@@ -12,6 +12,8 @@ interface AppState {
   addGeneratedImage: (imageUrl: string) => void;
   imageParams: ImageGenerationParams;
   setImageParams: (params: Partial<ImageGenerationParams>) => void;
+  ollamaModels: string[];
+  setOllamaModels: (models: string[]) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -42,4 +44,6 @@ export const useStore = create<AppState>((set) => ({
     set((state) => ({
       imageParams: { ...state.imageParams, ...params },
     })),
+  ollamaModels: [],
+  setOllamaModels: (models) => set({ ollamaModels: models }),
 }));

@@ -4,7 +4,7 @@
  */
 
 import { ImageGenerationParams } from "../types";
-import { RETRY_DELAY, MAX_RETRIES } from "../config/constants";
+import { MAX_RETRIES, RETRY_DELAY } from "../config/constants";
 
 /**
  * Configuration for Stable Diffusion service
@@ -33,6 +33,18 @@ export class StableDiffusionService {
   }
 
   /**
+   * Checks if the service is available
+   */
+  static async checkAvailability(baseUrl: string): Promise<boolean> {
+    try {
+      const response = await fetch(baseUrl);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Generates an image using Stable Diffusion
    * @param params - Image generation parameters
    * @returns Promise with the generated image data
@@ -50,6 +62,7 @@ export class StableDiffusionService {
           height: parseInt(params.size.split("x")[1]),
           steps: params.steps,
           cfg_scale: params.guidanceScale,
+          negative_prompt: params.negativePrompt,
         }),
       });
 

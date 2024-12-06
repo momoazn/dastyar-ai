@@ -3,7 +3,9 @@
  * @module services/ollama
  */
 
-import { MAX_RETRIES, RETRY_DELAY } from "../config/constants";
+import { Ollama } from "ollama";
+
+const OLLAMA_BASE_URL = "http://localhost:11434";
 
 /**
  * Configuration for Ollama service
@@ -18,107 +20,79 @@ export interface OllamaConfig {
  * Class for handling Ollama API interactions
  */
 export class OllamaService {
-  private config: OllamaConfig;
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
+  private ollama: Ollama;
 
   /**
    * Creates an instance of OllamaService
    * @param config - Configuration options
    */
-  constructor(config: OllamaConfig) {
-    this.config = {
-      maxRetries: MAX_RETRIES,
-      ...config,
-    };
-  }
-
-  /**
-   * Connects to the Ollama WebSocket server
-   * @returns Promise that resolves when connected
-   */
-  async connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.ws = new WebSocket(`${this.config.baseUrl}/api/chat`);
-
-        this.ws.onopen = () => {
-          this.reconnectAttempts = 0;
-          resolve();
-        };
-
-        this.ws.onerror = (error) => {
-          if (
-            this.reconnectAttempts < (this.config.maxRetries || MAX_RETRIES)
-          ) {
-            setTimeout(() => this.reconnect(), RETRY_DELAY);
-          } else {
-            reject(error);
-          }
-        };
-      } catch (error) {
-        reject(error);
-      }
+  constructor() {
+    this.ollama = new Ollama({
+      host: OLLAMA_BASE_URL,
     });
   }
 
   /**
-   * Attempts to reconnect to the WebSocket server
+   * Checks if the service is available
    */
-  private async reconnect(): Promise<void> {
-    this.reconnectAttempts++;
+  static async checkAvailability(): Promise<boolean> {
     try {
-      await this.connect();
-    } catch (error) {
-      console.error("Reconnection failed:", error);
+      const ollama = new Ollama({
+        host: OLLAMA_BASE_URL,
+      });
+      await ollama.list();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static async getModels(): Promise<string[]> {
+    try {
+      const ollama = new Ollama({
+        host: OLLAMA_BASE_URL,
+      });
+      const models = await ollama.list();
+      return models.models.map((model) => model.name);
+    } catch {
+      return [];
     }
   }
 
   /**
-   * Sends a message to the Ollama API
+   * Sends a chat message to Ollama
    * @param message - Message to send
-   * @returns Promise with the response
+   * @param onToken - Callback for receiving streaming tokens
    */
-  async sendMessage(message: string): Promise<string> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      await this.connect();
-    }
+  async chat(
+    message: string,
+    model: string,
+    onToken?: (token: string) => void
+  ): Promise<string> {
+    console.log("@@@@@@ model", { message, model });
 
-    return new Promise((resolve, reject) => {
-      if (!this.ws) {
-        reject(new Error("WebSocket not initialized"));
-        return;
-      }
+    try {
+      let fullResponse = "";
+      const response = await this.ollama.chat({
+        model,
+        messages: [{ role: "user", content: message }],
+        // @ts-ignore
+        stream: !!onToken,
+      });
 
-      this.ws.send(
-        JSON.stringify({
-          model: this.config.model,
-          messages: [{ role: "user", content: message }],
-        }),
-      );
-
-      let response = "";
-
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.done) {
-          resolve(response);
-        } else {
-          response += data.message;
+      if (onToken) {
+        for await (const chunk of response) {
+          const token = chunk.message?.content || "";
+          fullResponse += token;
+          onToken(token);
         }
-      };
-
-      this.ws.onerror = reject;
-    });
-  }
-
-  /**
-   * Closes the WebSocket connection
-   */
-  disconnect(): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+        return fullResponse;
+      } else {
+        return response.message?.content || "";
+      }
+    } catch (error) {
+      console.error("Error in chat:", error);
+      throw error;
     }
   }
 }
