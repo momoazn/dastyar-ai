@@ -13,7 +13,7 @@ interface Message {
 
 export const ChatSection: React.FC = () => {
   const { recording, setRecording, audioLevel, ollamaModels } = useStore();
-  const ollamaService = new OllamaService();
+  const ollamaService = useRef(new OllamaService());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [message, setMessage] = useState("");
@@ -22,8 +22,15 @@ export const ChatSection: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
 
+  const modelSelectHandler = (model: string) => {
+    setSelectedModel(model);
+    localStorage.setItem("ollamaModel", model);
+  };
+
   useEffect(() => {
-    setSelectedModel(ollamaModels[0]);
+    const savedModel = localStorage.getItem("ollamaModel");
+    if (savedModel) setSelectedModel(savedModel);
+    else setSelectedModel(ollamaModels?.[0] ?? "");
   }, [ollamaModels]);
 
   useEffect(() => {
@@ -61,14 +68,18 @@ export const ChatSection: React.FC = () => {
 
     setMessages((prev) => [...prev, assistantMessage]);
 
-    await ollamaService.chat(userMessage.content, selectedModel, (token) => {
-      if (stopRequested) return;
-      streamedContent += token;
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { ...assistantMessage, content: streamedContent },
-      ]);
-    });
+    await ollamaService?.current.chat(
+      userMessage.content,
+      selectedModel,
+      (token) => {
+        if (stopRequested) return;
+        streamedContent += token;
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          { ...assistantMessage, content: streamedContent },
+        ]);
+      }
+    );
 
     setIsStreaming(false);
   };
@@ -147,7 +158,7 @@ export const ChatSection: React.FC = () => {
       <div className="mt-2 mb-4">
         <select
           value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
+          onChange={(e) => modelSelectHandler(e.target.value)}
           className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           {ollamaModels.map((model) => (
