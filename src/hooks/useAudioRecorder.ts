@@ -3,8 +3,8 @@
  * @module hooks/useAudioRecorder
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { useStore } from '../store/useStore';
+import { useState, useCallback, useRef } from "react";
+import { useStore } from "../store/useStore";
 
 interface UseAudioRecorderReturn {
   startRecording: () => Promise<void>;
@@ -26,24 +26,28 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   /**
    * Analyzes audio data to update the audio level indicator
    */
-  const analyzeAudio = useCallback((audioContext: AudioContext, source: MediaStreamAudioSourceNode) => {
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
+  const analyzeAudio = useCallback(
+    (audioContext: AudioContext, source: MediaStreamAudioSourceNode) => {
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
 
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    
-    const updateLevel = () => {
-      if (isRecording) {
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-        setAudioLevel((average / 256) * 100);
-        requestAnimationFrame(updateLevel);
-      }
-    };
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-    updateLevel();
-  }, [isRecording, setAudioLevel]);
+      const updateLevel = () => {
+        if (isRecording) {
+          analyser.getByteFrequencyData(dataArray);
+          const average =
+            dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+          setAudioLevel((average / 256) * 100);
+          requestAnimationFrame(updateLevel);
+        }
+      };
+
+      updateLevel();
+    },
+    [isRecording, setAudioLevel],
+  );
 
   /**
    * Starts the audio recording
@@ -51,7 +55,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   const startRecording = async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       analyzeAudio(audioContext, source);
@@ -67,8 +71,8 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       setIsRecording(true);
       setError(null);
     } catch (err) {
-      setError('Failed to start recording');
-      console.error('Recording error:', err);
+      setError("Failed to start recording");
+      console.error("Recording error:", err);
     }
   };
 
@@ -78,12 +82,12 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   const stopRecording = async (): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       if (!mediaRecorder.current) {
-        reject(new Error('No media recorder'));
+        reject(new Error("No media recorder"));
         return;
       }
 
       mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
         resolve(audioBlob);
       };
 

@@ -3,9 +3,9 @@
  * @module hooks/useServices
  */
 
-import { useEffect } from 'react';
-import { useStore } from '../store/useStore';
-import { checkServices } from '../utils/api';
+import { useEffect } from "react";
+import { useStore } from "../store/useStore";
+import { checkServices } from "../utils/api";
 
 export const useServices = () => {
   const setConnectionStatus = useStore((state) => state.setConnectionStatus);

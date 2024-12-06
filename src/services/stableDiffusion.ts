@@ -3,8 +3,8 @@
  * @module services/stableDiffusion
  */
 
-import { ImageGenerationParams } from '../types';
-import { RETRY_DELAY, MAX_RETRIES } from '../config/constants';
+import { ImageGenerationParams } from "../types";
+import { RETRY_DELAY, MAX_RETRIES } from "../config/constants";
 
 /**
  * Configuration for Stable Diffusion service
@@ -40,14 +40,14 @@ export class StableDiffusionService {
   async generateImage(params: ImageGenerationParams): Promise<string> {
     try {
       const response = await fetch(`${this.config.baseUrl}/sdapi/v1/txt2img`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           prompt: params.prompt,
-          width: parseInt(params.size.split('x')[0]),
-          height: parseInt(params.size.split('x')[1]),
+          width: parseInt(params.size.split("x")[0]),
+          height: parseInt(params.size.split("x")[1]),
           steps: params.steps,
           cfg_scale: params.guidanceScale,
         }),
@@ -62,7 +62,7 @@ export class StableDiffusionService {
     } catch (error) {
       if (this.retryCount < (this.config.maxRetries || MAX_RETRIES)) {
         this.retryCount++;
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
         return this.generateImage(params);
       }
       throw error;

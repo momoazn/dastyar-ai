@@ -19,6 +19,7 @@ A modern web application for interacting with Ollama and Stable Diffusion AI ser
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```

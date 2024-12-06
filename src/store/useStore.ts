@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { ConnectionStatus, ImageGenerationParams } from '../types';
+import { create } from "zustand";
+import { ConnectionStatus, ImageGenerationParams } from "../types";
 
 interface AppState {
   connectionStatus: ConnectionStatus;
@@ -33,8 +33,8 @@ export const useStore = create<AppState>((set) => ({
       generatedImages: [...state.generatedImages, imageUrl],
     })),
   imageParams: {
-    prompt: '',
-    size: '512x512',
+    prompt: "",
+    size: "512x512",
     steps: 20,
     guidanceScale: 7.5,
   },

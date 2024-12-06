@@ -3,7 +3,7 @@
  * @module services/ollama
  */
 
-import { MAX_RETRIES, RETRY_DELAY } from '../config/constants';
+import { MAX_RETRIES, RETRY_DELAY } from "../config/constants";
 
 /**
  * Configuration for Ollama service
@@ -41,14 +41,16 @@ export class OllamaService {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(`${this.config.baseUrl}/api/chat`);
-        
+
         this.ws.onopen = () => {
           this.reconnectAttempts = 0;
           resolve();
         };
 
         this.ws.onerror = (error) => {
-          if (this.reconnectAttempts < (this.config.maxRetries || MAX_RETRIES)) {
+          if (
+            this.reconnectAttempts < (this.config.maxRetries || MAX_RETRIES)
+          ) {
             setTimeout(() => this.reconnect(), RETRY_DELAY);
           } else {
             reject(error);
@@ -68,7 +70,7 @@ export class OllamaService {
     try {
       await this.connect();
     } catch (error) {
-      console.error('Reconnection failed:', error);
+      console.error("Reconnection failed:", error);
     }
   }
 
@@ -84,17 +86,19 @@ export class OllamaService {
 
     return new Promise((resolve, reject) => {
       if (!this.ws) {
-        reject(new Error('WebSocket not initialized'));
+        reject(new Error("WebSocket not initialized"));
         return;
       }
 
-      this.ws.send(JSON.stringify({
-        model: this.config.model,
-        messages: [{ role: 'user', content: message }],
-      }));
+      this.ws.send(
+        JSON.stringify({
+          model: this.config.model,
+          messages: [{ role: "user", content: message }],
+        }),
+      );
 
-      let response = '';
-      
+      let response = "";
+
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.done) {

@@ -7,13 +7,14 @@
  * Creates a new SpeechRecognition instance with Persian language settings
  */
 export const createSpeechRecognition = (): SpeechRecognition => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
-  
-  recognition.lang = 'fa-IR';
+
+  recognition.lang = "fa-IR";
   recognition.continuous = true;
   recognition.interimResults = true;
-  
+
   return recognition;
 };
 
@@ -22,9 +23,9 @@ export const createSpeechRecognition = (): SpeechRecognition => {
  */
 export const speak = (text: string): void => {
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'fa-IR';
+  utterance.lang = "fa-IR";
   utterance.rate = 1;
   utterance.pitch = 1;
-  
+
   window.speechSynthesis.speak(utterance);
 };
