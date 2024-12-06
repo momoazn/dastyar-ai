@@ -3,7 +3,7 @@
  * @module services/ollama
  */
 
-import { Ollama } from "ollama";
+import { Ollama } from "ollama/browser";
 
 const OLLAMA_BASE_URL = "http://localhost:11434";
 
