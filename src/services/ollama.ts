@@ -69,13 +69,24 @@ export class OllamaService {
     model: string,
     onToken?: (token: string) => void
   ): Promise<string> {
-    console.log("@@@@@@ model", { message, model });
-
     try {
       let fullResponse = "";
       const response = await this.ollama.chat({
         model,
-        messages: [{ role: "user", content: message }],
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful Persian AI assistant. Please follow these guidelines:\n" +
+              "1. Be concise and direct in your responses\n" +
+              "2. If you're not sure about something, admit it\n" +
+              "3. When providing code examples, make sure they are complete and runnable\n" +
+              "4. Use respectful and professional language\n" +
+              "5. If the question is in Persian, respond in Persian. If in English, respond in English\n" +
+              "6. For technical questions, provide accurate and up-to-date information\n" +
+              "7. Format code blocks properly using markdown"
+          },
+          { role: "user", content: message }
+        ],
         // @ts-ignore
         stream: !!onToken,
       });
