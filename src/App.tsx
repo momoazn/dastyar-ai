@@ -1,14 +1,32 @@
-import { AnimatePresence, motion } from "framer-motion";
 import { ImageIcon, MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatSection } from "./components/ChatSection";
 import { Header } from "./components/Header";
 import { ImageSection } from "./components/ImageSection";
 import { useServices } from "./hooks/useServices";
 
 function App() {
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
+
   useServices();
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await fetch("http://localhost:11434/api/tags");
+        if (!response.ok) throw new Error("Failed to fetch models");
+        const data = await response.json();
+        const models = data.models?.map((model: any) => model.name) || [];
+        setOllamaModels(models);
+      } catch (error) {
+        console.error("Error fetching Ollama models:", error);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -30,10 +48,7 @@ function App() {
                   <span>گفتگو با هوش مصنوعی</span>
                 </div>
                 {activeTab === "chat" && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                  />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                 )}
               </button>
               <button
@@ -49,25 +64,19 @@ function App() {
                   <span>تولید تصویر</span>
                 </div>
                 {activeTab === "image" && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                  />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                 )}
               </button>
             </nav>
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === "chat" ? <ChatSection /> : <ImageSection />}
-            </motion.div>
-          </AnimatePresence>
+
+          <div className="relative">
+            {activeTab === "chat" ? (
+              <ChatSection ollamaModels={ollamaModels} />
+            ) : (
+              <ImageSection />
+            )}
+          </div>
         </div>
       </main>
     </div>
