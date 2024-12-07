@@ -1,124 +1,196 @@
-import { motion } from "framer-motion";
-import { Download, ImagePlus, Sliders } from "lucide-react";
+import { Download, ImagePlus } from "lucide-react";
 import { useState } from "react";
 import {
   ImageGenerationParams,
   StableDiffusionService,
 } from "../services/stableDiffusion";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Slider } from "./ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-export const ImageSection: React.FC<{ sdService: StableDiffusionService }> = ({
-  sdService,
-}) => {
-  const [generatedImages, setGeneratedImages] = useState<string[]>();
-  const [imageParams, setImageParams] = useState<ImageGenerationParams>({
+interface ImageSectionProps {
+  sdService: StableDiffusionService;
+}
+
+export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [settings, setSettings] = useState<ImageGenerationParams>({
     prompt: "",
-    size: "512x512",
-    steps: 5,
+    steps: 20,
     guidanceScale: 7.5,
     sampler_index: "Euler",
+    width: 512,
+    height: 512,
   });
 
   const handleGenerate = async () => {
-    const generatedImage = await sdService.generateImage(imageParams);
-    setGeneratedImages([...generatedImage, generatedImage]);
+    if (!prompt.trim()) return;
+
+    setGenerating(true);
+    try {
+      const images = await sdService.generateImage({
+        ...settings,
+        prompt: prompt,
+      });
+      setGeneratedImages((prev) => [...images, ...prev]);
+    } catch (error) {
+      console.error("Error generating image:", error);
+    }
+    setGenerating(false);
   };
 
   return (
-    <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex h-full">
+      {/* Settings Panel */}
+      <div className="w-96 border-l border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6 space-y-6 overflow-y-auto">
         <div className="space-y-6">
-          <div className="space-y-4">
-            <textarea
-              value={imageParams.prompt}
-              onChange={(e) =>
-                setImageParams({ ...imageParams, prompt: e.target.value })
-              }
-              className="w-full border rounded-md p-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
-              dir="rtl"
-            />
-          </div>
-          <div className="bg-gray-50 rounded-md p-4 space-y-4">
-            <div className="flex items-center gap-2 text-gray-700 mb-3">
-              <Sliders className="w-5 h-5" />
-              <span className="font-medium">تنظیمات</span>
-            </div>
-            <div className="space-y-4">
+          <Card className="border-gray-800 bg-gray-800/50">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium text-gray-100">
+                تنظیمات تصویر
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  اندازه تصویر
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  توضیحات
                 </label>
-                <select
-                  value={imageParams.size}
-                  onChange={(e) =>
-                    setImageParams({
-                      ...imageParams,
-                      size: e.target.value as typeof imageParams.size,
-                    })
-                  }
-                  className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="512x512">512x512</option>
-                  <option value="768x768">768x768</option>
-                  <option value="1024x1024">1024x1024</option>
-                </select>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
+                  className="bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
+                  dir="auto"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   تعداد مراحل
                 </label>
-                <input
-                  type="range"
-                  value={imageParams.steps}
-                  onChange={(e) =>
-                    setImageParams({
-                      ...imageParams,
-                      steps: parseInt(e.target.value),
-                    })
+                <Slider
+                  value={[settings.steps]}
+                  onValueChange={(value) =>
+                    setSettings({ ...settings, steps: value[0] })
                   }
-                  className="w-full"
                   min={1}
                   max={50}
+                  step={1}
+                  className="py-4"
                 />
-                <div className="text-sm text-gray-500 text-center">
-                  {imageParams.steps}
+                <span className="text-sm text-gray-400">{settings.steps}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    عرض
+                  </label>
+                  <Select
+                    value={settings.width?.toString()}
+                    onValueChange={(value) =>
+                      setSettings({ ...settings, width: parseInt(value) })
+                    }
+                  >
+                    <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      {[256, 512, 768, 1024].map((size) => (
+                        <SelectItem
+                          key={size}
+                          value={size.toString()}
+                          className="text-gray-100 focus:bg-gray-700"
+                        >
+                          {size}px
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    ارتفاع
+                  </label>
+                  <Select
+                    value={settings.height?.toString()}
+                    onValueChange={(value) =>
+                      setSettings({ ...settings, height: parseInt(value) })
+                    }
+                  >
+                    <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      {[256, 512, 768, 1024].map((size) => (
+                        <SelectItem
+                          key={size}
+                          value={size.toString()}
+                          className="text-gray-100 focus:bg-gray-700"
+                        >
+                          {size}px
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </div>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-blue-500 text-white rounded-md py-3 px-4 flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
+            </CardContent>
+          </Card>
+
+          <Button
+            size="lg"
+            className="w-full gap-2 bg-blue-600 hover:bg-blue-500"
             onClick={handleGenerate}
+            disabled={generating || !prompt.trim()}
           >
             <ImagePlus className="w-5 h-5" />
-            <span>ایجاد تصویر</span>
-          </motion.button>
+            <span>{generating ? "در حال ایجاد..." : "ایجاد تصویر"}</span>
+          </Button>
         </div>
-        <div className="bg-gray-50 rounded-md p-4">
-          <h3 className="text-lg font-medium mb-4">تصاویر تولید شده</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {generatedImages?.map((image, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="relative group rounded-md overflow-hidden"
-              >
-                <img
-                  src={image}
-                  alt={`Generated ${index + 1}`}
-                  className="w-full h-48 object-cover"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+      </div>
+
+      {/* Generated Images Gallery */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-6">
+          {generatedImages?.map((image, index) => (
+            <div
+              key={index}
+              className="group relative aspect-square rounded-xl overflow-hidden bg-gray-800"
+            >
+              <img
+                src={image}
+                alt={`Generated ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:text-white hover:bg-white/20"
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = image;
+                    link.download = `generated-${index + 1}.png`;
+                    link.click();
+                  }}
                 >
-                  <Download className="w-5 h-5" />
-                </motion.button>
-              </motion.div>
-            ))}
-          </div>
+                  <Download className="w-6 h-6" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

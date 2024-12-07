@@ -9,11 +9,12 @@ const MAX_RETRIES = 3;
 
 export interface ImageGenerationParams {
   prompt: string;
-  size: "512x512" | "768x768" | "1024x1024";
   steps: number;
   guidanceScale: number;
   negativePrompt?: string;
   sampler_index: "Euler";
+  width: number;
+  height: number;
 }
 
 /**
@@ -48,13 +49,8 @@ export class StableDiffusionService {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            prompt: params.prompt,
-            width: parseInt(params.size.split("x")[0]),
-            height: parseInt(params.size.split("x")[1]),
-            steps: params.steps,
-          }),
-        },
+          body: JSON.stringify(params),
+        }
       );
 
       if (!response.ok) {

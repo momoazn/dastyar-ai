@@ -3,6 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { OllamaService } from "../services/ollama";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { ScrollArea } from "./ui/scroll-area";
+import { Card } from "./ui/card";
 
 interface Message {
   role: "user" | "assistant";
@@ -126,17 +137,17 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
       switch (error.name) {
         case "NotAllowedError":
           alert(
-            "Microphone access was denied. Please allow microphone access to use this feature.",
+            "Microphone access was denied. Please allow microphone access to use this feature."
           );
           break;
         case "NotFoundError":
           alert(
-            "No microphone was found. Please ensure you have a microphone connected.",
+            "No microphone was found. Please ensure you have a microphone connected."
           );
           break;
         default:
           alert(
-            "An error occurred while trying to start recording. Please check the console for details.",
+            "An error occurred while trying to start recording. Please check the console for details."
           );
       }
     }
@@ -156,7 +167,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          `Transcription failed: ${response.status} ${errorData?.detail || ""}`,
+          `Transcription failed: ${response.status} ${errorData?.detail || ""}`
         );
       }
 
@@ -199,78 +210,114 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   };
 
   return (
-    <div className="p-6">
-      <div className="h-[700px] overflow-y-auto mb-4 border rounded-md bg-gray-50 p-4">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`mb-4 p-3 rounded-lg ${
-              msg.role === "user"
-                ? "bg-blue-100 ml-auto max-w-[80%]"
-                : "bg-white mr-auto max-w-[80%]"
-            }`}
-            dir={detectTextDirection(msg.content)}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {msg.content}
-            </ReactMarkdown>
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-6 space-y-6">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`relative max-w-[80%] px-4 py-3 rounded-2xl ${
+                    msg.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-800 text-gray-100"
+                  }`}
+                  dir={detectTextDirection(msg.content)}
+                >
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        </ScrollArea>
       </div>
 
-      <div className="flex items-center gap-2">
-        <select
-          value={selectedModel}
-          onChange={(e) => handleModelSelect(e.target.value)}
-          className="w-full p-2 border rounded-md"
-        >
-          {ollamaModels?.map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-4 space-y-4">
+        <Select value={selectedModel} onValueChange={handleModelSelect}>
+          <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-100">
+            <SelectValue placeholder="انتخاب مدل" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-800 border-gray-700">
+            {ollamaModels?.map((model) => (
+              <SelectItem
+                key={model}
+                value={model}
+                className="text-gray-100 focus:bg-gray-700 focus:text-gray-100"
+              >
+                {model}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <div className="flex items-center gap-2 mt-4">
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="پیام خود را بنویسید..."
-          className="flex-1 p-2 border rounded-md resize-none"
-          rows={1}
-        />
-        <button
-          onClick={() =>
-            recording ? handleRecordingStop() : handleRecordingStart()
-          }
-          className={`p-2 rounded-full ${
-            recording ? "bg-red-500" : "bg-blue-500"
-          } text-white hover:opacity-80`}
-        >
-          {recording ? <Pause size={20} /> : <Mic size={20} />}
-        </button>
-        {recordingTime !== "00:00" && recording && (
-          <span className="text-sm text-gray-500">{recordingTime}</span>
-        )}
-        <button
-          onClick={isStreaming ? () => setStopRequested(true) : handleSend}
-          disabled={!message.trim() && isStreaming}
-          className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50"
-        >
-          {isStreaming ? (
-            <Pause className="w-5 h-5" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-        </button>
+        <div className="flex items-end gap-2">
+          <div className="flex-1 relative">
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="پیام خود را بنویسید..."
+              className="resize-none min-h-[60px] pr-4 pl-24 py-3 bg-gray-800 border-gray-700 text-gray-100 focus:border-gray-600 placeholder:text-gray-500"
+              dir="rtl"
+            />
+            <div className="absolute bottom-2 left-2 flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className={
+                  recording
+                    ? "text-red-400 hover:text-red-300 hover:bg-red-950"
+                    : "text-gray-400 hover:text-gray-300 hover:bg-gray-800"
+                }
+                onClick={() =>
+                  recording ? handleRecordingStop() : handleRecordingStart()
+                }
+              >
+                {recording ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
+              {recordingTime !== "00:00" && recording && (
+                <span className="text-sm text-gray-400">{recordingTime}</span>
+              )}
+              <Button
+                size="icon"
+                variant={isStreaming ? "secondary" : "default"}
+                className={
+                  isStreaming
+                    ? "bg-gray-700 hover:bg-gray-600"
+                    : "bg-blue-600 hover:bg-blue-500"
+                }
+                onClick={
+                  isStreaming ? () => setStopRequested(true) : handleSend
+                }
+                disabled={!message.trim() && isStreaming}
+              >
+                {isStreaming ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
