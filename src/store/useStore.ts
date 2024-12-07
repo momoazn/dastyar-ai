@@ -20,6 +20,7 @@ export const useStore = create<AppState>((set) => ({
   connectionStatus: {
     ollama: false,
     stableDiffusion: false,
+    whisper: false,
   },
   setConnectionStatus: (status) =>
     set((state) => ({

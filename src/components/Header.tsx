@@ -1,5 +1,5 @@
 import React from "react";
-import { Brain, ImageIcon, Sparkles } from "lucide-react";
+import { Brain, CloudIcon, ImageIcon, Sparkles } from "lucide-react";
 import { useStore } from "../store/useStore";
 import { motion } from "framer-motion";
 
@@ -31,6 +31,14 @@ export const Header: React.FC = () => {
                 }
               />
               <span className="text-sm">Ollama</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
+              <CloudIcon
+                className={
+                  connectionStatus.whisper ? "text-green-500" : "text-red-500"
+                }
+              />
+              <span className="text-sm">Whisper</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
               <ImageIcon

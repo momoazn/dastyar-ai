@@ -9,4 +9,5 @@ export interface ImageGenerationParams {
 export interface ConnectionStatus {
   ollama: boolean;
   stableDiffusion: boolean;
+  whisper: boolean;
 }

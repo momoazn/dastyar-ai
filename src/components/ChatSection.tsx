@@ -201,7 +201,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
 
   return (
     <div className="p-6">
-      <div className="h-[500px] overflow-y-auto mb-4 border rounded-md bg-gray-50 p-4">
+      <div className="h-[700px] overflow-y-auto mb-4 border rounded-md bg-gray-50 p-4">
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -244,7 +244,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
               handleSend();
             }
           }}
-          placeholder="Type your message..."
+          placeholder="پیام خود را بنویسید..."
           className="flex-1 p-2 border rounded-md resize-none"
           rows={1}
         />
@@ -266,7 +266,11 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
           disabled={!message.trim() && isStreaming}
           className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50"
         >
-          <Send size={20} />
+          {isStreaming ? (
+            <Pause className="w-5 h-5" />
+          ) : (
+            <Send className="w-5 h-5" />
+          )}
         </button>
       </div>
     </div>

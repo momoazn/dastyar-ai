@@ -9,6 +9,11 @@ import { OllamaService } from "../services/ollama";
 import { StableDiffusionService } from "../services/stableDiffusion";
 import { useStore } from "../store/useStore";
 
+const isWhisperAvailable = async () => {
+  const response = await fetch("http://localhost:8000/models");
+  return response.ok;
+};
+
 export const useServices = () => {
   const [setConnectionStatus, setOllamaModels] = useStore((state) => [
     state.setConnectionStatus,
@@ -17,16 +22,19 @@ export const useServices = () => {
 
   useEffect(() => {
     const checkAvailability = async () => {
-      const [ollamaAvailable, sdAvailable] = await Promise.all([
-        OllamaService.checkAvailability(),
-        StableDiffusionService.checkAvailability(
-          STABLE_DIFFUSION_CONFIG.baseUrl
-        ),
-      ]);
+      const [ollamaAvailable, sdAvailable, whisperAvailable] =
+        await Promise.all([
+          OllamaService.checkAvailability(),
+          StableDiffusionService.checkAvailability(
+            STABLE_DIFFUSION_CONFIG.baseUrl
+          ),
+          isWhisperAvailable(),
+        ]);
 
       setConnectionStatus({
         ollama: ollamaAvailable,
         stableDiffusion: sdAvailable,
+        whisper: whisperAvailable,
       });
 
       const models = await OllamaService.getModels();
