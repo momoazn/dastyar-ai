@@ -1,12 +1,10 @@
-import { ImageIcon, MessageSquare } from "lucide-react";
-import { act, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChatSection } from "./components/ChatSection";
-import { Status } from "./components/Status";
 import { ImageSection } from "./components/ImageSection";
+import { Sidebar } from "./components/Sidebar";
 import { useServices } from "./hooks/useServices";
 import { OllamaService } from "./services/ollama";
 import { StableDiffusionService } from "./services/stableDiffusion";
-import { Sidebar } from "./components/Sidebar";
 
 function App() {
   const ollamaService = useRef(new OllamaService());
