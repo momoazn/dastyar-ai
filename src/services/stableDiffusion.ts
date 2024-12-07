@@ -4,7 +4,10 @@
  */
 
 import { ImageGenerationParams } from "../types";
-import { MAX_RETRIES, RETRY_DELAY } from "../config/constants";
+
+const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
+const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
 
 /**
  * Configuration for Stable Diffusion service
@@ -18,26 +21,14 @@ export interface StableDiffusionConfig {
  * Class for handling Stable Diffusion API interactions
  */
 export class StableDiffusionService {
-  private config: StableDiffusionConfig;
   private retryCount = 0;
-
-  /**
-   * Creates an instance of StableDiffusionService
-   * @param config - Configuration options
-   */
-  constructor(config: StableDiffusionConfig) {
-    this.config = {
-      maxRetries: MAX_RETRIES,
-      ...config,
-    };
-  }
 
   /**
    * Checks if the service is available
    */
-  static async checkAvailability(baseUrl: string): Promise<boolean> {
+  async checkAvailability(): Promise<boolean> {
     try {
-      const response = await fetch(baseUrl);
+      const response = await fetch(STABLE_DIFFUSION_BASE_URL);
       return response.ok;
     } catch {
       return false;
@@ -51,20 +42,21 @@ export class StableDiffusionService {
    */
   async generateImage(params: ImageGenerationParams): Promise<string> {
     try {
-      const response = await fetch(`${this.config.baseUrl}/sdapi/v1/txt2img`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: params.prompt,
-          width: parseInt(params.size.split("x")[0]),
-          height: parseInt(params.size.split("x")[1]),
-          steps: params.steps,
-          cfg_scale: params.guidanceScale,
-          negative_prompt: params.negativePrompt,
-        }),
-      });
+      const response = await fetch(
+        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/txt2img`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: params.prompt,
+            width: parseInt(params.size.split("x")[0]),
+            height: parseInt(params.size.split("x")[1]),
+            steps: params.steps,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,7 +65,7 @@ export class StableDiffusionService {
       const data = await response.json();
       return `data:image/png;base64,${data.images[0]}`;
     } catch (error) {
-      if (this.retryCount < (this.config.maxRetries || MAX_RETRIES)) {
+      if (this.retryCount < MAX_RETRIES) {
         this.retryCount++;
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
         return this.generateImage(params);

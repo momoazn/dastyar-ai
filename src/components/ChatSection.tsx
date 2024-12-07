@@ -10,7 +10,8 @@ interface Message {
 }
 
 interface ChatSectionProps {
-  ollamaModels: string[];
+  ollamaService: OllamaService;
+  ollamaModels?: string[];
 }
 
 // Utility functions
@@ -29,9 +30,11 @@ const detectTextDirection = (text: string): "rtl" | "ltr" => {
   return rtlRegex.test(text) ? "rtl" : "ltr";
 };
 
-export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
+export const ChatSection: React.FC<ChatSectionProps> = ({
+  ollamaModels,
+  ollamaService,
+}) => {
   // Services
-  const ollamaService = useRef(new OllamaService());
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -183,18 +186,14 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
     setStopRequested(false);
 
     let streamedContent = "";
-    await ollamaService.current.chat(
-      userMessage.content,
-      selectedModel,
-      (token) => {
-        if (stopRequested) return;
-        streamedContent += token;
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          { ...assistantMessage, content: streamedContent },
-        ]);
-      }
-    );
+    await ollamaService.chat(userMessage.content, selectedModel, (token) => {
+      if (stopRequested) return;
+      streamedContent += token;
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { ...assistantMessage, content: streamedContent },
+      ]);
+    });
 
     setIsStreaming(false);
   };
@@ -226,7 +225,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ ollamaModels }) => {
           onChange={(e) => handleModelSelect(e.target.value)}
           className="w-full p-2 border rounded-md"
         >
-          {ollamaModels.map((model) => (
+          {ollamaModels?.map((model) => (
             <option key={model} value={model}>
               {model}
             </option>

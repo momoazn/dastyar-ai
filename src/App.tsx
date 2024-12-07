@@ -1,36 +1,26 @@
 import { ImageIcon, MessageSquare } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { ChatSection } from "./components/ChatSection";
 import { Header } from "./components/Header";
 import { ImageSection } from "./components/ImageSection";
 import { useServices } from "./hooks/useServices";
+import { OllamaService } from "./services/ollama";
+import { StableDiffusionService } from "./services/stableDiffusion";
 
 function App() {
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const ollamaService = useRef(new OllamaService());
+  const sdService = useRef(new StableDiffusionService());
 
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
 
-  useServices();
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await fetch("http://localhost:11434/api/tags");
-        if (!response.ok) throw new Error("Failed to fetch models");
-        const data = await response.json();
-        const models = data.models?.map((model: any) => model.name) || [];
-        setOllamaModels(models);
-      } catch (error) {
-        console.error("Error fetching Ollama models:", error);
-      }
-    };
-
-    fetchModels();
-  }, []);
+  const [connectionsStatus, ollamaModels] = useServices(
+    ollamaService.current,
+    sdService.current
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Header />
+      <Header connectionsStatus={connectionsStatus} />
       <main className="max-w-7xl mx-auto px-4 pb-8">
         <div className="bg-white rounded-md shadow-sm overflow-hidden">
           <div className="border-b border-gray-200">
@@ -72,9 +62,12 @@ function App() {
 
           <div className="relative">
             {activeTab === "chat" ? (
-              <ChatSection ollamaModels={ollamaModels} />
+              <ChatSection
+                ollamaService={ollamaService.current}
+                ollamaModels={ollamaModels}
+              />
             ) : (
-              <ImageSection />
+              <ImageSection sdService={sdService.current} />
             )}
           </div>
         </div>

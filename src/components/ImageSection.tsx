@@ -1,13 +1,23 @@
-import React from "react";
-import { ImagePlus, Download, Sliders } from "lucide-react";
-import { useStore } from "../store/useStore";
 import { motion } from "framer-motion";
+import { Download, ImagePlus, Sliders } from "lucide-react";
+import { useState } from "react";
+import { StableDiffusionService } from "../services/stableDiffusion";
+import { ImageGenerationParams } from "../types";
 
-export const ImageSection: React.FC = () => {
-  const { imageParams, setImageParams, generatedImages } = useStore();
+export const ImageSection: React.FC<{ sdService: StableDiffusionService }> = ({
+  sdService,
+}) => {
+  const [generatedImages, setGeneratedImages] = useState<string[]>();
+  const [imageParams, setImageParams] = useState<ImageGenerationParams>({
+    prompt: "",
+    size: "512x512",
+    steps: 20,
+    guidanceScale: 7.5,
+  });
 
-  const handleGenerate = () => {
-    // TODO: Implement image generation
+  const handleGenerate = async () => {
+    const generatedImage = await sdService.generateImage(imageParams);
+    setGeneratedImages([...generatedImage, generatedImage]);
   };
 
   return (
@@ -17,7 +27,9 @@ export const ImageSection: React.FC = () => {
           <div className="space-y-4">
             <textarea
               value={imageParams.prompt}
-              onChange={(e) => setImageParams({ prompt: e.target.value })}
+              onChange={(e) =>
+                setImageParams({ ...imageParams, prompt: e.target.value })
+              }
               className="w-full border rounded-md p-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
               dir="rtl"
@@ -37,6 +49,7 @@ export const ImageSection: React.FC = () => {
                   value={imageParams.size}
                   onChange={(e) =>
                     setImageParams({
+                      ...imageParams,
                       size: e.target.value as typeof imageParams.size,
                     })
                   }
@@ -55,7 +68,10 @@ export const ImageSection: React.FC = () => {
                   type="range"
                   value={imageParams.steps}
                   onChange={(e) =>
-                    setImageParams({ steps: parseInt(e.target.value) })
+                    setImageParams({
+                      ...imageParams,
+                      steps: parseInt(e.target.value),
+                    })
                   }
                   className="w-full"
                   min={1}
@@ -79,7 +95,7 @@ export const ImageSection: React.FC = () => {
         <div className="bg-gray-50 rounded-md p-4">
           <h3 className="text-lg font-medium mb-4">تصاویر تولید شده</h3>
           <div className="grid grid-cols-2 gap-4">
-            {generatedImages.map((image, index) => (
+            {generatedImages?.map((image, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}

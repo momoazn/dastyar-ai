@@ -3,47 +3,56 @@
  * @module hooks/useServices
  */
 
-import { useEffect } from "react";
-import { STABLE_DIFFUSION_CONFIG } from "../config/constants";
+import { useEffect, useState } from "react";
 import { OllamaService } from "../services/ollama";
 import { StableDiffusionService } from "../services/stableDiffusion";
-import { useStore } from "../store/useStore";
+import { ConnectionStatus } from "../types";
 
 const isWhisperAvailable = async () => {
-  const response = await fetch("http://localhost:8000/models");
-  return response.ok;
+  try {
+    const response = await fetch("http://localhost:8000/models");
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 };
 
-export const useServices = () => {
-  const [setConnectionStatus, setOllamaModels] = useStore((state) => [
-    state.setConnectionStatus,
-    state.setOllamaModels,
-  ]);
+export const useServices = (
+  ollamaService: OllamaService,
+  sdService: StableDiffusionService
+) => {
+  const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
+    ollama: false,
+    stableDiffusion: false,
+    whisper: false,
+  });
+  const [ollamaModels, setOllamaModels] = useState<string[]>();
+
+  const checkAvailability = async () => {
+    const [ollamaAvailable, sdAvailable, whisperAvailable] = await Promise.all([
+      ollamaService.checkAvailability(),
+      sdService.checkAvailability(),
+      isWhisperAvailable(),
+    ]);
+
+    console.log({ ollamaAvailable, sdAvailable, whisperAvailable });
+
+    setConnectionsStatus({
+      ollama: ollamaAvailable,
+      stableDiffusion: sdAvailable,
+      whisper: whisperAvailable,
+    });
+
+    const models = await ollamaService.getModels();
+    setOllamaModels(models);
+  };
 
   useEffect(() => {
-    const checkAvailability = async () => {
-      const [ollamaAvailable, sdAvailable, whisperAvailable] =
-        await Promise.all([
-          OllamaService.checkAvailability(),
-          StableDiffusionService.checkAvailability(
-            STABLE_DIFFUSION_CONFIG.baseUrl
-          ),
-          isWhisperAvailable(),
-        ]);
-
-      setConnectionStatus({
-        ollama: ollamaAvailable,
-        stableDiffusion: sdAvailable,
-        whisper: whisperAvailable,
-      });
-
-      const models = await OllamaService.getModels();
-      setOllamaModels(models);
-    };
-
     checkAvailability();
     const interval = setInterval(checkAvailability, 30000);
 
     return () => clearInterval(interval);
-  }, [setConnectionStatus]);
+  }, [setConnectionsStatus]);
+
+  return [connectionsStatus, ollamaModels] as const;
 };

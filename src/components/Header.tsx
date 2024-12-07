@@ -1,11 +1,11 @@
-import React from "react";
-import { Brain, CloudIcon, ImageIcon, Sparkles } from "lucide-react";
-import { useStore } from "../store/useStore";
 import { motion } from "framer-motion";
+import { Brain, CloudIcon, ImageIcon, Sparkles } from "lucide-react";
+import React from "react";
+import { ConnectionStatus } from "../types";
 
-export const Header: React.FC = () => {
-  const connectionStatus = useStore((state) => state.connectionStatus);
-
+export const Header: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
+  connectionsStatus,
+}) => {
   return (
     <header className="bg-white border-b border-gray-200 mb-6">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -27,7 +27,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
               <Brain
                 className={
-                  connectionStatus.ollama ? "text-green-500" : "text-red-500"
+                  connectionsStatus.ollama ? "text-green-500" : "text-red-500"
                 }
               />
               <span className="text-sm">Ollama</span>
@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
               <CloudIcon
                 className={
-                  connectionStatus.whisper ? "text-green-500" : "text-red-500"
+                  connectionsStatus.whisper ? "text-green-500" : "text-red-500"
                 }
               />
               <span className="text-sm">Whisper</span>
@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
               <ImageIcon
                 className={
-                  connectionStatus.stableDiffusion
+                  connectionsStatus.stableDiffusion
                     ? "text-green-500"
                     : "text-red-500"
                 }

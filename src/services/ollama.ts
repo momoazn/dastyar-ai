@@ -35,24 +35,18 @@ export class OllamaService {
   /**
    * Checks if the service is available
    */
-  static async checkAvailability(): Promise<boolean> {
+  async checkAvailability(): Promise<boolean> {
     try {
-      const ollama = new Ollama({
-        host: OLLAMA_BASE_URL,
-      });
-      await ollama.list();
+      await this.ollama.list();
       return true;
     } catch {
       return false;
     }
   }
 
-  static async getModels(): Promise<string[]> {
+  async getModels(): Promise<string[]> {
     try {
-      const ollama = new Ollama({
-        host: OLLAMA_BASE_URL,
-      });
-      const models = await ollama.list();
+      const models = await this.ollama.list();
       return models.models.map((model) => model.name);
     } catch {
       return [];
@@ -76,16 +70,17 @@ export class OllamaService {
         messages: [
           {
             role: "system",
-            content: "You are a helpful Persian AI assistant. Please follow these guidelines:\n" +
+            content:
+              "You are a helpful Persian AI assistant. Please follow these guidelines:\n" +
               "1. Be concise and direct in your responses\n" +
               "2. If you're not sure about something, admit it\n" +
               "3. When providing code examples, make sure they are complete and runnable\n" +
               "4. Use respectful and professional language\n" +
               "5. If the question is in Persian, respond in Persian. If in English, respond in English\n" +
               "6. For technical questions, provide accurate and up-to-date information\n" +
-              "7. Format code blocks properly using markdown"
+              "7. Format code blocks properly using markdown",
           },
-          { role: "user", content: message }
+          { role: "user", content: message },
         ],
         // @ts-ignore
         stream: !!onToken,
