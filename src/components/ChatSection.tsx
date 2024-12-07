@@ -126,17 +126,17 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
       switch (error.name) {
         case "NotAllowedError":
           alert(
-            "Microphone access was denied. Please allow microphone access to use this feature."
+            "Microphone access was denied. Please allow microphone access to use this feature.",
           );
           break;
         case "NotFoundError":
           alert(
-            "No microphone was found. Please ensure you have a microphone connected."
+            "No microphone was found. Please ensure you have a microphone connected.",
           );
           break;
         default:
           alert(
-            "An error occurred while trying to start recording. Please check the console for details."
+            "An error occurred while trying to start recording. Please check the console for details.",
           );
       }
     }
@@ -156,7 +156,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          `Transcription failed: ${response.status} ${errorData?.detail || ""}`
+          `Transcription failed: ${response.status} ${errorData?.detail || ""}`,
         );
       }
 

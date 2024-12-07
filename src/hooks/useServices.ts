@@ -24,7 +24,7 @@ const isWhisperAvailable = async () => {
 
 export const useServices = (
   ollamaService: OllamaService,
-  sdService: StableDiffusionService
+  sdService: StableDiffusionService,
 ) => {
   const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
     ollama: false,

@@ -15,7 +15,7 @@ function App() {
 
   const [connectionsStatus, ollamaModels] = useServices(
     ollamaService.current,
-    sdService.current
+    sdService.current,
   );
 
   return (

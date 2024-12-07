@@ -61,7 +61,7 @@ export class OllamaService {
   async chat(
     message: string,
     model: string,
-    onToken?: (token: string) => void
+    onToken?: (token: string) => void,
   ): Promise<string> {
     try {
       let fullResponse = "";

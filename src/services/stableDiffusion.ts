@@ -54,7 +54,7 @@ export class StableDiffusionService {
             height: parseInt(params.size.split("x")[1]),
             steps: params.steps,
           }),
-        }
+        },
       );
 
       if (!response.ok) {

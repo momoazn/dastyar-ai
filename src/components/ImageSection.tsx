@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { Download, ImagePlus, Sliders } from "lucide-react";
 import { useState } from "react";
-import { ImageGenerationParams, StableDiffusionService } from "../services/stableDiffusion";
+import {
+  ImageGenerationParams,
+  StableDiffusionService,
+} from "../services/stableDiffusion";
 
 export const ImageSection: React.FC<{ sdService: StableDiffusionService }> = ({
   sdService,
