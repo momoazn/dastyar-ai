@@ -12,18 +12,18 @@ function App() {
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
   const [connectionsStatus, ollamaModels] = useServices(
     ollamaService.current,
-    sdService.current
+    sdService.current,
   );
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         connectionsStatus={connectionsStatus}
       />
 
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex h-full flex-1 flex-col overflow-hidden">
         <div className="flex-1 overflow-auto">
           {activeTab === "chat" ? (
             <ChatSection

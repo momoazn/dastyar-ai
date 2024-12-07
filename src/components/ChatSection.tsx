@@ -2,10 +2,11 @@ import { Mic, Pause, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { OllamaService } from "../services/ollama";
+
 import { useAudioRecording } from "../hooks/useAudioRecording";
 import { useChat } from "../hooks/useChat";
 import { useModelSelection } from "../hooks/useModelSelection";
+import { OllamaService } from "../services/ollama";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {
@@ -47,7 +48,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
 
   return (
     <div className="flex h-full flex-col gap-2 pt-4">
-      <ScrollArea className="flex-1 rounded-md border p-4 mx-4">
+      <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
         <div className="flex flex-col gap-4">
           {messages.map((message, index) => (
             <div
@@ -74,7 +75,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
         </div>
       </ScrollArea>
 
-      <div className="flex flex-col gap-2 mx-4">
+      <div className="mx-4 flex flex-col gap-2">
         <Select value={selectedModel} onValueChange={setModel}>
           <SelectTrigger>
             <SelectValue placeholder="Select a model" />

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { OllamaService } from '../services/ollama';
+import { useState } from "react";
+import { OllamaService } from "../services/ollama";
 
 interface Message {
   role: "user" | "assistant";

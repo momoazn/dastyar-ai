@@ -51,7 +51,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
 
   return (
     <div className="flex h-full">
-      <div className="w-96 border-l border-border bg-background backdrop-blur-sm p-6 space-y-6 overflow-y-auto">
+      <div className="w-96 space-y-6 overflow-y-auto border-l border-border bg-background p-6 backdrop-blur-sm">
         <div className="space-y-6">
           <Card className="border-border bg-background">
             <CardHeader>
@@ -61,20 +61,20 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="mb-2 block text-sm font-medium text-foreground">
                   توضیحات
                 </label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
-                  className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                  className="border-border bg-background text-foreground placeholder:text-muted-foreground"
                   dir="auto"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="mb-2 block text-sm font-medium text-foreground">
                   تعداد مراحل
                 </label>
                 <Slider
@@ -94,7 +94,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="mb-2 block text-sm font-medium text-foreground">
                     عرض
                   </label>
                   <Select
@@ -103,10 +103,10 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                       setSettings({ ...settings, width: parseInt(value) })
                     }
                   >
-                    <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectTrigger className="border-border bg-background text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border-border">
+                    <SelectContent className="border-border bg-background">
                       {[256, 512, 768, 1024].map((size) => (
                         <SelectItem
                           key={size}
@@ -121,7 +121,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="mb-2 block text-sm font-medium text-foreground">
                     ارتفاع
                   </label>
                   <Select
@@ -130,10 +130,10 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                       setSettings({ ...settings, height: parseInt(value) })
                     }
                   >
-                    <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectTrigger className="border-border bg-background text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border-border">
+                    <SelectContent className="border-border bg-background">
                       {[256, 512, 768, 1024].map((size) => (
                         <SelectItem
                           key={size}
@@ -156,30 +156,30 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
             onClick={handleGenerate}
             disabled={generating || !prompt.trim()}
           >
-            <ImagePlus className="w-5 h-5" />
+            <ImagePlus className="h-5 w-5" />
             <span>{generating ? "در حال ایجاد..." : "ایجاد تصویر"}</span>
           </Button>
         </div>
       </div>
 
       {/* Generated Images Gallery */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-2 gap-6">
           {generatedImages?.map((image, index) => (
             <div
               key={index}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-background"
+              className="group relative aspect-square overflow-hidden rounded-xl bg-background"
             >
               <img
                 src={image}
                 alt={`Generated ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-background hover:text-background hover:bg-white/20"
+                  className="text-background hover:bg-white/20 hover:text-background"
                   onClick={() => {
                     const link = document.createElement("a");
                     link.href = image;
@@ -187,7 +187,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                     link.click();
                   }}
                 >
-                  <Download className="w-6 h-6" />
+                  <Download className="h-6 w-6" />
                 </Button>
               </div>
             </div>

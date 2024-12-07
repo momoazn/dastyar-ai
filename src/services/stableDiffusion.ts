@@ -50,7 +50,7 @@ export class StableDiffusionService {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(params),
-        }
+        },
       );
 
       if (!response.ok) {

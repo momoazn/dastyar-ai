@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 
 const formatTime = (ms: number): string => {
   const seconds = Math.floor(ms / 1000);
@@ -9,7 +9,9 @@ const formatTime = (ms: number): string => {
     .padStart(2, "0")}`;
 };
 
-export const useAudioRecording = (onTranscriptionComplete: (text: string) => void) => {
+export const useAudioRecording = (
+  onTranscriptionComplete: (text: string) => void,
+) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [recordingTime, setRecordingTime] = useState("00:00");
@@ -77,17 +79,17 @@ export const useAudioRecording = (onTranscriptionComplete: (text: string) => voi
       switch (error.name) {
         case "NotAllowedError":
           alert(
-            "Microphone access was denied. Please allow microphone access to use this feature."
+            "Microphone access was denied. Please allow microphone access to use this feature.",
           );
           break;
         case "NotFoundError":
           alert(
-            "No microphone was found. Please ensure you have a microphone connected."
+            "No microphone was found. Please ensure you have a microphone connected.",
           );
           break;
         default:
           alert(
-            "An error occurred while trying to start recording. Please check the console for details."
+            "An error occurred while trying to start recording. Please check the console for details.",
           );
       }
     }
@@ -106,7 +108,7 @@ export const useAudioRecording = (onTranscriptionComplete: (text: string) => voi
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          `Transcription failed: ${response.status} ${errorData?.detail || ""}`
+          `Transcription failed: ${response.status} ${errorData?.detail || ""}`,
         );
       }
 
