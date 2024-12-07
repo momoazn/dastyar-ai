@@ -3,18 +3,17 @@
  * @module services/stableDiffusion
  */
 
-import { ImageGenerationParams } from "../types";
-
 const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 
-/**
- * Configuration for Stable Diffusion service
- */
-export interface StableDiffusionConfig {
-  baseUrl: string;
-  maxRetries?: number;
+export interface ImageGenerationParams {
+  prompt: string;
+  size: "512x512" | "768x768" | "1024x1024";
+  steps: number;
+  guidanceScale: number;
+  negativePrompt?: string;
+  sampler_index: "Euler";
 }
 
 /**

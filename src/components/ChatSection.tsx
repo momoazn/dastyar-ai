@@ -1,5 +1,5 @@
 import { Mic, Pause, Send } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { OllamaService } from "../services/ollama";

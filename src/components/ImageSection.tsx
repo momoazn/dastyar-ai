@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { Download, ImagePlus, Sliders } from "lucide-react";
 import { useState } from "react";
-import { StableDiffusionService } from "../services/stableDiffusion";
-import { ImageGenerationParams } from "../types";
+import { ImageGenerationParams, StableDiffusionService } from "../services/stableDiffusion";
 
 export const ImageSection: React.FC<{ sdService: StableDiffusionService }> = ({
   sdService,
@@ -11,8 +10,9 @@ export const ImageSection: React.FC<{ sdService: StableDiffusionService }> = ({
   const [imageParams, setImageParams] = useState<ImageGenerationParams>({
     prompt: "",
     size: "512x512",
-    steps: 20,
+    steps: 5,
     guidanceScale: 7.5,
+    sampler_index: "Euler",
   });
 
   const handleGenerate = async () => {

@@ -6,7 +6,12 @@
 import { useEffect, useState } from "react";
 import { OllamaService } from "../services/ollama";
 import { StableDiffusionService } from "../services/stableDiffusion";
-import { ConnectionStatus } from "../types";
+
+export interface ConnectionStatus {
+  ollama: boolean;
+  stableDiffusion: boolean;
+  whisper: boolean;
+}
 
 const isWhisperAvailable = async () => {
   try {

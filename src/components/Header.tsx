@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Brain, CloudIcon, ImageIcon, Sparkles } from "lucide-react";
-import React from "react";
-import { ConnectionStatus } from "../types";
+import { ConnectionStatus } from "../hooks/useServices";
 
 export const Header: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
   connectionsStatus,
@@ -23,7 +22,6 @@ export const Header: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">قدرت گرفته از</span>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50">
               <Brain
                 className={
