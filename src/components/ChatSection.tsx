@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Mic, Pause, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -12,15 +11,18 @@ interface Message {
 }
 
 export const ChatSection: React.FC = () => {
-  const { recording, setRecording, audioLevel, ollamaModels } = useStore();
+  const { recording, setRecording, ollamaModels } = useStore();
   const ollamaService = useRef(new OllamaService());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
+  const [recordingTime, setRecordingTime] = useState("00:00");
 
   const modelSelectHandler = (model: string) => {
     setSelectedModel(model);
@@ -87,6 +89,145 @@ export const ChatSection: React.FC = () => {
   const handleStop = () => {
     setStopRequested(true);
     setIsStreaming(false);
+  };
+
+  const startRecording = async () => {
+    try {
+      console.log("Requesting microphone access...");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        },
+      });
+
+      console.log("Microphone access granted, creating MediaRecorder...");
+      // Use audio/wav MIME type
+      const options = { mimeType: "audio/wav;codecs=MS_PCM" };
+      let mediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, options);
+      } catch (e) {
+        // Fallback to default format if WAV is not supported
+        mediaRecorder = new MediaRecorder(stream);
+      }
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        console.log("Received audio chunk:", event.data.size, "bytes");
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstart = () => {
+        console.log("MediaRecorder started");
+        setRecording(true);
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log("MediaRecorder stopped, processing audio...");
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/wav",
+        });
+        console.log("Audio blob created, size:", audioBlob.size, "bytes");
+        await sendAudioForTranscription(audioBlob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        setRecording(false);
+      };
+
+      const startTime = Date.now();
+      const timerInterval = setInterval(() => {
+        const now = Date.now();
+        const diff = now - startTime;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        setRecordingTime(
+          `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+            .toString()
+            .padStart(2, "0")}`
+        );
+      }, 1000);
+
+      console.log("Starting MediaRecorder...");
+      mediaRecorder.start(1000); // Collect data every second
+
+      return () => {
+        clearInterval(timerInterval);
+        if (mediaRecorderRef.current?.state === "recording") {
+          mediaRecorderRef.current.stop();
+        }
+      };
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        alert(
+          "Microphone access was denied. Please allow microphone access to use this feature."
+        );
+      } else if (
+        error instanceof DOMException &&
+        error.name === "NotFoundError"
+      ) {
+        alert(
+          "No microphone was found. Please ensure you have a microphone connected."
+        );
+      } else {
+        alert(
+          "An error occurred while trying to start recording. Please check the console for details."
+        );
+      }
+      setRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      setRecordingTime("00:00");
+    }
+  };
+
+  const sendAudioForTranscription = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      // Ensure the file has a .wav extension
+      formData.append("file", audioBlob, "recording.wav");
+
+      console.log("Sending audio for transcription...");
+      const response = await fetch("http://localhost:8000/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error("Transcription failed:", response.status, errorData);
+        throw new Error(
+          `Transcription failed: ${response.status} ${errorData?.detail || ""}`
+        );
+      }
+
+      const data = await response.json();
+      if (data.text) {
+        console.log("Transcription received:", data);
+        setMessage(data.text);
+      }
+    } catch (error) {
+      console.error("Error during transcription:", error);
+      alert("Failed to transcribe audio. Please try again.");
+    }
   };
 
   return (
@@ -169,54 +310,38 @@ export const ChatSection: React.FC = () => {
         </select>
       </div>
 
-      <div className="flex items-center gap-3">
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className={`p-3 rounded-md transition-colors ${
-            recording
-              ? "bg-red-500 text-white hover:bg-red-600"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-          onClick={() => setRecording(!recording)}
+      <div className="flex items-center gap-2 mt-4">
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="Type your message..."
+          className="flex-1 p-2 border rounded-md resize-none"
+          rows={1}
+        />
+        <button
+          onClick={() => (recording ? stopRecording() : startRecording())}
+          className={`p-2 rounded-full ${
+            recording ? "bg-red-500" : "bg-blue-500"
+          } text-white hover:opacity-80`}
         >
-          <Mic className="w-5 h-5" />
-        </motion.button>
-        {recording && (
-          <div className="flex-1 h-2 bg-gray-200 rounded-md overflow-hidden">
-            <motion.div
-              className="h-full bg-blue-500 rounded-md"
-              initial={{ width: 0 }}
-              animate={{ width: `${audioLevel}%` }}
-              transition={{ duration: 0.2 }}
-            />
-          </div>
+          {recording ? <Pause size={20} /> : <Mic size={20} />}
+        </button>
+        {recordingTime !== "00:00" && recording && (
+          <span className="text-sm text-gray-500">{recordingTime}</span>
         )}
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSend();
-              }
-            }}
-            className="w-full border rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="پیام خود را بنویسید..."
-            dir="rtl"
-          />
-        </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          onClick={() => (isStreaming ? handleStop() : handleSend())}
+        <button
+          onClick={isStreaming ? handleStop : handleSend}
+          disabled={!message.trim() && isStreaming}
+          className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50"
         >
-          {isStreaming ? (
-            <Pause className="w-5 h-5" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-        </motion.button>
+          <Send size={20} />
+        </button>
       </div>
     </div>
   );
