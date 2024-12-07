@@ -59,7 +59,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
   const [recordingTime, setRecordingTime] = useState("00:00");
-  const [recording, setRecording] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   // Effects
   useEffect(() => {
@@ -92,7 +92,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
         if (data.size > 0) audioChunksRef.current.push(data);
       };
 
-      mediaRecorder.onstart = () => setRecording(true);
+      mediaRecorder.onstart = () => setIsRecording(true);
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
@@ -124,14 +124,14 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   const handleRecordingStop = () => {
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
-      setRecording(false);
+      setIsRecording(false);
       setRecordingTime("00:00");
     }
   };
 
   const handleRecordingError = (error: unknown) => {
     console.error("Recording error:", error);
-    setRecording(false);
+    setIsRecording(false);
 
     if (error instanceof DOMException) {
       switch (error.name) {
@@ -241,17 +241,17 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
         </ScrollArea>
       </div>
 
-      <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm p-4 space-y-4">
+      <div className="border-t border-border bg-background backdrop-blur-sm p-4 space-y-4">
         <Select value={selectedModel} onValueChange={handleModelSelect}>
-          <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-100">
+          <SelectTrigger className="bg-background border-border text-foreground">
             <SelectValue placeholder="انتخاب مدل" />
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-700">
+          <SelectContent className="bg-background border-border text-foreground">
             {ollamaModels?.map((model) => (
               <SelectItem
                 key={model}
                 value={model}
-                className="text-gray-100 focus:bg-gray-700 focus:text-gray-100"
+                className="text-foreground focus:bg-foreground focus:text-background"
               >
                 {model}
               </SelectItem>
@@ -271,7 +271,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
                 }
               }}
               placeholder="پیام خود را بنویسید..."
-              className="resize-none min-h-[60px] pr-4 pl-24 py-3 bg-gray-800 border-gray-700 text-gray-100 focus:border-gray-600 placeholder:text-gray-500"
+              className="resize-none min-h-[60px] pr-4 pl-24 py-3 bg-background border-border text-foreground focus:border-border placeholder:text-muted-foreground"
               dir="rtl"
             />
             <div className="absolute bottom-2 left-2 flex items-center gap-1">
@@ -279,21 +279,21 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
                 size="icon"
                 variant="ghost"
                 className={
-                  recording
+                  isRecording
                     ? "text-red-400 hover:text-red-300 hover:bg-red-950"
                     : "text-gray-400 hover:text-gray-300 hover:bg-gray-800"
                 }
                 onClick={() =>
-                  recording ? handleRecordingStop() : handleRecordingStart()
+                  isRecording ? handleRecordingStop() : handleRecordingStart()
                 }
               >
-                {recording ? (
+                {isRecording ? (
                   <Pause className="h-4 w-4" />
                 ) : (
                   <Mic className="h-4 w-4" />
                 )}
               </Button>
-              {recordingTime !== "00:00" && recording && (
+              {recordingTime !== "00:00" && isRecording && (
                 <span className="text-sm text-gray-400">{recordingTime}</span>
               )}
               <Button
@@ -301,8 +301,8 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
                 variant={isStreaming ? "secondary" : "default"}
                 className={
                   isStreaming
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-blue-600 hover:bg-blue-500"
+                    ? "bg-secondary hover:bg-secondary/80"
+                    : "bg-primary hover:bg-primary/80"
                 }
                 onClick={
                   isStreaming ? () => setStopRequested(true) : handleSend

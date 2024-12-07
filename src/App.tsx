@@ -18,7 +18,7 @@ function App() {
   );
 
   return (
-    <div className="flex h-screen bg-[#0f172a] text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}

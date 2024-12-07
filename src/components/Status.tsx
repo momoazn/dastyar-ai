@@ -19,7 +19,7 @@ export const Status: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
       <div
         className={`flex items-center gap-2 px-2 py-1.5 rounded ${
           connectionsStatus.whisper
-            ? "text-green-400 bg-green-500/10"
+            ? "text-green-400 bg-green-600/10"
             : "text-red-400 bg-red-500/10"
         }`}
       >

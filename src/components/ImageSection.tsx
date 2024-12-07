@@ -51,31 +51,30 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
 
   return (
     <div className="flex h-full">
-      {/* Settings Panel */}
-      <div className="w-96 border-l border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6 space-y-6 overflow-y-auto">
+      <div className="w-96 border-l border-border bg-background backdrop-blur-sm p-6 space-y-6 overflow-y-auto">
         <div className="space-y-6">
-          <Card className="border-gray-800 bg-gray-800/50">
+          <Card className="border-border bg-background">
             <CardHeader>
-              <CardTitle className="text-lg font-medium text-gray-100">
+              <CardTitle className="text-lg font-medium text-foreground">
                 تنظیمات تصویر
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   توضیحات
                 </label>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
-                  className="bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                   dir="auto"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   تعداد مراحل
                 </label>
                 <Slider
@@ -88,12 +87,14 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                   step={1}
                   className="py-4"
                 />
-                <span className="text-sm text-gray-400">{settings.steps}</span>
+                <span className="text-sm text-foreground">
+                  {settings.steps}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     عرض
                   </label>
                   <Select
@@ -102,15 +103,15 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                       setSettings({ ...settings, width: parseInt(value) })
                     }
                   >
-                    <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-100">
+                    <SelectTrigger className="bg-background border-border text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectContent className="bg-background border-border">
                       {[256, 512, 768, 1024].map((size) => (
                         <SelectItem
                           key={size}
                           value={size.toString()}
-                          className="text-gray-100 focus:bg-gray-700"
+                          className="text-foreground focus:bg-foreground focus:text-background"
                         >
                           {size}px
                         </SelectItem>
@@ -120,7 +121,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     ارتفاع
                   </label>
                   <Select
@@ -129,15 +130,15 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                       setSettings({ ...settings, height: parseInt(value) })
                     }
                   >
-                    <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-100">
+                    <SelectTrigger className="bg-background border-border text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectContent className="bg-background border-border">
                       {[256, 512, 768, 1024].map((size) => (
                         <SelectItem
                           key={size}
                           value={size.toString()}
-                          className="text-gray-100 focus:bg-gray-700"
+                          className="text-foreground focus:bg-foreground focus:text-background"
                         >
                           {size}px
                         </SelectItem>
@@ -151,7 +152,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
 
           <Button
             size="lg"
-            className="w-full gap-2 bg-blue-600 hover:bg-blue-500"
+            className="w-full gap-2 bg-primary hover:bg-primary/80"
             onClick={handleGenerate}
             disabled={generating || !prompt.trim()}
           >
@@ -167,7 +168,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
           {generatedImages?.map((image, index) => (
             <div
               key={index}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-gray-800"
+              className="group relative aspect-square rounded-xl overflow-hidden bg-background"
             >
               <img
                 src={image}
@@ -178,7 +179,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:text-white hover:bg-white/20"
+                  className="text-background hover:text-background hover:bg-white/20"
                   onClick={() => {
                     const link = document.createElement("a");
                     link.href = image;
