@@ -38,11 +38,11 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
 
     setGenerating(true);
     try {
-      const images = await sdService.generateImage({
+      const image = await sdService.generateImage({
         ...settings,
         prompt,
       });
-      setGeneratedImages((prev) => [...images, ...prev]);
+      setGeneratedImages((prev) => [image, ...prev]);
     } catch (error) {
       console.error("Error generating image:", error);
     }
