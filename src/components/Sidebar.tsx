@@ -1,4 +1,4 @@
-import { ConnectionStatus } from "@/hooks/useServices";
+import { useServices } from "@/context/ServiceContext";
 import { ImageIcon, MessageSquare } from "lucide-react";
 import { Dispatch } from "react";
 import { Status } from "./Status";
@@ -6,8 +6,9 @@ import { Status } from "./Status";
 export const Sidebar: React.FC<{
   activeTab: "chat" | "image";
   setActiveTab: Dispatch<"chat" | "image">;
-  connectionsStatus: ConnectionStatus;
-}> = ({ activeTab, setActiveTab, connectionsStatus }) => {
+}> = ({ activeTab, setActiveTab }) => {
+  const { connectionsStatus } = useServices();
+
   return (
     <div className="flex w-20 flex-col border-l border-border lg:w-64">
       <div className="border-b border-border p-4">

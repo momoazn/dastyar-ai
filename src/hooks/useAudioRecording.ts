@@ -1,3 +1,4 @@
+import { useServices } from "@/context/ServiceContext";
 import { useRef, useState } from "react";
 
 const formatTime = (ms: number): string => {
@@ -16,6 +17,9 @@ export const useAudioRecording = (
   const audioChunksRef = useRef<Blob[]>([]);
   const [recordingTime, setRecordingTime] = useState("00:00");
   const [isRecording, setIsRecording] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { whisperService } = useServices();
 
   const handleRecordingStart = async () => {
     try {
@@ -97,32 +101,21 @@ export const useAudioRecording = (
 
   const handleTranscription = async (audioBlob: Blob) => {
     try {
-      const formData = new FormData();
-      formData.append("file", audioBlob, "recording.wav");
-
-      const response = await fetch("http://localhost:8000/transcribe", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          `Transcription failed: ${response.status} ${errorData?.detail || ""}`,
-        );
-      }
-
-      const { text } = await response.json();
+      const text = await whisperService.transcribe(audioBlob);
+      setIsLoading(true);
       if (text) onTranscriptionComplete(text);
     } catch (error) {
       console.error("Transcription error:", error);
       alert("Failed to transcribe audio. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     isRecording,
     recordingTime,
+    isLoading,
     startRecording: handleRecordingStart,
     stopRecording: handleRecordingStop,
   };

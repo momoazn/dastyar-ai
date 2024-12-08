@@ -1,0 +1,79 @@
+import { OllamaService } from "@/services/ollama";
+import { StableDiffusionService } from "@/services/stableDiffusion";
+import { WhisperService } from "@/services/whisper";
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+export interface ConnectionStatus {
+  ollama: boolean;
+  stableDiffusion: boolean;
+  whisper: boolean;
+}
+
+export interface ServiceContextType {
+  ollamaService: OllamaService;
+  sdService: StableDiffusionService;
+  whisperService: WhisperService;
+  connectionsStatus: ConnectionStatus;
+  ollamaModels: string[];
+}
+
+const ServiceContext = createContext<ServiceContextType>(null!);
+
+export const useServices = () => {
+  return useContext(ServiceContext);
+};
+
+export const ServiceProvider = ({ children }: PropsWithChildren) => {
+  const ollamaService = useRef(new OllamaService());
+  const sdService = useRef(new StableDiffusionService());
+  const whisperService = useRef(new WhisperService());
+
+  const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
+    ollama: false,
+    stableDiffusion: false,
+    whisper: false,
+  });
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+
+  const checkAvailability = async () => {
+    const [ollamaAvailable, sdAvailable, whisperAvailable, ollamaModels] =
+      await Promise.all([
+        ollamaService.current.checkAvailability(),
+        sdService.current.checkAvailability(),
+        whisperService.current.checkAvailability(),
+        ollamaService.current.getModels(),
+      ]);
+
+    setConnectionsStatus({
+      ollama: ollamaAvailable,
+      stableDiffusion: sdAvailable,
+      whisper: whisperAvailable,
+    });
+    setOllamaModels(ollamaModels);
+  };
+
+  useEffect(() => {
+    checkAvailability();
+  }, [setConnectionsStatus]);
+
+  return (
+    <ServiceContext.Provider
+      value={{
+        ollamaService: ollamaService.current,
+        sdService: sdService.current,
+        whisperService: whisperService.current,
+        connectionsStatus,
+        ollamaModels,
+      }}
+    >
+      {children}
+    </ServiceContext.Provider>
+  );
+};

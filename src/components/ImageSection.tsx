@@ -1,9 +1,10 @@
+import { useServices } from "@/context/ServiceContext";
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
-import {
-  ImageGenerationParams,
-  StableDiffusionService,
-} from "../services/stableDiffusion";
+import { useAudioRecording } from "../hooks/useAudioRecording";
+import { useImageGeneration } from "../hooks/useImageGeneration";
+import { ImageGenerationParams } from "../services/stableDiffusion";
+import { Alert, AlertDescription } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
@@ -16,13 +17,6 @@ import {
 } from "./ui/select";
 import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
-import { useAudioRecording } from "../hooks/useAudioRecording";
-import { useImageGeneration } from "../hooks/useImageGeneration";
-import { Alert, AlertDescription } from "./ui/alert";
-
-interface ImageSectionProps {
-  sdService: StableDiffusionService;
-}
 
 const samplers = [
   "Euler",
@@ -44,7 +38,9 @@ const samplers = [
   "DPM++ SDE Karras",
 ] as const;
 
-export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
+export const ImageSection = () => {
+  const { sdService } = useServices();
+
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [settings, setSettings] = useState<ImageGenerationParams>({

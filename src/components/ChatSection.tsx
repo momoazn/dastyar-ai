@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { useServices } from "@/context/ServiceContext";
 import { useAudioRecording } from "../hooks/useAudioRecording";
 import { useModelSelection } from "../hooks/useModelSelection";
 import { usePersistentChat } from "../hooks/usePersistentChat";
-import { OllamaService } from "../services/ollama";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {
@@ -18,25 +18,19 @@ import {
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 
-interface ChatSectionProps {
-  ollamaService: OllamaService;
-  ollamaModels?: string[];
-}
-
 const detectTextDirection = (text: string): "rtl" | "ltr" => {
   const rtlRegex =
     /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
   return rtlRegex.test(text) ? "rtl" : "ltr";
 };
 
-export const ChatSection: React.FC<ChatSectionProps> = ({
-  ollamaModels,
-  ollamaService,
-}) => {
+export const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
 
-  const { selectedModel, setModel } = useModelSelection(ollamaModels);
+  const { ollamaService, ollamaModels } = useServices();
+
+  const { selectedModel, setModel } = useModelSelection();
   const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
     usePersistentChat(ollamaService);
   const { isRecording, startRecording, stopRecording } = useAudioRecording(
