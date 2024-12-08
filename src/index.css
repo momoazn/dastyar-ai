@@ -2,30 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Vazirmatn";
-  src: local("Vazirmatn-Regular"), url("./assets/fonts/Vazirmatn-Regular.woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Vazirmatn";
-  src: local("Vazirmatn-Medium"), url("./assets/fonts/Vazirmatn-Medium.woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Vazirmatn";
-  src: local("Vazirmatn-Bold"), url("./assets/fonts/Vazirmatn-Bold.woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 @layer base {
   :root {
     --gradient: #003973;
@@ -71,8 +47,9 @@ html {
 }
 
 body {
-  font-family: "Vazirmatn";
+  font-family: "Vazirmatn Variable", sans-serif;
 }
+
 .rtl {
   direction: rtl;
 }
