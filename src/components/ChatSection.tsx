@@ -39,7 +39,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   const { selectedModel, setModel } = useModelSelection(ollamaModels);
   const { messages, isStreaming, sendMessage, stopStreaming } =
     useChat(ollamaService);
-  const { isRecording, recordingTime, startRecording, stopRecording } =
+  const { isRecording, startRecording, stopRecording } =
     useAudioRecording((text) => setMessage(text));
 
   useEffect(() => {

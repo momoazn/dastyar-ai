@@ -1,4 +1,4 @@
-import { Download, ImagePlus, Send } from "lucide-react";
+import { Download, ImagePlus, Mic, Pause, Send } from "lucide-react";
 import { useState } from "react";
 import {
   ImageGenerationParams,
@@ -16,6 +16,7 @@ import {
 } from "./ui/select";
 import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
+import { useAudioRecording } from "../hooks/useAudioRecording";
 
 interface ImageSectionProps {
   sdService: StableDiffusionService;
@@ -55,6 +56,9 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
     width: 512,
     height: 512,
   });
+  const { isRecording, startRecording, stopRecording } = useAudioRecording(
+    (text) => setPrompt(text)
+  );
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -226,6 +230,13 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
           </div>
 
           <div className="flex flex-col gap-2 self-end">
+            <Button
+              size="icon"
+              variant={isRecording ? "destructive" : "outline"}
+              onClick={isRecording ? stopRecording : startRecording}
+            >
+              {isRecording ? <Pause className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
             <Button
               size="icon"
               onClick={handleGenerate}
