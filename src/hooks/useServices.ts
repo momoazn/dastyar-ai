@@ -40,8 +40,6 @@ export const useServices = (
       isWhisperAvailable(),
     ]);
 
-    console.log({ ollamaAvailable, sdAvailable, whisperAvailable });
-
     setConnectionsStatus({
       ollama: ollamaAvailable,
       stableDiffusion: sdAvailable,

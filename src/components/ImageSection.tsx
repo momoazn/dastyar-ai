@@ -1,4 +1,4 @@
-import { Download, ImagePlus, Mic, Pause, Send } from "lucide-react";
+import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   ImageGenerationParams,
@@ -17,6 +17,9 @@ import {
 import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
 import { useAudioRecording } from "../hooks/useAudioRecording";
+import { useImageGeneration } from "../hooks/useImageGeneration";
+import { Progress } from "./ui/progress";
+import { Alert, AlertDescription } from "./ui/alert";
 
 interface ImageSectionProps {
   sdService: StableDiffusionService;
@@ -45,49 +48,66 @@ const samplers = [
 export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [settings, setSettings] = useState<ImageGenerationParams>({
     prompt: "",
-    steps: 20,
-    guidanceScale: 7.5,
+    steps: 10,
+    guidanceScale: 5,
     negativePrompt: "",
     sampler_index: "Euler",
     width: 512,
     height: 512,
   });
+
   const { isRecording, startRecording, stopRecording } = useAudioRecording(
-    (text) => setPrompt(text)
+    (text) => setPrompt(text),
   );
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+  const { images, generating, progress, generateImage, clearHistory } =
+    useImageGeneration(sdService);
 
-    setGenerating(true);
-    try {
-      const image = await sdService.generateImage({
-        ...settings,
-        prompt,
-        negativePrompt,
-      });
-      setGeneratedImages((prev) => [image, ...prev]);
-    } catch (error) {
-      console.error("Error generating image:", error);
-    }
-    setGenerating(false);
+  const handleGenerate = async () => {
+    if (!prompt.trim() || generating) return;
+    await generateImage({ ...settings, prompt, negativePrompt });
   };
 
   return (
     <div className="flex h-full flex-col gap-2 pt-4">
+      {generating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-[300px] space-y-4">
+            <Alert>
+              <AlertDescription className="text-center">
+                در حال ایجاد تصویر...
+              </AlertDescription>
+            </Alert>
+            <Progress value={progress} className="w-full" />
+          </div>
+        </div>
+      )}
+
+      <div className="mx-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">تصاویر ایجاد شده</h2>
+        {images.length > 0 && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={clearHistory}
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
       <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
         <div className="grid grid-cols-2 gap-6">
-          {generatedImages?.map((image, index) => (
+          {images.map((image, index) => (
             <div
               key={index}
               className="group relative aspect-square overflow-hidden rounded-xl bg-background"
             >
               <img
-                src={image}
+                src={image.url}
                 alt={`Generated ${index + 1}`}
                 className="h-full w-full object-cover"
               />
@@ -98,7 +118,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
                   className="text-background hover:bg-white/20 hover:text-background"
                   onClick={() => {
                     const link = document.createElement("a");
-                    link.href = image;
+                    link.href = image.url;
                     link.download = `generated-${index + 1}.png`;
                     link.click();
                   }}
@@ -235,7 +255,11 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
               variant={isRecording ? "destructive" : "outline"}
               onClick={isRecording ? stopRecording : startRecording}
             >
-              {isRecording ? <Pause className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {isRecording ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
             </Button>
             <Button
               size="icon"
