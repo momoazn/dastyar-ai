@@ -1,11 +1,12 @@
-import { Download, ImagePlus } from "lucide-react";
+import { Download, ImagePlus, Send } from "lucide-react";
 import { useState } from "react";
 import {
   ImageGenerationParams,
   StableDiffusionService,
 } from "../services/stableDiffusion";
 import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
+import { Card } from "./ui/card";
+import { ScrollArea } from "./ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -14,20 +15,42 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Slider } from "./ui/slider";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Textarea } from "./ui/textarea";
 
 interface ImageSectionProps {
   sdService: StableDiffusionService;
 }
 
+const samplers = [
+  "Euler",
+  "Euler a",
+  "LMS",
+  "Heun",
+  "DPM2",
+  "DPM2 a",
+  "DPM++ 2S a",
+  "DPM++ 2M",
+  "DPM++ SDE",
+  "DPM fast",
+  "DPM adaptive",
+  "LMS Karras",
+  "DPM2 Karras",
+  "DPM2 a Karras",
+  "DPM++ 2S a Karras",
+  "DPM++ 2M Karras",
+  "DPM++ SDE Karras",
+] as const;
+
 export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
   const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [settings, setSettings] = useState<ImageGenerationParams>({
     prompt: "",
     steps: 20,
     guidanceScale: 7.5,
+    negativePrompt: "",
     sampler_index: "Euler",
     width: 512,
     height: 512,
@@ -41,6 +64,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
       const image = await sdService.generateImage({
         ...settings,
         prompt,
+        negativePrompt,
       });
       setGeneratedImages((prev) => [image, ...prev]);
     } catch (error) {
@@ -50,120 +74,8 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
   };
 
   return (
-    <div className="flex h-full">
-      <div className="w-96 space-y-6 overflow-y-auto border-l border-border bg-background p-6 backdrop-blur-sm">
-        <div className="space-y-6">
-          <Card className="border-border bg-background">
-            <CardHeader>
-              <CardTitle className="text-lg font-medium text-foreground">
-                تنظیمات تصویر
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  توضیحات
-                </label>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
-                  className="border-border bg-background text-foreground placeholder:text-muted-foreground"
-                  dir="auto"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  تعداد مراحل
-                </label>
-                <Slider
-                  value={[settings.steps]}
-                  onValueChange={(value) =>
-                    setSettings({ ...settings, steps: value[0] })
-                  }
-                  min={1}
-                  max={50}
-                  step={1}
-                  className="py-4"
-                />
-                <span className="text-sm text-foreground">
-                  {settings.steps}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">
-                    عرض
-                  </label>
-                  <Select
-                    value={settings.width?.toString()}
-                    onValueChange={(value) =>
-                      setSettings({ ...settings, width: parseInt(value) })
-                    }
-                  >
-                    <SelectTrigger className="border-border bg-background text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-background">
-                      {[256, 512, 768, 1024].map((size) => (
-                        <SelectItem
-                          key={size}
-                          value={size.toString()}
-                          className="text-foreground focus:bg-foreground focus:text-background"
-                        >
-                          {size}px
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">
-                    ارتفاع
-                  </label>
-                  <Select
-                    value={settings.height?.toString()}
-                    onValueChange={(value) =>
-                      setSettings({ ...settings, height: parseInt(value) })
-                    }
-                  >
-                    <SelectTrigger className="border-border bg-background text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-background">
-                      {[256, 512, 768, 1024].map((size) => (
-                        <SelectItem
-                          key={size}
-                          value={size.toString()}
-                          className="text-foreground focus:bg-foreground focus:text-background"
-                        >
-                          {size}px
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Button
-            size="lg"
-            className="w-full gap-2 bg-primary hover:bg-primary/80"
-            onClick={handleGenerate}
-            disabled={generating || !prompt.trim()}
-          >
-            <ImagePlus className="h-5 w-5" />
-            <span>{generating ? "در حال ایجاد..." : "ایجاد تصویر"}</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Generated Images Gallery */}
-      <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex h-full flex-col gap-2 pt-4">
+      <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
         <div className="grid grid-cols-2 gap-6">
           {generatedImages?.map((image, index) => (
             <div
@@ -193,7 +105,141 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
             </div>
           ))}
         </div>
-      </div>
+      </ScrollArea>
+
+      <Card className="mx-4 p-4">
+        <div className="grid grid-cols-2 gap-4 pb-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">
+              اندازه
+            </label>
+            <Select
+              value={settings.width.toString()}
+              onValueChange={(value) =>
+                setSettings({
+                  ...settings,
+                  width: parseInt(value),
+                  height: parseInt(value),
+                })
+              }
+            >
+              <SelectTrigger className="border-border bg-background text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-background">
+                {[256, 512, 768, 1024].map((size) => (
+                  <SelectItem
+                    key={size}
+                    value={size.toString()}
+                    className="text-foreground focus:bg-foreground focus:text-background"
+                  >
+                    {size}x{size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">
+              سمپلر
+            </label>
+            <Select
+              value={settings.sampler_index}
+              onValueChange={(value) =>
+                setSettings({
+                  ...settings,
+                  sampler_index: value as typeof settings.sampler_index,
+                })
+              }
+            >
+              <SelectTrigger className="border-border bg-background text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-background">
+                {samplers.map((sampler) => (
+                  <SelectItem
+                    key={sampler}
+                    value={sampler}
+                    className="text-foreground focus:bg-foreground focus:text-background"
+                  >
+                    {sampler}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">
+              مقیاس راهنمایی
+            </label>
+            <Slider
+              value={[settings.guidanceScale]}
+              onValueChange={(value) =>
+                setSettings({ ...settings, guidanceScale: value[0] })
+              }
+              min={1}
+              max={20}
+              step={0.1}
+              className="py-4"
+            />
+            <span className="text-sm text-foreground">
+              {settings.guidanceScale.toFixed(1)}
+            </span>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">
+              گام‌ها
+            </label>
+            <Slider
+              value={[settings.steps]}
+              onValueChange={(value) =>
+                setSettings({ ...settings, steps: value[0] })
+              }
+              min={1}
+              max={150}
+              step={1}
+              className="py-4"
+            />
+            <span className="text-sm text-foreground">{settings.steps}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <div className="flex flex-1 flex-col gap-2">
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
+              className="border-border bg-background text-foreground placeholder:text-muted-foreground"
+              dir="auto"
+            />
+            <Textarea
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              placeholder="پرامپت منفی..."
+              className="border-border bg-background text-foreground placeholder:text-muted-foreground"
+              dir="auto"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 self-end">
+            <Button
+              size="icon"
+              onClick={handleGenerate}
+              disabled={generating || !prompt.trim()}
+            >
+              {generating ? (
+                <ImagePlus className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
