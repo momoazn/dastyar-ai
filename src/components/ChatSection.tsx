@@ -1,11 +1,11 @@
-import { Mic, Pause, Send } from "lucide-react";
+import { Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { useAudioRecording } from "../hooks/useAudioRecording";
-import { useChat } from "../hooks/useChat";
 import { useModelSelection } from "../hooks/useModelSelection";
+import { usePersistentChat } from "../hooks/usePersistentChat";
 import { OllamaService } from "../services/ollama";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -37,10 +37,11 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
   const [message, setMessage] = useState("");
 
   const { selectedModel, setModel } = useModelSelection(ollamaModels);
-  const { messages, isStreaming, sendMessage, stopStreaming } =
-    useChat(ollamaService);
-  const { isRecording, startRecording, stopRecording } =
-    useAudioRecording((text) => setMessage(text));
+  const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
+    usePersistentChat(ollamaService);
+  const { isRecording, startRecording, stopRecording } = useAudioRecording(
+    (text) => setMessage(text),
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,6 +49,20 @@ export const ChatSection: React.FC<ChatSectionProps> = ({
 
   return (
     <div className="flex h-full flex-col gap-2 pt-4">
+      <div className="mx-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">گفتگو</h2>
+        {messages.length > 0 && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={clearHistory}
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
       <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
         <div className="flex flex-col gap-4">
           {messages.map((message, index) => (

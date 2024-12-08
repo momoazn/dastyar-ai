@@ -16,7 +16,6 @@ export const useImageGeneration = (sdService: StableDiffusionService) => {
     return saved ? JSON.parse(saved) : [];
   });
   const [generating, setGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(images));
@@ -26,18 +25,9 @@ export const useImageGeneration = (sdService: StableDiffusionService) => {
     if (!settings.prompt.trim() || generating) return;
 
     setGenerating(true);
-    setProgress(0);
 
     try {
-      // Simulate progress during generation
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 2, 95));
-      }, 100);
-
       const imageUrl = await sdService.generateImage(settings);
-
-      clearInterval(progressInterval);
-      setProgress(100);
 
       const newImage: GeneratedImage = {
         url: imageUrl,
@@ -51,7 +41,6 @@ export const useImageGeneration = (sdService: StableDiffusionService) => {
       console.error("Error generating image:", error);
     } finally {
       setGenerating(false);
-      setProgress(0);
     }
   };
 
@@ -63,7 +52,6 @@ export const useImageGeneration = (sdService: StableDiffusionService) => {
   return {
     images,
     generating,
-    progress,
     generateImage,
     clearHistory,
   };

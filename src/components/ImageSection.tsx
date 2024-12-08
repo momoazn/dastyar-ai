@@ -18,7 +18,6 @@ import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
 import { useAudioRecording } from "../hooks/useAudioRecording";
 import { useImageGeneration } from "../hooks/useImageGeneration";
-import { Progress } from "./ui/progress";
 import { Alert, AlertDescription } from "./ui/alert";
 
 interface ImageSectionProps {
@@ -62,7 +61,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
     (text) => setPrompt(text),
   );
 
-  const { images, generating, progress, generateImage, clearHistory } =
+  const { images, generating, generateImage, clearHistory } =
     useImageGeneration(sdService);
 
   const handleGenerate = async () => {
@@ -74,13 +73,13 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
     <div className="flex h-full flex-col gap-2 pt-4">
       {generating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-[300px] space-y-4">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <Alert>
               <AlertDescription className="text-center">
                 در حال ایجاد تصویر...
               </AlertDescription>
             </Alert>
-            <Progress value={progress} className="w-full" />
           </div>
         </div>
       )}
