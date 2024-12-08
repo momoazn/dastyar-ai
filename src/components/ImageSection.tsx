@@ -40,7 +40,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ sdService }) => {
     try {
       const images = await sdService.generateImage({
         ...settings,
-        prompt: prompt,
+        prompt,
       });
       setGeneratedImages((prev) => [...images, ...prev]);
     } catch (error) {
