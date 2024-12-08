@@ -3,8 +3,8 @@
  * @module services/stableDiffusion
  */
 
-// const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
-const STABLE_DIFFUSION_BASE_URL = "http://192.168.1.100:7860";
+const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
+// const STABLE_DIFFUSION_BASE_URL = "http://192.168.1.100:7860";
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 
