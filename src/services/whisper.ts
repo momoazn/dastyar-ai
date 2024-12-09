@@ -3,8 +3,7 @@
  * @module services/whisper
  */
 
-// const WHISPER_BASE_URL = "http://localhost:8000";
-const WHISPER_BASE_URL = "http://192.168.78.107:8000/";
+const WHISPER_BASE_URL = "http://localhost:8000";
 
 /**
  * Class for handling Whisper API interactions
