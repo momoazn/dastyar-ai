@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { useServices } from "@/context/ServiceContext";
+import { detectTextDirection } from "@/lib/utils";
 import { useAudioRecording } from "../hooks/useAudioRecording";
 import { useModelSelection } from "../hooks/useModelSelection";
 import { usePersistentChat } from "../hooks/usePersistentChat";
@@ -17,12 +18,6 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-
-const detectTextDirection = (text: string): "rtl" | "ltr" => {
-  const rtlRegex =
-    /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-  return rtlRegex.test(text) ? "rtl" : "ltr";
-};
 
 export const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
