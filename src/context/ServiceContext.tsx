@@ -22,6 +22,7 @@ export interface ServiceContextType {
   whisperService: WhisperService;
   connectionsStatus: ConnectionStatus;
   ollamaModels: string[];
+  whisperModels: string[];
 }
 
 const ServiceContext = createContext<ServiceContextType>(null!);
@@ -41,15 +42,22 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
     whisper: false,
   });
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [whisperModels, setWhisperModels] = useState<string[]>([]);
 
   const checkAvailability = async () => {
-    const [ollamaAvailable, sdAvailable, whisperAvailable, ollamaModels] =
-      await Promise.all([
-        ollamaService.current.checkAvailability(),
-        sdService.current.checkAvailability(),
-        whisperService.current.checkAvailability(),
-        ollamaService.current.getModels(),
-      ]);
+    const [
+      ollamaAvailable,
+      sdAvailable,
+      whisperAvailable,
+      ollamaModels,
+      whisperModels,
+    ] = await Promise.all([
+      ollamaService.current.checkAvailability(),
+      sdService.current.checkAvailability(),
+      whisperService.current.checkAvailability(),
+      ollamaService.current.getModels(),
+      whisperService.current.getModels(),
+    ]);
 
     setConnectionsStatus({
       ollama: ollamaAvailable,
@@ -57,6 +65,7 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
       whisper: whisperAvailable,
     });
     setOllamaModels(ollamaModels);
+    setWhisperModels(whisperModels);
   };
 
   useEffect(() => {
@@ -71,6 +80,7 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
         whisperService: whisperService.current,
         connectionsStatus,
         ollamaModels,
+        whisperModels,
       }}
     >
       {children}

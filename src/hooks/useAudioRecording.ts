@@ -1,5 +1,6 @@
 import { useServices } from "@/context/ServiceContext";
 import { useRef, useState } from "react";
+import { useModelSelection } from "./useModelSelection";
 
 const formatTime = (ms: number): string => {
   const seconds = Math.floor(ms / 1000);
@@ -20,6 +21,7 @@ export const useAudioRecording = (
   const [isLoading, setIsLoading] = useState(false);
 
   const { whisperService } = useServices();
+  const { selectedWhisperModel } = useModelSelection();
 
   const handleRecordingStart = async () => {
     try {
@@ -45,7 +47,7 @@ export const useAudioRecording = (
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/wav",
         });
-        await handleTranscription(audioBlob);
+        await handleTranscription(audioBlob, selectedWhisperModel);
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -99,9 +101,9 @@ export const useAudioRecording = (
     }
   };
 
-  const handleTranscription = async (audioBlob: Blob) => {
+  const handleTranscription = async (audioBlob: Blob, model: string) => {
     try {
-      const text = await whisperService.transcribe(audioBlob);
+      const text = await whisperService.transcribe(audioBlob, model);
       setIsLoading(true);
       if (text) onTranscriptionComplete(text);
     } catch (error) {

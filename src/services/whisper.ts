@@ -3,7 +3,18 @@
  * @module services/whisper
  */
 
-const WHISPER_BASE_URL = "http://localhost:8000";
+const WHISPER_BASE_URL = "http://localhost:8080/api/v1";
+
+type Model = {
+  id: string;
+  object: string;
+  path: string;
+  created: number;
+};
+
+type ModelResponse = {
+  models: Model[];
+};
 
 /**
  * Class for handling Whisper API interactions
@@ -24,17 +35,18 @@ export class WhisperService {
   async getModels(): Promise<string[]> {
     try {
       const response = await fetch(`${WHISPER_BASE_URL}/models`);
-      const json = await response.json();
-      return json.models;
+      const json: ModelResponse = await response.json();
+      return json.models.map((item) => item.id.split("ggml-").at(0) ?? "");
     } catch {
       return [];
     }
   }
 
-  async transcribe(audioBlob: Blob): Promise<string> {
+  async transcribe(audioBlob: Blob, model: string): Promise<string> {
     const formData = new FormData();
     formData.append("file", audioBlob, "recording.wav");
-    const response = await fetch(`${WHISPER_BASE_URL}/transcribe`, {
+    formData.append("model", model);
+    const response = await fetch(`${WHISPER_BASE_URL}/audio/transcriptions`, {
       method: "POST",
       body: formData,
     });

@@ -23,9 +23,14 @@ export const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
 
-  const { ollamaService, ollamaModels } = useServices();
+  const { ollamaService, ollamaModels, whisperModels } = useServices();
 
-  const { selectedModel, setModel } = useModelSelection();
+  const {
+    selectedOllamaModel,
+    selectedWhisperModel,
+    setOllamaModel,
+    setWhisperModel,
+  } = useModelSelection();
   const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
     usePersistentChat(ollamaService);
   const { isRecording, startRecording, stopRecording } = useAudioRecording(
@@ -80,18 +85,33 @@ export const ChatSection = () => {
       </ScrollArea>
 
       <div className="mx-4 flex flex-col gap-2">
-        <Select value={selectedModel} onValueChange={setModel}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a model" />
-          </SelectTrigger>
-          <SelectContent>
-            {ollamaModels?.map((model) => (
-              <SelectItem key={model} value={model}>
-                {model}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={selectedOllamaModel} onValueChange={setOllamaModel}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select LLM model" />
+            </SelectTrigger>
+            <SelectContent>
+              {ollamaModels?.map((model) => (
+                <SelectItem key={model} value={model}>
+                  {model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedWhisperModel} onValueChange={setWhisperModel}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Whisper model" />
+            </SelectTrigger>
+            <SelectContent>
+              {whisperModels?.map((model) => (
+                <SelectItem key={model} value={model}>
+                  {model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="flex gap-2 pb-2">
           <Textarea
@@ -103,7 +123,7 @@ export const ChatSection = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage(message, selectedModel);
+                sendMessage(message, selectedOllamaModel);
                 setMessage("");
               }
             }}
@@ -123,7 +143,7 @@ export const ChatSection = () => {
                 if (isStreaming) {
                   stopStreaming();
                 } else {
-                  sendMessage(message, selectedModel);
+                  sendMessage(message, selectedOllamaModel);
                   setMessage("");
                 }
               }}
