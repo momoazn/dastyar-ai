@@ -1,6 +1,6 @@
-import { useServices } from "@/context/ServiceContext";
+import { useServices } from "@/context/service-context";
 import { useRef, useState } from "react";
-import { useModelSelection } from "./useModelSelection";
+import { useModelSelection } from "./use-model-selection";
 
 const formatTime = (ms: number): string => {
   const seconds = Math.floor(ms / 1000);

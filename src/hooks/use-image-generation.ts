@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ImageGenerationParams,
   StableDiffusionService,
-} from "../services/stableDiffusion";
+} from "../services/stable-diffusion";
 
 const STORAGE_KEY = "generatedImages";
 

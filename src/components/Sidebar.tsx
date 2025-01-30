@@ -1,7 +1,7 @@
-import { useServices } from "@/context/ServiceContext";
+import { useServices } from "@/context/service-context";
 import { ImageIcon, MessageSquare } from "lucide-react";
 import { Dispatch } from "react";
-import { Status } from "./Status";
+import { Status } from "./status";
 
 export const Sidebar: React.FC<{
   activeTab: "chat" | "image";

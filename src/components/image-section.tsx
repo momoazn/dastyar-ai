@@ -1,9 +1,9 @@
-import { useServices } from "@/context/ServiceContext";
+import { useServices } from "@/context/service-context";
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useAudioRecording } from "../hooks/useAudioRecording";
-import { useImageGeneration } from "../hooks/useImageGeneration";
-import { ImageGenerationParams } from "../services/stableDiffusion";
+import { useAudioRecording } from "../hooks/use-audio-recording";
+import { useImageGeneration } from "../hooks/use-image-generation";
+import { ImageGenerationParams } from "../services/stable-diffusion";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";

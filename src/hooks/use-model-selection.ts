@@ -1,4 +1,4 @@
-import { useServices } from "@/context/ServiceContext";
+import { useServices } from "@/context/service-context";
 import { useEffect, useState } from "react";
 
 export const useModelSelection = () => {

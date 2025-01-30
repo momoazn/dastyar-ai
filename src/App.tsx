@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ChatSection } from "./components/ChatSection";
-import { ImageSection } from "./components/ImageSection";
-import { ServiceProvider, useServices } from "./context/ServiceContext";
+import { ChatSection } from "./components/chat-section";
+import { ImageSection } from "./components/image-section";
+import { ServiceProvider, useServices } from "./context/service-context";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Status } from "./components/Status";
+import { Status } from "./components/status";
 
 function MainContent() {
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");

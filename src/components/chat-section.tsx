@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { useServices } from "@/context/ServiceContext";
+import { useServices } from "@/context/service-context";
 import { detectTextDirection } from "@/lib/utils";
-import { useAudioRecording } from "../hooks/useAudioRecording";
-import { useModelSelection } from "../hooks/useModelSelection";
-import { usePersistentChat } from "../hooks/usePersistentChat";
+import { useAudioRecording } from "../hooks/use-audio-recording";
+import { useModelSelection } from "../hooks/use-model-selection";
+import { usePersistentChat } from "../hooks/use-persistent-chat";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {

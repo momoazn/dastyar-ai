@@ -1,5 +1,5 @@
 import { OllamaService } from "@/services/ollama";
-import { StableDiffusionService } from "@/services/stableDiffusion";
+import { StableDiffusionService } from "@/services/stable-diffusion";
 import { WhisperService } from "@/services/whisper";
 import {
   createContext,

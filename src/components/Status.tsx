@@ -1,5 +1,5 @@
+import { ConnectionStatus } from "@/context/service-context";
 import { Brain, CloudIcon, ImageIcon } from "lucide-react";
-import { ConnectionStatus } from "../hooks/useServices";
 
 export const Status: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
   connectionsStatus,
