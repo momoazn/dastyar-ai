@@ -59,9 +59,9 @@ export const ChatSection = () => {
 
       <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
         <div className="flex flex-col gap-4">
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
-              key={index}
+              key={`${message.timestamp}-${message.content.substring(0, 20)}`}
               className={`flex ${
                 message.role === "assistant" ? "justify-start" : "justify-end"
               }`}
@@ -92,7 +92,7 @@ export const ChatSection = () => {
             </SelectTrigger>
             <SelectContent>
               {ollamaModels?.map((model) => (
-                <SelectItem key={model} value={model}>
+                <SelectItem key={model} value={model || "default"}>
                   {model}
                 </SelectItem>
               ))}
@@ -105,7 +105,7 @@ export const ChatSection = () => {
             </SelectTrigger>
             <SelectContent>
               {whisperModels?.map((model) => (
-                <SelectItem key={model} value={model}>
+                <SelectItem key={model} value={model || "default"}>
                   {model}
                 </SelectItem>
               ))}
