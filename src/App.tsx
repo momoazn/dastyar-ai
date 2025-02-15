@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import { ChatSection } from "./components/chat-section";
 import { Header } from "./components/header";
 import { ImageSection } from "./components/image-section";
+import { TranslationSection } from "./components/translation-section";
 import { Sidebar } from "./components/sidebar";
 import { ServiceProvider, useServices } from "./context/service-context";
 
@@ -34,6 +35,16 @@ function MainContent() {
           >
             تولید تصویر
           </NavLink>
+          <NavLink
+            to="/translate"
+            className={({ isActive }) =>
+              `text-md rounded-md px-6 py-2 ${
+                isActive ? "bg-primary/10 text-primary" : ""
+              }`
+            }
+          >
+            ترجمه
+          </NavLink>
         </nav>
 
         <div className="flex-1 overflow-auto">
@@ -41,6 +52,7 @@ function MainContent() {
             <Route path="/" element={<ChatSection />} />
             <Route path="/chat" element={<ChatSection />} />
             <Route path="/image" element={<ImageSection />} />
+            <Route path="/translate" element={<TranslationSection />} />
           </Routes>
         </div>
       </div>
