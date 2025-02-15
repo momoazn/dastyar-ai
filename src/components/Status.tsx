@@ -1,11 +1,13 @@
 import { ConnectionStatus } from "@/context/service-context";
 import { Brain, CloudIcon, ImageIcon } from "lucide-react";
 
-export const Status: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
+export function Status({
   connectionsStatus,
-}) => {
+}: {
+  connectionsStatus: ConnectionStatus;
+}) {
   return (
-    <header className="flex flex-col gap-2">
+    <header className="flex gap-2">
       <div
         className={`flex items-center gap-2 rounded px-2 py-1.5 ${
           connectionsStatus.ollama
@@ -38,4 +40,4 @@ export const Status: React.FC<{ connectionsStatus: ConnectionStatus }> = ({
       </div>
     </header>
   );
-};
+}

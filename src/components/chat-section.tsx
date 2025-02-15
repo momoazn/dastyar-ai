@@ -33,9 +33,8 @@ export const ChatSection = () => {
   } = useModelSelection();
   const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
     usePersistentChat(ollamaService);
-  const { isRecording, startRecording, stopRecording } = useAudioRecording(
-    (text) => setMessage(text),
-  );
+  const { isRecording, startRecording, stopRecording } =
+    useAudioRecording(setMessage);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ChatSection } from "./components/chat-section";
+import { Header } from "./components/header";
 import { ImageSection } from "./components/image-section";
-import { ServiceProvider, useServices } from "./context/service-context";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Status } from "./components/status";
+import { ServiceProvider, useServices } from "./context/service-context";
 
 function MainContent() {
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
@@ -11,12 +11,13 @@ function MainContent() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
+      <Header connectionsStatus={connectionsStatus} />
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as "chat" | "image")}
         className="border-b border-border"
       >
-        <TabsList className="h-16 w-full rounded-none bg-background px-4">
+        <TabsList className="h-12 w-full bg-transparent">
           <TabsTrigger
             value="chat"
             className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
@@ -34,10 +35,6 @@ function MainContent() {
 
       <div className="flex-1 overflow-auto">
         {activeTab === "chat" ? <ChatSection /> : <ImageSection />}
-      </div>
-
-      <div className="border-t border-border p-4">
-        <Status connectionsStatus={connectionsStatus} />
       </div>
     </div>
   );
