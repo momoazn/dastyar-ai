@@ -1,64 +1,28 @@
 import { useServices } from "@/context/service-context";
+import { useImageSettings } from "@/hooks/use-image-settings";
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAudioRecording } from "../hooks/use-audio-recording";
 import { useImageGeneration } from "../hooks/use-image-generation";
-import { ImageGenerationParams } from "../services/stable-diffusion";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
-
-const samplers = [
-  "Euler",
-  "Euler a",
-  "LMS",
-  "Heun",
-  "DPM2",
-  "DPM2 a",
-  "DPM++ 2S a",
-  "DPM++ 2M",
-  "DPM++ SDE",
-  "DPM fast",
-  "DPM adaptive",
-  "LMS Karras",
-  "DPM2 Karras",
-  "DPM2 a Karras",
-  "DPM++ 2S a Karras",
-  "DPM++ 2M Karras",
-  "DPM++ SDE Karras",
-] as const;
 
 export const ImageSection = () => {
   const { sdService } = useServices();
+  const { settings } = useImageSettings();
 
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [settings, setSettings] = useState<ImageGenerationParams>({
-    prompt: "",
-    steps: 10,
-    guidanceScale: 5,
-    negativePrompt: "",
-    sampler_index: "Euler",
-    width: 512,
-    height: 512,
-  });
 
-  const { isRecording, startRecording, stopRecording } = useAudioRecording(
-    (text) => setPrompt(text),
-  );
+  const { isRecording, startRecording, stopRecording } =
+    useAudioRecording(setPrompt);
 
   const { images, generating, generateImage, clearHistory } =
     useImageGeneration(sdService);
+
+  console.log("###### settings", settings);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || generating) return;
@@ -126,106 +90,7 @@ export const ImageSection = () => {
         </div>
       </ScrollArea>
 
-      <Card className="mx-4 p-4">
-        <div className="grid grid-cols-2 gap-4 pb-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              اندازه
-            </label>
-            <Select
-              value={settings.width.toString()}
-              onValueChange={(value) =>
-                setSettings({
-                  ...settings,
-                  width: parseInt(value),
-                  height: parseInt(value),
-                })
-              }
-            >
-              <SelectTrigger className="border-border bg-background text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-background">
-                {[256, 512, 768, 1024].map((size) => (
-                  <SelectItem
-                    key={size}
-                    value={size.toString()}
-                    className="text-foreground focus:bg-foreground focus:text-background"
-                  >
-                    {size}x{size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              سمپلر
-            </label>
-            <Select
-              value={settings.sampler_index}
-              onValueChange={(value) =>
-                setSettings({
-                  ...settings,
-                  sampler_index: value as typeof settings.sampler_index,
-                })
-              }
-            >
-              <SelectTrigger className="border-border bg-background text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-background">
-                {samplers.map((sampler) => (
-                  <SelectItem
-                    key={sampler}
-                    value={sampler}
-                    className="text-foreground focus:bg-foreground focus:text-background"
-                  >
-                    {sampler}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              مقیاس راهنمایی
-            </label>
-            <Slider
-              value={[settings.guidanceScale]}
-              onValueChange={(value) =>
-                setSettings({ ...settings, guidanceScale: value[0] })
-              }
-              min={1}
-              max={20}
-              step={0.1}
-              className="py-4"
-            />
-            <span className="text-sm text-foreground">
-              {settings.guidanceScale.toFixed(1)}
-            </span>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              گام‌ها
-            </label>
-            <Slider
-              value={[settings.steps]}
-              onValueChange={(value) =>
-                setSettings({ ...settings, steps: value[0] })
-              }
-              min={1}
-              max={150}
-              step={1}
-              className="py-4"
-            />
-            <span className="text-sm text-foreground">{settings.steps}</span>
-          </div>
-        </div>
-
+      <div className="mx-4 p-4">
         <div className="flex gap-2">
           <div className="flex flex-1 flex-col gap-2">
             <Textarea
@@ -269,7 +134,7 @@ export const ImageSection = () => {
             </Button>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
