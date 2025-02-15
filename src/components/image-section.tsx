@@ -1,5 +1,6 @@
 import { useServices } from "@/context/service-context";
 import { useImageSettings } from "@/hooks/use-image-settings";
+import { detectTextDirection } from "@/lib/utils";
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAudioRecording } from "../hooks/use-audio-recording";
@@ -28,7 +29,7 @@ export const ImageSection = () => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-2 pt-4">
+    <div className="flex h-full flex-col gap-4 p-4">
       {generating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
@@ -42,21 +43,18 @@ export const ImageSection = () => {
         </div>
       )}
 
-      <div className="mx-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">تصاویر ایجاد شده</h2>
-        {images.length > 0 && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={clearHistory}
-            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+      {images.length > 0 && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={clearHistory}
+          className="self-end text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
 
-      <ScrollArea className="mx-4 flex-1 rounded-md border p-4">
+      <ScrollArea className="flex-1 rounded-lg border bg-background p-4">
         <div className="grid grid-cols-2 gap-6">
           {images.map((image, index) => (
             <div
@@ -88,49 +86,55 @@ export const ImageSection = () => {
         </div>
       </ScrollArea>
 
-      <div className="mx-4 p-4">
-        <div className="flex gap-2">
-          <div className="flex flex-1 flex-col gap-2">
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
-              className="border-border bg-background text-foreground placeholder:text-muted-foreground"
-              dir="auto"
-            />
-            <Textarea
-              value={negativePrompt}
-              onChange={(e) => setNegativePrompt(e.target.value)}
-              placeholder="پرامپت منفی..."
-              className="border-border bg-background text-foreground placeholder:text-muted-foreground"
-              dir="auto"
-            />
-          </div>
+      <div className="flex gap-2">
+        <div className="flex flex-1 flex-col gap-2">
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="توضیحات تصویر مورد نظر خود را وارد کنید..."
+            className="border-border bg-background text-foreground placeholder:text-muted-foreground"
+            dir={prompt ? detectTextDirection(prompt) : "rtl"}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleGenerate();
+              }
+            }}
+          />
+          <Textarea
+            value={negativePrompt}
+            onChange={(e) => setNegativePrompt(e.target.value)}
+            placeholder="پرامپت منفی..."
+            className="border-border bg-background text-foreground placeholder:text-muted-foreground"
+            dir={negativePrompt ? detectTextDirection(negativePrompt) : "rtl"}
+          />
+        </div>
 
-          <div className="flex flex-col gap-2 self-end">
-            <Button
-              size="icon"
-              variant={isRecording ? "destructive" : "outline"}
-              onClick={isRecording ? stopRecording : startRecording}
-            >
-              {isRecording ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              size="icon"
-              onClick={handleGenerate}
-              disabled={generating || !prompt.trim()}
-            >
-              {generating ? (
-                <ImagePlus className="h-4 w-4 animate-pulse" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+        <div className="flex flex-col gap-2 self-end">
+          <Button
+            size="icon"
+            className="h-10 w-10"
+            variant={isRecording ? "destructive" : "outline"}
+            onClick={isRecording ? stopRecording : startRecording}
+          >
+            {isRecording ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            size="icon"
+            className="h-10 w-10"
+            onClick={handleGenerate}
+            disabled={generating || !prompt.trim()}
+          >
+            {generating ? (
+              <ImagePlus className="h-4 w-4 animate-pulse" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </div>
     </div>

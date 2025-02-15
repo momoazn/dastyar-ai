@@ -39,7 +39,7 @@ export function Sidebar() {
       )}
     >
       {/* Header section */}
-      <div className="flex h-12 items-center justify-between border-b p-4">
+      <div className="flex h-16 items-center justify-between border-b p-4">
         <Button
           variant="ghost"
           size="icon"

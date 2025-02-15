@@ -20,18 +20,18 @@ function MainContent() {
           onValueChange={(value) => setActiveTab(value as "chat" | "image")}
           className="border-b border-border"
         >
-          <TabsList className="h-12 w-full bg-transparent">
-            <TabsTrigger
-              value="chat"
-              className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
-              گفتگو
-            </TabsTrigger>
+          <TabsList className="h-16 w-full bg-transparent">
             <TabsTrigger
               value="image"
-              className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+              className="text-md px-6 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
             >
               تولید تصویر
+            </TabsTrigger>
+            <TabsTrigger
+              value="chat"
+              className="text-md px-6 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+            >
+              گفتگو
             </TabsTrigger>
           </TabsList>
         </Tabs>

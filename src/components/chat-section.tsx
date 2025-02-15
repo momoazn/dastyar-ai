@@ -34,20 +34,16 @@ export const ChatSection = () => {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">گفتگو</h2>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearHistory}
-            className="text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            پاک کردن تاریخچه
-          </Button>
-        )}
-      </div>
+      {messages.length > 0 && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={clearHistory}
+          className="self-end text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
 
       <ScrollArea className="flex-1 rounded-lg border bg-background p-4">
         <div className="flex flex-col gap-4">
@@ -63,7 +59,7 @@ export const ChatSection = () => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="پیام خود را بنویسید..."
-          className="min-h-[40px] resize-none"
+          className="min-h-[40px]"
           dir={message ? detectTextDirection(message) : "rtl"}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -90,6 +86,7 @@ export const ChatSection = () => {
           <Button
             size="icon"
             className="h-10 w-10"
+            disabled={!message.trim() || isStreaming}
             onClick={() => {
               if (isStreaming) {
                 stopStreaming();
