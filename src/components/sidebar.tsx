@@ -35,7 +35,7 @@ export function Sidebar() {
     <div
       className={cn(
         "flex h-full flex-col border-l border-r transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-[50px]" : "w-[280px]",
+        isCollapsed ? "w-[50px]" : "w-[340px]",
       )}
     >
       {/* Header section */}
@@ -58,13 +58,13 @@ export function Sidebar() {
       <ScrollArea className="flex-1 p-4">
         <div className="flex flex-col gap-2">
           {/* Placeholder for chat list */}
-          {!isCollapsed && (
+          {/* {!isCollapsed && (
             <>
               <div className="h-10 rounded-md border bg-muted/50" />
               <div className="h-10 rounded-md border bg-muted/50" />
               <div className="h-10 rounded-md border bg-muted/50" />
             </>
-          )}
+          )} */}
         </div>
       </ScrollArea>
 
