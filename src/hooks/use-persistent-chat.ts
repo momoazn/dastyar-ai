@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OllamaService } from "../services/ollama";
 
 const STORAGE_KEY = "chatHistory";
@@ -7,6 +7,11 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+}
+
+export interface MessageWithThinking extends Message {
+  finishedThinking?: boolean;
+  think?: string;
 }
 
 export const usePersistentChat = (ollamaService: OllamaService) => {
@@ -72,3 +77,33 @@ export const usePersistentChat = (ollamaService: OllamaService) => {
     clearHistory,
   };
 };
+
+export function useMessagesWithThinking(messages: Message[]) {
+  return useMemo(
+    () =>
+      messages.map((m: Message): MessageWithThinking => {
+        if (m.role === "assistant") {
+          if (m.content.includes("</think>")) {
+            return {
+              ...m,
+              finishedThinking: true,
+              think: m.content
+                .split("</think>")[0]
+                .replace("</think>", "")
+                .replace("<think>", ""),
+              content: m.content.split("</think>")[1],
+            };
+          } else {
+            return {
+              ...m,
+              finishedThinking: false,
+              think: m.content.replace("<think>", ""),
+              content: "",
+            };
+          }
+        }
+        return m;
+      }),
+    [messages],
+  );
+}
