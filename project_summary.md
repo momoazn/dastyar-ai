@@ -45,7 +45,7 @@ The project is structured as follows:
 -   **Context API:** The `ServiceContext` provides a way to access the various services throughout the application.
 -   **Custom Hooks:** The application uses custom hooks to manage state and logic for audio recording, chat, image generation, model selection, and persistent chat.
 -   **UI Library:** The application uses Radix UI components for building the user interface.
--   **Styling:** The application uses Tailwind CSS and ShadcnUI for styling.
+-   **Styling:** The application uses Tailwind CSS and ShadcnUI for styling, including a dark mode theme that can be toggled by users. The theme preference is persisted in localStorage.
 
 ### Backend
 
@@ -76,7 +76,7 @@ The application is intended to provide a local AI assistant that can:
 
 ## Technologies Used
 
--   **Frontend:** React, TypeScript, Tailwind CSS, Radix UI, Vite
+-   **Frontend:** React, TypeScript, Tailwind CSS, Radix UI, Vite (with dark mode support)
 -   **Backend:** Go
 -   **Services:** Ollama, Stable Diffusion, Whisper
 
