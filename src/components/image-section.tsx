@@ -22,8 +22,6 @@ export const ImageSection = () => {
   const { images, generating, generateImage, clearHistory } =
     useImageGeneration(sdService);
 
-  console.log("###### settings", settings);
-
   const handleGenerate = async () => {
     if (!prompt.trim() || generating) return;
     await generateImage({ ...settings, prompt, negativePrompt });
