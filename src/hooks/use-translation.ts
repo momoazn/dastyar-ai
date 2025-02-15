@@ -7,6 +7,28 @@ interface TranslationOptions {
   tone: string;
 }
 
+const getLanguageFullName = (langCode: string): string => {
+  const languageMap: Record<string, string> = {
+    persian: "Persian (Farsi)",
+    english: "English",
+    arabic: "Modern Standard Arabic",
+    french: "French",
+    german: "German",
+    spanish: "Spanish",
+  };
+  return languageMap[langCode] || langCode;
+};
+
+const getToneDescription = (tone: string): string => {
+  const toneDescriptions: Record<string, string> = {
+    formal: "formal and professional",
+    casual: "casual and conversational",
+    technical: "technical and precise",
+    friendly: "friendly and approachable",
+  };
+  return toneDescriptions[tone] || tone;
+};
+
 export function useTranslation() {
   const [isTranslating, setIsTranslating] = useState(false);
   const { ollamaService } = useServices();
@@ -18,17 +40,41 @@ export function useTranslation() {
   ): Promise<string> => {
     if (!text || !ollamaService) return "";
 
+    const sourceLanguage = getLanguageFullName(options.sourceLang);
+    const targetLanguage = getLanguageFullName(options.targetLang);
+    const toneStyle = getToneDescription(options.tone);
+
     setIsTranslating(true);
     try {
-      const prompt = `Instructions: You are a skilled translator. Translate the following text from ${options.sourceLang} to ${options.targetLang} using a ${options.tone} tone. Maintain the original meaning while adapting the translation to be culturally appropriate for the target language. Only respond with the translation, do not include any explanations or additional text.\n\nText to translate:\n${text}`;
+      const systemPrompt = `You are a highly skilled professional translator with expertise in ${sourceLanguage} and ${targetLanguage}. 
+Your task is to translate the provided text:
+- From: ${sourceLanguage}
+- To: ${targetLanguage}
+- Style: ${toneStyle}
 
-      const response = await ollamaService.chat(prompt, ollamaModel);
+Guidelines:
+1. Maintain accurate meaning and context
+2. Adapt cultural references appropriately
+3. Use ${toneStyle} language
+4. Preserve formatting and structure
+5. Only respond with the translation
+6. Do not include explanations or notes
 
+Text to translate:
+${text}`;
+
+      const response = await ollamaService.chat(
+        systemPrompt,
+        ollamaModel,
+        () => {},
+      );
+
+      // Clean up any potential thinking output
       if (response.includes("</think>")) {
-        return response.split("</think>")[1];
+        return response.split("</think>")[1].trim();
       }
 
-      return response || "";
+      return response.trim() || "";
     } catch (error) {
       console.error("Translation error:", error);
       throw new Error("Translation failed. Please try again.");

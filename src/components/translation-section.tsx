@@ -13,12 +13,12 @@ import {
 import { Textarea } from "./ui/textarea";
 
 const languages = [
-  { value: "Persian", label: "فارسی" },
-  { value: "English", label: "English" },
-  { value: "Arabic", label: "العربية" },
-  { value: "French", label: "Français" },
-  { value: "de", label: "Deutsch" },
-  { value: "es", label: "Español" },
+  { value: "persian", label: "فارسی", fullName: "Persian (Farsi)" },
+  { value: "english", label: "English", fullName: "English" },
+  { value: "arabic", label: "العربية", fullName: "Modern Standard Arabic" },
+  { value: "french", label: "Français", fullName: "French" },
+  { value: "german", label: "Deutsch", fullName: "German" },
+  { value: "spanish", label: "Español", fullName: "Spanish" },
 ];
 
 const tones = [
@@ -31,8 +31,8 @@ const tones = [
 export function TranslationSection() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
-  const [sourceLang, setSourceLang] = useState("English");
-  const [targetLang, setTargetLang] = useState("Persian");
+  const [sourceLang, setSourceLang] = useState("english");
+  const [targetLang, setTargetLang] = useState("persian");
   const [tone, setTone] = useState("formal");
 
   const { selectedOllamaModel } = useModelSelection();
