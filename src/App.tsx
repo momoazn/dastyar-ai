@@ -1,13 +1,11 @@
-import { useState } from "react";
+import { NavLink, Route, Routes } from "react-router-dom";
 import { ChatSection } from "./components/chat-section";
 import { Header } from "./components/header";
 import { ImageSection } from "./components/image-section";
 import { Sidebar } from "./components/sidebar";
-import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { ServiceProvider, useServices } from "./context/service-context";
 
 function MainContent() {
-  const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
   const { connectionsStatus } = useServices();
 
   return (
@@ -15,29 +13,35 @@ function MainContent() {
       <Sidebar />
       <div className="flex h-full w-full flex-col overflow-hidden">
         <Header connectionsStatus={connectionsStatus} />
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "chat" | "image")}
-          className="border-b border-border"
-        >
-          <TabsList className="h-16 w-full bg-transparent">
-            <TabsTrigger
-              value="image"
-              className="text-md px-6 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
-              تولید تصویر
-            </TabsTrigger>
-            <TabsTrigger
-              value="chat"
-              className="text-md px-6 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
-              گفتگو
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <nav className="flex h-16 items-center border-b border-border px-4">
+          <NavLink
+            to="/chat"
+            className={({ isActive }) =>
+              `text-md rounded-md px-6 py-2 ${
+                isActive ? "bg-primary/10 text-primary" : ""
+              }`
+            }
+          >
+            گفتگو
+          </NavLink>
+          <NavLink
+            to="/image"
+            className={({ isActive }) =>
+              `text-md rounded-md px-6 py-2 ${
+                isActive ? "bg-primary/10 text-primary" : ""
+              }`
+            }
+          >
+            تولید تصویر
+          </NavLink>
+        </nav>
 
         <div className="flex-1 overflow-auto">
-          {activeTab === "chat" ? <ChatSection /> : <ImageSection />}
+          <Routes>
+            <Route path="/" element={<ChatSection />} />
+            <Route path="/chat" element={<ChatSection />} />
+            <Route path="/image" element={<ImageSection />} />
+          </Routes>
         </div>
       </div>
     </>
