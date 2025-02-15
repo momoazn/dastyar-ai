@@ -10,27 +10,14 @@ import { useModelSelection } from "../hooks/use-model-selection";
 import { usePersistentChat } from "../hooks/use-persistent-chat";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Textarea } from "./ui/textarea";
 
 export const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
 
-  const { ollamaService, ollamaModels, whisperModels } = useServices();
-
-  const {
-    selectedOllamaModel,
-    selectedWhisperModel,
-    setOllamaModel,
-    setWhisperModel,
-  } = useModelSelection();
+  const { ollamaService } = useServices();
+  const { selectedOllamaModel } = useModelSelection();
   const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
     usePersistentChat(ollamaService);
   const { isRecording, startRecording, stopRecording } =
@@ -83,73 +70,43 @@ export const ChatSection = () => {
         </div>
       </ScrollArea>
 
-      <div className="mx-4 flex flex-col gap-2">
-        <div className="flex gap-2">
-          <Select value={selectedOllamaModel} onValueChange={setOllamaModel}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select LLM model" />
-            </SelectTrigger>
-            <SelectContent>
-              {ollamaModels?.map((model) => (
-                <SelectItem key={model} value={model || "default"}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="mx-4 flex gap-2 pb-2">
+        <Textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="پیام خود را بنویسید..."
+          className="flex-1"
+          dir={message ? detectTextDirection(message) : "rtl"}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage(message, selectedOllamaModel);
+              setMessage("");
+            }
+          }}
+        />
 
-          <Select value={selectedWhisperModel} onValueChange={setWhisperModel}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Whisper model" />
-            </SelectTrigger>
-            <SelectContent>
-              {whisperModels?.map((model) => (
-                <SelectItem key={model} value={model || "default"}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex gap-2 pb-2">
-          <Textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="پیام خود را بنویسید..."
-            className="flex-1"
-            dir={message ? detectTextDirection(message) : "rtl"}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
+        <div className="flex flex-col gap-2">
+          <Button
+            size="icon"
+            variant={isRecording ? "destructive" : "outline"}
+            onClick={isRecording ? stopRecording : startRecording}
+          >
+            {isRecording ? <Pause size={16} /> : <Mic size={16} />}
+          </Button>
+          <Button
+            size="icon"
+            onClick={() => {
+              if (isStreaming) {
+                stopStreaming();
+              } else {
                 sendMessage(message, selectedOllamaModel);
                 setMessage("");
               }
             }}
-          />
-
-          <div className="flex flex-col gap-2">
-            <Button
-              size="icon"
-              variant={isRecording ? "destructive" : "outline"}
-              onClick={isRecording ? stopRecording : startRecording}
-            >
-              {isRecording ? <Pause size={16} /> : <Mic size={16} />}
-            </Button>
-            <Button
-              size="icon"
-              onClick={() => {
-                if (isStreaming) {
-                  stopStreaming();
-                } else {
-                  sendMessage(message, selectedOllamaModel);
-                  setMessage("");
-                }
-              }}
-            >
-              <Send size={16} />
-            </Button>
-          </div>
+          >
+            <Send size={16} />
+          </Button>
         </div>
       </div>
     </div>

@@ -1,11 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useServices } from "@/context/service-context";
+import { useModelSelection } from "@/hooks/use-model-selection";
 import { cn } from "@/lib/utils";
-import { ChevronsLeft, ChevronsRight, Settings } from "lucide-react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
+
+export type ModelSelectionProps = {
+  selectedOllamaModel: string;
+  selectedWhisperModel: string;
+};
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { ollamaModels, whisperModels } = useServices();
+  const {
+    selectedOllamaModel,
+    selectedWhisperModel,
+    setOllamaModel,
+    setWhisperModel,
+  } = useModelSelection();
 
   return (
     <div
@@ -44,19 +65,55 @@ export function Sidebar() {
         </div>
       </ScrollArea>
 
-      {/* Settings section */}
-      <div className="border-t p-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-8 w-8",
-            !isCollapsed && "ml-auto", // Align to right when expanded
-          )}
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Model selection section at bottom */}
+      {!isCollapsed && (
+        <div className="border-t p-4">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              مدل‌های هوش مصنوعی
+            </h3>
+            <div className="flex flex-col gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium">مدل چت</label>
+                <Select
+                  value={selectedOllamaModel}
+                  onValueChange={setOllamaModel}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="انتخاب مدل چت" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ollamaModels?.map((model) => (
+                      <SelectItem key={model} value={model || "default"}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium">مدل تشخیص گفتار</label>
+                <Select
+                  value={selectedWhisperModel}
+                  onValueChange={setWhisperModel}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="انتخاب مدل تشخیص گفتار" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {whisperModels?.map((model) => (
+                      <SelectItem key={model} value={model || "default"}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
