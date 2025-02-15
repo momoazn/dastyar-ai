@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChatSection } from "./components/chat-section";
 import { Header } from "./components/header";
 import { ImageSection } from "./components/image-section";
+import { Sidebar } from "./components/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { ServiceProvider, useServices } from "./context/service-context";
 
@@ -11,6 +12,7 @@ function MainContent() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
+      <Sidebar />
       <Header connectionsStatus={connectionsStatus} />
       <Tabs
         value={activeTab}
