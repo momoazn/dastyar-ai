@@ -3,7 +3,7 @@ import { OllamaService } from "../services/ollama";
 
 const STORAGE_KEY = "chatHistory";
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: number;

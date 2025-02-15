@@ -5,9 +5,11 @@ import remarkGfm from "remark-gfm";
 
 import { useServices } from "@/context/service-context";
 import { cn, detectTextDirection } from "@/lib/utils";
+import { THINKING_MODELS } from "@/services/ollama";
 import { useAudioRecording } from "../hooks/use-audio-recording";
 import { useModelSelection } from "../hooks/use-model-selection";
 import {
+  Message,
   MessageWithThinking,
   useMessagesWithThinking,
   usePersistentChat,
@@ -15,6 +17,10 @@ import {
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
+
+const isThinkingModel = (model: string) => {
+  return THINKING_MODELS.find((m) => model.includes(m)) !== undefined;
+};
 
 export const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,8 +53,15 @@ export const ChatSection = () => {
 
       <ScrollArea className="flex-1 rounded-lg border bg-background p-4">
         <div className="flex flex-col gap-4">
-          {messagesWithThinking.map((message) => (
-            <AIMessage key={message.timestamp} message={message} />
+          {(isThinkingModel(selectedOllamaModel)
+            ? messagesWithThinking
+            : messages
+          ).map((message) => (
+            <AIMessage
+              key={message.timestamp}
+              message={message}
+              isThinkingModel={isThinkingModel(selectedOllamaModel)}
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>
@@ -105,10 +118,11 @@ export const ChatSection = () => {
 };
 
 interface AIMessageProps {
-  message: MessageWithThinking;
+  message: Message | MessageWithThinking;
+  isThinkingModel: boolean;
 }
 
-const AIMessage = ({ message }: AIMessageProps) => {
+const AIMessage = ({ message, isThinkingModel }: AIMessageProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -127,15 +141,15 @@ const AIMessage = ({ message }: AIMessageProps) => {
             : "bg-primary text-primary-foreground",
         )}
       >
-        {message.role === "assistant" && (
+        {isThinkingModel && message.role === "assistant" && (
           <div className="flex items-center justify-between">
-            {!message.finishedThinking && (
+            {/* {!(message as MessageWithThinking).finishedThinking && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="animate-pulse">در حال فکر کردن...</span>
               </div>
-            )}
+            )} */}
 
-            {message.think && (
+            {isThinkingModel && (message as MessageWithThinking).think && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -148,7 +162,7 @@ const AIMessage = ({ message }: AIMessageProps) => {
           </div>
         )}
 
-        {message.think && (
+        {isThinkingModel && (message as MessageWithThinking).think && (
           <div
             dir="ltr"
             className={cn(
@@ -157,7 +171,7 @@ const AIMessage = ({ message }: AIMessageProps) => {
             )}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.think}
+              {(message as MessageWithThinking).think}
             </ReactMarkdown>
           </div>
         )}
