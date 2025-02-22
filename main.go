@@ -6,12 +6,14 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"runtime"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	ollama "github.com/ollama/ollama/api"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -31,6 +33,11 @@ type Conversation struct {
 	Messages  []Message `json:"messages,omitempty" gorm:"foreignKey:ConversationID"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ChatRequest struct {
+	Message string `json:"message"`
+	Model   string `json:"model"`
 }
 
 // Initialize database connection and create tables
@@ -143,13 +150,95 @@ func handleAddMessage(db *gorm.DB) echo.HandlerFunc {
 	}
 }
 
-func setupRoutes(e *echo.Echo, db *gorm.DB, staticFS fs.FS) {
-	// Create a handler for serving static files
-	fileHandler := http.FileServer(http.FS(staticFS))
-	e.GET("/*", echo.WrapHandler(fileHandler))
+func handleStreamChat(db *gorm.DB, ollamaClient *ollama.Client) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		convID := c.Param("id")
+		var chatReq ChatRequest
+		if err := c.Bind(&chatReq); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
 
+		// Verify conversation exists
+		var conv Conversation
+		result := db.First(&conv, convID)
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				return c.JSON(http.StatusNotFound, map[string]string{"error": "Conversation not found"})
+			}
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
+		}
+
+		// Create and save user message
+		userMsg := Message{
+			ConversationID: conv.ID,
+			Role:           "user",
+			Content:        chatReq.Message,
+			CreatedAt:      time.Now(),
+		}
+		if err := db.Create(&userMsg).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		// Create assistant message (will be updated with streamed content)
+		assistantMsg := Message{
+			ConversationID: conv.ID,
+			Role:           "assistant",
+			Content:        "",
+			CreatedAt:      time.Now(),
+		}
+		if err := db.Create(&assistantMsg).Error; err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		// Set up SSE headers
+		c.Response().Header().Set("Content-Type", "text/event-stream")
+		c.Response().Header().Set("Cache-Control", "no-cache")
+		c.Response().Header().Set("Connection", "keep-alive")
+		c.Response().WriteHeader(http.StatusOK)
+
+		// Create a channel to handle client disconnection
+		done := c.Request().Context().Done()
+		fullResponse := ""
+
+		// Start streaming response
+		err := ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
+			Model: chatReq.Model,
+			Messages: []api.Message{
+				{Role: "user", Content: chatReq.Message},
+			},
+		}, func(response api.ChatResponse) error {
+			select {
+			case <-done:
+				return fmt.Errorf("client disconnected")
+			default:
+				fullResponse += response.Message.Content
+				// Send the chunk to the client
+				fmt.Fprintf(c.Response(), "data: %s\n\n", response.Message.Content)
+				c.Response().Flush()
+				return nil
+			}
+		})
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		// Update the assistant message with the complete response
+		db.Model(&assistantMsg).Update("content", fullResponse)
+		// Update conversation's updated_at timestamp
+		db.Model(&conv).Update("updated_at", time.Now())
+
+		return nil
+	}
+}
+
+func setupRoutes(e *echo.Echo, db *gorm.DB, staticFS fs.FS) {
 	// API group
 	api := e.Group("/api")
+
+	// Create Ollama client
+	ollamaURL, _ := url.Parse("http://localhost:11434")
+	ollamaClient := ollama.NewClient(ollamaURL, &http.Client{})
 
 	// Conversation endpoints
 	api.GET("/conversations", handleGetAllConversations(db))
@@ -157,6 +246,21 @@ func setupRoutes(e *echo.Echo, db *gorm.DB, staticFS fs.FS) {
 	api.GET("/conversations/:id", handleGetConversation(db))
 	api.DELETE("/conversations/:id", handleDeleteConversation(db))
 	api.POST("/conversations/:id/messages", handleAddMessage(db))
+
+	// Streaming chat endpoint
+	api.POST("/conversations/:id/chat", handleStreamChat(db, ollamaClient))
+
+	// Create a handler for serving static files
+	// This should be last to ensure API routes are handled first
+	fileHandler := http.FileServer(http.FS(staticFS))
+	e.GET("/*", echo.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If path starts with /api, return 404 as it means no API route was matched
+		if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
+			http.NotFound(w, r)
+			return
+		}
+		fileHandler.ServeHTTP(w, r)
+	})))
 }
 
 func openBrowser(serverAddr string) {
