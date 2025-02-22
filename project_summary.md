@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a web application designed to be a Persian AI assistant. It provides two main functionalities: a chat interface powered by a local large language model (Ollama), and an image generation tool powered by Stable Diffusion. Additionally, it includes a Whisper service for audio transcription. The application is built using React, TypeScript, and Tailwind CSS for the frontend, and Go for the backend.
+This project is a web application designed to be a Persian AI assistant. It provides three main functionalities: a chat interface powered by a local large language model (Ollama), an image generation tool powered by Stable Diffusion, and a translation feature. Additionally, it includes a Whisper service for audio transcription. The application is built using React, TypeScript, Tailwind CSS and ShadcnUI for the frontend, and Go for the backend.
 
 ## Project Structure
 
@@ -10,11 +10,16 @@ The project is structured as follows:
 
 -   **Frontend (React/TypeScript):**
     -   `src/`: Contains the main application code.
-        -   `app.tsx`: The main application component, which sets up the layout and manages the tabs for chat and image generation.
+        -   `app.tsx`: The main application component, which sets up the layout and manages routing.
+        -   `pages/`: Contains the main page components.
+            -   `chat.tsx`: Page component for the chat interface.
+            -   `image.tsx`: Page component for the image generation interface.
+            -   `translation.tsx`: Page component for the translation feature.
         -   `components/`: Contains reusable UI components.
-            -   `ChatSection.tsx`: Component for the chat interface.
-            -   `ImageSection.tsx`: Component for the image generation interface.
-            -   `Status.tsx`: Component for displaying connection statuses.
+            -   `sidebar.tsx`: Component for the application's sidebar navigation.
+            -   `header.tsx`: Component for the application's header.
+            -   `message.tsx`: Component for displaying chat messages.
+            -   `status.tsx`: Component for displaying connection statuses.
             -   `ui/`: Contains Radix UI components.
         -   `context/`: Contains context providers for managing application state.
             -   `ServiceContext.tsx`: Provides access to the various services.
@@ -41,7 +46,8 @@ The project is structured as follows:
 
 ### Frontend
 
--   **React Components:** The application uses React components to build the user interface. The main components are `App`, `MainContent`, `ChatSection`, `ImageSection`, and `Status`.
+-   **Pages:** The application is now organized into distinct pages for each major feature (chat, image generation, and translation).
+-   **React Components:** The application uses React components to build the user interface. Key components include `Sidebar`, `Header`, `Message`, and various feature-specific components.
 -   **Context API:** The `ServiceContext` provides a way to access the various services throughout the application.
 -   **Custom Hooks:** The application uses custom hooks to manage state and logic for audio recording, chat, image generation, model selection, and persistent chat.
 -   **UI Library:** The application uses Radix UI components for building the user interface.
@@ -59,7 +65,7 @@ The project is structured as follows:
 
 ## Data Flow
 
-1.  The user interacts with the frontend through the chat or image generation interfaces.
+1.  The user interacts with the frontend through the chat, image generation, or translation interfaces.
 2.  The frontend sends requests to the appropriate service (Ollama, Stable Diffusion, or Whisper).
 3.  The services interact with their respective APIs.
 4.  The APIs return data to the services.
@@ -72,11 +78,12 @@ The application is intended to provide a local AI assistant that can:
 
 -   Engage in chat conversations using a local large language model (Ollama).
 -   Generate images from text prompts using Stable Diffusion.
+-   Provide translation services.
 -   Transcribe audio to text using Whisper.
 
 ## Technologies Used
 
--   **Frontend:** React, TypeScript, Tailwind CSS, Radix UI, Vite (with dark mode support)
+-   **Frontend:** React, TypeScript, Tailwind CSS, ShadcnUI, Vite (with dark mode support)
 -   **Backend:** Go
 -   **Services:** Ollama, Stable Diffusion, Whisper
 
