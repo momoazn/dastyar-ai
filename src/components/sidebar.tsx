@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { useServices } from "@/context/service-context";
 import { samplers, useImageSettings } from "@/hooks/use-image-settings";
 import { useModelSelection } from "@/hooks/use-model-selection";
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
@@ -74,17 +75,23 @@ export function Sidebar() {
           <div className="border-b p-4">
             <div className="flex flex-col gap-4">
               <h3 className="text-sm font-medium text-muted-foreground">
-                مدل‌های هوش مصنوعی
+                {PERSIAN_TEXTS.modelSelection.aiModels}
               </h3>
               <div className="flex flex-col gap-2">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">مدل چت</label>
+                  <label className="text-xs font-medium">
+                    {PERSIAN_TEXTS.modelSelection.chatModel}
+                  </label>
                   <Select
                     value={selectedOllamaModel}
                     onValueChange={setOllamaModel}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="انتخاب مدل چت" />
+                      <SelectValue
+                        placeholder={
+                          PERSIAN_TEXTS.modelSelection.selectChatModel
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {ollamaModels?.map((model) => (
@@ -97,13 +104,19 @@ export function Sidebar() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">مدل تشخیص گفتار</label>
+                  <label className="text-xs font-medium">
+                    {PERSIAN_TEXTS.modelSelection.speechModel}
+                  </label>
                   <Select
                     value={selectedWhisperModel}
                     onValueChange={setWhisperModel}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="انتخاب مدل تشخیص گفتار" />
+                      <SelectValue
+                        placeholder={
+                          PERSIAN_TEXTS.modelSelection.selectSpeechModel
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {whisperModels?.map((model) => (
@@ -122,11 +135,13 @@ export function Sidebar() {
           <div className="p-4">
             <div className="flex flex-col gap-4">
               <h3 className="text-sm font-medium text-muted-foreground">
-                تنظیمات تصویر
+                {PERSIAN_TEXTS.imageSettings.imageSettings}
               </h3>
               <div className="flex flex-col gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">اندازه</label>
+                  <label className="text-xs font-medium">
+                    {PERSIAN_TEXTS.imageSettings.width}
+                  </label>
                   <Select
                     value={settings.width.toString()}
                     onValueChange={(value) =>
@@ -138,7 +153,9 @@ export function Sidebar() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="انتخاب اندازه" />
+                      <SelectValue
+                        placeholder={PERSIAN_TEXTS.imageSettings.selectWidth}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {[256, 512, 768, 1024].map((size) => (
@@ -151,7 +168,9 @@ export function Sidebar() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">سمپلر</label>
+                  <label className="text-xs font-medium">
+                    {PERSIAN_TEXTS.imageSettings.sampler}
+                  </label>
                   <Select
                     value={settings.sampler_index}
                     onValueChange={(value) =>
@@ -162,7 +181,9 @@ export function Sidebar() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="انتخاب سمپلر" />
+                      <SelectValue
+                        placeholder={PERSIAN_TEXTS.imageSettings.selectSampler}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {samplers.map((sampler) => (
@@ -177,7 +198,7 @@ export function Sidebar() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium">
-                      مقیاس راهنمایی
+                      {PERSIAN_TEXTS.imageSettings.guidanceScale}
                     </label>
                     <span className="text-xs text-muted-foreground">
                       {settings.guidanceScale.toFixed(1)}
@@ -197,7 +218,9 @@ export function Sidebar() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium">گام‌ها</label>
+                    <label className="text-xs font-medium">
+                      {PERSIAN_TEXTS.imageSettings.steps}
+                    </label>
                     <span className="text-xs text-muted-foreground">
                       {settings.steps}
                     </span>

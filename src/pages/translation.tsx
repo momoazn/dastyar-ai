@@ -1,34 +1,35 @@
 import { useModelSelection } from "@/hooks/use-model-selection";
 import { useState } from "react";
-import { useTranslation } from "../hooks/use-translation";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Textarea } from "./ui/textarea";
+} from "../components/ui/select";
+import { Textarea } from "../components/ui/textarea";
+import { useTranslation } from "../hooks/use-translation";
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
-  { value: "persian", label: "فارسی", fullName: "Persian (Farsi)" },
-  { value: "english", label: "English", fullName: "English" },
-  { value: "arabic", label: "العربية", fullName: "Modern Standard Arabic" },
-  { value: "french", label: "Français", fullName: "French" },
-  { value: "german", label: "Deutsch", fullName: "German" },
-  { value: "spanish", label: "Español", fullName: "Spanish" },
+  { value: "persian", label: PERSIAN_TEXTS.languages.persian, fullName: "Persian (Farsi)" },
+  { value: "english", label: PERSIAN_TEXTS.languages.english, fullName: "English" },
+  { value: "arabic", label: PERSIAN_TEXTS.languages.arabic, fullName: "Modern Standard Arabic" },
+  { value: "french", label: PERSIAN_TEXTS.languages.french, fullName: "French" },
+  { value: "german", label: PERSIAN_TEXTS.languages.german, fullName: "German" },
+  { value: "spanish", label: PERSIAN_TEXTS.languages.spanish, fullName: "Spanish" },
 ];
 
 const tones = [
-  { value: "formal", label: "رسمی" },
-  { value: "casual", label: "غیر رسمی" },
-  { value: "technical", label: "تخصصی" },
-  { value: "friendly", label: "دوستانه" },
+  { value: "formal", label: PERSIAN_TEXTS.tones.formal },
+  { value: "casual", label: PERSIAN_TEXTS.tones.casual },
+  { value: "technical", label: PERSIAN_TEXTS.tones.technical },
+  { value: "friendly", label: PERSIAN_TEXTS.tones.friendly },
 ];
 
-export function TranslationSection() {
+export function TranslationPage() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [sourceLang, setSourceLang] = useState("english");
@@ -55,9 +56,9 @@ export function TranslationSection() {
       setTranslatedText(result);
     } catch (error) {
       if (error instanceof Error) {
-        setTranslatedText(`خطا در ترجمه: ${error.message}`);
+        setTranslatedText(`${PERSIAN_TEXTS.translation.error}: ${error.message}`);
       } else {
-        setTranslatedText("خطا در ترجمه. لطفا دوباره تلاش کنید.");
+        setTranslatedText(`${PERSIAN_TEXTS.translation.error}. ${PERSIAN_TEXTS.translation.tryAgain}`);
       }
     }
   };
@@ -67,10 +68,10 @@ export function TranslationSection() {
       <Card className="flex-1 bg-background p-4">
         <div className="mb-6 grid grid-cols-3 gap-4">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">زبان مبدا</p>
+            <p className="text-sm text-muted-foreground">{PERSIAN_TEXTS.translation.sourceLanguage}</p>
             <Select value={sourceLang} onValueChange={setSourceLang}>
               <SelectTrigger>
-                <SelectValue placeholder="زبان مبدا" />
+                <SelectValue placeholder={PERSIAN_TEXTS.translation.sourceLanguage} />
               </SelectTrigger>
               <SelectContent>
                 {languages.map((lang) => (
@@ -83,10 +84,10 @@ export function TranslationSection() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">زبان مقصد</p>
+            <p className="text-sm text-muted-foreground">{PERSIAN_TEXTS.translation.targetLanguage}</p>
             <Select value={targetLang} onValueChange={setTargetLang}>
               <SelectTrigger>
-                <SelectValue placeholder="زبان مقصد" />
+                <SelectValue placeholder={PERSIAN_TEXTS.translation.targetLanguage} />
               </SelectTrigger>
               <SelectContent>
                 {languages.map((lang) => (
@@ -99,10 +100,10 @@ export function TranslationSection() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">لحن ترجمه</p>
+            <p className="text-sm text-muted-foreground">{PERSIAN_TEXTS.translation.translationTone}</p>
             <Select value={tone} onValueChange={setTone}>
               <SelectTrigger>
-                <SelectValue placeholder="لحن ترجمه" />
+                <SelectValue placeholder={PERSIAN_TEXTS.translation.translationTone} />
               </SelectTrigger>
               <SelectContent>
                 {tones.map((t) => (
@@ -118,7 +119,7 @@ export function TranslationSection() {
         <div className="mb-4 grid grid-rows-2 gap-6">
           <div>
             <Textarea
-              placeholder="متن مورد نظر برای ترجمه را وارد کنید..."
+              placeholder={PERSIAN_TEXTS.translation.enterText}
               value={sourceText}
               onChange={(e) => setSourceText(e.target.value)}
               className="min-h-[250px]"
@@ -139,7 +140,7 @@ export function TranslationSection() {
             onClick={handleTranslate}
             disabled={!sourceText || isTranslating}
           >
-            {isTranslating ? "در حال ترجمه..." : "ترجمه"}
+            {isTranslating ? PERSIAN_TEXTS.translation.translating : PERSIAN_TEXTS.translation.translate}
           </Button>
         </div>
       </Card>

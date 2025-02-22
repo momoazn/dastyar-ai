@@ -1,3 +1,4 @@
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";
@@ -19,7 +20,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      aria-label="تغییر تم"
+      aria-label={PERSIAN_TEXTS.ui.themeToggle}
     >
       {theme === "light" ? (
         <Moon className="h-5 w-5" />

@@ -1,0 +1,74 @@
+export const PERSIAN_TEXTS = {
+  // Navigation and Headers
+  navigation: {
+    chat: "گفتگو",
+    imageGeneration: "تولید تصویر",
+    translation: "ترجمه",
+    appTitle: "دستیار هوشمند",
+  },
+
+  // Chat Interface
+  chat: {
+    thinking: "در حال فکر کردن...",
+    showThoughts: "نمایش افکار",
+    hideThoughts: "پنهان کردن افکار",
+    writeMessage: "پیام خود را بنویسید...",
+  },
+
+  // Translation Interface
+  translation: {
+    sourceLanguage: "زبان مبدا",
+    targetLanguage: "زبان مقصد",
+    translationTone: "لحن ترجمه",
+    enterText: "متن مورد نظر برای ترجمه را وارد کنید...",
+    negativePrompt: "پرامپت منفی...",
+    translating: "در حال ترجمه...",
+    translate: "ترجمه",
+    error: "خطا در ترجمه",
+    tryAgain: "لطفا دوباره تلاش کنید.",
+  },
+
+  // Model Selection
+  modelSelection: {
+    aiModels: "مدل‌های هوش مصنوعی",
+    chatModel: "مدل چت",
+    selectChatModel: "انتخاب مدل چت",
+    speechModel: "مدل تشخیص گفتار",
+    selectSpeechModel: "انتخاب مدل تشخیص گفتار",
+  },
+
+  // Image Generation Settings
+  imageSettings: {
+    imageSettings: "تنظیمات تصویر",
+    sampler: "سمپلر",
+    selectSampler: "انتخاب سمپلر",
+    guidanceScale: "مقیاس راهنمایی",
+    steps: "گام‌ها",
+    width: "عرض",
+    height: "ارتفاع",
+    selectWidth: "انتخاب عرض",
+  },
+
+  // UI Elements
+  ui: {
+    themeToggle: "تغییر تم",
+  },
+
+  // Language Labels
+  languages: {
+    persian: "فارسی",
+    english: "انگلیسی",
+    arabic: "عربی",
+    french: "فرانسه",
+    german: "آلمانی",
+    spanish: "اسپانیایی",
+  },
+
+  // Tone Labels
+  tones: {
+    formal: "رسمی",
+    casual: "غیر رسمی",
+    technical: "تخصصی",
+    friendly: "دوستانه",
+  },
+} as const;

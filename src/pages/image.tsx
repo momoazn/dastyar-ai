@@ -3,14 +3,14 @@ import { useImageSettings } from "@/hooks/use-image-settings";
 import { detectTextDirection } from "@/lib/utils";
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Textarea } from "../components/ui/textarea";
 import { useAudioRecording } from "../hooks/use-audio-recording";
 import { useImageGeneration } from "../hooks/use-image-generation";
-import { Alert, AlertDescription } from "./ui/alert";
-import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
-import { Textarea } from "./ui/textarea";
 
-export const ImageSection = () => {
+export function ImagePage() {
   const { sdService } = useServices();
   const { settings } = useImageSettings();
 
@@ -139,4 +139,4 @@ export const ImageSection = () => {
       </div>
     </div>
   );
-};
+}
