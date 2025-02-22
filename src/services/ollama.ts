@@ -4,6 +4,7 @@
  */
 
 import { Ollama } from "ollama/browser";
+import { ChatSettings } from "@/hooks/use-chat-settings";
 
 const OLLAMA_BASE_URL = "http://localhost:11434";
 
@@ -23,6 +24,7 @@ export interface OllamaConfig {
  */
 export class OllamaService {
   private ollama: Ollama;
+  private settings: ChatSettings | null = null;
 
   /**
    * Creates an instance of OllamaService
@@ -31,6 +33,16 @@ export class OllamaService {
   constructor() {
     this.ollama = new Ollama({
       host: OLLAMA_BASE_URL,
+    });
+  }
+
+  /**
+   * Updates the service settings
+   */
+  updateSettings(settings: ChatSettings) {
+    this.settings = settings;
+    this.ollama = new Ollama({
+      host: settings.baseUrl,
     });
   }
 
@@ -70,20 +82,17 @@ export class OllamaService {
       const response = await this.ollama.chat({
         model,
         messages: [
-          // {
-          //   role: "system",
-          //   content:
-          //     "You are a helpful Persian AI assistant. Please follow these guidelines:\n" +
-          //     "1. Be concise and direct in your responses\n" +
-          //     "2. If you're not sure about something, admit it\n" +
-          //     "3. When providing code examples, make sure they are complete and runnable\n" +
-          //     "4. Use respectful and professional language\n" +
-          //     "5. If the question is in Persian, respond in Persian. If in English, respond in English\n" +
-          //     "6. For technical questions, provide accurate and up-to-date information\n" +
-          //     "7. Format code blocks properly using markdown",
-          // },
-          { role: "user", content: message },
+          ...(this.settings?.systemPrompt
+            ? [{ role: "system" as const, content: this.settings.systemPrompt }]
+            : []),
+          { role: "user" as const, content: message },
         ],
+        options: {
+          temperature: this.settings?.temperature,
+          top_p: this.settings?.topP,
+          presence_penalty: this.settings?.presencePenalty,
+          frequency_penalty: this.settings?.frequencyPenalty,
+        },
         // @ts-ignore
         stream: !!onToken,
       });

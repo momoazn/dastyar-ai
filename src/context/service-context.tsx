@@ -1,6 +1,7 @@
 import { OllamaService } from "@/services/ollama";
 import { StableDiffusionService } from "@/services/stable-diffusion";
 import { WhisperService } from "@/services/whisper";
+import { useChatSettings } from "@/hooks/use-chat-settings";
 import {
   createContext,
   PropsWithChildren,
@@ -25,16 +26,21 @@ export interface ServiceContextType {
   whisperModels: string[];
 }
 
-const ServiceContext = createContext<ServiceContextType>(null!);
+const ServiceContext = createContext<ServiceContextType | null>(null);
 
 export const useServices = () => {
-  return useContext(ServiceContext);
+  const context = useContext(ServiceContext);
+  if (!context) {
+    throw new Error("useServices must be used within a ServiceProvider");
+  }
+  return context;
 };
 
 export const ServiceProvider = ({ children }: PropsWithChildren) => {
   const ollamaService = useRef(new OllamaService());
   const sdService = useRef(new StableDiffusionService());
   const whisperService = useRef(new WhisperService());
+  const { settings: chatSettings } = useChatSettings();
 
   const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
     ollama: false,
@@ -43,6 +49,10 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
   });
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [whisperModels, setWhisperModels] = useState<string[]>([]);
+
+  useEffect(() => {
+    ollamaService.current.updateSettings(chatSettings);
+  }, [chatSettings]);
 
   const checkAvailability = async () => {
     const [

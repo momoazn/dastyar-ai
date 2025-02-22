@@ -7,6 +7,22 @@ export const PERSIAN_TEXTS = {
     appTitle: "دستیار هوشمند",
   },
 
+  // Settings
+  settings: {
+    title: "تنظیمات",
+    chatTab: "تنظیمات چت",
+    imageTab: "تنظیمات تصویر",
+    baseUrl: "آدرس سرور",
+    systemPrompt: "پرامپت سیستم",
+    temperature: "دما",
+    topP: "احتمال بالا",
+    presencePenalty: "جریمه تکرار",
+    frequencyPenalty: "جریمه فراوانی",
+    reset: "بازنشانی",
+    showAdvanced: "نمایش تنظیمات پیشرفته",
+    hideAdvanced: "پنهان کردن تنظیمات پیشرفته",
+  },
+
   // Chat Interface
   chat: {
     thinking: "در حال فکر کردن...",

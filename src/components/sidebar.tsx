@@ -1,36 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { useServices } from "@/context/service-context";
-import { samplers, useImageSettings } from "@/hooks/use-image-settings";
-import { useModelSelection } from "@/hooks/use-model-selection";
-import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
-
-export type ModelSelectionProps = {
-  selectedOllamaModel: string;
-  selectedWhisperModel: string;
-};
+import { SettingsModal } from "./settings-modal";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { ollamaModels, whisperModels } = useServices();
-  const {
-    selectedOllamaModel,
-    selectedWhisperModel,
-    setOllamaModel,
-    setWhisperModel,
-  } = useModelSelection();
-  const { settings, setSettings } = useImageSettings();
 
   return (
     <div
@@ -69,178 +45,10 @@ export function Sidebar() {
         </div>
       </ScrollArea>
 
-      {!isCollapsed && (
-        <div className="border-t">
-          {/* Model selection section */}
-          <div className="border-b p-4">
-            <div className="flex flex-col gap-4">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                {PERSIAN_TEXTS.modelSelection.aiModels}
-              </h3>
-              <div className="flex flex-col gap-2">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {PERSIAN_TEXTS.modelSelection.chatModel}
-                  </label>
-                  <Select
-                    value={selectedOllamaModel}
-                    onValueChange={setOllamaModel}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          PERSIAN_TEXTS.modelSelection.selectChatModel
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ollamaModels?.map((model) => (
-                        <SelectItem key={model} value={model || "default"}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {PERSIAN_TEXTS.modelSelection.speechModel}
-                  </label>
-                  <Select
-                    value={selectedWhisperModel}
-                    onValueChange={setWhisperModel}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          PERSIAN_TEXTS.modelSelection.selectSpeechModel
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {whisperModels?.map((model) => (
-                        <SelectItem key={model} value={model || "default"}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Image settings section */}
-          <div className="p-4">
-            <div className="flex flex-col gap-4">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                {PERSIAN_TEXTS.imageSettings.imageSettings}
-              </h3>
-              <div className="flex flex-col gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {PERSIAN_TEXTS.imageSettings.width}
-                  </label>
-                  <Select
-                    value={settings.width.toString()}
-                    onValueChange={(value) =>
-                      setSettings({
-                        ...settings,
-                        width: parseInt(value),
-                        height: parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={PERSIAN_TEXTS.imageSettings.selectWidth}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[256, 512, 768, 1024].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}x{size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {PERSIAN_TEXTS.imageSettings.sampler}
-                  </label>
-                  <Select
-                    value={settings.sampler_index}
-                    onValueChange={(value) =>
-                      setSettings({
-                        ...settings,
-                        sampler_index: value as typeof settings.sampler_index,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={PERSIAN_TEXTS.imageSettings.selectSampler}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {samplers.map((sampler) => (
-                        <SelectItem key={sampler} value={sampler}>
-                          {sampler}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium">
-                      {PERSIAN_TEXTS.imageSettings.guidanceScale}
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      {settings.guidanceScale.toFixed(1)}
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.guidanceScale]}
-                    onValueChange={(value) =>
-                      setSettings({ ...settings, guidanceScale: value[0] })
-                    }
-                    min={1}
-                    max={20}
-                    step={0.1}
-                    className="py-2"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium">
-                      {PERSIAN_TEXTS.imageSettings.steps}
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      {settings.steps}
-                    </span>
-                  </div>
-                  <Slider
-                    value={[settings.steps]}
-                    onValueChange={(value) =>
-                      setSettings({ ...settings, steps: value[0] })
-                    }
-                    min={1}
-                    max={150}
-                    step={1}
-                    className="py-2"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Footer with settings button */}
+      <div className="flex h-12 items-center justify-end border-t p-4">
+        {!isCollapsed && <SettingsModal />}
+      </div>
     </div>
   );
 }
