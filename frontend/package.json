@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bunx --bun vite",
-    "build": "bunx --bun vite build",
+    "build": "bunx --bun vite build --emptyOutDir",
     "preview": "bunx --bun vite preview"
   },
   "dependencies": {
