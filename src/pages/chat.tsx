@@ -5,12 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useServices } from "@/context/service-context";
 import { useAudioRecording } from "@/hooks/use-audio-recording";
 import { useModelSelection } from "@/hooks/use-model-selection";
-import { useMessagesWithThinking, usePersistentChat } from "@/hooks/use-persistent-chat";
+import {
+  useMessagesWithThinking,
+  usePersistentChat,
+} from "@/hooks/use-persistent-chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 import { THINKING_MODELS } from "@/services/ollama";
 import { Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
 const isThinkingModel = (model: string) => {
   return THINKING_MODELS.find((m) => model.includes(m)) !== undefined;
@@ -19,8 +23,10 @@ const isThinkingModel = (model: string) => {
 export function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
+  const { id } = useParams();
 
-  const { ollamaService } = useServices();
+  const { ollamaService, selectedSession } = useServices();
+
   const { selectedOllamaModel } = useModelSelection();
   const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
     usePersistentChat(ollamaService);

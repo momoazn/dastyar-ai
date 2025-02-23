@@ -38,7 +38,7 @@ function MainContent() {
         <div className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<ChatPage />} />
-            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/chat/:id" element={<ChatPage />} />
             <Route path="/image" element={<ImagePage />} />
             <Route path="/translate" element={<TranslationPage />} />
           </Routes>

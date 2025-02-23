@@ -1,7 +1,8 @@
+import { useChatSettings } from "@/hooks/use-chat-settings";
+import { Session } from "@/services/chat";
 import { OllamaService } from "@/services/ollama";
 import { StableDiffusionService } from "@/services/stable-diffusion";
 import { WhisperService } from "@/services/whisper";
-import { useChatSettings } from "@/hooks/use-chat-settings";
 import {
   createContext,
   PropsWithChildren,
@@ -24,6 +25,8 @@ export interface ServiceContextType {
   connectionsStatus: ConnectionStatus;
   ollamaModels: string[];
   whisperModels: string[];
+  selectedSession: Session | null;
+  setSelectedSession: (session: Session | null) => void;
 }
 
 const ServiceContext = createContext<ServiceContextType | null>(null);
@@ -42,6 +45,8 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
   const whisperService = useRef(new WhisperService());
   const { settings: chatSettings } = useChatSettings();
 
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+
   const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
     ollama: false,
     stableDiffusion: false,
@@ -56,26 +61,26 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
 
   const checkAvailability = async () => {
     const [
-      ollamaAvailable,
-      sdAvailable,
-      whisperAvailable,
+      // ollamaAvailable,
+      // sdAvailable,
+      // whisperAvailable,
       ollamaModels,
-      whisperModels,
+      // whisperModels,
     ] = await Promise.all([
-      ollamaService.current.checkAvailability(),
-      sdService.current.checkAvailability(),
-      whisperService.current.checkAvailability(),
+      // ollamaService.current.checkAvailability(),
+      // sdService.current.checkAvailability(),
+      // whisperService.current.checkAvailability(),
       ollamaService.current.getModels(),
-      whisperService.current.getModels(),
+      // whisperService.current.getModels(),
     ]);
 
-    setConnectionsStatus({
-      ollama: ollamaAvailable,
-      stableDiffusion: sdAvailable,
-      whisper: whisperAvailable,
-    });
+    // setConnectionsStatus({
+    //   ollama: ollamaAvailable,
+    //   stableDiffusion: sdAvailable,
+    //   whisper: whisperAvailable,
+    // });
     setOllamaModels(ollamaModels);
-    setWhisperModels(whisperModels);
+    // setWhisperModels(whisperModels);
   };
 
   useEffect(() => {
@@ -91,6 +96,8 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
         connectionsStatus,
         ollamaModels,
         whisperModels,
+        selectedSession,
+        setSelectedSession,
       }}
     >
       {children}
