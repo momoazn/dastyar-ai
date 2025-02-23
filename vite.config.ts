@@ -12,4 +12,5 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["lucide"],
   },
+  server: {},
 });
