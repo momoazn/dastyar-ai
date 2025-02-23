@@ -76,7 +76,7 @@ func handleDeleteSession(db *gorm.DB) echo.HandlerFunc {
 func handleAddMessage(db *gorm.DB) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sessionID := c.Param("id")
-		var msg Message
+		var msg ChatMessage
 		if err := c.Bind(&msg); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
@@ -129,7 +129,7 @@ func handleStreamChat(db *gorm.DB, ollamaClient *api.Client) echo.HandlerFunc {
 		}
 
 		// Create and save user message
-		userMsg := Message{
+		userMsg := ChatMessage{
 			SessionID: session.ID,
 			Role:      "user",
 			Content:   chatReq.Message,
@@ -140,7 +140,7 @@ func handleStreamChat(db *gorm.DB, ollamaClient *api.Client) echo.HandlerFunc {
 		}
 
 		// Create assistant message (will be updated with streamed content)
-		assistantMsg := Message{
+		assistantMsg := ChatMessage{
 			SessionID: session.ID,
 			Role:      "assistant",
 			Content:   "",
@@ -199,11 +199,7 @@ func handleGetModels(ollamaClient *api.Client) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
-		var modelsList []string
-		for _, model := range models.Models {
-			modelsList = append(modelsList, model.Name)
-		}
-		return c.JSON(http.StatusOK, modelsList)
+		return c.JSON(http.StatusOK, models)
 	}
 }
 
@@ -223,7 +219,10 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
+	}))
 
 	// API group
 	apiGroup := e.Group("/api")

@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Define the server address
-	serverAddr := "localhost:5173"
+	serverAddr := "localhost:8080"
 	fmt.Printf("Server starting on http://%s\n", serverAddr)
 
 	// Open browser automatically
