@@ -1,9 +1,12 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
 import { ServiceProvider, useServices } from "./context/service-context";
 import { PERSIAN_TEXTS } from "./lib/persian-texts";
 import { ChatPage, ImagePage, TranslationPage } from "./pages";
+
+const queryClient = new QueryClient();
 
 const NAV_LINKS = [
   { to: "/chat", label: PERSIAN_TEXTS.navigation.chat },
@@ -50,11 +53,13 @@ function MainContent() {
 
 function App() {
   return (
-    <ServiceProvider>
-      <div className="flex h-screen overflow-hidden bg-background text-foreground">
-        <MainContent />
-      </div>
-    </ServiceProvider>
+    <QueryClientProvider client={queryClient}>
+      <ServiceProvider>
+        <div className="flex h-screen overflow-hidden bg-background text-foreground">
+          <MainContent />
+        </div>
+      </ServiceProvider>
+    </QueryClientProvider>
   );
 }
 
