@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -169,16 +170,20 @@ func (h *Handler) handleGetThreadMessages(c echo.Context) error {
 }
 
 type ChatRequest struct {
-	Message  string `json:"message"`
+	Content  string `json:"content"`
 	Model    string `json:"model"`
 	ThreadID string `json:"thread_id"`
 }
 
 type ChatResponse struct {
-	Content    string `json:"content"`
-	Think      string `json:"think"`
-	IsThinking bool   `json:"isThinking"`
-	IsDone     bool   `json:"isDone"`
+	ID        uint      `json:"id"`
+	ThreadID  uint      `json:"thread_id"`
+	Content   string    `json:"content"`
+	Think     string    `json:"think"`
+	State     string    `json:"state"`
+	Role      string    `json:"role"`
+	Model     string    `json:"model"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func (h *Handler) handleStreamChat(c echo.Context) error {
@@ -193,7 +198,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		})
 	}
 
-	if chatReq.Message == "" || chatReq.Model == "" || chatReq.ThreadID == "" {
+	if chatReq.Content == "" || chatReq.Model == "" || chatReq.ThreadID == "" {
 		log.Error().Msg("message, model, and thread_id are required")
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Message: "message, model, and thread_id are required",
@@ -204,7 +209,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
 		Str("model", chatReq.Model).
-		Int("message_length", len(chatReq.Message)).
+		Int("message_length", len(chatReq.Content)).
 		Msg("Chat request received")
 
 	// Verify thread exists
@@ -228,7 +233,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	userMsg := ChatMessage{
 		ThreadID:  thread.ID,
 		Role:      "user",
-		Content:   chatReq.Message,
+		Content:   chatReq.Content,
 		Model:     chatReq.Model,
 		Timestamp: time.Now(),
 	}
@@ -252,6 +257,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		Think:     "",
 		Model:     chatReq.Model,
 		Timestamp: time.Now(),
+		State:     "idle",
 	}
 	if err := h.db.Create(&assistantMsg).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to create assistant message")
@@ -270,20 +276,35 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	// Create a channel to handle client disconnection
 	done := c.Request().Context().Done()
 	streamStart := time.Now()
-	currentContent := ""
+	chunk := ""
 	fullContent := ""
 	fullThink := ""
 	chunkCount := 0
 	isThinking := false
 	isThinkingModel := isThinkingModel(chatReq.Model)
+	currentState := "idle"
+
+	var threadMessages []ChatMessage
+	result = h.db.Where("thread_id = ?", chatReq.ThreadID).Order("timestamp ASC").Find(&threadMessages)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	messages := []api.Message{}
+	for _, message := range threadMessages {
+		messages = append(messages, api.Message{
+			Role:    message.Role,
+			Content: message.Content,
+		})
+	}
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model: chatReq.Model,
-		Messages: []api.Message{
-			{Role: "user", Content: chatReq.Message},
-		},
-		Stream: func() *bool { b := true; return &b }(),
+		Model:    chatReq.Model,
+		Messages: messages,
+		Stream:   func() *bool { b := true; return &b }(),
 	}, func(response api.ChatResponse) error {
 		select {
 		case <-done:
@@ -295,18 +316,20 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 			return fmt.Errorf("client disconnected")
 		default:
 			if isThinkingModel {
-				if response.Message.Content == "<think>" {
+				if strings.HasPrefix(response.Message.Content, "<think>") {
 					isThinking = true
+					currentState = "thinking"
 				}
 
-				if response.Message.Content == "</think>" {
+				if strings.HasSuffix(response.Message.Content, "</think>") {
 					isThinking = false
+					currentState = "responding"
 				}
 			}
 
 			chunkCount++
 			if response.Message.Content != "<think>" && response.Message.Content != "</think>" {
-				currentContent += response.Message.Content
+				chunk = response.Message.Content
 				if isThinking {
 					fullThink += response.Message.Content
 				} else {
@@ -317,17 +340,25 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 			var res ChatResponse
 			if isThinking {
 				res = ChatResponse{
-					Content:    "",
-					Think:      currentContent,
-					IsThinking: true,
-					IsDone:     false,
+					ID:        assistantMsg.ID,
+					Content:   "",
+					Think:     chunk,
+					State:     currentState,
+					Role:      assistantMsg.Role,
+					Model:     assistantMsg.Model,
+					ThreadID:  assistantMsg.ThreadID,
+					Timestamp: assistantMsg.Timestamp,
 				}
 			} else {
 				res = ChatResponse{
-					Content:    currentContent,
-					Think:      "",
-					IsThinking: false,
-					IsDone:     false,
+					ID:        assistantMsg.ID,
+					Content:   chunk,
+					Think:     fullThink,
+					State:     currentState,
+					Role:      assistantMsg.Role,
+					Model:     assistantMsg.Model,
+					ThreadID:  assistantMsg.ThreadID,
+					Timestamp: assistantMsg.Timestamp,
 				}
 			}
 
@@ -337,6 +368,8 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 			return nil
 		}
 	})
+
+	currentState = "done"
 
 	if err != nil {
 		log.Error().Err(err).
@@ -351,7 +384,10 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 
 	// Update the assistant message with the complete response
 	updateStart := time.Now()
-	if err := h.db.Model(&assistantMsg).Update("content", fullContent).Update("think", fullThink).Error; err != nil {
+	if err := h.db.Model(&assistantMsg).
+		Update("content", fullContent).
+		Update("think", fullThink).
+		Update("state", currentState).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
 	}
 	// Update thread's updated_at timestamp
