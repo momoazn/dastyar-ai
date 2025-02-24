@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
@@ -54,6 +55,7 @@ function MainContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
       <ServiceProvider>
         <div className="flex h-screen overflow-hidden bg-background text-foreground">
           <MainContent />
