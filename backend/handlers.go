@@ -15,192 +15,227 @@ import (
 	"gorm.io/gorm"
 )
 
-func handleGetAllSessions(db *gorm.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var sessions []Session
-		result := db.Preload("Messages").Order("updated_at DESC").Find(&sessions)
-		if result.Error != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-		return c.JSON(http.StatusOK, sessions)
-	}
+type Response struct {
+	Data    any    `json:"data"`
+	Message string `json:"message"`
 }
 
-func handleCreateSession(db *gorm.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var session Session
-		if err := c.Bind(&session); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-
-		result := db.Create(&session)
-		if result.Error != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-
-		return c.JSON(http.StatusCreated, session)
-	}
+type PaginatedResponse struct {
+	Data        any    `json:"data"`
+	Message     string `json:"message"`
+	HasNext     bool   `json:"has_next"`
+	HasPrevious bool   `json:"has_previous"`
 }
 
-func handleGetSession(db *gorm.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		id := c.Param("id")
-		var session Session
-
-		result := db.Preload("Messages").First(&session, id)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				return c.JSON(http.StatusNotFound, map[string]string{"error": "Session not found"})
-			}
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-
-		return c.JSON(http.StatusOK, session)
-	}
+type ErrorResponse struct {
+	Message string `json:"message"`
 }
 
-func handleDeleteSession(db *gorm.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		id := c.Param("id")
-		result := db.Delete(&Session{}, id)
-		if result.Error != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-		if result.RowsAffected == 0 {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "Session not found"})
-		}
-		return c.NoContent(http.StatusOK)
-	}
+type Handler struct {
+	db           *gorm.DB
+	ollamaClient *api.Client
 }
 
-func handleAddMessage(db *gorm.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sessionID := c.Param("id")
-		var msg ChatMessage
-		if err := c.Bind(&msg); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-
-		// Verify session exists
-		var session Session
-		result := db.First(&session, sessionID)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				return c.JSON(http.StatusNotFound, map[string]string{"error": "Session not found"})
-			}
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-
-		// Set session ID and create message
-		msg.SessionID = session.ID
-		result = db.Create(&msg)
-		if result.Error != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-
-		// Update session's updated_at timestamp
-		db.Model(&session).Update("updated_at", time.Now())
-
-		return c.JSON(http.StatusCreated, msg)
+func (h *Handler) handleGetAllThreads(c echo.Context) error {
+	var threads []Thread
+	result := h.db.Preload("Messages").Order("updated_at DESC").Find(&threads)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
 	}
+	return c.JSON(http.StatusOK, PaginatedResponse{
+		Data:        threads,
+		Message:     "Threads fetched successfully",
+		HasNext:     len(threads) > 10,
+		HasPrevious: false,
+	})
+}
+
+func (h *Handler) handleCreateThread(c echo.Context) error {
+	var thread Thread
+	if err := c.Bind(&thread); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	result := h.db.Create(&thread)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusCreated, Response{
+		Data:    thread,
+		Message: "Thread created successfully",
+	})
+}
+
+func (h *Handler) handleGetThread(c echo.Context) error {
+	id := c.Param("id")
+	var thread Thread
+
+	result := h.db.Preload("Messages").First(&thread, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, ErrorResponse{
+				Message: "Thread not found",
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Data:    thread,
+		Message: "Thread fetched successfully",
+	})
+}
+
+func (h *Handler) handleDeleteThread(c echo.Context) error {
+	id := c.Param("id")
+	result := h.db.Delete(&Thread{}, id)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+	if result.RowsAffected == 0 {
+		return c.JSON(http.StatusNotFound, ErrorResponse{
+			Message: "Thread not found",
+		})
+	}
+	return c.JSON(http.StatusOK, Response{
+		Message: "Thread deleted successfully",
+	})
+}
+
+func (h *Handler) handleGetMessages(c echo.Context) error {
+	ThreadID := c.Param("id")
+	var messages []ChatMessage
+	result := h.db.Where("thread_id = ?", ThreadID).Order("created_at ASC").Find(&messages)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, PaginatedResponse{
+		Data:        messages,
+		Message:     "Messages fetched successfully",
+		HasNext:     len(messages) > 10,
+		HasPrevious: false,
+	})
 }
 
 type ChatRequest struct {
-	Message string `json:"message"`
-	Model   string `json:"model"`
+	Message  string `json:"message"`
+	Model    string `json:"model"`
+	ThreadID string `json:"thread_id"`
 }
 
-func handleStreamChat(db *gorm.DB, ollamaClient *api.Client) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sessionID := c.Param("id")
-		var chatReq ChatRequest
-		if err := c.Bind(&chatReq); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-
-		// Verify session exists
-		var session Session
-		result := db.First(&session, sessionID)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				return c.JSON(http.StatusNotFound, map[string]string{"error": "Session not found"})
-			}
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": result.Error.Error()})
-		}
-
-		// Create and save user message
-		userMsg := ChatMessage{
-			SessionID: session.ID,
-			Role:      "user",
-			Content:   chatReq.Message,
-			CreatedAt: time.Now(),
-		}
-		if err := db.Create(&userMsg).Error; err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-
-		// Create assistant message (will be updated with streamed content)
-		assistantMsg := ChatMessage{
-			SessionID: session.ID,
-			Role:      "assistant",
-			Content:   "",
-			CreatedAt: time.Now(),
-		}
-		if err := db.Create(&assistantMsg).Error; err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-
-		// Set up SSE headers
-		c.Response().Header().Set("Content-Type", "text/event-stream")
-		c.Response().Header().Set("Cache-Control", "no-cache")
-		c.Response().Header().Set("Connection", "keep-alive")
-		c.Response().WriteHeader(http.StatusOK)
-
-		// Create a channel to handle client disconnection
-		done := c.Request().Context().Done()
-		fullResponse := ""
-
-		// Start streaming response
-		err := ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-			Model: chatReq.Model,
-			Messages: []api.Message{
-				{Role: "user", Content: chatReq.Message},
-			},
-			Stream: func() *bool { b := true; return &b }(),
-		}, func(response api.ChatResponse) error {
-			select {
-			case <-done:
-				return fmt.Errorf("client disconnected")
-			default:
-				fullResponse += response.Message.Content
-				// Send the chunk to the client
-				fmt.Fprintf(c.Response(), "data: %s\n\n", response.Message.Content)
-				c.Response().Flush()
-				return nil
-			}
+func (h *Handler) handleStreamChat(c echo.Context) error {
+	var chatReq ChatRequest
+	if err := c.Bind(&chatReq); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: err.Error(),
 		})
-
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-
-		// Update the assistant message with the complete response
-		db.Model(&assistantMsg).Update("content", fullResponse)
-		// Update session's updated_at timestamp
-		db.Model(&session).Update("updated_at", time.Now())
-
-		return nil
 	}
+
+	// Verify session exists
+	var thread Thread
+	result := h.db.First(&thread, chatReq.ThreadID)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, ErrorResponse{
+				Message: "Thread not found",
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	// Create and save user message
+	userMsg := ChatMessage{
+		ThreadID:  thread.ID,
+		Role:      "user",
+		Content:   chatReq.Message,
+		CreatedAt: time.Now(),
+	}
+	if err := h.db.Create(&userMsg).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	// Create assistant message (will be updated with streamed content)
+	assistantMsg := ChatMessage{
+		ThreadID:  thread.ID,
+		Role:      "assistant",
+		Content:   "",
+		CreatedAt: time.Now(),
+	}
+	if err := h.db.Create(&assistantMsg).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	// Set up SSE headers
+	c.Response().Header().Set("Content-Type", "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().WriteHeader(http.StatusOK)
+
+	// Create a channel to handle client disconnection
+	done := c.Request().Context().Done()
+	fullResponse := ""
+
+	// Start streaming response
+	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
+		Model: chatReq.Model,
+		Messages: []api.Message{
+			{Role: "user", Content: chatReq.Message},
+		},
+		Stream: func() *bool { b := true; return &b }(),
+	}, func(response api.ChatResponse) error {
+		select {
+		case <-done:
+			return fmt.Errorf("client disconnected")
+		default:
+			fullResponse += response.Message.Content
+			// Send the chunk to the client
+			fmt.Fprintf(c.Response(), "data: %s\n\n", response.Message.Content)
+			c.Response().Flush()
+			return nil
+		}
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	// Update the assistant message with the complete response
+	h.db.Model(&assistantMsg).Update("content", fullResponse)
+	// Update session's updated_at timestamp
+	h.db.Model(&thread).Update("updated_at", time.Now())
+
+	return nil
 }
 
-func handleGetModels(ollamaClient *api.Client) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		models, err := ollamaClient.List(c.Request().Context())
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-		return c.JSON(http.StatusOK, models)
+func (h *Handler) handleGetModels(c echo.Context) error {
+	models, err := h.ollamaClient.List(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
 	}
+	return c.JSON(http.StatusOK, models)
 }
 
 //go:embed dist
@@ -231,17 +266,22 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 	ollamaURL, _ := url.Parse("http://localhost:11434")
 	ollamaClient := api.NewClient(ollamaURL, &http.Client{})
 
+	handler := &Handler{
+		db:           db,
+		ollamaClient: ollamaClient,
+	}
+
 	// Session endpoints
-	apiGroup.GET("/sessions", handleGetAllSessions(db))
-	apiGroup.POST("/sessions", handleCreateSession(db))
-	apiGroup.GET("/sessions/:id", handleGetSession(db))
-	apiGroup.DELETE("/sessions/:id", handleDeleteSession(db))
-	apiGroup.POST("/sessions/:id/messages", handleAddMessage(db))
+	apiGroup.GET("/threads", handler.handleGetAllThreads)
+	apiGroup.POST("/threads", handler.handleCreateThread)
+	apiGroup.GET("/threads/:id", handler.handleGetThread)
+	apiGroup.DELETE("/threads/:id", handler.handleDeleteThread)
+	apiGroup.GET("/threads/:id/messages", handler.handleGetMessages)
 
 	// Streaming chat endpoint
-	apiGroup.POST("/sessions/:id/chat", handleStreamChat(db, ollamaClient))
+	apiGroup.POST("/chat", handler.handleStreamChat)
 
-	apiGroup.GET("/models", handleGetModels(ollamaClient))
+	apiGroup.GET("/models", handler.handleGetModels)
 
 	// Create a handler for serving static files
 	// This should be last to ensure API routes are handled first
