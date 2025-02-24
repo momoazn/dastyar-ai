@@ -3,8 +3,10 @@ package main
 import (
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Thread struct {
@@ -30,22 +32,56 @@ type ChatMessage struct {
 
 // Initialize database connection and create tables
 func initDB() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("chats.db"), &gorm.Config{})
+	start := time.Now()
+	log.Info().Msg("Initializing database connection...")
+
+	db, err := gorm.Open(sqlite.Open("chats.db"), &gorm.Config{
+		Logger: logger.New(
+			&log.Logger,
+			logger.Config{
+				SlowThreshold:             time.Second, // Log queries slower than 1s
+				LogLevel:                  logger.Info, // Log all SQL queries
+				IgnoreRecordNotFoundError: false,       // Log not found errors
+				Colorful:                  false,       // Disable color
+			},
+		),
+	})
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to connect to database")
 		return nil, err
 	}
+	log.Info().Dur("duration_ms", time.Since(start)).Msg("Database connection established")
 
 	// Auto migrate the schema
-	err = db.AutoMigrate(&Thread{}, &ChatMessage{})
-	if err != nil {
+	log.Info().Msg("Running database migrations...")
+	migStart := time.Now()
+	if err := db.AutoMigrate(&Thread{}, &ChatMessage{}); err != nil {
+		log.Error().Err(err).Msg("Failed to run database migrations")
+		return nil, err
+	}
+	log.Info().Dur("duration_ms", time.Since(migStart)).Msg("Database migrations completed")
+
+	// Seed initial data
+	log.Info().Msg("Checking for seed data...")
+	if err := seedDatabase(db); err != nil {
+		log.Error().Err(err).Msg("Failed to seed database")
 		return nil, err
 	}
 
-	// Seed initial data
-	err = seedDatabase(db)
-	if err != nil {
-		return nil, err
+	// Log some database stats
+	var threadCount, messageCount int64
+	if err := db.Model(&Thread{}).Count(&threadCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get thread count")
 	}
+	if err := db.Model(&ChatMessage{}).Count(&messageCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get message count")
+	}
+
+	log.Info().
+		Int64("thread_count", threadCount).
+		Int64("message_count", messageCount).
+		Dur("total_duration_ms", time.Since(start)).
+		Msg("Database initialization completed successfully")
 
 	return db, nil
 }
@@ -53,12 +89,22 @@ func initDB() (*gorm.DB, error) {
 // seedDatabase adds test data to the database for UI testing purposes.
 // It includes both English and Persian content to ensure proper multilingual support.
 func seedDatabase(db *gorm.DB) error {
-	// Check if seeding has already been done by looking for any existing threads
+	start := time.Now()
+	log.Info().Msg("Starting database seeding process...")
+
+	// Check if seeding has already been done
 	var count int64
-	db.Model(&Thread{}).Count(&count)
-	if count > 0 {
-		return nil // Database already has data
+	if err := db.Model(&Thread{}).Count(&count).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to check existing thread count")
+		return err
 	}
+
+	if count > 0 {
+		log.Info().Int64("existing_threads", count).Msg("Database already contains data, skipping seed")
+		return nil
+	}
+
+	log.Info().Msg("No existing data found, proceeding with seeding")
 
 	// Create 3 test threads with 5 messages each
 	threads := []Thread{
@@ -113,5 +159,21 @@ func seedDatabase(db *gorm.DB) error {
 	}
 
 	// Create the threads and their messages in the database
-	return db.Create(&threads).Error
+	log.Info().
+		Int("thread_count", len(threads)).
+		Int("total_messages", len(threads)*5).
+		Msg("Creating seed data...")
+
+	if err := db.Create(&threads).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to create seed data")
+		return err
+	}
+
+	log.Info().
+		Int("thread_count", len(threads)).
+		Int("total_messages", len(threads)*5).
+		Dur("duration_ms", time.Since(start)).
+		Msg("Seed data created successfully")
+
+	return nil
 }

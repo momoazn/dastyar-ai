@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ollama/ollama/api"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -37,13 +37,23 @@ type Handler struct {
 }
 
 func (h *Handler) handleGetAllThreads(c echo.Context) error {
+	start := time.Now()
+	log.Info().Msg("Handling get all threads request")
+
 	var threads []Thread
 	result := h.db.Preload("Messages").Order("updated_at DESC").Find(&threads)
 	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Failed to fetch threads")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
+
+	log.Info().
+		Int("thread_count", len(threads)).
+		Dur("duration_ms", time.Since(start)).
+		Msg("Successfully fetched threads")
+
 	return c.JSON(http.StatusOK, PaginatedResponse[Thread]{
 		Data:        threads,
 		Message:     "Threads fetched successfully",
@@ -53,19 +63,35 @@ func (h *Handler) handleGetAllThreads(c echo.Context) error {
 }
 
 func (h *Handler) handleCreateThread(c echo.Context) error {
+	start := time.Now()
+	log.Info().Msg("Handling create thread request")
+
 	var thread Thread
 	if err := c.Bind(&thread); err != nil {
+		log.Error().Err(err).Msg("Failed to bind request")
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Message: err.Error(),
 		})
 	}
 
+	log.Info().
+		Str("title", thread.Title).
+		Str("model", thread.Model).
+		Msg("Creating new thread")
+
 	result := h.db.Create(&thread)
 	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Failed to create thread")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
+
+	log.Info().
+		Uint("thread_id", thread.ID).
+		Str("title", thread.Title).
+		Dur("duration_ms", time.Since(start)).
+		Msg("Thread created successfully")
 
 	return c.JSON(http.StatusCreated, Response[Thread]{
 		Data:    thread,
@@ -74,20 +100,31 @@ func (h *Handler) handleCreateThread(c echo.Context) error {
 }
 
 func (h *Handler) handleGetThread(c echo.Context) error {
+	start := time.Now()
 	id := c.Param("id")
-	var thread Thread
+	log.Info().Str("thread_id", id).Msg("Handling get thread request")
 
+	var thread Thread
 	result := h.db.Preload("Messages").First(&thread, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			log.Info().Str("thread_id", id).Msg("Thread not found")
 			return c.JSON(http.StatusNotFound, ErrorResponse{
 				Message: "Thread not found",
 			})
 		}
+		log.Error().Err(result.Error).Str("thread_id", id).Msg("Failed to fetch thread")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
+
+	log.Info().
+		Str("thread_id", id).
+		Str("title", thread.Title).
+		Int("message_count", len(thread.Messages)).
+		Dur("duration_ms", time.Since(start)).
+		Msg("Thread fetched successfully")
 
 	return c.JSON(http.StatusOK, Response[Thread]{
 		Data:    thread,
@@ -137,27 +174,41 @@ type ChatRequest struct {
 }
 
 func (h *Handler) handleStreamChat(c echo.Context) error {
+	start := time.Now()
+	log.Info().Msg("Handling stream chat request")
+
 	var chatReq ChatRequest
 	if err := c.Bind(&chatReq); err != nil {
+		log.Error().Err(err).Msg("Failed to bind chat request")
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Message: err.Error(),
 		})
 	}
+
+	// Log sanitized request (exclude sensitive data)
+	log.Info().
+		Str("thread_id", chatReq.ThreadID).
+		Str("model", chatReq.Model).
+		Int("message_length", len(chatReq.Message)).
+		Msg("Chat request received")
 
 	// Verify session exists
 	var thread Thread
 	result := h.db.First(&thread, chatReq.ThreadID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			log.Info().Str("thread_id", chatReq.ThreadID).Msg("Thread not found")
 			return c.JSON(http.StatusNotFound, ErrorResponse{
 				Message: "Thread not found",
 			})
 		}
+		log.Error().Err(result.Error).Str("thread_id", chatReq.ThreadID).Msg("Failed to fetch thread")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
 
+	msgStart := time.Now()
 	// Create and save user message
 	userMsg := ChatMessage{
 		ThreadID:  thread.ID,
@@ -166,10 +217,16 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		CreatedAt: time.Now(),
 	}
 	if err := h.db.Create(&userMsg).Error; err != nil {
+		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to save user message")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: err.Error(),
 		})
 	}
+	log.Info().
+		Uint("message_id", userMsg.ID).
+		Str("thread_id", chatReq.ThreadID).
+		Dur("duration_ms", time.Since(msgStart)).
+		Msg("User message saved")
 
 	// Create assistant message (will be updated with streamed content)
 	assistantMsg := ChatMessage{
@@ -179,6 +236,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		CreatedAt: time.Now(),
 	}
 	if err := h.db.Create(&assistantMsg).Error; err != nil {
+		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to create assistant message")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: err.Error(),
 		})
@@ -193,6 +251,8 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	// Create a channel to handle client disconnection
 	done := c.Request().Context().Done()
 	fullResponse := ""
+	streamStart := time.Now()
+	chunkCount := 0
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
@@ -204,9 +264,16 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	}, func(response api.ChatResponse) error {
 		select {
 		case <-done:
+			log.Info().
+				Str("thread_id", chatReq.ThreadID).
+				Int("chunks_sent", chunkCount).
+				Dur("stream_duration_ms", time.Since(streamStart)).
+				Msg("Client disconnected")
 			return fmt.Errorf("client disconnected")
 		default:
 			fullResponse += response.Message.Content
+			chunkCount++
+
 			// Send the chunk to the client
 			fmt.Fprintf(c.Response(), "data: %s\n\n", response.Message.Content)
 			c.Response().Flush()
@@ -215,15 +282,34 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	})
 
 	if err != nil {
+		log.Error().Err(err).
+			Str("thread_id", chatReq.ThreadID).
+			Int("chunks_sent", chunkCount).
+			Dur("stream_duration_ms", time.Since(streamStart)).
+			Msg("Streaming failed")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: err.Error(),
 		})
 	}
 
 	// Update the assistant message with the complete response
-	h.db.Model(&assistantMsg).Update("content", fullResponse)
+	updateStart := time.Now()
+	if err := h.db.Model(&assistantMsg).Update("content", fullResponse).Error; err != nil {
+		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
+	}
 	// Update session's updated_at timestamp
-	h.db.Model(&thread).Update("updated_at", time.Now())
+	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
+		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update thread timestamp")
+	}
+
+	log.Info().
+		Str("thread_id", chatReq.ThreadID).
+		Int("response_length", len(fullResponse)).
+		Int("chunks_received", chunkCount).
+		Dur("stream_duration_ms", time.Since(streamStart)).
+		Dur("update_duration_ms", time.Since(updateStart)).
+		Dur("total_duration_ms", time.Since(start)).
+		Msg("Chat stream completed")
 
 	return nil
 }
@@ -242,13 +328,17 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 var staticFiles embed.FS
 
 func setupServer(db *gorm.DB) (*echo.Echo, error) {
+	start := time.Now()
+	log.Info().Msg("Setting up HTTP server...")
+
 	// Create Echo instance
 	e := echo.New()
 
 	// Create a file system from the embedded static directory
 	staticFS, err := fs.Sub(staticFiles, "dist")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to create static file system")
+		return nil, err
 	}
 
 	// Middleware
@@ -259,12 +349,15 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
 	}))
 
+	log.Info().Msg("Configured HTTP middleware")
+
 	// API group
 	apiGroup := e.Group("/api")
 
 	// Create Ollama client
 	ollamaURL, _ := url.Parse("http://localhost:11434")
 	ollamaClient := api.NewClient(ollamaURL, &http.Client{})
+	log.Info().Str("url", ollamaURL.String()).Msg("Configured Ollama client")
 
 	handler := &Handler{
 		db:           db,
@@ -280,20 +373,24 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 
 	// Streaming chat endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
-
 	apiGroup.GET("/models", handler.handleGetModels)
 
+	log.Info().Msg("Registered API routes")
+
 	// Create a handler for serving static files
-	// This should be last to ensure API routes are handled first
 	fileHandler := http.FileServer(http.FS(staticFS))
 	e.GET("/*", echo.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// If path starts with /api, return 404 as it means no API route was matched
 		if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
 			http.NotFound(w, r)
 			return
 		}
 		fileHandler.ServeHTTP(w, r)
 	})))
+
+	log.Info().
+		Str("static_dir", "dist").
+		Dur("setup_duration_ms", time.Since(start)).
+		Msg("Server setup completed")
 
 	return e, nil
 }
