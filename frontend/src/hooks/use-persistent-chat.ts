@@ -1,62 +1,106 @@
-import { useEffect, useMemo, useState } from "react";
-import { OllamaService } from "../services/ollama";
+import { Message, sendMessage as sendMessageApi } from "@/lib/api/chat";
+import { Dispatch, SetStateAction, useState } from "react";
 
-const STORAGE_KEY = "chatHistory";
+export const useChat = (
+  messages: Message[],
+  setMessages: Dispatch<SetStateAction<Message[]>>,
+  threadID: number,
+) => {
+  // const queryClient = useQueryClient();
 
-export interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-}
-
-export interface MessageWithThinking extends Message {
-  finishedThinking?: boolean;
-  think?: string;
-}
-
-export const usePersistentChat = (ollamaService: OllamaService) => {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  });
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
-
-  const sendMessage = async (content: string, selectedModel: string) => {
+  const sendMessage = async (content: string) => {
     if (!content.trim() || isStreaming) return;
 
-    const userMessage: Message = {
+    const userMessage: Partial<Message> = {
+      id: Math.random(),
       role: "user",
       content: content.trim(),
-      timestamp: Date.now(),
-    };
-    const assistantMessage: Message = {
-      role: "assistant",
-      content: "",
-      timestamp: Date.now(),
+      model: "deepscaler:latest",
     };
 
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    const assistantMessage: Partial<Message> = {
+      id: Math.random(),
+      role: "assistant",
+      content: "",
+      think: "",
+      model: "deepscaler:latest",
+      state: "idle",
+    };
+
+    // queryClient.setQueryData<PaginatedApiResponse<Message>>(
+    //   getThreadMessagesQueryKey(threadID),
+    //   (prev) => {
+    //     if (!prev) return prev;
+
+    //     return {
+    //       ...prev,
+    //       data: [
+    //         ...prev.data,
+    //         userMessage as Message,
+    //         assistantMessage as Message,
+    //       ],
+    //     };
+    //   },
+    // );
+
+    setMessages([
+      ...messages,
+      userMessage as Message,
+      assistantMessage as Message,
+    ]);
+
     setIsStreaming(true);
     setStopRequested(false);
 
-    let streamedContent = "";
-    await ollamaService.chat(userMessage.content, selectedModel, (token) => {
-      if (stopRequested) return;
+    let fullContent = "";
+    let fullThink = "";
 
-      streamedContent += token;
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1].content = streamedContent;
-        return newMessages;
-      });
-    });
+    await sendMessageApi(
+      threadID,
+      userMessage.content!,
+      "deepscaler:latest",
+      (chunk) => {
+        if (stopRequested) return;
 
-    setIsStreaming(false);
+        // queryClient.setQueryData<PaginatedApiResponse<Message>>(
+        //   getThreadMessagesQueryKey(threadID),
+        //   (prev) => {
+        //     if (!prev) return prev;
+
+        //     const newMessages = [...prev.data];
+        //     newMessages[newMessages.length - 1].content += chunk.content;
+        //     return {
+        //       ...prev,
+        //       data: newMessages,
+        //     };
+        //   },
+        // );
+
+        if (chunk.state === "thinking") {
+          fullThink += chunk.think ?? "";
+        } else if (chunk.state === "responding") {
+          fullContent += chunk.content ?? "";
+        }
+
+        const newMessage: Message = {
+          ...chunk,
+          content: fullContent,
+          think: fullThink,
+        };
+
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = newMessage;
+          return newMessages;
+        });
+      },
+      () => {
+        setIsStreaming(false);
+      },
+    );
   };
 
   const stopStreaming = () => {
@@ -64,46 +108,9 @@ export const usePersistentChat = (ollamaService: OllamaService) => {
     setIsStreaming(false);
   };
 
-  const clearHistory = () => {
-    setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
-  };
-
   return {
-    messages,
     isStreaming,
     sendMessage,
     stopStreaming,
-    clearHistory,
   };
 };
-
-export function useMessagesWithThinking(messages: Message[]) {
-  return useMemo(
-    () =>
-      messages.map((m: Message): MessageWithThinking => {
-        if (m.role === "assistant") {
-          if (m.content.includes("</think>")) {
-            return {
-              ...m,
-              finishedThinking: true,
-              think: m.content
-                .split("</think>")[0]
-                .replace("</think>", "")
-                .replace("<think>", ""),
-              content: m.content.split("</think>")[1],
-            };
-          } else {
-            return {
-              ...m,
-              finishedThinking: false,
-              think: m.content.replace("<think>", ""),
-              content: "",
-            };
-          }
-        }
-        return m;
-      }),
-    [messages],
-  );
-}

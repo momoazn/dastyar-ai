@@ -1,5 +1,4 @@
 import { useChatSettings } from "@/hooks/use-chat-settings";
-import { Session } from "@/services/chat";
 import { OllamaService } from "@/services/ollama";
 import { StableDiffusionService } from "@/services/stable-diffusion";
 import { WhisperService } from "@/services/whisper";
@@ -25,8 +24,6 @@ export interface ServiceContextType {
   connectionsStatus: ConnectionStatus;
   ollamaModels: string[];
   whisperModels: string[];
-  selectedSession: Session | null;
-  setSelectedSession: (session: Session | null) => void;
 }
 
 const ServiceContext = createContext<ServiceContextType | null>(null);
@@ -44,8 +41,6 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
   const sdService = useRef(new StableDiffusionService());
   const whisperService = useRef(new WhisperService());
   const { settings: chatSettings } = useChatSettings();
-
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const [connectionsStatus, setConnectionsStatus] = useState<ConnectionStatus>({
     ollama: false,
@@ -96,8 +91,6 @@ export const ServiceProvider = ({ children }: PropsWithChildren) => {
         connectionsStatus,
         ollamaModels,
         whisperModels,
-        selectedSession,
-        setSelectedSession,
       }}
     >
       {children}

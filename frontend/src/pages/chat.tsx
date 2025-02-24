@@ -1,38 +1,45 @@
+import { Mic, Pause, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import { AIMessage } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { useServices } from "@/context/service-context";
 import { useAudioRecording } from "@/hooks/use-audio-recording";
-import { useModelSelection } from "@/hooks/use-model-selection";
-import {
-  useMessagesWithThinking,
-  usePersistentChat,
-} from "@/hooks/use-persistent-chat";
+import { useChat } from "@/hooks/use-persistent-chat";
+import { Message, useThreadMessages } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
-import { THINKING_MODELS } from "@/services/ollama";
-import { Mic, Pause, Send, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 
-const isThinkingModel = (model: string) => {
-  return THINKING_MODELS.find((m) => model.includes(m)) !== undefined;
-};
+// const isThinkingModel = (model: string) => {
+//   return THINKING_MODELS.find((m) => model.includes(m)) !== undefined;
+// };
 
 export function ChatPage() {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
-  const { id } = useParams();
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  const { ollamaService, selectedSession } = useServices();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { selectedOllamaModel } = useModelSelection();
-  const { messages, isStreaming, sendMessage, stopStreaming, clearHistory } =
-    usePersistentChat(ollamaService);
-  const messagesWithThinking = useMessagesWithThinking(messages);
+  const { id: threadID } = useParams();
+
+  const { data: threadMessages } = useThreadMessages(Number(threadID));
+
+  const { isStreaming, sendMessage, stopStreaming } = useChat(
+    messages,
+    setMessages,
+    Number(threadID),
+  );
+
   const { isRecording, startRecording, stopRecording } =
     useAudioRecording(setMessage);
+
+  useEffect(() => {
+    if (threadMessages) {
+      setMessages(threadMessages.data);
+    }
+  }, [threadMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,7 +47,7 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      {messages.length > 0 && (
+      {/* {threadMessages?.data.length > 0 && (
         <Button
           variant="outline"
           size="icon"
@@ -49,18 +56,15 @@ export function ChatPage() {
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      )}
+      )} */}
 
-      <ScrollArea className="flex-1 rounded-lg border bg-background p-4">
+      <ScrollArea className="flex-1 rounded-lg bg-background">
         <div className="flex flex-col gap-4">
-          {(isThinkingModel(selectedOllamaModel)
-            ? messagesWithThinking
-            : messages
-          ).map((message) => (
+          {messages.map((message) => (
             <AIMessage
-              key={message.timestamp}
+              key={message.id}
               message={message}
-              isThinkingModel={isThinkingModel(selectedOllamaModel)}
+              // isThinkingModel={isThinkingModel(selectedOllamaModel)}
             />
           ))}
           <div ref={messagesEndRef} />
@@ -77,7 +81,7 @@ export function ChatPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              sendMessage(message, selectedOllamaModel);
+              sendMessage(message);
               setMessage("");
             }
           }}
@@ -104,7 +108,7 @@ export function ChatPage() {
               if (isStreaming) {
                 stopStreaming();
               } else {
-                sendMessage(message, selectedOllamaModel);
+                sendMessage(message);
                 setMessage("");
               }
             }}
