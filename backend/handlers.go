@@ -15,12 +15,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type Response struct {
-	Data    any    `json:"data"`
+type Response[T any] struct {
+	Data    T      `json:"data"`
 	Message string `json:"message"`
 }
 
-type PaginatedResponse struct {
+type PaginatedResponse[T any] struct {
 	Data        any    `json:"data"`
 	Message     string `json:"message"`
 	HasNext     bool   `json:"has_next"`
@@ -44,7 +44,7 @@ func (h *Handler) handleGetAllThreads(c echo.Context) error {
 			Message: result.Error.Error(),
 		})
 	}
-	return c.JSON(http.StatusOK, PaginatedResponse{
+	return c.JSON(http.StatusOK, PaginatedResponse[Thread]{
 		Data:        threads,
 		Message:     "Threads fetched successfully",
 		HasNext:     len(threads) > 10,
@@ -67,7 +67,7 @@ func (h *Handler) handleCreateThread(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, Response{
+	return c.JSON(http.StatusCreated, Response[Thread]{
 		Data:    thread,
 		Message: "Thread created successfully",
 	})
@@ -89,7 +89,7 @@ func (h *Handler) handleGetThread(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, Response{
+	return c.JSON(http.StatusOK, Response[Thread]{
 		Data:    thread,
 		Message: "Thread fetched successfully",
 	})
@@ -108,7 +108,7 @@ func (h *Handler) handleDeleteThread(c echo.Context) error {
 			Message: "Thread not found",
 		})
 	}
-	return c.JSON(http.StatusOK, Response{
+	return c.JSON(http.StatusOK, Response[Thread]{
 		Message: "Thread deleted successfully",
 	})
 }
@@ -122,7 +122,7 @@ func (h *Handler) handleGetMessages(c echo.Context) error {
 			Message: result.Error.Error(),
 		})
 	}
-	return c.JSON(http.StatusOK, PaginatedResponse{
+	return c.JSON(http.StatusOK, PaginatedResponse[ChatMessage]{
 		Data:        messages,
 		Message:     "Messages fetched successfully",
 		HasNext:     len(messages) > 10,
