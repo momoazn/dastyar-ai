@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -150,10 +151,10 @@ func (h *Handler) handleDeleteThread(c echo.Context) error {
 	})
 }
 
-func (h *Handler) handleGetMessages(c echo.Context) error {
+func (h *Handler) handleGetThreadMessages(c echo.Context) error {
 	ThreadID := c.Param("id")
 	var messages []ChatMessage
-	result := h.db.Where("thread_id = ?", ThreadID).Order("created_at ASC").Find(&messages)
+	result := h.db.Where("thread_id = ?", ThreadID).Order("timestamp ASC").Find(&messages)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
@@ -173,6 +174,13 @@ type ChatRequest struct {
 	ThreadID string `json:"thread_id"`
 }
 
+type ChatResponse struct {
+	Content    string `json:"content"`
+	Think      string `json:"think"`
+	IsThinking bool   `json:"isThinking"`
+	IsDone     bool   `json:"isDone"`
+}
+
 func (h *Handler) handleStreamChat(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling stream chat request")
@@ -185,6 +193,13 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		})
 	}
 
+	if chatReq.Message == "" || chatReq.Model == "" || chatReq.ThreadID == "" {
+		log.Error().Msg("message, model, and thread_id are required")
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: "message, model, and thread_id are required",
+		})
+	}
+
 	// Log sanitized request (exclude sensitive data)
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
@@ -192,7 +207,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		Int("message_length", len(chatReq.Message)).
 		Msg("Chat request received")
 
-	// Verify session exists
+	// Verify thread exists
 	var thread Thread
 	result := h.db.First(&thread, chatReq.ThreadID)
 	if result.Error != nil {
@@ -214,7 +229,8 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		ThreadID:  thread.ID,
 		Role:      "user",
 		Content:   chatReq.Message,
-		CreatedAt: time.Now(),
+		Model:     chatReq.Model,
+		Timestamp: time.Now(),
 	}
 	if err := h.db.Create(&userMsg).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to save user message")
@@ -233,7 +249,9 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		ThreadID:  thread.ID,
 		Role:      "assistant",
 		Content:   "",
-		CreatedAt: time.Now(),
+		Think:     "",
+		Model:     chatReq.Model,
+		Timestamp: time.Now(),
 	}
 	if err := h.db.Create(&assistantMsg).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to create assistant message")
@@ -243,16 +261,21 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 	}
 
 	// Set up SSE headers
-	c.Response().Header().Set("Content-Type", "text/event-stream")
+	c.Response().Header().Set("Content-Type", "application/x-ndjson")
 	c.Response().Header().Set("Cache-Control", "no-cache")
 	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Header().Set("Transfer-Encoding", "chunked")
 	c.Response().WriteHeader(http.StatusOK)
 
 	// Create a channel to handle client disconnection
 	done := c.Request().Context().Done()
-	fullResponse := ""
 	streamStart := time.Now()
+	currentContent := ""
+	fullContent := ""
+	fullThink := ""
 	chunkCount := 0
+	isThinking := false
+	isThinkingModel := isThinkingModel(chatReq.Model)
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
@@ -271,11 +294,45 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 				Msg("Client disconnected")
 			return fmt.Errorf("client disconnected")
 		default:
-			fullResponse += response.Message.Content
+			if isThinkingModel {
+				if response.Message.Content == "<think>" {
+					isThinking = true
+				}
+
+				if response.Message.Content == "</think>" {
+					isThinking = false
+				}
+			}
+
 			chunkCount++
+			if response.Message.Content != "<think>" && response.Message.Content != "</think>" {
+				currentContent += response.Message.Content
+				if isThinking {
+					fullThink += response.Message.Content
+				} else {
+					fullContent += response.Message.Content
+				}
+			}
+
+			var res ChatResponse
+			if isThinking {
+				res = ChatResponse{
+					Content:    "",
+					Think:      currentContent,
+					IsThinking: true,
+					IsDone:     false,
+				}
+			} else {
+				res = ChatResponse{
+					Content:    currentContent,
+					Think:      "",
+					IsThinking: false,
+					IsDone:     false,
+				}
+			}
 
 			// Send the chunk to the client
-			fmt.Fprintf(c.Response(), "data: %s\n\n", response.Message.Content)
+			json.NewEncoder(c.Response()).Encode(res)
 			c.Response().Flush()
 			return nil
 		}
@@ -294,17 +351,17 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 
 	// Update the assistant message with the complete response
 	updateStart := time.Now()
-	if err := h.db.Model(&assistantMsg).Update("content", fullResponse).Error; err != nil {
+	if err := h.db.Model(&assistantMsg).Update("content", fullContent).Update("think", fullThink).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
 	}
-	// Update session's updated_at timestamp
+	// Update thread's updated_at timestamp
 	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update thread timestamp")
 	}
 
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
-		Int("response_length", len(fullResponse)).
+		Int("response_length", len(fullContent)+len(fullThink)).
 		Int("chunks_received", chunkCount).
 		Dur("stream_duration_ms", time.Since(streamStart)).
 		Dur("update_duration_ms", time.Since(updateStart)).
@@ -321,7 +378,10 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 			Message: err.Error(),
 		})
 	}
-	return c.JSON(http.StatusOK, models)
+	return c.JSON(http.StatusOK, Response[[]api.ListModelResponse]{
+		Data:    models.Models,
+		Message: "Models fetched successfully",
+	})
 }
 
 //go:embed dist
@@ -342,7 +402,7 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 	}
 
 	// Middleware
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -364,12 +424,12 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 		ollamaClient: ollamaClient,
 	}
 
-	// Session endpoints
+	// Threads and messages endpoints
 	apiGroup.GET("/threads", handler.handleGetAllThreads)
 	apiGroup.POST("/threads", handler.handleCreateThread)
 	apiGroup.GET("/threads/:id", handler.handleGetThread)
 	apiGroup.DELETE("/threads/:id", handler.handleDeleteThread)
-	apiGroup.GET("/threads/:id/messages", handler.handleGetMessages)
+	apiGroup.GET("/threads/:id/messages", handler.handleGetThreadMessages)
 
 	// Streaming chat endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)

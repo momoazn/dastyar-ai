@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"slices"
 )
 
 func openBrowser(serverAddr string) {
@@ -22,4 +23,10 @@ func openBrowser(serverAddr string) {
 	if err != nil {
 		fmt.Printf("Error opening browser: %v\n", err)
 	}
+}
+
+var thinkingModels = []string{"deepseek-r1", "deepscaler"}
+
+func isThinkingModel(model string) bool {
+	return slices.Contains(thinkingModels, model)
 }
