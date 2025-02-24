@@ -25,9 +25,10 @@ type ChatMessage struct {
 	Thread    Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
 	Role      string    `json:"role"`
 	Content   string    `json:"content"`
+	Think     string    `json:"think"`
 	Model     string    `json:"model"`
 	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 // Initialize database connection and create tables
@@ -154,7 +155,7 @@ func seedDatabase(db *gorm.DB) error {
 		threads[i].LastMessageAt = now
 
 		for j := range threads[i].Messages {
-			threads[i].Messages[j].CreatedAt = now.Add(time.Duration(j) * time.Minute)
+			threads[i].Messages[j].Timestamp = now.Add(time.Duration(j) * time.Minute)
 		}
 	}
 
