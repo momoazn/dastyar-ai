@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
-	"slices"
+	"strings"
 )
 
 func openBrowser(serverAddr string) {
@@ -28,5 +28,10 @@ func openBrowser(serverAddr string) {
 var thinkingModels = []string{"deepseek-r1", "deepscaler"}
 
 func isThinkingModel(model string) bool {
-	return slices.Contains(thinkingModels, model)
+	for _, m := range thinkingModels {
+		if strings.Contains(model, m) {
+			return true
+		}
+	}
+	return false
 }
