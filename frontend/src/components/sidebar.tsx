@@ -1,41 +1,31 @@
+import { ChevronsLeft, ChevronsRight, MessageSquare, Plus } from "lucide-react";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useCreateThread, useThreads } from "@/lib/api/chat";
 import { cn } from "@/lib/utils";
-import { ChevronsLeft, ChevronsRight, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { SettingsModal } from "./settings-modal";
-import { ChatService, Session } from "@/services/chat";
-import { useServices } from "@/context/service-context";
-import { useNavigate, NavLink } from "react-router-dom";
+import { LoadingSpinner } from "./ui/loading-spinner";
 
 export function Sidebar() {
-  const { current: chatService } = useRef(new ChatService());
-
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>([]);
 
-  const { setSelectedSession } = useServices();
+  const {
+    data: threads,
+    isLoading: isThreadsLoading,
+    refetch: refetchThreads,
+  } = useThreads();
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      const sessions = await chatService.getAllSessions();
-      setSessions(sessions);
-      // if (sessions.length > 0 && !selectedSession) {
-      //   setSelectedSession(sessions[0]);
-      // }
-    };
-
-    fetchSessions();
-  }, []);
-
-  const createSession = async () => {
-    const session = await chatService.createSession("New Chat");
-    setSessions([...sessions, session]);
-    setSelectedSession(session);
-    navigate(`/chat/${session.id}`);
-  };
+  const { mutate: createThread } = useCreateThread({
+    onSuccess: (data) => {
+      navigate(`/chat/${data.data.id}`);
+      refetchThreads();
+    },
+  });
 
   return (
     <div
@@ -63,30 +53,45 @@ export function Sidebar() {
             <ChevronsRight className="h-4 w-4" />
           )}
         </Button>
-        <Button variant="default" size="icon" onClick={createSession}>
+        <Button
+          variant="default"
+          size="icon"
+          onClick={() => createThread("New Chat")}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Chat list section */}
       <ScrollArea className="flex-1 p-4">
-        <div className="flex flex-col gap-2">
+        <div className="rtl flex flex-col gap-1">
           {!isCollapsed && (
             <>
-              {sessions.map((session) => (
-                <NavLink
-                  key={session.id}
-                  to={`/chat/${session.id}`}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex h-10 items-center justify-start rounded-md border bg-muted/50 px-4 pt-1",
-                      isActive ? "bg-primary/10 text-primary" : "",
-                    )
-                  }
-                >
-                  {session.title ?? "New Chat"}
-                </NavLink>
-              ))}
+              {isThreadsLoading ? (
+                <LoadingSpinner />
+              ) : (
+                threads?.data?.map((thread) => (
+                  <NavLink
+                    key={thread.id}
+                    to={`/chat/${thread.id}`}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex h-10 items-center gap-2 text-wrap rounded-md ps-2 text-sm text-muted-foreground",
+                        isActive ? "bg-primary/10 text-primary" : "",
+                      )
+                    }
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>
+                      {thread.title
+                        ? thread.title.length > 24
+                          ? `${thread.title.slice(0, 20)}...`
+                          : thread.title
+                        : "New Chat"}
+                    </span>
+                  </NavLink>
+                ))
+              )}
             </>
           )}
         </div>
