@@ -27,7 +27,7 @@ type ChatMessage struct {
 	Content   string    `json:"content"`
 	Think     string    `json:"think"`
 	Model     string    `json:"model"`
-	Status    string    `json:"status"`
+	State     string    `json:"state"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
@@ -60,7 +60,7 @@ func initDB() (*gorm.DB, error) {
 		log.Error().Err(err).Msg("Failed to run database migrations")
 		return nil, err
 	}
-	log.Info().Dur("duration_ms", time.Since(migStart)).Msg("Database migrations completed")
+	log.Info().Dur("duration_ms", time.Since(migStart)).Msg("Database migrations done")
 
 	// Seed initial data
 	log.Info().Msg("Checking for seed data...")
@@ -82,7 +82,7 @@ func initDB() (*gorm.DB, error) {
 		Int64("thread_count", threadCount).
 		Int64("message_count", messageCount).
 		Dur("total_duration_ms", time.Since(start)).
-		Msg("Database initialization completed successfully")
+		Msg("Database initialization done successfully")
 
 	return db, nil
 }
@@ -113,36 +113,36 @@ func seedDatabase(db *gorm.DB) error {
 			Title: "آموزش هوش مصنوعی",
 			Model: "gpt-4",
 			Messages: []ChatMessage{
-				{Role: "user", Content: "هوش مصنوعی چیست و چگونه کار می‌کند؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "هوش مصنوعی سیستمی است که می‌تواند داده‌ها را تحلیل کرده و با یادگیری از آنها، تصمیم‌گیری کند. این سیستم‌ها از الگوریتم‌های پیچیده برای شبیه‌سازی تفکر انسانی استفاده می‌کنند.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "تفاوت بین یادگیری عمیق و یادگیری ماشین چیست؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "یادگیری ماشین زیرمجموعه‌ای از هوش مصنوعی است که از الگوریتم‌ها برای یادگیری از داده‌ها استفاده می‌کند. یادگیری عمیق نوع پیشرفته‌تری است که از شبکه‌های عصبی چندلایه برای یادگیری استفاده می‌کند.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "کاربردهای هوش مصنوعی در زندگی روزمره چیست؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "هوش مصنوعی در بسیاری از جنبه‌های زندگی روزمره کاربرد دارد: دستیارهای صوتی مثل سیری، پیشنهادات خرید در فروشگاه‌های آنلاین، تشخیص چهره در دوربین‌ها، سیستم‌های پیشنهاد محتوا در شبکه‌های اجتماعی، و ترجمه خودکار زبان.", Model: "gpt-4", Status: "completed"},
+				{Role: "user", Content: "هوش مصنوعی چیست و چگونه کار می‌کند؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "هوش مصنوعی سیستمی است که می‌تواند داده‌ها را تحلیل کرده و با یادگیری از آنها، تصمیم‌گیری کند. این سیستم‌ها از الگوریتم‌های پیچیده برای شبیه‌سازی تفکر انسانی استفاده می‌کنند.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "تفاوت بین یادگیری عمیق و یادگیری ماشین چیست؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "یادگیری ماشین زیرمجموعه‌ای از هوش مصنوعی است که از الگوریتم‌ها برای یادگیری از داده‌ها استفاده می‌کند. یادگیری عمیق نوع پیشرفته‌تری است که از شبکه‌های عصبی چندلایه برای یادگیری استفاده می‌کند.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "کاربردهای هوش مصنوعی در زندگی روزمره چیست؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "هوش مصنوعی در بسیاری از جنبه‌های زندگی روزمره کاربرد دارد: دستیارهای صوتی مثل سیری، پیشنهادات خرید در فروشگاه‌های آنلاین، تشخیص چهره در دوربین‌ها، سیستم‌های پیشنهاد محتوا در شبکه‌های اجتماعی، و ترجمه خودکار زبان.", Model: "gpt-4", State: "done"},
 			},
 		},
 		{
 			Title: "مشاوره برنامه‌نویسی",
 			Model: "gpt-4",
 			Messages: []ChatMessage{
-				{Role: "user", Content: "بهترین زبان برنامه‌نویسی برای شروع کدام است؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "پایتون یک انتخاب عالی برای شروع است. سینتکس ساده و خوانایی بالایی دارد و منابع آموزشی زیادی در دسترس است.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "چطور می‌توانم در برنامه‌نویسی پیشرفت کنم؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "تمرین مداوم، کار روی پروژه‌های شخصی، مطالعه کد دیگران و مشارکت در پروژه‌های متن‌باز بهترین راه‌های پیشرفت هستند.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "برای یادگیری وب چه مسیری را پیشنهاد می‌کنید؟", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "برای شروع، HTML و CSS را یاد بگیرید. سپس JavaScript را مطالعه کنید. بعد می‌توانید فریم‌ورک‌های مدرن مثل React یا Vue را یاد بگیرید. برای بک‌اند هم Node.js یا Python با Django خوب هستند.", Model: "gpt-4", Status: "completed"},
+				{Role: "user", Content: "بهترین زبان برنامه‌نویسی برای شروع کدام است؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "پایتون یک انتخاب عالی برای شروع است. سینتکس ساده و خوانایی بالایی دارد و منابع آموزشی زیادی در دسترس است.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "چطور می‌توانم در برنامه‌نویسی پیشرفت کنم؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "تمرین مداوم، کار روی پروژه‌های شخصی، مطالعه کد دیگران و مشارکت در پروژه‌های متن‌باز بهترین راه‌های پیشرفت هستند.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "برای یادگیری وب چه مسیری را پیشنهاد می‌کنید؟", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "برای شروع، HTML و CSS را یاد بگیرید. سپس JavaScript را مطالعه کنید. بعد می‌توانید فریم‌ورک‌های مدرن مثل React یا Vue را یاد بگیرید. برای بک‌اند هم Node.js یا Python با Django خوب هستند.", Model: "gpt-4", State: "done"},
 			},
 		},
 		{
 			Title: "Understanding Go Concurrency",
 			Model: "gpt-4",
 			Messages: []ChatMessage{
-				{Role: "user", Content: "What is concurrent programming in Go?", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "Concurrent programming in Go is a way to handle multiple tasks simultaneously using goroutines and channels. This makes programs more efficient and responsive.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "What are the benefits of using goroutines?", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "Goroutines are lightweight, requiring only a few KB of memory. They start quickly, can run thousands concurrently, and communicate safely through channels.", Model: "gpt-4", Status: "completed"},
-				{Role: "user", Content: "Could you explain error handling in concurrent Go?", Model: "gpt-4", Status: "completed"},
-				{Role: "assistant", Content: "In concurrent Go, error handling is typically done through channels and select statements. You can also use error groups for managing multiple goroutines, and panic/recover for unexpected errors. Always ensure proper error propagation to maintain program stability.", Model: "gpt-4", Status: "completed"},
+				{Role: "user", Content: "What is concurrent programming in Go?", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "Concurrent programming in Go is a way to handle multiple tasks simultaneously using goroutines and channels. This makes programs more efficient and responsive.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "What are the benefits of using goroutines?", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "Goroutines are lightweight, requiring only a few KB of memory. They start quickly, can run thousands concurrently, and communicate safely through channels.", Model: "gpt-4", State: "done"},
+				{Role: "user", Content: "Could you explain error handling in concurrent Go?", Model: "gpt-4", State: "done"},
+				{Role: "assistant", Content: "In concurrent Go, error handling is typically done through channels and select statements. You can also use error groups for managing multiple goroutines, and panic/recover for unexpected errors. Always ensure proper error propagation to maintain program stability.", Model: "gpt-4", State: "done"},
 			},
 		},
 	}
