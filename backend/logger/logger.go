@@ -40,7 +40,76 @@ func InitLogger(config Config) error {
 	// Configure console output
 	var writers []io.Writer
 	if config.ConsoleLoggingEnabled {
-		writers = append(writers, os.Stdout)
+		consoleWriter := zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: "15:04:05",
+			NoColor:    false,
+			PartsOrder: []string{
+				zerolog.TimestampFieldName,
+				zerolog.LevelFieldName,
+				zerolog.MessageFieldName,
+				zerolog.CallerFieldName,
+			},
+			FormatMessage: func(i interface{}) string {
+				return fmt.Sprintf("%s |", i)
+			},
+			FieldsExclude: []string{"caller", "time", "level"},
+			FormatFieldName: func(i interface{}) string {
+				return fmt.Sprintf("%s:", i)
+			},
+			FormatFieldValue: func(i interface{}) string {
+				switch v := i.(type) {
+				case time.Duration:
+					return v.Round(time.Millisecond).String()
+				case string:
+					return v
+				case int:
+					return fmt.Sprintf("%d", v)
+				case bool:
+					if v {
+						return "yes"
+					}
+					return "no"
+				default:
+					return fmt.Sprintf("%v", i)
+				}
+			},
+			FormatLevel: func(i interface{}) string {
+				if ll, ok := i.(string); ok {
+					switch ll {
+					case "trace":
+						return "\x1b[97mTRACE\x1b[0m"
+					case "debug":
+						return "\x1b[36mDEBUG\x1b[0m"
+					case "info":
+						return "\x1b[32mINFO\x1b[0m"
+					case "warn":
+						return "\x1b[33mWARN\x1b[0m"
+					case "error":
+						return "\x1b[31mERROR\x1b[0m"
+					case "fatal":
+						return "\x1b[31;1mFATAL\x1b[0m"
+					case "panic":
+						return "\x1b[41;97mPANIC\x1b[0m"
+					default:
+						return ll
+					}
+				}
+				return "???"
+			},
+			FormatCaller: func(i interface{}) string {
+				if i == nil {
+					return ""
+				}
+				if c, ok := i.(string); ok {
+					if len(c) > 0 {
+						return filepath.Base(c)
+					}
+				}
+				return "???"
+			},
+		}
+		writers = append(writers, consoleWriter)
 	}
 
 	// Configure file output
@@ -73,15 +142,23 @@ func InitLogger(config Config) error {
 	}
 
 	// Configure global logger
-	zerolog.TimeFieldFormat = time.RFC3339Nano
+	zerolog.TimeFieldFormat = "2006-01-02T15:04:05.000Z07:00"
 
 	// Set console level
 	if config.ConsoleLoggingEnabled {
 		zerolog.SetGlobalLevel(config.ConsoleLogLevel)
 	}
 
-	// Create logger
-	log.Logger = zerolog.New(writer).With().Timestamp().Caller().Logger()
+	// Create logger with additional context
+	logger := zerolog.New(writer).
+		With().
+		Timestamp().
+		Caller().
+		Logger().
+		Level(zerolog.InfoLevel)
+
+	// Set global logger
+	log.Logger = logger
 
 	// Log initial configuration
 	log.Info().
