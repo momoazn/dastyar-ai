@@ -421,6 +421,13 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 	})
 }
 
+func (h *Handler) handleHealthCheck(c echo.Context) error {
+	return c.JSON(http.StatusOK, Response[string]{
+		Data:    "ok",
+		Message: "Server is running",
+	})
+}
+
 //go:embed dist
 var staticFiles embed.FS
 
@@ -534,6 +541,9 @@ func setupServer(db *gorm.DB) (*echo.Echo, error) {
 	// Streaming chat endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
 	apiGroup.GET("/models", handler.handleGetModels)
+
+	// Health check endpoint
+	apiGroup.GET("/health", handler.handleHealthCheck)
 
 	log.Info().Msg("Registered API routes")
 

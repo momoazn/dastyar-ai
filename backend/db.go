@@ -36,7 +36,7 @@ func initDB() (*gorm.DB, error) {
 	start := time.Now()
 	log.Info().Msg("Initializing database connection...")
 
-	db, err := gorm.Open(sqlite.Open("chats.db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("../chats.db"), &gorm.Config{
 		Logger: logger.New(
 			&log.Logger,
 			logger.Config{

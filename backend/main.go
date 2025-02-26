@@ -5,8 +5,6 @@ import (
 	"os"
 	"runtime"
 
-	"ai-assistant/logger"
-
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -14,7 +12,7 @@ import (
 
 func main() {
 	// Initialize logger with configuration
-	if err := logger.InitLogger(logger.Config{
+	if err := InitLogger(Config{
 		ConsoleLoggingEnabled: true,
 		ConsoleLogLevel:       zerolog.InfoLevel,
 		FileLoggingEnabled:    true,
