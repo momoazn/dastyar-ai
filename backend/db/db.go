@@ -10,13 +10,12 @@ import (
 )
 
 type Thread struct {
-	ID            uint          `json:"id" gorm:"primaryKey"`
-	Title         string        `json:"title"`
-	Messages      []ChatMessage `json:"messages,omitempty" gorm:"foreignKey:ThreadID"`
-	Model         string        `json:"model"`
-	CreatedAt     time.Time     `json:"created_at"`
-	UpdatedAt     time.Time     `json:"updated_at"`
-	LastMessageAt time.Time     `json:"last_message_at"`
+	ID        uint          `json:"id" gorm:"primaryKey"`
+	Title     string        `json:"title"`
+	Messages  []ChatMessage `json:"messages,omitempty" gorm:"foreignKey:ThreadID"`
+	Model     string        `json:"model"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 type ChatMessage struct {
@@ -32,16 +31,17 @@ type ChatMessage struct {
 }
 
 type TranslateMessage struct {
-	ID         uint      `json:"id" gorm:"primaryKey"`
-	ThreadID   uint      `json:"thread_id"`
-	Thread     Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
-	Content    string    `json:"content"`
-	Model      string    `json:"model"`
-	SourceLang string    `json:"source_lang"`
-	TargetLang string    `json:"target_lang"`
-	State      string    `json:"state"`
-	Tone       string    `json:"tone"`
-	Timestamp  time.Time `json:"timestamp"`
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	ThreadID     uint      `json:"thread_id"`
+	Thread       Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Input        string    `json:"input"`
+	Output       string    `json:"output"`
+	Model        string    `json:"model"`
+	SourceLang   string    `json:"source_lang"`
+	TargetLang   string    `json:"target_lang"`
+	Tone         string    `json:"tone"`
+	SystemPrompt string    `json:"-"`
+	Timestamp    time.Time `json:"timestamp"`
 }
 
 // Initialize database connection and create tables
@@ -124,7 +124,7 @@ func seedDatabase(db *gorm.DB) error {
 	threads := []Thread{
 		{
 			Title: "آموزش هوش مصنوعی",
-			Model: "gpt-4",
+			Model: "deepseek-r1",
 			Messages: []ChatMessage{
 				{Role: "user", Content: "هوش مصنوعی چیست و چگونه کار می‌کند؟", Model: "gpt-4", State: "done"},
 				{Role: "assistant", Content: "هوش مصنوعی سیستمی است که می‌تواند داده‌ها را تحلیل کرده و با یادگیری از آنها، تصمیم‌گیری کند. این سیستم‌ها از الگوریتم‌های پیچیده برای شبیه‌سازی تفکر انسانی استفاده می‌کنند.", Model: "gpt-4", State: "done"},
@@ -136,7 +136,7 @@ func seedDatabase(db *gorm.DB) error {
 		},
 		{
 			Title: "مشاوره برنامه‌نویسی",
-			Model: "gpt-4",
+			Model: "deepseek-r1",
 			Messages: []ChatMessage{
 				{Role: "user", Content: "بهترین زبان برنامه‌نویسی برای شروع کدام است؟", Model: "gpt-4", State: "done"},
 				{Role: "assistant", Content: "پایتون یک انتخاب عالی برای شروع است. سینتکس ساده و خوانایی بالایی دارد و منابع آموزشی زیادی در دسترس است.", Model: "gpt-4", State: "done"},
@@ -148,7 +148,7 @@ func seedDatabase(db *gorm.DB) error {
 		},
 		{
 			Title: "Understanding Go Concurrency",
-			Model: "gpt-4",
+			Model: "deepseek-r1",
 			Messages: []ChatMessage{
 				{Role: "user", Content: "What is concurrent programming in Go?", Model: "gpt-4", State: "done"},
 				{Role: "assistant", Content: "Concurrent programming in Go is a way to handle multiple tasks simultaneously using goroutines and channels. This makes programs more efficient and responsive.", Model: "gpt-4", State: "done"},
@@ -163,9 +163,8 @@ func seedDatabase(db *gorm.DB) error {
 	// Set timestamps for threads and messages
 	now := time.Now()
 	for i := range threads {
-		threads[i].CreatedAt = now
-		threads[i].UpdatedAt = now
-		threads[i].LastMessageAt = now
+		threads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+		threads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
 
 		for j := range threads[i].Messages {
 			threads[i].Messages[j].Timestamp = now.Add(time.Duration(j) * time.Minute)

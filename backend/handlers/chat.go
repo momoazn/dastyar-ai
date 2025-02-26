@@ -237,7 +237,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
 	}
 	// Update thread's updated_at timestamp
-	if err := h.db.Model(&thread).Update("last_message_at", time.Now()).Update("updated_at", time.Now()).Error; err != nil {
+	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update thread timestamp")
 	}
 
@@ -255,7 +255,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 
 type TranslateRequest struct {
 	ThreadID   string `json:"thread_id"`
-	Content    string `json:"content"`
+	Input      string `json:"input"`
 	Model      string `json:"model"`
 	SourceLang string `json:"source_lang"`
 	TargetLang string `json:"target_lang"`
@@ -277,10 +277,10 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		translateReq.Tone = "formal"
 	}
 
-	if translateReq.Content == "" || translateReq.Model == "" || translateReq.SourceLang == "" || translateReq.TargetLang == "" || translateReq.ThreadID == "" {
-		log.Error().Msg("content, model, from_lang, to_lang, and thread_id are required")
+	if translateReq.Input == "" || translateReq.Model == "" || translateReq.SourceLang == "" || translateReq.TargetLang == "" || translateReq.ThreadID == "" {
+		log.Error().Msg("input, model, from_lang, to_lang, and thread_id are required")
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "content, model, from_lang, to_lang, and thread_id are required",
+			Message: "input, model, from_lang, to_lang, and thread_id are required",
 		})
 	}
 
@@ -303,14 +303,17 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 	sourceLang := getLanguageFullName(translateReq.SourceLang)
 	targetLang := getLanguageFullName(translateReq.TargetLang)
 	tone := getToneDescription(translateReq.Tone)
+	systemPrompt := getSystemPrompt(sourceLang, targetLang, tone, translateReq.Input)
 
 	translateMsg := db.TranslateMessage{
-		Content:    translateReq.Content,
-		Model:      translateReq.Model,
-		ThreadID:   thread.ID,
-		SourceLang: sourceLang,
-		TargetLang: targetLang,
-		Tone:       tone,
+		Input:        translateReq.Input,
+		Output:       "",
+		Model:        translateReq.Model,
+		ThreadID:     thread.ID,
+		SourceLang:   translateReq.SourceLang,
+		TargetLang:   translateReq.TargetLang,
+		Tone:         translateReq.Tone,
+		SystemPrompt: systemPrompt,
 	}
 
 	if err := h.db.Create(&translateMsg).Error; err != nil {
@@ -325,7 +328,7 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		Messages: []api.Message{
 			{
 				Role:    "user",
-				Content: getSystemPrompt(sourceLang, targetLang, tone, translateReq.Content),
+				Content: systemPrompt,
 			},
 		},
 		Format: translateResponseSchema,
@@ -340,12 +343,11 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		}
 
 		content := translateResponse.Translation
-
-		translateMsg.Content = content
+		translateMsg.Output = content
 		return nil
 	})
 
-	if err := h.db.Model(&translateMsg).Update("content", translateMsg.Content).Update("state", "done").Error; err != nil {
+	if err := h.db.Model(&translateMsg).Update("output", translateMsg.Output).Update("timestamp", time.Now()).Error; err != nil {
 		log.Error().Err(err).Msg("Failed to update translate message")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: err.Error(),
@@ -353,7 +355,7 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 	}
 
 	// Update thread's updated_at timestamp
-	if err := h.db.Model(&thread).Update("last_message_at", time.Now()).Update("updated_at", time.Now()).Error; err != nil {
+	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", translateReq.ThreadID).Msg("Failed to update thread timestamp")
 	}
 

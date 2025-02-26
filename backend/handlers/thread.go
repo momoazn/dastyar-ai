@@ -15,7 +15,7 @@ func (h *Handler) handleGetAllThreads(c echo.Context) error {
 	log.Info().Msg("Handling get all threads request")
 
 	var threads []db.Thread
-	result := h.db.Preload("Messages").Order("last_message_at DESC").Find(&threads)
+	result := h.db.Order("updated_at DESC").Find(&threads)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Failed to fetch threads")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -36,12 +36,17 @@ func (h *Handler) handleGetAllThreads(c echo.Context) error {
 	})
 }
 
+type CreateThreadRequest struct {
+	Title string `json:"title"`
+	Model string `json:"model"`
+}
+
 func (h *Handler) handleCreateThread(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling create thread request")
 
-	var thread db.Thread
-	if err := c.Bind(&thread); err != nil {
+	var request CreateThreadRequest
+	if err := c.Bind(&request); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
 		return c.JSON(http.StatusBadRequest, ErrorResponse{
 			Message: err.Error(),
@@ -49,10 +54,16 @@ func (h *Handler) handleCreateThread(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("title", thread.Title).
-		Str("model", thread.Model).
+		Str("title", request.Title).
+		Str("model", request.Model).
 		Msg("Creating new thread")
 
+	thread := db.Thread{
+		Title:     request.Title,
+		Model:     request.Model,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 	result := h.db.Create(&thread)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Failed to create thread")
