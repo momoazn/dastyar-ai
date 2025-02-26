@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 
 import { useGetSelectedChatModel, useSetSelectedChatModel } from "./atoms";
@@ -19,10 +19,12 @@ const NAV_LINKS = [
 ];
 
 function MainContent() {
-  const { data: chatModels } = useChatModels();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const selectedChatModel = useGetSelectedChatModel();
   const setSelectedChatModel = useSetSelectedChatModel();
+
+  const { data: chatModels } = useChatModels();
 
   useEffect(() => {
     if (chatModels?.data && !Boolean(selectedChatModel)) {
@@ -32,9 +34,15 @@ function MainContent() {
 
   return (
     <>
-      <Sidebar />
+      <Sidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
       <div className="flex h-full w-full flex-col overflow-hidden">
-        <Header />
+        <Header
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
         <nav className="flex h-16 items-center border-b border-border px-4">
           {NAV_LINKS.map(({ to, label }) => (
             <NavLink
@@ -76,4 +84,3 @@ function App() {
 }
 
 export default App;
-

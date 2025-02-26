@@ -75,6 +75,7 @@ export function useTranslation(threadId: number) {
         model,
         false,
       );
+
       return response.content.trim();
     } catch (error) {
       console.error("Translation error:", error);

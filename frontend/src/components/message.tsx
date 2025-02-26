@@ -20,7 +20,10 @@ export interface MessageProps {
 export function Message({ message }: MessageProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  const hasThinking = isThinkingModel(message.model);
+  const hasThinking =
+    isThinkingModel(message.model) &&
+    message.role === "assistant" &&
+    message.think !== "";
 
   return (
     <div

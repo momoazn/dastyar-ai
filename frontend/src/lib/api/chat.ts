@@ -4,8 +4,12 @@ import {
   useQuery,
   UseQueryOptions,
 } from "@tanstack/react-query";
+
 import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { StreamResponseService } from "../utils";
+
+export type ChatState = "idle" | "thinking" | "responding" | "done";
+export type ChatRole = "user" | "assistant" | "system";
 
 export type Thread = {
   id: number;
@@ -20,12 +24,20 @@ export type Thread = {
 export type Message = {
   id: number;
   thread_id: number;
-  role: string;
+  role: ChatRole;
   content: string;
   think: string;
   model: string;
-  state: "idle" | "thinking" | "responding" | "done";
+  state: ChatState;
   timestamp: string;
+};
+
+export type ChatModel = {
+  name: string;
+  model: string;
+  modified_at: string;
+  size: number;
+  digest: string;
 };
 
 export type SendMessageBody = {
@@ -52,7 +64,7 @@ export const getThreadMessagesQueryKey = (id: number) => [
 
 export const useThreadMessages = (
   id: number,
-  options?: UseQueryOptions<PaginatedApiResponse<Message>, Error>,
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<Message>, Error>>,
 ) => {
   return useQuery({
     queryKey: getThreadMessagesQueryKey(id),
@@ -85,14 +97,6 @@ export const useDeleteThread = (
       }),
     ...options,
   });
-};
-
-export type ChatModel = {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
 };
 
 export const useChatModels = (

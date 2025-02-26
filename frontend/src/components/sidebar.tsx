@@ -1,5 +1,5 @@
 import { ChevronsLeft, ChevronsRight, MessageSquare, Plus } from "lucide-react";
-import { useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils";
 import { SettingsModal } from "./settings-modal";
 import { LoadingSpinner } from "./ui/loading-spinner";
 
-export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
+}
 
+export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   const navigate = useNavigate();
 
   const {
@@ -23,7 +26,7 @@ export function Sidebar() {
   const { mutate: createThread, isPending: isCreatingThread } = useCreateThread(
     {
       onSuccess: (data) => {
-        navigate(`/chat/${data.data.id}`);
+        navigate(`/chat/${data.data.id}`, { state: { thread: data.data } });
         refetchThreads();
       },
     },
@@ -33,23 +36,20 @@ export function Sidebar() {
     <div
       className={cn(
         "flex h-full flex-col border-l border-r transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-[50px]" : "w-[340px]",
+        !isSidebarOpen ? "w-0 overflow-hidden" : "w-[340px]",
       )}
     >
       {/* Header section */}
       <div
-        className={cn(
-          "flex h-16 items-center justify-between border-b p-4",
-          isCollapsed ? "flex-col" : "flex-row",
-        )}
+        className={cn("flex h-16 items-center justify-between border-b p-4")}
       >
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => setIsSidebarOpen((c) => !c)}
         >
-          {isCollapsed ? (
+          {!isSidebarOpen ? (
             <ChevronsLeft className="h-4 w-4" />
           ) : (
             <ChevronsRight className="h-4 w-4" />
@@ -72,7 +72,7 @@ export function Sidebar() {
       {/* Chat list section */}
       <ScrollArea className="flex-1 p-4">
         <div className="rtl flex flex-col gap-1">
-          {!isCollapsed && (
+          {isSidebarOpen && (
             <>
               {isThreadsLoading ? (
                 <LoadingSpinner />
@@ -106,7 +106,7 @@ export function Sidebar() {
 
       {/* Footer with settings button */}
       <div className="flex h-12 items-center justify-end border-t p-4">
-        {!isCollapsed && <SettingsModal />}
+        {isSidebarOpen && <SettingsModal />}
       </div>
     </div>
   );

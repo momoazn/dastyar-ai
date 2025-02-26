@@ -20,7 +20,9 @@ export function ChatPage() {
 
   const { id: threadID } = useParams<{ id: string }>();
 
-  const { data: threadMessages } = useThreadMessages(Number(threadID));
+  const { data: threadMessages } = useThreadMessages(Number(threadID), {
+    enabled: !!threadID,
+  });
 
   const { isStreaming, sendMessage, stopStreaming } = useChat(
     messages,
@@ -43,17 +45,6 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      {/* {threadMessages?.data.length > 0 && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={clearHistory}
-          className="self-end text-destructive hover:bg-destructive hover:text-destructive-foreground"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      )} */}
-
       <ScrollArea className="flex-1 rounded-lg bg-background">
         <div className="flex flex-col gap-4">
           {messages.map((message) => (
