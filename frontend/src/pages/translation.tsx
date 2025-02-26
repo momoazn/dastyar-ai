@@ -14,6 +14,9 @@ import {
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { useTranslation } from "../hooks/use-translation";
+import { useThreadTranslations } from "@/lib/api/chat";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const languages = [
   {
@@ -55,8 +58,24 @@ const tones = [
   { value: "friendly", label: PERSIAN_TEXTS.tones.friendly },
 ];
 
+const getToneLabel = (tone: string) => {
+  console.log("##### tone", tone);
+
+  return tones.find((t) => t.value === tone)?.label || tone;
+};
+
+const getLanguageLabel = (language: string) => {
+  return languages.find((l) => l.value === language)?.label || language;
+};
+
 export function TranslationPage() {
   const { threadID } = useParams();
+
+  const {
+    data: translations,
+    isLoading: isTranslationsLoading,
+    refetch: refetchTranslations,
+  } = useThreadTranslations(Number(threadID));
 
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -79,6 +98,7 @@ export function TranslationPage() {
       });
 
       setTranslatedText(result);
+      refetchTranslations();
     } catch (error) {
       if (error instanceof Error) {
         setTranslatedText(
@@ -168,7 +188,7 @@ export function TranslationPage() {
           </div>
           <div>
             <Textarea
-              placeholder="ترجمه..."
+              placeholder={PERSIAN_TEXTS.translation.translatedText}
               value={translatedText}
               readOnly
               className="min-h-[250px]"
@@ -186,6 +206,63 @@ export function TranslationPage() {
               : PERSIAN_TEXTS.translation.translate}
           </Button>
         </div>
+      </Card>
+
+      <Card className="flex-1 bg-background p-4">
+        <h3 className="text-md mb-4 font-medium text-muted-foreground">
+          {PERSIAN_TEXTS.translation.translations}
+        </h3>
+
+        {isTranslationsLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : translations?.data && translations.data.length > 0 ? (
+          <ScrollArea className="h-[calc(100%-2rem)]">
+            <div className="space-y-4">
+              {translations.data.map((translation) => (
+                <div
+                  key={translation.id}
+                  className="rounded-lg border border-border bg-card p-4 shadow-sm"
+                >
+                  <div className="mb-2 flex flex-row-reverse items-center justify-between text-sm text-muted-foreground">
+                    <div className="rtl flex items-center gap-2">
+                      <span>{getLanguageLabel(translation.source_lang)}</span>
+                      <span>←</span>
+                      <span>{getLanguageLabel(translation.target_lang)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>
+                        {new Date(translation.timestamp).toLocaleString()}
+                      </span>
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                        {getToneLabel(translation.tone)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <p
+                      dir="auto"
+                      className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
+                    >
+                      {translation.input}
+                    </p>
+                    <p
+                      dir="auto"
+                      className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
+                    >
+                      {translation.output}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            {PERSIAN_TEXTS.translation.noTranslations}
+          </div>
+        )}
       </Card>
     </div>
   );

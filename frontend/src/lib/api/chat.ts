@@ -14,14 +14,13 @@ export type ChatRole = "user" | "assistant" | "system";
 export type Thread = {
   id: number;
   title: string;
-  messages: Message[];
+  messages: ChatMessage[];
   model: string;
   created_at: string;
   updated_at: string;
-  last_message_at: string;
 };
 
-export type Message = {
+export type ChatMessage = {
   id: number;
   thread_id: number;
   role: ChatRole;
@@ -29,6 +28,18 @@ export type Message = {
   think: string;
   model: string;
   state: ChatState;
+  timestamp: string;
+};
+
+export type TranslateMessage = {
+  id: number;
+  thread_id: number;
+  input: string;
+  output: string;
+  model: string;
+  source_lang: string;
+  target_lang: string;
+  tone: string;
   timestamp: string;
 };
 
@@ -64,12 +75,12 @@ export const getThreadMessagesQueryKey = (id: number) => [
 
 export const useThreadMessages = (
   id: number,
-  options?: Partial<UseQueryOptions<PaginatedApiResponse<Message>, Error>>,
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<ChatMessage>, Error>>,
 ) => {
   return useQuery({
     queryKey: getThreadMessagesQueryKey(id),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<Message>>(`/threads/${id}/messages`),
+      fetchApi<PaginatedApiResponse<ChatMessage>>(`/threads/${id}/messages`),
     ...options,
   });
 };
@@ -125,19 +136,19 @@ export async function sendMessage(
   content: string,
   model: string,
   stream: boolean,
-  onChunk?: (chunk: Message) => void,
+  onChunk?: (chunk: ChatMessage) => void,
   onDone?: () => void,
-): Promise<Message> {
+): Promise<ChatMessage> {
   const service = new StreamResponseService();
 
-  const response = await service.processStreamableRequest<Message>("chat", {
+  const response = await service.processStreamableRequest<ChatMessage>("chat", {
     content,
     model,
     thread_id: threadId.toString(),
     stream,
   });
 
-  const completedMessage: Message = {
+  const completedMessage: ChatMessage = {
     id: 0,
     thread_id: threadId,
     role: "assistant",
@@ -184,7 +195,7 @@ export type TranslationOptions = {
 };
 
 export type TranslateRequest = {
-  content: string;
+  input: string;
   model: string;
 } & TranslationOptions;
 
@@ -192,10 +203,26 @@ export async function translateMessage(
   threadId: number,
   request: TranslateRequest,
 ) {
-  const response = await fetchApi<ApiResponse<Message>>(`/translate`, {
+  const response = await fetchApi<ApiResponse<TranslateMessage>>(`/translate`, {
     method: "POST",
     body: JSON.stringify({ ...request, thread_id: threadId.toString() }),
   });
 
   return response.data;
 }
+
+export const useThreadTranslations = (
+  id: number,
+  options?: Partial<
+    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
+  >,
+) => {
+  return useQuery({
+    queryKey: ["thread-translations", id],
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<TranslateMessage>>(
+        `/threads/${id}/translations`,
+      ),
+    ...options,
+  });
+};

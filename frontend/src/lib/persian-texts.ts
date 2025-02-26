@@ -42,6 +42,9 @@ export const PERSIAN_TEXTS = {
     translate: "ترجمه",
     error: "خطا در ترجمه",
     tryAgain: "لطفا دوباره تلاش کنید.",
+    translations: "ترجمه‌ها",
+    translatedText: "ترجمه",
+    noTranslations: "هیچ ترجمه‌ای وجود ندارد",
   },
 
   // Model Selection

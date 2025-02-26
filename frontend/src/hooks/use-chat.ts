@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
 import { useGetSelectedChatModel } from "@/atoms";
-import { type Message, sendMessage as sendMessageApi } from "@/lib/api/chat";
+import { type ChatMessage, sendMessage as sendMessageApi } from "@/lib/api/chat";
 
 export const useChat = (
-  messages: Message[],
-  setMessages: Dispatch<SetStateAction<Message[]>>,
+  messages: ChatMessage[],
+  setMessages: Dispatch<SetStateAction<ChatMessage[]>>,
 ) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
@@ -19,13 +19,13 @@ export const useChat = (
   ) => {
     if (!content.trim() || isStreaming) return;
 
-    const userMessage: Partial<Message> = {
+    const userMessage: Partial<ChatMessage> = {
       id: Math.random(),
       role: "user",
       content: content.trim(),
     };
 
-    const assistantMessage: Partial<Message> = {
+    const assistantMessage: Partial<ChatMessage> = {
       id: Math.random(),
       role: "assistant",
       content: "",
@@ -36,8 +36,8 @@ export const useChat = (
 
     setMessages([
       ...messages,
-      userMessage as Message,
-      assistantMessage as Message,
+      userMessage as ChatMessage,
+      assistantMessage as ChatMessage,
     ]);
 
     setIsStreaming(true);
@@ -60,7 +60,7 @@ export const useChat = (
           fullContent += chunk.content ?? "";
         }
 
-        const newMessage: Message = {
+        const newMessage: ChatMessage = {
           ...chunk,
           content: fullContent,
           think: fullThink,

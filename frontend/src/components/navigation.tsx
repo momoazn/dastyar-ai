@@ -12,11 +12,11 @@ export function Navigation() {
       <NavigationItem to={`/threads/${threadID}/chat`}>
         {PERSIAN_TEXTS.navigation.chat}
       </NavigationItem>
-      <NavigationItem to={`/threads/${threadID}/image`}>
-        {PERSIAN_TEXTS.navigation.imageGeneration}
-      </NavigationItem>
       <NavigationItem to={`/threads/${threadID}/translate`}>
         {PERSIAN_TEXTS.navigation.translation}
+      </NavigationItem>
+      <NavigationItem to={`/image`}>
+        {PERSIAN_TEXTS.navigation.imageGeneration}
       </NavigationItem>
     </nav>
   );

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAudioRecording } from "@/hooks/use-audio-recording";
 import { useChat } from "@/hooks/use-chat";
 import {
-  type Message as MessageType,
+  type ChatMessage as ChatMessageType,
   useCreateThread,
   useThreadMessages,
 } from "@/lib/api/chat";
@@ -18,7 +18,7 @@ import { detectTextDirection } from "@/lib/utils";
 
 export function ChatPage() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

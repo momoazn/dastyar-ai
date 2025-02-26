@@ -20,14 +20,14 @@ export function useTranslation(threadId: number) {
     setIsTranslating(true);
     try {
       const response = await translateMessage(threadId, {
-        content: text,
+        input: text,
         model,
         source_lang: options.sourceLang,
         target_lang: options.targetLang,
         tone: options.tone,
       });
 
-      return response.content.trim();
+      return response.output.trim();
     } catch (error) {
       console.error("Translation error:", error);
       throw new Error("Translation failed. Please try again.");

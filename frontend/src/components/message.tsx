@@ -2,7 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import type { Message } from "@/lib/api/chat";
+import type { ChatMessage } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -14,7 +14,7 @@ const isThinkingModel = (model: string) => {
 };
 
 export interface MessageProps {
-  message: Message;
+  message: ChatMessage;
 }
 
 export function Message({ message }: MessageProps) {

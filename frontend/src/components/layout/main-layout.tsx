@@ -17,7 +17,7 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar isSidebarOpen={isSidebarOpen} />
       <div className="flex h-full w-full flex-col overflow-hidden">
         <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         <Navigation />
@@ -29,7 +29,10 @@ export function MainLayout() {
             <Route path="/translate" element={<TranslationPage />} />
             <Route path="/threads/:threadID/chat" element={<ChatPage />} />
             <Route path="/threads/:threadID/image" element={<ImagePage />} />
-            <Route path="/threads/:threadID/translate" element={<TranslationPage />} />
+            <Route
+              path="/threads/:threadID/translate"
+              element={<TranslationPage />}
+            />
           </Routes>
         </div>
       </div>
