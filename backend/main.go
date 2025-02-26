@@ -1,6 +1,10 @@
 package main
 
 import (
+	"ai-assistant/db"
+	"ai-assistant/handlers"
+	"ai-assistant/utils"
+	"embed"
 	"fmt"
 	"os"
 	"runtime"
@@ -9,6 +13,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+//go:embed dist
+var staticFiles embed.FS
 
 func main() {
 	// Initialize logger with configuration
@@ -37,7 +44,7 @@ func main() {
 
 	// Initialize database
 	log.Info().Msg("Initializing database...")
-	db, err := initDB()
+	db, err := db.InitDB()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize database")
 	}
@@ -58,7 +65,7 @@ func main() {
 
 	// Setup routes
 	log.Info().Msg("Setting up HTTP server...")
-	e, err := setupServer(db)
+	e, err := handlers.SetupServer(db, staticFiles)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to setup server")
 	}
@@ -72,7 +79,7 @@ func main() {
 	// Open browser automatically in background
 	go func() {
 		if os.Getenv("DONT_OPEN_BROWSER") != "true" {
-			openBrowser(serverAddr)
+			utils.OpenBrowser(serverAddr)
 		}
 	}()
 

@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"time"
@@ -31,8 +31,21 @@ type ChatMessage struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+type TranslateMessage struct {
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	ThreadID   uint      `json:"thread_id"`
+	Thread     Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Content    string    `json:"content"`
+	Model      string    `json:"model"`
+	SourceLang string    `json:"source_lang"`
+	TargetLang string    `json:"target_lang"`
+	State      string    `json:"state"`
+	Tone       string    `json:"tone"`
+	Timestamp  time.Time `json:"timestamp"`
+}
+
 // Initialize database connection and create tables
-func initDB() (*gorm.DB, error) {
+func InitDB() (*gorm.DB, error) {
 	start := time.Now()
 	log.Info().Msg("Initializing database connection...")
 
@@ -56,7 +69,7 @@ func initDB() (*gorm.DB, error) {
 	// Auto migrate the schema
 	log.Info().Msg("Running database migrations...")
 	migStart := time.Now()
-	if err := db.AutoMigrate(&Thread{}, &ChatMessage{}); err != nil {
+	if err := db.AutoMigrate(&Thread{}, &ChatMessage{}, &TranslateMessage{}); err != nil {
 		log.Error().Err(err).Msg("Failed to run database migrations")
 		return nil, err
 	}

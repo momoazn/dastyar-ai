@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func openBrowser(serverAddr string) {
+func OpenBrowser(serverAddr string) {
 	var err error
 	switch runtime.GOOS {
 	case "linux":
@@ -27,7 +27,7 @@ func openBrowser(serverAddr string) {
 
 var thinkingModels = []string{"deepseek-r1", "deepscaler"}
 
-func isThinkingModel(model string) bool {
+func IsThinkingModel(model string) bool {
 	for _, m := range thinkingModels {
 		if strings.Contains(model, m) {
 			return true

@@ -176,3 +176,26 @@ export async function sendMessage(
 
   return completedMessage;
 }
+
+export type TranslationOptions = {
+  source_lang: string;
+  target_lang: string;
+  tone: string;
+};
+
+export type TranslateRequest = {
+  content: string;
+  model: string;
+} & TranslationOptions;
+
+export async function translateMessage(
+  threadId: number,
+  request: TranslateRequest,
+) {
+  const response = await fetchApi<ApiResponse<Message>>(`/translate`, {
+    method: "POST",
+    body: JSON.stringify({ ...request, thread_id: threadId.toString() }),
+  });
+
+  return response.data;
+}
