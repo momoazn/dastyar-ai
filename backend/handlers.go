@@ -156,12 +156,17 @@ func (h *Handler) handleDeleteThread(c echo.Context) error {
 func (h *Handler) handleGetThreadMessages(c echo.Context) error {
 	ThreadID := c.Param("id")
 	var messages []ChatMessage
-	result := h.db.Where("thread_id = ?", ThreadID).Order("timestamp ASC").Find(&messages)
+	result := h.db.
+		Where("thread_id = ?", ThreadID).
+		Where("role IN (?, ?)", "user", "assistant").
+		Order("timestamp ASC").
+		Find(&messages)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
+
 	return c.JSON(http.StatusOK, PaginatedResponse[ChatMessage]{
 		Data:        messages,
 		Message:     "Messages fetched successfully",
@@ -422,6 +427,12 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 }
 
 func (h *Handler) handleHealthCheck(c echo.Context) error {
+	err := h.ollamaClient.Heartbeat(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
 	return c.JSON(http.StatusOK, Response[string]{
 		Data:    "ok",
 		Message: "Server is running",
