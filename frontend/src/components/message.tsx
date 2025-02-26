@@ -21,9 +21,9 @@ export function Message({ message }: MessageProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const hasThinking =
-    isThinkingModel(message.model) &&
-    message.role === "assistant" &&
-    message.think !== "";
+    message?.role === "assistant" &&
+    message?.think !== "" &&
+    isThinkingModel(message?.model ?? "");
 
   return (
     <div

@@ -1,26 +1,22 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { Dispatch, SetStateAction, useState } from "react";
 
 import { useGetSelectedChatModel } from "@/atoms";
-import {
-  getThreadMessagesQueryKey,
-  Message,
-  sendMessage as sendMessageApi,
-} from "@/lib/api/chat";
+import { type Message, sendMessage as sendMessageApi } from "@/lib/api/chat";
 
 export const useChat = (
   messages: Message[],
   setMessages: Dispatch<SetStateAction<Message[]>>,
-  threadID: number,
 ) => {
-  const queryClient = useQueryClient();
-
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
 
   const selectedModel = useGetSelectedChatModel();
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (
+    content: string,
+    threadID: number,
+    onDone?: () => void,
+  ) => {
     if (!content.trim() || isStreaming) return;
 
     const userMessage: Partial<Message> = {
@@ -78,9 +74,7 @@ export const useChat = (
       },
       () => {
         setIsStreaming(false);
-        queryClient.refetchQueries({
-          queryKey: getThreadMessagesQueryKey(threadID),
-        });
+        onDone?.();
       },
     );
   };

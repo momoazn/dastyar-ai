@@ -1,6 +1,6 @@
 import { Mic, Pause, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { Message } from "@/components/message";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useAudioRecording } from "@/hooks/use-audio-recording";
 import { useChat } from "@/hooks/use-chat";
-import { type Message as MessageType, useThreadMessages } from "@/lib/api/chat";
+import {
+  type Message as MessageType,
+  useCreateThread,
+  useThreadMessages,
+} from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
@@ -19,16 +23,21 @@ export function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { id: threadID } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  const { data: threadMessages } = useThreadMessages(Number(threadID), {
-    enabled: !!threadID,
-  });
+  const { data: threadMessages, refetch: refetchMessages } = useThreadMessages(
+    Number(threadID),
+    {
+      enabled: !!threadID,
+    },
+  );
 
   const { isStreaming, sendMessage, stopStreaming } = useChat(
     messages,
     setMessages,
-    Number(threadID),
   );
+
+  const { mutateAsync: createThread } = useCreateThread();
 
   const { isRecording, startRecording, stopRecording } =
     useAudioRecording(setMessage);
@@ -42,6 +51,20 @@ export function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (threadID) {
+      await sendMessage(message, Number(threadID), refetchMessages);
+      setMessage("");
+      return;
+    }
+
+    const { data: newThread } = await createThread("New Chat");
+    sendMessage(message, newThread.id, () =>
+      navigate(`/chat/${newThread.id}`, { replace: true }),
+    );
+    setMessage("");
+  };
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -64,8 +87,7 @@ export function ChatPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              sendMessage(message);
-              setMessage("");
+              handleSendMessage();
             }
           }}
         />
@@ -91,8 +113,7 @@ export function ChatPage() {
               if (isStreaming) {
                 stopStreaming();
               } else {
-                sendMessage(message);
-                setMessage("");
+                handleSendMessage();
               }
             }}
           >
