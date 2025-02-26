@@ -44,7 +44,7 @@ func (h *Handler) handleGetAllThreads(c echo.Context) error {
 	log.Info().Msg("Handling get all threads request")
 
 	var threads []Thread
-	result := h.db.Preload("Messages").Order("updated_at DESC").Find(&threads)
+	result := h.db.Preload("Messages").Order("last_message_at DESC").Find(&threads)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Failed to fetch threads")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -397,7 +397,7 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
 	}
 	// Update thread's updated_at timestamp
-	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
+	if err := h.db.Model(&thread).Update("last_message_at", time.Now()).Update("updated_at", time.Now()).Error; err != nil {
 		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update thread timestamp")
 	}
 

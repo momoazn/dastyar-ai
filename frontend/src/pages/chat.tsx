@@ -22,7 +22,7 @@ export function ChatPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { id: threadID } = useParams<{ id: string }>();
+  const { threadID } = useParams();
   const navigate = useNavigate();
 
   const { data: threadMessages, refetch: refetchMessages } = useThreadMessages(
@@ -54,7 +54,7 @@ export function ChatPage() {
 
   const handleSendMessage = async () => {
     if (threadID) {
-      await sendMessage(message, Number(threadID), refetchMessages);
+      sendMessage(message, Number(threadID), refetchMessages);
       setMessage("");
       return;
     }

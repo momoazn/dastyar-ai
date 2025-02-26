@@ -56,7 +56,7 @@ const tones = [
 ];
 
 export function TranslationPage() {
-  const { id: threadId } = useParams<{ id: string }>();
+  const { threadID } = useParams();
 
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -64,7 +64,7 @@ export function TranslationPage() {
   const [targetLang, setTargetLang] = useState("persian");
   const [tone, setTone] = useState("formal");
 
-  const { translate, isTranslating } = useTranslation(Number(threadId));
+  const { translate, isTranslating } = useTranslation(Number(threadID));
 
   const selectedModel = useGetSelectedChatModel();
 
