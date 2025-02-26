@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useServices } from "../context/service-context";
+import { sendMessage } from "@/lib/api/chat";
 
 interface TranslationOptions {
   sourceLang: string;
@@ -29,24 +29,13 @@ const getToneDescription = (tone: string): string => {
   return toneDescriptions[tone] || tone;
 };
 
-export function useTranslation() {
-  const [isTranslating, setIsTranslating] = useState(false);
-  const { ollamaService } = useServices();
-
-  const translate = async (
-    text: string,
-    options: TranslationOptions,
-    ollamaModel: string,
-  ): Promise<string> => {
-    if (!text || !ollamaService) return "";
-
-    const sourceLanguage = getLanguageFullName(options.sourceLang);
-    const targetLanguage = getLanguageFullName(options.targetLang);
-    const toneStyle = getToneDescription(options.tone);
-
-    setIsTranslating(true);
-    try {
-      const systemPrompt = `You are a highly skilled professional translator with expertise in ${sourceLanguage} and ${targetLanguage}. 
+const getSystemPrompt = (
+  sourceLanguage: string,
+  targetLanguage: string,
+  toneStyle: string,
+  text: string,
+) => {
+  return `You are a highly skilled professional translator with expertise in ${sourceLanguage} and ${targetLanguage}. 
 Your task is to translate the provided text:
 - From: ${sourceLanguage}
 - To: ${targetLanguage}
@@ -62,19 +51,31 @@ Guidelines:
 
 Text to translate:
 ${text}`;
+};
 
-      const response = await ollamaService.chat(
-        systemPrompt,
-        ollamaModel,
-        () => {},
+export function useTranslation(threadId: number) {
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const translate = async (
+    text: string,
+    model: string,
+    options: TranslationOptions,
+  ): Promise<string> => {
+    if (!text) return "";
+
+    const sourceLanguage = getLanguageFullName(options.sourceLang);
+    const targetLanguage = getLanguageFullName(options.targetLang);
+    const toneStyle = getToneDescription(options.tone);
+
+    setIsTranslating(true);
+    try {
+      const response = await sendMessage(
+        threadId,
+        getSystemPrompt(sourceLanguage, targetLanguage, toneStyle, text),
+        model,
+        false,
       );
-
-      // Clean up any potential thinking output
-      if (response.includes("</think>")) {
-        return response.split("</think>")[1].trim();
-      }
-
-      return response.trim() || "";
+      return response.content.trim();
     } catch (error) {
       console.error("Translation error:", error);
       throw new Error("Translation failed. Please try again.");

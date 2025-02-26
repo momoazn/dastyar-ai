@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useEffect } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
+
+import { useGetSelectedChatModel, useSetSelectedChatModel } from "./atoms";
 import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
-import { ServiceProvider, useServices } from "./context/service-context";
+import { useChatModels } from "./lib/api/chat";
 import { PERSIAN_TEXTS } from "./lib/persian-texts";
 import { ChatPage, ImagePage, TranslationPage } from "./pages";
 
@@ -16,13 +19,22 @@ const NAV_LINKS = [
 ];
 
 function MainContent() {
-  const { connectionsStatus } = useServices();
+  const { data: chatModels } = useChatModels();
+
+  const selectedChatModel = useGetSelectedChatModel();
+  const setSelectedChatModel = useSetSelectedChatModel();
+
+  useEffect(() => {
+    if (chatModels?.data && !Boolean(selectedChatModel)) {
+      setSelectedChatModel(chatModels.data[0].name);
+    }
+  }, [chatModels, selectedChatModel, setSelectedChatModel]);
 
   return (
     <>
       <Sidebar />
       <div className="flex h-full w-full flex-col overflow-hidden">
-        <Header connectionsStatus={connectionsStatus} />
+        <Header />
         <nav className="flex h-16 items-center border-b border-border px-4">
           {NAV_LINKS.map(({ to, label }) => (
             <NavLink
@@ -56,11 +68,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
-      <ServiceProvider>
-        <div className="flex h-screen overflow-hidden bg-background text-foreground">
-          <MainContent />
-        </div>
-      </ServiceProvider>
+      <div className="flex h-screen overflow-hidden bg-background text-foreground">
+        <MainContent />
+      </div>
     </QueryClientProvider>
   );
 }

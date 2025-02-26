@@ -2,27 +2,23 @@ import { Mic, Pause, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { AIMessage } from "@/components/message";
+import { Message } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useAudioRecording } from "@/hooks/use-audio-recording";
-import { useChat } from "@/hooks/use-persistent-chat";
-import { Message, useThreadMessages } from "@/lib/api/chat";
+import { useChat } from "@/hooks/use-chat";
+import { type Message as MessageType, useThreadMessages } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
-// const isThinkingModel = (model: string) => {
-//   return THINKING_MODELS.find((m) => model.includes(m)) !== undefined;
-// };
-
 export function ChatPage() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { id: threadID } = useParams();
+  const { id: threadID } = useParams<{ id: string }>();
 
   const { data: threadMessages } = useThreadMessages(Number(threadID));
 
@@ -61,11 +57,7 @@ export function ChatPage() {
       <ScrollArea className="flex-1 rounded-lg bg-background">
         <div className="flex flex-col gap-4">
           {messages.map((message) => (
-            <AIMessage
-              key={message.id}
-              message={message}
-              // isThinkingModel={isThinkingModel(selectedOllamaModel)}
-            />
+            <Message key={message.id} message={message} />
           ))}
           <div ref={messagesEndRef} />
         </div>

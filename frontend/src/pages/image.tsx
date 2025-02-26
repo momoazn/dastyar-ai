@@ -1,8 +1,9 @@
-import { useServices } from "@/context/service-context";
+import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+
 import { useImageSettings } from "@/hooks/use-image-settings";
 import { detectTextDirection } from "@/lib/utils";
-import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { StableDiffusionService } from "@/services/stable-diffusion";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Button } from "../components/ui/button";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -11,7 +12,10 @@ import { useAudioRecording } from "../hooks/use-audio-recording";
 import { useImageGeneration } from "../hooks/use-image-generation";
 
 export function ImagePage() {
-  const { sdService } = useServices();
+  const sdService = useRef<StableDiffusionService>(
+    new StableDiffusionService(),
+  );
+
   const { settings } = useImageSettings();
 
   const [prompt, setPrompt] = useState("");
@@ -21,7 +25,7 @@ export function ImagePage() {
     useAudioRecording(setPrompt);
 
   const { images, generating, generateImage, clearHistory } =
-    useImageGeneration(sdService);
+    useImageGeneration(sdService.current);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || generating) return;

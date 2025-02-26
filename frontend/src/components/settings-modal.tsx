@@ -1,3 +1,8 @@
+import { useAtom } from "jotai";
+import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { useState } from "react";
+
+import { selectedChatModelAtom } from "@/atoms";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,22 +22,18 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useServices } from "@/context/service-context";
 import { useChatSettings } from "@/hooks/use-chat-settings";
 import { samplers, useImageSettings } from "@/hooks/use-image-settings";
-import { useModelSelection } from "@/hooks/use-model-selection";
+import { useChatModels } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { ChevronDown, ChevronUp, Settings } from "lucide-react";
-import { useState } from "react";
 
 export function SettingsModal() {
-  const { ollamaModels, whisperModels } = useServices();
-  const {
-    selectedOllamaModel,
-    selectedWhisperModel,
-    setOllamaModel,
-    setWhisperModel,
-  } = useModelSelection();
+  const { data: chatModels } = useChatModels();
+
+  const [selectedChatModel, setSelectedChatModel] = useAtom(
+    selectedChatModelAtom,
+  );
+
   const { settings: imageSettings, setSettings: setImageSettings } =
     useImageSettings();
   const {
@@ -80,8 +81,8 @@ export function SettingsModal() {
                     {PERSIAN_TEXTS.modelSelection.chatModel}
                   </label>
                   <Select
-                    value={selectedOllamaModel}
-                    onValueChange={setOllamaModel}
+                    value={selectedChatModel}
+                    onValueChange={setSelectedChatModel}
                   >
                     <SelectTrigger>
                       <SelectValue
@@ -91,16 +92,16 @@ export function SettingsModal() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {ollamaModels?.map((model) => (
-                        <SelectItem key={model} value={model || "default"}>
-                          {model}
+                      {chatModels?.data?.map((model) => (
+                        <SelectItem key={model.name} value={model.name}>
+                          {model.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-1">
+                {/* <div className="space-y-1">
                   <label className="block text-right text-xs font-medium">
                     {PERSIAN_TEXTS.modelSelection.speechModel}
                   </label>
@@ -123,7 +124,7 @@ export function SettingsModal() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-4 border-t pt-4">

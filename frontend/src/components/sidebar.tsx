@@ -12,20 +12,22 @@ import { LoadingSpinner } from "./ui/loading-spinner";
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const navigate = useNavigate();
+
   const {
     data: threads,
     isLoading: isThreadsLoading,
     refetch: refetchThreads,
   } = useThreads();
 
-  const navigate = useNavigate();
-
-  const { mutate: createThread } = useCreateThread({
-    onSuccess: (data) => {
-      navigate(`/chat/${data.data.id}`);
-      refetchThreads();
+  const { mutate: createThread, isPending: isCreatingThread } = useCreateThread(
+    {
+      onSuccess: (data) => {
+        navigate(`/chat/${data.data.id}`);
+        refetchThreads();
+      },
     },
-  });
+  );
 
   return (
     <div
@@ -57,8 +59,13 @@ export function Sidebar() {
           variant="default"
           size="icon"
           onClick={() => createThread("New Chat")}
+          disabled={isCreatingThread}
         >
-          <Plus className="h-4 w-4" />
+          {isCreatingThread ? (
+            <LoadingSpinner className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
