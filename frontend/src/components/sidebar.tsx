@@ -31,6 +31,10 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
     },
   );
 
+  if (!isSidebarOpen) {
+    return null;
+  }
+
   return (
     <div
       className={cn(

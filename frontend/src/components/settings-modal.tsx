@@ -46,8 +46,8 @@ export function SettingsModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Settings className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-12 w-12">
+          <Settings className="h-12 w-12" />
         </Button>
       </DialogTrigger>
       <DialogContent
