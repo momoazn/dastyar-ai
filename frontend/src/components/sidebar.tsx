@@ -1,18 +1,13 @@
-import { MessageSquare, Plus, X } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Thread,
-  useCreateThread,
-  useDeleteThread,
-  useThreads,
-} from "@/lib/api/chat";
+import { useCreateThread, useDeleteThread, useThreads } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { SettingsModal } from "./settings-modal";
+import { SidebarItem } from "./sidebar-item";
 import { LoadingSpinner } from "./ui/loading-spinner";
 
 interface SidebarProps {
@@ -86,7 +81,7 @@ export function Sidebar({ isSidebarOpen }: SidebarProps) {
           {isCreatingThread ? (
             <LoadingSpinner className="h-4 w-4" />
           ) : (
-            <Plus className="h-4 w-4" />
+            <Plus className="h-12 w-12" />
           )}
         </Button>
       </div>
@@ -120,60 +115,5 @@ export function Sidebar({ isSidebarOpen }: SidebarProps) {
         {isSidebarOpen && <SettingsModal />}
       </div>
     </div>
-  );
-}
-
-function SidebarItem({
-  thread,
-  onDelete,
-  isDeletingThread,
-}: {
-  thread: Thread;
-  onDelete: () => void;
-  isDeletingThread: boolean;
-}) {
-  const { pathname } = useLocation();
-  const [isHovering, setIsHovering] = useState(false);
-
-  const pathnameRegex = new RegExp(
-    `^/threads/${thread.id}/(chat|image|translate)$`,
-  );
-  const isActive = pathnameRegex.test(pathname);
-
-  return (
-    <NavLink
-      key={thread.id}
-      to={`/threads/${thread.id}/chat`}
-      className={cn(
-        "flex h-10 items-center justify-between gap-2 text-wrap rounded-md px-2 ps-2 text-sm text-muted-foreground",
-        isActive ? "bg-primary/10 text-primary" : "",
-      )}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <div className="flex items-center gap-2">
-        <MessageSquare className="h-4 w-4" />
-        <span>
-          {thread.title
-            ? thread.title.length > 24
-              ? `${thread.title.slice(0, 20)}...`
-              : thread.title
-            : PERSIAN_TEXTS.navigation.newChat}
-        </span>
-      </div>
-      {isHovering && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          disabled={isDeletingThread}
-          className={
-            "h-6 w-6 bg-transparent hover:bg-transparent hover:text-red-500"
-          }
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
-    </NavLink>
   );
 }

@@ -118,6 +118,7 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	apiGroup.GET("/threads", handler.handleGetAllThreads)
 	apiGroup.POST("/threads", handler.handleCreateThread)
 	apiGroup.GET("/threads/:id", handler.handleGetThread)
+	apiGroup.PUT("/threads/:id", handler.handleUpdateThread)
 	apiGroup.DELETE("/threads/:id", handler.handleDeleteThread)
 	apiGroup.GET("/threads/:id/messages", handler.handleGetThreadMessages)
 	apiGroup.GET("/threads/:id/translations", handler.handleGetThreadTranslations)

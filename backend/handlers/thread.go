@@ -117,6 +117,48 @@ func (h *Handler) handleGetThread(c echo.Context) error {
 	})
 }
 
+type UpdateThreadRequest struct {
+	Title string `json:"title"`
+}
+
+func (h *Handler) handleUpdateThread(c echo.Context) error {
+	id := c.Param("id")
+	var request UpdateThreadRequest
+	if err := c.Bind(&request); err != nil {
+		log.Error().Err(err).Msg("Failed to bind update thread request")
+		return c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	var thread db.Thread
+	result := h.db.First(&thread, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, ErrorResponse{
+				Message: "Thread not found",
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	thread.Title = request.Title
+	thread.UpdatedAt = time.Now()
+	
+	if err := h.db.Save(&thread).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response[db.Thread]{
+		Data:    thread,
+		Message: "Thread updated successfully",
+	})
+}
+
 func (h *Handler) handleDeleteThread(c echo.Context) error {
 	id := c.Param("id")
 	result := h.db.Delete(&db.Thread{}, id)

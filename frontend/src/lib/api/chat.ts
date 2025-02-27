@@ -98,6 +98,23 @@ export const useCreateThread = (
   });
 };
 
+export const useUpdateThread = (
+  options?: UseMutationOptions<
+    ApiResponse<Thread>,
+    Error,
+    { id: number; title: string }
+  >,
+) => {
+  return useMutation({
+    mutationFn: ({ id, title }) =>
+      fetchApi<ApiResponse<Thread>>(`/threads/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ title }),
+      }),
+    ...options,
+  });
+};
+
 export const useDeleteThread = (
   options?: UseMutationOptions<ApiResponse<Thread>, Error, number>,
 ) => {
