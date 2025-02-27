@@ -1,7 +1,10 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
 import { useGetChatModel } from "@/atoms";
-import { type ChatMessage, sendMessage as sendMessageApi } from "@/lib/api/chat";
+import {
+  type ChatMessage,
+  sendMessage as sendMessageApi,
+} from "@/lib/api/chat";
 
 export const useChat = (
   messages: ChatMessage[],
@@ -15,6 +18,7 @@ export const useChat = (
   const sendMessage = async (
     content: string,
     threadID: number,
+    model?: string,
     onDone?: () => void,
   ) => {
     if (!content.trim() || isStreaming) return;
@@ -49,7 +53,7 @@ export const useChat = (
     await sendMessageApi(
       threadID,
       userMessage.content!,
-      selectedModel,
+      model ?? selectedModel,
       true,
       (chunk) => {
         if (stopRequested) return;
