@@ -8,12 +8,13 @@ interface TranslationOptions {
   tone: string;
 }
 
-export function useTranslation(threadId: number) {
+export function useTranslation() {
   const [isTranslating, setIsTranslating] = useState(false);
   const translationModel = useGetTranslationModel();
 
   const translate = async (
     text: string,
+    threadId: number,
     options: TranslationOptions,
   ): Promise<string> => {
     if (!text) return "";

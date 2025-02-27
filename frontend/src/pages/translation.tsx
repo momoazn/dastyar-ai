@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useThreadTranslations } from "@/lib/api/chat";
+import { useCreateThread, useThreadTranslations } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -57,36 +57,52 @@ const tones = [
   { value: "friendly", label: PERSIAN_TEXTS.tones.friendly },
 ];
 
-const getToneLabel = (tone: string) => {
+type Language = (typeof languages)[number]["value"];
+type Tone = (typeof tones)[number]["value"];
+
+const getToneLabel = (tone: Tone) => {
   return tones.find((t) => t.value === tone)?.label || tone;
 };
 
-const getLanguageLabel = (language: string) => {
+const getLanguageLabel = (language: Language) => {
   return languages.find((l) => l.value === language)?.label || language;
 };
 
 export function TranslationPage() {
-  const { threadID } = useParams();
+  const [sourceText, setSourceText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
+  const [sourceLang, setSourceLang] = useState<Language>("english");
+  const [targetLang, setTargetLang] = useState<Language>("persian");
+  const [tone, setTone] = useState<Tone>("formal");
+
+  const { translate, isTranslating } = useTranslation();
+
+  const { threadId } = useParams();
 
   const {
     data: translations,
     isLoading: isTranslationsLoading,
     refetch: refetchTranslations,
-  } = useThreadTranslations(Number(threadID));
+  } = useThreadTranslations(Number(threadId), {
+    enabled: !!threadId,
+  });
 
-  const [sourceText, setSourceText] = useState("");
-  const [translatedText, setTranslatedText] = useState("");
-  const [sourceLang, setSourceLang] = useState("english");
-  const [targetLang, setTargetLang] = useState("persian");
-  const [tone, setTone] = useState("formal");
-
-  const { translate, isTranslating } = useTranslation(Number(threadID));
+  const { mutateAsync: createThread } = useCreateThread();
 
   const handleTranslate = async () => {
     if (!sourceText) return;
 
+    let tId = Number(threadId);
+
+    if (!tId) {
+      const { data: newThread } = await createThread(
+        PERSIAN_TEXTS.navigation.newChat,
+      );
+      tId = newThread.id;
+    }
+
     try {
-      const result = await translate(sourceText, {
+      const result = await translate(sourceText, tId, {
         sourceLang,
         targetLang,
         tone,
