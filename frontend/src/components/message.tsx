@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
+import { BotIcon, Loader2, UserIcon } from "lucide-react";
 import { Button } from "./ui/button";
 
 const THINKING_MODELS = ["deepseek-r1", "deepscaler"];
@@ -27,29 +28,34 @@ export function Message({ message }: MessageProps) {
 
   return (
     <div
+      id={`message-${message.id}`}
       className={cn(
-        "flex",
+        "flex pr-4",
         message.role === "assistant" ? "justify-start" : "justify-end",
       )}
     >
+      {/* Message bubble */}
       <div
         dir={detectTextDirection(message.content)}
         className={cn(
-          "max-w-[85%] space-y-2 rounded-lg p-3",
+          "flex max-w-[85%] flex-col items-start justify-center space-y-3 rounded-md p-4 shadow-sm transition-colors",
           message.role === "assistant"
-            ? "bg-secondary text-secondary-foreground"
-            : "bg-primary text-primary-foreground",
+            ? "bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+            : "bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white",
         )}
       >
-        <div className="flex items-center justify-between">
-          {!message && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="animate-pulse">
-                {PERSIAN_TEXTS.chat.thinking}
-              </span>
-            </div>
+        {/* Message header */}
+        <div
+          className={cn(
+            "rtl flex w-full items-center justify-between",
+            message.role === "user"
+              ? "justify-start"
+              : hasThinking
+                ? "justify-between"
+                : "justify-end",
           )}
-
+        >
+          {/* Toggle thoughts button */}
           {hasThinking && (
             <Button
               variant="ghost"
@@ -62,14 +68,24 @@ export function Message({ message }: MessageProps) {
                 : PERSIAN_TEXTS.chat.hideThoughts}
             </Button>
           )}
+
+          {/* Message icon */}
+          {message.role === "assistant" ? (
+            <BotIcon className="h-4 w-4" />
+          ) : (
+            <UserIcon className="h-4 w-4" />
+          )}
         </div>
 
+        {/* Thoughts */}
         {hasThinking && (
           <div
             dir="ltr"
             className={cn(
-              "border-l-2 border-muted pl-2 text-sm text-muted-foreground",
-              collapsed && "hidden",
+              "overflow-hidden border-l-2 border-muted pl-3 text-sm text-muted-foreground transition-all duration-200 ease-in-out dark:text-slate-400",
+              collapsed
+                ? "mt-0 max-h-0 opacity-0"
+                : "mt-2 max-h-[500px] opacity-100",
             )}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -81,14 +97,17 @@ export function Message({ message }: MessageProps) {
         {/* Waiting for first chunk */}
         {message.state === "idle" && (
           <div className="flex items-center justify-between">
-            <span className="animate-pulse">...</span>
+            <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         )}
 
+        {/* Message content */}
         <article
           className={cn(
-            "prose max-w-none",
-            message.role === "user" && "prose-invert",
+            "prose max-w-none break-words dark:prose-pre:bg-slate-900",
+            message.role === "user"
+              ? "prose-invert dark:prose-headings:text-white dark:prose-a:text-blue-300"
+              : "dark:text-slate-100 dark:prose-headings:text-white dark:prose-a:text-blue-400",
           )}
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
