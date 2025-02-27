@@ -2,6 +2,7 @@ import { Mic, Pause, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { useGetChatModel } from "@/atoms";
 import { Message } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,9 +29,11 @@ export function ChatPage() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
 
+  const defaultChatModel = useGetChatModel();
+
   const { data: chatModels } = useChatModels();
   const [currentChatModel, setCurrentChatModel] = useState<string | undefined>(
-    undefined,
+    defaultChatModel,
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -58,7 +61,12 @@ export function ChatPage() {
   useEffect(() => {
     if (threadMessages) {
       setMessages(threadMessages.data);
-      setCurrentChatModel(threadMessages.data.at(-1)?.model);
+      const lastMessageChatModel = threadMessages.data.at(-1)?.model;
+      if (lastMessageChatModel) {
+        setCurrentChatModel(lastMessageChatModel);
+      } else {
+        setCurrentChatModel(defaultChatModel);
+      }
     }
   }, [threadMessages]);
 
