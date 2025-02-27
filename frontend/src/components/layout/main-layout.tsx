@@ -4,10 +4,10 @@ import { Header } from "../header";
 import { Sidebar } from "../sidebar";
 import { Navigation } from "../navigation";
 import { ChatPage, ImagePage, TranslationPage } from "../../pages";
-import { useInitializeChatModel } from "@/hooks/use-chat-model";
+import { useInitializeSelectedModels } from "@/hooks/use-chat-model";
 
 export function MainLayout() {
-  useInitializeChatModel();
+  useInitializeSelectedModels();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 

@@ -55,6 +55,8 @@ export const PERSIAN_TEXTS = {
     selectChatModel: "انتخاب مدل چت",
     speechModel: "مدل تشخیص گفتار",
     selectSpeechModel: "انتخاب مدل تشخیص گفتار",
+    translationModel: "مدل ترجمه",
+    selectTranslationModel: "انتخاب مدل ترجمه",
   },
 
   // Image Generation Settings

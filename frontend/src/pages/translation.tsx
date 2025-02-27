@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { useGetSelectedChatModel } from "@/atoms";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useThreadTranslations } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -14,9 +16,6 @@ import {
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { useTranslation } from "../hooks/use-translation";
-import { useThreadTranslations } from "@/lib/api/chat";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const languages = [
   {
@@ -59,8 +58,6 @@ const tones = [
 ];
 
 const getToneLabel = (tone: string) => {
-  console.log("##### tone", tone);
-
   return tones.find((t) => t.value === tone)?.label || tone;
 };
 
@@ -85,13 +82,11 @@ export function TranslationPage() {
 
   const { translate, isTranslating } = useTranslation(Number(threadID));
 
-  const selectedModel = useGetSelectedChatModel();
-
   const handleTranslate = async () => {
     if (!sourceText) return;
 
     try {
-      const result = await translate(sourceText, selectedModel, {
+      const result = await translate(sourceText, {
         sourceLang,
         targetLang,
         tone,
@@ -114,7 +109,7 @@ export function TranslationPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      <Card className="flex-1 bg-background p-4">
+      <Card className="bg-background p-4">
         <div className="mb-6 grid grid-cols-3 gap-4">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
@@ -177,13 +172,13 @@ export function TranslationPage() {
           </div>
         </div>
 
-        <div className="mb-4 grid grid-rows-2 gap-6">
+        <div className="mb-4 grid grid-cols-2 gap-6">
           <div>
             <Textarea
               placeholder={PERSIAN_TEXTS.translation.enterText}
               value={sourceText}
               onChange={(e) => setSourceText(e.target.value)}
-              className="min-h-[250px]"
+              className="min-h-[250px] w-full"
             />
           </div>
           <div>
@@ -191,7 +186,7 @@ export function TranslationPage() {
               placeholder={PERSIAN_TEXTS.translation.translatedText}
               value={translatedText}
               readOnly
-              className="min-h-[250px]"
+              className="min-h-[250px] w-full"
             />
           </div>
         </div>

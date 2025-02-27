@@ -1,8 +1,7 @@
-import { useAtom } from "jotai";
 import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { useState } from "react";
 
-import { selectedChatModelAtom } from "@/atoms";
+import { useChatModel, useTranslationModel } from "@/atoms";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,9 +29,8 @@ import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 export function SettingsModal() {
   const { data: chatModels } = useChatModels();
 
-  const [selectedChatModel, setSelectedChatModel] = useAtom(
-    selectedChatModelAtom,
-  );
+  const [chatModel, setChatModel] = useChatModel();
+  const [translationModel, setTranslationModel] = useTranslationModel();
 
   const { settings: imageSettings, setSettings: setImageSettings } =
     useImageSettings();
@@ -80,14 +78,36 @@ export function SettingsModal() {
                   <label className="block text-right text-xs font-medium">
                     {PERSIAN_TEXTS.modelSelection.chatModel}
                   </label>
-                  <Select
-                    value={selectedChatModel}
-                    onValueChange={setSelectedChatModel}
-                  >
+                  <Select value={chatModel} onValueChange={setChatModel}>
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
                           PERSIAN_TEXTS.modelSelection.selectChatModel
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chatModels?.data?.map((model) => (
+                        <SelectItem key={model.name} value={model.name}>
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-right text-xs font-medium">
+                    {PERSIAN_TEXTS.modelSelection.translationModel}
+                  </label>
+                  <Select
+                    value={translationModel}
+                    onValueChange={setTranslationModel}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          PERSIAN_TEXTS.modelSelection.selectTranslationModel
                         }
                       />
                     </SelectTrigger>

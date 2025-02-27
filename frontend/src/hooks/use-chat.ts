@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
-import { useGetSelectedChatModel } from "@/atoms";
+import { useGetChatModel } from "@/atoms";
 import { type ChatMessage, sendMessage as sendMessageApi } from "@/lib/api/chat";
 
 export const useChat = (
@@ -10,7 +10,7 @@ export const useChat = (
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
 
-  const selectedModel = useGetSelectedChatModel();
+  const selectedModel = useGetChatModel();
 
   const sendMessage = async (
     content: string,
