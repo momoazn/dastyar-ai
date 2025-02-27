@@ -5,19 +5,30 @@ import { PERSIAN_TEXTS } from "../lib/persian-texts";
 
 export function Navigation() {
   const { pathname } = useLocation();
-  const threadID = pathname.split("/")?.[2];
+  const threadId = pathname.split("/")?.[2];
+
+  const routes = [
+    {
+      path: threadId ? `/threads/${threadId}/chat` : "/chat",
+      label: PERSIAN_TEXTS.navigation.chat,
+    },
+    {
+      path: threadId ? `/threads/${threadId}/translate` : "/translate",
+      label: PERSIAN_TEXTS.navigation.translation,
+    },
+    {
+      path: "/image",
+      label: PERSIAN_TEXTS.navigation.imageGeneration,
+    },
+  ];
 
   return (
     <nav className="flex h-16 items-center border-b border-border px-4">
-      <NavigationItem to={`/threads/${threadID}/chat`}>
-        {PERSIAN_TEXTS.navigation.chat}
-      </NavigationItem>
-      <NavigationItem to={`/threads/${threadID}/translate`}>
-        {PERSIAN_TEXTS.navigation.translation}
-      </NavigationItem>
-      <NavigationItem to={`/image`}>
-        {PERSIAN_TEXTS.navigation.imageGeneration}
-      </NavigationItem>
+      {routes.map((route) => (
+        <NavigationItem key={route.path} to={route.path}>
+          {route.label}
+        </NavigationItem>
+      ))}
     </nav>
   );
 }

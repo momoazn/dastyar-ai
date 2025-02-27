@@ -70,9 +70,11 @@ export function Sidebar({ isSidebarOpen }: SidebarProps) {
       <div
         className={cn("flex h-16 items-center justify-between border-b p-4")}
       >
-        <h1 className="text-2xl font-semibold text-primary">
-          {PERSIAN_TEXTS.navigation.appTitle}
-        </h1>
+        <NavLink to="/">
+          <h1 className="text-2xl font-semibold text-primary">
+            {PERSIAN_TEXTS.navigation.appTitle}
+          </h1>
+        </NavLink>
 
         {/* Create new thread button */}
         <Button
@@ -133,8 +135,10 @@ function SidebarItem({
   const { pathname } = useLocation();
   const [isHovering, setIsHovering] = useState(false);
 
-  const isActive =
-    pathname.startsWith("/threads") && pathname.includes(thread.id.toString());
+  const pathnameRegex = new RegExp(
+    `^/threads/${thread.id}/(chat|image|translate)$`,
+  );
+  const isActive = pathnameRegex.test(pathname);
 
   return (
     <NavLink
