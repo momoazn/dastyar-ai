@@ -70,6 +70,7 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
+      {/* Chat Messages Container */}
       <ScrollArea className="flex-1 rounded-lg bg-background">
         <div className="flex flex-col gap-4">
           {messages.map((message) => (
@@ -79,7 +80,9 @@ export function ChatPage() {
         </div>
       </ScrollArea>
 
+      {/* Chat Input Container */}
       <div className="flex gap-2">
+        {/* Chat Input */}
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -94,7 +97,9 @@ export function ChatPage() {
           }}
         />
 
+        {/* Chat Input Buttons */}
         <div className="flex flex-col gap-2">
+          {/* Record Button */}
           <Button
             size="icon"
             variant={isRecording ? "destructive" : "outline"}
@@ -107,6 +112,8 @@ export function ChatPage() {
               <Mic className="h-4 w-4" />
             )}
           </Button>
+
+          {/* Send Button */}
           <Button
             size="icon"
             className="h-10 w-10"
