@@ -59,9 +59,11 @@ export function ChatPage() {
       return;
     }
 
-    const { data: newThread } = await createThread("New Chat");
+    const { data: newThread } = await createThread(
+      PERSIAN_TEXTS.navigation.newChat,
+    );
     sendMessage(message, newThread.id, () =>
-      navigate(`/chat/${newThread.id}`, { replace: true }),
+      navigate(`/threads/${newThread.id}/chat`, { replace: true }),
     );
     setMessage("");
   };

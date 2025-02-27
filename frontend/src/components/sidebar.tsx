@@ -78,7 +78,7 @@ export function Sidebar({ isSidebarOpen }: SidebarProps) {
         <Button
           variant="default"
           size="icon"
-          onClick={() => createThread("New Chat")}
+          onClick={() => createThread(PERSIAN_TEXTS.navigation.newChat)}
           disabled={isCreatingThread}
         >
           {isCreatingThread ? (
@@ -154,7 +154,7 @@ function SidebarItem({
             ? thread.title.length > 24
               ? `${thread.title.slice(0, 20)}...`
               : thread.title
-            : "New Chat"}
+            : PERSIAN_TEXTS.navigation.newChat}
         </span>
       </div>
       {isHovering && (

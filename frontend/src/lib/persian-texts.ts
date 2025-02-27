@@ -5,6 +5,7 @@ export const PERSIAN_TEXTS = {
     imageGeneration: "تولید تصویر",
     translation: "ترجمه",
     appTitle: "دستیار هوشمند",
+    newChat: "مکالمه جدید",
   },
 
   // Settings
