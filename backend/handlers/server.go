@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"embed"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"time"
 
@@ -15,22 +17,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
-	start := time.Now()
-	log.Info().Msg("Setting up HTTP server...")
-
-	// Create Echo instance
-	e := echo.New()
-
-	// Create a file system from the embedded static directory
-	staticFS, err := fs.Sub(staticFiles, "dist")
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create static file system")
-		return nil, err
-	}
-
-	// Middleware
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+// setupRequestLogger creates a custom request logger middleware
+func setupRequestLogger() echo.MiddlewareFunc {
+	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:           true,
 		LogStatus:        true,
 		LogLatency:       true,
@@ -95,24 +84,23 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 			logger.Msg(msg)
 			return nil
 		},
-	}))
+	})
+}
+
+// setupMiddleware configures all middleware for the server
+func setupMiddleware(e *echo.Echo) {
+	e.Use(setupRequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
 	}))
+	log.Info().Msg("Configured HTTP middlewares")
+}
 
-	log.Info().Msg("Configured HTTP middleware")
-
-	// API group
+// setupAPIRoutes configures all API routes
+func setupAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
-
-	// Create Ollama client
-	ollamaURL, _ := url.Parse("http://localhost:11434")
-	ollamaClient := api.NewClient(ollamaURL, &http.Client{})
-	log.Info().Str("url", ollamaURL.String()).Msg("Configured Ollama client")
-
-	handler := NewHandler(db, ollamaClient)
 
 	// Threads and messages endpoints
 	apiGroup.GET("/threads", handler.handleGetAllThreads)
@@ -132,19 +120,90 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	apiGroup.GET("/health", handler.handleHealthCheck)
 
 	log.Info().Msg("Registered API routes")
+}
 
-	// Create a handler for serving static files
+// createSPAHandler creates a handler for serving the Single Page Application
+func createSPAHandler(staticFS fs.FS) http.HandlerFunc {
 	fileHandler := http.FileServer(http.FS(staticFS))
-	e.GET("/*", echo.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
 		if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
 			http.NotFound(w, r)
 			return
 		}
+
+		// First try to serve the file directly
+		err := func() error {
+			f, err := staticFS.Open(r.URL.Path)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			return nil
+		}()
+
+		// If file doesn't exist, check if this is a route (no file extension)
+		if err != nil {
+			// Check if the path has a file extension
+			if path.Ext(r.URL.Path) == "" {
+				indexFile, err := staticFS.Open("index.html")
+				if err != nil {
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					return
+				}
+				defer indexFile.Close()
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				http.ServeContent(w, r, "index.html", time.Time{}, indexFile.(io.ReadSeeker))
+				return
+			}
+		}
+
 		fileHandler.ServeHTTP(w, r)
-	})))
+	}
+}
+
+// setupStaticFiles configures static file serving for the SPA
+func setupStaticFiles(e *echo.Echo, staticFiles embed.FS) (fs.FS, error) {
+	staticFS, err := fs.Sub(staticFiles, "dist")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create static file system")
+		return nil, err
+	}
+
+	e.GET("/*", echo.WrapHandler(createSPAHandler(staticFS)))
+	log.Info().Str("static_dir", "dist").Msg("Configured static file serving")
+
+	return staticFS, nil
+}
+
+// createOllamaClient creates and configures the Ollama client
+func createOllamaClient() *api.Client {
+	ollamaURL, _ := url.Parse("http://localhost:11434")
+	ollamaClient := api.NewClient(ollamaURL, &http.Client{})
+	log.Info().Str("url", ollamaURL.String()).Msg("Configured Ollama client")
+	return ollamaClient
+}
+
+func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
+	start := time.Now()
+	log.Info().Msg("Setting up HTTP server...")
+
+	// Create Echo instance
+	e := echo.New()
+
+	// Setup all components
+	setupMiddleware(e)
+
+	_, err := setupStaticFiles(e, staticFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	ollamaClient := createOllamaClient()
+	handler := NewHandler(db, ollamaClient, nil)
+	setupAPIRoutes(e, handler)
 
 	log.Info().
-		Str("static_dir", "dist").
 		Dur("setup_duration_ms", time.Since(start)).
 		Msg("Server setup completed")
 
