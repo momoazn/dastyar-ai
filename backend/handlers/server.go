@@ -200,7 +200,7 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	}
 
 	ollamaClient := createOllamaClient()
-	handler := NewHandler(db, ollamaClient, nil)
+	handler := NewHandler(db, ollamaClient)
 	setupAPIRoutes(e, handler)
 
 	log.Info().
