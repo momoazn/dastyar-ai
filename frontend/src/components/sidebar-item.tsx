@@ -10,7 +10,7 @@ import { useRef, useState } from "react";
 
 interface SidebarItemProps {
   thread: Thread;
-  onDelete: () => void;
+  onDelete: (e: React.MouseEvent<HTMLButtonElement>) => void;
   isDeletingThread: boolean;
 }
 
@@ -79,8 +79,8 @@ export function SidebarItem({
         ) : (
           <span className="truncate">
             {thread.title
-              ? thread.title.length > 20
-                ? thread.title.slice(0, 20) + "..."
+              ? thread.title.length > 25
+                ? thread.title.slice(0, 25) + "..."
                 : thread.title
               : PERSIAN_TEXTS.navigation.newChat}
           </span>

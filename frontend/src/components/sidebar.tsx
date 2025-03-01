@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCreateThread, useDeleteThread, useThreads } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
+import { DeleteDialog } from "./delete-dialog";
 import { SettingsModal } from "./settings-modal";
 import { SidebarItem } from "./sidebar-item";
 import { LoadingSpinner } from "./ui/loading-spinner";
@@ -33,21 +35,31 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
     },
   );
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+
   const { mutate: deleteThread, isPending: isDeletingThread } = useDeleteThread(
     {
       onSuccess: () => {
         refetchThreads();
+        setDeleteDialogOpen(false);
+        setThreadToDelete(null);
       },
     },
   );
 
-  const handleDeleteThread = (threadId: number) => {
-    if (
-      confirm(`آیا از حذف این چت مطمئن هستید؟
-همراه با حذف پیام‌ها و ترجمه‌ها و تصاویر تولید شده نیز حذف می‌شوند!
-این فعل برای همیشه انجام خواهد شد و قابل بازگردانی نیست.`)
-    ) {
-      deleteThread(threadId);
+  const handleDeleteThread = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    threadId: number,
+  ) => {
+    e.preventDefault();
+    setThreadToDelete(threadId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (threadToDelete) {
+      deleteThread(threadToDelete);
     }
   };
 
@@ -109,7 +121,7 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                     <SidebarItem
                       key={thread.id}
                       thread={thread}
-                      onDelete={() => handleDeleteThread(thread.id)}
+                      onDelete={(e) => handleDeleteThread(e, thread.id)}
                       isDeletingThread={isDeletingThread}
                     />
                   ))
@@ -124,6 +136,15 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
           {isSidebarOpen && <SettingsModal />}
         </div>
       </aside>
+
+      {deleteDialogOpen && (
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          isDeleting={isDeletingThread}
+        />
+      )}
     </>
   );
 }

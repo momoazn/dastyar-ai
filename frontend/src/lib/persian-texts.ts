@@ -74,6 +74,14 @@ export const PERSIAN_TEXTS = {
   // UI Elements
   ui: {
     themeToggle: "تغییر تم",
+    delete: "حذف",
+    cancel: "انصراف",
+  },
+
+  deleteDialog: {
+    title: "آیا از حذف این چت مطمئن هستید؟",
+    description:
+      "همراه با حذف پیام‌ها و ترجمه‌ها و تصاویر تولید شده نیز حذف می‌شوند!\nاین فعل برای همیشه انجام خواهد شد و قابل بازگردانی نیست.",
   },
 
   // Language Labels
