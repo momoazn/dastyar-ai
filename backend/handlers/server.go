@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"time"
@@ -98,16 +99,18 @@ func setupMiddleware(e *echo.Echo) {
 	log.Info().Msg("Configured HTTP middlewares")
 }
 
-// setupAPIRoutes configures all API routes
-func setupAPIRoutes(e *echo.Echo, handler *Handler) {
+// registerAPIRoutes configures all API routes
+func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
 
-	// Threads and messages endpoints
+	// Threads endpoints
 	apiGroup.GET("/threads", handler.handleGetAllThreads)
 	apiGroup.POST("/threads", handler.handleCreateThread)
 	apiGroup.GET("/threads/:id", handler.handleGetThread)
 	apiGroup.PUT("/threads/:id", handler.handleUpdateThread)
 	apiGroup.DELETE("/threads/:id", handler.handleDeleteThread)
+
+	// Messages endpoints
 	apiGroup.GET("/threads/:id/messages", handler.handleGetThreadMessages)
 	apiGroup.GET("/threads/:id/translations", handler.handleGetThreadTranslations)
 
@@ -178,7 +181,11 @@ func setupStaticFiles(e *echo.Echo, staticFiles embed.FS) (fs.FS, error) {
 
 // createOllamaClient creates and configures the Ollama client
 func createOllamaClient() *api.Client {
-	ollamaURL, _ := url.Parse("http://localhost:11434")
+	var ollamaHost string = os.Getenv("OLLAMA_HOST")
+	if ollamaHost == "" {
+		ollamaHost = "http://localhost:11434"
+	}
+	ollamaURL, _ := url.Parse(ollamaHost)
 	ollamaClient := api.NewClient(ollamaURL, &http.Client{})
 	log.Info().Str("url", ollamaURL.String()).Msg("Configured Ollama client")
 	return ollamaClient
@@ -201,7 +208,7 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 
 	ollamaClient := createOllamaClient()
 	handler := NewHandler(db, ollamaClient)
-	setupAPIRoutes(e, handler)
+	registerAPIRoutes(e, handler)
 
 	log.Info().
 		Dur("setup_duration_ms", time.Since(start)).
