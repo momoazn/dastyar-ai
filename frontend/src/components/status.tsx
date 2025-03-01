@@ -1,16 +1,25 @@
-import { useChatHealthCheck } from "@/lib/api/chat";
-import { Brain, CloudIcon, ImageIcon, LucideIcon } from "lucide-react";
+import { useChatHealthCheck, useThreads } from "@/lib/api/chat";
+import {
+  Brain,
+  CloudIcon,
+  ImageIcon,
+  LucideIcon,
+  MessageCircle,
+} from "lucide-react";
 
 export function Status() {
   const { data: healthCheck } = useChatHealthCheck();
+  const { isError: isThreadsError } = useThreads();
 
   return (
     <header className="flex gap-2">
+      <StatusItem name="Chat" icon={MessageCircle} status={!isThreadsError} />
       <StatusItem
-        name="Chat"
+        name="Ollama"
         icon={Brain}
         status={healthCheck?.data === "ok"}
       />
+
       <StatusItem name="Whisper" icon={CloudIcon} status={false} />
       <StatusItem name="Stable Diffusion" icon={ImageIcon} status={false} />
     </header>
