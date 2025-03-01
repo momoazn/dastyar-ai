@@ -1,6 +1,7 @@
 package db
 
 import (
+	"os"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -49,7 +50,11 @@ func InitDB() (*gorm.DB, error) {
 	start := time.Now()
 	log.Info().Msg("Initializing database connection...")
 
-	db, err := gorm.Open(sqlite.Open("../chats.db"), &gorm.Config{
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./chats.db"
+	}
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.New(
 			&log.Logger,
 			logger.Config{
