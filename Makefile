@@ -39,6 +39,9 @@ run: build-frontend build-backend
 .PHONY: build
 build: build-frontend build-backend
 
+.PHONY: build-for-windows
+build-for-windows: build-frontend build-backend-for-windows
+
 .PHONY: build-frontend
 build-frontend:
 	cd $(FRONTEND_DIR) && bun run build
@@ -46,6 +49,10 @@ build-frontend:
 .PHONY: build-backend
 build-backend:
 	cd $(BACKEND_DIR) && go build -o persian-ai-assistant && mv persian-ai-assistant ../
+
+.PHONY: build-backend-for-windows
+build-backend-for-windows:
+	cd $(BACKEND_DIR) && GOOS=windows GOARCH=amd64 go build -o persian-ai-assistant.exe && mv persian-ai-assistant.exe ../
 
 # Clean up
 .PHONY: clean
