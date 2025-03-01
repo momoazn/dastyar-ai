@@ -21,7 +21,9 @@ const TranslationPage = lazy(() =>
 export function MainLayout() {
   useInitializeSelectedModels();
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    return window.innerWidth >= 768; // Initialize based on screen width
+  });
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -29,7 +31,7 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {isSidebarOpen && <Sidebar isSidebarOpen={isSidebarOpen} />}
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex h-full w-full flex-col overflow-hidden">
         <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         <Navigation />
