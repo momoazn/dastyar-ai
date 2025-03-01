@@ -71,7 +71,10 @@ func main() {
 	}
 
 	// Define the server address
-	serverAddr := "localhost:8080"
+	serverAddr := os.Getenv("SERVER_ADDR")
+	if serverAddr == "" {
+		serverAddr = "localhost:8080"
+	}
 	log.Info().
 		Str("address", fmt.Sprintf("http://%s", serverAddr)).
 		Msg("Server initialized")
