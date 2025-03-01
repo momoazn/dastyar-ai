@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { lazy, useState } from "react";
 import { Routes, Route } from "react-router-dom";
+
 import { Header } from "../header";
 import { Sidebar } from "../sidebar";
 import { Navigation } from "../navigation";
-import { ChatPage, ImagePage, TranslationPage } from "../../pages";
 import { useInitializeSelectedModels } from "@/hooks/use-chat-model";
+
+const ChatPage = lazy(() =>
+  import("../../pages/chat").then((module) => ({ default: module.ChatPage })),
+);
+const ImagePage = lazy(() =>
+  import("../../pages/image").then((module) => ({ default: module.ImagePage })),
+);
+const TranslationPage = lazy(() =>
+  import("../../pages/translation").then((module) => ({
+    default: module.TranslationPage,
+  })),
+);
 
 export function MainLayout() {
   useInitializeSelectedModels();
@@ -17,7 +29,7 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <Sidebar isSidebarOpen={isSidebarOpen} />
+      {isSidebarOpen && <Sidebar isSidebarOpen={isSidebarOpen} />}
       <div className="flex h-full w-full flex-col overflow-hidden">
         <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         <Navigation />
