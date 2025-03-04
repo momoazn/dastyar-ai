@@ -3,6 +3,7 @@ package main
 import (
 	"ai-assistant/db"
 	"ai-assistant/handlers"
+	"ai-assistant/logger"
 	"ai-assistant/utils"
 	"embed"
 	"fmt"
@@ -19,7 +20,7 @@ var staticFiles embed.FS
 
 func main() {
 	// Initialize logger with configuration
-	if err := InitLogger(Config{
+	if err := logger.InitLogger(logger.Config{
 		ConsoleLoggingEnabled: true,
 		ConsoleLogLevel:       zerolog.InfoLevel,
 		FileLoggingEnabled:    true,
