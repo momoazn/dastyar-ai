@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
-import { PERSIAN_TEXTS } from "../lib/persian-texts";
 
 export function Navigation() {
   const { pathname } = useLocation();

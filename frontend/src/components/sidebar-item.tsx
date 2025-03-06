@@ -1,8 +1,7 @@
 import { MessageSquare, Pencil, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
 import { Thread, useUpdateThread } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";

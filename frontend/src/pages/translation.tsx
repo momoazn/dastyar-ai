@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCreateThread, useThreadTranslations } from "@/lib/api/chat";
-import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 import {
+  Button,
+  Card,
+  LoadingSpinner,
+  ScrollArea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
-import { Textarea } from "../components/ui/textarea";
-import { useTranslation } from "../hooks/use-translation";
+  Textarea,
+} from "@/components/ui";
+import { useTranslation } from "@/hooks";
+import { useCreateThread, useThreadTranslations } from "@/lib/api/chat";
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
   {

@@ -2,27 +2,27 @@ import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { useState } from "react";
 
 import { useChatModel, useTranslationModel } from "@/atoms";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { useChatSettings } from "@/hooks/use-chat-settings";
-import { samplers, useImageSettings } from "@/hooks/use-image-settings";
+  Slider,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from "@/components/ui";
+import { samplers, useChatSettings, useImageSettings } from "@/hooks";
 import { useChatModels } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 

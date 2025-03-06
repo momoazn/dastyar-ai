@@ -22,12 +22,10 @@ export function MainLayout() {
   useInitializeSelectedModels();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    return window.innerWidth >= 768; // Initialize based on screen width
+    return window.innerWidth >= 768;
   });
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

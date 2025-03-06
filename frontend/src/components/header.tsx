@@ -1,7 +1,7 @@
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
-import { Status } from "./status";
-import { Button } from "./ui/button";
-import { ThemeToggle } from "./ui/theme-toggle";
+
+import { Status } from "@/components/status";
+import { Button, ThemeToggle } from "@/components/ui";
 
 interface HeaderProps {
   isSidebarOpen: boolean;

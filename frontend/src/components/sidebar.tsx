@@ -2,15 +2,11 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { DeleteDialog, SettingsModal, SidebarItem } from "@/components";
+import { Button, LoadingSpinner, ScrollArea } from "@/components/ui";
 import { useCreateThread, useDeleteThread, useThreads } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
-import { DeleteDialog } from "./delete-dialog";
-import { SettingsModal } from "./settings-modal";
-import { SidebarItem } from "./sidebar-item";
-import { LoadingSpinner } from "./ui/loading-spinner";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -19,6 +15,9 @@ interface SidebarProps {
 
 export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const navigate = useNavigate();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
 
   const {
     data: threads,
@@ -34,9 +33,6 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
       },
     },
   );
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
 
   const { mutate: deleteThread, isPending: isDeletingThread } = useDeleteThread(
     {
@@ -58,9 +54,8 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   };
 
   const confirmDelete = () => {
-    if (threadToDelete) {
-      deleteThread(threadToDelete);
-    }
+    if (!threadToDelete) return;
+    deleteThread(threadToDelete);
   };
 
   if (!isSidebarOpen) {

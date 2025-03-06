@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+  LoadingSpinner,
+} from "@/components/ui";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { LoadingSpinner } from "./ui/loading-spinner";
 
 interface DeleteDialogProps {
   open: boolean;

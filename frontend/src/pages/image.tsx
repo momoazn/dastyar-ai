@@ -1,15 +1,20 @@
 import { Download, ImagePlus, Mic, Pause, Send, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { useImageSettings } from "@/hooks/use-image-settings";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  ScrollArea,
+  Textarea,
+} from "@/components/ui";
+import {
+  useAudioRecording,
+  useImageGeneration,
+  useImageSettings,
+} from "@/hooks";
 import { detectTextDirection } from "@/lib/utils";
 import { StableDiffusionService } from "@/services/stable-diffusion";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { Button } from "../components/ui/button";
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Textarea } from "../components/ui/textarea";
-import { useAudioRecording } from "../hooks/use-audio-recording";
-import { useImageGeneration } from "../hooks/use-image-generation";
 
 export function ImagePage() {
   const sdService = useRef<StableDiffusionService>(

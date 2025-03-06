@@ -2,11 +2,11 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { Button } from "@/components/ui";
 import type { ChatMessage } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { BotIcon, Loader2, UserIcon } from "lucide-react";
-import { Button } from "./ui/button";
 
 const THINKING_MODELS = ["deepseek-r1", "deepscaler"];
 
