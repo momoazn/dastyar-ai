@@ -6,6 +6,9 @@ import { Sidebar } from "../sidebar";
 import { Navigation } from "../navigation";
 import { useInitializeSelectedModels } from "@/hooks/use-chat-model";
 
+const HomePage = lazy(() =>
+  import("../../pages/home").then((module) => ({ default: module.HomePage })),
+);
 const ChatPage = lazy(() =>
   import("../../pages/chat").then((module) => ({ default: module.ChatPage })),
 );
@@ -35,7 +38,7 @@ export function MainLayout() {
         <Navigation />
         <div className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/" element={<ChatPage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/image" element={<ImagePage />} />
             <Route path="/translate" element={<TranslationPage />} />

@@ -1,4 +1,22 @@
 export const PERSIAN_TEXTS = {
+  index: {
+    chatTitle: "چت با دستیار هوشمند",
+    chatDescription:
+      "با استفاده از هوش مصنوعی به راحتی چت کنید و پاسخ‌های هوشمند دریافت کنید",
+
+    imageTitle: "تولید تصویر",
+    imageDescription: "با استفاده از توضیحات متنی، تصاویر دلخواه خود را بسازید",
+
+    translationTitle: "ترجمه متن",
+    translationDescription: "متن‌های خود را به راحتی ترجمه کنید",
+
+    start: "شروع کنید",
+
+    appTitle: "دستیار هوشمند فارسی",
+    description:
+      "با استفاده از هوش مصنوعی، تجربه‌ای متفاوت را تجربه کنید",
+  },
+
   // Navigation and Headers
   navigation: {
     chat: "گفتگو",

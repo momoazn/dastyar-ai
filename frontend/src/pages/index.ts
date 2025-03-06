@@ -1,4 +1,4 @@
-export * from "./chat";
-export * from "./image";
-export * from "./translation";
-
+export { ChatPage } from "./chat";
+export { HomePage } from "./home";
+export { ImagePage } from "./image";
+export { TranslationPage } from "./translation";
