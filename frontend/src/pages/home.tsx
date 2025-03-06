@@ -30,7 +30,7 @@ const features = [
 
 export function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8">
+    <div className="mt-8 flex flex-col items-center justify-center p-4 md:mt-24 md:p-8">
       <div className="w-full max-w-4xl space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="text-4xl font-bold">{PERSIAN_TEXTS.index.appTitle}</h1>
@@ -45,7 +45,7 @@ export function HomePage() {
               <div className="space-y-4">
                 <div className={feature.color}>{feature.icon}</div>
                 <h2 className="text-xl font-semibold">{feature.title}</h2>
-                <p className="text-sm text-muted-foreground h-10">
+                <p className="h-10 text-sm text-muted-foreground">
                   {feature.description}
                 </p>
                 <Button asChild className="w-full">

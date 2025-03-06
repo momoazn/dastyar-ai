@@ -1,10 +1,8 @@
 import { lazy, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 
-import { Header } from "../header";
-import { Sidebar } from "../sidebar";
-import { Navigation } from "../navigation";
-import { useInitializeSelectedModels } from "@/hooks/use-chat-model";
+import { Header, Navigation, Sidebar } from "@/components";
+import { useInitializeSelectedModels } from "@/hooks";
 
 const HomePage = lazy(() =>
   import("../../pages/home").then((module) => ({ default: module.HomePage })),
@@ -24,6 +22,8 @@ const TranslationPage = lazy(() =>
 export function MainLayout() {
   useInitializeSelectedModels();
 
+  const { pathname } = useLocation();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     return window.innerWidth >= 768;
   });
@@ -35,7 +35,7 @@ export function MainLayout() {
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex h-full w-full flex-col overflow-hidden">
         <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <Navigation />
+        {pathname !== "/" && <Navigation />}
         <div className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<HomePage />} />
