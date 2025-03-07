@@ -1,90 +1,160 @@
-# Project Analysis: Persian AI Assistant
+# Persian AI Assistant - Project Context
 
-## Overview
+## Project Identity
+- **Name**: Persian AI Assistant
+- **Type**: Web Application
+- **Primary Language**: Persian
+- **Purpose**: Multilingual AI assistant with chat, image generation, and translation capabilities
 
-This project is a web application designed to be a Persian AI assistant. It provides three main functionalities: a chat interface powered by a local large language model (Ollama), an image generation tool powered by Stable Diffusion, and a translation feature. Additionally, it includes a Whisper service for audio transcription. The application is built using React, TypeScript, Tailwind CSS and ShadcnUI for the frontend, and Go for the backend.
+## Core Features
+1. **Chat Interface**
+   - Powered by local LLM (Ollama)
+   - Real-time conversation
+   - Model selection capability
+   - Persistent chat history
 
-## Project Structure
+2. **Image Generation**
+   - Powered by Stable Diffusion
+   - Text-to-image generation
+   - Image customization options
 
-The project is structured as follows:
+3. **Translation Service**
+   - Multi-language support
+   - Text translation capabilities
+   - Integration with chat system
 
--   **Frontend (React/TypeScript):**
-    -   `src/`: Contains the main application code.
-        -   `app.tsx`: The main application component, which sets up the layout and manages routing.
-        -   `pages/`: Contains the main page components.
-            -   `chat.tsx`: Page component for the chat interface.
-            -   `image.tsx`: Page component for the image generation interface.
-            -   `translation.tsx`: Page component for the translation feature.
-        -   `components/`: Contains reusable UI components.
-            -   `sidebar.tsx`: Component for the application's sidebar navigation.
-            -   `header.tsx`: Component for the application's header.
-            -   `message.tsx`: Component for displaying chat messages.
-            -   `status.tsx`: Component for displaying connection statuses.
-            -   `ui/`: Contains Radix UI components.
-        -   `context/`: Contains context providers for managing application state.
-            -   `ServiceContext.tsx`: Provides access to the various services.
-        -   `hooks/`: Contains custom React hooks.
-            -   `useAudioRecording.ts`: Hook for handling audio recording.
-            -   `useChat.ts`: Hook for managing chat interactions.
-            -   `useImageGeneration.ts`: Hook for managing image generation.
-            -   `useModelSelection.ts`: Hook for selecting models.
-            -   `usePersistentChat.ts`: Hook for persisting chat history.
-        -   `lib/`: Contains utility functions.
-            -   `utils.ts`: Utility functions.
-        -   `services/`: Contains services for interacting with external APIs.
-            -   `ollama.ts`: Service for interacting with the Ollama API.
-            -   `stableDiffusion.ts`: Service for interacting with the Stable Diffusion API.
-            -   `whisper.ts`: Service for interacting with the Whisper API.
-    -   `index.html`: The main HTML file for the application.
-    -   `package.json`: Contains project dependencies and scripts.
-    -   `vite.config.ts`: Configuration file for Vite.
-    -   `tsconfig.json`: Configuration file for TypeScript.
--   **Backend (Go):**
-    -   `main.go`: The main Go file that serves the static files and opens the browser.
+4. **Audio Features**
+   - Whisper-powered transcription
+   - Audio recording capabilities
+   - Speech-to-text functionality
 
-## Key Components
+## Technical Architecture
 
-### Frontend
+### Frontend Architecture
+```typescript
+// Core Structure
+src/
+  ├── app.tsx           // Main application setup
+  ├── atoms.ts          // Global state management
+  ├── pages/            // Route components
+  ├── components/       // UI components
+  ├── hooks/           // Custom React hooks
+  ├── lib/             // Utilities
+  └── services/        // API integrations
+```
 
--   **Pages:** The application is now organized into distinct pages for each major feature (chat, image generation, and translation).
--   **React Components:** The application uses React components to build the user interface. Key components include `Sidebar`, `Header`, `Message`, and various feature-specific components.
--   **Context API:** The `ServiceContext` provides a way to access the various services throughout the application.
--   **Custom Hooks:** The application uses custom hooks to manage state and logic for audio recording, chat, image generation, model selection, and persistent chat.
--   **UI Library:** The application uses Radix UI components for building the user interface.
--   **Styling:** The application uses Tailwind CSS and ShadcnUI for styling, including a dark mode theme that can be toggled by users. The theme preference is persisted in localStorage.
+### Key Frontend Components
+1. **Pages**
+   - `home.tsx`: Entry point and dashboard
+   - `chat.tsx`: Chat interface
+   - `image.tsx`: Image generation interface
+   - `translation.tsx`: Translation interface
 
-### Backend
+2. **Core Components**
+   - `sidebar.tsx`: Navigation and context
+   - `chat-input.tsx`: User input interface
+   - `message.tsx`: Message display
+   - `settings-modal.tsx`: Configuration interface
 
--   **Go Server:** The Go backend serves the static files from the `dist` directory and automatically opens the application in the browser.
+3. **State Management**
+   - Uses atomic patterns
+   - Global state with atoms.ts
+   - Persistent storage integration
 
-### Services
+### Backend Architecture
+```go
+backend/
+  ├── main.go          // Server entry point
+  ├── handlers/        // HTTP request handlers
+  ├── db/             // Database operations
+  ├── utils/          // Helper functions
+  └── logger/         // Custom logging
+```
 
--   **Ollama Service:** The `OllamaService` interacts with the Ollama API to provide chat functionality. It allows users to select a model and send chat messages.
--   **Stable Diffusion Service:** The `StableDiffusionService` interacts with the Stable Diffusion API to generate images from text prompts.
--   **Whisper Service:** The `WhisperService` interacts with the Whisper API to transcribe audio to text.
+## Technology Stack
 
-## Data Flow
+### Frontend Technologies
+- **Framework**: React 18+
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Build Tool**: Vite
+- **Package Manager**: Bun
 
-1.  The user interacts with the frontend through the chat, image generation, or translation interfaces.
-2.  The frontend sends requests to the appropriate service (Ollama, Stable Diffusion, or Whisper).
-3.  The services interact with their respective APIs.
-4.  The APIs return data to the services.
-5.  The services return data to the frontend.
-6.  The frontend updates the UI based on the data received.
+### Backend Technologies
+- **Language**: Go
+- **Database**: Integrated persistence layer
+- **Development**: Air (hot reloading)
+- **Logging**: Custom implementation
 
-## Intended Functionality
+### External Services
+- **LLM**: Ollama (local deployment)
+- **Image Generation**: Stable Diffusion
+- **Speech Processing**: Whisper
 
-The application is intended to provide a local AI assistant that can:
+## Development Workflow
 
--   Engage in chat conversations using a local large language model (Ollama).
--   Generate images from text prompts using Stable Diffusion.
--   Provide translation services.
--   Transcribe audio to text using Whisper.
+### Tools and Configuration
+- **IDE**: VSCode optimized
+- **Code Quality**:
+  - ESLint for linting
+  - Prettier for formatting
+- **Build Automation**: Makefile
+- **Environment**: Configurable via .env
 
-## Technologies Used
+### Data Flow Pattern
+1. User Input → Frontend Components
+2. Frontend → Backend API Calls
+3. Backend → External Service Integration
+4. Data Persistence → Database Layer
+5. Response → Frontend Update
+6. State Management → UI Refresh
 
--   **Frontend:** React, TypeScript, Tailwind CSS, ShadcnUI, Vite (with dark mode support)
--   **Backend:** Go
--   **Services:** Ollama, Stable Diffusion, Whisper
+## Integration Points
 
-This analysis provides a comprehensive overview of the project's purpose, structure, key components, data flow, and intended functionality.
+### API Endpoints
+- Chat communication endpoints
+- Image generation endpoints
+- Translation service endpoints
+- Audio processing endpoints
+
+### Service Communications
+- Local LLM interaction protocol
+- Image generation pipeline
+- Translation processing flow
+- Audio transcription workflow
+
+## Best Practices
+
+### Code Organization
+- Modular component structure
+- Clear separation of concerns
+- Consistent file naming
+- Type-safe implementations
+
+### State Management
+- Atomic state patterns
+- Persistent storage handling
+- Real-time updates
+- Error boundary handling
+
+### UI/UX Principles
+- Responsive design
+- Dark/light theme support
+- Accessibility compliance
+- Persian language optimization
+
+## Development Guidelines
+
+### Setup Requirements
+1. Node.js environment
+2. Go development setup
+3. Local LLM configuration
+4. Environment variables
+
+### Running the Project
+1. Frontend development server
+2. Backend API server
+3. Database connections
+4. External service configurations
+
+This context document is designed for LLM reference and provides structured information about the Persian AI Assistant project's architecture, features, and implementation details.
