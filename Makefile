@@ -4,7 +4,7 @@ BACKEND_DIR := backend
 
 # Default target
 .PHONY: all
-all: install run
+all: dev
 
 # Install dependencies
 .PHONY: install

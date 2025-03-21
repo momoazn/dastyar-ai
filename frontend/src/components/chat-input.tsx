@@ -1,5 +1,4 @@
 import { Mic, Pause, Send } from "lucide-react";
-import { useState } from "react";
 
 import {
   Button,
@@ -16,22 +15,24 @@ import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
 interface ChatInputProps {
-  handleSendMessage: () => void;
+  handleSendPrompt: () => void;
   isStreaming: boolean;
   stopStreaming: () => void;
   currentChatModel?: string;
   setCurrentChatModel: (model: string) => void;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
 }
 
 export function ChatInput({
-  handleSendMessage,
+  handleSendPrompt,
   isStreaming,
   stopStreaming,
   currentChatModel,
   setCurrentChatModel,
+  prompt,
+  setPrompt,
 }: ChatInputProps) {
-  const [prompt, setPrompt] = useState("");
-
   const { isRecording, startRecording, stopRecording } =
     useAudioRecording(setPrompt);
 
@@ -51,7 +52,7 @@ export function ChatInput({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSendMessage();
+                handleSendPrompt();
               }
             }}
           />
@@ -60,7 +61,11 @@ export function ChatInput({
         {/* Chat Input Buttons And Model Selector */}
         <div className="flex w-full justify-between">
           {/* Model Selector */}
-          <Select value={currentChatModel} onValueChange={setCurrentChatModel}>
+          <Select
+            defaultValue={currentChatModel}
+            value={currentChatModel}
+            onValueChange={setCurrentChatModel}
+          >
             <SelectTrigger className="w-[200px] border-none">
               <SelectValue
                 placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
@@ -92,7 +97,6 @@ export function ChatInput({
             </Button>
 
             {/* Send Button */}
-
             <Button
               size="icon"
               className="h-10 w-10"
@@ -101,7 +105,7 @@ export function ChatInput({
                 if (isStreaming) {
                   stopStreaming();
                 } else {
-                  handleSendMessage();
+                  handleSendPrompt();
                 }
               }}
             >

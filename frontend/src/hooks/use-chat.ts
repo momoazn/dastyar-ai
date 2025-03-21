@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
-import { useGetChatModel } from "@/atoms";
 import {
   type ChatMessage,
   sendMessage as sendMessageApi,
@@ -13,20 +12,18 @@ export const useChat = (
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
 
-  const selectedModel = useGetChatModel();
-
-  const sendMessage = async (
-    content: string,
+  const sendPrompt = async (
+    prompt: string,
     threadID: number,
-    model?: string,
+    model: string,
     onDone?: () => void,
   ) => {
-    if (!content.trim() || isStreaming) return;
+    if (!prompt.trim() || isStreaming) return;
 
     const userMessage: Partial<ChatMessage> = {
       id: Math.random(),
       role: "user",
-      content: content.trim(),
+      content: prompt.trim(),
     };
 
     const assistantMessage: Partial<ChatMessage> = {
@@ -53,7 +50,7 @@ export const useChat = (
     await sendMessageApi(
       threadID,
       userMessage.content!,
-      model ?? selectedModel,
+      model,
       true,
       (chunk) => {
         if (stopRequested) return;
@@ -90,7 +87,7 @@ export const useChat = (
 
   return {
     isStreaming,
-    sendMessage,
+    sendPrompt,
     stopStreaming,
   };
 };

@@ -1,9 +1,8 @@
 import { atom, useAtomValue, useSetAtom } from "jotai";
 
 export const CHAT_MODEL_LS_KEY = "SELECTED_CHAT_MODEL";
-const savedChatModel = localStorage.getItem(CHAT_MODEL_LS_KEY);
 
-export const chatModelAtom = atom(savedChatModel ?? "");
+export const chatModelAtom = atom(localStorage.getItem(CHAT_MODEL_LS_KEY));
 
 export const useGetChatModel = () => {
   return useAtomValue(chatModelAtom);

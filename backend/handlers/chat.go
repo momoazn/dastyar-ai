@@ -171,16 +171,11 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 					isThinking = false
 					currentState = "responding"
 				}
-			}
-
-			chunkCount++
-			if response.Message.Content != "<think>" && response.Message.Content != "</think>" {
+			} else {
+				chunkCount++
+				currentState = "responding"
 				chunk = response.Message.Content
-				if isThinking {
-					fullThink += response.Message.Content
-				} else {
-					fullContent += response.Message.Content
-				}
+				fullContent += response.Message.Content
 			}
 
 			var res ChatResponse

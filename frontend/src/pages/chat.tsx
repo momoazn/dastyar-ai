@@ -7,19 +7,22 @@ import { ScrollArea } from "@/components/ui";
 import { useChat } from "@/hooks";
 import {
   type ChatMessage as ChatMessageType,
+  useChatModels,
   useCreateThread,
   useThreadMessages,
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 export function ChatPage() {
-  const [message, setMessage] = useState("");
+  const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
 
   const defaultChatModel = useGetChatModel();
 
-  const [currentChatModel, setCurrentChatModel] = useState<string | undefined>(
-    defaultChatModel,
+  const { data: chatModels } = useChatModels();
+
+  const [currentChatModel, setCurrentChatModel] = useState<string>(
+    defaultChatModel ?? (chatModels?.data?.[0].model as string),
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +37,7 @@ export function ChatPage() {
     },
   );
 
-  const { isStreaming, sendMessage, stopStreaming } = useChat(
+  const { isStreaming, sendPrompt, stopStreaming } = useChat(
     messages,
     setMessages,
   );
@@ -48,7 +51,9 @@ export function ChatPage() {
       if (lastMessageChatModel) {
         setCurrentChatModel(lastMessageChatModel);
       } else {
-        setCurrentChatModel(defaultChatModel);
+        setCurrentChatModel(
+          defaultChatModel ?? (chatModels?.data?.[0].model as string),
+        );
       }
     }
   }, [threadMessages]);
@@ -57,20 +62,20 @@ export function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = async () => {
+  const handleSendPrompt = async () => {
     if (threadID) {
-      sendMessage(message, Number(threadID), currentChatModel, refetchMessages);
-      setMessage("");
+      sendPrompt(prompt, Number(threadID), currentChatModel, refetchMessages);
+      setPrompt("");
       return;
     }
 
     const { data: newThread } = await createThread(
       PERSIAN_TEXTS.navigation.newChat,
     );
-    sendMessage(message, newThread.id, currentChatModel, () =>
+    sendPrompt(prompt, newThread.id, currentChatModel, () =>
       navigate(`/threads/${newThread.id}/chat`, { replace: true }),
     );
-    setMessage("");
+    setPrompt("");
   };
 
   return (
@@ -87,11 +92,13 @@ export function ChatPage() {
 
       {/* Chat Input Container */}
       <ChatInput
-        handleSendMessage={handleSendMessage}
+        handleSendPrompt={handleSendPrompt}
         isStreaming={isStreaming}
         stopStreaming={stopStreaming}
         currentChatModel={currentChatModel}
         setCurrentChatModel={setCurrentChatModel}
+        prompt={prompt}
+        setPrompt={setPrompt}
       />
     </div>
   );
