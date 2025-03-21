@@ -32,7 +32,14 @@ export function DeleteDialog({
             {PERSIAN_TEXTS.deleteDialog.description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+          >
+            {PERSIAN_TEXTS.ui.cancel}
+          </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
@@ -43,13 +50,6 @@ export function DeleteDialog({
             ) : (
               PERSIAN_TEXTS.ui.delete
             )}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isDeleting}
-          >
-            {PERSIAN_TEXTS.ui.cancel}
           </Button>
         </DialogFooter>
       </DialogContent>
