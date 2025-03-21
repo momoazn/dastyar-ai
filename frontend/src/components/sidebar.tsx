@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog, SettingsModal, SidebarItem } from "@/components";
 import { Button, LoadingSpinner, ScrollArea } from "@/components/ui";
@@ -15,6 +15,7 @@ interface SidebarProps {
 
 export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
@@ -37,9 +38,13 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const { mutate: deleteThread, isPending: isDeletingThread } = useDeleteThread(
     {
       onSuccess: () => {
+        const toDeleteThreadId = threadToDelete;
         refetchThreads();
         setDeleteDialogOpen(false);
         setThreadToDelete(null);
+        if (location.pathname === `/threads/${toDeleteThreadId}/chat`) {
+          navigate("/");
+        }
       },
     },
   );
