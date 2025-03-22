@@ -118,16 +118,16 @@ func (h *Handler) parseAndValidateChatRequest(c echo.Context) (ChatRequest, erro
 	return chatReq, nil
 }
 
-func (h *Handler) getThread(c echo.Context, threadID string) (db.Thread, error) {
-	var thread db.Thread
+func (h *Handler) getThread(c echo.Context, threadID string) (db.ChatThread, error) {
+	var thread db.ChatThread
 	result := h.db.First(&thread, threadID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			log.Info().Str("thread_id", threadID).Msg("Thread not found")
-			return db.Thread{}, c.JSON(http.StatusNotFound, ErrorResponse{Message: "Thread not found"})
+			return db.ChatThread{}, c.JSON(http.StatusNotFound, ErrorResponse{Message: "Thread not found"})
 		}
 		log.Error().Err(result.Error).Str("thread_id", threadID).Msg("Failed to fetch thread")
-		return db.Thread{}, c.JSON(http.StatusInternalServerError, ErrorResponse{Message: result.Error.Error()})
+		return db.ChatThread{}, c.JSON(http.StatusInternalServerError, ErrorResponse{Message: result.Error.Error()})
 	}
 	return thread, nil
 }
@@ -302,7 +302,7 @@ func (h *Handler) prepareChatResponse(assistantMsg db.ChatMessage, currentChunk,
 	return res
 }
 
-func (h *Handler) updateMessageAndThread(assistantMsg db.ChatMessage, thread db.Thread, result StreamResult) error {
+func (h *Handler) updateMessageAndThread(assistantMsg db.ChatMessage, thread db.ChatThread, result StreamResult) error {
 	// Update the assistant message with the complete response
 	if err := h.db.Model(&assistantMsg).
 		Updates(map[string]interface{}{

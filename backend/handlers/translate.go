@@ -49,7 +49,7 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 	}
 
 	// Verify thread exists
-	var thread db.Thread
+	var thread db.TranslateThread
 	result := h.db.First(&thread, translateReq.ThreadID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {

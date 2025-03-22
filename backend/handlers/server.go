@@ -103,18 +103,23 @@ func setupMiddleware(e *echo.Echo) {
 func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
 
-	// Threads endpoints
-	apiGroup.GET("/threads", handler.handleGetAllThreads)
-	apiGroup.POST("/threads", handler.handleCreateThread)
-	apiGroup.GET("/threads/:id", handler.handleGetThread)
-	apiGroup.PUT("/threads/:id", handler.handleUpdateThread)
-	apiGroup.DELETE("/threads/:id", handler.handleDeleteThread)
+	// Chat threads endpoints
+	apiGroup.GET("/chat-threads", handler.handleGetAllChatThreads)
+	apiGroup.POST("/chat-threads", handler.handleCreateChatThread)
+	apiGroup.GET("/chat-threads/:id", handler.handleGetChatThread)
+	apiGroup.PUT("/chat-threads/:id", handler.handleUpdateChatThread)
+	apiGroup.DELETE("/chat-threads/:id", handler.handleDeleteChatThread)
+	apiGroup.GET("/chat-threads/:id/messages", handler.handleGetChatThreadMessages)
 
-	// Messages endpoints
-	apiGroup.GET("/threads/:id/messages", handler.handleGetThreadMessages)
-	apiGroup.GET("/threads/:id/translations", handler.handleGetThreadTranslations)
+	// Translate threads endpoints
+	apiGroup.GET("/translate-threads", handler.handleGetAllTranslateThreads)
+	apiGroup.POST("/translate-threads", handler.handleCreateTranslateThread)
+	apiGroup.GET("/translate-threads/:id", handler.handleGetTranslateThread)
+	apiGroup.PUT("/translate-threads/:id", handler.handleUpdateTranslateThread)
+	apiGroup.DELETE("/translate-threads/:id", handler.handleDeleteTranslateThread)
+	apiGroup.GET("/translate-threads/:id/translations", handler.handleGetTranslateThreadTranslations)
 
-	// Streaming chat endpoint
+	// LLM endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
 	apiGroup.POST("/translate", handler.handleTranslate)
 	apiGroup.GET("/models", handler.handleGetModels)

@@ -10,39 +10,48 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type Thread struct {
+type ChatThread struct {
 	ID        uint          `json:"id" gorm:"primaryKey"`
 	Title     string        `json:"title"`
-	Messages  []ChatMessage `json:"messages,omitempty" gorm:"foreignKey:ThreadID"`
+	Messages  []ChatMessage `json:"messages,omitempty" gorm:"foreignKey:ChatThreadID"`
 	Model     string        `json:"model"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
 
+type TranslateThread struct {
+	ID        uint               `json:"id" gorm:"primaryKey"`
+	Title     string             `json:"title"`
+	Messages  []TranslateMessage `json:"messages,omitempty" gorm:"foreignKey:TranslateThreadID"`
+	Model     string             `json:"model"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
 type ChatMessage struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	ThreadID  uint      `json:"thread_id"`
-	Thread    Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
-	Role      string    `json:"role"`
-	Content   string    `json:"content"`
-	Think     string    `json:"think"`
-	Model     string    `json:"model"`
-	State     string    `json:"state"`
-	Timestamp time.Time `json:"timestamp"`
+	ID        uint       `json:"id" gorm:"primaryKey"`
+	ThreadID  uint       `json:"thread_id"`
+	Thread    ChatThread `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Role      string     `json:"role"`
+	Content   string     `json:"content"`
+	Think     string     `json:"think"`
+	Model     string     `json:"model"`
+	State     string     `json:"state"`
+	Timestamp time.Time  `json:"timestamp"`
 }
 
 type TranslateMessage struct {
-	ID           uint      `json:"id" gorm:"primaryKey"`
-	ThreadID     uint      `json:"thread_id"`
-	Thread       Thread    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
-	Input        string    `json:"input"`
-	Output       string    `json:"output"`
-	Model        string    `json:"model"`
-	SourceLang   string    `json:"source_lang"`
-	TargetLang   string    `json:"target_lang"`
-	Tone         string    `json:"tone"`
-	SystemPrompt string    `json:"-"`
-	Timestamp    time.Time `json:"timestamp"`
+	ID           uint            `json:"id" gorm:"primaryKey"`
+	ThreadID     uint            `json:"thread_id"`
+	Thread       TranslateThread `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Input        string          `json:"input"`
+	Output       string          `json:"output"`
+	Model        string          `json:"model"`
+	SourceLang   string          `json:"source_lang"`
+	TargetLang   string          `json:"target_lang"`
+	Tone         string          `json:"tone"`
+	SystemPrompt string          `json:"-"`
+	Timestamp    time.Time       `json:"timestamp"`
 }
 
 // Initialize database connection and create tables
@@ -74,7 +83,7 @@ func InitDB() (*gorm.DB, error) {
 	// Auto migrate the schema
 	log.Info().Msg("Running database migrations...")
 	migStart := time.Now()
-	if err := db.AutoMigrate(&Thread{}, &ChatMessage{}, &TranslateMessage{}); err != nil {
+	if err := db.AutoMigrate(&ChatThread{}, &ChatMessage{}, &TranslateThread{}, &TranslateMessage{}); err != nil {
 		log.Error().Err(err).Msg("Failed to run database migrations")
 		return nil, err
 	}
@@ -88,17 +97,25 @@ func InitDB() (*gorm.DB, error) {
 	}
 
 	// Log some database stats
-	var threadCount, messageCount int64
-	if err := db.Model(&Thread{}).Count(&threadCount).Error; err != nil {
-		log.Warn().Err(err).Msg("Failed to get thread count")
+	var chatThreadCount, translateThreadCount, chatMessageCount, translateMessageCount int64
+	if err := db.Model(&ChatThread{}).Count(&chatThreadCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get chat thread count")
 	}
-	if err := db.Model(&ChatMessage{}).Count(&messageCount).Error; err != nil {
-		log.Warn().Err(err).Msg("Failed to get message count")
+	if err := db.Model(&ChatMessage{}).Count(&chatMessageCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get chat message count")
+	}
+	if err := db.Model(&TranslateThread{}).Count(&translateThreadCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get translate thread count")
+	}
+	if err := db.Model(&TranslateMessage{}).Count(&translateMessageCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get translate message count")
 	}
 
 	log.Info().
-		Int64("thread_count", threadCount).
-		Int64("message_count", messageCount).
+		Int64("chat_thread_count", chatThreadCount).
+		Int64("translate_thread_count", translateThreadCount).
+		Int64("chat_message_count", chatMessageCount).
+		Int64("translate_message_count", translateMessageCount).
 		Dur("total_duration_ms", time.Since(start)).
 		Msg("Database initialization done successfully")
 
@@ -113,8 +130,8 @@ func seedDatabase(db *gorm.DB) error {
 
 	// Check if seeding has already been done
 	var count int64
-	if err := db.Model(&Thread{}).Count(&count).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to check existing thread count")
+	if err := db.Model(&ChatThread{}).Count(&count).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to check existing chat thread count")
 		return err
 	}
 
@@ -126,7 +143,7 @@ func seedDatabase(db *gorm.DB) error {
 	log.Info().Msg("No existing data found, proceeding with seeding")
 
 	// Create 3 test threads with 5 messages each
-	threads := []Thread{
+	chatThreads := []ChatThread{
 		{
 			Title: "آموزش هوش مصنوعی",
 			Model: "deepseek-r1",
@@ -167,29 +184,29 @@ func seedDatabase(db *gorm.DB) error {
 
 	// Set timestamps for threads and messages
 	now := time.Now()
-	for i := range threads {
-		threads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
-		threads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+	for i := range chatThreads {
+		chatThreads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+		chatThreads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
 
-		for j := range threads[i].Messages {
-			threads[i].Messages[j].Timestamp = now.Add(time.Duration(j) * time.Minute)
+		for j := range chatThreads[i].Messages {
+			chatThreads[i].Messages[j].Timestamp = now.Add(time.Duration(j) * time.Minute)
 		}
 	}
 
 	// Create the threads and their messages in the database
 	log.Info().
-		Int("thread_count", len(threads)).
-		Int("total_messages", len(threads)*5).
+		Int("chat_thread_count", len(chatThreads)).
+		Int("total_chat_messages", len(chatThreads)*5).
 		Msg("Creating seed data...")
 
-	if err := db.Create(&threads).Error; err != nil {
+	if err := db.Create(&chatThreads).Error; err != nil {
 		log.Error().Err(err).Msg("Failed to create seed data")
 		return err
 	}
 
 	log.Info().
-		Int("thread_count", len(threads)).
-		Int("total_messages", len(threads)*5).
+		Int("chat_thread_count", len(chatThreads)).
+		Int("total_chat_messages", len(chatThreads)*5).
 		Dur("duration_ms", time.Since(start)).
 		Msg("Seed data created successfully")
 
