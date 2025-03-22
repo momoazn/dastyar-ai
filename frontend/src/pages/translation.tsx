@@ -14,7 +14,10 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslation } from "@/hooks";
-import { useCreateChatThread, useThreadTranslations } from "@/lib/api/chat";
+import {
+  useCreateTranslateProject,
+  useTranslateProjectMessages,
+} from "@/lib/api/translate";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
@@ -83,11 +86,11 @@ export function TranslationPage() {
     data: translations,
     isLoading: isTranslationsLoading,
     refetch: refetchTranslations,
-  } = useThreadTranslations(Number(threadId), {
+  } = useTranslateProjectMessages(Number(threadId), {
     enabled: !!threadId,
   });
 
-  const { mutateAsync: createThread } = useCreateChatThread();
+  const { mutateAsync: createTranslateProject } = useCreateTranslateProject();
 
   const handleTranslate = async () => {
     if (!sourceText) return;
@@ -95,10 +98,10 @@ export function TranslationPage() {
     let tId = Number(threadId);
 
     if (!tId) {
-      const { data: newThread } = await createThread(
+      const { data: newTranslateProject } = await createTranslateProject(
         PERSIAN_TEXTS.navigation.newChat,
       );
-      tId = newThread.id;
+      tId = newTranslateProject.id;
     }
 
     try {
@@ -238,13 +241,17 @@ export function TranslationPage() {
                 >
                   <div className="mb-2 flex flex-row-reverse items-center justify-between text-sm text-muted-foreground">
                     <div className="rtl flex items-center gap-2">
-                      <span>{getLanguageLabel(translation.source_lang)}</span>
+                      <span>
+                        {getLanguageLabel(translation.source_language)}
+                      </span>
                       <span>←</span>
-                      <span>{getLanguageLabel(translation.target_lang)}</span>
+                      <span>
+                        {getLanguageLabel(translation.target_language)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>
-                        {new Date(translation.timestamp).toLocaleString()}
+                        {new Date(translation.created_at).toLocaleString()}
                       </span>
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
                         {getToneLabel(translation.tone)}
@@ -256,13 +263,13 @@ export function TranslationPage() {
                       dir="auto"
                       className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
                     >
-                      {translation.input}
+                      {translation.source_text}
                     </p>
                     <p
                       dir="auto"
                       className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
                     >
-                      {translation.output}
+                      {translation.translated_text}
                     </p>
                   </div>
                 </div>

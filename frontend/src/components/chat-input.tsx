@@ -10,7 +10,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useAudioRecording } from "@/hooks";
-import { useChatModels } from "@/lib/api/chat";
+import { useAIModels } from "@/lib/api";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ export function ChatInput({
   const { isRecording, startRecording, stopRecording } =
     useAudioRecording(setPrompt);
 
-  const { data: chatModels } = useChatModels();
+  const { data: aiModels } = useAIModels();
 
   // Handle key presses in the textarea
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -80,7 +80,7 @@ export function ChatInput({
           <ModelSelector
             currentModel={currentChatModel}
             setCurrentModel={setCurrentChatModel}
-            models={chatModels?.data || []}
+            models={aiModels?.data || []}
           />
 
           {/* Action Buttons */}

@@ -5,18 +5,18 @@ import { useGetChatModel } from "@/atoms";
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
 import { useChat } from "@/hooks";
+import { useAIModels } from "@/lib/api";
 import {
-  type ChatMessage as ChatMessageType,
-  useChatModels,
-  useCreateChatThread,
-  useChatThreadMessages,
+  type Message as MessageType,
+  useConversationMessages,
+  useCreateConversation,
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 export function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
-  const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
   const [currentChatModel, setCurrentChatModel] = useState("");
 
   // ===== REFS & NAVIGATION =====
@@ -26,12 +26,10 @@ export function ChatPage() {
 
   // ===== API HOOKS =====
   const defaultChatModel = useGetChatModel();
-  const { data: chatModels } = useChatModels();
-  const { data: threadMessages, refetch: refetchMessages } = useChatThreadMessages(
-    Number(threadID),
-    { enabled: !!threadID },
-  );
-  const { mutateAsync: createThread } = useCreateChatThread();
+  const { data: aiModels } = useAIModels();
+  const { data: conversationMessages, refetch: refetchMessages } =
+    useConversationMessages(Number(threadID), { enabled: !!threadID });
+  const { mutateAsync: createConversation } = useCreateConversation();
 
   // ===== CHAT FUNCTIONALITY =====
   const { isStreaming, sendPrompt, stopStreaming } = useChat(
@@ -49,13 +47,13 @@ export function ChatPage() {
 
   // Initialize chat model and load messages when thread changes
   useEffect(() => {
-    if (!threadMessages) return;
+    if (!conversationMessages) return;
 
     // Set messages from thread
-    setMessages(threadMessages.data);
+    setMessages(conversationMessages.data);
 
     // Determine which chat model to use
-    const lastMessageModel = threadMessages.data.at(-1)?.model;
+    const lastMessageModel = conversationMessages.data.at(-1)?.ai_model;
 
     if (lastMessageModel) {
       // Use model from the last message in the thread
@@ -63,11 +61,11 @@ export function ChatPage() {
     } else if (defaultChatModel) {
       // Use default model from user preferences
       setCurrentChatModel(defaultChatModel);
-    } else if (chatModels?.data?.length) {
+    } else if (aiModels?.data?.length) {
       // Fallback to first available model
-      setCurrentChatModel(chatModels.data[0].model);
+      setCurrentChatModel(aiModels.data[0].model);
     }
-  }, [threadMessages, defaultChatModel, chatModels]);
+  }, [conversationMessages, defaultChatModel, aiModels]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -78,10 +76,10 @@ export function ChatPage() {
   useEffect(() => {
     if (!currentChatModel && defaultChatModel) {
       setCurrentChatModel(defaultChatModel);
-    } else if (!currentChatModel && chatModels?.data?.length) {
-      setCurrentChatModel(chatModels.data[0].model);
+    } else if (!currentChatModel && aiModels?.data?.length) {
+      setCurrentChatModel(aiModels.data[0].model);
     }
-  }, [currentChatModel, defaultChatModel, chatModels]);
+  }, [currentChatModel, defaultChatModel, aiModels]);
 
   // ===== HANDLERS =====
 
@@ -100,13 +98,13 @@ export function ChatPage() {
 
     try {
       // Create a new thread
-      const { data: newThread } = await createThread(
+      const { data: newConversation } = await createConversation(
         PERSIAN_TEXTS.navigation.newChat,
       );
 
       // Send message to the new thread
-      sendPrompt(prompt, newThread.id, currentChatModel, () =>
-        navigate(`/threads/${newThread.id}/chat`, { replace: true }),
+      sendPrompt(prompt, newConversation.id, currentChatModel, () =>
+        navigate(`/threads/${newConversation.id}/chat`, { replace: true }),
       );
       setPrompt("");
     } catch (error) {

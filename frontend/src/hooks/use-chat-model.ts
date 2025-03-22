@@ -5,7 +5,7 @@ import {
   useSetChatModel,
   useSetTranslationModel,
 } from "../atoms";
-import { useChatModels } from "../lib/api/chat";
+import { useAIModels } from "../lib/api";
 
 /**
  * Hook that initializes selected models on application startup
@@ -15,13 +15,13 @@ export function useInitializeSelectedModels() {
   // Get current model selections
   const chatModel = useGetChatModel();
   const translationModel = useGetTranslationModel();
-  
+
   // Get setter functions
   const setChatModel = useSetChatModel();
   const setTranslationModel = useSetTranslationModel();
-  
+
   // Fetch available models
-  const { data: chatModels, isSuccess } = useChatModels();
+  const { data: chatModels, isSuccess } = useAIModels();
 
   useEffect(() => {
     // Only proceed if we have successfully loaded chat models
@@ -30,7 +30,7 @@ export function useInitializeSelectedModels() {
     }
 
     const defaultModel = chatModels.data[0].name;
-    
+
     // Set chat model if not already set
     if (!chatModel) {
       setChatModel(defaultModel);

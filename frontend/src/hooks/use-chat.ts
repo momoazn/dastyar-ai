@@ -1,9 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 
-import {
-  type ChatMessage,
-  sendMessage as sendMessageApi,
-} from "@/lib/api/chat";
+import { type Message, sendMessage as sendMessageApi } from "@/lib/api/chat";
 
 interface UseChatOptions {
   onStreamStart?: () => void;
@@ -14,9 +11,9 @@ interface UseChatOptions {
  * Hook for managing chat interactions including message sending and streaming
  */
 export const useChat = (
-  messages: ChatMessage[],
-  setMessages: Dispatch<SetStateAction<ChatMessage[]>>,
-  options?: UseChatOptions
+  messages: Message[],
+  setMessages: Dispatch<SetStateAction<Message[]>>,
+  options?: UseChatOptions,
 ) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [stopRequested, setStopRequested] = useState(false);
@@ -26,15 +23,18 @@ export const useChat = (
    */
   const createTempMessage = (
     role: "user" | "assistant",
-    content: string = ""
-  ): ChatMessage => ({
-    id: Math.random(),
-    role,
-    content,
-    think: "",
-    model: "",
-    state: role === "assistant" ? "idle" : undefined,
-  } as ChatMessage);
+    content: string = "",
+  ): Message =>
+    ({
+      id: Math.random(),
+      conversation_id: 0,
+      role,
+      content,
+      reasoning: "",
+      ai_model: "",
+      status: role === "assistant" ? "idle" : undefined,
+      sent_at: new Date().toISOString(),
+    }) as Message;
 
   /**
    * Sends a prompt message and handles streaming the response
@@ -63,7 +63,7 @@ export const useChat = (
 
     // Track content for accumulation
     let fullContent = "";
-    let fullThink = "";
+    let fullReasoning = "";
 
     try {
       // Send message to API with streaming
@@ -77,9 +77,9 @@ export const useChat = (
           if (stopRequested) return;
 
           // Accumulate content based on state
-          if (chunk.state === "thinking") {
-            fullThink += chunk.think ?? "";
-          } else if (chunk.state === "responding") {
+          if (chunk.status === "reasoning") {
+            fullReasoning += chunk.reasoning ?? "";
+          } else if (chunk.status === "responding") {
             fullContent += chunk.content ?? "";
           }
 
@@ -87,10 +87,10 @@ export const useChat = (
           updateAssistantMessage({
             ...chunk,
             content: fullContent,
-            think: fullThink,
+            reasoning: fullReasoning,
           });
         },
-        handleStreamComplete(onDone)
+        handleStreamComplete(onDone),
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -101,7 +101,7 @@ export const useChat = (
   /**
    * Updates the assistant's message in the message list
    */
-  const updateAssistantMessage = (updatedMessage: ChatMessage) => {
+  const updateAssistantMessage = (updatedMessage: Message) => {
     setMessages((prev) => {
       const newMessages = [...prev];
       newMessages[newMessages.length - 1] = updatedMessage;

@@ -5,9 +5,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DeleteDialog, SettingsModal, SidebarItem } from "@/components";
 import { Button, LoadingSpinner, ScrollArea } from "@/components/ui";
 import {
-  useChatThreads,
-  useCreateChatThread,
-  useDeleteChatThread,
+  useConversations,
+  useCreateConversation,
+  useDeleteConversation,
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
@@ -22,43 +22,45 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const location = useLocation();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+  const [conversationToDelete, setConversationToDelete] = useState<
+    number | null
+  >(null);
 
   const {
-    data: chatThreads,
-    isLoading: isChatThreadsLoading,
-    refetch: refetchChatThreads,
-  } = useChatThreads();
+    data: conversations,
+    isLoading: isConversationsLoading,
+    refetch: refetchConversations,
+  } = useConversations();
 
   const { mutate: createThread, isPending: isCreatingThread } =
-    useCreateChatThread({
-      onSuccess: ({ data: thread }) => {
-        navigate(`/threads/${thread.id}/chat`);
-        refetchChatThreads();
+    useCreateConversation({
+      onSuccess: ({ data: conversation }) => {
+        navigate(`/threads/${conversation.id}/chat`);
+        refetchConversations();
       },
     });
 
-  const { mutate: deleteThread, isPending: isDeletingThread } =
-    useDeleteChatThread({
+  const { mutate: deleteConversation, isPending: isDeletingConversation } =
+    useDeleteConversation({
       onSuccess: () => {
-        const toDeleteThreadId = threadToDelete;
-        refetchChatThreads();
+        const toDeleteConversationId = conversationToDelete;
+        refetchConversations();
         setDeleteDialogOpen(false);
-        setThreadToDelete(null);
-        if (location.pathname === `/threads/${toDeleteThreadId}/chat`) {
+        setConversationToDelete(null);
+        if (location.pathname === `/threads/${toDeleteConversationId}/chat`) {
           navigate("/");
         }
       },
     });
 
-  const handleDeleteThread = (threadId: number) => {
-    setThreadToDelete(threadId);
+  const handleDeleteConversation = (conversationId: number) => {
+    setConversationToDelete(conversationId);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
-    if (!threadToDelete) return;
-    deleteThread(threadToDelete);
+    if (!conversationToDelete) return;
+    deleteConversation(conversationToDelete);
   };
 
   if (!isSidebarOpen) {
@@ -101,25 +103,25 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
 
         <ScrollArea className="flex-1">
           <nav className="rtl flex flex-col gap-1 p-4">
-            {isChatThreadsLoading ? (
+            {isConversationsLoading ? (
               <div className="mt-20 flex h-10 items-center justify-center">
                 <LoadingSpinner />
               </div>
             ) : (
               <ul className="list-none p-0">
-                {chatThreads?.data?.map((thread) => (
-                  <li key={thread.id}>
+                {conversations?.data?.map((conversation) => (
+                  <li key={conversation.id}>
                     <SidebarItem
-                      thread={thread}
+                      conversation={conversation}
                       onDelete={(e) => {
                         e.preventDefault();
                         if (e.shiftKey) {
-                          deleteThread(thread.id);
+                          deleteConversation(conversation.id);
                         } else {
-                          handleDeleteThread(thread.id);
+                          handleDeleteConversation(conversation.id);
                         }
                       }}
-                      isDeletingThread={isDeletingThread}
+                      isDeletingConversation={isDeletingConversation}
                     />
                   </li>
                 ))}
@@ -138,7 +140,7 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={confirmDelete}
-          isDeleting={isDeletingThread}
+          isDeleting={isDeletingConversation}
         />
       )}
     </>

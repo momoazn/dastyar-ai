@@ -8,65 +8,35 @@ import {
 import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { StreamResponseService } from "../utils";
 
-export type ChatState = "idle" | "thinking" | "responding" | "done";
-export type ChatRole = "user" | "assistant" | "system";
+export type MessageStatus = "idle" | "reasoning" | "responding" | "done";
+export type MessageRole = "user" | "assistant" | "system";
 
-export interface Thread<T extends ChatMessage | TranslateMessage> {
+export interface Conversation {
   id: number;
   title: string;
-  messages: T[];
-  model: string;
+  ai_model: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface ChatThread extends Thread<ChatMessage> {}
-export interface TranslateThread extends Thread<TranslateMessage> {}
-
-export type ChatMessage = {
+export interface Message {
   id: number;
-  thread_id: number;
-  role: ChatRole;
+  conversation_id: number;
+  role: MessageRole;
   content: string;
-  think: string;
-  model: string;
-  state: ChatState;
-  timestamp: string;
-};
+  reasoning: string;
+  ai_model: string;
+  status: MessageStatus;
+  sent_at: string;
+}
 
-export type TranslateMessage = {
-  id: number;
-  thread_id: number;
-  input: string;
-  output: string;
-  model: string;
-  source_lang: string;
-  target_lang: string;
-  tone: string;
-  timestamp: string;
-};
-
-export type ChatModel = {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-};
-
-export type SendMessageBody = {
-  content: string;
-  model: string;
-  stream?: boolean;
-  thread_id: string;
-};
-
-export const useChatThreads = (
-  options?: UseQueryOptions<PaginatedApiResponse<ChatThread>, Error>,
+export const useConversations = (
+  options?: UseQueryOptions<PaginatedApiResponse<Conversation>, Error>,
 ) => {
   return useQuery({
-    queryKey: ["chat-threads"],
-    queryFn: () => fetchApi<PaginatedApiResponse<ChatThread>>("/chat-threads"),
+    queryKey: ["conversations"],
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<Conversation>>("/conversations"),
     ...options,
   });
 };
@@ -76,26 +46,24 @@ export const getThreadMessagesQueryKey = (id: number) => [
   id,
 ];
 
-export const useChatThreadMessages = (
+export const useConversationMessages = (
   id: number,
-  options?: Partial<UseQueryOptions<PaginatedApiResponse<ChatMessage>, Error>>,
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<Message>, Error>>,
 ) => {
   return useQuery({
     queryKey: getThreadMessagesQueryKey(id),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<ChatMessage>>(
-        `/chat-threads/${id}/messages`,
-      ),
+      fetchApi<PaginatedApiResponse<Message>>(`/conversations/${id}/messages`),
     ...options,
   });
 };
 
-export const useCreateChatThread = (
-  options?: UseMutationOptions<ApiResponse<ChatThread>, Error, string>,
+export const useCreateConversation = (
+  options?: UseMutationOptions<ApiResponse<Conversation>, Error, string>,
 ) => {
   return useMutation({
     mutationFn: (title: string) =>
-      fetchApi<ApiResponse<ChatThread>>("/chat-threads", {
+      fetchApi<ApiResponse<Conversation>>("/conversations", {
         method: "POST",
         body: JSON.stringify({ title }),
       }),
@@ -103,16 +71,16 @@ export const useCreateChatThread = (
   });
 };
 
-export const useUpdateChatThread = (
+export const useUpdateConversation = (
   options?: UseMutationOptions<
-    ApiResponse<ChatThread>,
+    ApiResponse<Conversation>,
     Error,
     { id: number; title: string }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${id}`, {
+      fetchApi<ApiResponse<Conversation>>(`/conversations/${id}`, {
         method: "PUT",
         body: JSON.stringify({ title }),
       }),
@@ -120,109 +88,14 @@ export const useUpdateChatThread = (
   });
 };
 
-export const useDeleteChatThread = (
-  options?: UseMutationOptions<ApiResponse<ChatThread>, Error, number>,
+export const useDeleteConversation = (
+  options?: UseMutationOptions<ApiResponse<Conversation>, Error, number>,
 ) => {
   return useMutation({
     mutationFn: (id: number) =>
-      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${id}`, {
+      fetchApi<ApiResponse<Conversation>>(`/conversations/${id}`, {
         method: "DELETE",
       }),
-    ...options,
-  });
-};
-
-export const useTranslateThreads = (
-  options?: UseQueryOptions<PaginatedApiResponse<TranslateThread>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["translate-threads"],
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateThread>>("/translate-threads"),
-    ...options,
-  });
-};
-
-export const getTranslateThreadMessagesQueryKey = (id: number) => [
-  "translate-thread-messages",
-  id,
-];
-
-export const useTranslateThreadMessages = (
-  id: number,
-  options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
-  >,
-) => {
-  return useQuery({
-    queryKey: getTranslateThreadMessagesQueryKey(id),
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateMessage>>(
-        `/translate-threads/${id}/messages`,
-      ),
-    ...options,
-  });
-};
-
-export const useCreateTranslateThread = (
-  options?: UseMutationOptions<ApiResponse<TranslateThread>, Error, string>,
-) => {
-  return useMutation({
-    mutationFn: (title: string) =>
-      fetchApi<ApiResponse<TranslateThread>>("/translate-threads", {
-        method: "POST",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useUpdateTranslateThread = (
-  options?: UseMutationOptions<
-    ApiResponse<TranslateThread>,
-    Error,
-    { id: number; title: string }
-  >,
-) => {
-  return useMutation({
-    mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<TranslateThread>>(`/translate-threads/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useDeleteTranslateThread = (
-  options?: UseMutationOptions<ApiResponse<TranslateThread>, Error, number>,
-) => {
-  return useMutation({
-    mutationFn: (id: number) =>
-      fetchApi<ApiResponse<TranslateThread>>(`/translate-threads/${id}`, {
-        method: "DELETE",
-      }),
-    ...options,
-  });
-};
-
-export const useChatModels = (
-  options?: UseQueryOptions<ApiResponse<ChatModel[]>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["models"],
-    queryFn: () => fetchApi<ApiResponse<ChatModel[]>>("/models"),
-    ...options,
-  });
-};
-
-export const useChatHealthCheck = (
-  options?: UseQueryOptions<ApiResponse<string>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["health"],
-    queryFn: () => fetchApi<ApiResponse<string>>("/health"),
-    refetchInterval: 10000,
     ...options,
   });
 };
@@ -232,27 +105,27 @@ export async function sendMessage(
   content: string,
   model: string,
   stream: boolean,
-  onChunk?: (chunk: ChatMessage) => void,
+  onChunk?: (chunk: Message) => void,
   onDone?: () => void,
-): Promise<ChatMessage> {
+): Promise<Message> {
   const service = new StreamResponseService();
 
-  const response = await service.processStreamableRequest<ChatMessage>("chat", {
+  const response = await service.processStreamableRequest<Message>("chat", {
     content,
     model,
     thread_id: threadId.toString(),
     stream,
   });
 
-  const completedMessage: ChatMessage = {
+  const completedMessage: Message = {
     id: 0,
-    thread_id: threadId,
+    conversation_id: threadId,
     role: "assistant",
     content: "",
-    think: "",
-    model,
-    state: "idle",
-    timestamp: "",
+    reasoning: "",
+    ai_model: model,
+    status: "idle",
+    sent_at: "",
   };
 
   try {
@@ -260,12 +133,12 @@ export async function sendMessage(
       onChunk?.(chunk);
       if (completedMessage.id === 0) {
         completedMessage.id = chunk.id;
-        completedMessage.timestamp = chunk.timestamp;
+        completedMessage.sent_at = chunk.sent_at;
       }
 
       completedMessage.content += chunk.content;
-      completedMessage.think += chunk.think;
-      completedMessage.state = chunk.state;
+      completedMessage.reasoning += chunk.reasoning;
+      completedMessage.status = chunk.status;
     }
   } catch (error: any) {
     // If the error is about not receiving done/success response, we can ignore it
@@ -283,42 +156,3 @@ export async function sendMessage(
 
   return completedMessage;
 }
-
-export type TranslationOptions = {
-  source_lang: string;
-  target_lang: string;
-  tone: string;
-};
-
-export type TranslateRequest = {
-  input: string;
-  model: string;
-} & TranslationOptions;
-
-export async function translateMessage(
-  threadId: number,
-  request: TranslateRequest,
-) {
-  const response = await fetchApi<ApiResponse<TranslateMessage>>(`/translate`, {
-    method: "POST",
-    body: JSON.stringify({ ...request, thread_id: threadId.toString() }),
-  });
-
-  return response.data;
-}
-
-export const useTranslateThreadTranslations = (
-  id: number,
-  options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
-  >,
-) => {
-  return useQuery({
-    queryKey: ["translate-thread-translations", id],
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateMessage>>(
-        `/translate-threads/${id}/translations`,
-      ),
-    ...options,
-  });
-};

@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui";
-import type { ChatMessage } from "@/lib/api/chat";
+import type { Message as MessageType } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { BotIcon, Loader2, UserIcon } from "lucide-react";
@@ -15,7 +15,7 @@ const isThinkingModel = (model: string) => {
 };
 
 export interface MessageProps {
-  message: ChatMessage;
+  message: MessageType;
 }
 
 export function Message({ message }: MessageProps) {
@@ -23,8 +23,8 @@ export function Message({ message }: MessageProps) {
 
   const hasThinking =
     message?.role === "assistant" &&
-    message?.think !== "" &&
-    isThinkingModel(message?.model ?? "");
+    message?.reasoning !== "" &&
+    isThinkingModel(message?.ai_model ?? "");
 
   return (
     <div
@@ -89,13 +89,13 @@ export function Message({ message }: MessageProps) {
             )}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.think}
+              {message.reasoning}
             </ReactMarkdown>
           </div>
         )}
 
         {/* Waiting for first chunk */}
-        {message.state === "idle" && (
+        {message.status === "idle" && (
           <div className="flex items-center justify-between">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>

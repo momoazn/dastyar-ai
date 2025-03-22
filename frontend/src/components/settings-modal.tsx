@@ -23,11 +23,11 @@ import {
   Textarea,
 } from "@/components/ui";
 import { samplers, useChatSettings, useImageSettings } from "@/hooks";
-import { useChatModels } from "@/lib/api/chat";
+import { useAIModels } from "@/lib/api";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 export function SettingsModal() {
-  const { data: chatModels } = useChatModels();
+  const { data: aiModels } = useAIModels();
 
   const [chatModel, setChatModel] = useChatModel();
   const [translationModel, setTranslationModel] = useTranslationModel();
@@ -87,7 +87,7 @@ export function SettingsModal() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {chatModels?.data?.map((model) => (
+                      {aiModels?.data?.map((model) => (
                         <SelectItem key={model.name} value={model.name}>
                           {model.name}
                         </SelectItem>
@@ -112,7 +112,7 @@ export function SettingsModal() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {chatModels?.data?.map((model) => (
+                      {aiModels?.data?.map((model) => (
                         <SelectItem key={model.name} value={model.name}>
                           {model.name}
                         </SelectItem>

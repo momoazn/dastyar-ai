@@ -14,16 +14,6 @@ type Conversation struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// TranslationProject represents a collection of translations
-type TranslationProject struct {
-	ID           uint          `json:"id" gorm:"primaryKey"`
-	Title        string        `json:"title"`
-	Translations []Translation `json:"translations,omitempty" gorm:"foreignKey:ProjectID"`
-	AIModel      string        `json:"ai_model"`
-	CreatedAt    time.Time     `json:"created_at"`
-	UpdatedAt    time.Time     `json:"updated_at"`
-}
-
 // Message represents a single message in a conversation
 type Message struct {
 	ID             uint         `json:"id" gorm:"primaryKey"`
@@ -35,6 +25,16 @@ type Message struct {
 	AIModel        string       `json:"ai_model"`
 	Status         string       `json:"status"`
 	SentAt         time.Time    `json:"sent_at"`
+}
+
+// TranslationProject represents a collection of translations
+type TranslationProject struct {
+	ID           uint          `json:"id" gorm:"primaryKey"`
+	Title        string        `json:"title"`
+	Translations []Translation `json:"translations,omitempty" gorm:"foreignKey:ProjectID"`
+	AIModel      string        `json:"ai_model"`
+	CreatedAt    time.Time     `json:"created_at"`
+	UpdatedAt    time.Time     `json:"updated_at"`
 }
 
 // Translation represents a single translation entry

@@ -1,5 +1,5 @@
 import { useGetTranslationModel } from "@/atoms";
-import { translateMessage } from "@/lib/api/chat";
+import { translateMessage } from "@/lib/api/translate";
 import { useState } from "react";
 
 interface TranslationOptions {
@@ -29,7 +29,7 @@ export function useTranslation() {
         tone: options.tone,
       });
 
-      return response.output.trim();
+      return response.translated_text.trim();
     } catch (error) {
       console.error("Translation error:", error);
       throw new Error("Translation failed. Please try again.");
