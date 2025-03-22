@@ -38,82 +38,163 @@ export function ChatInput({
 
   const { data: chatModels } = useChatModels();
 
+  // Handle key presses in the textarea
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendPrompt();
+    }
+  };
+
+  // Handle send/stop button click
+  const handleSendButtonClick = () => {
+    if (isStreaming) {
+      stopStreaming();
+    } else {
+      handleSendPrompt();
+    }
+  };
+
+  // Handle record button click
+  const handleRecordButtonClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <div className="flex min-h-[80px] gap-2 rounded-md">
       <div className="flex flex-1 flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-ring has-[textarea:focus]:ring-offset-2">
-        {/* Chat Input */}
-        <div className="flex-1">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={PERSIAN_TEXTS.chat.writeMessage}
-            className="h-full w-full resize-none rounded-none border-none focus-visible:ring-0"
-            dir={prompt ? detectTextDirection(prompt) : "rtl"}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendPrompt();
-              }
-            }}
-          />
-        </div>
+        {/* Message Input Area */}
+        <MessageInput
+          prompt={prompt}
+          setPrompt={setPrompt}
+          handleKeyDown={handleKeyDown}
+        />
 
-        {/* Chat Input Buttons And Model Selector */}
+        {/* Controls Bar */}
         <div className="flex w-full justify-between">
           {/* Model Selector */}
-          <Select
-            defaultValue={currentChatModel}
-            value={currentChatModel}
-            onValueChange={setCurrentChatModel}
-          >
-            <SelectTrigger className="w-[200px] border-none">
-              <SelectValue
-                placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {chatModels?.data?.map((model) => (
-                <SelectItem key={model.name} value={model.name}>
-                  {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ModelSelector
+            currentModel={currentChatModel}
+            setCurrentModel={setCurrentChatModel}
+            models={chatModels?.data || []}
+          />
 
-          {/* Chat Input Buttons */}
+          {/* Action Buttons */}
           <div className="flex gap-2">
             {/* Record Button */}
-            <Button
-              size="icon"
-              variant={isRecording ? "destructive" : "outline"}
-              onClick={isRecording ? stopRecording : startRecording}
-              className="h-10 w-10"
-            >
-              {isRecording ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
+            <RecordButton
+              isRecording={isRecording}
+              onClick={handleRecordButtonClick}
+            />
 
             {/* Send Button */}
-            <Button
-              size="icon"
-              className="h-10 w-10"
-              disabled={!prompt.trim() || isStreaming}
-              onClick={() => {
-                if (isStreaming) {
-                  stopStreaming();
-                } else {
-                  handleSendPrompt();
-                }
-              }}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <SendButton
+              isDisabled={!prompt.trim() || isStreaming}
+              onClick={handleSendButtonClick}
+            />
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// Sub-components to improve readability
+
+interface MessageInputProps {
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+}
+
+function MessageInput({ prompt, setPrompt, handleKeyDown }: MessageInputProps) {
+  return (
+    <div className="flex-1">
+      <Textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder={PERSIAN_TEXTS.chat.writeMessage}
+        className="h-full w-full resize-none rounded-none border-none focus-visible:ring-0"
+        dir={prompt ? detectTextDirection(prompt) : "rtl"}
+        onKeyDown={handleKeyDown}
+      />
+    </div>
+  );
+}
+
+interface ModelSelectorProps {
+  currentModel?: string;
+  setCurrentModel: (model: string) => void;
+  models: Array<{ name: string; [key: string]: any }>;
+}
+
+function ModelSelector({
+  currentModel,
+  setCurrentModel,
+  models,
+}: ModelSelectorProps) {
+  return (
+    <Select
+      defaultValue={currentModel}
+      value={currentModel}
+      onValueChange={setCurrentModel}
+    >
+      <SelectTrigger className="w-[200px] border-none">
+        <SelectValue
+          placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
+        />
+      </SelectTrigger>
+      <SelectContent>
+        {models.map((model) => (
+          <SelectItem key={model.name} value={model.name}>
+            {model.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+interface RecordButtonProps {
+  isRecording: boolean;
+  onClick: () => void;
+}
+
+function RecordButton({ isRecording, onClick }: RecordButtonProps) {
+  return (
+    <Button
+      size="icon"
+      variant={isRecording ? "destructive" : "outline"}
+      onClick={onClick}
+      className="h-10 w-10"
+    >
+      {isRecording ? (
+        <Pause className="h-4 w-4" />
+      ) : (
+        <Mic className="h-4 w-4" />
+      )}
+    </Button>
+  );
+}
+
+interface SendButtonProps {
+  isDisabled: boolean;
+  onClick: () => void;
+}
+
+function SendButton({ isDisabled, onClick }: SendButtonProps) {
+  return (
+    <Button
+      size="icon"
+      className="h-10 w-10"
+      disabled={isDisabled}
+      onClick={onClick}
+    >
+      <Send className="h-4 w-4" />
+    </Button>
   );
 }

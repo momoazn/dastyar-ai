@@ -14,69 +14,108 @@ import {
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 export function ChatPage() {
-  // State management
+  // ===== STATE =====
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-  const defaultChatModel = useGetChatModel();
-  const { data: chatModels } = useChatModels();
-  const [currentChatModel, setCurrentChatModel] = useState<string>(
-    defaultChatModel ?? (chatModels?.data?.[0].model as string),
-  );
+  const [currentChatModel, setCurrentChatModel] = useState("");
 
-  // Refs and navigation
+  // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { threadID } = useParams();
   const navigate = useNavigate();
 
-  // API hooks
+  // ===== API HOOKS =====
+  const defaultChatModel = useGetChatModel();
+  const { data: chatModels } = useChatModels();
   const { data: threadMessages, refetch: refetchMessages } = useThreadMessages(
     Number(threadID),
     { enabled: !!threadID },
   );
+  const { mutateAsync: createThread } = useCreateThread();
+
+  // ===== CHAT FUNCTIONALITY =====
   const { isStreaming, sendPrompt, stopStreaming } = useChat(
     messages,
     setMessages,
+    {
+      onStreamEnd: () => {
+        // Scroll to bottom when streaming ends
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      },
+    },
   );
-  const { mutateAsync: createThread } = useCreateThread();
 
-  // Effects
+  // ===== EFFECTS =====
+
+  // Initialize chat model and load messages when thread changes
   useEffect(() => {
-    if (threadMessages) {
-      setMessages(threadMessages.data);
-      const lastMessageChatModel = threadMessages.data.at(-1)?.model;
-      if (lastMessageChatModel) {
-        setCurrentChatModel(lastMessageChatModel);
-      } else {
-        setCurrentChatModel(
-          defaultChatModel ?? (chatModels?.data?.[0].model as string),
-        );
-      }
+    if (!threadMessages) return;
+
+    // Set messages from thread
+    setMessages(threadMessages.data);
+
+    // Determine which chat model to use
+    const lastMessageModel = threadMessages.data.at(-1)?.model;
+
+    if (lastMessageModel) {
+      // Use model from the last message in the thread
+      setCurrentChatModel(lastMessageModel);
+    } else if (defaultChatModel) {
+      // Use default model from user preferences
+      setCurrentChatModel(defaultChatModel);
+    } else if (chatModels?.data?.length) {
+      // Fallback to first available model
+      setCurrentChatModel(chatModels.data[0].model);
     }
   }, [threadMessages, defaultChatModel, chatModels]);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handlers
+  // Set initial model when first loading
+  useEffect(() => {
+    if (!currentChatModel && defaultChatModel) {
+      setCurrentChatModel(defaultChatModel);
+    } else if (!currentChatModel && chatModels?.data?.length) {
+      setCurrentChatModel(chatModels.data[0].model);
+    }
+  }, [currentChatModel, defaultChatModel, chatModels]);
+
+  // ===== HANDLERS =====
+
+  /**
+   * Handles sending a new message
+   */
   const handleSendPrompt = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || !currentChatModel) return;
 
     if (threadID) {
+      // Send to existing thread
       sendPrompt(prompt, Number(threadID), currentChatModel, refetchMessages);
       setPrompt("");
       return;
     }
 
-    const { data: newThread } = await createThread(
-      PERSIAN_TEXTS.navigation.newChat,
-    );
-    sendPrompt(prompt, newThread.id, currentChatModel, () =>
-      navigate(`/threads/${newThread.id}/chat`, { replace: true }),
-    );
-    setPrompt("");
+    try {
+      // Create a new thread
+      const { data: newThread } = await createThread(
+        PERSIAN_TEXTS.navigation.newChat,
+      );
+
+      // Send message to the new thread
+      sendPrompt(prompt, newThread.id, currentChatModel, () =>
+        navigate(`/threads/${newThread.id}/chat`, { replace: true }),
+      );
+      setPrompt("");
+    } catch (error) {
+      console.error("Failed to create new thread:", error);
+      // Could add user notification here
+    }
   };
 
+  // ===== RENDERING =====
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       {/* Chat Messages Container */}

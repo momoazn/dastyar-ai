@@ -7,27 +7,45 @@ import {
 } from "../atoms";
 import { useChatModels } from "../lib/api/chat";
 
+/**
+ * Hook that initializes selected models on application startup
+ * Sets default models if none are selected
+ */
 export function useInitializeSelectedModels() {
+  // Get current model selections
   const chatModel = useGetChatModel();
-  const setChatModel = useSetChatModel();
   const translationModel = useGetTranslationModel();
+  
+  // Get setter functions
+  const setChatModel = useSetChatModel();
   const setTranslationModel = useSetTranslationModel();
-
-  const { data: chatModels } = useChatModels();
+  
+  // Fetch available models
+  const { data: chatModels, isSuccess } = useChatModels();
 
   useEffect(() => {
-    if (chatModels?.data && !Boolean(chatModel)) {
-      setChatModel(chatModels.data[0].name);
+    // Only proceed if we have successfully loaded chat models
+    if (!isSuccess || !chatModels?.data?.length) {
+      return;
     }
 
-    if (chatModels?.data && !Boolean(translationModel)) {
-      setTranslationModel(chatModels.data[0].name);
+    const defaultModel = chatModels.data[0].name;
+    
+    // Set chat model if not already set
+    if (!chatModel) {
+      setChatModel(defaultModel);
+    }
+
+    // Set translation model if not already set
+    if (!translationModel) {
+      setTranslationModel(defaultModel);
     }
   }, [
+    isSuccess,
     chatModels,
     chatModel,
-    setChatModel,
     translationModel,
+    setChatModel,
     setTranslationModel,
   ]);
 }
