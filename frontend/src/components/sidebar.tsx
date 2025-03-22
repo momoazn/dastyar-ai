@@ -4,7 +4,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog, SettingsModal, SidebarItem } from "@/components";
 import { Button, LoadingSpinner, ScrollArea } from "@/components/ui";
-import { useCreateThread, useDeleteThread, useThreads } from "@/lib/api/chat";
+import {
+  useChatThreads,
+  useCreateChatThread,
+  useDeleteChatThread,
+} from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 
@@ -21,33 +25,31 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
 
   const {
-    data: threads,
-    isLoading: isThreadsLoading,
-    refetch: refetchThreads,
-  } = useThreads();
+    data: chatThreads,
+    isLoading: isChatThreadsLoading,
+    refetch: refetchChatThreads,
+  } = useChatThreads();
 
-  const { mutate: createThread, isPending: isCreatingThread } = useCreateThread(
-    {
+  const { mutate: createThread, isPending: isCreatingThread } =
+    useCreateChatThread({
       onSuccess: ({ data: thread }) => {
         navigate(`/threads/${thread.id}/chat`);
-        refetchThreads();
+        refetchChatThreads();
       },
-    },
-  );
+    });
 
-  const { mutate: deleteThread, isPending: isDeletingThread } = useDeleteThread(
-    {
+  const { mutate: deleteThread, isPending: isDeletingThread } =
+    useDeleteChatThread({
       onSuccess: () => {
         const toDeleteThreadId = threadToDelete;
-        refetchThreads();
+        refetchChatThreads();
         setDeleteDialogOpen(false);
         setThreadToDelete(null);
         if (location.pathname === `/threads/${toDeleteThreadId}/chat`) {
           navigate("/");
         }
       },
-    },
-  );
+    });
 
   const handleDeleteThread = (threadId: number) => {
     setThreadToDelete(threadId);
@@ -84,7 +86,7 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
         <div className="flex justify-center border-b p-4">
           <Button
             variant="outline"
-            className="flex w-full items-center gap-2 justify-center"
+            className="flex w-full items-center justify-center gap-2"
             onClick={() => createThread(PERSIAN_TEXTS.navigation.newChat)}
             disabled={isCreatingThread}
           >
@@ -99,13 +101,13 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
 
         <ScrollArea className="flex-1">
           <nav className="rtl flex flex-col gap-1 p-4">
-            {isThreadsLoading ? (
+            {isChatThreadsLoading ? (
               <div className="mt-20 flex h-10 items-center justify-center">
                 <LoadingSpinner />
               </div>
             ) : (
               <ul className="list-none p-0">
-                {threads?.data?.map((thread) => (
+                {chatThreads?.data?.map((thread) => (
                   <li key={thread.id}>
                     <SidebarItem
                       thread={thread}

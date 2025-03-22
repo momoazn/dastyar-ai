@@ -25,11 +25,12 @@ func OpenBrowser(serverAddr string) {
 	}
 }
 
-var thinkingModels = []string{"deepseek-r1", "deepscaler"}
+var reasoningModels = []string{"deepseek-r1", "deepscaler"}
 
-func IsThinkingModel(model string) bool {
-	for _, m := range thinkingModels {
-		if strings.Contains(model, m) {
+// IsReasoningModel checks if the AI model is capable of structured thinking
+func IsReasoningModel(aiModel string) bool {
+	for _, m := range reasoningModels {
+		if strings.Contains(aiModel, m) {
 			return true
 		}
 	}

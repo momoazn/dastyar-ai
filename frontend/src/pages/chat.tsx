@@ -8,8 +8,8 @@ import { useChat } from "@/hooks";
 import {
   type ChatMessage as ChatMessageType,
   useChatModels,
-  useCreateThread,
-  useThreadMessages,
+  useCreateChatThread,
+  useChatThreadMessages,
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
@@ -27,11 +27,11 @@ export function ChatPage() {
   // ===== API HOOKS =====
   const defaultChatModel = useGetChatModel();
   const { data: chatModels } = useChatModels();
-  const { data: threadMessages, refetch: refetchMessages } = useThreadMessages(
+  const { data: threadMessages, refetch: refetchMessages } = useChatThreadMessages(
     Number(threadID),
     { enabled: !!threadID },
   );
-  const { mutateAsync: createThread } = useCreateThread();
+  const { mutateAsync: createThread } = useCreateChatThread();
 
   // ===== CHAT FUNCTIONALITY =====
   const { isStreaming, sendPrompt, stopStreaming } = useChat(

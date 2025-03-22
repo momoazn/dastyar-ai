@@ -1,5 +1,5 @@
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import { Status } from "@/components/status";
 import { Button, ThemeToggle } from "@/components/ui";
@@ -11,16 +11,7 @@ interface HeaderProps {
   toggleSidebar: () => void;
 }
 
-export function Header({
-  isSidebarOpen,
-  toggleSidebar,
-}: HeaderProps) {
-  const location = useLocation();
-  const { pathname } = location;
-  const isHome = pathname === "/";
-  const isThread = pathname.includes("/threads/");
-  const showNavigation = !isHome && !isThread;
-
+export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   return (
     <header className="w-full border-b">
       <div className="flex h-16 items-center justify-between p-4">
@@ -49,11 +40,9 @@ export function Header({
         </div>
       </div>
 
-      {showNavigation && (
-        <nav className="flex items-center justify-end border-t">
-          <Navigation />
-        </nav>
-      )}
+      <nav className="flex items-center justify-start border-t">
+        <Navigation />
+      </nav>
     </header>
   );
 }

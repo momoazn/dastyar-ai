@@ -14,12 +14,12 @@ import (
 )
 
 type TranslateRequest struct {
-	ThreadID   string `json:"thread_id"`
-	Input      string `json:"input"`
-	Model      string `json:"model"`
-	SourceLang string `json:"source_lang"`
-	TargetLang string `json:"target_lang"`
-	Tone       string `json:"tone"`
+	ProjectID      string `json:"project_id"`
+	SourceText     string `json:"source_text"`
+	AIModel        string `json:"ai_model"`
+	SourceLanguage string `json:"source_language"`
+	TargetLanguage string `json:"target_language"`
+	Tone           string `json:"tone"`
 }
 
 type TranslateResponse struct {
@@ -27,72 +27,140 @@ type TranslateResponse struct {
 }
 
 func (h *Handler) handleTranslate(c echo.Context) error {
+	startTime := time.Now()
 	log.Info().Msg("Handling translate request")
 
+	// 1. Parse and validate request
+	translateReq, err := h.parseAndValidateTranslateRequest(c)
+	if err != nil {
+		return err
+	}
+
+	// 2. Retrieve project
+	project, err := h.getTranslationProject(c, translateReq.ProjectID)
+	if err != nil {
+		return err
+	}
+
+	// 3. Create translation entry
+	translation, err := h.createTranslation(project.ID, translateReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+
+	// 4. Process translation
+	if err := h.processTranslation(c, translation); err != nil {
+		log.Error().Err(err).Uint("project_id", project.ID).Msg("Translation processing failed")
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+
+	// 5. Update translation and project
+	if err := h.updateTranslationAndProject(translation, project); err != nil {
+		log.Error().Err(err).Str("project_id", translateReq.ProjectID).Msg("Failed to update records")
+	}
+
+	logCompletedTranslation(translateReq.ProjectID, len(translation.TranslatedText), startTime)
+	return c.JSON(http.StatusOK, Response[db.Translation]{
+		Data:    *translation,
+		Message: "Translation completed",
+	})
+}
+
+func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateRequest, error) {
 	var translateReq TranslateRequest
 	if err := c.Bind(&translateReq); err != nil {
 		log.Error().Err(err).Msg("Failed to bind translate request")
-		return c.JSON(http.StatusBadRequest, ErrorResponse{
+		return TranslateRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
 			Message: err.Error(),
 		})
 	}
 
+	// Set default tone if not provided
 	if translateReq.Tone == "" {
 		translateReq.Tone = "formal"
 	}
 
-	if translateReq.Input == "" || translateReq.Model == "" || translateReq.SourceLang == "" || translateReq.TargetLang == "" || translateReq.ThreadID == "" {
-		log.Error().Msg("input, model, from_lang, to_lang, and thread_id are required")
-		return c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "input, model, from_lang, to_lang, and thread_id are required",
+	// Validate required fields
+	if translateReq.SourceText == "" || translateReq.AIModel == "" ||
+		translateReq.SourceLanguage == "" || translateReq.TargetLanguage == "" ||
+		translateReq.ProjectID == "" {
+		log.Error().Msg("source_text, ai_model, source_language, target_language, and project_id are required")
+		return TranslateRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: "source_text, ai_model, source_language, target_language, and project_id are required",
 		})
 	}
 
-	// Verify thread exists
-	var thread db.TranslateThread
-	result := h.db.First(&thread, translateReq.ThreadID)
+	// Log sanitized request
+	log.Info().
+		Str("project_id", translateReq.ProjectID).
+		Str("ai_model", translateReq.AIModel).
+		Int("source_text_length", len(translateReq.SourceText)).
+		Str("source_language", translateReq.SourceLanguage).
+		Str("target_language", translateReq.TargetLanguage).
+		Str("tone", translateReq.Tone).
+		Msg("Translation request received")
+
+	return translateReq, nil
+}
+
+func (h *Handler) getTranslationProject(c echo.Context, projectID string) (*db.TranslationProject, error) {
+	var project *db.TranslationProject
+	result := h.db.First(project, projectID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			log.Info().Str("thread_id", translateReq.ThreadID).Msg("Thread not found")
-			return c.JSON(http.StatusNotFound, ErrorResponse{
-				Message: "Thread not found",
+			log.Info().Str("project_id", projectID).Msg("Translation project not found")
+			return nil, c.JSON(http.StatusNotFound, ErrorResponse{
+				Message: "Translation project not found",
 			})
 		}
-		log.Error().Err(result.Error).Str("thread_id", translateReq.ThreadID).Msg("Failed to fetch thread")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+		log.Error().Err(result.Error).Str("project_id", projectID).Msg("Failed to fetch translation project")
+		return nil, c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
+	return project, nil
+}
 
-	sourceLang := getLanguageFullName(translateReq.SourceLang)
-	targetLang := getLanguageFullName(translateReq.TargetLang)
+func (h *Handler) createTranslation(projectID uint, translateReq TranslateRequest) (*db.Translation, error) {
+	sourceLang := getLanguageFullName(translateReq.SourceLanguage)
+	targetLang := getLanguageFullName(translateReq.TargetLanguage)
 	tone := getToneDescription(translateReq.Tone)
-	systemPrompt := getSystemPrompt(sourceLang, targetLang, tone, translateReq.Input)
+	systemPrompt := getSystemPrompt(sourceLang, targetLang, tone, translateReq.SourceText)
 
-	translateMsg := db.TranslateMessage{
-		Input:        translateReq.Input,
-		Output:       "",
-		Model:        translateReq.Model,
-		ThreadID:     thread.ID,
-		SourceLang:   translateReq.SourceLang,
-		TargetLang:   translateReq.TargetLang,
-		Tone:         translateReq.Tone,
-		SystemPrompt: systemPrompt,
+	translation := &db.Translation{
+		SourceText:     translateReq.SourceText,
+		TranslatedText: "",
+		AIModel:        translateReq.AIModel,
+		ProjectID:      projectID,
+		SourceLanguage: translateReq.SourceLanguage,
+		TargetLanguage: translateReq.TargetLanguage,
+		Tone:           translateReq.Tone,
+		Instructions:   systemPrompt,
+		CreatedAt:      time.Now(),
 	}
 
-	if err := h.db.Create(&translateMsg).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to create translate message")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
-		})
+	if err := h.db.Create(&translation).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to create translation")
+		return nil, err
 	}
 
-	h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model: translateMsg.Model,
+	log.Info().
+		Uint("translation_id", translation.ID).
+		Uint("project_id", projectID).
+		Msg("Translation entry created")
+
+	return translation, nil
+}
+
+func (h *Handler) processTranslation(c echo.Context, translation *db.Translation) error {
+	var translatedText string
+
+	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
+		Model: translation.AIModel,
 		Messages: []api.Message{
 			{
 				Role:    "user",
-				Content: systemPrompt,
+				Content: translation.Instructions,
 			},
 		},
 		Format: translateResponseSchema,
@@ -101,36 +169,49 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		var translateResponse TranslateResponse
 		if err := json.Unmarshal([]byte(response.Message.Content), &translateResponse); err != nil {
 			log.Error().Err(err).Msg("Failed to unmarshal translate response")
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Message: err.Error(),
-			})
+			return err
 		}
 
-		content := translateResponse.Translation
-		translateMsg.Output = content
+		translatedText = translateResponse.Translation
 		return nil
 	})
 
-	if err := h.db.Model(&translateMsg).Update("output", translateMsg.Output).Update("timestamp", time.Now()).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to update translate message")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
-		})
+	if err != nil {
+		return err
 	}
 
-	// Update thread's updated_at timestamp
-	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
-		log.Error().Err(err).Str("thread_id", translateReq.ThreadID).Msg("Failed to update thread timestamp")
+	// Store the translated text in our translation object
+	translation.TranslatedText = translatedText
+	return nil
+}
+
+func (h *Handler) updateTranslationAndProject(translation *db.Translation, project *db.TranslationProject) error {
+	// Update the translation with the translated text
+	if err := h.db.Model(translation).Update("translated_text", translation.TranslatedText).Error; err != nil {
+		log.Error().Err(err).Uint("translation_id", translation.ID).Msg("Failed to update translation")
+		return err
 	}
 
-	return c.JSON(http.StatusOK, Response[db.TranslateMessage]{
-		Data:    translateMsg,
-		Message: "Translation completed",
-	})
+	// Update project's updated_at timestamp
+	return h.db.Model(project).Update("updated_at", time.Now()).Error
+}
+
+func logCompletedTranslation(projectID string, responseLength int, startTime time.Time) {
+	log.Info().
+		Str("project_id", projectID).
+		Int("response_length", responseLength).
+		Dur("total_duration_ms", time.Since(startTime)).
+		Msg("Translation completed")
 }
 
 func getLanguageFullName(langCode string) string {
 	languageMap := map[string]string{
+		"fa":      "Persian (Farsi)",
+		"en":      "English",
+		"ar":      "Modern Standard Arabic",
+		"fr":      "French",
+		"de":      "German",
+		"es":      "Spanish",
 		"persian": "Persian (Farsi)",
 		"english": "English",
 		"arabic":  "Modern Standard Arabic",

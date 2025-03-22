@@ -103,21 +103,21 @@ func setupMiddleware(e *echo.Echo) {
 func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
 
-	// Chat threads endpoints
-	apiGroup.GET("/chat-threads", handler.handleGetAllChatThreads)
-	apiGroup.POST("/chat-threads", handler.handleCreateChatThread)
-	apiGroup.GET("/chat-threads/:id", handler.handleGetChatThread)
-	apiGroup.PUT("/chat-threads/:id", handler.handleUpdateChatThread)
-	apiGroup.DELETE("/chat-threads/:id", handler.handleDeleteChatThread)
-	apiGroup.GET("/chat-threads/:id/messages", handler.handleGetChatThreadMessages)
+	// Conversation endpoints
+	apiGroup.GET("/conversations", handler.handleGetAllConversations)
+	apiGroup.POST("/conversations", handler.handleCreateConversation)
+	apiGroup.GET("/conversations/:id", handler.handleGetConversation)
+	apiGroup.PUT("/conversations/:id", handler.handleUpdateConversation)
+	apiGroup.DELETE("/conversations/:id", handler.handleDeleteConversation)
+	apiGroup.GET("/conversations/:id/messages", handler.handleGetConversationMessages)
 
-	// Translate threads endpoints
-	apiGroup.GET("/translate-threads", handler.handleGetAllTranslateThreads)
-	apiGroup.POST("/translate-threads", handler.handleCreateTranslateThread)
-	apiGroup.GET("/translate-threads/:id", handler.handleGetTranslateThread)
-	apiGroup.PUT("/translate-threads/:id", handler.handleUpdateTranslateThread)
-	apiGroup.DELETE("/translate-threads/:id", handler.handleDeleteTranslateThread)
-	apiGroup.GET("/translate-threads/:id/translations", handler.handleGetTranslateThreadTranslations)
+	// Translation project endpoints
+	apiGroup.GET("/translation-projects", handler.handleGetAllTranslationProjects)
+	apiGroup.POST("/translation-projects", handler.handleCreateTranslationProject)
+	apiGroup.GET("/translation-projects/:id", handler.handleGetTranslationProject)
+	apiGroup.PUT("/translation-projects/:id", handler.handleUpdateTranslationProject)
+	apiGroup.DELETE("/translation-projects/:id", handler.handleDeleteTranslationProject)
+	apiGroup.GET("/translation-projects/:id/translations", handler.handleGetTranslationProjectTranslations)
 
 	// LLM endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)

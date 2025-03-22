@@ -11,14 +11,17 @@ import { StreamResponseService } from "../utils";
 export type ChatState = "idle" | "thinking" | "responding" | "done";
 export type ChatRole = "user" | "assistant" | "system";
 
-export type Thread = {
+export interface Thread<T extends ChatMessage | TranslateMessage> {
   id: number;
   title: string;
-  messages: ChatMessage[];
+  messages: T[];
   model: string;
   created_at: string;
   updated_at: string;
-};
+}
+
+export interface ChatThread extends Thread<ChatMessage> {}
+export interface TranslateThread extends Thread<TranslateMessage> {}
 
 export type ChatMessage = {
   id: number;
@@ -58,12 +61,12 @@ export type SendMessageBody = {
   thread_id: string;
 };
 
-export const useThreads = (
-  options?: UseQueryOptions<PaginatedApiResponse<Thread>, Error>,
+export const useChatThreads = (
+  options?: UseQueryOptions<PaginatedApiResponse<ChatThread>, Error>,
 ) => {
   return useQuery({
-    queryKey: ["threads"],
-    queryFn: () => fetchApi<PaginatedApiResponse<Thread>>("/threads"),
+    queryKey: ["chat-threads"],
+    queryFn: () => fetchApi<PaginatedApiResponse<ChatThread>>("/chat-threads"),
     ...options,
   });
 };
@@ -73,24 +76,26 @@ export const getThreadMessagesQueryKey = (id: number) => [
   id,
 ];
 
-export const useThreadMessages = (
+export const useChatThreadMessages = (
   id: number,
   options?: Partial<UseQueryOptions<PaginatedApiResponse<ChatMessage>, Error>>,
 ) => {
   return useQuery({
     queryKey: getThreadMessagesQueryKey(id),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<ChatMessage>>(`/threads/${id}/messages`),
+      fetchApi<PaginatedApiResponse<ChatMessage>>(
+        `/chat-threads/${id}/messages`,
+      ),
     ...options,
   });
 };
 
-export const useCreateThread = (
-  options?: UseMutationOptions<ApiResponse<Thread>, Error, string>,
+export const useCreateChatThread = (
+  options?: UseMutationOptions<ApiResponse<ChatThread>, Error, string>,
 ) => {
   return useMutation({
     mutationFn: (title: string) =>
-      fetchApi<ApiResponse<Thread>>("/threads", {
+      fetchApi<ApiResponse<ChatThread>>("/chat-threads", {
         method: "POST",
         body: JSON.stringify({ title }),
       }),
@@ -98,16 +103,16 @@ export const useCreateThread = (
   });
 };
 
-export const useUpdateThread = (
+export const useUpdateChatThread = (
   options?: UseMutationOptions<
-    ApiResponse<Thread>,
+    ApiResponse<ChatThread>,
     Error,
     { id: number; title: string }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<Thread>>(`/threads/${id}`, {
+      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${id}`, {
         method: "PUT",
         body: JSON.stringify({ title }),
       }),
@@ -115,12 +120,86 @@ export const useUpdateThread = (
   });
 };
 
-export const useDeleteThread = (
-  options?: UseMutationOptions<ApiResponse<Thread>, Error, number>,
+export const useDeleteChatThread = (
+  options?: UseMutationOptions<ApiResponse<ChatThread>, Error, number>,
 ) => {
   return useMutation({
     mutationFn: (id: number) =>
-      fetchApi<ApiResponse<Thread>>(`/threads/${id}`, {
+      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${id}`, {
+        method: "DELETE",
+      }),
+    ...options,
+  });
+};
+
+export const useTranslateThreads = (
+  options?: UseQueryOptions<PaginatedApiResponse<TranslateThread>, Error>,
+) => {
+  return useQuery({
+    queryKey: ["translate-threads"],
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<TranslateThread>>("/translate-threads"),
+    ...options,
+  });
+};
+
+export const getTranslateThreadMessagesQueryKey = (id: number) => [
+  "translate-thread-messages",
+  id,
+];
+
+export const useTranslateThreadMessages = (
+  id: number,
+  options?: Partial<
+    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
+  >,
+) => {
+  return useQuery({
+    queryKey: getTranslateThreadMessagesQueryKey(id),
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<TranslateMessage>>(
+        `/translate-threads/${id}/messages`,
+      ),
+    ...options,
+  });
+};
+
+export const useCreateTranslateThread = (
+  options?: UseMutationOptions<ApiResponse<TranslateThread>, Error, string>,
+) => {
+  return useMutation({
+    mutationFn: (title: string) =>
+      fetchApi<ApiResponse<TranslateThread>>("/translate-threads", {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      }),
+    ...options,
+  });
+};
+
+export const useUpdateTranslateThread = (
+  options?: UseMutationOptions<
+    ApiResponse<TranslateThread>,
+    Error,
+    { id: number; title: string }
+  >,
+) => {
+  return useMutation({
+    mutationFn: ({ id, title }) =>
+      fetchApi<ApiResponse<TranslateThread>>(`/translate-threads/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ title }),
+      }),
+    ...options,
+  });
+};
+
+export const useDeleteTranslateThread = (
+  options?: UseMutationOptions<ApiResponse<TranslateThread>, Error, number>,
+) => {
+  return useMutation({
+    mutationFn: (id: number) =>
+      fetchApi<ApiResponse<TranslateThread>>(`/translate-threads/${id}`, {
         method: "DELETE",
       }),
     ...options,
@@ -228,17 +307,17 @@ export async function translateMessage(
   return response.data;
 }
 
-export const useThreadTranslations = (
+export const useTranslateThreadTranslations = (
   id: number,
   options?: Partial<
     UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
   >,
 ) => {
   return useQuery({
-    queryKey: ["thread-translations", id],
+    queryKey: ["translate-thread-translations", id],
     queryFn: () =>
       fetchApi<PaginatedApiResponse<TranslateMessage>>(
-        `/threads/${id}/translations`,
+        `/translate-threads/${id}/translations`,
       ),
     ...options,
   });

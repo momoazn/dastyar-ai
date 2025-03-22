@@ -1,4 +1,4 @@
-import { useChatHealthCheck, useThreads } from "@/lib/api/chat";
+import { useChatHealthCheck, useChatThreads } from "@/lib/api/chat";
 import {
   Brain,
   CloudIcon,
@@ -9,7 +9,7 @@ import {
 
 export function Status() {
   const { data: healthCheck } = useChatHealthCheck();
-  const { isError: isThreadsError } = useThreads();
+  const { isError: isThreadsError } = useChatThreads();
 
   return (
     <header className="flex gap-2">

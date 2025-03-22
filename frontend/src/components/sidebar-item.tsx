@@ -2,13 +2,13 @@ import { MessageSquare, Pencil, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { Button, Input } from "@/components/ui";
-import { Thread, useUpdateThread } from "@/lib/api/chat";
+import { ChatThread, useUpdateChatThread } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
 
 interface SidebarItemProps {
-  thread: Thread;
+  thread: ChatThread;
   onDelete: (e: React.MouseEvent<HTMLButtonElement>) => void;
   isDeletingThread: boolean;
 }
@@ -24,7 +24,7 @@ export function SidebarItem({
   const [editTitle, setEditTitle] = useState(thread.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: updateThread } = useUpdateThread({
+  const { mutate: updateThread } = useUpdateChatThread({
     onSuccess: () => {
       setIsEditing(false);
     },

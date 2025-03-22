@@ -14,7 +14,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslation } from "@/hooks";
-import { useCreateThread, useThreadTranslations } from "@/lib/api/chat";
+import { useCreateChatThread, useThreadTranslations } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
@@ -87,7 +87,7 @@ export function TranslationPage() {
     enabled: !!threadId,
   });
 
-  const { mutateAsync: createThread } = useCreateThread();
+  const { mutateAsync: createThread } = useCreateChatThread();
 
   const handleTranslate = async () => {
     if (!sourceText) return;
