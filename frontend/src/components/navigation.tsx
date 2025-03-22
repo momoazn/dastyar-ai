@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, NavLinkProps, useLocation } from "react-router-dom";
 
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
@@ -33,24 +33,16 @@ export function Navigation() {
   );
 }
 
-function NavigationItem({
-  to,
-  children,
-}: {
-  to: string;
-  children: React.ReactNode;
-}) {
+function NavigationItem(props: NavLinkProps) {
   return (
     <NavLink
-      to={to}
+      {...props}
       className={({ isActive }) =>
         cn(
           "text-md rounded-md px-6 py-2",
           isActive ? "bg-primary/10 text-primary" : "",
         )
       }
-    >
-      {children}
-    </NavLink>
+    />
   );
 }
