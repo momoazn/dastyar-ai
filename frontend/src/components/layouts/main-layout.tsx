@@ -1,7 +1,7 @@
 import { lazy, useState } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
-import { Header, Navigation, Sidebar } from "@/components";
+import { Header, Sidebar } from "@/components";
 import { useInitializeSelectedModels } from "@/hooks";
 
 const HomePage = lazy(() =>
@@ -22,8 +22,6 @@ const TranslationPage = lazy(() =>
 export function MainLayout() {
   useInitializeSelectedModels();
 
-  const { pathname } = useLocation();
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     return window.innerWidth >= 768;
   });
@@ -31,12 +29,11 @@ export function MainLayout() {
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className="flex h-full w-full flex-col overflow-hidden">
-        <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        {pathname !== "/" && <Navigation />}
-        <div className="flex-1 overflow-auto">
+    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <main className="flex flex-1 overflow-hidden">
+        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <section className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatPage />} />
@@ -49,8 +46,8 @@ export function MainLayout() {
               element={<TranslationPage />}
             />
           </Routes>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { DeleteDialog, SettingsModal, SidebarItem } from "@/components";
 import { Button, LoadingSpinner, ScrollArea } from "@/components/ui";
@@ -70,52 +70,44 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
         <div
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={toggleSidebar}
+          aria-hidden="true"
         />
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex h-full w-[80%] flex-col border-l border-r bg-background transition-transform duration-300 ease-in-out md:static md:w-[400px]",
-          isSidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0",
+          "z-30 flex h-full flex-col border-l bg-background md:w-[320px]",
+          isSidebarOpen ? "w-[80%]" : "w-0",
         )}
+        aria-label="Threads sidebar"
       >
-        {/* Header section */}
-        <div
-          className={cn("flex h-16 items-center justify-between border-b p-4")}
-        >
-          <NavLink to="/">
-            <h1 className="text-2xl font-semibold text-primary">
-              {PERSIAN_TEXTS.navigation.appTitle}
-            </h1>
-          </NavLink>
-
-          {/* Create new thread button */}
+        {/* Create thread button */}
+        <div className="flex justify-center border-b p-4">
           <Button
-            variant="default"
-            size="icon"
+            variant="outline"
+            className="flex w-full items-center gap-2 justify-center"
             onClick={() => createThread(PERSIAN_TEXTS.navigation.newChat)}
             disabled={isCreatingThread}
           >
             {isCreatingThread ? (
               <LoadingSpinner className="h-4 w-4" />
             ) : (
-              <Plus className="h-12 w-12" />
+              <Plus className="h-4 w-4" />
             )}
+            <span>{PERSIAN_TEXTS.navigation.newChat}</span>
           </Button>
         </div>
 
-        {/* Chat list section */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="rtl flex flex-col gap-1">
-            {isSidebarOpen && (
-              <>
-                {isThreadsLoading ? (
-                  <div className="mt-20 flex h-10 items-center justify-center">
-                    <LoadingSpinner />
-                  </div>
-                ) : (
-                  threads?.data?.map((thread) => (
+        <ScrollArea className="flex-1">
+          <nav className="rtl flex flex-col gap-1 p-4">
+            {isThreadsLoading ? (
+              <div className="mt-20 flex h-10 items-center justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <ul className="list-none p-0">
+                {threads?.data?.map((thread) => (
+                  <li key={thread.id}>
                     <SidebarItem
-                      key={thread.id}
                       thread={thread}
                       onDelete={(e) => {
                         e.preventDefault();
@@ -127,17 +119,16 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                       }}
                       isDeletingThread={isDeletingThread}
                     />
-                  ))
-                )}
-              </>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
+          </nav>
         </ScrollArea>
 
-        {/* Footer with settings button */}
-        <div className="flex h-12 items-center justify-end border-t p-4">
+        <footer className="flex h-12 items-center justify-end border-t p-4">
           {isSidebarOpen && <SettingsModal />}
-        </div>
+        </footer>
       </aside>
 
       {deleteDialogOpen && (
