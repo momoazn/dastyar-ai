@@ -14,36 +14,32 @@ import {
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 export function ChatPage() {
+  // State management
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-
   const defaultChatModel = useGetChatModel();
-
   const { data: chatModels } = useChatModels();
-
   const [currentChatModel, setCurrentChatModel] = useState<string>(
     defaultChatModel ?? (chatModels?.data?.[0].model as string),
   );
 
+  // Refs and navigation
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const { threadID } = useParams();
   const navigate = useNavigate();
 
+  // API hooks
   const { data: threadMessages, refetch: refetchMessages } = useThreadMessages(
     Number(threadID),
-    {
-      enabled: !!threadID,
-    },
+    { enabled: !!threadID },
   );
-
   const { isStreaming, sendPrompt, stopStreaming } = useChat(
     messages,
     setMessages,
   );
-
   const { mutateAsync: createThread } = useCreateThread();
 
+  // Effects
   useEffect(() => {
     if (threadMessages) {
       setMessages(threadMessages.data);
@@ -56,13 +52,16 @@ export function ChatPage() {
         );
       }
     }
-  }, [threadMessages]);
+  }, [threadMessages, defaultChatModel, chatModels]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handlers
   const handleSendPrompt = async () => {
+    if (!prompt.trim()) return;
+
     if (threadID) {
       sendPrompt(prompt, Number(threadID), currentChatModel, refetchMessages);
       setPrompt("");
