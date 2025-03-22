@@ -49,11 +49,7 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
     },
   );
 
-  const handleDeleteThread = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    threadId: number,
-  ) => {
-    e.preventDefault();
+  const handleDeleteThread = (threadId: number) => {
     setThreadToDelete(threadId);
     setDeleteDialogOpen(true);
   };
@@ -121,7 +117,14 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                     <SidebarItem
                       key={thread.id}
                       thread={thread}
-                      onDelete={(e) => handleDeleteThread(e, thread.id)}
+                      onDelete={(e) => {
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                          deleteThread(thread.id);
+                        } else {
+                          handleDeleteThread(thread.id);
+                        }
+                      }}
                       isDeletingThread={isDeletingThread}
                     />
                   ))
