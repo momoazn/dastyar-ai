@@ -15,6 +15,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// Message states
+const (
+	StateIdle       = "idle"
+	StateThinking   = "thinking"
+	StateResponding = "responding"
+	StateDone       = "done"
+)
+
+// Message roles
+const (
+	RoleUser      = "user"
+	RoleAssistant = "assistant"
+)
+
 type ChatRequest struct {
 	Content  string `json:"content"`
 	Model    string `json:"model"`
@@ -33,118 +47,176 @@ type ChatResponse struct {
 }
 
 func (h *Handler) handleStreamChat(c echo.Context) error {
-	start := time.Now()
+	startTime := time.Now()
 	log.Info().Msg("Handling stream chat request")
 
+	// 1. Parse and validate request
+	chatReq, err := h.parseAndValidateChatRequest(c)
+	if err != nil {
+		return err
+	}
+
+	// 2. Retrieve thread
+	thread, err := h.getThread(c, chatReq.ThreadID)
+	if err != nil {
+		return err
+	}
+
+	// 3. Create user and assistant messages
+	_, assistantMsg, err := h.createMessages(thread.ID, chatReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+
+	// 4. Setup streaming response
+	h.setupSSEHeaders(c)
+
+	// 5. Get thread history
+	messages, err := h.getThreadHistory(chatReq.ThreadID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+
+	// 6. Stream response to client
+	streamResult, err := h.streamResponse(c, assistantMsg, messages, chatReq)
+	if err != nil {
+		logStreamError(err, chatReq.ThreadID, streamResult)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+	}
+
+	// 7. Update assistant message with final content
+	if err := h.updateMessageAndThread(assistantMsg, thread, streamResult); err != nil {
+		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update records")
+	}
+
+	logCompletedStream(chatReq.ThreadID, streamResult, startTime)
+	return nil
+}
+
+func (h *Handler) parseAndValidateChatRequest(c echo.Context) (ChatRequest, error) {
 	var chatReq ChatRequest
 	if err := c.Bind(&chatReq); err != nil {
 		log.Error().Err(err).Msg("Failed to bind chat request")
-		return c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: err.Error(),
-		})
+		return ChatRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 	}
 
+	// Validate required fields
 	if chatReq.Content == "" || chatReq.Model == "" || chatReq.ThreadID == "" {
-		log.Error().Msg("message, model, and thread_id are required")
-		return c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "message, model, and thread_id are required",
+		log.Error().Msg("content, model, and thread_id are required")
+		return ChatRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: "content, model, and thread_id are required",
 		})
 	}
 
-	// Log sanitized request (exclude sensitive data)
+	// Log sanitized request
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
 		Str("model", chatReq.Model).
 		Int("message_length", len(chatReq.Content)).
 		Msg("Chat request received")
 
-	// Verify thread exists
+	return chatReq, nil
+}
+
+func (h *Handler) getThread(c echo.Context, threadID string) (db.Thread, error) {
 	var thread db.Thread
-	result := h.db.First(&thread, chatReq.ThreadID)
+	result := h.db.First(&thread, threadID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			log.Info().Str("thread_id", chatReq.ThreadID).Msg("Thread not found")
-			return c.JSON(http.StatusNotFound, ErrorResponse{
-				Message: "Thread not found",
-			})
+			log.Info().Str("thread_id", threadID).Msg("Thread not found")
+			return db.Thread{}, c.JSON(http.StatusNotFound, ErrorResponse{Message: "Thread not found"})
 		}
-		log.Error().Err(result.Error).Str("thread_id", chatReq.ThreadID).Msg("Failed to fetch thread")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: result.Error.Error(),
-		})
+		log.Error().Err(result.Error).Str("thread_id", threadID).Msg("Failed to fetch thread")
+		return db.Thread{}, c.JSON(http.StatusInternalServerError, ErrorResponse{Message: result.Error.Error()})
 	}
+	return thread, nil
+}
 
-	msgStart := time.Now()
+func (h *Handler) createMessages(threadID uint, chatReq ChatRequest) (db.ChatMessage, db.ChatMessage, error) {
 	// Create and save user message
 	userMsg := db.ChatMessage{
-		ThreadID:  thread.ID,
-		Role:      "user",
+		ThreadID:  threadID,
+		Role:      RoleUser,
 		Content:   chatReq.Content,
 		Model:     chatReq.Model,
 		Timestamp: time.Now(),
 	}
 	if err := h.db.Create(&userMsg).Error; err != nil {
-		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to save user message")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
-		})
+		log.Error().Err(err).Uint("thread_id", threadID).Msg("Failed to save user message")
+		return db.ChatMessage{}, db.ChatMessage{}, err
 	}
 	log.Info().
 		Uint("message_id", userMsg.ID).
-		Str("thread_id", chatReq.ThreadID).
-		Dur("duration_ms", time.Since(msgStart)).
+		Uint("thread_id", threadID).
 		Msg("User message saved")
 
 	// Create assistant message (will be updated with streamed content)
 	assistantMsg := db.ChatMessage{
-		ThreadID:  thread.ID,
-		Role:      "assistant",
+		ThreadID:  threadID,
+		Role:      RoleAssistant,
 		Content:   "",
 		Think:     "",
 		Model:     chatReq.Model,
 		Timestamp: time.Now(),
-		State:     "idle",
+		State:     StateIdle,
 	}
 	if err := h.db.Create(&assistantMsg).Error; err != nil {
-		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to create assistant message")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
-		})
+		log.Error().Err(err).Uint("thread_id", threadID).Msg("Failed to create assistant message")
+		return db.ChatMessage{}, db.ChatMessage{}, err
 	}
 
-	// Set up SSE headers
+	return userMsg, assistantMsg, nil
+}
+
+func (h *Handler) setupSSEHeaders(c echo.Context) {
 	c.Response().Header().Set("Content-Type", "application/x-ndjson")
 	c.Response().Header().Set("Cache-Control", "no-cache")
 	c.Response().Header().Set("Connection", "keep-alive")
 	c.Response().Header().Set("Transfer-Encoding", "chunked")
 	c.Response().WriteHeader(http.StatusOK)
+}
 
-	// Create a channel to handle client disconnection
-	done := c.Request().Context().Done()
-	streamStart := time.Now()
-	chunk := ""
-	fullContent := ""
-	fullThink := ""
-	chunkCount := 0
-	isThinking := false
-	isThinkingModel := utils.IsThinkingModel(chatReq.Model)
-	currentState := "idle"
-
+func (h *Handler) getThreadHistory(threadID string) ([]api.Message, error) {
 	var threadMessages []db.ChatMessage
-	result = h.db.Where("thread_id = ?", chatReq.ThreadID).Order("timestamp ASC").Find(&threadMessages)
+	result := h.db.Where("thread_id = ?", threadID).Order("timestamp ASC").Find(&threadMessages)
 	if result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: result.Error.Error(),
-		})
+		return nil, result.Error
 	}
 
-	messages := []api.Message{}
+	messages := make([]api.Message, 0, len(threadMessages))
 	for _, message := range threadMessages {
 		messages = append(messages, api.Message{
 			Role:    message.Role,
 			Content: message.Content,
 		})
 	}
+	return messages, nil
+}
+
+type StreamResult struct {
+	FullContent string
+	FullThink   string
+	ChunkCount  int
+	StartTime   time.Time
+	EndTime     time.Time
+}
+
+func (h *Handler) streamResponse(c echo.Context, assistantMsg db.ChatMessage, messages []api.Message, chatReq ChatRequest) (StreamResult, error) {
+	// Create a channel to handle client disconnection
+	done := c.Request().Context().Done()
+	streamStart := time.Now()
+
+	result := StreamResult{
+		StartTime:   streamStart,
+		FullContent: "",
+		FullThink:   "",
+		ChunkCount:  0,
+	}
+
+	currentChunk := ""
+	isThinking := false
+	isThinkingModel := utils.IsThinkingModel(chatReq.Model)
+	currentState := StateIdle
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
@@ -156,94 +228,110 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 		case <-done:
 			log.Info().
 				Str("thread_id", chatReq.ThreadID).
-				Int("chunks_sent", chunkCount).
+				Int("chunks_sent", result.ChunkCount).
 				Dur("stream_duration_ms", time.Since(streamStart)).
 				Msg("Client disconnected")
 			return fmt.Errorf("client disconnected")
 		default:
 			if isThinkingModel {
-				if strings.HasPrefix(response.Message.Content, "<think>") {
-					isThinking = true
-					currentState = "thinking"
-				}
-
-				if strings.HasSuffix(response.Message.Content, "</think>") {
-					isThinking = false
-					currentState = "responding"
-				}
+				h.processThinkingModelResponse(&result, &currentChunk, &isThinking, &currentState, response.Message.Content)
 			} else {
-				chunkCount++
-				currentState = "responding"
-				chunk = response.Message.Content
-				fullContent += response.Message.Content
+				h.processStandardModelResponse(&result, &currentChunk, &currentState, response.Message.Content)
 			}
 
-			var res ChatResponse
-			if isThinking {
-				res = ChatResponse{
-					ID:        assistantMsg.ID,
-					Content:   "",
-					Think:     chunk,
-					State:     currentState,
-					Role:      assistantMsg.Role,
-					Model:     assistantMsg.Model,
-					ThreadID:  assistantMsg.ThreadID,
-					Timestamp: assistantMsg.Timestamp,
-				}
-			} else {
-				res = ChatResponse{
-					ID:        assistantMsg.ID,
-					Content:   chunk,
-					Think:     fullThink,
-					State:     currentState,
-					Role:      assistantMsg.Role,
-					Model:     assistantMsg.Model,
-					ThreadID:  assistantMsg.ThreadID,
-					Timestamp: assistantMsg.Timestamp,
-				}
-			}
+			// Prepare response
+			chatResponse := h.prepareChatResponse(assistantMsg, currentChunk, result.FullThink, currentState, isThinking)
 
 			// Send the chunk to the client
-			json.NewEncoder(c.Response()).Encode(res)
+			if err := json.NewEncoder(c.Response()).Encode(chatResponse); err != nil {
+				return err
+			}
 			c.Response().Flush()
 			return nil
 		}
 	})
 
-	currentState = "done"
+	result.EndTime = time.Now()
+	return result, err
+}
 
-	if err != nil {
-		log.Error().Err(err).
-			Str("thread_id", chatReq.ThreadID).
-			Int("chunks_sent", chunkCount).
-			Dur("stream_duration_ms", time.Since(streamStart)).
-			Msg("Streaming failed")
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
-		})
+func (h *Handler) processThinkingModelResponse(result *StreamResult, currentChunk *string, isThinking *bool, currentState *string, content string) {
+	if strings.HasPrefix(content, "<think>") {
+		*isThinking = true
+		*currentState = StateThinking
 	}
 
+	if strings.HasSuffix(content, "</think>") {
+		*isThinking = false
+		*currentState = StateResponding
+	}
+
+	*currentChunk = content
+	if *isThinking {
+		result.FullThink += content
+	} else {
+		result.FullContent += content
+	}
+}
+
+func (h *Handler) processStandardModelResponse(result *StreamResult, currentChunk *string, currentState *string, content string) {
+	result.ChunkCount++
+	*currentState = StateResponding
+	*currentChunk = content
+	result.FullContent += content
+}
+
+func (h *Handler) prepareChatResponse(assistantMsg db.ChatMessage, currentChunk, fullThink, currentState string, isThinking bool) ChatResponse {
+	res := ChatResponse{
+		ID:        assistantMsg.ID,
+		ThreadID:  assistantMsg.ThreadID,
+		Role:      assistantMsg.Role,
+		Model:     assistantMsg.Model,
+		Timestamp: assistantMsg.Timestamp,
+		State:     currentState,
+	}
+
+	if isThinking {
+		res.Content = ""
+		res.Think = currentChunk
+	} else {
+		res.Content = currentChunk
+		res.Think = fullThink
+	}
+
+	return res
+}
+
+func (h *Handler) updateMessageAndThread(assistantMsg db.ChatMessage, thread db.Thread, result StreamResult) error {
 	// Update the assistant message with the complete response
-	updateStart := time.Now()
 	if err := h.db.Model(&assistantMsg).
-		Update("content", fullContent).
-		Update("think", fullThink).
-		Update("state", currentState).Error; err != nil {
-		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update assistant message")
+		Updates(map[string]interface{}{
+			"content": result.FullContent,
+			"think":   result.FullThink,
+			"state":   StateDone,
+		}).Error; err != nil {
+		return err
 	}
+
 	// Update thread's updated_at timestamp
-	if err := h.db.Model(&thread).Update("updated_at", time.Now()).Error; err != nil {
-		log.Error().Err(err).Str("thread_id", chatReq.ThreadID).Msg("Failed to update thread timestamp")
-	}
+	return h.db.Model(&thread).Update("updated_at", time.Now()).Error
+}
 
+func logStreamError(err error, threadID string, result StreamResult) {
+	log.Error().Err(err).
+		Str("thread_id", threadID).
+		Int("chunks_sent", result.ChunkCount).
+		Dur("stream_duration_ms", time.Since(result.StartTime)).
+		Msg("Streaming failed")
+}
+
+func logCompletedStream(threadID string, result StreamResult, startTime time.Time) {
 	log.Info().
-		Str("thread_id", chatReq.ThreadID).
-		Int("response_length", len(fullContent)+len(fullThink)).
-		Int("chunks_received", chunkCount).
-		Dur("stream_duration_ms", time.Since(streamStart)).
-		Dur("update_duration_ms", time.Since(updateStart)).
-		Dur("total_duration_ms", time.Since(start)).
+		Str("thread_id", threadID).
+		Int("response_length", len(result.FullContent)+len(result.FullThink)).
+		Int("chunks_received", result.ChunkCount).
+		Dur("stream_duration_ms", time.Since(result.StartTime)).
+		Dur("update_duration_ms", time.Since(result.EndTime)).
+		Dur("total_duration_ms", time.Since(startTime)).
 		Msg("Chat stream completed")
-
-	return nil
 }
