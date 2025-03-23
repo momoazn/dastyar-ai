@@ -39,7 +39,7 @@ func InitDB() (*gorm.DB, error) {
 	// Auto migrate the schema
 	log.Info().Msg("Running database migrations...")
 	migStart := time.Now()
-	if err := db.AutoMigrate(&Conversation{}, &Message{}, &TranslationProject{}, &Translation{}); err != nil {
+	if err := db.AutoMigrate(&ChatThread{}, &Message{}, &TranslationThread{}, &Translation{}); err != nil {
 		log.Error().Err(err).Msg("Failed to run database migrations")
 		return nil, err
 	}
@@ -53,23 +53,23 @@ func InitDB() (*gorm.DB, error) {
 	}
 
 	// Log some database stats
-	var conversationCount, translationProjectCount, messageCount, translationCount int64
-	if err := db.Model(&Conversation{}).Count(&conversationCount).Error; err != nil {
-		log.Warn().Err(err).Msg("Failed to get conversation count")
+	var chatThreadCount, translationThreadCount, messageCount, translationCount int64
+	if err := db.Model(&ChatThread{}).Count(&chatThreadCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get chat thread count")
 	}
 	if err := db.Model(&Message{}).Count(&messageCount).Error; err != nil {
 		log.Warn().Err(err).Msg("Failed to get message count")
 	}
-	if err := db.Model(&TranslationProject{}).Count(&translationProjectCount).Error; err != nil {
-		log.Warn().Err(err).Msg("Failed to get translation project count")
+	if err := db.Model(&TranslationThread{}).Count(&translationThreadCount).Error; err != nil {
+		log.Warn().Err(err).Msg("Failed to get translation thread count")
 	}
 	if err := db.Model(&Translation{}).Count(&translationCount).Error; err != nil {
 		log.Warn().Err(err).Msg("Failed to get translation count")
 	}
 
 	log.Info().
-		Int64("conversation_count", conversationCount).
-		Int64("translation_project_count", translationProjectCount).
+		Int64("chat_thread_count", chatThreadCount).
+		Int64("translation_thread_count", translationThreadCount).
 		Int64("message_count", messageCount).
 		Int64("translation_count", translationCount).
 		Dur("total_duration_ms", time.Since(start)).

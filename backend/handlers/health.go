@@ -14,7 +14,6 @@ func (h *Handler) handleHealthCheck(c echo.Context) error {
 		})
 	}
 	return c.JSON(http.StatusOK, Response[string]{
-		Data:    "ok",
-		Message: "Server is running",
+		Data: "ok",
 	})
 }

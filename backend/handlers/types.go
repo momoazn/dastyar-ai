@@ -6,15 +6,13 @@ import (
 )
 
 type Response[T any] struct {
-	Data    T      `json:"data"`
-	Message string `json:"message"`
+	Data T `json:"data"`
 }
 
 type PaginatedResponse[T any] struct {
-	Data        any    `json:"data"`
-	Message     string `json:"message"`
-	HasNext     bool   `json:"has_next"`
-	HasPrevious bool   `json:"has_previous"`
+	Data        any  `json:"data"`
+	HasNext     bool `json:"has_next"`
+	HasPrevious bool `json:"has_previous"`
 }
 
 type ErrorResponse struct {

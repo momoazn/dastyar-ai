@@ -15,20 +15,20 @@ func seedDatabase(db *gorm.DB) error {
 
 	// Check if seeding has already been done
 	var count int64
-	if err := db.Model(&Conversation{}).Count(&count).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to check existing conversation count")
+	if err := db.Model(&ChatThread{}).Count(&count).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to check existing chat threads count")
 		return err
 	}
 
 	if count > 0 {
-		log.Info().Int64("existing_conversations", count).Msg("Database already contains data, skipping seed")
+		log.Info().Int64("existing_chatThreads", count).Msg("Database already contains data, skipping seed")
 		return nil
 	}
 
 	log.Info().Msg("No existing data found, proceeding with seeding")
 
-	// Create 3 test conversations with 5 messages each
-	conversations := []Conversation{
+	// Create 3 test chatThreads with 5 messages each
+	chatThreads := []ChatThread{
 		{
 			Title:   "آموزش هوش مصنوعی",
 			AIModel: "deepseek-r1",
@@ -67,8 +67,8 @@ func seedDatabase(db *gorm.DB) error {
 		},
 	}
 
-	// Create translation projects with example entries
-	translationProjects := []TranslationProject{
+	// Create translation threads with example entries
+	translationThreads := []TranslationThread{
 		{
 			Title:   "فارسی به انگلیسی",
 			AIModel: "gpt-4",
@@ -119,46 +119,46 @@ func seedDatabase(db *gorm.DB) error {
 		},
 	}
 
-	// Set timestamps for conversations and messages
+	// Set timestamps for chatThreads and messages
 	now := time.Now()
-	for i := range conversations {
-		conversations[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
-		conversations[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+	for i := range chatThreads {
+		chatThreads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+		chatThreads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
 
-		for j := range conversations[i].Messages {
-			conversations[i].Messages[j].SentAt = now.Add(time.Duration(j) * time.Minute)
+		for j := range chatThreads[i].Messages {
+			chatThreads[i].Messages[j].SentAt = now.Add(time.Duration(j) * time.Minute)
 		}
 	}
 
-	// Set timestamps for translation projects
-	for i := range translationProjects {
-		translationProjects[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
-		translationProjects[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+	// Set timestamps for translation threads
+	for i := range translationThreads {
+		translationThreads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+		translationThreads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
 	}
 
-	// Create the conversations and their messages in the database
+	// Create the chatThreads and their messages in the database
 	log.Info().
-		Int("conversation_count", len(conversations)).
-		Int("total_messages", len(conversations)*5).
-		Int("translation_project_count", len(translationProjects)).
-		Int("total_translations", len(translationProjects[0].Translations)+len(translationProjects[1].Translations)).
+		Int("chat_threads_count", len(chatThreads)).
+		Int("total_messages", len(chatThreads)*5).
+		Int("translation_threads_count", len(translationThreads)).
+		Int("total_translations", len(translationThreads[0].Translations)+len(translationThreads[1].Translations)).
 		Msg("Creating seed data...")
 
-	if err := db.Create(&conversations).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to create conversation seed data")
+	if err := db.Create(&chatThreads).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to create chat threads seed data")
 		return err
 	}
 
-	if err := db.Create(&translationProjects).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to create translation project seed data")
+	if err := db.Create(&translationThreads).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to create translation threads seed data")
 		return err
 	}
 
 	log.Info().
-		Int("conversation_count", len(conversations)).
-		Int("total_messages", len(conversations)*5).
-		Int("translation_project_count", len(translationProjects)).
-		Int("total_translations", len(translationProjects[0].Translations)+len(translationProjects[1].Translations)).
+		Int("chat_threads_count", len(chatThreads)).
+		Int("total_messages", len(chatThreads)*5).
+		Int("translation_threads_count", len(translationThreads)).
+		Int("total_translations", len(translationThreads[0].Translations)+len(translationThreads[1].Translations)).
 		Dur("duration_ms", time.Since(start)).
 		Msg("Seed data created successfully")
 

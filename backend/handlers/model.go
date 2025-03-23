@@ -15,7 +15,6 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 		})
 	}
 	return c.JSON(http.StatusOK, Response[[]api.ListModelResponse]{
-		Data:    models.Models,
-		Message: "Models fetched successfully",
+		Data: models.Models,
 	})
 }

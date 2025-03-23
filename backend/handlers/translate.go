@@ -14,7 +14,7 @@ import (
 )
 
 type TranslateRequest struct {
-	ProjectID      string `json:"project_id"`
+	ThreadID       string `json:"thread_id"`
 	SourceText     string `json:"source_text"`
 	AIModel        string `json:"ai_model"`
 	SourceLanguage string `json:"source_language"`
@@ -36,33 +36,32 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		return err
 	}
 
-	// 2. Retrieve project
-	project, err := h.getTranslationProject(c, translateReq.ProjectID)
+	// 2. Retrieve translation thread
+	thread, err := h.getTranslationThread(c, translateReq.ThreadID)
 	if err != nil {
 		return err
 	}
 
 	// 3. Create translation entry
-	translation, err := h.createTranslation(project.ID, translateReq)
+	translation, err := h.createTranslation(thread.ID, translateReq)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 
 	// 4. Process translation
 	if err := h.processTranslation(c, translation); err != nil {
-		log.Error().Err(err).Uint("project_id", project.ID).Msg("Translation processing failed")
+		log.Error().Err(err).Uint("translation_thread_id", thread.ID).Msg("Translation processing failed")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 
-	// 5. Update translation and project
-	if err := h.updateTranslationAndProject(translation, project); err != nil {
-		log.Error().Err(err).Str("project_id", translateReq.ProjectID).Msg("Failed to update records")
+	// 5. Update translation and translation thread
+	if err := h.updateTranslationAndThread(translation, thread); err != nil {
+		log.Error().Err(err).Str("translation_thread_id", translateReq.ThreadID).Msg("Failed to update records")
 	}
 
-	logCompletedTranslation(translateReq.ProjectID, len(translation.TranslatedText), startTime)
+	logCompletedTranslation(translateReq.ThreadID, len(translation.TranslatedText), startTime)
 	return c.JSON(http.StatusOK, Response[db.Translation]{
-		Data:    *translation,
-		Message: "Translation completed",
+		Data: *translation,
 	})
 }
 
@@ -83,16 +82,16 @@ func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateReq
 	// Validate required fields
 	if translateReq.SourceText == "" || translateReq.AIModel == "" ||
 		translateReq.SourceLanguage == "" || translateReq.TargetLanguage == "" ||
-		translateReq.ProjectID == "" {
-		log.Error().Msg("source_text, ai_model, source_language, target_language, and project_id are required")
+		translateReq.ThreadID == "" {
+		log.Error().Msg("source_text, ai_model, source_language, target_language, and thread_id are required")
 		return TranslateRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "source_text, ai_model, source_language, target_language, and project_id are required",
+			Message: "source_text, ai_model, source_language, target_language, and thread_id are required",
 		})
 	}
 
 	// Log sanitized request
 	log.Info().
-		Str("project_id", translateReq.ProjectID).
+		Str("thread_id", translateReq.ThreadID).
 		Str("ai_model", translateReq.AIModel).
 		Int("source_text_length", len(translateReq.SourceText)).
 		Str("source_language", translateReq.SourceLanguage).
@@ -103,25 +102,25 @@ func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateReq
 	return translateReq, nil
 }
 
-func (h *Handler) getTranslationProject(c echo.Context, projectID string) (*db.TranslationProject, error) {
-	var project *db.TranslationProject
-	result := h.db.First(project, projectID)
+func (h *Handler) getTranslationThread(c echo.Context, threadID string) (*db.TranslationThread, error) {
+	var thread *db.TranslationThread
+	result := h.db.First(thread, threadID)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			log.Info().Str("project_id", projectID).Msg("Translation project not found")
+			log.Info().Str("thread_id", threadID).Msg("Translation thread not found")
 			return nil, c.JSON(http.StatusNotFound, ErrorResponse{
-				Message: "Translation project not found",
+				Message: "Translation thread not found",
 			})
 		}
-		log.Error().Err(result.Error).Str("project_id", projectID).Msg("Failed to fetch translation project")
+		log.Error().Err(result.Error).Str("thread_id", threadID).Msg("Failed to fetch translation thread")
 		return nil, c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Message: result.Error.Error(),
 		})
 	}
-	return project, nil
+	return thread, nil
 }
 
-func (h *Handler) createTranslation(projectID uint, translateReq TranslateRequest) (*db.Translation, error) {
+func (h *Handler) createTranslation(threadID uint, translateReq TranslateRequest) (*db.Translation, error) {
 	sourceLang := getLanguageFullName(translateReq.SourceLanguage)
 	targetLang := getLanguageFullName(translateReq.TargetLanguage)
 	tone := getToneDescription(translateReq.Tone)
@@ -131,7 +130,7 @@ func (h *Handler) createTranslation(projectID uint, translateReq TranslateReques
 		SourceText:     translateReq.SourceText,
 		TranslatedText: "",
 		AIModel:        translateReq.AIModel,
-		ProjectID:      projectID,
+		ThreadID:       threadID,
 		SourceLanguage: translateReq.SourceLanguage,
 		TargetLanguage: translateReq.TargetLanguage,
 		Tone:           translateReq.Tone,
@@ -146,7 +145,7 @@ func (h *Handler) createTranslation(projectID uint, translateReq TranslateReques
 
 	log.Info().
 		Uint("translation_id", translation.ID).
-		Uint("project_id", projectID).
+		Uint("thread_id", threadID).
 		Msg("Translation entry created")
 
 	return translation, nil
@@ -185,20 +184,20 @@ func (h *Handler) processTranslation(c echo.Context, translation *db.Translation
 	return nil
 }
 
-func (h *Handler) updateTranslationAndProject(translation *db.Translation, project *db.TranslationProject) error {
+func (h *Handler) updateTranslationAndThread(translation *db.Translation, translationThread *db.TranslationThread) error {
 	// Update the translation with the translated text
 	if err := h.db.Model(translation).Update("translated_text", translation.TranslatedText).Error; err != nil {
 		log.Error().Err(err).Uint("translation_id", translation.ID).Msg("Failed to update translation")
 		return err
 	}
 
-	// Update project's updated_at timestamp
-	return h.db.Model(project).Update("updated_at", time.Now()).Error
+	// Update translation thread's updated_at timestamp
+	return h.db.Model(translationThread).Update("updated_at", time.Now()).Error
 }
 
-func logCompletedTranslation(projectID string, responseLength int, startTime time.Time) {
+func logCompletedTranslation(threadID string, responseLength int, startTime time.Time) {
 	log.Info().
-		Str("project_id", projectID).
+		Str("thread_id", threadID).
 		Int("response_length", responseLength).
 		Dur("total_duration_ms", time.Since(startTime)).
 		Msg("Translation completed")

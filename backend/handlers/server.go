@@ -104,20 +104,20 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
 
 	// Conversation endpoints
-	apiGroup.GET("/conversations", handler.handleGetAllConversations)
-	apiGroup.POST("/conversations", handler.handleCreateConversation)
-	apiGroup.GET("/conversations/:id", handler.handleGetConversation)
-	apiGroup.PUT("/conversations/:id", handler.handleUpdateConversation)
-	apiGroup.DELETE("/conversations/:id", handler.handleDeleteConversation)
-	apiGroup.GET("/conversations/:id/messages", handler.handleGetConversationMessages)
+	apiGroup.GET("/chat-threads", handler.handleGetAllChatThreads)
+	apiGroup.POST("/chat-threads", handler.handleCreateChatThread)
+	apiGroup.GET("/chat-threads/:id", handler.handleGetChatThread)
+	apiGroup.PUT("/chat-threads/:id", handler.handleUpdateChatThread)
+	apiGroup.DELETE("/chat-threads/:id", handler.handleDeleteChatThread)
+	apiGroup.GET("/chat-threads/:id/messages", handler.handleGetChatThreadMessages)
 
-	// Translation project endpoints
-	apiGroup.GET("/translation-projects", handler.handleGetAllTranslationProjects)
-	apiGroup.POST("/translation-projects", handler.handleCreateTranslationProject)
-	apiGroup.GET("/translation-projects/:id", handler.handleGetTranslationProject)
-	apiGroup.PUT("/translation-projects/:id", handler.handleUpdateTranslationProject)
-	apiGroup.DELETE("/translation-projects/:id", handler.handleDeleteTranslationProject)
-	apiGroup.GET("/translation-projects/:id/translations", handler.handleGetTranslationProjectTranslations)
+	// Translation thread endpoints
+	apiGroup.GET("/translation-threads", handler.handleGetAllTranslationThreads)
+	apiGroup.POST("/translation-threads", handler.handleCreateTranslationThread)
+	apiGroup.GET("/translation-threads/:id", handler.handleGetTranslationThread)
+	apiGroup.PUT("/translation-threads/:id", handler.handleUpdateTranslationThread)
+	apiGroup.DELETE("/translation-threads/:id", handler.handleDeleteTranslationThread)
+	apiGroup.GET("/translation-threads/:id/translations", handler.handleGetTranslationThreadTranslations)
 
 	// LLM endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
