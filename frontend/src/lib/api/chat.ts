@@ -41,7 +41,7 @@ export const getConversationMessagesQueryKey = (id: number) => [
 
 // React Query hooks - Queries
 export const useConversations = (
-  options?: UseQueryOptions<PaginatedApiResponse<Conversation>, Error>,
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<Conversation>, Error>>,
 ) => {
   return useQuery({
     queryKey: getConversationsQueryKey(),
@@ -71,10 +71,14 @@ export const useConversationMessages = (
 
 // React Query hooks - Mutations
 export const useCreateConversation = (
-  options?: UseMutationOptions<ApiResponse<Conversation>, Error, string>,
+  options?: UseMutationOptions<
+    ApiResponse<Conversation>,
+    Error,
+    { title: string }
+  >,
 ) => {
   return useMutation({
-    mutationFn: (title: string) =>
+    mutationFn: ({ title }) =>
       fetchApi<ApiResponse<Conversation>>("/conversations", {
         method: "POST",
         body: JSON.stringify({ title }),
@@ -101,10 +105,14 @@ export const useUpdateConversation = (
 };
 
 export const useDeleteConversation = (
-  options?: UseMutationOptions<ApiResponse<Conversation>, Error, number>,
+  options?: UseMutationOptions<
+    ApiResponse<Conversation>,
+    Error,
+    { id: number }
+  >,
 ) => {
   return useMutation({
-    mutationFn: (id: number) =>
+    mutationFn: ({ id }) =>
       fetchApi<ApiResponse<Conversation>>(`/conversations/${id}`, {
         method: "DELETE",
       }),

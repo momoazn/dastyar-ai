@@ -24,6 +24,8 @@ export const PERSIAN_TEXTS = {
     translation: "ترجمه",
     appTitle: "دستیار هوشمند",
     newChat: "مکالمه جدید",
+    newTranslation: "ترجمه جدید",
+    new: "جدید",
   },
 
   // Settings

@@ -41,7 +41,7 @@ export type TranslateRequest = {
 } & TranslationOptions;
 
 // Query key getters
-export const getTranslationProjectsQueryKey = () => ["translate-projects"];
+export const getTranslationProjectsQueryKey = () => ["translation-projects"];
 export const getTranslationProjectTranslationsQueryKey = (id: number) => [
   "translate-project-translations",
   id,
@@ -49,12 +49,16 @@ export const getTranslationProjectTranslationsQueryKey = (id: number) => [
 
 // React Query hooks - Queries
 export const useTranslationProjects = (
-  options?: UseQueryOptions<PaginatedApiResponse<TranslationProject>, Error>,
+  options?: Partial<
+    UseQueryOptions<PaginatedApiResponse<TranslationProject>, Error>
+  >,
 ) => {
   return useQuery({
     queryKey: getTranslationProjectsQueryKey(),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslationProject>>("/translate-projects"),
+      fetchApi<PaginatedApiResponse<TranslationProject>>(
+        "/translation-projects",
+      ),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
@@ -70,7 +74,7 @@ export const useTranslationProjectTranslations = (
     queryKey: getTranslationProjectTranslationsQueryKey(id),
     queryFn: () =>
       fetchApi<PaginatedApiResponse<Translation>>(
-        `/translate-projects/${id}/translations`,
+        `/translation-projects/${id}/translations`,
       ),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
@@ -81,11 +85,15 @@ export const useTranslationProjectTranslations = (
 
 // React Query hooks - Mutations
 export const useCreateTranslationProject = (
-  options?: UseMutationOptions<ApiResponse<TranslationProject>, Error, string>,
+  options?: UseMutationOptions<
+    ApiResponse<TranslationProject>,
+    Error,
+    { title: string }
+  >,
 ) => {
   return useMutation({
-    mutationFn: (title: string) =>
-      fetchApi<ApiResponse<TranslationProject>>("/translate-projects", {
+    mutationFn: ({ title }) =>
+      fetchApi<ApiResponse<TranslationProject>>("/translation-projects", {
         method: "POST",
         body: JSON.stringify({ title }),
       }),
@@ -102,7 +110,7 @@ export const useUpdateTranslationProject = (
 ) => {
   return useMutation({
     mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<TranslationProject>>(`/translate-projects/${id}`, {
+      fetchApi<ApiResponse<TranslationProject>>(`/translation-projects/${id}`, {
         method: "PUT",
         body: JSON.stringify({ title }),
       }),
@@ -111,11 +119,15 @@ export const useUpdateTranslationProject = (
 };
 
 export const useDeleteTranslationProject = (
-  options?: UseMutationOptions<ApiResponse<TranslationProject>, Error, number>,
+  options?: UseMutationOptions<
+    ApiResponse<TranslationProject>,
+    Error,
+    { id: number }
+  >,
 ) => {
   return useMutation({
-    mutationFn: (id: number) =>
-      fetchApi<ApiResponse<TranslationProject>>(`/translate-projects/${id}`, {
+    mutationFn: ({ id }) =>
+      fetchApi<ApiResponse<TranslationProject>>(`/translation-projects/${id}`, {
         method: "DELETE",
       }),
     ...options,

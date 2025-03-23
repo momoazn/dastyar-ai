@@ -2,42 +2,41 @@ import { MessageSquare, Pencil, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { Button, Input } from "@/components/ui";
-import { Conversation, useUpdateConversation } from "@/lib/api/chat";
+import { Conversation } from "@/lib/api/chat";
+import { TranslationProject } from "@/lib/api/translate";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
 
 interface SidebarItemProps {
-  conversation: Conversation;
+  item: Conversation | TranslationProject;
   onDelete: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  isDeletingConversation: boolean;
+  isDeletingItem: boolean;
+  updateItem: (item: { id: number; title: string }) => void;
+  currentMode: "chat" | "translation" | "image" | "home";
 }
 
 export function SidebarItem({
-  conversation,
+  item,
   onDelete,
-  isDeletingConversation,
+  isDeletingItem,
+  updateItem,
+  currentMode,
 }: SidebarItemProps) {
   const { pathname } = useLocation();
   const [isHovering, setIsHovering] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(conversation.title);
+  const [editTitle, setEditTitle] = useState(item.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: updateConversation } = useUpdateConversation({
-    onSuccess: () => {
-      setIsEditing(false);
-    },
-  });
-
   const pathnameRegex = new RegExp(
-    `^/threads/${conversation.id}/(chat|image|translate)$`,
+    `^/${currentMode === "chat" ? "chat" : "translation-project"}/${item.id}`,
   );
   const isActive = pathnameRegex.test(pathname);
 
   const handleSave = () => {
-    if (editTitle.trim() && editTitle !== conversation.title) {
-      updateConversation({ id: conversation.id, title: editTitle.trim() });
+    if (editTitle.trim() && editTitle !== item.title) {
+      updateItem({ id: item.id, title: editTitle.trim() });
     }
     setIsEditing(false);
   };
@@ -47,14 +46,14 @@ export function SidebarItem({
       handleSave();
     } else if (e.key === "Escape") {
       setIsEditing(false);
-      setEditTitle(conversation.title);
+      setEditTitle(item.title);
     }
   };
 
   return (
     <NavLink
-      key={conversation.id}
-      to={`/threads/${conversation.id}/chat`}
+      key={item.id}
+      to={`/${currentMode === "chat" ? "chat" : "translation-project"}/${item.id}`}
       className={cn(
         "flex h-10 items-center justify-between gap-2 text-wrap rounded-md px-2 ps-2 text-sm text-muted-foreground",
         isActive ? "bg-primary/10 text-primary" : "",
@@ -77,10 +76,10 @@ export function SidebarItem({
           />
         ) : (
           <span className="truncate">
-            {conversation.title
-              ? conversation.title.length > 25
-                ? conversation.title.slice(0, 25) + "..."
-                : conversation.title
+            {item.title
+              ? item.title.length > 25
+                ? item.title.slice(0, 25) + "..."
+                : item.title
               : PERSIAN_TEXTS.navigation.newChat}
           </span>
         )}
@@ -93,7 +92,7 @@ export function SidebarItem({
             onClick={(e) => {
               e.preventDefault();
               setIsEditing(true);
-              setEditTitle(conversation.title);
+              setEditTitle(item.title);
               setTimeout(() => inputRef.current?.focus(), 0);
             }}
             className="h-6 w-6 bg-transparent hover:bg-transparent hover:text-blue-500"
@@ -104,7 +103,7 @@ export function SidebarItem({
             variant="ghost"
             size="icon"
             onClick={onDelete}
-            disabled={isDeletingConversation}
+            disabled={isDeletingItem}
             className="h-6 w-6 bg-transparent hover:bg-transparent hover:text-red-500"
           >
             <X className="h-4 w-4" />

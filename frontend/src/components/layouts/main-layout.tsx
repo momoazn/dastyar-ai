@@ -8,7 +8,9 @@ const HomePage = lazy(() =>
   import("../../pages/home").then((module) => ({ default: module.HomePage })),
 );
 const ChatPage = lazy(() =>
-  import("../../pages/chat").then((module) => ({ default: module.ChatPage })),
+  import("../../pages/chat").then((module) => ({
+    default: module.ChatPage,
+  })),
 );
 const ImagePage = lazy(() =>
   import("../../pages/image").then((module) => ({ default: module.ImagePage })),
@@ -38,11 +40,14 @@ export function MainLayout() {
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/image" element={<ImagePage />} />
-            <Route path="/translate" element={<TranslationPage />} />
-            <Route path="/threads/:threadID/chat" element={<ChatPage />} />
-            <Route path="/threads/:threadID/image" element={<ImagePage />} />
+            <Route path="/translation-project" element={<TranslationPage />} />
             <Route
-              path="/threads/:threadID/translate"
+              path="/conversation/:conversationID"
+              element={<ChatPage />}
+            />
+            <Route path="/image/:imageID" element={<ImagePage />} />
+            <Route
+              path="/translation-project/:translationProjectID"
               element={<TranslationPage />}
             />
           </Routes>

@@ -21,14 +21,16 @@ export function ChatPage() {
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { threadID } = useParams();
+  const { conversationID } = useParams();
   const navigate = useNavigate();
 
   // ===== API HOOKS =====
   const defaultChatModel = useGetChatModel();
   const { data: aiModels } = useAIModels();
   const { data: conversationMessages, refetch: refetchMessages } =
-    useConversationMessages(Number(threadID), { enabled: !!threadID });
+    useConversationMessages(Number(conversationID), {
+      enabled: !!conversationID,
+    });
   const { mutateAsync: createConversation } = useCreateConversation();
 
   // ===== CHAT FUNCTIONALITY =====
@@ -89,22 +91,27 @@ export function ChatPage() {
   const handleSendPrompt = async () => {
     if (!prompt.trim() || !currentChatModel) return;
 
-    if (threadID) {
-      // Send to existing thread
-      sendPrompt(prompt, Number(threadID), currentChatModel, refetchMessages);
+    if (conversationID) {
+      // Send to existing conversation
+      sendPrompt(
+        prompt,
+        Number(conversationID),
+        currentChatModel,
+        refetchMessages,
+      );
       setPrompt("");
       return;
     }
 
     try {
       // Create a new thread
-      const { data: newConversation } = await createConversation(
-        PERSIAN_TEXTS.navigation.newChat,
-      );
+      const { data: newConversation } = await createConversation({
+        title: PERSIAN_TEXTS.navigation.newChat,
+      });
 
       // Send message to the new thread
       sendPrompt(prompt, newConversation.id, currentChatModel, () =>
-        navigate(`/threads/${newConversation.id}/chat`, { replace: true }),
+        navigate(`/conversation/${newConversation.id}`, { replace: true }),
       );
       setPrompt("");
     } catch (error) {
