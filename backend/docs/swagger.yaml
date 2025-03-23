@@ -1,0 +1,664 @@
+basePath: /api
+definitions:
+  db.ChatThread:
+    properties:
+      ai_model:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      messages:
+        items:
+          $ref: '#/definitions/db.Message'
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  db.Message:
+    properties:
+      ai_model:
+        type: string
+      chat_thread_id:
+        type: integer
+      content:
+        type: string
+      id:
+        type: integer
+      reasoning:
+        type: string
+      role:
+        type: string
+      sent_at:
+        type: string
+      status:
+        type: string
+    type: object
+  db.Translation:
+    properties:
+      ai_model:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      source_language:
+        type: string
+      source_text:
+        type: string
+      target_language:
+        type: string
+      thread_id:
+        type: integer
+      tone:
+        type: string
+      translated_text:
+        type: string
+    type: object
+  db.TranslationThread:
+    properties:
+      ai_model:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      translations:
+        items:
+          $ref: '#/definitions/db.Translation'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  handlers.ChatRequest:
+    properties:
+      ai_model:
+        type: string
+      content:
+        type: string
+      thread_id:
+        type: string
+    type: object
+  handlers.ChatResponse:
+    properties:
+      ai_model:
+        type: string
+      content:
+        type: string
+      id:
+        type: integer
+      reasoning:
+        type: string
+      role:
+        type: string
+      sent_at:
+        type: string
+      status:
+        type: string
+      thread_id:
+        type: integer
+    type: object
+  handlers.CreateChatThreadRequest:
+    properties:
+      ai_model:
+        type: string
+      title:
+        type: string
+    type: object
+  handlers.CreateTranslationThreadRequest:
+    properties:
+      ai_model:
+        type: string
+      title:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.ModelResponse:
+    properties:
+      details:
+        additionalProperties: true
+        description: Using map for swagger compatibility
+        type: object
+      digest:
+        type: string
+      modified_at:
+        type: string
+      name:
+        type: string
+      size:
+        type: integer
+    type: object
+  handlers.PaginatedResponse-db_ChatThread:
+    properties:
+      data: {}
+      has_next:
+        type: boolean
+      has_previous:
+        type: boolean
+    type: object
+  handlers.PaginatedResponse-db_Message:
+    properties:
+      data: {}
+      has_next:
+        type: boolean
+      has_previous:
+        type: boolean
+    type: object
+  handlers.PaginatedResponse-db_Translation:
+    properties:
+      data: {}
+      has_next:
+        type: boolean
+      has_previous:
+        type: boolean
+    type: object
+  handlers.PaginatedResponse-db_TranslationThread:
+    properties:
+      data: {}
+      has_next:
+        type: boolean
+      has_previous:
+        type: boolean
+    type: object
+  handlers.Response-array_handlers_ModelResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.ModelResponse'
+        type: array
+    type: object
+  handlers.Response-db_ChatThread:
+    properties:
+      data:
+        $ref: '#/definitions/db.ChatThread'
+    type: object
+  handlers.Response-db_TranslationThread:
+    properties:
+      data:
+        $ref: '#/definitions/db.TranslationThread'
+    type: object
+  handlers.Response-string:
+    properties:
+      data:
+        type: string
+    type: object
+  handlers.TranslateRequest:
+    properties:
+      ai_model:
+        type: string
+      source_language:
+        type: string
+      source_text:
+        type: string
+      target_language:
+        type: string
+      thread_id:
+        type: string
+      tone:
+        type: string
+    type: object
+  handlers.TranslateResponse:
+    properties:
+      translation:
+        type: string
+    type: object
+  handlers.UpdateChatThreadRequest:
+    properties:
+      title:
+        type: string
+    type: object
+  handlers.UpdateTranslationThreadRequest:
+    properties:
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is the API for the AI Assistant.
+  title: AI Assistant API
+  version: "1.0"
+paths:
+  /chat:
+    post:
+      consumes:
+      - application/json
+      description: Send a message and receive streamed response from the AI model
+      parameters:
+      - description: Chat request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ChatRequest'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: Streamed response
+          schema:
+            $ref: '#/definitions/handlers.ChatResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Chat thread not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Stream chat response
+      tags:
+      - LLM
+  /chat-threads:
+    get:
+      description: Get all chat threads
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaginatedResponse-db_ChatThread'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all chat threads
+      tags:
+      - Chat Threads
+    post:
+      consumes:
+      - application/json
+      description: Create a new chat thread
+      parameters:
+      - description: Chat thread details
+        in: body
+        name: chat_thread
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateChatThreadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.Response-db_ChatThread'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new chat thread
+      tags:
+      - Chat Threads
+  /chat-threads/{id}:
+    delete:
+      description: Delete a chat thread
+      parameters:
+      - description: Chat thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_ChatThread'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a chat thread
+      tags:
+      - Chat Threads
+    get:
+      description: Get a chat thread by ID
+      parameters:
+      - description: Chat thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_ChatThread'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a chat thread by ID
+      tags:
+      - Chat Threads
+    put:
+      consumes:
+      - application/json
+      description: Update a chat thread
+      parameters:
+      - description: Chat thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Chat thread details
+        in: body
+        name: chat_thread
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateChatThreadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_ChatThread'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a chat thread
+      tags:
+      - Chat Threads
+  /chat-threads/{id}/messages:
+    get:
+      description: Get chat thread messages
+      parameters:
+      - description: Chat thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaginatedResponse-db_Message'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get chat thread messages
+      tags:
+      - Chat Threads
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the application and Ollama service are running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-string'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Health check endpoint
+      tags:
+      - Health
+  /models:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all available LLM models from Ollama
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of models
+          schema:
+            $ref: '#/definitions/handlers.Response-array_handlers_ModelResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get available LLM models
+      tags:
+      - LLM
+  /translate:
+    post:
+      consumes:
+      - application/json
+      description: Translate text from one language to another
+      parameters:
+      - description: Translation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.TranslateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Translated text
+          schema:
+            $ref: '#/definitions/handlers.TranslateResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Translation thread not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Translate text
+      tags:
+      - LLM
+  /translation-threads:
+    get:
+      description: Get all translation threads
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaginatedResponse-db_TranslationThread'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all translation threads
+      tags:
+      - Translation Threads
+    post:
+      consumes:
+      - application/json
+      description: Create a new translation thread
+      parameters:
+      - description: Translation thread details
+        in: body
+        name: translation_thread
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateTranslationThreadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.Response-db_TranslationThread'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new translation thread
+      tags:
+      - Translation Threads
+  /translation-threads/{id}:
+    delete:
+      description: Delete a translation thread by ID
+      parameters:
+      - description: Translation thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_TranslationThread'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a translation thread
+      tags:
+      - Translation Threads
+    get:
+      description: Get a translation thread by ID with its translations
+      parameters:
+      - description: Translation thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_TranslationThread'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a translation thread by ID
+      tags:
+      - Translation Threads
+    put:
+      consumes:
+      - application/json
+      description: Update a translation thread's title
+      parameters:
+      - description: Translation thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Translation thread details
+        in: body
+        name: thread
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateTranslationThreadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response-db_TranslationThread'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a translation thread
+      tags:
+      - Translation Threads
+  /translation-threads/{id}/translations:
+    get:
+      description: Get all translations from a translation thread
+      parameters:
+      - description: Translation thread ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaginatedResponse-db_Translation'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get translations from a thread
+      tags:
+      - Translation Threads
+swagger: "2.0"

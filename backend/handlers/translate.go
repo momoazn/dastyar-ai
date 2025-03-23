@@ -26,6 +26,17 @@ type TranslateResponse struct {
 	Translation string `json:"translation"`
 }
 
+// @Summary Translate text
+// @Description Translate text from one language to another
+// @Tags LLM
+// @Accept json
+// @Produce json
+// @Param request body TranslateRequest true "Translation request"
+// @Success 200 {object} TranslateResponse "Translated text"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 404 {object} ErrorResponse "Translation thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /translate [post]
 func (h *Handler) handleTranslate(c echo.Context) error {
 	startTime := time.Now()
 	log.Info().Msg("Handling translate request")

@@ -16,7 +16,23 @@ import (
 	"github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+
+	_ "ai-assistant/docs"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
+
+type Handler struct {
+	db           *gorm.DB
+	ollamaClient *api.Client
+}
+
+func NewHandler(db *gorm.DB, ollamaClient *api.Client) *Handler {
+	return &Handler{
+		db:           db,
+		ollamaClient: ollamaClient,
+	}
+}
 
 // setupRequestLogger creates a custom request logger middleware
 func setupRequestLogger() echo.MiddlewareFunc {
@@ -196,6 +212,11 @@ func createOllamaClient() *api.Client {
 	return ollamaClient
 }
 
+// @title AI Assistant API
+// @version 1.0
+// @description This is the API for the AI Assistant.
+// @host localhost:8080
+// @BasePath /api
 func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	start := time.Now()
 	log.Info().Msg("Setting up HTTP server...")
@@ -206,14 +227,17 @@ func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	// Setup all components
 	setupMiddleware(e)
 
-	_, err := setupStaticFiles(e, staticFiles)
-	if err != nil {
-		return nil, err
-	}
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+	log.Info().Msg("Swagger documentation available at /docs/index.html")
 
 	ollamaClient := createOllamaClient()
 	handler := NewHandler(db, ollamaClient)
 	registerAPIRoutes(e, handler)
+
+	_, err := setupStaticFiles(e, staticFiles)
+	if err != nil {
+		return nil, err
+	}
 
 	log.Info().
 		Dur("setup_duration_ms", time.Since(start)).

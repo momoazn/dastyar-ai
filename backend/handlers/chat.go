@@ -46,6 +46,17 @@ type ChatResponse struct {
 	SentAt    time.Time `json:"sent_at"`
 }
 
+// @Summary Stream chat response
+// @Description Send a message and receive streamed response from the AI model
+// @Tags LLM
+// @Accept json
+// @Produce text/event-stream
+// @Param request body ChatRequest true "Chat request"
+// @Success 200 {object} ChatResponse "Streamed response"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 404 {object} ErrorResponse "Chat thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /chat [post]
 func (h *Handler) handleStreamChat(c echo.Context) error {
 	startTime := time.Now()
 	log.Info().Msg("Handling stream chat request")

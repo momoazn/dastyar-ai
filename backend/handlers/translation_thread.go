@@ -10,6 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// @Summary Get all translation threads
+// @Description Get all translation threads
+// @Tags Translation Threads
+// @Produce json
+// @Success 200 {object} PaginatedResponse[db.TranslationThread]
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads [get]
 func (h *Handler) handleGetAllTranslationThreads(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling get all translation threads request")
@@ -40,6 +47,16 @@ type CreateTranslationThreadRequest struct {
 	AIModel string `json:"ai_model"`
 }
 
+// @Summary Create a new translation thread
+// @Description Create a new translation thread
+// @Tags Translation Threads
+// @Accept json
+// @Produce json
+// @Param translation_thread body CreateTranslationThreadRequest true "Translation thread details"
+// @Success 201 {object} Response[db.TranslationThread]
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads [post]
 func (h *Handler) handleCreateTranslationThread(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling create translation thread request")
@@ -82,6 +99,15 @@ func (h *Handler) handleCreateTranslationThread(c echo.Context) error {
 	})
 }
 
+// @Summary Get a translation thread by ID
+// @Description Get a translation thread by ID with its translations
+// @Tags Translation Threads
+// @Produce json
+// @Param id path string true "Translation thread ID"
+// @Success 200 {object} Response[db.TranslationThread]
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads/{id} [get]
 func (h *Handler) handleGetTranslationThread(c echo.Context) error {
 	start := time.Now()
 	id := c.Param("id")
@@ -118,6 +144,18 @@ type UpdateTranslationThreadRequest struct {
 	Title string `json:"title"`
 }
 
+// @Summary Update a translation thread
+// @Description Update a translation thread's title
+// @Tags Translation Threads
+// @Accept json
+// @Produce json
+// @Param id path string true "Translation thread ID"
+// @Param thread body UpdateTranslationThreadRequest true "Translation thread details"
+// @Success 200 {object} Response[db.TranslationThread]
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads/{id} [put]
 func (h *Handler) handleUpdateTranslationThread(c echo.Context) error {
 	id := c.Param("id")
 	var request UpdateTranslationThreadRequest
@@ -155,6 +193,15 @@ func (h *Handler) handleUpdateTranslationThread(c echo.Context) error {
 	})
 }
 
+// @Summary Delete a translation thread
+// @Description Delete a translation thread by ID
+// @Tags Translation Threads
+// @Produce json
+// @Param id path string true "Translation thread ID"
+// @Success 200 {object} Response[db.TranslationThread]
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads/{id} [delete]
 func (h *Handler) handleDeleteTranslationThread(c echo.Context) error {
 	id := c.Param("id")
 	result := h.db.Delete(&db.TranslationThread{}, id)
@@ -171,6 +218,15 @@ func (h *Handler) handleDeleteTranslationThread(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response[db.TranslationThread]{})
 }
 
+// @Summary Get translations from a thread
+// @Description Get all translations from a translation thread
+// @Tags Translation Threads
+// @Produce json
+// @Param id path string true "Translation thread ID"
+// @Success 200 {object} PaginatedResponse[db.Translation]
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /translation-threads/{id}/translations [get]
 func (h *Handler) handleGetTranslationThreadTranslations(c echo.Context) error {
 	threadID := c.Param("id")
 	var translations []db.Translation
