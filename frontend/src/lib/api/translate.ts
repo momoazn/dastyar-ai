@@ -5,10 +5,11 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query";
 
-import { ApiResponse } from ".";
-import { fetchApi, PaginatedApiResponse } from ".";
+import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
+import { defaultQueryOptions } from "./common";
 
-export interface TranslateProject {
+// Type definitions
+export interface TranslationProject {
   id: number;
   title: string;
   ai_model: string;
@@ -16,7 +17,7 @@ export interface TranslateProject {
   updated_at: string;
 }
 
-export interface TranslateMessage {
+export interface Translation {
   id: number;
   project_id: number;
   source_text: string;
@@ -27,80 +28,6 @@ export interface TranslateMessage {
   tone: string;
   created_at: string;
 }
-
-export const useTranslateProjects = (
-  options?: UseQueryOptions<PaginatedApiResponse<TranslateProject>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["translate-projects"],
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateProject>>("/translate-projects"),
-    ...options,
-  });
-};
-
-export const getTranslateProjectMessagesQueryKey = (id: number) => [
-  "translate-project-messages",
-  id,
-];
-
-export const useTranslateProjectMessages = (
-  id: number,
-  options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
-  >,
-) => {
-  return useQuery({
-    queryKey: getTranslateProjectMessagesQueryKey(id),
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateMessage>>(
-        `/translate-projects/${id}/messages`,
-      ),
-    ...options,
-  });
-};
-
-export const useCreateTranslateProject = (
-  options?: UseMutationOptions<ApiResponse<TranslateProject>, Error, string>,
-) => {
-  return useMutation({
-    mutationFn: (title: string) =>
-      fetchApi<ApiResponse<TranslateProject>>("/translate-projects", {
-        method: "POST",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useUpdateTranslateThread = (
-  options?: UseMutationOptions<
-    ApiResponse<TranslateProject>,
-    Error,
-    { id: number; title: string }
-  >,
-) => {
-  return useMutation({
-    mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<TranslateProject>>(`/translate-projects/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useDeleteTranslateProject = (
-  options?: UseMutationOptions<ApiResponse<TranslateProject>, Error, number>,
-) => {
-  return useMutation({
-    mutationFn: (id: number) =>
-      fetchApi<ApiResponse<TranslateProject>>(`/translate-projects/${id}`, {
-        method: "DELETE",
-      }),
-    ...options,
-  });
-};
 
 export type TranslationOptions = {
   source_lang: string;
@@ -113,33 +40,97 @@ export type TranslateRequest = {
   model: string;
 } & TranslationOptions;
 
-export async function translateMessage(
-  translateProjectId: number,
-  request: TranslateRequest,
-) {
-  const response = await fetchApi<ApiResponse<TranslateMessage>>(`/translate`, {
+// Query key getters
+export const getTranslationProjectsQueryKey = () => ["translate-projects"];
+export const getTranslationProjectTranslationsQueryKey = (id: number) => [
+  "translate-project-translations",
+  id,
+];
+
+// React Query hooks - Queries
+export const useTranslationProjects = (
+  options?: UseQueryOptions<PaginatedApiResponse<TranslationProject>, Error>,
+) => {
+  return useQuery({
+    queryKey: getTranslationProjectsQueryKey(),
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<TranslationProject>>("/translate-projects"),
+    retry: defaultQueryOptions.retry,
+    refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
+    staleTime: defaultQueryOptions.staleTime,
+    ...options,
+  });
+};
+
+export const useTranslationProjectTranslations = (
+  id: number,
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<Translation>, Error>>,
+) => {
+  return useQuery({
+    queryKey: getTranslationProjectTranslationsQueryKey(id),
+    queryFn: () =>
+      fetchApi<PaginatedApiResponse<Translation>>(
+        `/translate-projects/${id}/translations`,
+      ),
+    retry: defaultQueryOptions.retry,
+    refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
+    staleTime: defaultQueryOptions.staleTime,
+    ...options,
+  });
+};
+
+// React Query hooks - Mutations
+export const useCreateTranslationProject = (
+  options?: UseMutationOptions<ApiResponse<TranslationProject>, Error, string>,
+) => {
+  return useMutation({
+    mutationFn: (title: string) =>
+      fetchApi<ApiResponse<TranslationProject>>("/translate-projects", {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      }),
+    ...options,
+  });
+};
+
+export const useUpdateTranslationProject = (
+  options?: UseMutationOptions<
+    ApiResponse<TranslationProject>,
+    Error,
+    { id: number; title: string }
+  >,
+) => {
+  return useMutation({
+    mutationFn: ({ id, title }) =>
+      fetchApi<ApiResponse<TranslationProject>>(`/translate-projects/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ title }),
+      }),
+    ...options,
+  });
+};
+
+export const useDeleteTranslationProject = (
+  options?: UseMutationOptions<ApiResponse<TranslationProject>, Error, number>,
+) => {
+  return useMutation({
+    mutationFn: (id: number) =>
+      fetchApi<ApiResponse<TranslationProject>>(`/translate-projects/${id}`, {
+        method: "DELETE",
+      }),
+    ...options,
+  });
+};
+
+// Direct API functions
+export async function translate(projectId: number, request: TranslateRequest) {
+  const response = await fetchApi<ApiResponse<Translation>>(`/translate`, {
     method: "POST",
     body: JSON.stringify({
       ...request,
-      project_id: translateProjectId.toString(),
+      project_id: projectId.toString(),
     }),
   });
 
   return response.data;
 }
-
-export const useTranslateThreadTranslations = (
-  id: number,
-  options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslateMessage>, Error>
-  >,
-) => {
-  return useQuery({
-    queryKey: ["translate-thread-translations", id],
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslateMessage>>(
-        `/translate-threads/${id}/translations`,
-      ),
-    ...options,
-  });
-};

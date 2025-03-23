@@ -7,7 +7,9 @@ import {
 
 import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { StreamResponseService } from "../utils";
+import { defaultQueryOptions } from "./common";
 
+// Type definitions
 export type MessageStatus = "idle" | "reasoning" | "responding" | "done";
 export type MessageRole = "user" | "assistant" | "system";
 
@@ -30,34 +32,44 @@ export interface Message {
   sent_at: string;
 }
 
+// Query key getters
+export const getConversationsQueryKey = () => ["conversations"];
+export const getConversationMessagesQueryKey = (id: number) => [
+  "conversation-messages",
+  id,
+];
+
+// React Query hooks - Queries
 export const useConversations = (
   options?: UseQueryOptions<PaginatedApiResponse<Conversation>, Error>,
 ) => {
   return useQuery({
-    queryKey: ["conversations"],
+    queryKey: getConversationsQueryKey(),
     queryFn: () =>
       fetchApi<PaginatedApiResponse<Conversation>>("/conversations"),
+    retry: defaultQueryOptions.retry,
+    refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
+    staleTime: defaultQueryOptions.staleTime,
     ...options,
   });
 };
-
-export const getThreadMessagesQueryKey = (id: number) => [
-  "thread-messages",
-  id,
-];
 
 export const useConversationMessages = (
   id: number,
   options?: Partial<UseQueryOptions<PaginatedApiResponse<Message>, Error>>,
 ) => {
   return useQuery({
-    queryKey: getThreadMessagesQueryKey(id),
+    queryKey: getConversationMessagesQueryKey(id),
     queryFn: () =>
       fetchApi<PaginatedApiResponse<Message>>(`/conversations/${id}/messages`),
+    retry: defaultQueryOptions.retry,
+    refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
+    staleTime: defaultQueryOptions.staleTime,
     ...options,
   });
 };
 
+// React Query hooks - Mutations
 export const useCreateConversation = (
   options?: UseMutationOptions<ApiResponse<Conversation>, Error, string>,
 ) => {
@@ -100,6 +112,7 @@ export const useDeleteConversation = (
   });
 };
 
+// Direct API functions
 export async function sendMessage(
   threadId: number,
   content: string,

@@ -1,5 +1,5 @@
 import { useGetTranslationModel } from "@/atoms";
-import { translateMessage } from "@/lib/api/translate";
+import { translate as translateRequest } from "@/lib/api/translate";
 import { useState } from "react";
 
 interface TranslationOptions {
@@ -14,14 +14,14 @@ export function useTranslation() {
 
   const translate = async (
     text: string,
-    threadId: number,
+    projectId: number,
     options: TranslationOptions,
   ): Promise<string> => {
     if (!text) return "";
 
     setIsTranslating(true);
     try {
-      const response = await translateMessage(threadId, {
+      const response = await translateRequest(projectId, {
         input: text,
         model: translationModel,
         source_lang: options.sourceLang,

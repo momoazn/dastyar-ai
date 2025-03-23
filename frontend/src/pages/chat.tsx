@@ -128,13 +128,13 @@ export function ChatPage() {
 
       {/* Chat Input Container */}
       <ChatInput
-        handleSendPrompt={handleSendPrompt}
-        isStreaming={isStreaming}
-        stopStreaming={stopStreaming}
-        currentChatModel={currentChatModel}
-        setCurrentChatModel={setCurrentChatModel}
         prompt={prompt}
         setPrompt={setPrompt}
+        handleSendPrompt={handleSendPrompt}
+        currentChatModel={currentChatModel}
+        setCurrentChatModel={setCurrentChatModel}
+        isStreaming={isStreaming}
+        stopStreaming={stopStreaming}
       />
     </div>
   );

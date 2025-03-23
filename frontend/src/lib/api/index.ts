@@ -1,5 +1,4 @@
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-
+// Response types
 export type ApiResponse<T> = {
   data: T;
   message: string;
@@ -12,6 +11,7 @@ export type PaginatedApiResponse<T> = {
   has_previous: boolean;
 };
 
+// Base fetch function
 export async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit,
@@ -31,31 +31,9 @@ export async function fetchApi<T>(
   return options?.method === "DELETE" ? undefined : response.json();
 }
 
-export type AIModel = {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-};
-
-export const useAIModels = (
-  options?: UseQueryOptions<ApiResponse<AIModel[]>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["models"],
-    queryFn: () => fetchApi<ApiResponse<AIModel[]>>("/models"),
-    ...options,
-  });
-};
-
-export const useChatHealthCheck = (
-  options?: UseQueryOptions<ApiResponse<string>, Error>,
-) => {
-  return useQuery({
-    queryKey: ["health"],
-    queryFn: () => fetchApi<ApiResponse<string>>("/health"),
-    refetchInterval: 10000,
-    ...options,
-  });
-};
+// Re-export everything from feature-specific modules
+export * from "./chat";
+export * from "./common";
+export * from "./health";
+export * from "./models";
+export * from "./translate";

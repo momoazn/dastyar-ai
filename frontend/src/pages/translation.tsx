@@ -15,8 +15,8 @@ import {
 } from "@/components/ui";
 import { useTranslation } from "@/hooks";
 import {
-  useCreateTranslateProject,
-  useTranslateProjectMessages,
+  useCreateTranslationProject,
+  useTranslationProjectTranslations,
 } from "@/lib/api/translate";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
@@ -80,28 +80,29 @@ export function TranslationPage() {
 
   const { translate, isTranslating } = useTranslation();
 
-  const { threadId } = useParams();
+  const { projectId } = useParams();
 
   const {
     data: translations,
     isLoading: isTranslationsLoading,
     refetch: refetchTranslations,
-  } = useTranslateProjectMessages(Number(threadId), {
-    enabled: !!threadId,
+  } = useTranslationProjectTranslations(Number(projectId), {
+    enabled: !!projectId,
   });
 
-  const { mutateAsync: createTranslateProject } = useCreateTranslateProject();
+  const { mutateAsync: createTranslationProject } =
+    useCreateTranslationProject();
 
   const handleTranslate = async () => {
     if (!sourceText) return;
 
-    let tId = Number(threadId);
+    let tId = Number(projectId);
 
     if (!tId) {
-      const { data: newTranslateProject } = await createTranslateProject(
+      const { data: newTranslationProject } = await createTranslationProject(
         PERSIAN_TEXTS.navigation.newChat,
       );
-      tId = newTranslateProject.id;
+      tId = newTranslationProject.id;
     }
 
     try {
