@@ -256,7 +256,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_ChatThread"
+                            "$ref": "#/definitions/handlers.Response-any"
                         }
                     },
                     "404": {
@@ -614,7 +614,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_TranslationThread"
+                            "$ref": "#/definitions/handlers.Response-any"
                         }
                     },
                     "404": {
@@ -886,7 +886,12 @@ const docTemplate = `{
         "handlers.PaginatedResponse-db_ChatThread": {
             "type": "object",
             "properties": {
-                "data": {},
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.ChatThread"
+                    }
+                },
                 "has_next": {
                     "type": "boolean"
                 },
@@ -898,7 +903,12 @@ const docTemplate = `{
         "handlers.PaginatedResponse-db_Message": {
             "type": "object",
             "properties": {
-                "data": {},
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.Message"
+                    }
+                },
                 "has_next": {
                     "type": "boolean"
                 },
@@ -910,7 +920,12 @@ const docTemplate = `{
         "handlers.PaginatedResponse-db_Translation": {
             "type": "object",
             "properties": {
-                "data": {},
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.Translation"
+                    }
+                },
                 "has_next": {
                     "type": "boolean"
                 },
@@ -922,13 +937,24 @@ const docTemplate = `{
         "handlers.PaginatedResponse-db_TranslationThread": {
             "type": "object",
             "properties": {
-                "data": {},
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.TranslationThread"
+                    }
+                },
                 "has_next": {
                     "type": "boolean"
                 },
                 "has_previous": {
                     "type": "boolean"
                 }
+            }
+        },
+        "handlers.Response-any": {
+            "type": "object",
+            "properties": {
+                "data": {}
             }
         },
         "handlers.Response-array_handlers_ModelResponse": {

@@ -5,7 +5,7 @@ type Response[T any] struct {
 }
 
 type PaginatedResponse[T any] struct {
-	Data        any  `json:"data"`
+	Data        []T  `json:"data"`
 	HasNext     bool `json:"has_next"`
 	HasPrevious bool `json:"has_previous"`
 }

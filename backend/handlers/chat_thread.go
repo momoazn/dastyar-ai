@@ -196,7 +196,7 @@ func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 // @Tags Chat Threads
 // @Produce json
 // @Param id path string true "Chat thread ID"
-// @Success 200 {object} Response[db.ChatThread]
+// @Success 200 {object} Response[any]
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /chat-threads/{id} [delete]
@@ -213,7 +213,7 @@ func (h *Handler) handleDeleteChatThread(c echo.Context) error {
 			Message: "Chat thread not found",
 		})
 	}
-	return c.JSON(http.StatusOK, Response[db.ChatThread]{})
+	return c.JSON(http.StatusOK, Response[any]{})
 }
 
 // @Summary Get chat thread messages

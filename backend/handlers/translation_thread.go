@@ -198,7 +198,7 @@ func (h *Handler) handleUpdateTranslationThread(c echo.Context) error {
 // @Tags Translation Threads
 // @Produce json
 // @Param id path string true "Translation thread ID"
-// @Success 200 {object} Response[db.TranslationThread]
+// @Success 200 {object} Response[any]
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /translation-threads/{id} [delete]
@@ -215,7 +215,7 @@ func (h *Handler) handleDeleteTranslationThread(c echo.Context) error {
 			Message: "Translation thread not found",
 		})
 	}
-	return c.JSON(http.StatusOK, Response[db.TranslationThread]{})
+	return c.JSON(http.StatusOK, Response[any]{})
 }
 
 // @Summary Get translations from a thread

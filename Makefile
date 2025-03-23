@@ -54,7 +54,11 @@ build-backend:
 build-backend-in-win:
 	cd $(BACKEND_DIR) && go build -o ../persian-ai-assistant.exe
 
-# Clean up
+# Misc
+.PHONY: build-docs
+build-docs:
+	cd $(BACKEND_DIR) && swag init --generalInfo handlers/server.go --output docs
+
 .PHONY: clean
 clean: clean-frontend clean-backend
 

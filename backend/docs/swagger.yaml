@@ -138,7 +138,10 @@ definitions:
     type: object
   handlers.PaginatedResponse-db_ChatThread:
     properties:
-      data: {}
+      data:
+        items:
+          $ref: '#/definitions/db.ChatThread'
+        type: array
       has_next:
         type: boolean
       has_previous:
@@ -146,7 +149,10 @@ definitions:
     type: object
   handlers.PaginatedResponse-db_Message:
     properties:
-      data: {}
+      data:
+        items:
+          $ref: '#/definitions/db.Message'
+        type: array
       has_next:
         type: boolean
       has_previous:
@@ -154,7 +160,10 @@ definitions:
     type: object
   handlers.PaginatedResponse-db_Translation:
     properties:
-      data: {}
+      data:
+        items:
+          $ref: '#/definitions/db.Translation'
+        type: array
       has_next:
         type: boolean
       has_previous:
@@ -162,11 +171,18 @@ definitions:
     type: object
   handlers.PaginatedResponse-db_TranslationThread:
     properties:
-      data: {}
+      data:
+        items:
+          $ref: '#/definitions/db.TranslationThread'
+        type: array
       has_next:
         type: boolean
       has_previous:
         type: boolean
+    type: object
+  handlers.Response-any:
+    properties:
+      data: {}
     type: object
   handlers.Response-array_handlers_ModelResponse:
     properties:
@@ -322,7 +338,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.Response-db_ChatThread'
+            $ref: '#/definitions/handlers.Response-any'
         "404":
           description: Not Found
           schema:
@@ -558,7 +574,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.Response-db_TranslationThread'
+            $ref: '#/definitions/handlers.Response-any'
         "404":
           description: Not Found
           schema:
