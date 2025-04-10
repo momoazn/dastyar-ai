@@ -70,7 +70,7 @@ export function SettingsModal() {
 
           <TabsContent value="chat" className="mt-4 space-y-4">
             <div className="space-y-4">
-              <h3 className="text-right text-sm font-medium text-muted-foreground">
+              <h3 className="text-muted-foreground text-right text-sm font-medium">
                 {PERSIAN_TEXTS.modelSelection.aiModels}
               </h3>
               <div className="flex flex-col gap-2">
@@ -149,7 +149,7 @@ export function SettingsModal() {
 
               <div className="space-y-4 border-t pt-4">
                 <div className="rtl flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-muted-foreground">
+                  <h3 className="text-muted-foreground text-sm font-medium">
                     {PERSIAN_TEXTS.settings.chatTab}
                   </h3>
                   <Button
@@ -223,7 +223,7 @@ export function SettingsModal() {
                           <label className="text-xs font-medium">
                             {PERSIAN_TEXTS.settings.temperature}
                           </label>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chatSettings.temperature.toFixed(1)}
                           </span>
                         </div>
@@ -245,7 +245,7 @@ export function SettingsModal() {
                           <label className="text-xs font-medium">
                             {PERSIAN_TEXTS.settings.topP}
                           </label>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chatSettings.topP.toFixed(1)}
                           </span>
                         </div>
@@ -267,7 +267,7 @@ export function SettingsModal() {
                           <label className="text-xs font-medium">
                             {PERSIAN_TEXTS.settings.presencePenalty}
                           </label>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chatSettings.presencePenalty.toFixed(1)}
                           </span>
                         </div>
@@ -289,7 +289,7 @@ export function SettingsModal() {
                           <label className="text-xs font-medium">
                             {PERSIAN_TEXTS.settings.frequencyPenalty}
                           </label>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {chatSettings.frequencyPenalty.toFixed(1)}
                           </span>
                         </div>
@@ -314,7 +314,7 @@ export function SettingsModal() {
 
           <TabsContent value="image" className="mt-4 space-y-4">
             <div className="space-y-4">
-              <h3 className="text-right text-sm font-medium text-muted-foreground">
+              <h3 className="text-muted-foreground text-right text-sm font-medium">
                 {PERSIAN_TEXTS.imageSettings.imageSettings}
               </h3>
               <div className="flex flex-col gap-4">
@@ -381,7 +381,7 @@ export function SettingsModal() {
                     <label className="text-xs font-medium">
                       {PERSIAN_TEXTS.imageSettings.guidanceScale}
                     </label>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {imageSettings.guidanceScale.toFixed(1)}
                     </span>
                   </div>
@@ -406,7 +406,7 @@ export function SettingsModal() {
                     <label className="text-xs font-medium">
                       {PERSIAN_TEXTS.imageSettings.steps}
                     </label>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {imageSettings.steps}
                     </span>
                   </div>

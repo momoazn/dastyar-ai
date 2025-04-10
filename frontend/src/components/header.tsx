@@ -29,7 +29,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
             )}
           </Button>
           <NavLink to="/">
-            <h1 className="text-2xl font-semibold text-primary">
+            <h1 className="text-primary text-2xl font-semibold">
               {PERSIAN_TEXTS.navigation.appTitle}
             </h1>
           </NavLink>

@@ -40,9 +40,9 @@ export function ImagePage() {
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       {generating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="border-primary h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" />
             <Alert>
               <AlertDescription className="text-center">
                 در حال ایجاد تصویر...
@@ -57,18 +57,18 @@ export function ImagePage() {
           variant="outline"
           size="icon"
           onClick={clearHistory}
-          className="self-end text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          className="text-destructive hover:bg-destructive hover:text-destructive-foreground self-end"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       )}
 
-      <ScrollArea className="flex-1 rounded-lg border bg-background p-4">
+      <ScrollArea className="bg-background flex-1 rounded-lg border p-4">
         <div className="grid grid-cols-2 gap-6">
           {images.map((image, index) => (
             <div
               key={index}
-              className="group relative aspect-square overflow-hidden rounded-xl bg-background"
+              className="group bg-background relative aspect-square overflow-hidden rounded-xl"
             >
               <img
                 src={image.url}
@@ -79,7 +79,7 @@ export function ImagePage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-background hover:bg-white/20 hover:text-background"
+                  className="text-background hover:text-background hover:bg-white/20"
                   onClick={() => {
                     const link = document.createElement("a");
                     link.href = image.url;

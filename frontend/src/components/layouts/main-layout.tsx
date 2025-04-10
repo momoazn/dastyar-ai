@@ -31,7 +31,7 @@ export function MainLayout() {
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">
       <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <main className="flex flex-1 overflow-hidden">
         <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />

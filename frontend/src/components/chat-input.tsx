@@ -66,7 +66,7 @@ export function ChatInput({
 
   return (
     <div className="flex min-h-[80px] gap-2 rounded-md">
-      <div className="flex flex-1 flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-ring has-[textarea:focus]:ring-offset-2">
+      <div className="has-[textarea:focus]:ring-ring flex flex-1 flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
         {/* Message Input Area */}
         <MessageInput
           prompt={prompt}

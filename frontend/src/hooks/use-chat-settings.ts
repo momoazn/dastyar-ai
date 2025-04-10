@@ -48,4 +48,4 @@ export function useChatSettings() {
     updateSettings,
     resetSettings,
   };
-} 
+}

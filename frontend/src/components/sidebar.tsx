@@ -35,14 +35,14 @@ export function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
       {/* Mobile backdrop */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          className="bg-background/80 fixed inset-0 z-40 backdrop-blur-xs md:hidden"
           onClick={toggleSidebar}
           aria-hidden="true"
         />
       )}
       <aside
         className={cn(
-          "z-30 flex h-full flex-col border-l bg-background md:w-[320px]",
+          "bg-background z-30 flex h-full flex-col border-l md:w-[320px]",
           isSidebarOpen ? "w-[80%]" : "w-0",
         )}
         aria-label={`${currentMode} sidebar`}

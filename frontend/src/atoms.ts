@@ -9,9 +9,9 @@ const STORAGE_KEYS = {
 // Create a reusable function for model atoms
 const createModelAtom = (storageKey: string) => {
   const modelAtom = atom(localStorage.getItem(storageKey) || "");
-  
+
   const useGetModel = () => useAtomValue(modelAtom);
-  
+
   const useSetModel = () => {
     const setModel = useSetAtom(modelAtom);
     return (model: string) => {
@@ -19,9 +19,9 @@ const createModelAtom = (storageKey: string) => {
       setModel(model);
     };
   };
-  
+
   const useModel = () => [useGetModel(), useSetModel()] as const;
-  
+
   return { modelAtom, useGetModel, useSetModel, useModel };
 };
 

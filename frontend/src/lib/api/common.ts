@@ -7,7 +7,7 @@ export function handleApiError(error: unknown): Error {
   if (error instanceof Error) {
     return error;
   }
-  return new Error('Unknown API error occurred');
+  return new Error("Unknown API error occurred");
 }
 
 /**
@@ -16,7 +16,7 @@ export function handleApiError(error: unknown): Error {
 export function transformResponse<T>(data: T): ApiResponse<T> {
   return {
     data,
-    message: 'Success',
+    message: "Success",
   };
 }
 
@@ -26,11 +26,11 @@ export function transformResponse<T>(data: T): ApiResponse<T> {
 export function transformPaginatedResponse<T>(
   data: T[],
   hasNext = false,
-  hasPrevious = false
+  hasPrevious = false,
 ): PaginatedApiResponse<T> {
   return {
     data,
-    message: 'Success',
+    message: "Success",
     has_next: hasNext,
     has_previous: hasPrevious,
   };
@@ -43,4 +43,4 @@ export const defaultQueryOptions = {
   retry: 1,
   refetchOnWindowFocus: false,
   staleTime: 5 * 60 * 1000, // 5 minutes
-}; 
+};

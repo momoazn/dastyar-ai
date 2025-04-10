@@ -55,7 +55,7 @@ export function SidebarItem({
       key={item.id}
       to={`/${currentMode === "chat" ? "chat" : "translation-project"}/${item.id}`}
       className={cn(
-        "flex h-10 items-center justify-between gap-2 text-wrap rounded-md px-2 ps-2 text-sm text-muted-foreground",
+        "text-muted-foreground flex h-10 items-center justify-between gap-2 rounded-md px-2 ps-2 text-sm text-wrap",
         isActive ? "bg-primary/10 text-primary" : "",
       )}
       onMouseEnter={() => setIsHovering(true)}

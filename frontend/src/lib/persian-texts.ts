@@ -13,8 +13,7 @@ export const PERSIAN_TEXTS = {
     start: "شروع کنید",
 
     appTitle: "دستیار هوشمند فارسی",
-    description:
-      "با استفاده از هوش مصنوعی، تجربه‌ای متفاوت را تجربه کنید",
+    description: "با استفاده از هوش مصنوعی، تجربه‌ای متفاوت را تجربه کنید",
   },
 
   // Navigation and Headers

@@ -38,7 +38,7 @@ export function Message({ message }: MessageProps) {
       <div
         dir={detectTextDirection(message.content)}
         className={cn(
-          "flex max-w-[85%] flex-col items-start justify-center space-y-3 rounded-md p-4 shadow-sm transition-colors",
+          "flex max-w-[85%] flex-col items-start justify-center space-y-3 rounded-md p-4 shadow-xs transition-colors",
           message.role === "assistant"
             ? "bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
             : "bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white",
@@ -82,7 +82,7 @@ export function Message({ message }: MessageProps) {
           <div
             dir="ltr"
             className={cn(
-              "overflow-hidden border-l-2 border-muted pl-3 text-sm text-muted-foreground transition-all duration-200 ease-in-out dark:text-slate-400",
+              "border-muted text-muted-foreground overflow-hidden border-l-2 pl-3 text-sm transition-all duration-200 ease-in-out dark:text-slate-400",
               collapsed
                 ? "mt-0 max-h-0 opacity-0"
                 : "mt-2 max-h-[500px] opacity-100",
@@ -104,10 +104,10 @@ export function Message({ message }: MessageProps) {
         {/* Message content */}
         <article
           className={cn(
-            "prose max-w-none break-words dark:prose-pre:bg-slate-900",
+            "prose dark:prose-pre:bg-slate-900 max-w-none break-words",
             message.role === "user"
               ? "prose-invert dark:prose-headings:text-white dark:prose-a:text-blue-300"
-              : "dark:text-slate-100 dark:prose-headings:text-white dark:prose-a:text-blue-400",
+              : "dark:prose-headings:text-white dark:prose-a:text-blue-400 dark:text-slate-100",
           )}
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>

@@ -132,7 +132,7 @@ export function TranslationPage() {
       <Card className="bg-background p-4">
         <div className="mb-6 grid grid-cols-3 gap-4">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {PERSIAN_TEXTS.translation.sourceLanguage}
             </p>
             <Select value={sourceLang} onValueChange={setSourceLang}>
@@ -152,7 +152,7 @@ export function TranslationPage() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {PERSIAN_TEXTS.translation.targetLanguage}
             </p>
             <Select value={targetLang} onValueChange={setTargetLang}>
@@ -172,7 +172,7 @@ export function TranslationPage() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {PERSIAN_TEXTS.translation.translationTone}
             </p>
             <Select value={tone} onValueChange={setTone}>
@@ -223,8 +223,8 @@ export function TranslationPage() {
         </div>
       </Card>
 
-      <Card className="flex-1 bg-background p-4">
-        <h3 className="text-md mb-4 font-medium text-muted-foreground">
+      <Card className="bg-background flex-1 p-4">
+        <h3 className="text-md text-muted-foreground mb-4 font-medium">
           {PERSIAN_TEXTS.translation.translations}
         </h3>
 
@@ -238,9 +238,9 @@ export function TranslationPage() {
               {translations.data.map((translation) => (
                 <div
                   key={translation.id}
-                  className="rounded-lg border border-border bg-card p-4 shadow-sm"
+                  className="border-border bg-card rounded-lg border p-4 shadow-xs"
                 >
-                  <div className="mb-2 flex flex-row-reverse items-center justify-between text-sm text-muted-foreground">
+                  <div className="text-muted-foreground mb-2 flex flex-row-reverse items-center justify-between text-sm">
                     <div className="rtl flex items-center gap-2">
                       <span>
                         {getLanguageLabel(translation.source_language)}
@@ -254,7 +254,7 @@ export function TranslationPage() {
                       <span>
                         {new Date(translation.created_at).toLocaleString()}
                       </span>
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                      <span className="bg-secondary rounded-full px-2 py-0.5 text-xs">
                         {getToneLabel(translation.tone)}
                       </span>
                     </div>
@@ -262,13 +262,13 @@ export function TranslationPage() {
                   <div className="space-y-2 text-right">
                     <p
                       dir="auto"
-                      className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
+                      className="bg-muted rounded-md p-2 text-sm whitespace-pre-wrap"
                     >
                       {translation.source_text}
                     </p>
                     <p
                       dir="auto"
-                      className="whitespace-pre-wrap rounded-md bg-muted p-2 text-sm"
+                      className="bg-muted rounded-md p-2 text-sm whitespace-pre-wrap"
                     >
                       {translation.translated_text}
                     </p>
@@ -278,7 +278,7 @@ export function TranslationPage() {
             </div>
           </ScrollArea>
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
+          <div className="text-muted-foreground flex h-full items-center justify-center">
             {PERSIAN_TEXTS.translation.noTranslations}
           </div>
         )}

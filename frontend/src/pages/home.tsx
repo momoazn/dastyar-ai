@@ -34,7 +34,7 @@ export function HomePage() {
       <div className="w-full max-w-4xl space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="text-4xl font-bold">{PERSIAN_TEXTS.index.appTitle}</h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             {PERSIAN_TEXTS.index.description}
           </p>
         </div>
@@ -45,7 +45,7 @@ export function HomePage() {
               <div className="space-y-4">
                 <div className={feature.color}>{feature.icon}</div>
                 <h2 className="text-xl font-semibold">{feature.title}</h2>
-                <p className="h-10 text-sm text-muted-foreground">
+                <p className="text-muted-foreground h-10 text-sm">
                   {feature.description}
                 </p>
                 <Button asChild className="w-full">
