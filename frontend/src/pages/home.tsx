@@ -28,7 +28,7 @@ const features = [
   },
 ];
 
-export function HomePage() {
+export default function HomePage() {
   return (
     <div className="mt-8 flex flex-col items-center justify-center p-4 md:mt-24 md:p-8">
       <div className="w-full max-w-4xl space-y-8">

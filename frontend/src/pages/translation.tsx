@@ -71,7 +71,7 @@ const getLanguageLabel = (language: Language) => {
   return languages.find((l) => l.value === language)?.label || language;
 };
 
-export function TranslationPage() {
+export default function TranslationPage() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [sourceLang, setSourceLang] = useState<Language>("english");
@@ -99,9 +99,9 @@ export function TranslationPage() {
     let tId = Number(projectId);
 
     if (!tId) {
-      const { data: newTranslationProject } = await createTranslationProject(
-        PERSIAN_TEXTS.navigation.newChat,
-      );
+      const { data: newTranslationProject } = await createTranslationProject({
+        title: PERSIAN_TEXTS.navigation.newChat,
+      });
       tId = newTranslationProject.id;
     }
 

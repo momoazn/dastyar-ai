@@ -4,22 +4,10 @@ import { Route, Routes } from "react-router-dom";
 import { Header, Sidebar } from "@/components";
 import { useInitializeSelectedModels } from "@/hooks";
 
-const HomePage = lazy(() =>
-  import("../../pages/home").then((module) => ({ default: module.HomePage })),
-);
-const ChatPage = lazy(() =>
-  import("../../pages/chat").then((module) => ({
-    default: module.ChatPage,
-  })),
-);
-const ImagePage = lazy(() =>
-  import("../../pages/image").then((module) => ({ default: module.ImagePage })),
-);
-const TranslationPage = lazy(() =>
-  import("../../pages/translation").then((module) => ({
-    default: module.TranslationPage,
-  })),
-);
+const HomePage = lazy(() => import("../../pages/home"));
+const ChatPage = lazy(() => import("../../pages/chat"));
+const ImagePage = lazy(() => import("../../pages/image"));
+const TranslationPage = lazy(() => import("../../pages/translation"));
 
 export function MainLayout() {
   useInitializeSelectedModels();

@@ -13,7 +13,7 @@ import {
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
-export function ChatPage() {
+export default function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([]);

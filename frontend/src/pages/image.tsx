@@ -16,7 +16,7 @@ import {
 import { detectTextDirection } from "@/lib/utils";
 import { StableDiffusionService } from "@/services/stable-diffusion";
 
-export function ImagePage() {
+export default function ImagePage() {
   const sdService = useRef<StableDiffusionService>(
     new StableDiffusionService(),
   );
