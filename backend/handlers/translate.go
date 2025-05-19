@@ -10,8 +10,41 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
+
+// @Summary Get all translations
+// @Description Get all translations
+// @Tags Translations
+// @Produce json
+// @Success 200 {object} PaginatedResponse[db.Translation]
+// @Failure 500 {object} ErrorResponse
+// @Router /translations [get]
+func (h *Handler) handleGetAllTranslations(c echo.Context) error {
+	start := time.Now()
+	log.Info().Msg("Handling get all translations request")
+
+	var translations []db.Translation
+	result := h.db.Order("created_at DESC").Find(&translations)
+	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Failed to fetch translations")
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: result.Error.Error(),
+		})
+	}
+
+	log.Info().
+		Int("translation_count", len(translations)).
+		Dur("duration_ms", time.Since(start)).
+		Msg("Successfully fetched translations")
+
+	return c.JSON(http.StatusOK, PaginatedResponse[db.Translation]{
+		Data:        translations,
+		HasNext:     len(translations) > 10,
+		Total:       len(translations),
+		CurrentPage: 1,
+		TotalPages:  len(translations) / 10,
+	})
+}
 
 type TranslateRequest struct {
 	ThreadID       string `json:"thread_id"`
@@ -26,8 +59,8 @@ type TranslateResponse struct {
 	Translation string `json:"translation"`
 }
 
-// @Summary Translate text
-// @Description Translate text from one language to another
+// @Summary Create translation
+// @Description Create translation
 // @Tags LLM
 // @Accept json
 // @Produce json
@@ -36,10 +69,10 @@ type TranslateResponse struct {
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 404 {object} ErrorResponse "Translation thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /translate [post]
-func (h *Handler) handleTranslate(c echo.Context) error {
+// @Router /translations [post]
+func (h *Handler) handleCreateTranslation(c echo.Context) error {
 	startTime := time.Now()
-	log.Info().Msg("Handling translate request")
+	log.Info().Msg("Handling create translation request")
 
 	// 1. Parse and validate request
 	translateReq, err := h.parseAndValidateTranslateRequest(c)
@@ -47,27 +80,16 @@ func (h *Handler) handleTranslate(c echo.Context) error {
 		return err
 	}
 
-	// 2. Retrieve translation thread
-	thread, err := h.getTranslationThread(c, translateReq.ThreadID)
-	if err != nil {
-		return err
-	}
-
-	// 3. Create translation entry
-	translation, err := h.createTranslation(thread.ID, translateReq)
+	// 2. Create translation entry
+	translation, err := h.createTranslation(translateReq)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 
 	// 4. Process translation
 	if err := h.processTranslation(c, translation); err != nil {
-		log.Error().Err(err).Uint("translation_thread_id", thread.ID).Msg("Translation processing failed")
+		log.Error().Err(err).Uint("translation_id", translation.ID).Msg("Translation processing failed")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
-	}
-
-	// 5. Update translation and translation thread
-	if err := h.updateTranslationAndThread(translation, thread); err != nil {
-		log.Error().Err(err).Str("translation_thread_id", translateReq.ThreadID).Msg("Failed to update records")
 	}
 
 	logCompletedTranslation(translateReq.ThreadID, len(translation.TranslatedText), startTime)
@@ -113,25 +135,7 @@ func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateReq
 	return translateReq, nil
 }
 
-func (h *Handler) getTranslationThread(c echo.Context, threadID string) (*db.TranslationThread, error) {
-	var thread *db.TranslationThread
-	result := h.db.First(thread, threadID)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			log.Info().Str("thread_id", threadID).Msg("Translation thread not found")
-			return nil, c.JSON(http.StatusNotFound, ErrorResponse{
-				Message: "Translation thread not found",
-			})
-		}
-		log.Error().Err(result.Error).Str("thread_id", threadID).Msg("Failed to fetch translation thread")
-		return nil, c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: result.Error.Error(),
-		})
-	}
-	return thread, nil
-}
-
-func (h *Handler) createTranslation(threadID uint, translateReq TranslateRequest) (*db.Translation, error) {
+func (h *Handler) createTranslation(translateReq TranslateRequest) (*db.Translation, error) {
 	sourceLang := getLanguageFullName(translateReq.SourceLanguage)
 	targetLang := getLanguageFullName(translateReq.TargetLanguage)
 	tone := getToneDescription(translateReq.Tone)
@@ -141,7 +145,6 @@ func (h *Handler) createTranslation(threadID uint, translateReq TranslateRequest
 		SourceText:     translateReq.SourceText,
 		TranslatedText: "",
 		LLM:            translateReq.LLM,
-		ThreadID:       threadID,
 		SourceLanguage: translateReq.SourceLanguage,
 		TargetLanguage: translateReq.TargetLanguage,
 		Tone:           translateReq.Tone,
@@ -156,7 +159,6 @@ func (h *Handler) createTranslation(threadID uint, translateReq TranslateRequest
 
 	log.Info().
 		Uint("translation_id", translation.ID).
-		Uint("thread_id", threadID).
 		Msg("Translation entry created")
 
 	return translation, nil
@@ -193,17 +195,6 @@ func (h *Handler) processTranslation(c echo.Context, translation *db.Translation
 	// Store the translated text in our translation object
 	translation.TranslatedText = translatedText
 	return nil
-}
-
-func (h *Handler) updateTranslationAndThread(translation *db.Translation, translationThread *db.TranslationThread) error {
-	// Update the translation with the translated text
-	if err := h.db.Model(translation).Update("translated_text", translation.TranslatedText).Error; err != nil {
-		log.Error().Err(err).Uint("translation_id", translation.ID).Msg("Failed to update translation")
-		return err
-	}
-
-	// Update translation thread's updated_at timestamp
-	return h.db.Model(translationThread).Update("updated_at", time.Now()).Error
 }
 
 func logCompletedTranslation(threadID string, responseLength int, startTime time.Time) {

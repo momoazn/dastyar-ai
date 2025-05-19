@@ -19,8 +19,10 @@ const TranslationPage = lazy(() => import("../../pages/translation"));
 const routes = [
   { path: "/", element: <HomePage /> },
   { path: "/chat", element: <ChatPage /> },
+  { path: "/chat/:id", element: <ChatPage /> },
   { path: "/image", element: <ImagePage /> },
-  { path: "/translation-project", element: <TranslationPage /> },
+  { path: "/translation", element: <TranslationPage /> },
+  { path: "/translation/:id", element: <TranslationPage /> },
 ] as const;
 
 export function MainLayout() {

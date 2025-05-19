@@ -26,7 +26,7 @@ export const useAIModels = (
 ) => {
   return useQuery({
     queryKey: getAIModelsQueryKey(),
-    queryFn: () => fetchApi<ApiResponse<AIModel[]>>("/models"),
+    queryFn: () => fetchApi<ApiResponse<AIModel[]>>("/list-llm"),
     ...defaultQueryOptions,
     ...options,
   });

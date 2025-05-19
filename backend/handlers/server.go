@@ -119,7 +119,6 @@ func setupMiddleware(e *echo.Echo) {
 func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup := e.Group("/api")
 
-	// Conversation endpoints
 	apiGroup.GET("/chat-threads", handler.handleGetAllChatThreads)
 	apiGroup.POST("/chat-threads", handler.handleCreateChatThread)
 	apiGroup.GET("/chat-threads/:id", handler.handleGetChatThread)
@@ -127,20 +126,12 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup.DELETE("/chat-threads/:id", handler.handleDeleteChatThread)
 	apiGroup.GET("/chat-threads/:id/messages", handler.handleGetChatThreadMessages)
 
-	// Translation thread endpoints
-	apiGroup.GET("/translation-threads", handler.handleGetAllTranslationThreads)
-	apiGroup.POST("/translation-threads", handler.handleCreateTranslationThread)
-	apiGroup.GET("/translation-threads/:id", handler.handleGetTranslationThread)
-	apiGroup.PUT("/translation-threads/:id", handler.handleUpdateTranslationThread)
-	apiGroup.DELETE("/translation-threads/:id", handler.handleDeleteTranslationThread)
-	apiGroup.GET("/translation-threads/:id/translations", handler.handleGetTranslationThreadTranslations)
+	apiGroup.GET("/translations", handler.handleGetAllTranslations)
+	apiGroup.POST("/translations", handler.handleCreateTranslation)
 
-	// LLM endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
-	apiGroup.POST("/translate", handler.handleTranslate)
 	apiGroup.GET("/list-llm", handler.handleGetLLMList)
 
-	// Health check endpoint
 	apiGroup.GET("/health", handler.handleHealthCheck)
 
 	log.Info().Msg("Registered API routes")

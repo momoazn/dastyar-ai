@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useGetDefaultChatModel } from "@/atoms";
+
 export default function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
@@ -19,7 +20,7 @@ export default function ChatPage() {
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { chatThreadID } = useParams();
+  const { chatThreadID } = useParams<{ chatThreadID: string }>();
   const navigate = useNavigate();
 
   const inNewChat = !Boolean(chatThreadID);

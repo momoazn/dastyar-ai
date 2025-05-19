@@ -1,21 +1,7 @@
-import {
-  useMutation,
-  UseMutationOptions,
-  useQuery,
-  UseQueryOptions,
-} from "@tanstack/react-query";
+import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 
 import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { defaultQueryOptions } from "./common";
-
-// Type definitions
-export interface TranslationThread {
-  id: number;
-  title: string;
-  llm: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface Translation {
   id: number;
@@ -41,92 +27,18 @@ export interface TranslateRequest extends TranslationOptions {
 }
 
 // Query key getters
-export const getTranslationThreadsQueryKey = () => ["translation-threads"];
-export const getTranslationThreadTranslationsQueryKey = (
-  translationThreadId: number,
-) => ["translation-thread-translations", translationThreadId];
+export const getTranslationsQueryKey = () => ["translations"];
 
 // React Query hooks - Queries
-export const useTranslationThreads = (
-  options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslationThread>, Error>
-  >,
-) => {
-  return useQuery({
-    queryKey: getTranslationThreadsQueryKey(),
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslationThread>>("/translation-threads"),
-    retry: defaultQueryOptions.retry,
-    refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
-    staleTime: defaultQueryOptions.staleTime,
-    ...options,
-  });
-};
-
-export const useTranslationThreadTranslations = (
-  id: number,
+export const useTranslations = (
   options?: Partial<UseQueryOptions<PaginatedApiResponse<Translation>, Error>>,
 ) => {
   return useQuery({
-    queryKey: getTranslationThreadTranslationsQueryKey(id),
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<Translation>>(
-        `/translation-threads/${id}/translations`,
-      ),
+    queryKey: getTranslationsQueryKey(),
+    queryFn: () => fetchApi<PaginatedApiResponse<Translation>>("/translations"),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
-    ...options,
-  });
-};
-
-// React Query hooks - Mutations
-export const useCreateTranslationThread = (
-  options?: UseMutationOptions<
-    ApiResponse<TranslationThread>,
-    Error,
-    { title: string }
-  >,
-) => {
-  return useMutation({
-    mutationFn: ({ title }) =>
-      fetchApi<ApiResponse<TranslationThread>>("/translation-threads", {
-        method: "POST",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useUpdateTranslationThread = (
-  options?: UseMutationOptions<
-    ApiResponse<TranslationThread>,
-    Error,
-    { id: number; title: string }
-  >,
-) => {
-  return useMutation({
-    mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<TranslationThread>>(`/translation-threads/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ title }),
-      }),
-    ...options,
-  });
-};
-
-export const useDeleteTranslationThread = (
-  options?: UseMutationOptions<
-    ApiResponse<TranslationThread>,
-    Error,
-    { id: number }
-  >,
-) => {
-  return useMutation({
-    mutationFn: ({ id }) =>
-      fetchApi<ApiResponse<TranslationThread>>(`/translation-threads/${id}`, {
-        method: "DELETE",
-      }),
     ...options,
   });
 };

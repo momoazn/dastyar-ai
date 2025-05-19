@@ -68,54 +68,42 @@ func seedDatabase(db *gorm.DB) error {
 	}
 
 	// Create translation threads with example entries
-	translationThreads := []TranslationThread{
+	translations := []Translation{
 		{
-			Title: "فارسی به انگلیسی",
-			LLM:   "gpt-4",
-			Translations: []Translation{
-				{
-					SourceText:     "سلام، حال شما چطور است؟",
-					TranslatedText: "Hello, how are you?",
-					LLM:            "gpt-4",
-					SourceLanguage: "fa",
-					TargetLanguage: "en",
-					Tone:           "casual",
-					CreatedAt:      time.Now(),
-				},
-				{
-					SourceText:     "من یک برنامه‌نویس هستم و در حال توسعه یک اپلیکیشن هوش مصنوعی هستم.",
-					TranslatedText: "I am a programmer and I am developing an artificial intelligence application.",
-					LLM:            "gpt-4",
-					SourceLanguage: "fa",
-					TargetLanguage: "en",
-					Tone:           "professional",
-					CreatedAt:      time.Now().Add(5 * time.Minute),
-				},
-			},
+			SourceText:     "سلام، حال شما چطور است؟",
+			TranslatedText: "Hello, how are you?",
+			LLM:            "gpt-4",
+			SourceLanguage: "fa",
+			TargetLanguage: "en",
+			Tone:           "casual",
+			CreatedAt:      time.Now(),
 		},
 		{
-			Title: "English to Persian",
-			LLM:   "gpt-4",
-			Translations: []Translation{
-				{
-					SourceText:     "Machine learning is transforming the way we solve problems.",
-					TranslatedText: "یادگیری ماشین در حال تغییر روش حل مسائل است.",
-					LLM:            "gpt-4",
-					SourceLanguage: "en",
-					TargetLanguage: "fa",
-					Tone:           "formal",
-					CreatedAt:      time.Now(),
-				},
-				{
-					SourceText:     "The weather is beautiful today!",
-					TranslatedText: "امروز هوا خیلی خوب است!",
-					LLM:            "gpt-4",
-					SourceLanguage: "en",
-					TargetLanguage: "fa",
-					Tone:           "casual",
-					CreatedAt:      time.Now().Add(5 * time.Minute),
-				},
-			},
+			SourceText:     "من یک برنامه‌نویس هستم و در حال توسعه یک اپلیکیشن هوش مصنوعی هستم.",
+			TranslatedText: "I am a programmer and I am developing an artificial intelligence application.",
+			LLM:            "gpt-4",
+			SourceLanguage: "fa",
+			TargetLanguage: "en",
+			Tone:           "professional",
+			CreatedAt:      time.Now().Add(5 * time.Minute),
+		},
+		{
+			SourceText:     "Machine learning is transforming the way we solve problems.",
+			TranslatedText: "یادگیری ماشین در حال تغییر روش حل مسائل است.",
+			LLM:            "gpt-4",
+			SourceLanguage: "en",
+			TargetLanguage: "fa",
+			Tone:           "formal",
+			CreatedAt:      time.Now(),
+		},
+		{
+			SourceText:     "The weather is beautiful today!",
+			TranslatedText: "امروز هوا خیلی خوب است!",
+			LLM:            "gpt-4",
+			SourceLanguage: "en",
+			TargetLanguage: "fa",
+			Tone:           "casual",
+			CreatedAt:      time.Now().Add(5 * time.Minute),
 		},
 	}
 
@@ -131,17 +119,16 @@ func seedDatabase(db *gorm.DB) error {
 	}
 
 	// Set timestamps for translation threads
-	for i := range translationThreads {
-		translationThreads[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
-		translationThreads[i].UpdatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
+	for i := range translations {
+		translations[i].CreatedAt = now.Add(-time.Duration(i) * time.Minute * 10)
 	}
 
 	// Create the chatThreads and their messages in the database
 	log.Info().
 		Int("chat_threads_count", len(chatThreads)).
 		Int("total_messages", len(chatThreads)*5).
-		Int("translation_threads_count", len(translationThreads)).
-		Int("total_translations", len(translationThreads[0].Translations)+len(translationThreads[1].Translations)).
+		Int("translation_threads_count", len(translations)).
+		Int("total_translations", len(translations)).
 		Msg("Creating seed data...")
 
 	if err := db.Create(&chatThreads).Error; err != nil {
@@ -149,16 +136,15 @@ func seedDatabase(db *gorm.DB) error {
 		return err
 	}
 
-	if err := db.Create(&translationThreads).Error; err != nil {
-		log.Error().Err(err).Msg("Failed to create translation threads seed data")
+	if err := db.Create(&translations).Error; err != nil {
+		log.Error().Err(err).Msg("Failed to create translations seed data")
 		return err
 	}
 
 	log.Info().
 		Int("chat_threads_count", len(chatThreads)).
 		Int("total_messages", len(chatThreads)*5).
-		Int("translation_threads_count", len(translationThreads)).
-		Int("total_translations", len(translationThreads[0].Translations)+len(translationThreads[1].Translations)).
+		Int("total_translations", len(translations)).
 		Dur("duration_ms", time.Since(start)).
 		Msg("Seed data created successfully")
 
