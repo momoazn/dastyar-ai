@@ -31,7 +31,7 @@ const (
 
 type ChatRequest struct {
 	Content  string `json:"content"`
-	AIModel  string `json:"ai_model"`
+	LLM      string `json:"llm"`
 	ThreadID string `json:"thread_id"`
 }
 
@@ -42,7 +42,7 @@ type ChatResponse struct {
 	Reasoning string    `json:"reasoning"`
 	Status    string    `json:"status"`
 	Role      string    `json:"role"`
-	AIModel   string    `json:"ai_model"`
+	LLM       string    `json:"llm"`
 	SentAt    time.Time `json:"sent_at"`
 }
 
@@ -112,17 +112,17 @@ func (h *Handler) parseAndValidateChatRequest(c echo.Context) (ChatRequest, erro
 	}
 
 	// Validate required fields
-	if chatReq.Content == "" || chatReq.AIModel == "" || chatReq.ThreadID == "" {
-		log.Error().Msg("content, ai_model, and thread_id are required")
+	if chatReq.Content == "" || chatReq.LLM == "" || chatReq.ThreadID == "" {
+		log.Error().Msg("content, llm, and thread_id are required")
 		return ChatRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "content, ai_model, and thread_id are required",
+			Message: "content, llm, and thread_id are required",
 		})
 	}
 
 	// Log sanitized request
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
-		Str("ai_model", chatReq.AIModel).
+		Str("llm", chatReq.LLM).
 		Int("message_length", len(chatReq.Content)).
 		Msg("Chat request received")
 
@@ -149,7 +149,7 @@ func (h *Handler) createMessages(ThreadID uint, chatReq ChatRequest) (db.Message
 		ChatThreadID: ThreadID,
 		Role:         RoleUser,
 		Content:      chatReq.Content,
-		AIModel:      chatReq.AIModel,
+		LLM:          chatReq.LLM,
 		SentAt:       time.Now(),
 	}
 	if err := h.db.Create(&userMsg).Error; err != nil {
@@ -167,7 +167,7 @@ func (h *Handler) createMessages(ThreadID uint, chatReq ChatRequest) (db.Message
 		Role:         RoleAssistant,
 		Content:      "",
 		Reasoning:    "",
-		AIModel:      chatReq.AIModel,
+		LLM:          chatReq.LLM,
 		SentAt:       time.Now(),
 		Status:       StatusIdle,
 	}
@@ -226,12 +226,12 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 
 	currentChunk := ""
 	isReasoning := false
-	isReasoningModel := utils.IsReasoningModel(chatReq.AIModel)
+	isReasoningModel := utils.IsReasoningModel(chatReq.LLM)
 	currentStatus := StatusIdle
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model:    chatReq.AIModel,
+		Model:    chatReq.LLM,
 		Messages: messages,
 		Stream:   func() *bool { b := true; return &b }(),
 	}, func(response api.ChatResponse) error {
@@ -297,7 +297,7 @@ func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk, ful
 		ID:       assistantMsg.ID,
 		ThreadID: assistantMsg.ChatThreadID,
 		Role:     assistantMsg.Role,
-		AIModel:  assistantMsg.AIModel,
+		LLM:      assistantMsg.LLM,
 		SentAt:   assistantMsg.SentAt,
 		Status:   currentStatus,
 	}

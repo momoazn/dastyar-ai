@@ -1,46 +1,54 @@
-import { lazy, useState } from "react";
+import { lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 
-import { Header, Sidebar } from "@/components";
-import { useInitializeSelectedModels } from "@/hooks";
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Header } from "../header";
+
+// import { Header, Sidebar } from "@/components";
 
 const HomePage = lazy(() => import("../../pages/home"));
 const ChatPage = lazy(() => import("../../pages/chat"));
 const ImagePage = lazy(() => import("../../pages/image"));
 const TranslationPage = lazy(() => import("../../pages/translation"));
 
+const routes = [
+  { path: "/", element: <HomePage /> },
+  { path: "/chat", element: <ChatPage /> },
+  { path: "/image", element: <ImagePage /> },
+  { path: "/translation-project", element: <TranslationPage /> },
+] as const;
+
 export function MainLayout() {
-  useInitializeSelectedModels();
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    return window.innerWidth >= 768;
-  });
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-
   return (
-    <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">
-      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <main className="flex flex-1 overflow-hidden">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <section className="flex-1 overflow-auto">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/image" element={<ImagePage />} />
-            <Route path="/translation-project" element={<TranslationPage />} />
-            <Route
-              path="/conversation/:conversationID"
-              element={<ChatPage />}
-            />
-            <Route path="/image/:imageID" element={<ImagePage />} />
-            <Route
-              path="/translation-project/:translationProjectID"
-              element={<TranslationPage />}
-            />
-          </Routes>
-        </section>
-      </main>
-    </div>
+    <>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "350px",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar side="right" />
+        <SidebarInset>
+          <Header SideBarTrigger={<SidebarTrigger />} />
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <Routes>
+              {routes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={route.element}
+                />
+              ))}
+            </Routes>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </>
   );
 }

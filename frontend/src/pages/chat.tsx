@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { useGetChatModel } from "@/atoms";
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
-import { useChat } from "@/hooks";
-import { useAIModels } from "@/lib/api";
+import { useAIModels, useChat } from "@/lib/api";
 import {
   type Message as MessageType,
-  useConversationMessages,
-  useCreateConversation,
+  useChatThreadMessages,
+  useCreateChatThread,
 } from "@/lib/api/chat";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-
+import { useGetDefaultChatModel } from "@/atoms";
 export default function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
@@ -21,22 +19,23 @@ export default function ChatPage() {
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { conversationID } = useParams();
+  const { chatThreadID } = useParams();
   const navigate = useNavigate();
 
+  const inNewChat = !Boolean(chatThreadID);
+
   // ===== API HOOKS =====
-  const defaultChatModel = useGetChatModel();
+  const defaultChatModel = useGetDefaultChatModel();
   const { data: aiModels } = useAIModels();
-  const { data: conversationMessages, refetch: refetchMessages } =
-    useConversationMessages(Number(conversationID), {
-      enabled: !!conversationID,
+  const { data: chatThreadMessages, refetch: refetchMessages } =
+    useChatThreadMessages(Number(chatThreadID), {
+      enabled: !inNewChat,
     });
-  const { mutateAsync: createConversation } = useCreateConversation();
+  const { mutateAsync: createChatThread } = useCreateChatThread();
 
   // ===== CHAT FUNCTIONALITY =====
   const { isStreaming, sendPrompt, stopStreaming } = useChat(
-    messages,
-    setMessages,
+    { messages, setMessages },
     {
       onStreamEnd: () => {
         // Scroll to bottom when streaming ends
@@ -49,13 +48,13 @@ export default function ChatPage() {
 
   // Initialize chat model and load messages when thread changes
   useEffect(() => {
-    if (!conversationMessages) return;
+    if (!chatThreadMessages || inNewChat) return;
 
     // Set messages from thread
-    setMessages(conversationMessages.data);
+    setMessages(chatThreadMessages.data);
 
     // Determine which chat model to use
-    const lastMessageModel = conversationMessages.data.at(-1)?.ai_model;
+    const lastMessageModel = chatThreadMessages.data.at(-1)?.llm;
 
     if (lastMessageModel) {
       // Use model from the last message in the thread
@@ -67,7 +66,7 @@ export default function ChatPage() {
       // Fallback to first available model
       setCurrentChatModel(aiModels.data[0].model);
     }
-  }, [conversationMessages, defaultChatModel, aiModels]);
+  }, [chatThreadMessages, defaultChatModel, aiModels]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -91,11 +90,11 @@ export default function ChatPage() {
   const handleSendPrompt = async () => {
     if (!prompt.trim() || !currentChatModel) return;
 
-    if (conversationID) {
-      // Send to existing conversation
+    if (chatThreadID) {
+      // Send to existing chat thread
       sendPrompt(
         prompt,
-        Number(conversationID),
+        Number(chatThreadID),
         currentChatModel,
         refetchMessages,
       );
@@ -105,13 +104,13 @@ export default function ChatPage() {
 
     try {
       // Create a new thread
-      const { data: newConversation } = await createConversation({
+      const { data: newChatThread } = await createChatThread({
         title: PERSIAN_TEXTS.navigation.newChat,
       });
 
       // Send message to the new thread
-      sendPrompt(prompt, newConversation.id, currentChatModel, () =>
-        navigate(`/conversation/${newConversation.id}`, { replace: true }),
+      sendPrompt(prompt, newChatThread.id, currentChatModel, () =>
+        navigate(`/chat/${newChatThread.id}`, { replace: true }),
       );
       setPrompt("");
     } catch (error) {

@@ -1,54 +1,37 @@
 import { atom, useAtomValue, useSetAtom } from "jotai";
 
-// Constants
-const STORAGE_KEYS = {
-  CHAT_MODEL: "SELECTED_CHAT_MODEL",
-  TRANSLATION_MODEL: "SELECTED_TRANSLATION_MODEL",
+const DEFAULT_CHAT_MODEL_STORAGE_KEY = "default_chat_model";
+const DEFAULT_TRANSLATION_MODEL_STORAGE_KEY = "default_translation_model";
+
+const defaultChatModelAtom = atom<string | null>(
+  localStorage.getItem(DEFAULT_CHAT_MODEL_STORAGE_KEY) || null,
+);
+const defaultTranslationModelAtom = atom<string | null>(
+  localStorage.getItem(DEFAULT_TRANSLATION_MODEL_STORAGE_KEY) || null,
+);
+
+export const useGetDefaultChatModel = () => {
+  return useAtomValue(defaultChatModelAtom);
 };
 
-// Create a reusable function for model atoms
-const createModelAtom = (storageKey: string) => {
-  const modelAtom = atom(localStorage.getItem(storageKey) || "");
+export const useSetDefaultChatModel = () => {
+  const setDefaultChatModel = useSetAtom(defaultChatModelAtom);
 
-  const useGetModel = () => useAtomValue(modelAtom);
-
-  const useSetModel = () => {
-    const setModel = useSetAtom(modelAtom);
-    return (model: string) => {
-      localStorage.setItem(storageKey, model);
-      setModel(model);
-    };
+  return (model: string) => {
+    localStorage.setItem(DEFAULT_CHAT_MODEL_STORAGE_KEY, model);
+    setDefaultChatModel(model);
   };
-
-  const useModel = () => [useGetModel(), useSetModel()] as const;
-
-  return { modelAtom, useGetModel, useSetModel, useModel };
 };
 
-// Chat model atoms and hooks
-const {
-  modelAtom: chatModelAtom,
-  useGetModel: useGetChatModel,
-  useSetModel: useSetChatModel,
-  useModel: useChatModel,
-} = createModelAtom(STORAGE_KEYS.CHAT_MODEL);
+export const useGetDefaultTranslationModel = () => {
+  return useAtomValue(defaultTranslationModelAtom);
+};
 
-// Translation model atoms and hooks
-const {
-  modelAtom: translationModelAtom,
-  useGetModel: useGetTranslationModel,
-  useSetModel: useSetTranslationModel,
-  useModel: useTranslationModel,
-} = createModelAtom(STORAGE_KEYS.TRANSLATION_MODEL);
+export const useSetDefaultTranslationModel = () => {
+  const setDefaultTranslationModel = useSetAtom(defaultTranslationModelAtom);
 
-export {
-  STORAGE_KEYS,
-  chatModelAtom,
-  useGetChatModel,
-  useSetChatModel,
-  useChatModel,
-  translationModelAtom,
-  useGetTranslationModel,
-  useSetTranslationModel,
-  useTranslationModel,
+  return (model: string) => {
+    localStorage.setItem(DEFAULT_TRANSLATION_MODEL_STORAGE_KEY, model);
+    setDefaultTranslationModel(model);
+  };
 };

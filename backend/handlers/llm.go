@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// ModelResponse represents a model in the response
-type ModelResponse struct {
+// LLMListResponse represents a model in the response
+type LLMListResponse struct {
 	Name       string    `json:"name"`
 	ModifiedAt time.Time `json:"modified_at"`
 	Size       int64     `json:"size"`
@@ -22,10 +22,10 @@ type ModelResponse struct {
 // @Tags LLM
 // @Accept json
 // @Produce json
-// @Success 200 {object} Response[[]ModelResponse] "List of models"
+// @Success 200 {object} Response[[]LLMListResponse] "List of models"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /models [get]
-func (h *Handler) handleGetModels(c echo.Context) error {
+// @Router /list-llm [get]
+func (h *Handler) handleGetLLMList(c echo.Context) error {
 	models, err := h.ollamaClient.List(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -33,8 +33,8 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 		})
 	}
 
-	// Convert api.ListModelResponse to our ModelResponse
-	var modelResponses []ModelResponse
+	// Convert api.LLMListResponse to our LLMListResponse
+	var llmListResponses []LLMListResponse
 	for _, model := range models.Models {
 		// Convert model details to map
 		detailsMap := make(map[string]interface{})
@@ -57,7 +57,7 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 			detailsMap["quantization_level"] = model.Details.QuantizationLevel
 		}
 
-		modelResponses = append(modelResponses, ModelResponse{
+		llmListResponses = append(llmListResponses, LLMListResponse{
 			Name:       model.Name,
 			ModifiedAt: model.ModifiedAt,
 			Size:       model.Size,
@@ -66,7 +66,7 @@ func (h *Handler) handleGetModels(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, Response[[]ModelResponse]{
-		Data: modelResponses,
+	return c.JSON(http.StatusOK, Response[[]LLMListResponse]{
+		Data: llmListResponses,
 	})
 }

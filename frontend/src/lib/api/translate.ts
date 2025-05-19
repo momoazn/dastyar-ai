@@ -9,20 +9,20 @@ import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { defaultQueryOptions } from "./common";
 
 // Type definitions
-export interface TranslationProject {
+export interface TranslationThread {
   id: number;
   title: string;
-  ai_model: string;
+  llm: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Translation {
   id: number;
-  project_id: number;
+  thread_id: number;
   source_text: string;
   translated_text: string;
-  ai_model: string;
+  llm: string;
   source_language: string;
   target_language: string;
   tone: string;
@@ -35,30 +35,27 @@ export type TranslationOptions = {
   tone: string;
 };
 
-export type TranslateRequest = {
+export interface TranslateRequest extends TranslationOptions {
   input: string;
   model: string;
-} & TranslationOptions;
+}
 
 // Query key getters
-export const getTranslationProjectsQueryKey = () => ["translation-projects"];
-export const getTranslationProjectTranslationsQueryKey = (id: number) => [
-  "translate-project-translations",
-  id,
-];
+export const getTranslationThreadsQueryKey = () => ["translation-threads"];
+export const getTranslationThreadTranslationsQueryKey = (
+  translationThreadId: number,
+) => ["translation-thread-translations", translationThreadId];
 
 // React Query hooks - Queries
-export const useTranslationProjects = (
+export const useTranslationThreads = (
   options?: Partial<
-    UseQueryOptions<PaginatedApiResponse<TranslationProject>, Error>
+    UseQueryOptions<PaginatedApiResponse<TranslationThread>, Error>
   >,
 ) => {
   return useQuery({
-    queryKey: getTranslationProjectsQueryKey(),
+    queryKey: getTranslationThreadsQueryKey(),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<TranslationProject>>(
-        "/translation-projects",
-      ),
+      fetchApi<PaginatedApiResponse<TranslationThread>>("/translation-threads"),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
@@ -66,15 +63,15 @@ export const useTranslationProjects = (
   });
 };
 
-export const useTranslationProjectTranslations = (
+export const useTranslationThreadTranslations = (
   id: number,
   options?: Partial<UseQueryOptions<PaginatedApiResponse<Translation>, Error>>,
 ) => {
   return useQuery({
-    queryKey: getTranslationProjectTranslationsQueryKey(id),
+    queryKey: getTranslationThreadTranslationsQueryKey(id),
     queryFn: () =>
       fetchApi<PaginatedApiResponse<Translation>>(
-        `/translation-projects/${id}/translations`,
+        `/translation-threads/${id}/translations`,
       ),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
@@ -84,16 +81,16 @@ export const useTranslationProjectTranslations = (
 };
 
 // React Query hooks - Mutations
-export const useCreateTranslationProject = (
+export const useCreateTranslationThread = (
   options?: UseMutationOptions<
-    ApiResponse<TranslationProject>,
+    ApiResponse<TranslationThread>,
     Error,
     { title: string }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ title }) =>
-      fetchApi<ApiResponse<TranslationProject>>("/translation-projects", {
+      fetchApi<ApiResponse<TranslationThread>>("/translation-threads", {
         method: "POST",
         body: JSON.stringify({ title }),
       }),
@@ -101,16 +98,16 @@ export const useCreateTranslationProject = (
   });
 };
 
-export const useUpdateTranslationProject = (
+export const useUpdateTranslationThread = (
   options?: UseMutationOptions<
-    ApiResponse<TranslationProject>,
+    ApiResponse<TranslationThread>,
     Error,
     { id: number; title: string }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<TranslationProject>>(`/translation-projects/${id}`, {
+      fetchApi<ApiResponse<TranslationThread>>(`/translation-threads/${id}`, {
         method: "PUT",
         body: JSON.stringify({ title }),
       }),
@@ -118,16 +115,16 @@ export const useUpdateTranslationProject = (
   });
 };
 
-export const useDeleteTranslationProject = (
+export const useDeleteTranslationThread = (
   options?: UseMutationOptions<
-    ApiResponse<TranslationProject>,
+    ApiResponse<TranslationThread>,
     Error,
     { id: number }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ id }) =>
-      fetchApi<ApiResponse<TranslationProject>>(`/translation-projects/${id}`, {
+      fetchApi<ApiResponse<TranslationThread>>(`/translation-threads/${id}`, {
         method: "DELETE",
       }),
     ...options,
@@ -135,12 +132,15 @@ export const useDeleteTranslationProject = (
 };
 
 // Direct API functions
-export async function translate(projectId: number, request: TranslateRequest) {
+export async function translate(
+  translationThreadId: number,
+  request: TranslateRequest,
+) {
   const response = await fetchApi<ApiResponse<Translation>>(`/translate`, {
     method: "POST",
     body: JSON.stringify({
       ...request,
-      project_id: projectId.toString(),
+      translation_thread_id: translationThreadId,
     }),
   });
 

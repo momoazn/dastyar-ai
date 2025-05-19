@@ -16,7 +16,7 @@ import (
 type TranslateRequest struct {
 	ThreadID       string `json:"thread_id"`
 	SourceText     string `json:"source_text"`
-	AIModel        string `json:"ai_model"`
+	LLM            string `json:"llm"`
 	SourceLanguage string `json:"source_language"`
 	TargetLanguage string `json:"target_language"`
 	Tone           string `json:"tone"`
@@ -91,19 +91,19 @@ func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateReq
 	}
 
 	// Validate required fields
-	if translateReq.SourceText == "" || translateReq.AIModel == "" ||
+	if translateReq.SourceText == "" || translateReq.LLM == "" ||
 		translateReq.SourceLanguage == "" || translateReq.TargetLanguage == "" ||
 		translateReq.ThreadID == "" {
-		log.Error().Msg("source_text, ai_model, source_language, target_language, and thread_id are required")
+		log.Error().Msg("source_text, llm, source_language, target_language, and thread_id are required")
 		return TranslateRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "source_text, ai_model, source_language, target_language, and thread_id are required",
+			Message: "source_text, llm, source_language, target_language, and thread_id are required",
 		})
 	}
 
 	// Log sanitized request
 	log.Info().
 		Str("thread_id", translateReq.ThreadID).
-		Str("ai_model", translateReq.AIModel).
+		Str("llm", translateReq.LLM).
 		Int("source_text_length", len(translateReq.SourceText)).
 		Str("source_language", translateReq.SourceLanguage).
 		Str("target_language", translateReq.TargetLanguage).
@@ -140,7 +140,7 @@ func (h *Handler) createTranslation(threadID uint, translateReq TranslateRequest
 	translation := &db.Translation{
 		SourceText:     translateReq.SourceText,
 		TranslatedText: "",
-		AIModel:        translateReq.AIModel,
+		LLM:            translateReq.LLM,
 		ThreadID:       threadID,
 		SourceLanguage: translateReq.SourceLanguage,
 		TargetLanguage: translateReq.TargetLanguage,
@@ -166,7 +166,7 @@ func (h *Handler) processTranslation(c echo.Context, translation *db.Translation
 	var translatedText string
 
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model: translation.AIModel,
+		Model: translation.LLM,
 		Messages: []api.Message{
 			{
 				Role:    "user",

@@ -1,5 +1,5 @@
 import { useChatHealthCheck } from "@/lib/api";
-import { useConversations } from "@/lib/api/chat";
+import { useChatThreads } from "@/lib/api/chat";
 import {
   Brain,
   CloudIcon,
@@ -10,14 +10,14 @@ import {
 
 export function Status() {
   const { data: healthCheck } = useChatHealthCheck();
-  const { isError: isConversationsError } = useConversations();
+  const { isError: isChatThreadsError } = useChatThreads();
 
   return (
     <header className="flex gap-2">
       <StatusItem
         name="Chat"
         icon={MessageCircle}
-        status={!isConversationsError}
+        status={!isChatThreadsError}
       />
       <StatusItem
         name="Ollama"

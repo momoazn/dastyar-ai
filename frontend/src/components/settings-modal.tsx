@@ -1,7 +1,6 @@
 import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { useState } from "react";
 
-import { useChatModel, useTranslationModel } from "@/atoms";
 import {
   Button,
   Dialog,
@@ -25,12 +24,20 @@ import {
 import { samplers, useChatSettings, useImageSettings } from "@/hooks";
 import { useAIModels } from "@/lib/api";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
+import {
+  useGetDefaultChatModel,
+  useGetDefaultTranslationModel,
+  useSetDefaultChatModel,
+  useSetDefaultTranslationModel,
+} from "@/atoms";
 
 export function SettingsModal() {
   const { data: aiModels } = useAIModels();
 
-  const [chatModel, setChatModel] = useChatModel();
-  const [translationModel, setTranslationModel] = useTranslationModel();
+  const defaultChatModel = useGetDefaultChatModel();
+  const defaultTranslationModel = useGetDefaultTranslationModel();
+  const setDefaultChatModel = useSetDefaultChatModel();
+  const setDefaultTranslationModel = useSetDefaultTranslationModel();
 
   const { settings: imageSettings, setSettings: setImageSettings } =
     useImageSettings();
@@ -78,7 +85,10 @@ export function SettingsModal() {
                   <label className="block text-right text-xs font-medium">
                     {PERSIAN_TEXTS.modelSelection.chatModel}
                   </label>
-                  <Select value={chatModel} onValueChange={setChatModel}>
+                  <Select
+                    value={defaultChatModel || ""}
+                    onValueChange={setDefaultChatModel}
+                  >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
@@ -101,8 +111,8 @@ export function SettingsModal() {
                     {PERSIAN_TEXTS.modelSelection.translationModel}
                   </label>
                   <Select
-                    value={translationModel}
-                    onValueChange={setTranslationModel}
+                    value={defaultTranslationModel || ""}
+                    onValueChange={setDefaultTranslationModel}
                   >
                     <SelectTrigger>
                       <SelectValue

@@ -138,7 +138,7 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	// LLM endpoint
 	apiGroup.POST("/chat", handler.handleStreamChat)
 	apiGroup.POST("/translate", handler.handleTranslate)
-	apiGroup.GET("/models", handler.handleGetModels)
+	apiGroup.GET("/list-llm", handler.handleGetLLMList)
 
 	// Health check endpoint
 	apiGroup.GET("/health", handler.handleHealthCheck)

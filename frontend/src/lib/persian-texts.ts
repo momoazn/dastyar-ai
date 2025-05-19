@@ -18,6 +18,7 @@ export const PERSIAN_TEXTS = {
 
   // Navigation and Headers
   navigation: {
+    home: "خانه",
     chat: "گفتگو",
     imageGeneration: "تولید تصویر",
     translation: "ترجمه",

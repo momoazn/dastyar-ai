@@ -30,39 +30,39 @@ func seedDatabase(db *gorm.DB) error {
 	// Create 3 test chatThreads with 5 messages each
 	chatThreads := []ChatThread{
 		{
-			Title:   "آموزش هوش مصنوعی",
-			AIModel: "deepseek-r1",
+			Title: "آموزش هوش مصنوعی",
+			LLM:   "deepseek-r1",
 			Messages: []Message{
-				{Role: "user", Content: "هوش مصنوعی چیست و چگونه کار می‌کند؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now()},
-				{Role: "assistant", Content: "هوش مصنوعی سیستمی است که می‌تواند داده‌ها را تحلیل کرده و با یادگیری از آنها، تصمیم‌گیری کند. این سیستم‌ها از الگوریتم‌های پیچیده برای شبیه‌سازی تفکر انسانی استفاده می‌کنند.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
-				{Role: "user", Content: "تفاوت بین یادگیری عمیق و یادگیری ماشین چیست؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
-				{Role: "assistant", Content: "یادگیری ماشین زیرمجموعه‌ای از هوش مصنوعی است که از الگوریتم‌ها برای یادگیری از داده‌ها استفاده می‌کند. یادگیری عمیق نوع پیشرفته‌تری است که از شبکه‌های عصبی چندلایه برای یادگیری استفاده می‌کند.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
-				{Role: "user", Content: "کاربردهای هوش مصنوعی در زندگی روزمره چیست؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
-				{Role: "assistant", Content: "هوش مصنوعی در بسیاری از جنبه‌های زندگی روزمره کاربرد دارد: دستیارهای صوتی مثل سیری، پیشنهادات خرید در فروشگاه‌های آنلاین، تشخیص چهره در دوربین‌ها، سیستم‌های پیشنهاد محتوا در شبکه‌های اجتماعی، و ترجمه خودکار زبان.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
+				{Role: "user", Content: "هوش مصنوعی چیست و چگونه کار می‌کند؟", LLM: "gpt-4", Status: "done", SentAt: time.Now()},
+				{Role: "assistant", Content: "هوش مصنوعی سیستمی است که می‌تواند داده‌ها را تحلیل کرده و با یادگیری از آنها، تصمیم‌گیری کند. این سیستم‌ها از الگوریتم‌های پیچیده برای شبیه‌سازی تفکر انسانی استفاده می‌کنند.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
+				{Role: "user", Content: "تفاوت بین یادگیری عمیق و یادگیری ماشین چیست؟", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
+				{Role: "assistant", Content: "یادگیری ماشین زیرمجموعه‌ای از هوش مصنوعی است که از الگوریتم‌ها برای یادگیری از داده‌ها استفاده می‌کند. یادگیری عمیق نوع پیشرفته‌تری است که از شبکه‌های عصبی چندلایه برای یادگیری استفاده می‌کند.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
+				{Role: "user", Content: "کاربردهای هوش مصنوعی در زندگی روزمره چیست؟", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
+				{Role: "assistant", Content: "هوش مصنوعی در بسیاری از جنبه‌های زندگی روزمره کاربرد دارد: دستیارهای صوتی مثل سیری، پیشنهادات خرید در فروشگاه‌های آنلاین، تشخیص چهره در دوربین‌ها، سیستم‌های پیشنهاد محتوا در شبکه‌های اجتماعی، و ترجمه خودکار زبان.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
 			},
 		},
 		{
-			Title:   "مشاوره برنامه‌نویسی",
-			AIModel: "deepseek-r1",
+			Title: "مشاوره برنامه‌نویسی",
+			LLM:   "deepseek-r1",
 			Messages: []Message{
-				{Role: "user", Content: "بهترین زبان برنامه‌نویسی برای شروع کدام است؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now()},
-				{Role: "assistant", Content: "پایتون یک انتخاب عالی برای شروع است. سینتکس ساده و خوانایی بالایی دارد و منابع آموزشی زیادی در دسترس است.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
-				{Role: "user", Content: "چطور می‌توانم در برنامه‌نویسی پیشرفت کنم؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
-				{Role: "assistant", Content: "تمرین مداوم، کار روی پروژه‌های شخصی، مطالعه کد دیگران و مشارکت در پروژه‌های متن‌باز بهترین راه‌های پیشرفت هستند.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
-				{Role: "user", Content: "برای یادگیری وب چه مسیری را پیشنهاد می‌کنید؟", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
-				{Role: "assistant", Content: "برای شروع، HTML و CSS را یاد بگیرید. سپس JavaScript را مطالعه کنید. بعد می‌توانید فریم‌ورک‌های مدرن مثل React یا Vue را یاد بگیرید. برای بک‌اند هم Node.js یا Python با Django خوب هستند.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
+				{Role: "user", Content: "بهترین زبان برنامه‌نویسی برای شروع کدام است؟", LLM: "gpt-4", Status: "done", SentAt: time.Now()},
+				{Role: "assistant", Content: "پایتون یک انتخاب عالی برای شروع است. سینتکس ساده و خوانایی بالایی دارد و منابع آموزشی زیادی در دسترس است.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
+				{Role: "user", Content: "چطور می‌توانم در برنامه‌نویسی پیشرفت کنم؟", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
+				{Role: "assistant", Content: "تمرین مداوم، کار روی پروژه‌های شخصی، مطالعه کد دیگران و مشارکت در پروژه‌های متن‌باز بهترین راه‌های پیشرفت هستند.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
+				{Role: "user", Content: "برای یادگیری وب چه مسیری را پیشنهاد می‌کنید؟", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
+				{Role: "assistant", Content: "برای شروع، HTML و CSS را یاد بگیرید. سپس JavaScript را مطالعه کنید. بعد می‌توانید فریم‌ورک‌های مدرن مثل React یا Vue را یاد بگیرید. برای بک‌اند هم Node.js یا Python با Django خوب هستند.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
 			},
 		},
 		{
-			Title:   "Understanding Go Concurrency",
-			AIModel: "deepseek-r1",
+			Title: "Understanding Go Concurrency",
+			LLM:   "deepseek-r1",
 			Messages: []Message{
-				{Role: "user", Content: "What is concurrent programming in Go?", AIModel: "gpt-4", Status: "done", SentAt: time.Now()},
-				{Role: "assistant", Content: "Concurrent programming in Go is a way to handle multiple tasks simultaneously using goroutines and channels. This makes programs more efficient and responsive.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
-				{Role: "user", Content: "What are the benefits of using goroutines?", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
-				{Role: "assistant", Content: "Goroutines are lightweight, requiring only a few KB of memory. They start quickly, can run thousands concurrently, and communicate safely through channels.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
-				{Role: "user", Content: "Could you explain error handling in concurrent Go?", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
-				{Role: "assistant", Content: "In concurrent Go, error handling is typically done through channels and select statements. You can also use error groups for managing multiple goroutines, and panic/recover for unexpected errors. Always ensure proper error propagation to maintain program stability.", AIModel: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
+				{Role: "user", Content: "What is concurrent programming in Go?", LLM: "gpt-4", Status: "done", SentAt: time.Now()},
+				{Role: "assistant", Content: "Concurrent programming in Go is a way to handle multiple tasks simultaneously using goroutines and channels. This makes programs more efficient and responsive.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(time.Minute)},
+				{Role: "user", Content: "What are the benefits of using goroutines?", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(2 * time.Minute)},
+				{Role: "assistant", Content: "Goroutines are lightweight, requiring only a few KB of memory. They start quickly, can run thousands concurrently, and communicate safely through channels.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(3 * time.Minute)},
+				{Role: "user", Content: "Could you explain error handling in concurrent Go?", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(4 * time.Minute)},
+				{Role: "assistant", Content: "In concurrent Go, error handling is typically done through channels and select statements. You can also use error groups for managing multiple goroutines, and panic/recover for unexpected errors. Always ensure proper error propagation to maintain program stability.", LLM: "gpt-4", Status: "done", SentAt: time.Now().Add(5 * time.Minute)},
 			},
 		},
 	}
@@ -70,13 +70,13 @@ func seedDatabase(db *gorm.DB) error {
 	// Create translation threads with example entries
 	translationThreads := []TranslationThread{
 		{
-			Title:   "فارسی به انگلیسی",
-			AIModel: "gpt-4",
+			Title: "فارسی به انگلیسی",
+			LLM:   "gpt-4",
 			Translations: []Translation{
 				{
 					SourceText:     "سلام، حال شما چطور است؟",
 					TranslatedText: "Hello, how are you?",
-					AIModel:        "gpt-4",
+					LLM:            "gpt-4",
 					SourceLanguage: "fa",
 					TargetLanguage: "en",
 					Tone:           "casual",
@@ -85,7 +85,7 @@ func seedDatabase(db *gorm.DB) error {
 				{
 					SourceText:     "من یک برنامه‌نویس هستم و در حال توسعه یک اپلیکیشن هوش مصنوعی هستم.",
 					TranslatedText: "I am a programmer and I am developing an artificial intelligence application.",
-					AIModel:        "gpt-4",
+					LLM:            "gpt-4",
 					SourceLanguage: "fa",
 					TargetLanguage: "en",
 					Tone:           "professional",
@@ -94,13 +94,13 @@ func seedDatabase(db *gorm.DB) error {
 			},
 		},
 		{
-			Title:   "English to Persian",
-			AIModel: "gpt-4",
+			Title: "English to Persian",
+			LLM:   "gpt-4",
 			Translations: []Translation{
 				{
 					SourceText:     "Machine learning is transforming the way we solve problems.",
 					TranslatedText: "یادگیری ماشین در حال تغییر روش حل مسائل است.",
-					AIModel:        "gpt-4",
+					LLM:            "gpt-4",
 					SourceLanguage: "en",
 					TargetLanguage: "fa",
 					Tone:           "formal",
@@ -109,7 +109,7 @@ func seedDatabase(db *gorm.DB) error {
 				{
 					SourceText:     "The weather is beautiful today!",
 					TranslatedText: "امروز هوا خیلی خوب است!",
-					AIModel:        "gpt-4",
+					LLM:            "gpt-4",
 					SourceLanguage: "en",
 					TargetLanguage: "fa",
 					Tone:           "casual",

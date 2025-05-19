@@ -43,8 +43,8 @@ func (h *Handler) handleGetAllTranslationThreads(c echo.Context) error {
 }
 
 type CreateTranslationThreadRequest struct {
-	Title   string `json:"title"`
-	AIModel string `json:"ai_model"`
+	Title string `json:"title"`
+	LLM   string `json:"llm"`
 }
 
 // @Summary Create a new translation thread
@@ -71,12 +71,12 @@ func (h *Handler) handleCreateTranslationThread(c echo.Context) error {
 
 	log.Info().
 		Str("title", request.Title).
-		Str("ai_model", request.AIModel).
+		Str("llm", request.LLM).
 		Msg("Creating new translation thread")
 
 	translationThread := db.TranslationThread{
 		Title:     request.Title,
-		AIModel:   request.AIModel,
+		LLM:       request.LLM,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

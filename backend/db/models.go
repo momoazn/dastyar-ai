@@ -9,7 +9,7 @@ type ChatThread struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	Title     string    `json:"title"`
 	Messages  []Message `json:"messages,omitempty" gorm:"foreignKey:ChatThreadID"`
-	AIModel   string    `json:"ai_model"`
+	LLM       string    `json:"llm"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -22,7 +22,7 @@ type Message struct {
 	Role         string     `json:"role"`
 	Content      string     `json:"content"`
 	Reasoning    string     `json:"reasoning"`
-	AIModel      string     `json:"ai_model"`
+	LLM          string     `json:"llm"`
 	Status       string     `json:"status"`
 	SentAt       time.Time  `json:"sent_at"`
 }
@@ -32,7 +32,7 @@ type TranslationThread struct {
 	ID           uint          `json:"id" gorm:"primaryKey"`
 	Title        string        `json:"title"`
 	Translations []Translation `json:"translations,omitempty" gorm:"foreignKey:ThreadID"`
-	AIModel      string        `json:"ai_model"`
+	LLM          string        `json:"llm"`
 	CreatedAt    time.Time     `json:"created_at"`
 	UpdatedAt    time.Time     `json:"updated_at"`
 }
@@ -44,7 +44,7 @@ type Translation struct {
 	Thread         TranslationThread `json:"-" gorm:"constraint:OnDelete:CASCADE"`
 	SourceText     string            `json:"source_text"`
 	TranslatedText string            `json:"translated_text"`
-	AIModel        string            `json:"ai_model"`
+	LLM            string            `json:"llm"`
 	SourceLanguage string            `json:"source_language"`
 	TargetLanguage string            `json:"target_language"`
 	Tone           string            `json:"tone"`

@@ -4,6 +4,4 @@ export * from "./header";
 export * from "./message";
 export * from "./navigation";
 export * from "./settings-modal";
-export * from "./sidebar";
-export * from "./sidebar-item";
 export * from "./status";

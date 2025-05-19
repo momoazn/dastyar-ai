@@ -1,4 +1,4 @@
-import { useGetTranslationModel } from "@/atoms";
+import { useGetDefaultTranslationModel } from "@/atoms";
 import { translate as translateRequest } from "@/lib/api/translate";
 import { useState } from "react";
 
@@ -10,7 +10,7 @@ interface TranslationOptions {
 
 export function useTranslation() {
   const [isTranslating, setIsTranslating] = useState(false);
-  const translationModel = useGetTranslationModel();
+  const defaultTranslationModel = useGetDefaultTranslationModel();
 
   const translate = async (
     text: string,
@@ -23,7 +23,7 @@ export function useTranslation() {
     try {
       const response = await translateRequest(projectId, {
         input: text,
-        model: translationModel,
+        model: defaultTranslationModel || "",
         source_lang: options.sourceLang,
         target_lang: options.targetLang,
         tone: options.tone,

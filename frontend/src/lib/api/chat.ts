@@ -4,49 +4,49 @@ import {
   useQuery,
   UseQueryOptions,
 } from "@tanstack/react-query";
+import { Dispatch, SetStateAction, useState } from "react";
 
-import { ApiResponse, fetchApi, PaginatedApiResponse } from ".";
 import { StreamResponseService } from "../utils";
 import { defaultQueryOptions } from "./common";
+import { ApiResponse, fetchApi, PaginatedApiResponse } from "./index";
 
 // Type definitions
 export type MessageStatus = "idle" | "reasoning" | "responding" | "done";
 export type MessageRole = "user" | "assistant" | "system";
 
-export interface Conversation {
+export interface ChatThread {
   id: number;
   title: string;
-  ai_model: string;
+  llm: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Message {
   id: number;
-  conversation_id: number;
+  chat_thread_id: number;
   role: MessageRole;
   content: string;
   reasoning: string;
-  ai_model: string;
+  llm: string;
   status: MessageStatus;
   sent_at: string;
 }
 
 // Query key getters
-export const getConversationsQueryKey = () => ["conversations"];
-export const getConversationMessagesQueryKey = (id: number) => [
-  "conversation-messages",
-  id,
+export const getChatThreadsQueryKey = () => ["chat-threads"];
+export const getChatThreadMessagesQueryKey = (chatThreadId: number) => [
+  "chat-thread-messages",
+  chatThreadId,
 ];
 
 // React Query hooks - Queries
-export const useConversations = (
-  options?: Partial<UseQueryOptions<PaginatedApiResponse<Conversation>, Error>>,
+export const useChatThreads = (
+  options?: Partial<UseQueryOptions<PaginatedApiResponse<ChatThread>, Error>>,
 ) => {
   return useQuery({
-    queryKey: getConversationsQueryKey(),
-    queryFn: () =>
-      fetchApi<PaginatedApiResponse<Conversation>>("/conversations"),
+    queryKey: getChatThreadsQueryKey(),
+    queryFn: () => fetchApi<PaginatedApiResponse<ChatThread>>("/chat-threads"),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
@@ -54,14 +54,16 @@ export const useConversations = (
   });
 };
 
-export const useConversationMessages = (
-  id: number,
+export const useChatThreadMessages = (
+  chatThreadId: number,
   options?: Partial<UseQueryOptions<PaginatedApiResponse<Message>, Error>>,
 ) => {
   return useQuery({
-    queryKey: getConversationMessagesQueryKey(id),
+    queryKey: getChatThreadMessagesQueryKey(chatThreadId),
     queryFn: () =>
-      fetchApi<PaginatedApiResponse<Message>>(`/conversations/${id}/messages`),
+      fetchApi<PaginatedApiResponse<Message>>(
+        `/chat-threads/${chatThreadId}/messages`,
+      ),
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
@@ -70,16 +72,16 @@ export const useConversationMessages = (
 };
 
 // React Query hooks - Mutations
-export const useCreateConversation = (
+export const useCreateChatThread = (
   options?: UseMutationOptions<
-    ApiResponse<Conversation>,
+    ApiResponse<ChatThread>,
     Error,
     { title: string }
   >,
 ) => {
   return useMutation({
     mutationFn: ({ title }) =>
-      fetchApi<ApiResponse<Conversation>>("/conversations", {
+      fetchApi<ApiResponse<ChatThread>>("/chat-threads", {
         method: "POST",
         body: JSON.stringify({ title }),
       }),
@@ -87,16 +89,16 @@ export const useCreateConversation = (
   });
 };
 
-export const useUpdateConversation = (
+export const useUpdateChatThread = (
   options?: UseMutationOptions<
-    ApiResponse<Conversation>,
+    ApiResponse<ChatThread>,
     Error,
-    { id: number; title: string }
+    { chatThreadId: number; title: string }
   >,
 ) => {
   return useMutation({
-    mutationFn: ({ id, title }) =>
-      fetchApi<ApiResponse<Conversation>>(`/conversations/${id}`, {
+    mutationFn: ({ chatThreadId, title }) =>
+      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${chatThreadId}`, {
         method: "PUT",
         body: JSON.stringify({ title }),
       }),
@@ -104,16 +106,16 @@ export const useUpdateConversation = (
   });
 };
 
-export const useDeleteConversation = (
+export const useDeleteChatThread = (
   options?: UseMutationOptions<
-    ApiResponse<Conversation>,
+    ApiResponse<ChatThread>,
     Error,
-    { id: number }
+    { chatThreadId: number }
   >,
 ) => {
   return useMutation({
-    mutationFn: ({ id }) =>
-      fetchApi<ApiResponse<Conversation>>(`/conversations/${id}`, {
+    mutationFn: ({ chatThreadId }) =>
+      fetchApi<ApiResponse<ChatThread>>(`/chat-threads/${chatThreadId}`, {
         method: "DELETE",
       }),
     ...options,
@@ -122,7 +124,7 @@ export const useDeleteConversation = (
 
 // Direct API functions
 export async function sendMessage(
-  threadId: number,
+  chatThreadId: number,
   content: string,
   model: string,
   stream: boolean,
@@ -134,17 +136,17 @@ export async function sendMessage(
   const response = await service.processStreamableRequest<Message>("chat", {
     content,
     model,
-    thread_id: threadId.toString(),
+    chat_thread_id: chatThreadId.toString(),
     stream,
   });
 
   const completedMessage: Message = {
     id: 0,
-    conversation_id: threadId,
+    chat_thread_id: chatThreadId,
     role: "assistant",
     content: "",
     reasoning: "",
-    ai_model: model,
+    llm: model,
     status: "idle",
     sent_at: "",
   };
@@ -177,3 +179,137 @@ export async function sendMessage(
 
   return completedMessage;
 }
+
+/**
+ * Creates a temporary message object for immediate display
+ */
+const createTempMessage = (role: MessageRole, content: string = "") => {
+  return {
+    id: Math.random(),
+    chat_thread_id: 0,
+    role,
+    content,
+    reasoning: "",
+    llm: "",
+    status: role === "assistant" ? "idle" : undefined,
+    sent_at: new Date().toISOString(),
+  } as Message;
+};
+
+interface UseChatParams {
+  messages: Message[];
+  setMessages: Dispatch<SetStateAction<Message[]>>;
+}
+
+interface UseChatOptions {
+  onStreamStart?: () => void;
+  onStreamEnd?: () => void;
+}
+
+/**
+ * Hook for managing chat interactions including message sending and streaming
+ */
+export const useChat = (
+  { messages, setMessages }: UseChatParams,
+  options?: UseChatOptions,
+) => {
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [stopRequested, setStopRequested] = useState(false);
+
+  /**
+   * Sends a prompt message and handles streaming the response
+   */
+  const sendPrompt = async (
+    prompt: string,
+    threadID: number,
+    model: string,
+    onDone?: () => void,
+  ) => {
+    // Validate input
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt || isStreaming) return;
+
+    // Create temporary messages for immediate UI feedback
+    const userMessage = createTempMessage("user", trimmedPrompt);
+    const assistantMessage = createTempMessage("assistant");
+
+    // Update UI with new messages
+    setMessages([...messages, userMessage, assistantMessage]);
+
+    // Setup streaming state
+    setIsStreaming(true);
+    setStopRequested(false);
+    options?.onStreamStart?.();
+
+    // Track content for accumulation
+    let fullContent = "";
+    let fullReasoning = "";
+
+    try {
+      // Send message to API with streaming
+      await sendMessage(
+        threadID,
+        trimmedPrompt,
+        model,
+        true,
+        (chunk) => {
+          // Stop processing if stop was requested
+          if (stopRequested) return;
+
+          // Accumulate content based on state
+          if (chunk.status === "reasoning") {
+            fullReasoning += chunk.reasoning ?? "";
+          } else if (chunk.status === "responding") {
+            fullContent += chunk.content ?? "";
+          }
+
+          // Update the UI with accumulated content
+          updateAssistantMessage({
+            ...chunk,
+            content: fullContent,
+            reasoning: fullReasoning,
+          });
+        },
+        handleStreamComplete(onDone),
+      );
+    } catch (error) {
+      console.error("Error sending message:", error);
+      handleStreamComplete(onDone)();
+    }
+  };
+
+  /**
+   * Updates the assistant's message in the message list
+   */
+  const updateAssistantMessage = (updatedMessage: Message) => {
+    setMessages((prev) => {
+      const newMessages = [...prev];
+      newMessages[newMessages.length - 1] = updatedMessage;
+      return newMessages;
+    });
+  };
+
+  /**
+   * Creates a handler for stream completion
+   */
+  const handleStreamComplete = (callback?: () => void) => () => {
+    setIsStreaming(false);
+    options?.onStreamEnd?.();
+    callback?.();
+  };
+
+  /**
+   * Stops the current streaming response
+   */
+  const stopStreaming = () => {
+    setStopRequested(true);
+    setIsStreaming(false);
+    options?.onStreamEnd?.();
+  };
+
+  return {
+    isStreaming,
+    sendPrompt,
+    stopStreaming,
+  };
+};
