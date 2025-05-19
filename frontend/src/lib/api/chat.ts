@@ -67,6 +67,7 @@ export const useChatThreadMessages = (
     retry: defaultQueryOptions.retry,
     refetchOnWindowFocus: defaultQueryOptions.refetchOnWindowFocus,
     staleTime: defaultQueryOptions.staleTime,
+    enabled: chatThreadId > 0,
     ...options,
   });
 };

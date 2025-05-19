@@ -24,7 +24,7 @@ export function Message({ message }: MessageProps) {
   const hasThinking =
     message?.role === "assistant" &&
     message?.reasoning !== "" &&
-    isThinkingModel(message?.ai_model ?? "");
+    isThinkingModel(message?.llm ?? "");
 
   return (
     <div

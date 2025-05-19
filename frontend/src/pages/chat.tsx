@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
@@ -17,21 +17,26 @@ export default function ChatPage() {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [currentChatModel, setCurrentChatModel] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { chatThreadID } = useParams<{ chatThreadID: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const inNewChat = !Boolean(chatThreadID);
+  const inNewChat = !Boolean(id);
+  const chatThreadIdNumber = id ? Number(id) : undefined;
 
   // ===== API HOOKS =====
   const defaultChatModel = useGetDefaultChatModel();
-  const { data: aiModels } = useAIModels();
-  const { data: chatThreadMessages, refetch: refetchMessages } =
-    useChatThreadMessages(Number(chatThreadID), {
-      enabled: !inNewChat,
-    });
+  const { data: models } = useAIModels();
+
+  const {
+    data: chatThreadMessagesData,
+    refetch: refetchMessages,
+    isLoading: isLoadingMessages,
+  } = useChatThreadMessages(chatThreadIdNumber ?? 0);
+
   const { mutateAsync: createChatThread } = useCreateChatThread();
 
   // ===== CHAT FUNCTIONALITY =====
@@ -40,22 +45,21 @@ export default function ChatPage() {
     {
       onStreamEnd: () => {
         // Scroll to bottom when streaming ends
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        scrollToBottom();
       },
     },
   );
 
-  // ===== EFFECTS =====
+  // ===== UTILS =====
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
-  // Initialize chat model and load messages when thread changes
-  useEffect(() => {
-    if (!chatThreadMessages || inNewChat) return;
+  const determineModelToUse = useCallback(() => {
+    if (!chatThreadMessagesData) return;
 
-    // Set messages from thread
-    setMessages(chatThreadMessages.data);
-
-    // Determine which chat model to use
-    const lastMessageModel = chatThreadMessages.data.at(-1)?.llm;
+    const threadMessages = chatThreadMessagesData.data;
+    const lastMessageModel = threadMessages.at(-1)?.llm;
 
     if (lastMessageModel) {
       // Use model from the last message in the thread
@@ -63,42 +67,66 @@ export default function ChatPage() {
     } else if (defaultChatModel) {
       // Use default model from user preferences
       setCurrentChatModel(defaultChatModel);
-    } else if (aiModels?.data?.length) {
+    } else if (models?.data?.length) {
       // Fallback to first available model
-      setCurrentChatModel(aiModels.data[0].model);
+      setCurrentChatModel(models.data[0].model);
     }
-  }, [chatThreadMessages, defaultChatModel, aiModels]);
+  }, [chatThreadMessagesData, defaultChatModel, models]);
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // ===== EFFECTS =====
 
   // Set initial model when first loading
   useEffect(() => {
-    if (!currentChatModel && defaultChatModel) {
-      setCurrentChatModel(defaultChatModel);
-    } else if (!currentChatModel && aiModels?.data?.length) {
-      setCurrentChatModel(aiModels.data[0].model);
+    if (!currentChatModel) {
+      if (defaultChatModel) {
+        setCurrentChatModel(defaultChatModel);
+      } else if (models?.data?.length) {
+        setCurrentChatModel(models.data[0].model);
+      }
     }
-  }, [currentChatModel, defaultChatModel, aiModels]);
+  }, [currentChatModel, defaultChatModel, models]);
+
+  // Initialize messages when thread changes
+  useEffect(() => {
+    if (inNewChat || isLoadingMessages || !chatThreadMessagesData) return;
+
+    // Set messages from thread
+    setMessages(chatThreadMessagesData.data);
+
+    // Determine which chat model to use
+    determineModelToUse();
+
+    // Mark as initialized after first load
+    setIsInitialized(true);
+
+    // After loading messages, scroll to bottom
+    setTimeout(scrollToBottom, 100);
+  }, [
+    chatThreadMessagesData,
+    inNewChat,
+    isLoadingMessages,
+    determineModelToUse,
+    scrollToBottom,
+  ]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (isInitialized || isStreaming) {
+      scrollToBottom();
+    }
+  }, [messages, isInitialized, isStreaming, scrollToBottom]);
 
   // ===== HANDLERS =====
 
   /**
    * Handles sending a new message
    */
-  const handleSendPrompt = async () => {
+  const handleSendPrompt = useCallback(async () => {
     if (!prompt.trim() || !currentChatModel) return;
 
-    if (chatThreadID) {
+    if (chatThreadIdNumber) {
       // Send to existing chat thread
-      sendPrompt(
-        prompt,
-        Number(chatThreadID),
-        currentChatModel,
-        refetchMessages,
-      );
+      sendPrompt(prompt, chatThreadIdNumber, currentChatModel, refetchMessages);
       setPrompt("");
       return;
     }
@@ -118,17 +146,33 @@ export default function ChatPage() {
       console.error("Failed to create new thread:", error);
       // Could add user notification here
     }
-  };
+  }, [
+    prompt,
+    currentChatModel,
+    chatThreadIdNumber,
+    sendPrompt,
+    createChatThread,
+    navigate,
+    refetchMessages,
+  ]);
 
   // ===== RENDERING =====
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       {/* Chat Messages Container */}
       <ScrollArea className="bg-background flex-1 rounded-lg">
-        <div className="flex flex-col gap-4">
-          {messages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))}
+        <div className="flex flex-col gap-4 p-4">
+          {messages.length > 0 ? (
+            messages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))
+          ) : !inNewChat && isLoadingMessages ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="text-muted-foreground animate-pulse">
+                {PERSIAN_TEXTS.general.loading}...
+              </div>
+            </div>
+          ) : null}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>

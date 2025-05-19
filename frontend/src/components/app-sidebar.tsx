@@ -9,12 +9,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  ChatThread,
-  Translation,
-  useChatThreads,
-  useTranslations,
-} from "@/lib/api";
+import { useChatThreads, useTranslations } from "@/lib/api";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import {
   Command,

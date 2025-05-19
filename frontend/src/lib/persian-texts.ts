@@ -16,6 +16,13 @@ export const PERSIAN_TEXTS = {
     description: "با استفاده از هوش مصنوعی، تجربه‌ای متفاوت را تجربه کنید",
   },
 
+  // General texts
+  general: {
+    loading: "در حال بارگذاری",
+    error: "خطا",
+    success: "موفقیت",
+  },
+
   // Navigation and Headers
   navigation: {
     home: "خانه",
