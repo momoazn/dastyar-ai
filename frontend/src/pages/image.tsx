@@ -38,7 +38,7 @@ export default function ImagePage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <main className="flex h-full flex-col gap-4 p-4">
       {generating && (
         <div className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs">
           <div className="flex flex-col items-center gap-4">
@@ -64,9 +64,9 @@ export default function ImagePage() {
       )}
 
       <ScrollArea className="bg-background flex-1 rounded-lg border p-4">
-        <div className="grid grid-cols-2 gap-6">
+        <section className="grid grid-cols-2 gap-6">
           {images.map((image, index) => (
-            <div
+            <article
               key={index}
               className="group bg-background relative aspect-square overflow-hidden rounded-xl"
             >
@@ -90,12 +90,12 @@ export default function ImagePage() {
                   <Download className="h-6 w-6" />
                 </Button>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
+        </section>
       </ScrollArea>
 
-      <div className="flex gap-2">
+      <footer className="flex gap-2">
         <div className="flex flex-1 flex-col gap-2">
           <Textarea
             value={prompt}
@@ -145,7 +145,7 @@ export default function ImagePage() {
             )}
           </Button>
         </div>
-      </div>
-    </div>
+      </footer>
+    </main>
   );
 }

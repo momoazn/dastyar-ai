@@ -65,38 +65,36 @@ export function ChatInput({
   };
 
   return (
-    <div className="flex min-h-[80px] gap-2 rounded-md">
-      <div className="has-[textarea:focus]:ring-ring flex flex-1 flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
-        {/* Message Input Area */}
-        <MessageInput
-          prompt={prompt}
-          setPrompt={setPrompt}
-          handleKeyDown={handleKeyDown}
+    <div className="has-[textarea:focus]:ring-ring flex min-h-[80px] flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
+      {/* Message Input Area */}
+      <MessageInput
+        prompt={prompt}
+        setPrompt={setPrompt}
+        handleKeyDown={handleKeyDown}
+      />
+
+      {/* Controls Bar */}
+      <div className="flex w-full justify-between">
+        {/* Model Selector */}
+        <ModelSelector
+          currentModel={currentChatModel}
+          setCurrentModel={setCurrentChatModel}
+          models={aiModels?.data || []}
         />
 
-        {/* Controls Bar */}
-        <div className="flex w-full justify-between">
-          {/* Model Selector */}
-          <ModelSelector
-            currentModel={currentChatModel}
-            setCurrentModel={setCurrentChatModel}
-            models={aiModels?.data || []}
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {/* Record Button */}
+          <RecordButton
+            isRecording={isRecording}
+            onClick={handleRecordButtonClick}
           />
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            {/* Record Button */}
-            <RecordButton
-              isRecording={isRecording}
-              onClick={handleRecordButtonClick}
-            />
-
-            {/* Send Button */}
-            <SendButton
-              isDisabled={!prompt.trim() || isStreaming}
-              onClick={handleSendButtonClick}
-            />
-          </div>
+          {/* Send Button */}
+          <SendButton
+            isDisabled={!prompt.trim() || isStreaming}
+            onClick={handleSendButtonClick}
+          />
         </div>
       </div>
     </div>
@@ -113,16 +111,14 @@ interface MessageInputProps {
 
 function MessageInput({ prompt, setPrompt, handleKeyDown }: MessageInputProps) {
   return (
-    <div className="flex-1">
-      <Textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder={PERSIAN_TEXTS.chat.writeMessage}
-        className="h-full w-full resize-none rounded-none border-none focus-visible:ring-0"
-        dir={prompt ? detectTextDirection(prompt) : "rtl"}
-        onKeyDown={handleKeyDown}
-      />
-    </div>
+    <Textarea
+      value={prompt}
+      onChange={(e) => setPrompt(e.target.value)}
+      placeholder={PERSIAN_TEXTS.chat.writeMessage}
+      className="h-full w-full resize-none rounded-none border-none focus-visible:ring-0"
+      dir={prompt ? detectTextDirection(prompt) : "rtl"}
+      onKeyDown={handleKeyDown}
+    />
   );
 }
 

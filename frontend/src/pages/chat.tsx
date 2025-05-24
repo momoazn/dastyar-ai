@@ -158,10 +158,10 @@ export default function ChatPage() {
 
   // ===== RENDERING =====
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <main className="flex h-full flex-col gap-4 p-4">
       {/* Chat Messages Container */}
       <ScrollArea className="bg-background flex-1 rounded-lg">
-        <div className="flex flex-col gap-4 p-4">
+        <section className="flex flex-col gap-4 p-4">
           {messages.length > 0 ? (
             messages.map((message) => (
               <Message key={message.id} message={message} />
@@ -174,7 +174,7 @@ export default function ChatPage() {
             </div>
           ) : null}
           <div ref={messagesEndRef} />
-        </div>
+        </section>
       </ScrollArea>
 
       {/* Chat Input Container */}
@@ -187,6 +187,6 @@ export default function ChatPage() {
         isStreaming={isStreaming}
         stopStreaming={stopStreaming}
       />
-    </div>
+    </main>
   );
 }

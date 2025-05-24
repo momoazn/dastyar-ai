@@ -27,30 +27,28 @@ const routes = [
 
 export function MainLayout() {
   return (
-    <>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "350px",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar side="right" />
-        <SidebarInset>
-          <Header SideBarTrigger={<SidebarTrigger />} />
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            <Routes>
-              {routes.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={route.element}
-                />
-              ))}
-            </Routes>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "350px",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar side="right" />
+      <SidebarInset>
+        <Header SideBarTrigger={<SidebarTrigger />} />
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <Routes>
+            {routes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={route.element}
+              />
+            ))}
+          </Routes>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

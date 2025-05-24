@@ -38,7 +38,7 @@ export function Message({ message }: MessageProps) {
       <div
         dir={detectTextDirection(message.content)}
         className={cn(
-          "flex max-w-[85%] flex-col items-start justify-center space-y-3 rounded-md p-4 shadow-xs transition-colors",
+          "flex max-w-[85%] flex-col space-y-3 rounded-md p-4 shadow-xs transition-colors",
           message.role === "assistant"
             ? "bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
             : "bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white",
@@ -47,7 +47,7 @@ export function Message({ message }: MessageProps) {
         {/* Message header */}
         <div
           className={cn(
-            "rtl flex w-full items-center justify-between",
+            "rtl flex w-full items-center",
             message.role === "user"
               ? "justify-start"
               : hasThinking
@@ -96,9 +96,7 @@ export function Message({ message }: MessageProps) {
 
         {/* Waiting for first chunk */}
         {message.status === "idle" && (
-          <div className="flex items-center justify-between">
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
+          <Loader2 className="h-4 w-4 animate-spin" />
         )}
 
         {/* Message content */}

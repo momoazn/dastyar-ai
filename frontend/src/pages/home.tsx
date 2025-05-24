@@ -31,31 +31,29 @@ const features = [
 export default function HomePage() {
   return (
     <div className="mt-8 flex flex-col items-center justify-center p-4 md:mt-24 md:p-8">
-      <div className="w-full max-w-4xl space-y-8">
-        <div className="space-y-4 text-center">
+      <section className="w-full max-w-4xl space-y-8">
+        <header className="space-y-4 text-center">
           <h1 className="text-4xl font-bold">{PERSIAN_TEXTS.index.appTitle}</h1>
           <p className="text-muted-foreground text-lg">
             {PERSIAN_TEXTS.index.description}
           </p>
-        </div>
+        </header>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <main className="grid gap-6 md:grid-cols-3">
           {features.map((feature, index) => (
             <Card key={index} className="p-6 transition-all hover:scale-105">
-              <div className="space-y-4">
-                <div className={feature.color}>{feature.icon}</div>
-                <h2 className="text-xl font-semibold">{feature.title}</h2>
-                <p className="text-muted-foreground h-10 text-sm">
-                  {feature.description}
-                </p>
-                <Button asChild className="w-full">
-                  <Link to={feature.link}>{PERSIAN_TEXTS.index.start}</Link>
-                </Button>
-              </div>
+              <div className={feature.color}>{feature.icon}</div>
+              <h2 className="mt-4 text-xl font-semibold">{feature.title}</h2>
+              <p className="text-muted-foreground mt-4 h-10 text-sm">
+                {feature.description}
+              </p>
+              <Button asChild className="mt-4 w-full">
+                <Link to={feature.link}>{PERSIAN_TEXTS.index.start}</Link>
+              </Button>
             </Card>
           ))}
-        </div>
-      </div>
+        </main>
+      </section>
     </div>
   );
 }

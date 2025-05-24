@@ -76,6 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     enabled: activeItem?.url === "/translation",
   });
 
+  React.useEffect(() => {
+    if (pathname === "/") setOpen(false);
+  }, [pathname]);
+
   return (
     <Sidebar
       collapsible="icon"
@@ -141,32 +145,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
-              {activeItem?.url === "/chat" && (
-                <div>
-                  {chatThreads?.data?.map((thread) => (
-                    <Link
-                      to={`/chat/${thread.id}`}
-                      key={thread.id}
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                    >
-                      <span className="font-medium">{thread.title}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-              {activeItem?.url === "/translation" && (
-                <div>
-                  {translations?.data?.map((translation) => (
-                    <Link
-                      to={`/translation/${translation.id}`}
-                      key={translation.id}
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                    >
-                      <span>{translation.translated_text.slice(0, 10)}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {activeItem?.url === "/chat" &&
+                chatThreads?.data?.map((thread) => (
+                  <Link
+                    to={`/chat/${thread.id}`}
+                    key={thread.id}
+                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+                  >
+                    <span className="font-medium">{thread.title}</span>
+                  </Link>
+                ))}
+              {activeItem?.url === "/translation" &&
+                translations?.data?.map((translation) => (
+                  <Link
+                    to={`/translation/${translation.id}`}
+                    key={translation.id}
+                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+                  >
+                    <span>{translation.translated_text.slice(0, 10)}</span>
+                  </Link>
+                ))}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
