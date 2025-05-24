@@ -158,7 +158,7 @@ export default function ChatPage() {
 
   // ===== RENDERING =====
   return (
-    <main className="flex h-full flex-col gap-4 p-4">
+    <main className="relative flex h-full flex-col gap-4 p-4">
       {/* Chat Messages Container */}
       <ScrollArea className="bg-background flex-1 rounded-lg">
         <section className="flex flex-col gap-4 p-4">

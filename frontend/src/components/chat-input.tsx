@@ -65,7 +65,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="has-[textarea:focus]:ring-ring flex min-h-[80px] flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
+    <div className="bg-background has-[textarea:focus]:ring-ring sticky bottom-0 flex min-h-[80px] flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
       {/* Message Input Area */}
       <MessageInput
         prompt={prompt}
@@ -100,8 +100,6 @@ export function ChatInput({
     </div>
   );
 }
-
-// Sub-components to improve readability
 
 interface MessageInputProps {
   prompt: string;
