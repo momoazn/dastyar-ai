@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
 
 import {
   Button,
@@ -14,10 +13,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslation } from "@/hooks";
-import {
-  useCreateTranslationThread,
-  useTranslationThreadTranslations,
-} from "@/lib/api/translate";
+import { useTranslations } from "@/lib/api/translate";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
@@ -80,39 +76,20 @@ export default function TranslationPage() {
 
   const { translate, isTranslating } = useTranslation();
 
-  const { translationID } = useParams();
-
-  const {
-    data: translations,
-    isLoading: isTranslationsLoading,
-    refetch: refetchTranslations,
-  } = useTranslationThreadTranslations(Number(translationID), {
-    enabled: !!translationID,
-  });
-
-  const { mutateAsync: createTranslationThread } = useCreateTranslationThread();
+  const { data: translations, isLoading: isTranslationsLoading } =
+    useTranslations();
 
   const handleTranslate = async () => {
     if (!sourceText) return;
 
-    let tId = Number(translationID);
-
-    if (!tId) {
-      const { data: newTranslationThread } = await createTranslationThread({
-        title: PERSIAN_TEXTS.navigation.newChat,
-      });
-      tId = newTranslationThread.id;
-    }
-
     try {
-      const result = await translate(sourceText, tId, {
+      const result = await translate(sourceText, 0, {
         sourceLang,
         targetLang,
         tone,
       });
 
       setTranslatedText(result);
-      refetchTranslations();
     } catch (error) {
       if (error instanceof Error) {
         setTranslatedText(

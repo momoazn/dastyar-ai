@@ -7,10 +7,10 @@ import { defaultQueryOptions } from "./common";
  */
 export type AIModel = {
   name: string;
-  model: string;
   modified_at: string;
   size: number;
   digest: string;
+  details?: Record<string, any>;
 };
 
 /**

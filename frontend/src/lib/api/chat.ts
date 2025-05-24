@@ -136,8 +136,8 @@ export async function sendMessage(
 
   const response = await service.processStreamableRequest<Message>("chat", {
     content,
-    model,
-    chat_thread_id: chatThreadId.toString(),
+    llm: model,
+    thread_id: chatThreadId.toString(),
     stream,
   });
 

@@ -69,7 +69,7 @@ export default function ChatPage() {
       setCurrentChatModel(defaultChatModel);
     } else if (models?.data?.length) {
       // Fallback to first available model
-      setCurrentChatModel(models.data[0].model);
+      setCurrentChatModel(models.data[0].name);
     }
   }, [chatThreadMessagesData, defaultChatModel, models]);
 
@@ -81,7 +81,7 @@ export default function ChatPage() {
       if (defaultChatModel) {
         setCurrentChatModel(defaultChatModel);
       } else if (models?.data?.length) {
-        setCurrentChatModel(models.data[0].model);
+        setCurrentChatModel(models.data[0].name);
       }
     }
   }, [currentChatModel, defaultChatModel, models]);

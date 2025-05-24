@@ -189,7 +189,7 @@ func (h *Handler) setupSSEHeaders(c echo.Context) {
 
 func (h *Handler) getChatThreadMessages(chatThreadID uint) ([]api.Message, error) {
 	var chatThreadMessages []db.Message
-	result := h.db.Where("thread_id = ?", chatThreadID).Order("sent_at ASC").Find(&chatThreadMessages)
+	result := h.db.Where("chat_thread_id = ?", chatThreadID).Order("sent_at ASC").Find(&chatThreadMessages)
 	if result.Error != nil {
 		return nil, result.Error
 	}
