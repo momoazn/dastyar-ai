@@ -35,6 +35,7 @@
                     "Chat"
                 ],
                 "summary": "Stream chat response",
+                "operationId": "sendChatMessage",
                 "parameters": [
                     {
                         "description": "Chat request payload",
@@ -84,6 +85,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Get all chat threads",
+                "operationId": "getChatThreads",
                 "responses": {
                     "200": {
                         "description": "List of chat threads with pagination info",
@@ -111,6 +113,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Create a new chat thread",
+                "operationId": "createChatThread",
                 "parameters": [
                     {
                         "description": "Chat thread details",
@@ -154,6 +157,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Get a chat thread by ID",
+                "operationId": "getChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -196,6 +200,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Update a chat thread",
+                "operationId": "updateChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -250,6 +255,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Delete a chat thread",
+                "operationId": "deleteChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -291,6 +297,7 @@
                     "Chat Threads"
                 ],
                 "summary": "Get chat thread messages",
+                "operationId": "getChatThreadMessages",
                 "parameters": [
                     {
                         "type": "string",
@@ -335,6 +342,7 @@
                     "Health"
                 ],
                 "summary": "Health check endpoint",
+                "operationId": "healthCheck",
                 "responses": {
                     "200": {
                         "description": "Service is healthy",
@@ -364,6 +372,7 @@
                     "Model"
                 ],
                 "summary": "Get available models",
+                "operationId": "getModels",
                 "responses": {
                     "200": {
                         "description": "List of models",
@@ -390,6 +399,7 @@
                     "Translations"
                 ],
                 "summary": "Get all translations",
+                "operationId": "getTranslations",
                 "responses": {
                     "200": {
                         "description": "List of translations with pagination info",
@@ -417,6 +427,7 @@
                     "Translations"
                 ],
                 "summary": "Create translation",
+                "operationId": "createTranslation",
                 "parameters": [
                     {
                         "description": "Translation request payload",
@@ -466,6 +477,7 @@
                     "Translations"
                 ],
                 "summary": "Get translation by ID",
+                "operationId": "getTranslation",
                 "parameters": [
                     {
                         "type": "string",

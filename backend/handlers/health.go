@@ -14,6 +14,7 @@ import (
 // @Success 200 {object} Response[string] "Service is healthy"
 // @Failure 500 {object} ErrorResponse "Service is unhealthy - Ollama connection failed"
 // @Router /health [get]
+// @ID healthCheck
 func (h *Handler) handleHealthCheck(c echo.Context) error {
 	err := h.ollamaClient.Heartbeat(c.Request().Context())
 	if err != nil {

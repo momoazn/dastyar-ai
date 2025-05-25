@@ -9,8 +9,7 @@
     "preview": "bunx --bun vite preview",
     "fmt": "bunx --bun prettier --write .",
     "lint": "bunx --bun eslint .",
-    "generate-types": "swagger-typescript-api generate -p ../backend/docs/swagger.json -o src/lib/api/generated --modular --api-class-name ApiClient --clean-output",
-    "generate-types:yaml": "swagger-typescript-api generate -p ../backend/docs/swagger.yaml -o src/lib/api/generated --modular --api-class-name ApiClient --clean-output",
+    "generate-types": "bunx --bun openapi-codegen gen api",
     "type-check": "bunx --bun tsc --noEmit"
   },
   "dependencies": {
@@ -47,6 +46,8 @@
     "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {
+    "@openapi-codegen/cli": "^3.1.0",
+    "@openapi-codegen/typescript": "^11.0.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/node": "^22.13.11",

@@ -328,6 +328,7 @@ paths:
         This endpoint supports both standard and reasoning models. For reasoning models,
         the response includes thinking process in the reasoning field. The response
         is streamed as NDJSON (newline-delimited JSON) for real-time updates.
+      operationId: sendChatMessage
       parameters:
       - description: Chat request payload
         in: body
@@ -361,6 +362,7 @@ paths:
     get:
       description: Retrieve a paginated list of all chat threads, ordered by last
         update time (newest first)
+      operationId: getChatThreads
       produces:
       - application/json
       responses:
@@ -380,6 +382,7 @@ paths:
       - application/json
       description: Create a new chat thread with a title and default model. This thread
         will be used to organize related chat messages.
+      operationId: createChatThread
       parameters:
       - description: Chat thread details
         in: body
@@ -409,6 +412,7 @@ paths:
     delete:
       description: Delete a chat thread and all associated messages. This action cannot
         be undone.
+      operationId: deleteChatThread
       parameters:
       - description: Chat thread ID
         in: path
@@ -436,6 +440,7 @@ paths:
     get:
       description: Retrieve a specific chat thread by its unique identifier, including
         all associated messages
+      operationId: getChatThread
       parameters:
       - description: Chat thread ID
         in: path
@@ -465,6 +470,7 @@ paths:
       - application/json
       description: Update the title of an existing chat thread. The updated_at timestamp
         will be automatically updated.
+      operationId: updateChatThread
       parameters:
       - description: Chat thread ID
         in: path
@@ -503,6 +509,7 @@ paths:
     get:
       description: Retrieve all messages in a chat thread, ordered by creation time
         (oldest first). Only user and assistant messages are returned.
+      operationId: getChatThreadMessages
       parameters:
       - description: Chat thread ID
         in: path
@@ -533,6 +540,7 @@ paths:
       - application/json
       description: Check if the application and Ollama service are running and accessible.
         Returns 'ok' if all services are healthy.
+      operationId: healthCheck
       produces:
       - application/json
       responses:
@@ -552,6 +560,7 @@ paths:
       consumes:
       - application/json
       description: Get list of all available models from Ollama
+      operationId: getModels
       produces:
       - application/json
       responses:
@@ -570,6 +579,7 @@ paths:
     get:
       description: Retrieve a paginated list of all translation records, ordered by
         creation date (newest first)
+      operationId: getTranslations
       produces:
       - application/json
       responses:
@@ -591,6 +601,7 @@ paths:
         multiple languages (Persian, English, Arabic, French, German, Spanish) and
         different tones (formal, casual, technical, friendly). The translation is
         processed synchronously and stored in the database.
+      operationId: createTranslation
       parameters:
       - description: Translation request payload
         in: body
@@ -623,6 +634,7 @@ paths:
   /translations/{id}:
     get:
       description: Retrieve a specific translation record by its unique identifier
+      operationId: getTranslation
       parameters:
       - description: Translation ID
         in: path

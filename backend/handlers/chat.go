@@ -61,6 +61,7 @@ type ChatResponse struct {
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - model or database error"
 // @Router /chat [post]
+// @ID sendChatMessage
 func (h *Handler) handleStreamChat(c echo.Context) error {
 	startTime := time.Now()
 	log.Info().Msg("Handling stream chat request")

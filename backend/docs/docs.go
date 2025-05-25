@@ -37,6 +37,7 @@ const docTemplate = `{
                     "Chat"
                 ],
                 "summary": "Stream chat response",
+                "operationId": "sendChatMessage",
                 "parameters": [
                     {
                         "description": "Chat request payload",
@@ -86,6 +87,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Get all chat threads",
+                "operationId": "getChatThreads",
                 "responses": {
                     "200": {
                         "description": "List of chat threads with pagination info",
@@ -113,6 +115,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Create a new chat thread",
+                "operationId": "createChatThread",
                 "parameters": [
                     {
                         "description": "Chat thread details",
@@ -156,6 +159,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Get a chat thread by ID",
+                "operationId": "getChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -198,6 +202,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Update a chat thread",
+                "operationId": "updateChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -252,6 +257,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Delete a chat thread",
+                "operationId": "deleteChatThread",
                 "parameters": [
                     {
                         "type": "string",
@@ -293,6 +299,7 @@ const docTemplate = `{
                     "Chat Threads"
                 ],
                 "summary": "Get chat thread messages",
+                "operationId": "getChatThreadMessages",
                 "parameters": [
                     {
                         "type": "string",
@@ -337,6 +344,7 @@ const docTemplate = `{
                     "Health"
                 ],
                 "summary": "Health check endpoint",
+                "operationId": "healthCheck",
                 "responses": {
                     "200": {
                         "description": "Service is healthy",
@@ -366,6 +374,7 @@ const docTemplate = `{
                     "Model"
                 ],
                 "summary": "Get available models",
+                "operationId": "getModels",
                 "responses": {
                     "200": {
                         "description": "List of models",
@@ -392,6 +401,7 @@ const docTemplate = `{
                     "Translations"
                 ],
                 "summary": "Get all translations",
+                "operationId": "getTranslations",
                 "responses": {
                     "200": {
                         "description": "List of translations with pagination info",
@@ -419,6 +429,7 @@ const docTemplate = `{
                     "Translations"
                 ],
                 "summary": "Create translation",
+                "operationId": "createTranslation",
                 "parameters": [
                     {
                         "description": "Translation request payload",
@@ -468,6 +479,7 @@ const docTemplate = `{
                     "Translations"
                 ],
                 "summary": "Get translation by ID",
+                "operationId": "getTranslation",
                 "parameters": [
                     {
                         "type": "string",

@@ -17,6 +17,7 @@ import (
 // @Success 200 {object} PaginatedResponse[db.ChatThread] "List of chat threads with pagination info"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads [get]
+// @ID getChatThreads
 func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling get all chat threads request")
@@ -59,6 +60,7 @@ type CreateChatThreadRequest struct {
 // @Failure 400 {object} ErrorResponse "Bad request - missing required fields"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads [post]
+// @ID createChatThread
 func (h *Handler) handleCreateChatThread(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling create chat thread request")
@@ -110,6 +112,7 @@ func (h *Handler) handleCreateChatThread(c echo.Context) error {
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [get]
+// @ID getChatThread
 func (h *Handler) handleGetChatThread(c echo.Context) error {
 	start := time.Now()
 	id := c.Param("id")
@@ -160,6 +163,7 @@ type UpdateChatThreadRequest struct {
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [put]
+// @ID updateChatThread
 func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 	id := c.Param("id")
 	var request UpdateChatThreadRequest
@@ -204,6 +208,7 @@ func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [delete]
+// @ID deleteChatThread
 func (h *Handler) handleDeleteChatThread(c echo.Context) error {
 	id := c.Param("id")
 	result := h.db.Delete(&db.ChatThread{}, id)
@@ -229,6 +234,7 @@ func (h *Handler) handleDeleteChatThread(c echo.Context) error {
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id}/messages [get]
+// @ID getChatThreadMessages
 func (h *Handler) handleGetChatThreadMessages(c echo.Context) error {
 	chatThreadID := c.Param("id")
 	var messages []db.Message

@@ -25,6 +25,7 @@ type ModelListResponse struct {
 // @Success 200 {object} Response[[]ModelListResponse] "List of models"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /list-model [get]
+// @ID getModels
 func (h *Handler) handleGetModelList(c echo.Context) error {
 	models, err := h.ollamaClient.List(c.Request().Context())
 	if err != nil {

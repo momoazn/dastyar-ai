@@ -19,6 +19,7 @@ import (
 // @Success 200 {object} PaginatedResponse[db.Translation] "List of translations with pagination info"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /translations [get]
+// @ID getTranslations
 func (h *Handler) handleGetAllTranslations(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling get all translations request")
@@ -55,6 +56,7 @@ func (h *Handler) handleGetAllTranslations(c echo.Context) error {
 // @Failure 404 {object} ErrorResponse "Translation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /translations/{id} [get]
+// @ID getTranslation
 func (h *Handler) handleGetTranslationById(c echo.Context) error {
 	id := c.Param("id")
 
@@ -96,6 +98,7 @@ type TranslateResponse struct {
 // @Failure 404 {object} ErrorResponse "Translation thread not found"
 // @Failure 500 {object} ErrorResponse "Internal server error - model or database error"
 // @Router /translations [post]
+// @ID createTranslation
 func (h *Handler) handleCreateTranslation(c echo.Context) error {
 	startTime := time.Now()
 	log.Info().Msg("Handling create translation request")
