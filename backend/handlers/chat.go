@@ -29,33 +29,37 @@ const (
 	RoleAssistant = "assistant"
 )
 
+// ChatRequest represents a chat message request
+// @Description Request payload for sending a chat message
 type ChatRequest struct {
-	Content  string `json:"content"`
-	LLM      string `json:"llm"`
-	ThreadID string `json:"thread_id"`
+	Content  string `json:"content" example:"Hello, how are you?" binding:"required"` // The message content to send
+	LLM      string `json:"llm" example:"llama3.2:latest" binding:"required"`         // The LLM model to use for the response
+	ThreadID string `json:"thread_id" example:"123" binding:"required"`               // The chat thread ID to send the message to
 }
 
+// ChatResponse represents a chat message response
+// @Description Response payload for a chat message (used in streaming)
 type ChatResponse struct {
-	ID        uint      `json:"id"`
-	ThreadID  uint      `json:"thread_id"`
-	Content   string    `json:"content"`
-	Reasoning string    `json:"reasoning"`
-	Status    string    `json:"status"`
-	Role      string    `json:"role"`
-	LLM       string    `json:"llm"`
-	SentAt    time.Time `json:"sent_at"`
+	ID        uint      `json:"id" example:"456"`                                   // Unique message ID
+	ThreadID  uint      `json:"thread_id" example:"123"`                            // Chat thread ID
+	Content   string    `json:"content" example:"Hello! I'm doing well, thank you"` // The message content
+	Reasoning string    `json:"reasoning" example:""`                               // Reasoning content (for reasoning models)
+	Status    string    `json:"status" example:"done"`                              // Message status (idle, reasoning, responding, done)
+	Role      string    `json:"role" example:"assistant"`                           // Message role (user or assistant)
+	LLM       string    `json:"llm" example:"llama3.2:latest"`                      // LLM model used
+	SentAt    time.Time `json:"sent_at" example:"2023-01-01T00:00:00Z"`             // Timestamp when message was sent
 }
 
 // @Summary Stream chat response
-// @Description Send a message and receive streamed response from the AI model
-// @Tags LLM
+// @Description Send a message to an AI model and receive a streamed response. This endpoint supports both standard and reasoning models. For reasoning models, the response includes thinking process in the reasoning field. The response is streamed as NDJSON (newline-delimited JSON) for real-time updates.
+// @Tags Chat
 // @Accept json
-// @Produce text/event-stream
-// @Param request body ChatRequest true "Chat request"
-// @Success 200 {object} ChatResponse "Streamed response"
-// @Failure 400 {object} ErrorResponse "Bad request"
+// @Produce application/x-ndjson
+// @Param request body ChatRequest true "Chat request payload"
+// @Success 200 {object} ChatResponse "Streamed chat response (NDJSON format)"
+// @Failure 400 {object} ErrorResponse "Bad request - missing required fields"
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
-// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Failure 500 {object} ErrorResponse "Internal server error - LLM or database error"
 // @Router /chat [post]
 func (h *Handler) handleStreamChat(c echo.Context) error {
 	startTime := time.Now()

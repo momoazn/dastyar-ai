@@ -1,9 +1,22 @@
 {
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "description": "This is the API for the AI Assistant.",
-        "title": "AI Assistant API",
-        "contact": {},
+        "description": "A comprehensive AI Assistant API that provides chat functionality, translation services, and LLM model management. This API supports streaming chat responses, multi-language translation with tone control, and chat thread management.",
+        "title": "Persian AI Assistant API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         "version": "1.0"
     },
     "host": "localhost:8080",
@@ -11,20 +24,20 @@
     "paths": {
         "/chat": {
             "post": {
-                "description": "Send a message and receive streamed response from the AI model",
+                "description": "Send a message to an AI model and receive a streamed response. This endpoint supports both standard and reasoning models. For reasoning models, the response includes thinking process in the reasoning field. The response is streamed as NDJSON (newline-delimited JSON) for real-time updates.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "text/event-stream"
+                    "application/x-ndjson"
                 ],
                 "tags": [
-                    "LLM"
+                    "Chat"
                 ],
                 "summary": "Stream chat response",
                 "parameters": [
                     {
-                        "description": "Chat request",
+                        "description": "Chat request payload",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -35,13 +48,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Streamed response",
+                        "description": "Streamed chat response (NDJSON format)",
                         "schema": {
                             "$ref": "#/definitions/handlers.ChatResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - missing required fields",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -53,7 +66,7 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error - LLM or database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -63,7 +76,7 @@
         },
         "/chat-threads": {
             "get": {
-                "description": "Get all chat threads",
+                "description": "Retrieve a paginated list of all chat threads, ordered by last update time (newest first)",
                 "produces": [
                     "application/json"
                 ],
@@ -73,13 +86,13 @@
                 "summary": "Get all chat threads",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of chat threads with pagination info",
                         "schema": {
                             "$ref": "#/definitions/handlers.PaginatedResponse-db_ChatThread"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -87,7 +100,7 @@
                 }
             },
             "post": {
-                "description": "Create a new chat thread",
+                "description": "Create a new chat thread with a title and default LLM model. This thread will be used to organize related chat messages.",
                 "consumes": [
                     "application/json"
                 ],
@@ -111,19 +124,19 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Chat thread created successfully",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response-db_ChatThread"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Bad request - missing required fields",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -133,7 +146,7 @@
         },
         "/chat-threads/{id}": {
             "get": {
-                "description": "Get a chat thread by ID",
+                "description": "Retrieve a specific chat thread by its unique identifier, including all associated messages",
                 "produces": [
                     "application/json"
                 ],
@@ -152,19 +165,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chat thread details with messages",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response-db_ChatThread"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Chat thread not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -172,7 +185,7 @@
                 }
             },
             "put": {
-                "description": "Update a chat thread",
+                "description": "Update the title of an existing chat thread. The updated_at timestamp will be automatically updated.",
                 "consumes": [
                     "application/json"
                 ],
@@ -203,25 +216,25 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chat thread updated successfully",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response-db_ChatThread"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Bad request - missing required fields",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Chat thread not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -229,7 +242,7 @@
                 }
             },
             "delete": {
-                "description": "Delete a chat thread",
+                "description": "Delete a chat thread and all associated messages. This action cannot be undone.",
                 "produces": [
                     "application/json"
                 ],
@@ -248,19 +261,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chat thread deleted successfully",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response-any"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Chat thread not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -270,7 +283,7 @@
         },
         "/chat-threads/{id}/messages": {
             "get": {
-                "description": "Get chat thread messages",
+                "description": "Retrieve all messages in a chat thread, ordered by creation time (oldest first). Only user and assistant messages are returned.",
                 "produces": [
                     "application/json"
                 ],
@@ -289,19 +302,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of messages in the chat thread",
                         "schema": {
                             "$ref": "#/definitions/handlers.PaginatedResponse-db_Message"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Chat thread not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -311,7 +324,7 @@
         },
         "/health": {
             "get": {
-                "description": "Check if the application and Ollama service are running",
+                "description": "Check if the application and Ollama service are running and accessible. Returns 'ok' if all services are healthy.",
                 "consumes": [
                     "application/json"
                 ],
@@ -324,13 +337,13 @@
                 "summary": "Health check endpoint",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Service is healthy",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response-string"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Service is unhealthy - Ollama connection failed",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -338,7 +351,7 @@
                 }
             }
         },
-        "/models": {
+        "/list-llm": {
             "get": {
                 "description": "Get list of all available LLM models from Ollama",
                 "consumes": [
@@ -355,7 +368,7 @@
                     "200": {
                         "description": "List of models",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response-array_handlers_ModelResponse"
+                            "$ref": "#/definitions/handlers.Response-array_handlers_LLMListResponse"
                         }
                     },
                     "500": {
@@ -367,9 +380,33 @@
                 }
             }
         },
-        "/translate": {
+        "/translations": {
+            "get": {
+                "description": "Retrieve a paginated list of all translation records, ordered by creation date (newest first)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Translations"
+                ],
+                "summary": "Get all translations",
+                "responses": {
+                    "200": {
+                        "description": "List of translations with pagination info",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PaginatedResponse-db_Translation"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error - database error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Translate text from one language to another",
+                "description": "Translate text from one language to another using AI models. Supports multiple languages (Persian, English, Arabic, French, German, Spanish) and different tones (formal, casual, technical, friendly). The translation is processed synchronously and stored in the database.",
                 "consumes": [
                     "application/json"
                 ],
@@ -377,12 +414,12 @@
                     "application/json"
                 ],
                 "tags": [
-                    "LLM"
+                    "Translations"
                 ],
-                "summary": "Translate text",
+                "summary": "Create translation",
                 "parameters": [
                     {
-                        "description": "Translation request",
+                        "description": "Translation request payload",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -393,13 +430,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Translated text",
+                        "description": "Translation completed successfully",
                         "schema": {
-                            "$ref": "#/definitions/handlers.TranslateResponse"
+                            "$ref": "#/definitions/handlers.Response-db_Translation"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - missing required fields or invalid parameters",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -411,7 +448,7 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error - LLM or database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -419,90 +456,20 @@
                 }
             }
         },
-        "/translation-threads": {
+        "/translations/{id}": {
             "get": {
-                "description": "Get all translation threads",
+                "description": "Retrieve a specific translation record by its unique identifier",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Translation Threads"
+                    "Translations"
                 ],
-                "summary": "Get all translation threads",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.PaginatedResponse-db_TranslationThread"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new translation thread",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Translation Threads"
-                ],
-                "summary": "Create a new translation thread",
-                "parameters": [
-                    {
-                        "description": "Translation thread details",
-                        "name": "translation_thread",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.CreateTranslationThreadRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_TranslationThread"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/translation-threads/{id}": {
-            "get": {
-                "description": "Get a translation thread by ID with its translations",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Translation Threads"
-                ],
-                "summary": "Get a translation thread by ID",
+                "summary": "Get translation by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Translation thread ID",
+                        "description": "Translation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -510,156 +477,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Translation details",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_TranslationThread"
+                            "$ref": "#/definitions/handlers.Response-db_Translation"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Translation not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a translation thread's title",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Translation Threads"
-                ],
-                "summary": "Update a translation thread",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Translation thread ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Translation thread details",
-                        "name": "thread",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.UpdateTranslationThreadRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_TranslationThread"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a translation thread by ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Translation Threads"
-                ],
-                "summary": "Delete a translation thread",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Translation thread ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response-any"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/translation-threads/{id}/translations": {
-            "get": {
-                "description": "Get all translations from a translation thread",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Translation Threads"
-                ],
-                "summary": "Get translations from a thread",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Translation thread ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.PaginatedResponse-db_Translation"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error - database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -672,14 +502,14 @@
         "db.ChatThread": {
             "type": "object",
             "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "llm": {
+                    "type": "string"
                 },
                 "messages": {
                     "type": "array",
@@ -698,9 +528,6 @@
         "db.Message": {
             "type": "object",
             "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
                 "chat_thread_id": {
                     "type": "integer"
                 },
@@ -709,6 +536,9 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "llm": {
+                    "type": "string"
                 },
                 "reasoning": {
                     "type": "string"
@@ -727,14 +557,14 @@
         "db.Translation": {
             "type": "object",
             "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "llm": {
+                    "type": "string"
                 },
                 "source_language": {
                     "type": "string"
@@ -744,9 +574,6 @@
                 },
                 "target_language": {
                     "type": "string"
-                },
-                "thread_id": {
-                    "type": "integer"
                 },
                 "tone": {
                     "type": "string"
@@ -756,208 +583,252 @@
                 }
             }
         },
-        "db.TranslationThread": {
-            "type": "object",
-            "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "translations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/db.Translation"
-                    }
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
         "handlers.ChatRequest": {
+            "description": "Request payload for sending a chat message",
             "type": "object",
+            "required": [
+                "content",
+                "llm",
+                "thread_id"
+            ],
             "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
                 "content": {
-                    "type": "string"
+                    "description": "The message content to send",
+                    "type": "string",
+                    "example": "Hello, how are you?"
+                },
+                "llm": {
+                    "description": "The LLM model to use for the response",
+                    "type": "string",
+                    "example": "llama3.2:latest"
                 },
                 "thread_id": {
-                    "type": "string"
+                    "description": "The chat thread ID to send the message to",
+                    "type": "string",
+                    "example": "123"
                 }
             }
         },
         "handlers.ChatResponse": {
+            "description": "Response payload for a chat message (used in streaming)",
             "type": "object",
             "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
                 "content": {
-                    "type": "string"
+                    "description": "The message content",
+                    "type": "string",
+                    "example": "Hello! I'm doing well, thank you"
                 },
                 "id": {
-                    "type": "integer"
+                    "description": "Unique message ID",
+                    "type": "integer",
+                    "example": 456
+                },
+                "llm": {
+                    "description": "LLM model used",
+                    "type": "string",
+                    "example": "llama3.2:latest"
                 },
                 "reasoning": {
-                    "type": "string"
+                    "description": "Reasoning content (for reasoning models)",
+                    "type": "string",
+                    "example": ""
                 },
                 "role": {
-                    "type": "string"
+                    "description": "Message role (user or assistant)",
+                    "type": "string",
+                    "example": "assistant"
                 },
                 "sent_at": {
-                    "type": "string"
+                    "description": "Timestamp when message was sent",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
                 },
                 "status": {
-                    "type": "string"
+                    "description": "Message status (idle, reasoning, responding, done)",
+                    "type": "string",
+                    "example": "done"
                 },
                 "thread_id": {
-                    "type": "integer"
+                    "description": "Chat thread ID",
+                    "type": "integer",
+                    "example": 123
                 }
             }
         },
         "handlers.CreateChatThreadRequest": {
+            "description": "Request payload for creating a new chat thread",
             "type": "object",
+            "required": [
+                "llm",
+                "title"
+            ],
             "properties": {
-                "ai_model": {
-                    "type": "string"
+                "llm": {
+                    "description": "The default LLM model for this thread",
+                    "type": "string",
+                    "example": "llama3.2:latest"
                 },
                 "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.CreateTranslationThreadRequest": {
-            "type": "object",
-            "properties": {
-                "ai_model": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
+                    "description": "The title of the chat thread",
+                    "type": "string",
+                    "example": "My Chat with AI"
                 }
             }
         },
         "handlers.ErrorResponse": {
+            "description": "Standard error response format",
             "type": "object",
             "properties": {
                 "message": {
-                    "type": "string"
+                    "description": "Error message description",
+                    "type": "string",
+                    "example": "Error message"
                 }
             }
         },
-        "handlers.ModelResponse": {
+        "handlers.LLMListResponse": {
+            "description": "Information about an available LLM model",
             "type": "object",
             "properties": {
                 "details": {
-                    "description": "Using map for swagger compatibility",
+                    "description": "Additional model details (format, family, etc.)",
                     "type": "object",
                     "additionalProperties": true
                 },
                 "digest": {
-                    "type": "string"
+                    "description": "Model digest/hash",
+                    "type": "string",
+                    "example": "sha256:abc123..."
                 },
                 "modified_at": {
-                    "type": "string"
+                    "description": "Last modification timestamp",
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
                 },
                 "name": {
-                    "type": "string"
+                    "description": "Model name and tag",
+                    "type": "string",
+                    "example": "llama3.2:latest"
                 },
                 "size": {
-                    "type": "integer"
+                    "description": "Model size in bytes",
+                    "type": "integer",
+                    "example": 4661224676
                 }
             }
         },
         "handlers.PaginatedResponse-db_ChatThread": {
             "type": "object",
             "properties": {
+                "current_page": {
+                    "description": "Current page number",
+                    "type": "integer"
+                },
                 "data": {
+                    "description": "Array of data items",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/db.ChatThread"
                     }
                 },
                 "has_next": {
+                    "description": "Whether there are more items available",
                     "type": "boolean"
                 },
                 "has_previous": {
+                    "description": "Whether there are previous items available",
                     "type": "boolean"
+                },
+                "total": {
+                    "description": "Total number of items",
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "description": "Total number of pages",
+                    "type": "integer"
                 }
             }
         },
         "handlers.PaginatedResponse-db_Message": {
             "type": "object",
             "properties": {
+                "current_page": {
+                    "description": "Current page number",
+                    "type": "integer"
+                },
                 "data": {
+                    "description": "Array of data items",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/db.Message"
                     }
                 },
                 "has_next": {
+                    "description": "Whether there are more items available",
                     "type": "boolean"
                 },
                 "has_previous": {
+                    "description": "Whether there are previous items available",
                     "type": "boolean"
+                },
+                "total": {
+                    "description": "Total number of items",
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "description": "Total number of pages",
+                    "type": "integer"
                 }
             }
         },
         "handlers.PaginatedResponse-db_Translation": {
             "type": "object",
             "properties": {
+                "current_page": {
+                    "description": "Current page number",
+                    "type": "integer"
+                },
                 "data": {
+                    "description": "Array of data items",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/db.Translation"
                     }
                 },
                 "has_next": {
+                    "description": "Whether there are more items available",
                     "type": "boolean"
                 },
                 "has_previous": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "handlers.PaginatedResponse-db_TranslationThread": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/db.TranslationThread"
-                    }
-                },
-                "has_next": {
+                    "description": "Whether there are previous items available",
                     "type": "boolean"
                 },
-                "has_previous": {
-                    "type": "boolean"
+                "total": {
+                    "description": "Total number of items",
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "description": "Total number of pages",
+                    "type": "integer"
                 }
             }
         },
         "handlers.Response-any": {
             "type": "object",
             "properties": {
-                "data": {}
+                "data": {
+                    "description": "The response data"
+                }
             }
         },
-        "handlers.Response-array_handlers_ModelResponse": {
+        "handlers.Response-array_handlers_LLMListResponse": {
             "type": "object",
             "properties": {
                 "data": {
+                    "description": "The response data",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handlers.ModelResponse"
+                        "$ref": "#/definitions/handlers.LLMListResponse"
                     }
                 }
             }
@@ -966,15 +837,25 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/db.ChatThread"
+                    "description": "The response data",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.ChatThread"
+                        }
+                    ]
                 }
             }
         },
-        "handlers.Response-db_TranslationThread": {
+        "handlers.Response-db_Translation": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/db.TranslationThread"
+                    "description": "The response data",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Translation"
+                        }
+                    ]
                 }
             }
         },
@@ -982,56 +863,72 @@
             "type": "object",
             "properties": {
                 "data": {
+                    "description": "The response data",
                     "type": "string"
                 }
             }
         },
         "handlers.TranslateRequest": {
+            "description": "Request payload for translating text between languages",
             "type": "object",
+            "required": [
+                "llm",
+                "source_language",
+                "source_text",
+                "target_language",
+                "thread_id"
+            ],
             "properties": {
-                "ai_model": {
-                    "type": "string"
+                "llm": {
+                    "description": "The LLM model to use for translation",
+                    "type": "string",
+                    "example": "llama3.2:latest"
                 },
                 "source_language": {
-                    "type": "string"
+                    "description": "Source language code (e.g., 'fa', 'en', 'ar')",
+                    "type": "string",
+                    "example": "fa"
                 },
                 "source_text": {
-                    "type": "string"
+                    "description": "The text to be translated",
+                    "type": "string",
+                    "example": "سلام دنیا"
                 },
                 "target_language": {
-                    "type": "string"
+                    "description": "Target language code (e.g., 'fa', 'en', 'ar')",
+                    "type": "string",
+                    "example": "en"
                 },
                 "thread_id": {
-                    "type": "string"
+                    "description": "The thread ID for this translation",
+                    "type": "string",
+                    "example": "123"
                 },
                 "tone": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.TranslateResponse": {
-            "type": "object",
-            "properties": {
-                "translation": {
-                    "type": "string"
+                    "description": "Translation tone (formal, casual, technical, friendly)",
+                    "type": "string",
+                    "example": "formal"
                 }
             }
         },
         "handlers.UpdateChatThreadRequest": {
+            "description": "Request payload for updating an existing chat thread",
             "type": "object",
+            "required": [
+                "title"
+            ],
             "properties": {
                 "title": {
-                    "type": "string"
+                    "description": "The new title for the chat thread",
+                    "type": "string",
+                    "example": "Updated Chat Title"
                 }
             }
-        },
-        "handlers.UpdateTranslationThreadRequest": {
-            "type": "object",
-            "properties": {
-                "title": {
-                    "type": "string"
-                }
-            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
         }
     }
 }

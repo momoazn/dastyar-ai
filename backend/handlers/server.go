@@ -204,11 +204,6 @@ func createOllamaClient() *api.Client {
 	return ollamaClient
 }
 
-// @title AI Assistant API
-// @version 1.0
-// @description This is the API for the AI Assistant.
-// @host localhost:8080
-// @BasePath /api
 func SetupServer(db *gorm.DB, staticFiles embed.FS) (*echo.Echo, error) {
 	start := time.Now()
 	log.Info().Msg("Setting up HTTP server...")

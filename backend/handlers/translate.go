@@ -13,11 +13,11 @@ import (
 )
 
 // @Summary Get all translations
-// @Description Get all translations
+// @Description Retrieve a paginated list of all translation records, ordered by creation date (newest first)
 // @Tags Translations
 // @Produce json
-// @Success 200 {object} PaginatedResponse[db.Translation]
-// @Failure 500 {object} ErrorResponse
+// @Success 200 {object} PaginatedResponse[db.Translation] "List of translations with pagination info"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /translations [get]
 func (h *Handler) handleGetAllTranslations(c echo.Context) error {
 	start := time.Now()
@@ -46,13 +46,14 @@ func (h *Handler) handleGetAllTranslations(c echo.Context) error {
 	})
 }
 
-// @Summary Get translation by id
-// @Description Get translation by id
+// @Summary Get translation by ID
+// @Description Retrieve a specific translation record by its unique identifier
 // @Tags Translations
 // @Produce json
-// @Param id path string true "Translation ID"
-// @Success 200 {object} db.Translation
-// @Failure 404 {object} ErrorResponse
+// @Param id path string true "Translation ID" example:"123"
+// @Success 200 {object} Response[db.Translation] "Translation details"
+// @Failure 404 {object} ErrorResponse "Translation not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /translations/{id} [get]
 func (h *Handler) handleGetTranslationById(c echo.Context) error {
 	id := c.Param("id")
@@ -67,30 +68,33 @@ func (h *Handler) handleGetTranslationById(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response[db.Translation]{Data: translation})
 }
 
-
+// TranslateRequest represents a translation request
+// @Description Request payload for translating text between languages
 type TranslateRequest struct {
-	ThreadID       string `json:"thread_id"`
-	SourceText     string `json:"source_text"`
-	LLM            string `json:"llm"`
-	SourceLanguage string `json:"source_language"`
-	TargetLanguage string `json:"target_language"`
-	Tone           string `json:"tone"`
+	ThreadID       string `json:"thread_id" example:"123" binding:"required"`         // The thread ID for this translation
+	SourceText     string `json:"source_text" example:"سلام دنیا" binding:"required"` // The text to be translated
+	LLM            string `json:"llm" example:"llama3.2:latest" binding:"required"`   // The LLM model to use for translation
+	SourceLanguage string `json:"source_language" example:"fa" binding:"required"`    // Source language code (e.g., 'fa', 'en', 'ar')
+	TargetLanguage string `json:"target_language" example:"en" binding:"required"`    // Target language code (e.g., 'fa', 'en', 'ar')
+	Tone           string `json:"tone" example:"formal"`                              // Translation tone (formal, casual, technical, friendly)
 }
 
+// TranslateResponse represents a translation response
+// @Description Response payload containing the translated text
 type TranslateResponse struct {
-	Translation string `json:"translation"`
+	Translation string `json:"translation" example:"Hello World"` // The translated text
 }
 
 // @Summary Create translation
-// @Description Create translation
-// @Tags LLM
+// @Description Translate text from one language to another using AI models. Supports multiple languages (Persian, English, Arabic, French, German, Spanish) and different tones (formal, casual, technical, friendly). The translation is processed synchronously and stored in the database.
+// @Tags Translations
 // @Accept json
 // @Produce json
-// @Param request body TranslateRequest true "Translation request"
-// @Success 200 {object} TranslateResponse "Translated text"
-// @Failure 400 {object} ErrorResponse "Bad request"
+// @Param request body TranslateRequest true "Translation request payload"
+// @Success 200 {object} Response[db.Translation] "Translation completed successfully"
+// @Failure 400 {object} ErrorResponse "Bad request - missing required fields or invalid parameters"
 // @Failure 404 {object} ErrorResponse "Translation thread not found"
-// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Failure 500 {object} ErrorResponse "Internal server error - LLM or database error"
 // @Router /translations [post]
 func (h *Handler) handleCreateTranslation(c echo.Context) error {
 	startTime := time.Now()

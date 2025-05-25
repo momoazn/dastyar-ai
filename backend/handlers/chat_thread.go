@@ -11,11 +11,11 @@ import (
 )
 
 // @Summary Get all chat threads
-// @Description Get all chat threads
+// @Description Retrieve a paginated list of all chat threads, ordered by last update time (newest first)
 // @Tags Chat Threads
 // @Produce json
-// @Success 200 {object} PaginatedResponse[db.ChatThread]
-// @Failure 500 {object} ErrorResponse
+// @Success 200 {object} PaginatedResponse[db.ChatThread] "List of chat threads with pagination info"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads [get]
 func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 	start := time.Now()
@@ -42,20 +42,22 @@ func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 	})
 }
 
+// CreateChatThreadRequest represents a request to create a new chat thread
+// @Description Request payload for creating a new chat thread
 type CreateChatThreadRequest struct {
-	Title string `json:"title"`
-	LLM   string `json:"llm"`
+	Title string `json:"title" example:"My Chat with AI" binding:"required"` // The title of the chat thread
+	LLM   string `json:"llm" example:"llama3.2:latest" binding:"required"`   // The default LLM model for this thread
 }
 
 // @Summary Create a new chat thread
-// @Description Create a new chat thread
+// @Description Create a new chat thread with a title and default LLM model. This thread will be used to organize related chat messages.
 // @Tags Chat Threads
 // @Accept json
 // @Produce json
 // @Param chat_thread body CreateChatThreadRequest true "Chat thread details"
-// @Success 201 {object} Response[db.ChatThread]
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Success 201 {object} Response[db.ChatThread] "Chat thread created successfully"
+// @Failure 400 {object} ErrorResponse "Bad request - missing required fields"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads [post]
 func (h *Handler) handleCreateChatThread(c echo.Context) error {
 	start := time.Now()
@@ -100,13 +102,13 @@ func (h *Handler) handleCreateChatThread(c echo.Context) error {
 }
 
 // @Summary Get a chat thread by ID
-// @Description Get a chat thread by ID
+// @Description Retrieve a specific chat thread by its unique identifier, including all associated messages
 // @Tags Chat Threads
 // @Produce json
-// @Param id path string true "Chat thread ID"
-// @Success 200 {object} Response[db.ChatThread]
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Param id path string true "Chat thread ID" example:"123"
+// @Success 200 {object} Response[db.ChatThread] "Chat thread details with messages"
+// @Failure 404 {object} ErrorResponse "Chat thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [get]
 func (h *Handler) handleGetChatThread(c echo.Context) error {
 	start := time.Now()
@@ -140,21 +142,23 @@ func (h *Handler) handleGetChatThread(c echo.Context) error {
 	})
 }
 
+// UpdateChatThreadRequest represents a request to update a chat thread
+// @Description Request payload for updating an existing chat thread
 type UpdateChatThreadRequest struct {
-	Title string `json:"title"`
+	Title string `json:"title" example:"Updated Chat Title" binding:"required"` // The new title for the chat thread
 }
 
 // @Summary Update a chat thread
-// @Description Update a chat thread
+// @Description Update the title of an existing chat thread. The updated_at timestamp will be automatically updated.
 // @Tags Chat Threads
 // @Accept json
 // @Produce json
-// @Param id path string true "Chat thread ID"
+// @Param id path string true "Chat thread ID" example:"123"
 // @Param chat_thread body UpdateChatThreadRequest true "Chat thread details"
-// @Success 200 {object} Response[db.ChatThread]
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Success 200 {object} Response[db.ChatThread] "Chat thread updated successfully"
+// @Failure 400 {object} ErrorResponse "Bad request - missing required fields"
+// @Failure 404 {object} ErrorResponse "Chat thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [put]
 func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 	id := c.Param("id")
@@ -192,13 +196,13 @@ func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 }
 
 // @Summary Delete a chat thread
-// @Description Delete a chat thread
+// @Description Delete a chat thread and all associated messages. This action cannot be undone.
 // @Tags Chat Threads
 // @Produce json
-// @Param id path string true "Chat thread ID"
-// @Success 200 {object} Response[any]
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Param id path string true "Chat thread ID" example:"123"
+// @Success 200 {object} Response[any] "Chat thread deleted successfully"
+// @Failure 404 {object} ErrorResponse "Chat thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id} [delete]
 func (h *Handler) handleDeleteChatThread(c echo.Context) error {
 	id := c.Param("id")
@@ -217,13 +221,13 @@ func (h *Handler) handleDeleteChatThread(c echo.Context) error {
 }
 
 // @Summary Get chat thread messages
-// @Description Get chat thread messages
+// @Description Retrieve all messages in a chat thread, ordered by creation time (oldest first). Only user and assistant messages are returned.
 // @Tags Chat Threads
 // @Produce json
-// @Param id path string true "Chat thread ID"
-// @Success 200 {object} PaginatedResponse[db.Message]
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Param id path string true "Chat thread ID" example:"123"
+// @Success 200 {object} PaginatedResponse[db.Message] "List of messages in the chat thread"
+// @Failure 404 {object} ErrorResponse "Chat thread not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads/{id}/messages [get]
 func (h *Handler) handleGetChatThreadMessages(c echo.Context) error {
 	chatThreadID := c.Param("id")

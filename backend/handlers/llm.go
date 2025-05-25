@@ -8,13 +8,13 @@ import (
 )
 
 // LLMListResponse represents a model in the response
+// @Description Information about an available LLM model
 type LLMListResponse struct {
-	Name       string    `json:"name"`
-	ModifiedAt time.Time `json:"modified_at"`
-	Size       int64     `json:"size"`
-	Digest     string    `json:"digest"`
-	// Using map for swagger compatibility
-	Details map[string]interface{} `json:"details"`
+	Name       string                 `json:"name" example:"llama3.2:latest"`             // Model name and tag
+	ModifiedAt time.Time              `json:"modified_at" example:"2023-01-01T00:00:00Z"` // Last modification timestamp
+	Size       int64                  `json:"size" example:"4661224676"`                  // Model size in bytes
+	Digest     string                 `json:"digest" example:"sha256:abc123..."`          // Model digest/hash
+	Details    map[string]interface{} `json:"details"`                                    // Additional model details (format, family, etc.)
 }
 
 // @Summary Get available LLM models
