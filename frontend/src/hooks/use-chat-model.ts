@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAIModels } from "../lib/api";
+import { useGetModels } from "../../generated/apiComponents";
 import {
   useGetDefaultChatModel,
   useGetDefaultTranslationModel,
@@ -21,7 +21,7 @@ export function useInitializeSelectedModels() {
   const setDefaultTranslationModel = useSetDefaultTranslationModel();
 
   // Fetch available models
-  const { data: chatModels, isSuccess } = useAIModels();
+  const { data: chatModels, isSuccess } = useGetModels({});
 
   useEffect(() => {
     // Only proceed if we have successfully loaded chat models
@@ -29,7 +29,10 @@ export function useInitializeSelectedModels() {
       return;
     }
 
-    const defaultModel = chatModels.data[0].name;
+    const defaultModel = chatModels.data[0]?.name;
+    if (!defaultModel) {
+      return;
+    }
 
     // Set chat model if not already set
     if (!defaultChatModel) {

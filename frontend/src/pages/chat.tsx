@@ -3,21 +3,24 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
-import { useAIModels, useChat } from "@/lib/api";
 import {
-  type Message as MessageType,
-  useChatThreadMessages,
+  useGetModels,
+  useGetChatThreadMessages,
   useCreateChatThread,
-} from "@/lib/api/chat";
+  useSendChatMessage,
+} from "../../generated/apiComponents";
+import { type DbMessage } from "../../generated/apiSchemas";
+import { skipToken } from "@tanstack/react-query";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useGetDefaultChatModel } from "@/atoms";
 
 export default function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
-  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [messages, setMessages] = useState<DbMessage[]>([]);
   const [currentChatModel, setCurrentChatModel] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -29,26 +32,18 @@ export default function ChatPage() {
 
   // ===== API HOOKS =====
   const defaultChatModel = useGetDefaultChatModel();
-  const { data: models } = useAIModels();
+  const { data: models } = useGetModels({});
 
   const {
     data: chatThreadMessagesData,
     refetch: refetchMessages,
     isLoading: isLoadingMessages,
-  } = useChatThreadMessages(chatThreadIdNumber ?? 0);
+  } = useGetChatThreadMessages(
+    chatThreadIdNumber ? { pathParams: { id: chatThreadIdNumber.toString() } } : skipToken
+  );
 
   const { mutateAsync: createChatThread } = useCreateChatThread();
-
-  // ===== CHAT FUNCTIONALITY =====
-  const { isStreaming, sendPrompt, stopStreaming } = useChat(
-    { messages, setMessages },
-    {
-      onStreamEnd: () => {
-        // Scroll to bottom when streaming ends
-        scrollToBottom();
-      },
-    },
-  );
+  const sendChatMutation = useSendChatMessage();
 
   // ===== UTILS =====
   const scrollToBottom = useCallback(() => {
@@ -56,10 +51,10 @@ export default function ChatPage() {
   }, []);
 
   const determineModelToUse = useCallback(() => {
-    if (!chatThreadMessagesData) return;
+    if (!chatThreadMessagesData?.data) return;
 
     const threadMessages = chatThreadMessagesData.data;
-    const lastMessageModel = threadMessages.at(-1)?.llm;
+    const lastMessageModel = threadMessages.at(-1)?.model;
 
     if (lastMessageModel) {
       // Use model from the last message in the thread
@@ -69,7 +64,10 @@ export default function ChatPage() {
       setCurrentChatModel(defaultChatModel);
     } else if (models?.data?.length) {
       // Fallback to first available model
-      setCurrentChatModel(models.data[0].name);
+      const firstModel = models.data[0]?.name;
+      if (firstModel) {
+        setCurrentChatModel(firstModel);
+      }
     }
   }, [chatThreadMessagesData, defaultChatModel, models]);
 
@@ -81,14 +79,17 @@ export default function ChatPage() {
       if (defaultChatModel) {
         setCurrentChatModel(defaultChatModel);
       } else if (models?.data?.length) {
-        setCurrentChatModel(models.data[0].name);
+        const firstModel = models.data[0]?.name;
+        if (firstModel) {
+          setCurrentChatModel(firstModel);
+        }
       }
     }
   }, [currentChatModel, defaultChatModel, models]);
 
   // Initialize messages when thread changes
   useEffect(() => {
-    if (inNewChat || isLoadingMessages || !chatThreadMessagesData) return;
+    if (inNewChat || isLoadingMessages || !chatThreadMessagesData?.data) return;
 
     // Set messages from thread
     setMessages(chatThreadMessagesData.data);
@@ -126,35 +127,65 @@ export default function ChatPage() {
 
     if (chatThreadIdNumber) {
       // Send to existing chat thread
-      sendPrompt(prompt, chatThreadIdNumber, currentChatModel, refetchMessages);
-      setPrompt("");
+      try {
+        setIsStreaming(true);
+        await sendChatMutation.mutateAsync({
+          body: {
+            content: prompt,
+            model: currentChatModel,
+            thread_id: chatThreadIdNumber.toString(),
+          },
+        });
+        setPrompt("");
+        refetchMessages();
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      } finally {
+        setIsStreaming(false);
+      }
       return;
     }
 
     try {
       // Create a new thread
-      const { data: newChatThread } = await createChatThread({
-        title: PERSIAN_TEXTS.navigation.newChat,
+      const newChatThread = await createChatThread({
+        body: {
+          title: PERSIAN_TEXTS.navigation.newChat,
+          model: currentChatModel,
+        },
       });
 
-      // Send message to the new thread
-      sendPrompt(prompt, newChatThread.id, currentChatModel, () =>
-        navigate(`/chat/${newChatThread.id}`, { replace: true }),
-      );
-      setPrompt("");
+      if (newChatThread.data?.id) {
+        // Send message to the new thread
+        setIsStreaming(true);
+        await sendChatMutation.mutateAsync({
+          body: {
+            content: prompt,
+            model: currentChatModel,
+            thread_id: newChatThread.data.id.toString(),
+          },
+        });
+        setPrompt("");
+        navigate(`/chat/${newChatThread.data.id}`, { replace: true });
+      }
     } catch (error) {
       console.error("Failed to create new thread:", error);
-      // Could add user notification here
+    } finally {
+      setIsStreaming(false);
     }
   }, [
     prompt,
     currentChatModel,
     chatThreadIdNumber,
-    sendPrompt,
+    sendChatMutation,
     createChatThread,
     navigate,
     refetchMessages,
   ]);
+
+  const stopStreaming = useCallback(() => {
+    setIsStreaming(false);
+  }, []);
 
   // ===== RENDERING =====
   return (

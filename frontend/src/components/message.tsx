@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui";
-import type { Message as MessageType } from "@/lib/api/chat";
+import type { DbMessage as MessageType } from "../../generated/apiSchemas";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { BotIcon, Loader2, UserIcon } from "lucide-react";

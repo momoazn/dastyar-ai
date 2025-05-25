@@ -9,7 +9,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useChatThreads, useTranslations } from "@/lib/api";
+import {
+  useGetChatThreads,
+  useGetTranslations,
+} from "../../generated/apiComponents";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import {
   Command,
@@ -41,14 +44,14 @@ const navMain: NavItem[] = [
     icon: MessageSquare,
   },
   {
-    title: PERSIAN_TEXTS.navigation.imageGeneration,
-    url: "/image",
-    icon: Image,
-  },
-  {
     title: PERSIAN_TEXTS.navigation.translation,
     url: "/translation",
     icon: MessageCircle,
+  },
+  {
+    title: PERSIAN_TEXTS.navigation.imageGeneration,
+    url: "/image",
+    icon: Image,
   },
 ] as const satisfies NavItem[];
 
@@ -69,12 +72,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     undefined,
   );
 
-  const { data: chatThreads } = useChatThreads({
-    enabled: activeItem?.url === "/chat",
-  });
-  const { data: translations } = useTranslations({
-    enabled: activeItem?.url === "/translation",
-  });
+  const { data: chatThreads } = useGetChatThreads(
+    {},
+    {
+      enabled: activeItem?.url === "/chat",
+    },
+  );
+  const { data: translations } = useGetTranslations(
+    {},
+    {
+      enabled: activeItem?.url === "/translation",
+    },
+  );
 
   useEffect(() => {
     if (pathname === "/") setOpen(false);
@@ -162,7 +171,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     key={translation.id}
                     className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
                   >
-                    <span>{translation.translated_text.slice(0, 20)}</span>
+                    <span>{translation.translated_text?.slice(0, 20)}</span>
                   </Link>
                 ))}
             </SidebarGroupContent>

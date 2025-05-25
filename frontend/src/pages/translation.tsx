@@ -12,7 +12,8 @@ import {
 import { useTranslate } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useParams } from "react-router-dom";
-import { useTranslation } from "@/lib/api";
+import { useGetTranslation } from "../../generated/apiComponents";
+import { skipToken } from "@tanstack/react-query";
 
 const languages = [
   {
@@ -66,19 +67,24 @@ export default function TranslationPage() {
 
   const { id } = useParams();
 
-  const { data: translation } = useTranslation(id ?? "", {
-    enabled: Boolean(id),
-  });
+  const { data: translationResponse } = useGetTranslation(
+    id ? { pathParams: { id } } : skipToken,
+    {
+      enabled: Boolean(id),
+    }
+  );
+  
+  const translation = translationResponse?.data;
 
   useEffect(() => {
     if (translation) {
       console.log("=========> translation", translation);
 
-      setSourceText(translation.source_text);
-      setTranslatedText(translation.translated_text);
-      setSourceLang(translation.source_language as Language);
-      setTargetLang(translation.target_language as Language);
-      setTone(translation.tone as Tone);
+      setSourceText(translation.source_text || "");
+      setTranslatedText(translation.translated_text || "");
+      setSourceLang((translation.source_language as Language) || "english");
+      setTargetLang((translation.target_language as Language) || "persian");
+      setTone((translation.tone as Tone) || "formal");
     }
   }, [translation]);
 
@@ -88,11 +94,9 @@ export default function TranslationPage() {
     if (!sourceText) return;
 
     try {
-      const result = await translate({
-        input: sourceText,
-        model: "soml1.7b",
-        source_lang: sourceLang,
-        target_lang: targetLang,
+      const result = await translate(sourceText, {
+        sourceLang: sourceLang,
+        targetLang: targetLang,
         tone: tone,
       });
 

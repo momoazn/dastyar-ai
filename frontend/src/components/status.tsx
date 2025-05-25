@@ -1,5 +1,4 @@
-import { useChatHealthCheck } from "@/lib/api";
-import { useChatThreads } from "@/lib/api/chat";
+import { useHealthCheck, useGetChatThreads } from "../../generated/apiComponents";
 import {
   Brain,
   CloudIcon,
@@ -9,8 +8,8 @@ import {
 } from "lucide-react";
 
 export function Status() {
-  const { data: healthCheck } = useChatHealthCheck();
-  const { isError: isChatThreadsError } = useChatThreads();
+  const { data: healthCheck } = useHealthCheck({});
+  const { isError: isChatThreadsError } = useGetChatThreads({});
 
   return (
     <header className="flex gap-2">
