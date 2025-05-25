@@ -1,10 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
-  Button,
   Card,
-  LoadingSpinner,
-  ScrollArea,
   Select,
   SelectContent,
   SelectItem,
@@ -13,7 +10,6 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslation } from "@/hooks";
-import { useTranslations } from "@/lib/api/translate";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 
 const languages = [
@@ -59,14 +55,6 @@ const tones = [
 type Language = (typeof languages)[number]["value"];
 type Tone = (typeof tones)[number]["value"];
 
-const getToneLabel = (tone: Tone) => {
-  return tones.find((t) => t.value === tone)?.label || tone;
-};
-
-const getLanguageLabel = (language: Language) => {
-  return languages.find((l) => l.value === language)?.label || language;
-};
-
 export default function TranslationPage() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -76,10 +64,7 @@ export default function TranslationPage() {
 
   const { translate, isTranslating } = useTranslation();
 
-  const { data: translations, isLoading: isTranslationsLoading } =
-    useTranslations();
-
-  const handleTranslate = async () => {
+  const handleTranslate = useCallback(async () => {
     if (!sourceText) return;
 
     try {
@@ -101,164 +86,133 @@ export default function TranslationPage() {
         );
       }
     }
-  };
+  }, [sourceText, sourceLang, targetLang, tone, translate]);
+
+  // Auto-translate when source text changes (with debounce)
+  useEffect(() => {
+    if (!sourceText.trim()) {
+      setTranslatedText("");
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handleTranslate();
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [sourceText, sourceLang, targetLang, tone, handleTranslate]);
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
-      <Card className="bg-background p-4">
-        <div className="mb-6 grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-sm">
-              {PERSIAN_TEXTS.translation.sourceLanguage}
-            </p>
-            <Select value={sourceLang} onValueChange={setSourceLang}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={PERSIAN_TEXTS.translation.sourceLanguage}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-sm">
-              {PERSIAN_TEXTS.translation.targetLanguage}
-            </p>
-            <Select value={targetLang} onValueChange={setTargetLang}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={PERSIAN_TEXTS.translation.targetLanguage}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-sm">
-              {PERSIAN_TEXTS.translation.translationTone}
-            </p>
-            <Select value={tone} onValueChange={setTone}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={PERSIAN_TEXTS.translation.translationTone}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {tones.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="mb-4 grid grid-cols-2 gap-6">
-          <div>
-            <Textarea
-              placeholder={PERSIAN_TEXTS.translation.enterText}
-              value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
-              className="min-h-[250px] w-full"
-            />
-          </div>
-          <div>
-            <Textarea
-              placeholder={PERSIAN_TEXTS.translation.translatedText}
-              value={translatedText}
-              readOnly
-              className="min-h-[250px] w-full"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={handleTranslate}
-            disabled={!sourceText || isTranslating}
-          >
-            {isTranslating
-              ? PERSIAN_TEXTS.translation.translating
-              : PERSIAN_TEXTS.translation.translate}
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="bg-background flex-1 p-4">
-        <h3 className="text-md text-muted-foreground mb-4 font-medium">
-          {PERSIAN_TEXTS.translation.translations}
-        </h3>
-
-        {isTranslationsLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        ) : translations?.data && translations.data.length > 0 ? (
-          <ScrollArea className="h-[calc(100%-2rem)]">
-            <div className="space-y-4">
-              {translations.data.map((translation) => (
-                <div
-                  key={translation.id}
-                  className="border-border bg-card rounded-lg border p-4 shadow-xs"
-                >
-                  <div className="text-muted-foreground mb-2 flex flex-row-reverse items-center justify-between text-sm">
-                    <div className="rtl flex items-center gap-2">
-                      <span>
-                        {getLanguageLabel(translation.source_language)}
-                      </span>
-                      <span>←</span>
-                      <span>
-                        {getLanguageLabel(translation.target_language)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>
-                        {new Date(translation.created_at).toLocaleString()}
-                      </span>
-                      <span className="bg-secondary rounded-full px-2 py-0.5 text-xs">
-                        {getToneLabel(translation.tone)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-right">
-                    <p
-                      dir="auto"
-                      className="bg-muted rounded-md p-2 text-sm whitespace-pre-wrap"
+    <div className="flex h-full flex-col" dir="rtl">
+      {/* Header with controls */}
+      <div className="bg-background p-4">
+        <div className="w-full">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {PERSIAN_TEXTS.translation.sourceLanguage}
+              </label>
+              <Select value={sourceLang} onValueChange={setSourceLang}>
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languages.map((lang) => (
+                    <SelectItem
+                      key={lang.value}
+                      value={lang.value}
+                      className="text-right"
                     >
-                      {translation.source_text}
-                    </p>
-                    <p
-                      dir="auto"
-                      className="bg-muted rounded-md p-2 text-sm whitespace-pre-wrap"
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {PERSIAN_TEXTS.translation.targetLanguage}
+              </label>
+              <Select value={targetLang} onValueChange={setTargetLang}>
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languages.map((lang) => (
+                    <SelectItem
+                      key={lang.value}
+                      value={lang.value}
+                      className="text-right"
                     >
-                      {translation.translated_text}
-                    </p>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {PERSIAN_TEXTS.translation.translationTone}
+              </label>
+              <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {tones.map((t) => (
+                    <SelectItem
+                      key={t.value}
+                      value={t.value}
+                      className="text-right"
+                    >
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content area with text areas */}
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex h-full w-full flex-col gap-4">
+          {/* Input text area */}
+          <Card className="flex-1 p-4">
+            <div className="h-full">
+              <Textarea
+                placeholder={PERSIAN_TEXTS.translation.enterText}
+                value={sourceText}
+                onChange={(e) => setSourceText(e.target.value)}
+                className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </Card>
+
+          {/* Translated text area */}
+          <Card className="flex-1 p-4">
+            <div className="h-full">
+              {isTranslating ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-muted-foreground">
+                    {PERSIAN_TEXTS.translation.translating}...
                   </div>
                 </div>
-              ))}
+              ) : (
+                <Textarea
+                  placeholder={PERSIAN_TEXTS.translation.translatedText}
+                  value={translatedText}
+                  readOnly
+                  className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+                />
+              )}
             </div>
-          </ScrollArea>
-        ) : (
-          <div className="text-muted-foreground flex h-full items-center justify-center">
-            {PERSIAN_TEXTS.translation.noTranslations}
-          </div>
-        )}
-      </Card>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
