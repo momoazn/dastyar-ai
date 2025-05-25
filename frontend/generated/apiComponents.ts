@@ -61,12 +61,21 @@ export const useSendChatMessage = (
   });
 };
 
+export type GetChatThreadsQueryParams = {
+  /**
+   * Whether the chat thread is archived
+   */
+  is_archived?: boolean;
+};
+
 export type GetChatThreadsError = Fetcher.ErrorWrapper<{
   status: 500;
   payload: Schemas.HandlersErrorResponse;
 }>;
 
-export type GetChatThreadsVariables = ApiContext["fetcherOptions"];
+export type GetChatThreadsVariables = {
+  queryParams?: GetChatThreadsQueryParams;
+} & ApiContext["fetcherOptions"];
 
 /**
  * Retrieve a paginated list of all chat threads, ordered by last update time (newest first)
@@ -80,7 +89,7 @@ export const fetchGetChatThreads = (
     GetChatThreadsError,
     undefined,
     {},
-    {},
+    GetChatThreadsQueryParams,
     {}
   >({ url: "/chat-threads", method: "get", ...variables, signal });
 
@@ -457,7 +466,7 @@ export type UpdateChatThreadError = Fetcher.ErrorWrapper<
 >;
 
 export type UpdateChatThreadVariables = {
-  body: Schemas.HandlersUpdateChatThreadRequest;
+  body?: Schemas.HandlersUpdateChatThreadRequest;
   pathParams: UpdateChatThreadPathParams;
 } & ApiContext["fetcherOptions"];
 

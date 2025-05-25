@@ -6,6 +6,8 @@ definitions:
         type: string
       id:
         type: integer
+      is_archived:
+        type: boolean
       messages:
         items:
           $ref: '#/definitions/db.Message'
@@ -123,7 +125,6 @@ definitions:
         example: My Chat with AI
         type: string
     required:
-    - model
     - title
     type: object
   handlers.ErrorResponse:
@@ -297,12 +298,14 @@ definitions:
   handlers.UpdateChatThreadRequest:
     description: Request payload for updating an existing chat thread
     properties:
+      is_archived:
+        description: Whether the chat thread is archived
+        example: false
+        type: boolean
       title:
         description: The new title for the chat thread
         example: Updated Chat Title
         type: string
-    required:
-    - title
     type: object
 host: localhost:8080
 info:
@@ -363,6 +366,11 @@ paths:
       description: Retrieve a paginated list of all chat threads, ordered by last
         update time (newest first)
       operationId: getChatThreads
+      parameters:
+      - description: Whether the chat thread is archived
+        in: query
+        name: is_archived
+        type: boolean
       produces:
       - application/json
       responses:

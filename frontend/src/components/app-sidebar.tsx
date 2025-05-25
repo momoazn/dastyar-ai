@@ -9,22 +9,27 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  useGetChatThreads,
-  useGetTranslations,
-} from "../../generated/apiComponents";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import {
+  ArchiveIcon,
   Command,
   HomeIcon,
   Image,
   MessageCircle,
   MessageSquare,
   Plus,
+  TrashIcon,
 } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
 import { useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  useCreateChatThread,
+  useDeleteChatThread,
+  useGetChatThreads,
+  useGetTranslations,
+  useUpdateChatThread,
+} from "../../generated/apiComponents";
+import { Button } from "./ui/button";
 
 type NavItem = {
   title: string;
@@ -72,8 +77,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     undefined,
   );
 
-  const { data: chatThreads } = useGetChatThreads(
-    {},
+  const { data: chatThreads, refetch: refetchChatThreads } = useGetChatThreads(
+    {
+      queryParams: {
+        is_archived: false,
+      },
+    },
     {
       enabled: activeItem?.url === "/chat",
     },
@@ -84,6 +93,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       enabled: activeItem?.url === "/translation",
     },
   );
+
+  const { mutate: createChatThread } = useCreateChatThread({
+    onSuccess: ({ data }) => {
+      if (!data?.id) return;
+      refetchChatThreads();
+      navigate(`/chat/${data.id}`);
+    },
+  });
+
+  const { mutate: deleteChatThread } = useDeleteChatThread({
+    onSuccess: () => {
+      refetchChatThreads();
+    },
+  });
+
+  const { mutate: updateChatThread } = useUpdateChatThread({
+    onSuccess: () => {
+      refetchChatThreads();
+    },
+  });
+
+  const handleNew = () => {
+    if (activeItem?.url === "/chat") {
+      createChatThread({
+        body: {
+          title: PERSIAN_TEXTS.navigation.newChat,
+        },
+      });
+    } else if (activeItem?.url === "/translation") {
+    }
+  };
 
   useEffect(() => {
     if (pathname === "/") setOpen(false);
@@ -147,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <h3 className="text-foreground ms-2 text-lg font-medium">
             {activeItem?.title}
           </h3>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleNew}>
             <Plus />
           </Button>
         </SidebarHeader>
@@ -159,11 +199,46 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Link
                     to={`/chat/${thread.id}`}
                     key={thread.id}
-                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-12 items-center justify-between border-b p-4 text-sm"
                   >
                     <span className="font-medium">{thread.title}</span>
+
+                    <div className="flex items-center gap-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="cursor-pointer hover:text-blue-500"
+                        onClick={() => {
+                          updateChatThread({
+                            pathParams: {
+                              id: thread.id?.toString() ?? "",
+                            },
+                            body: {
+                              is_archived: true,
+                            },
+                          });
+                        }}
+                      >
+                        <ArchiveIcon className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="cursor-pointer hover:text-red-500"
+                        onClick={() => {
+                          deleteChatThread({
+                            pathParams: {
+                              id: thread.id?.toString() ?? "",
+                            },
+                          });
+                        }}
+                      >
+                        <TrashIcon className="size-4" />
+                      </Button>
+                    </div>
                   </Link>
                 ))}
+
               {activeItem?.url === "/translation" &&
                 translations?.data?.map((translation) => (
                   <Link

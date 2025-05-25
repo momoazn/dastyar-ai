@@ -3,12 +3,13 @@ package db
 import "time"
 
 type ChatThread struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	Title     string    `json:"title"`
-	Messages  []Message `json:"messages,omitempty" gorm:"foreignKey:ChatThreadID"`
-	Model     string    `json:"model"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	Title      string    `json:"title"`
+	Messages   []Message `json:"messages,omitempty" gorm:"foreignKey:ChatThreadID"`
+	Model      string    `json:"model"`
+	IsArchived bool      `json:"is_archived" gorm:"default:false"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type Message struct {

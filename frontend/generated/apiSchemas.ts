@@ -6,6 +6,7 @@
 export type DbChatThread = {
   created_at?: string;
   id?: number;
+  is_archived?: boolean;
   messages?: DbMessage[];
   model?: string;
   title?: string;
@@ -121,7 +122,7 @@ export type HandlersCreateChatThreadRequest = {
    *
    * @example llama3.2:latest
    */
-  model: string;
+  model?: string;
   /**
    * The title of the chat thread
    *
@@ -341,9 +342,15 @@ export type HandlersTranslateRequest = {
  */
 export type HandlersUpdateChatThreadRequest = {
   /**
+   * Whether the chat thread is archived
+   *
+   * @example false
+   */
+  is_archived?: boolean;
+  /**
    * The new title for the chat thread
    *
    * @example Updated Chat Title
    */
-  title: string;
+  title?: string;
 };

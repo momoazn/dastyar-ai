@@ -10,10 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type GetAllChatThreadsRequest struct {
+	IsArchived bool `json:"is_archived" example:"false" binding:"omitempty"` // Whether the chat thread is archived
+}
+
 // @Summary Get all chat threads
 // @Description Retrieve a paginated list of all chat threads, ordered by last update time (newest first)
 // @Tags Chat Threads
 // @Produce json
+// @Param is_archived query bool false "Whether the chat thread is archived"
 // @Success 200 {object} PaginatedResponse[db.ChatThread] "List of chat threads with pagination info"
 // @Failure 500 {object} ErrorResponse "Internal server error - database error"
 // @Router /chat-threads [get]
@@ -22,8 +27,10 @@ func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 	start := time.Now()
 	log.Info().Msg("Handling get all chat threads request")
 
+	isArchived := c.QueryParam("is_archived") == "true"
+
 	var chatThreads []db.ChatThread
-	result := h.db.Order("updated_at DESC").Find(&chatThreads)
+	result := h.db.Where("is_archived = ?", isArchived).Order("updated_at DESC").Find(&chatThreads)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Failed to fetch chat threads")
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -46,8 +53,8 @@ func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 // CreateChatThreadRequest represents a request to create a new chat thread
 // @Description Request payload for creating a new chat thread
 type CreateChatThreadRequest struct {
-	Title string `json:"title" example:"My Chat with AI" binding:"required"` // The title of the chat thread
-	Model string `json:"model" example:"llama3.2:latest" binding:"required"` // The default model for this thread
+	Title string `json:"title" example:"My Chat with AI" binding:"required"`  // The title of the chat thread
+	Model string `json:"model" example:"llama3.2:latest" binding:"omitempty"` // The default model for this thread
 }
 
 // @Summary Create a new chat thread
@@ -148,7 +155,8 @@ func (h *Handler) handleGetChatThread(c echo.Context) error {
 // UpdateChatThreadRequest represents a request to update a chat thread
 // @Description Request payload for updating an existing chat thread
 type UpdateChatThreadRequest struct {
-	Title string `json:"title" example:"Updated Chat Title" binding:"required"` // The new title for the chat thread
+	Title      string `json:"title" example:"Updated Chat Title" binding:"omitempty"` // The new title for the chat thread
+	IsArchived bool   `json:"is_archived" example:"false" binding:"omitempty"`        // Whether the chat thread is archived
 }
 
 // @Summary Update a chat thread
@@ -188,6 +196,7 @@ func (h *Handler) handleUpdateChatThread(c echo.Context) error {
 	}
 
 	chatThread.Title = request.Title
+	chatThread.IsArchived = request.IsArchived
 	chatThread.UpdatedAt = time.Now()
 
 	if err := h.db.Save(&chatThread).Error; err != nil {

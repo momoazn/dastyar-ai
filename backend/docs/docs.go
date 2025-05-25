@@ -88,6 +88,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get all chat threads",
                 "operationId": "getChatThreads",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Whether the chat thread is archived",
+                        "name": "is_archived",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of chat threads with pagination info",
@@ -522,6 +530,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "is_archived": {
+                    "type": "boolean"
+                },
                 "messages": {
                     "type": "array",
                     "items": {
@@ -673,7 +684,6 @@ const docTemplate = `{
             "description": "Request payload for creating a new chat thread",
             "type": "object",
             "required": [
-                "model",
                 "title"
             ],
             "properties": {
@@ -928,10 +938,12 @@ const docTemplate = `{
         "handlers.UpdateChatThreadRequest": {
             "description": "Request payload for updating an existing chat thread",
             "type": "object",
-            "required": [
-                "title"
-            ],
             "properties": {
+                "is_archived": {
+                    "description": "Whether the chat thread is archived",
+                    "type": "boolean",
+                    "example": false
+                },
                 "title": {
                     "description": "The new title for the chat thread",
                     "type": "string",
