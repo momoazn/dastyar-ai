@@ -19,9 +19,9 @@ import {
   MessageSquare,
   Plus,
 } from "lucide-react";
-import * as React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import { useEffect } from "react";
 
 type NavItem = {
   title: string;
@@ -76,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     enabled: activeItem?.url === "/translation",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (pathname === "/") setOpen(false);
   }, [pathname]);
 
@@ -162,7 +162,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     key={translation.id}
                     className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
                   >
-                    <span>{translation.translated_text.slice(0, 10)}</span>
+                    <span>{translation.translated_text.slice(0, 20)}</span>
                   </Link>
                 ))}
             </SidebarGroupContent>

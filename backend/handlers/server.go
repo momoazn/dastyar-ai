@@ -127,6 +127,7 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup.GET("/chat-threads/:id/messages", handler.handleGetChatThreadMessages)
 
 	apiGroup.GET("/translations", handler.handleGetAllTranslations)
+	apiGroup.GET("/translations/:id", handler.handleGetTranslationById)
 	apiGroup.POST("/translations", handler.handleCreateTranslation)
 
 	apiGroup.POST("/chat", handler.handleStreamChat)

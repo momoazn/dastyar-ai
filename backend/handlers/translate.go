@@ -46,6 +46,28 @@ func (h *Handler) handleGetAllTranslations(c echo.Context) error {
 	})
 }
 
+// @Summary Get translation by id
+// @Description Get translation by id
+// @Tags Translations
+// @Produce json
+// @Param id path string true "Translation ID"
+// @Success 200 {object} db.Translation
+// @Failure 404 {object} ErrorResponse
+// @Router /translations/{id} [get]
+func (h *Handler) handleGetTranslationById(c echo.Context) error {
+	id := c.Param("id")
+
+	var translation db.Translation
+	result := h.db.Where("id = ?", id).First(&translation)
+	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Failed to fetch translation")
+		return c.JSON(http.StatusNotFound, ErrorResponse{Message: "Translation not found"})
+	}
+
+	return c.JSON(http.StatusOK, Response[db.Translation]{Data: translation})
+}
+
+
 type TranslateRequest struct {
 	ThreadID       string `json:"thread_id"`
 	SourceText     string `json:"source_text"`

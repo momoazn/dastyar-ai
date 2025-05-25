@@ -8,20 +8,19 @@ interface TranslationOptions {
   tone: string;
 }
 
-export function useTranslation() {
+export function useTranslate() {
   const [isTranslating, setIsTranslating] = useState(false);
   const defaultTranslationModel = useGetDefaultTranslationModel();
 
   const translate = async (
     text: string,
-    projectId: number,
     options: TranslationOptions,
   ): Promise<string> => {
     if (!text) return "";
 
     setIsTranslating(true);
     try {
-      const response = await translateRequest(projectId, {
+      const response = await translateRequest({
         input: text,
         model: defaultTranslationModel || "",
         source_lang: options.sourceLang,
