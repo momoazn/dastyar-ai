@@ -54,9 +54,17 @@ build-backend:
 build-backend-in-win:
 	cd $(BACKEND_DIR) && go build -o ../persian-ai-assistant.exe
 
-# Misc
+# Documentation and Type Generation
 .PHONY: build-docs
 build-docs:
+	cd $(BACKEND_DIR) && swag init --generalInfo handlers/server.go --output docs
+
+.PHONY: generate-types
+generate-types: build-docs
+	cd $(FRONTEND_DIR) && bun run generate-types
+
+.PHONY: generate-swagger
+generate-swagger:
 	cd $(BACKEND_DIR) && swag init --generalInfo handlers/server.go --output docs
 
 .PHONY: clean
@@ -86,7 +94,12 @@ help:
 	@echo "Individual targets:"
 	@echo "  install-frontend  - Install frontend dependencies"
 	@echo "  install-backend   - Install backend dependencies"
-	@echo "  run-frontend     - Run frontend development server"
-	@echo "  run-backend      - Run backend development server"
+	@echo "  dev-frontend     - Run frontend development server"
+	@echo "  dev-backend      - Run backend development server"
 	@echo "  build-frontend   - Build frontend project"
 	@echo "  build-backend    - Build backend project"
+	@echo ""
+	@echo "Type generation:"
+	@echo "  generate-types   - Generate TypeScript types from Swagger docs"
+	@echo "  generate-swagger - Generate Swagger documentation from Go code"
+	@echo "  build-docs       - Build Swagger documentation"
