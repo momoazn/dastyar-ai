@@ -73,7 +73,7 @@ func (h *Handler) handleGetTranslationById(c echo.Context) error {
 type TranslateRequest struct {
 	ThreadID       string `json:"thread_id" example:"123" binding:"required"`         // The thread ID for this translation
 	SourceText     string `json:"source_text" example:"سلام دنیا" binding:"required"` // The text to be translated
-	LLM            string `json:"llm" example:"llama3.2:latest" binding:"required"`   // The LLM model to use for translation
+	Model          string `json:"model" example:"llama3.2:latest" binding:"required"` // The model to use for translation
 	SourceLanguage string `json:"source_language" example:"fa" binding:"required"`    // Source language code (e.g., 'fa', 'en', 'ar')
 	TargetLanguage string `json:"target_language" example:"en" binding:"required"`    // Target language code (e.g., 'fa', 'en', 'ar')
 	Tone           string `json:"tone" example:"formal"`                              // Translation tone (formal, casual, technical, friendly)
@@ -94,7 +94,7 @@ type TranslateResponse struct {
 // @Success 200 {object} Response[db.Translation] "Translation completed successfully"
 // @Failure 400 {object} ErrorResponse "Bad request - missing required fields or invalid parameters"
 // @Failure 404 {object} ErrorResponse "Translation thread not found"
-// @Failure 500 {object} ErrorResponse "Internal server error - LLM or database error"
+// @Failure 500 {object} ErrorResponse "Internal server error - model or database error"
 // @Router /translations [post]
 func (h *Handler) handleCreateTranslation(c echo.Context) error {
 	startTime := time.Now()
@@ -139,19 +139,19 @@ func (h *Handler) parseAndValidateTranslateRequest(c echo.Context) (TranslateReq
 	}
 
 	// Validate required fields
-	if translateReq.SourceText == "" || translateReq.LLM == "" ||
+	if translateReq.SourceText == "" || translateReq.Model == "" ||
 		translateReq.SourceLanguage == "" || translateReq.TargetLanguage == "" ||
 		translateReq.ThreadID == "" {
-		log.Error().Msg("source_text, llm, source_language, target_language, and thread_id are required")
+		log.Error().Msg("source_text, model, source_language, target_language, and thread_id are required")
 		return TranslateRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "source_text, llm, source_language, target_language, and thread_id are required",
+			Message: "source_text, model, source_language, target_language, and thread_id are required",
 		})
 	}
 
 	// Log sanitized request
 	log.Info().
 		Str("thread_id", translateReq.ThreadID).
-		Str("llm", translateReq.LLM).
+		Str("model", translateReq.Model).
 		Int("source_text_length", len(translateReq.SourceText)).
 		Str("source_language", translateReq.SourceLanguage).
 		Str("target_language", translateReq.TargetLanguage).
@@ -170,7 +170,7 @@ func (h *Handler) createTranslation(translateReq TranslateRequest) (*db.Translat
 	translation := &db.Translation{
 		SourceText:     translateReq.SourceText,
 		TranslatedText: "",
-		LLM:            translateReq.LLM,
+		Model:          translateReq.Model,
 		SourceLanguage: translateReq.SourceLanguage,
 		TargetLanguage: translateReq.TargetLanguage,
 		Tone:           translateReq.Tone,
@@ -194,7 +194,7 @@ func (h *Handler) processTranslation(c echo.Context, translation *db.Translation
 	var translatedText string
 
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model: translation.LLM,
+		Model: translation.Model,
 		Messages: []api.Message{
 			{
 				Role:    "user",

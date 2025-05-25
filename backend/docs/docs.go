@@ -68,7 +68,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error - LLM or database error",
+                        "description": "Internal server error - model or database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -102,7 +102,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new chat thread with a title and default LLM model. This thread will be used to organize related chat messages.",
+                "description": "Create a new chat thread with a title and default model. This thread will be used to organize related chat messages.",
                 "consumes": [
                     "application/json"
                 ],
@@ -353,9 +353,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/list-llm": {
+        "/list-model": {
             "get": {
-                "description": "Get list of all available LLM models from Ollama",
+                "description": "Get list of all available models from Ollama",
                 "consumes": [
                     "application/json"
                 ],
@@ -363,14 +363,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "LLM"
+                    "Model"
                 ],
-                "summary": "Get available LLM models",
+                "summary": "Get available models",
                 "responses": {
                     "200": {
                         "description": "List of models",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response-array_handlers_LLMListResponse"
+                            "$ref": "#/definitions/handlers.Response-array_handlers_ModelListResponse"
                         }
                     },
                     "500": {
@@ -450,7 +450,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error - LLM or database error",
+                        "description": "Internal server error - model or database error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -510,14 +510,14 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "llm": {
-                    "type": "string"
-                },
                 "messages": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/db.Message"
                     }
+                },
+                "model": {
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"
@@ -539,7 +539,7 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "llm": {
+                "model": {
                     "type": "string"
                 },
                 "reasoning": {
@@ -565,7 +565,7 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "llm": {
+                "model": {
                     "type": "string"
                 },
                 "source_language": {
@@ -590,7 +590,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "content",
-                "llm",
+                "model",
                 "thread_id"
             ],
             "properties": {
@@ -599,8 +599,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Hello, how are you?"
                 },
-                "llm": {
-                    "description": "The LLM model to use for the response",
+                "model": {
+                    "description": "The model to use for the response",
                     "type": "string",
                     "example": "llama3.2:latest"
                 },
@@ -625,8 +625,8 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 456
                 },
-                "llm": {
-                    "description": "LLM model used",
+                "model": {
+                    "description": "Model used",
                     "type": "string",
                     "example": "llama3.2:latest"
                 },
@@ -661,12 +661,12 @@ const docTemplate = `{
             "description": "Request payload for creating a new chat thread",
             "type": "object",
             "required": [
-                "llm",
+                "model",
                 "title"
             ],
             "properties": {
-                "llm": {
-                    "description": "The default LLM model for this thread",
+                "model": {
+                    "description": "The default model for this thread",
                     "type": "string",
                     "example": "llama3.2:latest"
                 },
@@ -688,8 +688,8 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.LLMListResponse": {
-            "description": "Information about an available LLM model",
+        "handlers.ModelListResponse": {
+            "description": "Information about an available model",
             "type": "object",
             "properties": {
                 "details": {
@@ -823,14 +823,14 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.Response-array_handlers_LLMListResponse": {
+        "handlers.Response-array_handlers_ModelListResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "The response data",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handlers.LLMListResponse"
+                        "$ref": "#/definitions/handlers.ModelListResponse"
                     }
                 }
             }
@@ -874,15 +874,15 @@ const docTemplate = `{
             "description": "Request payload for translating text between languages",
             "type": "object",
             "required": [
-                "llm",
+                "model",
                 "source_language",
                 "source_text",
                 "target_language",
                 "thread_id"
             ],
             "properties": {
-                "llm": {
-                    "description": "The LLM model to use for translation",
+                "model": {
+                    "description": "The model to use for translation",
                     "type": "string",
                     "example": "llama3.2:latest"
                 },
@@ -942,7 +942,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{"http", "https"},
 	Title:            "Persian AI Assistant API",
-	Description:      "A comprehensive AI Assistant API that provides chat functionality, translation services, and LLM model management. This API supports streaming chat responses, multi-language translation with tone control, and chat thread management.",
+	Description:      "A comprehensive AI Assistant API that provides chat functionality, translation services, and model management. This API supports streaming chat responses, multi-language translation with tone control, and chat thread management.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

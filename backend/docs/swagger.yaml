@@ -6,12 +6,12 @@ definitions:
         type: string
       id:
         type: integer
-      llm:
-        type: string
       messages:
         items:
           $ref: '#/definitions/db.Message'
         type: array
+      model:
+        type: string
       title:
         type: string
       updated_at:
@@ -25,7 +25,7 @@ definitions:
         type: string
       id:
         type: integer
-      llm:
+      model:
         type: string
       reasoning:
         type: string
@@ -42,7 +42,7 @@ definitions:
         type: string
       id:
         type: integer
-      llm:
+      model:
         type: string
       source_language:
         type: string
@@ -62,8 +62,8 @@ definitions:
         description: The message content to send
         example: Hello, how are you?
         type: string
-      llm:
-        description: The LLM model to use for the response
+      model:
+        description: The model to use for the response
         example: llama3.2:latest
         type: string
       thread_id:
@@ -72,7 +72,7 @@ definitions:
         type: string
     required:
     - content
-    - llm
+    - model
     - thread_id
     type: object
   handlers.ChatResponse:
@@ -86,8 +86,8 @@ definitions:
         description: Unique message ID
         example: 456
         type: integer
-      llm:
-        description: LLM model used
+      model:
+        description: Model used
         example: llama3.2:latest
         type: string
       reasoning:
@@ -114,8 +114,8 @@ definitions:
   handlers.CreateChatThreadRequest:
     description: Request payload for creating a new chat thread
     properties:
-      llm:
-        description: The default LLM model for this thread
+      model:
+        description: The default model for this thread
         example: llama3.2:latest
         type: string
       title:
@@ -123,7 +123,7 @@ definitions:
         example: My Chat with AI
         type: string
     required:
-    - llm
+    - model
     - title
     type: object
   handlers.ErrorResponse:
@@ -134,8 +134,8 @@ definitions:
         example: Error message
         type: string
     type: object
-  handlers.LLMListResponse:
-    description: Information about an available LLM model
+  handlers.ModelListResponse:
+    description: Information about an available model
     properties:
       details:
         additionalProperties: true
@@ -232,12 +232,12 @@ definitions:
       data:
         description: The response data
     type: object
-  handlers.Response-array_handlers_LLMListResponse:
+  handlers.Response-array_handlers_ModelListResponse:
     properties:
       data:
         description: The response data
         items:
-          $ref: '#/definitions/handlers.LLMListResponse'
+          $ref: '#/definitions/handlers.ModelListResponse'
         type: array
     type: object
   handlers.Response-db_ChatThread:
@@ -263,8 +263,8 @@ definitions:
   handlers.TranslateRequest:
     description: Request payload for translating text between languages
     properties:
-      llm:
-        description: The LLM model to use for translation
+      model:
+        description: The model to use for translation
         example: llama3.2:latest
         type: string
       source_language:
@@ -288,7 +288,7 @@ definitions:
         example: formal
         type: string
     required:
-    - llm
+    - model
     - source_language
     - source_text
     - target_language
@@ -311,8 +311,8 @@ info:
     name: API Support
     url: http://www.swagger.io/support
   description: A comprehensive AI Assistant API that provides chat functionality,
-    translation services, and LLM model management. This API supports streaming chat
-    responses, multi-language translation with tone control, and chat thread management.
+    translation services, and model management. This API supports streaming chat responses,
+    multi-language translation with tone control, and chat thread management.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -351,7 +351,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal server error - LLM or database error
+          description: Internal server error - model or database error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Stream chat response
@@ -378,8 +378,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new chat thread with a title and default LLM model. This
-        thread will be used to organize related chat messages.
+      description: Create a new chat thread with a title and default model. This thread
+        will be used to organize related chat messages.
       parameters:
       - description: Chat thread details
         in: body
@@ -547,25 +547,25 @@ paths:
       summary: Health check endpoint
       tags:
       - Health
-  /list-llm:
+  /list-model:
     get:
       consumes:
       - application/json
-      description: Get list of all available LLM models from Ollama
+      description: Get list of all available models from Ollama
       produces:
       - application/json
       responses:
         "200":
           description: List of models
           schema:
-            $ref: '#/definitions/handlers.Response-array_handlers_LLMListResponse'
+            $ref: '#/definitions/handlers.Response-array_handlers_ModelListResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get available LLM models
+      summary: Get available models
       tags:
-      - LLM
+      - Model
   /translations:
     get:
       description: Retrieve a paginated list of all translation records, ordered by
@@ -614,7 +614,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal server error - LLM or database error
+          description: Internal server error - model or database error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Create translation

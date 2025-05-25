@@ -1,6 +1,6 @@
 // @title Persian AI Assistant API
 // @version 1.0
-// @description A comprehensive AI Assistant API that provides chat functionality, translation services, and LLM model management. This API supports streaming chat responses, multi-language translation with tone control, and chat thread management.
+// @description A comprehensive AI Assistant API that provides chat functionality, translation services, and model management. This API supports streaming chat responses, multi-language translation with tone control, and chat thread management.
 // @termsOfService http://swagger.io/terms/
 // @contact.name API Support
 // @contact.url http://www.swagger.io/support

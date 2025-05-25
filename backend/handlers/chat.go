@@ -33,7 +33,7 @@ const (
 // @Description Request payload for sending a chat message
 type ChatRequest struct {
 	Content  string `json:"content" example:"Hello, how are you?" binding:"required"` // The message content to send
-	LLM      string `json:"llm" example:"llama3.2:latest" binding:"required"`         // The LLM model to use for the response
+	Model    string `json:"model" example:"llama3.2:latest" binding:"required"`       // The model to use for the response
 	ThreadID string `json:"thread_id" example:"123" binding:"required"`               // The chat thread ID to send the message to
 }
 
@@ -46,7 +46,7 @@ type ChatResponse struct {
 	Reasoning string    `json:"reasoning" example:""`                               // Reasoning content (for reasoning models)
 	Status    string    `json:"status" example:"done"`                              // Message status (idle, reasoning, responding, done)
 	Role      string    `json:"role" example:"assistant"`                           // Message role (user or assistant)
-	LLM       string    `json:"llm" example:"llama3.2:latest"`                      // LLM model used
+	Model     string    `json:"model" example:"llama3.2:latest"`                    // Model used
 	SentAt    time.Time `json:"sent_at" example:"2023-01-01T00:00:00Z"`             // Timestamp when message was sent
 }
 
@@ -59,7 +59,7 @@ type ChatResponse struct {
 // @Success 200 {object} ChatResponse "Streamed chat response (NDJSON format)"
 // @Failure 400 {object} ErrorResponse "Bad request - missing required fields"
 // @Failure 404 {object} ErrorResponse "Chat thread not found"
-// @Failure 500 {object} ErrorResponse "Internal server error - LLM or database error"
+// @Failure 500 {object} ErrorResponse "Internal server error - model or database error"
 // @Router /chat [post]
 func (h *Handler) handleStreamChat(c echo.Context) error {
 	startTime := time.Now()
@@ -116,17 +116,17 @@ func (h *Handler) parseAndValidateChatRequest(c echo.Context) (ChatRequest, erro
 	}
 
 	// Validate required fields
-	if chatReq.Content == "" || chatReq.LLM == "" || chatReq.ThreadID == "" {
-		log.Error().Msg("content, llm, and thread_id are required")
+	if chatReq.Content == "" || chatReq.Model == "" || chatReq.ThreadID == "" {
+		log.Error().Msg("content, model, and thread_id are required")
 		return ChatRequest{}, c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "content, llm, and thread_id are required",
+			Message: "content, model, and thread_id are required",
 		})
 	}
 
 	// Log sanitized request
 	log.Info().
 		Str("thread_id", chatReq.ThreadID).
-		Str("llm", chatReq.LLM).
+		Str("model", chatReq.Model).
 		Int("message_length", len(chatReq.Content)).
 		Msg("Chat request received")
 
@@ -153,7 +153,7 @@ func (h *Handler) createMessages(ThreadID uint, chatReq ChatRequest) (db.Message
 		ChatThreadID: ThreadID,
 		Role:         RoleUser,
 		Content:      chatReq.Content,
-		LLM:          chatReq.LLM,
+		Model:        chatReq.Model,
 		SentAt:       time.Now(),
 	}
 	if err := h.db.Create(&userMsg).Error; err != nil {
@@ -171,7 +171,7 @@ func (h *Handler) createMessages(ThreadID uint, chatReq ChatRequest) (db.Message
 		Role:         RoleAssistant,
 		Content:      "",
 		Reasoning:    "",
-		LLM:          chatReq.LLM,
+		Model:        chatReq.Model,
 		SentAt:       time.Now(),
 		Status:       StatusIdle,
 	}
@@ -230,12 +230,12 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 
 	currentChunk := ""
 	isReasoning := false
-	isReasoningModel := utils.IsReasoningModel(chatReq.LLM)
+	isReasoningModel := utils.IsReasoningModel(chatReq.Model)
 	currentStatus := StatusIdle
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
-		Model:    chatReq.LLM,
+		Model:    chatReq.Model,
 		Messages: messages,
 		Stream:   func() *bool { b := true; return &b }(),
 	}, func(response api.ChatResponse) error {
@@ -301,7 +301,7 @@ func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk, ful
 		ID:       assistantMsg.ID,
 		ThreadID: assistantMsg.ChatThreadID,
 		Role:     assistantMsg.Role,
-		LLM:      assistantMsg.LLM,
+		Model:    assistantMsg.Model,
 		SentAt:   assistantMsg.SentAt,
 		Status:   currentStatus,
 	}

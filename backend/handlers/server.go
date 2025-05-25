@@ -131,7 +131,7 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup.POST("/translations", handler.handleCreateTranslation)
 
 	apiGroup.POST("/chat", handler.handleStreamChat)
-	apiGroup.GET("/list-llm", handler.handleGetLLMList)
+	apiGroup.GET("/list-model", handler.handleGetModelList)
 
 	apiGroup.GET("/health", handler.handleHealthCheck)
 

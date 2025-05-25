@@ -46,11 +46,11 @@ func (h *Handler) handleGetAllChatThreads(c echo.Context) error {
 // @Description Request payload for creating a new chat thread
 type CreateChatThreadRequest struct {
 	Title string `json:"title" example:"My Chat with AI" binding:"required"` // The title of the chat thread
-	LLM   string `json:"llm" example:"llama3.2:latest" binding:"required"`   // The default LLM model for this thread
+	Model string `json:"model" example:"llama3.2:latest" binding:"required"` // The default model for this thread
 }
 
 // @Summary Create a new chat thread
-// @Description Create a new chat thread with a title and default LLM model. This thread will be used to organize related chat messages.
+// @Description Create a new chat thread with a title and default model. This thread will be used to organize related chat messages.
 // @Tags Chat Threads
 // @Accept json
 // @Produce json
@@ -73,12 +73,12 @@ func (h *Handler) handleCreateChatThread(c echo.Context) error {
 
 	log.Info().
 		Str("title", request.Title).
-		Str("llm", request.LLM).
+		Str("model", request.Model).
 		Msg("Creating new chat thread")
 
 	chatThread := db.ChatThread{
 		Title:     request.Title,
-		LLM:       request.LLM,
+		Model:     request.Model,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

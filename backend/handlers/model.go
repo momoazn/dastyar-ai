@@ -7,9 +7,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// LLMListResponse represents a model in the response
-// @Description Information about an available LLM model
-type LLMListResponse struct {
+// ModelListResponse represents a model in the response
+// @Description Information about an available model
+type ModelListResponse struct {
 	Name       string                 `json:"name" example:"llama3.2:latest"`             // Model name and tag
 	ModifiedAt time.Time              `json:"modified_at" example:"2023-01-01T00:00:00Z"` // Last modification timestamp
 	Size       int64                  `json:"size" example:"4661224676"`                  // Model size in bytes
@@ -17,15 +17,15 @@ type LLMListResponse struct {
 	Details    map[string]interface{} `json:"details"`                                    // Additional model details (format, family, etc.)
 }
 
-// @Summary Get available LLM models
-// @Description Get list of all available LLM models from Ollama
-// @Tags LLM
+// @Summary Get available models
+// @Description Get list of all available models from Ollama
+// @Tags Model
 // @Accept json
 // @Produce json
-// @Success 200 {object} Response[[]LLMListResponse] "List of models"
+// @Success 200 {object} Response[[]ModelListResponse] "List of models"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /list-llm [get]
-func (h *Handler) handleGetLLMList(c echo.Context) error {
+// @Router /list-model [get]
+func (h *Handler) handleGetModelList(c echo.Context) error {
 	models, err := h.ollamaClient.List(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -33,8 +33,8 @@ func (h *Handler) handleGetLLMList(c echo.Context) error {
 		})
 	}
 
-	// Convert api.LLMListResponse to our LLMListResponse
-	var llmListResponses []LLMListResponse
+	// Convert api.ModelListResponse to our ModelListResponse
+	var modelListResponses []ModelListResponse
 	for _, model := range models.Models {
 		// Convert model details to map
 		detailsMap := make(map[string]interface{})
@@ -57,7 +57,7 @@ func (h *Handler) handleGetLLMList(c echo.Context) error {
 			detailsMap["quantization_level"] = model.Details.QuantizationLevel
 		}
 
-		llmListResponses = append(llmListResponses, LLMListResponse{
+		modelListResponses = append(modelListResponses, ModelListResponse{
 			Name:       model.Name,
 			ModifiedAt: model.ModifiedAt,
 			Size:       model.Size,
@@ -66,7 +66,7 @@ func (h *Handler) handleGetLLMList(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, Response[[]LLMListResponse]{
-		Data: llmListResponses,
+	return c.JSON(http.StatusOK, Response[[]ModelListResponse]{
+		Data: modelListResponses,
 	})
 }

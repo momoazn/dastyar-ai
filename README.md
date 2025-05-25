@@ -44,7 +44,7 @@ make build
 
 ## ✨ Features
 
-- 🤖 **AI Chat**: Local LLM integration with Ollama
+- 🤖 **AI Chat**: Local model integration with Ollama
 - 🎨 **Image Generation**: Stable Diffusion powered image creation
 - 🔄 **Translation**: Multi-language translation with tone control
 - 🎤 **Voice Input**: Whisper-powered speech-to-text
@@ -96,7 +96,7 @@ A comprehensive AI-powered platform providing Persian language support with mode
 │   Frontend      │    │   Backend       │    │  External AI    │
 │   (React/TS)    │◄──►│   (Go/Echo)     │◄──►│   Services      │
 │                 │    │                 │    │                 │
-│ • UI Components │    │ • REST API      │    │ • Ollama LLM    │
+│ • UI Components │    │ • REST API      │    │ • Ollama Model  │
 │ • State Mgmt    │    │ • Database      │    │ • Stable Diff.  │
 │ • Routing       │    │ • Auth/Logging  │    │ • Whisper       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
@@ -125,7 +125,7 @@ src/
 │   ├── api/         // API integration utilities
 │   └── utils.ts     // Helper functions
 └── services/        // External service integrations
-    ├── ollama.ts    // Ollama LLM integration
+    ├── ollama.ts    // Ollama model integration
     ├── stable-diffusion.ts // Image generation
     └── whisper.ts   // Speech-to-text
 ```
@@ -154,7 +154,7 @@ backend/
 ## Core Features
 
 ### 1. Chat Interface
-- **Local LLM Integration**: Powered by Ollama for privacy and performance
+- **Local Model Integration**: Powered by Ollama for privacy and performance
 - **Real-time Conversation**: Streaming responses with TypeScript support
 - **Model Selection**: Dynamic model switching capability
 - **Persistent History**: Chat threads stored locally with SQLite
@@ -174,7 +174,7 @@ backend/
 - **Multi-language Support**: Comprehensive language coverage
 - **Translation Threads**: Organized translation history
 - **Tone Control**: Formal, informal, and neutral tone options
-- **AI Model Selection**: Choose from available LLM models
+- **AI Model Selection**: Choose from available models
 - **Context Preservation**: Thread-based translation memory
 
 ### 4. Audio Features
@@ -213,7 +213,7 @@ backend/
 - **API Documentation**: Swagger/OpenAPI 3.0
 
 ### External Services & Dependencies
-- **LLM**: Ollama (local deployment) for privacy
+- **Model**: Ollama (local deployment) for privacy
 - **Image Generation**: Stable Diffusion (local instance)
 - **Speech Processing**: Whisper for transcription
 - **Development Tools**:
@@ -232,7 +232,7 @@ ChatThread {
   ID: uint (primary key)
   Title: string
   Messages: []Message (foreign key relationship)
-  LLM: string (AI model used)
+  Model: string (AI model used)
   CreatedAt, UpdatedAt: time
 }
 
@@ -393,7 +393,7 @@ POST /api/translate
   "source_language": "en",
   "target_language": "fa",
   "tone": "formal",
-  "llm": "model_name"
+  "model": "model_name"
 }
 ```
 
