@@ -27,6 +27,7 @@ import {
   useDeleteChatThread,
   useGetChatThreads,
   useGetTranslations,
+  useDeleteTranslation,
   useUpdateChatThread,
 } from "../../generated/apiComponents";
 import { Button } from "./ui/button";
@@ -87,12 +88,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       enabled: activeItem?.url === "/chat",
     },
   );
-  const { data: translations } = useGetTranslations(
-    {},
-    {
-      enabled: activeItem?.url === "/translation",
-    },
-  );
 
   const { mutate: createChatThread } = useCreateChatThread({
     onSuccess: ({ data }) => {
@@ -111,6 +106,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { mutate: updateChatThread } = useUpdateChatThread({
     onSuccess: () => {
       refetchChatThreads();
+    },
+  });
+
+  const { data: translations, refetch: refetchTranslations } =
+    useGetTranslations(
+      {},
+      {
+        enabled: activeItem?.url === "/translation",
+      },
+    );
+
+  const { mutate: deleteTranslation } = useDeleteTranslation({
+    onSuccess: () => {
+      refetchTranslations();
     },
   });
 
@@ -196,63 +205,97 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent>
               {activeItem?.url === "/chat" &&
                 chatThreads?.data?.map((thread) => (
-                  <Link
+                  <InnerSidebarItem
                     to={`/chat/${thread.id}`}
                     key={thread.id}
-                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-12 items-center justify-between border-b p-4 text-sm"
-                  >
-                    <span className="font-medium">{thread.title}</span>
-
-                    <div className="flex items-center gap-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="cursor-pointer hover:text-blue-500"
-                        onClick={() => {
-                          updateChatThread({
-                            pathParams: {
-                              id: thread.id?.toString() ?? "",
-                            },
-                            body: {
-                              is_archived: true,
-                            },
-                          });
-                        }}
-                      >
-                        <ArchiveIcon className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="cursor-pointer hover:text-red-500"
-                        onClick={() => {
-                          deleteChatThread({
-                            pathParams: {
-                              id: thread.id?.toString() ?? "",
-                            },
-                          });
-                        }}
-                      >
-                        <TrashIcon className="size-4" />
-                      </Button>
-                    </div>
-                  </Link>
+                    title={thread.title}
+                    onArchive={() => {
+                      updateChatThread({
+                        pathParams: {
+                          id: thread.id?.toString() ?? "",
+                        },
+                      });
+                    }}
+                    onDelete={() => {
+                      deleteChatThread({
+                        pathParams: {
+                          id: thread.id?.toString() ?? "",
+                        },
+                      });
+                    }}
+                  />
                 ))}
 
               {activeItem?.url === "/translation" &&
                 translations?.data?.map((translation) => (
-                  <Link
+                  <InnerSidebarItem
                     to={`/translation/${translation.id}`}
                     key={translation.id}
-                    className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                  >
-                    <span>{translation.translated_text?.slice(0, 20)}</span>
-                  </Link>
+                    title={translation.translated_text?.slice(0, 20)}
+                    onDelete={() => {
+                      deleteTranslation({
+                        pathParams: {
+                          id: translation.id?.toString() ?? "",
+                        },
+                      });
+                    }}
+                  />
                 ))}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
     </Sidebar>
+  );
+}
+
+function InnerSidebarItem({
+  title,
+  to,
+  onArchive,
+  onDelete,
+}: {
+  title: string | undefined;
+  to: string;
+  onArchive?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onDelete?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <Link
+      to={to}
+      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-12 items-center justify-between border-b p-4 text-sm"
+    >
+      <span className="font-medium">{title ?? "Untitled"}</span>
+
+      <div className="flex items-center gap-0">
+        {onArchive && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer hover:text-blue-500"
+            onClick={(e) => {
+              e.preventDefault();
+              onArchive?.(e);
+            }}
+          >
+            <ArchiveIcon className="size-4" />
+          </Button>
+        )}
+
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer hover:text-red-500"
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete?.(e);
+            }}
+          >
+            <TrashIcon className="size-4" />
+          </Button>
+        )}
+      </div>
+    </Link>
   );
 }

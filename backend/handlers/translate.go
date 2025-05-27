@@ -70,6 +70,33 @@ func (h *Handler) handleGetTranslationById(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response[db.Translation]{Data: translation})
 }
 
+// @Summary Delete translation by ID
+// @Description Delete a specific translation record by its unique identifier
+// @Tags Translations
+// @Produce json
+// @Param id path string true "Translation ID" example:"123"
+// @Success 200 {object} Response[db.Translation] "Translation deleted successfully"
+// @Failure 404 {object} ErrorResponse "Translation not found"
+// @Failure 500 {object} ErrorResponse "Internal server error - database error"
+// @Router /translations/{id} [delete]
+// @ID deleteTranslation
+func (h *Handler) handleDeleteTranslation(c echo.Context) error {
+	id := c.Param("id")
+
+	var translation db.Translation
+	result := h.db.Where("id = ?", id).First(&translation)
+	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Failed to fetch translation")
+		return c.JSON(http.StatusNotFound, ErrorResponse{Message: "Translation not found"})
+	}
+
+	log.Info().
+		Uint("translation_id", translation.ID).
+		Msg("Translation entry deleted")
+
+	return c.JSON(http.StatusNoContent, Response[db.Translation]{Data: translation})
+}
+
 // TranslateRequest represents a translation request
 // @Description Request payload for translating text between languages
 type TranslateRequest struct {

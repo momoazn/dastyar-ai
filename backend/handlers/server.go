@@ -129,6 +129,7 @@ func registerAPIRoutes(e *echo.Echo, handler *Handler) {
 	apiGroup.GET("/translations", handler.handleGetAllTranslations)
 	apiGroup.GET("/translations/:id", handler.handleGetTranslationById)
 	apiGroup.POST("/translations", handler.handleCreateTranslation)
+	apiGroup.DELETE("/translations/:id", handler.handleDeleteTranslation)
 
 	apiGroup.POST("/chat", handler.handleStreamChat)
 	apiGroup.GET("/list-model", handler.handleGetModelList)

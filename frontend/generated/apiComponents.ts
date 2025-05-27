@@ -1067,6 +1067,69 @@ export const useCreateTranslation = (
   });
 };
 
+export type DeleteTranslationPathParams = {
+  /**
+   * Translation ID
+   */
+  id: string;
+};
+
+export type DeleteTranslationError = Fetcher.ErrorWrapper<
+  | {
+      status: 404;
+      payload: Schemas.HandlersErrorResponse;
+    }
+  | {
+      status: 500;
+      payload: Schemas.HandlersErrorResponse;
+    }
+>;
+
+export type DeleteTranslationVariables = {
+  pathParams: DeleteTranslationPathParams;
+} & ApiContext["fetcherOptions"];
+
+/**
+ * Delete a specific translation record by its unique identifier
+ */
+export const fetchDeleteTranslation = (
+  variables: DeleteTranslationVariables,
+  signal?: AbortSignal,
+) =>
+  apiFetch<
+    Schemas.HandlersResponseDbTranslation,
+    DeleteTranslationError,
+    undefined,
+    {},
+    {},
+    DeleteTranslationPathParams
+  >({ url: "/translations/{id}", method: "delete", ...variables, signal });
+
+/**
+ * Delete a specific translation record by its unique identifier
+ */
+export const useDeleteTranslation = (
+  options?: Omit<
+    reactQuery.UseMutationOptions<
+      Schemas.HandlersResponseDbTranslation,
+      DeleteTranslationError,
+      DeleteTranslationVariables
+    >,
+    "mutationFn"
+  >,
+) => {
+  const { fetcherOptions } = useApiContext();
+  return reactQuery.useMutation<
+    Schemas.HandlersResponseDbTranslation,
+    DeleteTranslationError,
+    DeleteTranslationVariables
+  >({
+    mutationFn: (variables: DeleteTranslationVariables) =>
+      fetchDeleteTranslation(deepMerge(fetcherOptions, variables)),
+    ...options,
+  });
+};
+
 export type GetTranslationPathParams = {
   /**
    * Translation ID

@@ -24,7 +24,8 @@ export function Message({ message }: MessageProps) {
   const hasThinking =
     message?.role === "assistant" &&
     message?.reasoning !== "" &&
-    isThinkingModel(message?.llm ?? "");
+    message?.model &&
+    isThinkingModel(message.model);
 
   return (
     <div
@@ -36,7 +37,7 @@ export function Message({ message }: MessageProps) {
     >
       {/* Message bubble */}
       <div
-        dir={detectTextDirection(message.content)}
+        dir={detectTextDirection(message.content || "")}
         className={cn(
           "flex max-w-[85%] flex-col space-y-3 rounded-md p-4 shadow-xs transition-colors",
           message.role === "assistant"
@@ -89,7 +90,7 @@ export function Message({ message }: MessageProps) {
             )}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.reasoning}
+              {message.reasoning || ""}
             </ReactMarkdown>
           </div>
         )}
@@ -109,7 +110,7 @@ export function Message({ message }: MessageProps) {
           )}
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {message.content}
+            {message.content || ""}
           </ReactMarkdown>
         </article>
       </div>

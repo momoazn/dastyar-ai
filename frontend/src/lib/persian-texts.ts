@@ -64,6 +64,7 @@ export const PERSIAN_TEXTS = {
     sourceLanguage: "زبان مبدا",
     targetLanguage: "زبان مقصد",
     translationTone: "لحن ترجمه",
+    model: "مدل زبانی ترجمه",
     enterText: "متن مورد نظر برای ترجمه را وارد کنید...",
     negativePrompt: "پرامپت منفی...",
     translating: "در حال ترجمه...",

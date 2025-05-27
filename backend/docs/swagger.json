@@ -515,6 +515,46 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Delete a specific translation record by its unique identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Translations"
+                ],
+                "summary": "Delete translation by ID",
+                "operationId": "deleteTranslation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Translation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Translation deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response-db_Translation"
+                        }
+                    },
+                    "404": {
+                        "description": "Translation not found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error - database error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
             }
         }
     },

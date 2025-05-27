@@ -7,12 +7,12 @@ import {
   useGetModels,
   useGetChatThreadMessages,
   useCreateChatThread,
-  useSendChatMessage,
 } from "../../generated/apiComponents";
 import { type DbMessage } from "../../generated/apiSchemas";
 import { skipToken } from "@tanstack/react-query";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useGetDefaultChatModel } from "@/atoms";
+import { useStreamingChat } from "@/hooks";
 
 export default function ChatPage() {
   // ===== STATE =====
@@ -20,7 +20,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<DbMessage[]>([]);
   const [currentChatModel, setCurrentChatModel] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState<DbMessage | null>(null);
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,6 +33,7 @@ export default function ChatPage() {
   // ===== API HOOKS =====
   const defaultChatModel = useGetDefaultChatModel();
   const { data: models } = useGetModels({});
+  const { sendMessage, stopStreaming, isStreaming } = useStreamingChat();
 
   const {
     data: chatThreadMessagesData,
@@ -43,7 +44,6 @@ export default function ChatPage() {
   );
 
   const { mutateAsync: createChatThread } = useCreateChatThread();
-  const sendChatMutation = useSendChatMessage();
 
   // ===== UTILS =====
   const scrollToBottom = useCallback(() => {
@@ -115,7 +115,7 @@ export default function ChatPage() {
     if (isInitialized || isStreaming) {
       scrollToBottom();
     }
-  }, [messages, isInitialized, isStreaming, scrollToBottom]);
+  }, [messages, streamingMessage, isInitialized, isStreaming, scrollToBottom]);
 
   // ===== HANDLERS =====
 
@@ -125,77 +125,88 @@ export default function ChatPage() {
   const handleSendPrompt = useCallback(async () => {
     if (!prompt.trim() || !currentChatModel) return;
 
-    if (chatThreadIdNumber) {
-      // Send to existing chat thread
+    let threadId = chatThreadIdNumber?.toString();
+
+    // Create a new thread if we're in a new chat
+    if (!threadId) {
       try {
-        setIsStreaming(true);
-        await sendChatMutation.mutateAsync({
+        const newChatThread = await createChatThread({
           body: {
-            content: prompt,
+            title: PERSIAN_TEXTS.navigation.newChat,
             model: currentChatModel,
-            thread_id: chatThreadIdNumber.toString(),
           },
         });
-        setPrompt("");
-        refetchMessages();
+
+        if (newChatThread.data?.id) {
+          threadId = newChatThread.data.id.toString();
+          navigate(`/chat/${newChatThread.data.id}`, { replace: true });
+        } else {
+          throw new Error("Failed to create chat thread");
+        }
       } catch (error) {
-        console.error("Failed to send message:", error);
-      } finally {
-        setIsStreaming(false);
+        console.error("Failed to create new thread:", error);
+        return;
       }
-      return;
     }
 
-    try {
-      // Create a new thread
-      const newChatThread = await createChatThread({
-        body: {
-          title: PERSIAN_TEXTS.navigation.newChat,
-          model: currentChatModel,
-        },
-      });
+    // Clear the prompt immediately
+    const messageContent = prompt;
+    setPrompt("");
 
-      if (newChatThread.data?.id) {
-        // Send message to the new thread
-        setIsStreaming(true);
-        await sendChatMutation.mutateAsync({
-          body: {
-            content: prompt,
-            model: currentChatModel,
-            thread_id: newChatThread.data.id.toString(),
+    // Send the streaming message
+    try {
+      await sendMessage(
+        {
+          content: messageContent,
+          model: currentChatModel,
+          thread_id: threadId,
+        },
+        {
+          onMessageUpdate: (message) => {
+            setStreamingMessage(message);
           },
-        });
-        setPrompt("");
-        navigate(`/chat/${newChatThread.data.id}`, { replace: true });
-      }
+          onComplete: () => {
+            setStreamingMessage(null);
+            refetchMessages();
+          },
+          onError: (error) => {
+            console.error("Streaming error:", error);
+            setStreamingMessage(null);
+            // Optionally show error to user
+          },
+        }
+      );
     } catch (error) {
-      console.error("Failed to create new thread:", error);
-    } finally {
-      setIsStreaming(false);
+      console.error("Failed to send message:", error);
+      // Restore the prompt if sending failed
+      setPrompt(messageContent);
     }
   }, [
     prompt,
     currentChatModel,
     chatThreadIdNumber,
-    sendChatMutation,
+    sendMessage,
     createChatThread,
     navigate,
     refetchMessages,
   ]);
 
-  const stopStreaming = useCallback(() => {
-    setIsStreaming(false);
-  }, []);
-
   // ===== RENDERING =====
+
+  // Combine regular messages with streaming message
+  const allMessages = [...messages];
+  if (streamingMessage) {
+    allMessages.push(streamingMessage);
+  }
+
   return (
     <main className="relative flex h-full flex-col gap-4 p-4">
       {/* Chat Messages Container */}
       <ScrollArea className="bg-background flex-1 rounded-lg">
         <section className="flex flex-col gap-4 p-4">
-          {messages.length > 0 ? (
-            messages.map((message) => (
-              <Message key={message.id} message={message} />
+          {allMessages.length > 0 ? (
+            allMessages.map((message, index) => (
+              <Message key={message.id || `streaming-${index}`} message={message} />
             ))
           ) : !inNewChat && isLoadingMessages ? (
             <div className="flex h-32 items-center justify-center">

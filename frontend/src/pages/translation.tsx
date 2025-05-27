@@ -1,48 +1,44 @@
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  Card,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-} from "@/components/ui";
-import { useTranslate } from "@/hooks";
+import { useModelsList, useTranslate } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
+import { skipToken } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { useGetTranslation } from "../../generated/apiComponents";
-import { skipToken } from "@tanstack/react-query";
+import {
+  TranslationControls,
+  TranslationTextAreas,
+  TranslateButton,
+} from "@/components/translation";
 
 const languages = [
   {
-    value: "persian",
+    value: "fa",
     label: PERSIAN_TEXTS.languages.persian,
     fullName: "Persian (Farsi)",
   },
   {
-    value: "english",
+    value: "en",
     label: PERSIAN_TEXTS.languages.english,
     fullName: "English",
   },
   {
-    value: "arabic",
+    value: "ar",
     label: PERSIAN_TEXTS.languages.arabic,
     fullName: "Modern Standard Arabic",
   },
   {
-    value: "french",
+    value: "fr",
     label: PERSIAN_TEXTS.languages.french,
     fullName: "French",
   },
   {
-    value: "german",
+    value: "de",
     label: PERSIAN_TEXTS.languages.german,
     fullName: "German",
   },
   {
-    value: "spanish",
+    value: "es",
     label: PERSIAN_TEXTS.languages.spanish,
     fullName: "Spanish",
   },
@@ -61,183 +57,95 @@ type Tone = (typeof tones)[number]["value"];
 export default function TranslationPage() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
-  const [sourceLang, setSourceLang] = useState<Language>("english");
-  const [targetLang, setTargetLang] = useState<Language>("persian");
+  const [sourceLang, setSourceLang] = useState<Language>("en");
+  const [targetLang, setTargetLang] = useState<Language>("fa");
   const [tone, setTone] = useState<Tone>("formal");
+  const [model, setModel] = useState<string>("");
 
   const { id } = useParams();
+  const isExistingTranslation = Boolean(id);
+
+  const { data: ollamaModels, isLoading: isLoadingModels } = useModelsList();
 
   const { data: translationResponse } = useGetTranslation(
     id ? { pathParams: { id } } : skipToken,
     {
-      enabled: Boolean(id),
-    }
+      enabled: isExistingTranslation,
+    },
   );
-  
+
   const translation = translationResponse?.data;
 
   useEffect(() => {
-    if (translation) {
-      console.log("=========> translation", translation);
+    if (!translation || isExistingTranslation) return;
+    setSourceText(translation.source_text || "");
+    setTranslatedText(translation.translated_text || "");
+    setSourceLang((translation.source_language as Language) || "en");
+    setTargetLang((translation.target_language as Language) || "fa");
+    setTone((translation.tone as Tone) || "formal");
+    setModel(translation.model || "");
+  }, [translation, isExistingTranslation]);
 
-      setSourceText(translation.source_text || "");
-      setTranslatedText(translation.translated_text || "");
-      setSourceLang((translation.source_language as Language) || "english");
-      setTargetLang((translation.target_language as Language) || "persian");
-      setTone((translation.tone as Tone) || "formal");
-    }
-  }, [translation]);
+  useEffect(() => {
+    if (!ollamaModels || model || translation || isLoadingModels) return;
+    setModel(ollamaModels.models[0].model);
+  }, [ollamaModels, model, translation, isLoadingModels]);
 
   const { translate, isTranslating } = useTranslate();
 
-  const handleTranslate = useCallback(async () => {
-    if (!sourceText) return;
-
-    try {
-      const result = await translate(sourceText, {
-        sourceLang: sourceLang,
-        targetLang: targetLang,
-        tone: tone,
-      });
-
+  const handleTranslate = useCallback(() => {
+    translate(sourceText, { sourceLang, targetLang, tone }).then((result) => {
       setTranslatedText(result);
-    } catch (error) {
-      if (error instanceof Error) {
-        setTranslatedText(
-          `${PERSIAN_TEXTS.translation.error}: ${error.message}`,
-        );
-      } else {
-        setTranslatedText(
-          `${PERSIAN_TEXTS.translation.error}. ${PERSIAN_TEXTS.translation.tryAgain}`,
-        );
-      }
-    }
+    });
   }, [sourceText, sourceLang, targetLang, tone, translate]);
 
-  // Auto-translate when source text changes (with debounce)
-  useEffect(() => {
-    if (!sourceText.trim()) {
-      setTranslatedText("");
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      handleTranslate();
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [sourceText, sourceLang, targetLang, tone, handleTranslate]);
+  const models = ollamaModels?.models || [];
 
   return (
     <div className="flex h-full flex-col" dir="rtl">
       {/* Header with controls */}
-      <div className="bg-background p-4">
-        <div className="w-full">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {PERSIAN_TEXTS.translation.sourceLanguage}
-              </label>
-              <Select value={sourceLang} onValueChange={setSourceLang}>
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {languages.map((lang) => (
-                    <SelectItem
-                      key={lang.value}
-                      value={lang.value}
-                      className="text-right"
-                    >
-                      {lang.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {PERSIAN_TEXTS.translation.targetLanguage}
-              </label>
-              <Select value={targetLang} onValueChange={setTargetLang}>
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {languages.map((lang) => (
-                    <SelectItem
-                      key={lang.value}
-                      value={lang.value}
-                      className="text-right"
-                    >
-                      {lang.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {PERSIAN_TEXTS.translation.translationTone}
-              </label>
-              <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {tones.map((t) => (
-                    <SelectItem
-                      key={t.value}
-                      value={t.value}
-                      className="text-right"
-                    >
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TranslationControls
+        sourceLang={sourceLang}
+        targetLang={targetLang}
+        tone={tone}
+        model={model}
+        onSourceLangChange={setSourceLang}
+        onTargetLangChange={setTargetLang}
+        onToneChange={setTone}
+        onModelChange={setModel}
+        languages={languages}
+        tones={tones}
+        models={models}
+        isExistingTranslation={isExistingTranslation}
+        labels={{
+          sourceLanguage: PERSIAN_TEXTS.translation.sourceLanguage,
+          targetLanguage: PERSIAN_TEXTS.translation.targetLanguage,
+          translationTone: PERSIAN_TEXTS.translation.translationTone,
+          model: PERSIAN_TEXTS.translation.model,
+        }}
+      />
 
       {/* Main content area with text areas */}
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex h-full w-full flex-col gap-4">
-          {/* Input text area */}
-          <Card className="flex-1 p-4">
-            <div className="h-full">
-              <Textarea
-                placeholder={PERSIAN_TEXTS.translation.enterText}
-                value={sourceText}
-                onChange={(e) => setSourceText(e.target.value)}
-                className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-              />
-            </div>
-          </Card>
+        <TranslationTextAreas
+          sourceText={sourceText}
+          translatedText={translatedText}
+          isTranslating={isTranslating}
+          onSourceTextChange={setSourceText}
+          placeholders={{
+            enterText: PERSIAN_TEXTS.translation.enterText,
+            translatedText: PERSIAN_TEXTS.translation.translatedText,
+          }}
+          loadingText={PERSIAN_TEXTS.translation.translating}
+          isExistingTranslation={isExistingTranslation}
+        />
 
-          {/* Translated text area */}
-          <Card className="flex-1 p-4">
-            <div className="h-full">
-              {isTranslating ? (
-                <div className="flex h-full items-center justify-center">
-                  <div className="text-muted-foreground">
-                    {PERSIAN_TEXTS.translation.translating}...
-                  </div>
-                </div>
-              ) : (
-                <Textarea
-                  placeholder={PERSIAN_TEXTS.translation.translatedText}
-                  value={translatedText}
-                  readOnly
-                  className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-                />
-              )}
-            </div>
-          </Card>
-        </div>
+        <TranslateButton
+          onTranslate={handleTranslate}
+          isTranslating={isTranslating}
+          text={PERSIAN_TEXTS.translation.translate}
+          disabled={!sourceText.trim()}
+        />
       </div>
     </div>
   );
