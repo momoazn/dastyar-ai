@@ -326,7 +326,7 @@ func (h *Handler) processStandardModelResponse(result *StreamResult, currentChun
 	result.FullContent += content
 }
 
-func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk, fullReasoning, currentStatus string, isReasoning bool) ChatResponse {
+func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk string, fullReasoning string, currentStatus string, isReasoning bool) ChatResponse {
 	res := ChatResponse{
 		ID:       assistantMsg.ID,
 		ThreadID: assistantMsg.ChatThreadID,

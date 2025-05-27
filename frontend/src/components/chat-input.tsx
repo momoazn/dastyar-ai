@@ -9,8 +9,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { useAudioRecording } from "@/hooks";
-import { useGetModels } from "../../generated/apiComponents";
+import { useAudioRecording, useModelsList } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
@@ -36,7 +35,7 @@ export function ChatInput({
   const { isRecording, startRecording, stopRecording } =
     useAudioRecording(setPrompt);
 
-  const { data: aiModels } = useGetModels({});
+  const { data: models } = useModelsList();
 
   // Handle key presses in the textarea
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -65,7 +64,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       {/* Message Input Area */}
       <MessageInput
         prompt={prompt}
@@ -79,7 +78,7 @@ export function ChatInput({
         <ModelSelector
           currentModel={currentChatModel}
           setCurrentModel={setCurrentChatModel}
-          models={aiModels?.data || []}
+          models={models?.models || []}
         />
 
         {/* Action Buttons */}
@@ -115,13 +114,13 @@ function MessageInput({ prompt, setPrompt, handleKeyDown }: MessageInputProps) {
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder={PERSIAN_TEXTS.chat.writeMessage}
-        className="min-h-[60px] w-full resize-none border-border bg-background"
+        className="border-border bg-background min-h-[60px] w-full resize-none"
         dir={prompt ? detectTextDirection(prompt) : "rtl"}
         onKeyDown={handleKeyDown}
       />
       {/* Placeholder icon when empty */}
       {!prompt && (
-        <div className="absolute left-4 top-4 text-muted-foreground">
+        <div className="text-muted-foreground absolute top-4 left-4">
           <Sparkles className="h-5 w-5" />
         </div>
       )}
@@ -153,10 +152,7 @@ function ModelSelector({
       </SelectTrigger>
       <SelectContent>
         {models.map((model) => (
-          <SelectItem 
-            key={model.name} 
-            value={model.name}
-          >
+          <SelectItem key={model.name} value={model.name}>
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500" />
               <span>{model.name}</span>

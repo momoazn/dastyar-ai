@@ -15,6 +15,14 @@ import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useGetDefaultChatModel } from "@/atoms";
 import { useStreamingChat } from "@/hooks";
 
+// Utility function to generate temporary IDs for optimistic updates
+const generateTempId = () => Date.now() + Math.floor(Math.random() * 1000);
+
+// Utility function to check if a message is optimistic (has temporary ID)
+const isOptimisticMessage = (msg: DbMessage) => {
+  return typeof msg.id === 'number' && msg.id > Date.now() - 60000; // Messages created in last minute with timestamp-based IDs
+};
+
 export default function ChatPage() {
   // ===== STATE =====
   const [prompt, setPrompt] = useState("");
@@ -92,8 +100,38 @@ export default function ChatPage() {
   useEffect(() => {
     if (inNewChat || isLoadingMessages || !chatThreadMessagesData?.data) return;
 
-    // Set messages from thread
-    setMessages(chatThreadMessagesData.data);
+    // Set messages from thread, but only if we don't have any local optimistic messages
+    // This prevents overriding messages that were added optimistically during streaming
+    setMessages(prev => {
+      const dbMessages = chatThreadMessagesData.data;
+      if (!dbMessages) return prev;
+
+      // If we have optimistic messages (with temporary IDs), merge them with database messages
+      const hasOptimisticMessages = prev.some(msg => isOptimisticMessage(msg));
+      
+      if (hasOptimisticMessages) {
+        // Keep optimistic messages and only add new database messages that aren't duplicated
+        const lastDbMessage = dbMessages[dbMessages.length - 1];
+        
+        // If the last database message is newer than our optimistic messages, replace all with DB messages
+        if (lastDbMessage && lastDbMessage.sent_at) {
+          const lastDbTime = new Date(lastDbMessage.sent_at).getTime();
+          const optimisticTimes = prev
+            .filter(msg => isOptimisticMessage(msg))
+            .map(msg => new Date(msg.sent_at || '').getTime());
+          
+          const latestOptimistic = Math.max(...optimisticTimes);
+          
+          if (lastDbTime > latestOptimistic) {
+            return dbMessages;
+          }
+        }
+        
+        return prev; // Keep optimistic messages
+      } else {
+        return dbMessages;
+      }
+    });
 
     // Determine which chat model to use
     determineModelToUse();
@@ -150,9 +188,36 @@ export default function ChatPage() {
       }
     }
 
-    // Clear the prompt immediately
+    // Create user message object and display it immediately
+    const userMessage: DbMessage = {
+      id: generateTempId(), // Temporary ID for immediate display
+      chat_thread_id: threadId ? parseInt(threadId) : 0,
+      role: "user",
+      content: prompt,
+      model: currentChatModel,
+      sent_at: new Date().toISOString(),
+      status: "done",
+    };
+
+    // Clear the prompt and add user message to display immediately
     const messageContent = prompt;
     setPrompt("");
+    setMessages(prev => [...prev, userMessage]);
+
+    // Create initial assistant message
+    const initialAssistantMessage: DbMessage = {
+      id: generateTempId(), // Temporary ID
+      chat_thread_id: threadId ? parseInt(threadId) : 0,
+      role: "assistant",
+      content: "",
+      reasoning: "",
+      model: currentChatModel,
+      sent_at: new Date().toISOString(),
+      status: "idle",
+    };
+
+    // Set initial streaming message
+    setStreamingMessage(initialAssistantMessage);
 
     // Send the streaming message
     try {
@@ -164,16 +229,33 @@ export default function ChatPage() {
         },
         {
           onMessageUpdate: (message) => {
-            setStreamingMessage(message);
+            setStreamingMessage(prev => {
+              if (!prev) {
+                return message;
+              }
+              
+              // Accumulate the content and reasoning incrementally
+              return {
+                ...message, // Use the latest message properties (status, timestamps, etc.)
+                content: (prev.content || "") + (message.content || ""),
+                reasoning: message.reasoning || prev.reasoning || "",
+              };
+            });
           },
           onComplete: () => {
             setStreamingMessage(null);
-            refetchMessages();
+            // Replace optimistic messages with final database messages
+            setTimeout(() => {
+              refetchMessages();
+            }, 100);
           },
           onError: (error) => {
             console.error("Streaming error:", error);
             setStreamingMessage(null);
-            // Optionally show error to user
+            // Restore the prompt if sending failed
+            setPrompt(messageContent);
+            // Remove the user message we added optimistically
+            setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
           },
         }
       );
@@ -181,6 +263,9 @@ export default function ChatPage() {
       console.error("Failed to send message:", error);
       // Restore the prompt if sending failed
       setPrompt(messageContent);
+      // Remove the user message we added optimistically
+      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+      setStreamingMessage(null);
     }
   }, [
     prompt,
@@ -194,10 +279,25 @@ export default function ChatPage() {
 
   // ===== RENDERING =====
 
-  // Combine regular messages with streaming message
+  // Combine regular messages with streaming message, avoiding duplicates
   const allMessages = [...messages];
   if (streamingMessage) {
-    allMessages.push(streamingMessage);
+    // Only add streaming message if it's not already in the messages array
+    const existingMessage = messages.find(msg => 
+      msg.role === "assistant" && 
+      msg.chat_thread_id === streamingMessage.chat_thread_id &&
+      msg.id === streamingMessage.id
+    );
+    
+    if (!existingMessage) {
+      allMessages.push(streamingMessage);
+    } else {
+      // Replace the existing message with the streaming version
+      const index = allMessages.findIndex(msg => msg.id === existingMessage.id);
+      if (index !== -1) {
+        allMessages[index] = streamingMessage;
+      }
+    }
   }
 
   return (
