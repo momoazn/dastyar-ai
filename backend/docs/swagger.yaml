@@ -280,10 +280,6 @@ definitions:
         description: Target language code (e.g., 'fa', 'en', 'ar')
         example: en
         type: string
-      thread_id:
-        description: The thread ID for this translation
-        example: "123"
-        type: string
       tone:
         description: Translation tone (formal, casual, technical, friendly)
         example: formal
@@ -293,7 +289,6 @@ definitions:
     - source_language
     - source_text
     - target_language
-    - thread_id
     type: object
   handlers.UpdateChatThreadRequest:
     description: Request payload for updating an existing chat thread
@@ -628,10 +623,6 @@ paths:
           description: Bad request - missing required fields or invalid parameters
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Translation thread not found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal server error - model or database error
           schema:
@@ -652,10 +643,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "204":
           description: Translation deleted successfully
-          schema:
-            $ref: '#/definitions/handlers.Response-db_Translation'
         "404":
           description: Translation not found
           schema:

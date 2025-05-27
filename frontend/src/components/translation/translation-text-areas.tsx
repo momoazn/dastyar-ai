@@ -10,7 +10,6 @@ interface TranslationTextAreasProps {
     translatedText: string;
   };
   loadingText: string;
-  isExistingTranslation: boolean;
 }
 
 export function TranslationTextAreas({
@@ -20,7 +19,6 @@ export function TranslationTextAreas({
   onSourceTextChange,
   placeholders,
   loadingText,
-  isExistingTranslation,
 }: TranslationTextAreasProps) {
   return (
     <div className="flex h-full w-full flex-col gap-4">
@@ -32,7 +30,6 @@ export function TranslationTextAreas({
             value={sourceText}
             onChange={(e) => onSourceTextChange(e.target.value)}
             className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-            disabled={isExistingTranslation}
           />
         </div>
       </Card>
@@ -50,7 +47,6 @@ export function TranslationTextAreas({
               value={translatedText}
               readOnly
               className="h-full min-h-[200px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-              disabled={isExistingTranslation}
             />
           )}
         </div>

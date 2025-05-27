@@ -324,12 +324,6 @@ export type HandlersTranslateRequest = {
    */
   target_language: string;
   /**
-   * The thread ID for this translation
-   *
-   * @example 123
-   */
-  thread_id: string;
-  /**
    * Translation tone (formal, casual, technical, friendly)
    *
    * @example formal

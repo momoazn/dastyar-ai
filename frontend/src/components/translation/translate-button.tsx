@@ -15,11 +15,11 @@ export function TranslateButton({
   disabled = false,
 }: TranslateButtonProps) {
   return (
-    <div className="flex flex-1/5 justify-end">
+    <div className="mt-4 flex w-full flex-1/5 justify-end">
       <Button
         variant="outline"
         size="lg"
-        className="cursor-pointer"
+        className="cursor-pointer w-full"
         onClick={onTranslate}
         disabled={disabled || isTranslating}
       >
@@ -28,4 +28,4 @@ export function TranslateButton({
       </Button>
     </div>
   );
-} 
+}

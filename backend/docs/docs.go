@@ -462,12 +462,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "Translation thread not found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal server error - model or database error",
                         "schema": {
@@ -538,11 +532,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Translation deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response-db_Translation"
-                        }
+                    "204": {
+                        "description": "Translation deleted successfully"
                     },
                     "404": {
                         "description": "Translation not found",
@@ -939,8 +930,7 @@ const docTemplate = `{
                 "model",
                 "source_language",
                 "source_text",
-                "target_language",
-                "thread_id"
+                "target_language"
             ],
             "properties": {
                 "model": {
@@ -962,11 +952,6 @@ const docTemplate = `{
                     "description": "Target language code (e.g., 'fa', 'en', 'ar')",
                     "type": "string",
                     "example": "en"
-                },
-                "thread_id": {
-                    "description": "The thread ID for this translation",
-                    "type": "string",
-                    "example": "123"
                 },
                 "tone": {
                     "description": "Translation tone (formal, casual, technical, friendly)",

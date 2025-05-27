@@ -1013,10 +1013,6 @@ export type CreateTranslationError = Fetcher.ErrorWrapper<
       payload: Schemas.HandlersErrorResponse;
     }
   | {
-      status: 404;
-      payload: Schemas.HandlersErrorResponse;
-    }
-  | {
       status: 500;
       payload: Schemas.HandlersErrorResponse;
     }
@@ -1097,7 +1093,7 @@ export const fetchDeleteTranslation = (
   signal?: AbortSignal,
 ) =>
   apiFetch<
-    Schemas.HandlersResponseDbTranslation,
+    undefined,
     DeleteTranslationError,
     undefined,
     {},
@@ -1111,7 +1107,7 @@ export const fetchDeleteTranslation = (
 export const useDeleteTranslation = (
   options?: Omit<
     reactQuery.UseMutationOptions<
-      Schemas.HandlersResponseDbTranslation,
+      undefined,
       DeleteTranslationError,
       DeleteTranslationVariables
     >,
@@ -1120,7 +1116,7 @@ export const useDeleteTranslation = (
 ) => {
   const { fetcherOptions } = useApiContext();
   return reactQuery.useMutation<
-    Schemas.HandlersResponseDbTranslation,
+    undefined,
     DeleteTranslationError,
     DeleteTranslationVariables
   >({

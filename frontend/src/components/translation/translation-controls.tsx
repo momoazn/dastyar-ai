@@ -28,7 +28,6 @@ interface TranslationControlsProps {
   languages: Language[];
   tones: Tone[];
   models: Model[];
-  isExistingTranslation: boolean;
   labels: {
     sourceLanguage: string;
     targetLanguage: string;
@@ -49,7 +48,6 @@ export function TranslationControls({
   languages,
   tones,
   models,
-  isExistingTranslation,
   labels,
 }: TranslationControlsProps) {
   const languageOptions = languages.map((lang) => ({
@@ -76,7 +74,6 @@ export function TranslationControls({
             value={sourceLang}
             onChange={onSourceLangChange}
             options={languageOptions}
-            disabled={isExistingTranslation}
           />
 
           <Selector
@@ -84,7 +81,6 @@ export function TranslationControls({
             value={targetLang}
             onChange={onTargetLangChange}
             options={languageOptions}
-            disabled={isExistingTranslation}
           />
 
           <Selector
@@ -92,7 +88,6 @@ export function TranslationControls({
             value={tone}
             onChange={onToneChange}
             options={toneOptions}
-            disabled={isExistingTranslation}
           />
 
           <Selector
@@ -100,7 +95,6 @@ export function TranslationControls({
             value={model}
             onChange={onModelChange}
             options={modelOptions}
-            disabled={isExistingTranslation}
           />
         </div>
       </div>

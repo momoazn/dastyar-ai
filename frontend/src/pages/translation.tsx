@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useModelsList, useTranslate } from "@/hooks";
-import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { skipToken } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
-import { useGetTranslation } from "../../generated/apiComponents";
 import {
+  TranslateButton,
   TranslationControls,
   TranslationTextAreas,
-  TranslateButton,
 } from "@/components/translation";
+import { useModelsList } from "@/hooks";
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
+import { skipToken } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  useCreateTranslation,
+  useGetTranslation,
+  useGetTranslations,
+} from "../../generated/apiComponents";
 
 const languages = [
   {
@@ -63,21 +67,30 @@ export default function TranslationPage() {
   const [model, setModel] = useState<string>("");
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const isExistingTranslation = Boolean(id);
 
-  const { data: ollamaModels, isLoading: isLoadingModels } = useModelsList();
-
+  const { data: ollamaModels } = useModelsList();
+  const { refetch: refetchTranslations } = useGetTranslations({});
   const { data: translationResponse } = useGetTranslation(
     id ? { pathParams: { id } } : skipToken,
     {
       enabled: isExistingTranslation,
     },
   );
+  const { mutate: createTranslation, isPending: isTranslating } =
+    useCreateTranslation({
+      onSuccess: ({ data }) => {
+        refetchTranslations();
+        navigate(`/translation/${data?.id}`);
+        setTranslatedText(data?.translated_text || "");
+      },
+    });
 
   const translation = translationResponse?.data;
 
   useEffect(() => {
-    if (!translation || isExistingTranslation) return;
+    if (!translation || !isExistingTranslation) return;
     setSourceText(translation.source_text || "");
     setTranslatedText(translation.translated_text || "");
     setSourceLang((translation.source_language as Language) || "en");
@@ -87,17 +100,21 @@ export default function TranslationPage() {
   }, [translation, isExistingTranslation]);
 
   useEffect(() => {
-    if (!ollamaModels || model || translation || isLoadingModels) return;
-    setModel(ollamaModels.models[0].model);
-  }, [ollamaModels, model, translation, isLoadingModels]);
-
-  const { translate, isTranslating } = useTranslate();
+    if (!ollamaModels || model) return;
+    setModel(ollamaModels.models?.at(-1)?.model || "");
+  }, [ollamaModels]);
 
   const handleTranslate = useCallback(() => {
-    translate(sourceText, { sourceLang, targetLang, tone }).then((result) => {
-      setTranslatedText(result);
+    createTranslation({
+      body: {
+        source_text: sourceText,
+        model: model,
+        source_language: sourceLang,
+        target_language: targetLang,
+        tone: tone,
+      },
     });
-  }, [sourceText, sourceLang, targetLang, tone, translate]);
+  }, [sourceText, sourceLang, targetLang, tone, model, createTranslation]);
 
   const models = ollamaModels?.models || [];
 
@@ -116,7 +133,6 @@ export default function TranslationPage() {
         languages={languages}
         tones={tones}
         models={models}
-        isExistingTranslation={isExistingTranslation}
         labels={{
           sourceLanguage: PERSIAN_TEXTS.translation.sourceLanguage,
           targetLanguage: PERSIAN_TEXTS.translation.targetLanguage,
@@ -137,7 +153,6 @@ export default function TranslationPage() {
             translatedText: PERSIAN_TEXTS.translation.translatedText,
           }}
           loadingText={PERSIAN_TEXTS.translation.translating}
-          isExistingTranslation={isExistingTranslation}
         />
 
         <TranslateButton
