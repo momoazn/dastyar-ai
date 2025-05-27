@@ -57,6 +57,7 @@ export const PERSIAN_TEXTS = {
     showThoughts: "نمایش افکار",
     hideThoughts: "پنهان کردن افکار",
     writeMessage: "پیام خود را بنویسید...",
+    generationStopped: "تولید پاسخ متوقف شد",
   },
 
   // Translation Interface

@@ -77,7 +77,9 @@ export function useStreamingChat() {
       options.onComplete();
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        console.log("Chat stream was aborted");
+        console.log("Chat stream was aborted by user");
+        // Call onComplete for aborted streams since the backend saves the partial message
+        options.onComplete();
       } else {
         console.error("Streaming error:", error);
         options.onError(error instanceof Error ? error.message : "Unknown error");

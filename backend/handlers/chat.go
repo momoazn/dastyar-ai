@@ -21,6 +21,7 @@ const (
 	StatusReasoning  = "reasoning"
 	StatusResponding = "responding"
 	StatusDone       = "done"
+	StatusStopped    = "stopped"
 )
 
 // Message roles
@@ -95,12 +96,24 @@ func (h *Handler) handleStreamChat(c echo.Context) error {
 
 	// 6. Stream response to client
 	streamResult, err := h.streamResponse(c, assistantMsg, messages, chatReq)
+
+	// Handle stopped streaming (not an error)
+	if streamResult.FinalStatus == StatusStopped {
+		log.Info().
+			Uint("thread_id", thread.ID).
+			Int("chunks_sent", streamResult.ChunkCount).
+			Dur("total_duration_ms", time.Since(startTime)).
+			Msg("Chat stream stopped by client")
+		return nil
+	}
+
+	// Handle actual errors
 	if err != nil {
 		logStreamError(err, thread.ID, streamResult)
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
 	}
 
-	// 7. Update assistant message with final content
+	// 7. Update assistant message with final content (only for completed streams)
 	if err := h.updateMessageAndChatThread(assistantMsg, thread, streamResult); err != nil {
 		log.Error().Err(err).Uint("thread_id", thread.ID).Msg("Failed to update records")
 	}
@@ -215,6 +228,7 @@ type StreamResult struct {
 	ChunkCount    int
 	StartTime     time.Time
 	EndTime       time.Time
+	FinalStatus   string
 }
 
 func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messages []api.Message, chatReq ChatRequest) (StreamResult, error) {
@@ -233,6 +247,7 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 	isReasoning := false
 	isReasoningModel := utils.IsReasoningModel(chatReq.Model)
 	currentStatus := StatusIdle
+	wasStopped := false
 
 	// Start streaming response
 	err := h.ollamaClient.Chat(c.Request().Context(), &api.ChatRequest{
@@ -242,12 +257,14 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 	}, func(response api.ChatResponse) error {
 		select {
 		case <-done:
+			// Client disconnected - mark as stopped and save partial content
+			wasStopped = true
 			log.Info().
 				Str("thread_id", chatReq.ThreadID).
 				Int("chunks_sent", result.ChunkCount).
 				Dur("stream_duration_ms", time.Since(streamStart)).
-				Msg("Client disconnected")
-			return fmt.Errorf("client disconnected")
+				Msg("Client disconnected - streaming stopped")
+			return fmt.Errorf("streaming stopped by client")
 		default:
 			if isReasoningModel {
 				h.processReasoningModelResponse(&result, &currentChunk, &isReasoning, &currentStatus, response.Message.Content)
@@ -260,7 +277,9 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 
 			// Send the chunk to the client
 			if err := json.NewEncoder(c.Response()).Encode(chatResponse); err != nil {
-				return err
+				// Client disconnected during send - mark as stopped
+				wasStopped = true
+				return fmt.Errorf("streaming stopped by client")
 			}
 			c.Response().Flush()
 			return nil
@@ -268,6 +287,16 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 	})
 
 	result.EndTime = time.Now()
+
+	// If streaming was stopped by client, update the result accordingly
+	if wasStopped {
+		result.FinalStatus = StatusStopped
+		// Save partial content to database immediately
+		h.updateMessageWithStoppedStatus(assistantMsg, result)
+		return result, nil // Return success instead of error
+	}
+
+	result.FinalStatus = StatusDone
 	return result, err
 }
 
@@ -324,13 +353,28 @@ func (h *Handler) updateMessageAndChatThread(assistantMsg db.Message, chatThread
 		Updates(map[string]interface{}{
 			"content":   result.FullContent,
 			"reasoning": result.FullReasoning,
-			"status":    StatusDone,
+			"status":    result.FinalStatus,
 		}).Error; err != nil {
 		return err
 	}
 
 	// Update chat thread's updated_at timestamp
 	return h.db.Model(&chatThread).Update("updated_at", time.Now()).Error
+}
+
+func (h *Handler) updateMessageWithStoppedStatus(assistantMsg db.Message, result StreamResult) error {
+	// Update the assistant message with the stopped status and partial content
+	if err := h.db.Model(&assistantMsg).
+		Updates(map[string]interface{}{
+			"content":   result.FullContent,
+			"reasoning": result.FullReasoning,
+			"status":    result.FinalStatus,
+		}).Error; err != nil {
+		return err
+	}
+
+	// Update chat thread's updated_at timestamp
+	return h.db.Model(&assistantMsg.ChatThread).Update("updated_at", time.Now()).Error
 }
 
 func logStreamError(err error, chatThreadID uint, result StreamResult) {

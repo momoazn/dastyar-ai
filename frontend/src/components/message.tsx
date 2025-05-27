@@ -6,7 +6,14 @@ import { Button } from "@/components/ui";
 import type { DbMessage as MessageType } from "../../generated/apiSchemas";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
-import { BotIcon, Loader2, UserIcon, Eye, EyeOff } from "lucide-react";
+import {
+  BotIcon,
+  Loader2,
+  UserIcon,
+  Eye,
+  EyeOff,
+  StopCircle,
+} from "lucide-react";
 
 const THINKING_MODELS = ["deepseek-r1", "deepscaler"];
 
@@ -29,13 +36,18 @@ export function Message({ message }: MessageProps) {
 
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
+  const isStopped = message.status === "stopped";
+  const isGenerating =
+    message.status === "idle" ||
+    message.status === "reasoning" ||
+    message.status === "responding";
 
   return (
     <div
       id={`message-${message.id}`}
       className={cn(
         "group flex w-full gap-3",
-        isUser ? "justify-end" : "justify-start"
+        isUser ? "justify-end" : "justify-start",
       )}
     >
       {/* Avatar for assistant */}
@@ -52,7 +64,7 @@ export function Message({ message }: MessageProps) {
         dir={detectTextDirection(message.content || "")}
         className={cn(
           "max-w-[80%] transition-all duration-200",
-          isUser && "order-1"
+          isUser && "order-1",
         )}
       >
         {/* Message bubble */}
@@ -61,16 +73,16 @@ export function Message({ message }: MessageProps) {
             "rounded-md border shadow-sm",
             isUser
               ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
-              : "bg-sidebar border-sidebar-border"
+              : "bg-sidebar border-sidebar-border",
           )}
         >
           {/* Thinking section header and content */}
           {hasThinking && (
             <>
-              <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-2">
+              <div className="border-sidebar-border flex items-center justify-between border-b px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <div className="bg-amber-500 h-2 w-2 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-medium text-sidebar-foreground">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
+                  <span className="text-sidebar-foreground text-xs font-medium">
                     فرآیند تفکر
                   </span>
                 </div>
@@ -82,7 +94,11 @@ export function Message({ message }: MessageProps) {
                   className="h-6 px-2 text-xs"
                   onClick={() => setCollapsed((c) => !c)}
                 >
-                  {collapsed ? <Eye className="mr-1 h-3 w-3" /> : <EyeOff className="mr-1 h-3 w-3" />}
+                  {collapsed ? (
+                    <Eye className="mr-1 h-3 w-3" />
+                  ) : (
+                    <EyeOff className="mr-1 h-3 w-3" />
+                  )}
                   {collapsed
                     ? PERSIAN_TEXTS.chat.showThoughts
                     : PERSIAN_TEXTS.chat.hideThoughts}
@@ -94,13 +110,13 @@ export function Message({ message }: MessageProps) {
                   "overflow-hidden transition-all duration-300 ease-in-out",
                   collapsed
                     ? "max-h-0 opacity-0"
-                    : "max-h-[400px] opacity-100 border-b border-sidebar-border"
+                    : "border-sidebar-border max-h-[400px] border-b opacity-100",
                 )}
               >
                 <div className="bg-muted/50 p-3">
                   <div
                     dir="ltr"
-                    className="prose prose-sm max-w-none text-muted-foreground"
+                    className="prose prose-sm text-muted-foreground max-w-none"
                   >
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.reasoning || ""}
@@ -112,11 +128,11 @@ export function Message({ message }: MessageProps) {
           )}
 
           {/* Loading state */}
-          {message.status === "idle" && (
+          {isGenerating && (
             <div className="flex items-center justify-center p-4">
               <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
-                <span className="text-sm text-muted-foreground">
+                <Loader2 className="text-sidebar-primary h-4 w-4 animate-spin" />
+                <span className="text-muted-foreground text-sm">
                   در حال تولید پاسخ...
                 </span>
               </div>
@@ -124,31 +140,45 @@ export function Message({ message }: MessageProps) {
           )}
 
           {/* Main message content */}
-          <div className="p-3">
-            <article
-              className={cn(
-                "prose prose-sm max-w-none break-words",
-                isUser
-                  ? "prose-invert"
-                  : "dark:prose-invert prose-sidebar"
+          {(message.content || !isGenerating) && (
+            <div className="p-3">
+              <article
+                className={cn(
+                  "prose prose-sm max-w-none break-words",
+                  isUser ? "prose-invert" : "dark:prose-invert prose-sidebar",
+                )}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content || ""}
+                </ReactMarkdown>
+              </article>
+
+              {/* Stopped message indicator */}
+              {isStopped && (
+                <div className="text-muted-foreground border-sidebar-border mt-3 flex items-center gap-2 border-t pt-2 text-xs">
+                  <StopCircle className="h-3 w-3" />
+                  <span>{PERSIAN_TEXTS.chat.generationStopped}</span>
+                </div>
               )}
-            >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content || ""}
-              </ReactMarkdown>
-            </article>
-          </div>
+            </div>
+          )}
 
           {/* Message timestamp footer */}
           <div className="px-3 pb-2 text-right">
-            <time className={cn(
-              "text-xs opacity-70",
-              isUser ? "text-sidebar-primary-foreground" : "text-sidebar-foreground"
-            )}>
-              {message.sent_at ? new Date(message.sent_at).toLocaleTimeString('fa-IR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              }) : ''}
+            <time
+              className={cn(
+                "text-xs opacity-70",
+                isUser
+                  ? "text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground",
+              )}
+            >
+              {message.sent_at
+                ? new Date(message.sent_at).toLocaleTimeString("fa-IR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : ""}
             </time>
           </div>
         </div>
@@ -156,7 +186,7 @@ export function Message({ message }: MessageProps) {
 
       {/* Avatar for user */}
       {isUser && (
-        <div className="mt-1 flex-shrink-0 order-2">
+        <div className="order-2 mt-1 flex-shrink-0">
           <div className="bg-sidebar-primary text-sidebar-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
             <UserIcon className="h-4 w-4" />
           </div>
