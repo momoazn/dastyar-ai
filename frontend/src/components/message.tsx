@@ -6,7 +6,7 @@ import { Button } from "@/components/ui";
 import type { DbMessage as MessageType } from "../../generated/apiSchemas";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
-import { BotIcon, Loader2, UserIcon } from "lucide-react";
+import { BotIcon, Loader2, UserIcon, Eye, EyeOff } from "lucide-react";
 
 const THINKING_MODELS = ["deepseek-r1", "deepscaler"];
 
@@ -27,93 +27,141 @@ export function Message({ message }: MessageProps) {
     message?.model &&
     isThinkingModel(message.model);
 
+  const isUser = message.role === "user";
+  const isAssistant = message.role === "assistant";
+
   return (
     <div
       id={`message-${message.id}`}
       className={cn(
-        "flex pr-4",
-        message.role === "assistant" ? "justify-start" : "justify-end",
+        "group flex w-full gap-3",
+        isUser ? "justify-end" : "justify-start"
       )}
     >
-      {/* Message bubble */}
+      {/* Avatar for assistant */}
+      {isAssistant && (
+        <div className="mt-1 flex-shrink-0">
+          <div className="bg-sidebar-primary text-sidebar-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
+            <BotIcon className="h-4 w-4" />
+          </div>
+        </div>
+      )}
+
+      {/* Message content */}
       <div
         dir={detectTextDirection(message.content || "")}
         className={cn(
-          "flex max-w-[85%] flex-col space-y-3 rounded-md p-4 shadow-xs transition-colors",
-          message.role === "assistant"
-            ? "bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
-            : "bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white",
+          "max-w-[80%] transition-all duration-200",
+          isUser && "order-1"
         )}
       >
-        {/* Message header */}
+        {/* Message bubble */}
         <div
           className={cn(
-            "rtl flex w-full items-center",
-            message.role === "user"
-              ? "justify-start"
-              : hasThinking
-                ? "justify-between"
-                : "justify-end",
+            "rounded-md border shadow-sm",
+            isUser
+              ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-border"
+              : "bg-sidebar border-sidebar-border"
           )}
         >
-          {/* Toggle thoughts button */}
+          {/* Thinking section header and content */}
           {hasThinking && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs"
-              onClick={() => setCollapsed((c) => !c)}
+            <>
+              <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-500 h-2 w-2 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-sidebar-foreground">
+                    فرآیند تفکر
+                  </span>
+                </div>
+
+                {/* Thinking toggle button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setCollapsed((c) => !c)}
+                >
+                  {collapsed ? <Eye className="mr-1 h-3 w-3" /> : <EyeOff className="mr-1 h-3 w-3" />}
+                  {collapsed
+                    ? PERSIAN_TEXTS.chat.showThoughts
+                    : PERSIAN_TEXTS.chat.hideThoughts}
+                </Button>
+              </div>
+
+              <div
+                className={cn(
+                  "overflow-hidden transition-all duration-300 ease-in-out",
+                  collapsed
+                    ? "max-h-0 opacity-0"
+                    : "max-h-[400px] opacity-100 border-b border-sidebar-border"
+                )}
+              >
+                <div className="bg-muted/50 p-3">
+                  <div
+                    dir="ltr"
+                    className="prose prose-sm max-w-none text-muted-foreground"
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.reasoning || ""}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Loading state */}
+          {message.status === "idle" && (
+            <div className="flex items-center justify-center p-4">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
+                <span className="text-sm text-muted-foreground">
+                  در حال تولید پاسخ...
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Main message content */}
+          <div className="p-3">
+            <article
+              className={cn(
+                "prose prose-sm max-w-none break-words",
+                isUser
+                  ? "prose-invert"
+                  : "dark:prose-invert prose-sidebar"
+              )}
             >
-              {collapsed
-                ? PERSIAN_TEXTS.chat.showThoughts
-                : PERSIAN_TEXTS.chat.hideThoughts}
-            </Button>
-          )}
-
-          {/* Message icon */}
-          {message.role === "assistant" ? (
-            <BotIcon className="h-4 w-4" />
-          ) : (
-            <UserIcon className="h-4 w-4" />
-          )}
-        </div>
-
-        {/* Thoughts */}
-        {hasThinking && (
-          <div
-            dir="ltr"
-            className={cn(
-              "border-muted text-muted-foreground overflow-hidden border-l-2 pl-3 text-sm transition-all duration-200 ease-in-out dark:text-slate-400",
-              collapsed
-                ? "mt-0 max-h-0 opacity-0"
-                : "mt-2 max-h-[500px] opacity-100",
-            )}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.reasoning || ""}
-            </ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content || ""}
+              </ReactMarkdown>
+            </article>
           </div>
-        )}
 
-        {/* Waiting for first chunk */}
-        {message.status === "idle" && (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        )}
-
-        {/* Message content */}
-        <article
-          className={cn(
-            "prose dark:prose-pre:bg-slate-900 max-w-none break-words",
-            message.role === "user"
-              ? "prose-invert dark:prose-headings:text-white dark:prose-a:text-blue-300"
-              : "dark:prose-headings:text-white dark:prose-a:text-blue-400 dark:text-slate-100",
-          )}
-        >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {message.content || ""}
-          </ReactMarkdown>
-        </article>
+          {/* Message timestamp footer */}
+          <div className="px-3 pb-2 text-right">
+            <time className={cn(
+              "text-xs opacity-70",
+              isUser ? "text-sidebar-primary-foreground" : "text-sidebar-foreground"
+            )}>
+              {message.sent_at ? new Date(message.sent_at).toLocaleTimeString('fa-IR', {
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}
+            </time>
+          </div>
+        </div>
       </div>
+
+      {/* Avatar for user */}
+      {isUser && (
+        <div className="mt-1 flex-shrink-0 order-2">
+          <div className="bg-sidebar-primary text-sidebar-primary-foreground flex h-8 w-8 items-center justify-center rounded-md">
+            <UserIcon className="h-4 w-4" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

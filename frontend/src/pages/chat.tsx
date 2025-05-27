@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Loader2, BotIcon } from "lucide-react";
 
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
@@ -200,35 +201,56 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="relative flex h-full flex-col gap-4 p-4">
+    <main className="flex h-full flex-col gap-4">
       {/* Chat Messages Container */}
-      <ScrollArea className="bg-background flex-1 rounded-lg">
-        <section className="flex flex-col gap-4 p-4">
-          {allMessages.length > 0 ? (
-            allMessages.map((message, index) => (
-              <Message key={message.id || `streaming-${index}`} message={message} />
-            ))
-          ) : !inNewChat && isLoadingMessages ? (
-            <div className="flex h-32 items-center justify-center">
-              <div className="text-muted-foreground animate-pulse">
-                {PERSIAN_TEXTS.general.loading}...
+      <div className="bg-card rounded-md border shadow-sm flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <section className="flex flex-col gap-4 p-4">
+            {allMessages.length > 0 ? (
+              allMessages.map((message, index) => (
+                <Message key={message.id || `streaming-${index}`} message={message} />
+              ))
+            ) : !inNewChat && isLoadingMessages ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="flex items-center gap-3 rounded-md bg-muted p-3">
+                  <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
+                  <span className="text-sm text-muted-foreground">
+                    {PERSIAN_TEXTS.general.loading}...
+                  </span>
+                </div>
               </div>
-            </div>
-          ) : null}
-          <div ref={messagesEndRef} />
-        </section>
-      </ScrollArea>
+            ) : (
+              <div className="flex h-64 items-center justify-center">
+                <div className="text-center">
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground mx-auto mb-4 h-16 w-16 rounded-md p-4">
+                    <BotIcon className="h-full w-full" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-foreground">
+                    مکالمه جدید را شروع کنید
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    سوال خود را بپرسید تا بتوانم به شما کمک کنم
+                  </p>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </section>
+        </ScrollArea>
+      </div>
 
       {/* Chat Input Container */}
-      <ChatInput
-        prompt={prompt}
-        setPrompt={setPrompt}
-        handleSendPrompt={handleSendPrompt}
-        currentChatModel={currentChatModel}
-        setCurrentChatModel={setCurrentChatModel}
-        isStreaming={isStreaming}
-        stopStreaming={stopStreaming}
-      />
+      <div className="bg-card rounded-md border shadow-sm">
+        <ChatInput
+          prompt={prompt}
+          setPrompt={setPrompt}
+          handleSendPrompt={handleSendPrompt}
+          currentChatModel={currentChatModel}
+          setCurrentChatModel={setCurrentChatModel}
+          isStreaming={isStreaming}
+          stopStreaming={stopStreaming}
+        />
+      </div>
     </main>
   );
 }

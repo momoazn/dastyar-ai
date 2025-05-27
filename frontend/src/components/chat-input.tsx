@@ -1,4 +1,4 @@
-import { Mic, Pause, Send } from "lucide-react";
+import { Mic, Pause, Send, Sparkles } from "lucide-react";
 
 import {
   Button,
@@ -65,7 +65,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="bg-background has-[textarea:focus]:ring-ring sticky bottom-0 flex min-h-[80px] flex-col gap-4 rounded-md border p-2 transition-all has-[textarea:focus]:ring-2 has-[textarea:focus]:ring-offset-2">
+    <div className="p-4 space-y-4">
       {/* Message Input Area */}
       <MessageInput
         prompt={prompt}
@@ -74,7 +74,7 @@ export function ChatInput({
       />
 
       {/* Controls Bar */}
-      <div className="flex w-full justify-between">
+      <div className="flex items-center justify-between">
         {/* Model Selector */}
         <ModelSelector
           currentModel={currentChatModel}
@@ -83,7 +83,7 @@ export function ChatInput({
         />
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {/* Record Button */}
           <RecordButton
             isRecording={isRecording}
@@ -92,7 +92,8 @@ export function ChatInput({
 
           {/* Send Button */}
           <SendButton
-            isDisabled={!prompt.trim() || isStreaming}
+            isDisabled={!prompt.trim()}
+            isStreaming={isStreaming}
             onClick={handleSendButtonClick}
           />
         </div>
@@ -109,14 +110,22 @@ interface MessageInputProps {
 
 function MessageInput({ prompt, setPrompt, handleKeyDown }: MessageInputProps) {
   return (
-    <Textarea
-      value={prompt}
-      onChange={(e) => setPrompt(e.target.value)}
-      placeholder={PERSIAN_TEXTS.chat.writeMessage}
-      className="h-full w-full resize-none rounded-none border-none focus-visible:ring-0"
-      dir={prompt ? detectTextDirection(prompt) : "rtl"}
-      onKeyDown={handleKeyDown}
-    />
+    <div className="relative">
+      <Textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder={PERSIAN_TEXTS.chat.writeMessage}
+        className="min-h-[60px] w-full resize-none border-border bg-background"
+        dir={prompt ? detectTextDirection(prompt) : "rtl"}
+        onKeyDown={handleKeyDown}
+      />
+      {/* Placeholder icon when empty */}
+      {!prompt && (
+        <div className="absolute left-4 top-4 text-muted-foreground">
+          <Sparkles className="h-5 w-5" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -137,15 +146,21 @@ function ModelSelector({
       value={currentModel}
       onValueChange={setCurrentModel}
     >
-      <SelectTrigger className="w-[200px] border-none">
+      <SelectTrigger className="w-[220px]">
         <SelectValue
           placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
         />
       </SelectTrigger>
       <SelectContent>
         {models.map((model) => (
-          <SelectItem key={model.name} value={model.name}>
-            {model.name}
+          <SelectItem 
+            key={model.name} 
+            value={model.name}
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <span>{model.name}</span>
+            </div>
           </SelectItem>
         ))}
       </SelectContent>
@@ -177,18 +192,24 @@ function RecordButton({ isRecording, onClick }: RecordButtonProps) {
 
 interface SendButtonProps {
   isDisabled: boolean;
+  isStreaming: boolean;
   onClick: () => void;
 }
 
-function SendButton({ isDisabled, onClick }: SendButtonProps) {
+function SendButton({ isDisabled, isStreaming, onClick }: SendButtonProps) {
   return (
     <Button
       size="icon"
-      className="h-10 w-10"
+      variant={isStreaming ? "destructive" : "default"}
       disabled={isDisabled}
       onClick={onClick}
+      className="h-10 w-10"
     >
-      <Send className="h-4 w-4" />
+      {isStreaming ? (
+        <Pause className="h-4 w-4" />
+      ) : (
+        <Send className="h-4 w-4" />
+      )}
     </Button>
   );
 }
