@@ -12,6 +12,7 @@ export enum Collections {
 	Otps = "_otps",
 	Superusers = "_superusers",
 	Messages = "messages",
+	Pdfs = "pdfs",
 	Threads = "threads",
 	Translations = "translations",
 }
@@ -117,6 +118,15 @@ export type MessagesRecord = {
 	updated?: IsoDateString
 }
 
+export type PdfsRecord = {
+	created?: IsoDateString
+	file: string
+	filename: string
+	id: string
+	message?: RecordIdString
+	updated?: IsoDateString
+}
+
 export type ThreadsRecord = {
 	created?: IsoDateString
 	id: string
@@ -162,6 +172,7 @@ export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemF
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
 export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> & BaseSystemFields<Texpand>
+export type PdfsResponse<Texpand = unknown> = Required<PdfsRecord> & BaseSystemFields<Texpand>
 export type ThreadsResponse<Texpand = unknown> = Required<ThreadsRecord> & BaseSystemFields<Texpand>
 export type TranslationsResponse<Texpand = unknown> = Required<TranslationsRecord> & BaseSystemFields<Texpand>
 
@@ -174,6 +185,7 @@ export type CollectionRecords = {
 	_otps: OtpsRecord
 	_superusers: SuperusersRecord
 	messages: MessagesRecord
+	pdfs: PdfsRecord
 	threads: ThreadsRecord
 	translations: TranslationsRecord
 }
@@ -185,6 +197,7 @@ export type CollectionResponses = {
 	_otps: OtpsResponse
 	_superusers: SuperusersResponse
 	messages: MessagesResponse
+	pdfs: PdfsResponse
 	threads: ThreadsResponse
 	translations: TranslationsResponse
 }
@@ -199,6 +212,7 @@ export type TypedPocketBase = PocketBase & {
 	collection(idOrName: '_otps'): RecordService<OtpsResponse>
 	collection(idOrName: '_superusers'): RecordService<SuperusersResponse>
 	collection(idOrName: 'messages'): RecordService<MessagesResponse>
+	collection(idOrName: 'pdfs'): RecordService<PdfsResponse>
 	collection(idOrName: 'threads'): RecordService<ThreadsResponse>
 	collection(idOrName: 'translations'): RecordService<TranslationsResponse>
 }
