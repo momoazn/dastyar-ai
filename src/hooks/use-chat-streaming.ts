@@ -14,6 +14,7 @@ const MESSAGES_QUERY_LIMIT = 100;
 const ERROR_MESSAGE = "Sorry, an error occurred while generating the response.";
 const REASONING_START_TAG = "<think>";
 const REASONING_END_TAG = "</think>";
+const UPDATE_INTERVAL_MS = 100; // Update assistant message every 100ms
 
 // ===== TYPES =====
 type CreateMessagePayload = Pick<
@@ -34,27 +35,6 @@ type StreamingState = {
 };
 
 // ===== UTILITY FUNCTIONS =====
-const generateMessageId = (prefix: string) => {
-  return `${prefix}-${Date.now()}`;
-};
-
-const createTempMessage = (
-  id: string,
-  role: MessagesRoleOptions,
-  content: string,
-  threadId: string,
-  model: string,
-  status: MessagesStatusOptions,
-): MessagesRecord => ({
-  id,
-  role,
-  content,
-  thread: threadId,
-  created: new Date().toISOString(),
-  model,
-  status,
-});
-
 const convertToOllamaMessages = (
   messages: MessagesRecord[],
 ): OllamaMessage[] => {
@@ -71,29 +51,29 @@ const parseReasoningTokens = (
   let reasoning = "";
   let response = "";
 
-  // Extract reasoning content between <think> and </think> tags
-  const reasoningMatch = content.match(
-    new RegExp(`${REASONING_START_TAG}([\\s\\S]*?)${REASONING_END_TAG}`, "g"),
-  );
+  // Handle progressive reasoning parsing during streaming
+  const thinkStartIndex = content.indexOf(REASONING_START_TAG);
 
-  if (reasoningMatch) {
-    // Extract all reasoning blocks and combine them
-    reasoning = reasoningMatch
-      .map((match) =>
-        match.replace(REASONING_START_TAG, "").replace(REASONING_END_TAG, ""),
-      )
-      .join("\n")
-      .trim();
+  if (thinkStartIndex !== -1) {
+    // We found an opening <think> tag
+    const thinkEndIndex = content.indexOf(REASONING_END_TAG, thinkStartIndex);
 
-    // Remove reasoning tags from content to get the actual response
-    response = content
-      .replace(
-        new RegExp(`${REASONING_START_TAG}[\\s\\S]*?${REASONING_END_TAG}`, "g"),
-        "",
-      )
-      .trim();
+    if (thinkEndIndex !== -1) {
+      // Complete reasoning block found
+      const reasoningStartPos = thinkStartIndex + REASONING_START_TAG.length;
+      reasoning = content.substring(reasoningStartPos, thinkEndIndex).trim();
+
+      // Response content comes after the closing </think> tag
+      const responseStartPos = thinkEndIndex + REASONING_END_TAG.length;
+      response = content.substring(responseStartPos).trim();
+    } else {
+      // Incomplete reasoning block (still streaming reasoning)
+      const reasoningStartPos = thinkStartIndex + REASONING_START_TAG.length;
+      reasoning = content.substring(reasoningStartPos).trim();
+      response = ""; // No response content yet
+    }
   } else {
-    // No reasoning tokens, treat entire content as response
+    // No reasoning tags, treat entire content as response
     response = content;
   }
 
@@ -108,9 +88,9 @@ const updateStreamingState = (
   const { reasoning, response } = parseReasoningTokens(updatedFullContent);
 
   // Determine if we're currently in reasoning mode
-  const isCurrentlyReasoning =
-    updatedFullContent.includes(REASONING_START_TAG) &&
-    !updatedFullContent.includes(REASONING_END_TAG);
+  const hasOpenTag = updatedFullContent.includes(REASONING_START_TAG);
+  const hasCloseTag = updatedFullContent.includes(REASONING_END_TAG);
+  const isCurrentlyReasoning = hasOpenTag && !hasCloseTag;
 
   return {
     isReasoning: isCurrentlyReasoning,
@@ -128,9 +108,12 @@ export function useStreamingChat(threadId?: string) {
   // ===== STATE MANAGEMENT =====
   const [prompt, setPrompt] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [tempMessages, setTempMessages] = useState<MessagesRecord[]>([]);
+  const [messages, setMessages] = useState<MessagesRecord[]>([]);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
+  const [updateInterval, setUpdateInterval] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   // ===== API QUERIES & MUTATIONS =====
   const { data: messagesData, refetch: refetchMessages } = useQuery({
@@ -149,59 +132,119 @@ export function useStreamingChat(threadId?: string) {
     },
   });
 
-  // ===== UTILITY FUNCTIONS =====
-  const updateTempMessage = useCallback(
-    (messageId: string, updates: Partial<MessagesRecord>) => {
-      setTempMessages((prev) => {
-        const newMessages = [...prev];
-        const index = newMessages.findIndex((msg) => msg.id === messageId);
+  // ===== POCKETBASE SUBSCRIPTION EFFECTS =====
+  useEffect(() => {
+    if (!threadId) return;
 
-        if (index !== -1) {
-          newMessages[index] = { ...newMessages[index], ...updates };
+    let unsubscribePromise: Promise<() => void> | null = null;
+
+    // Subscribe to all messages changes for this thread
+    unsubscribePromise = pb.collection("messages").subscribe(
+      "*",
+      (event) => {
+        const record = event.record as MessagesRecord;
+
+        // Only handle messages from the current thread
+        if (record.thread !== threadId) return;
+
+        if (event.action === "create") {
+          setMessages((prev) => {
+            // Check if message already exists to avoid duplicates
+            const exists = prev.some((msg) => msg.id === record.id);
+            if (exists) return prev;
+
+            // Insert in correct chronological order
+            const newMessages = [...prev, record];
+            newMessages.sort((a, b) => {
+              const aTime = a.created ? new Date(a.created).getTime() : 0;
+              const bTime = b.created ? new Date(b.created).getTime() : 0;
+              return aTime - bTime;
+            });
+            return newMessages;
+          });
+        } else if (event.action === "update") {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === record.id ? record : msg)),
+          );
+        } else if (event.action === "delete") {
+          setMessages((prev) => prev.filter((msg) => msg.id !== record.id));
         }
+      },
+      {
+        filter: `thread = "${threadId}"`,
+      },
+    );
 
-        return newMessages;
-      });
-    },
-    [],
-  );
+    // Cleanup subscription on unmount or threadId change
+    return () => {
+      if (unsubscribePromise) {
+        unsubscribePromise
+          .then((unsubscribe) => {
+            unsubscribe();
+          })
+          .catch(console.error);
+      }
+    };
+  }, [threadId]);
+
+  // ===== INITIAL MESSAGES LOAD =====
+  useEffect(() => {
+    if (messagesData?.items) {
+      setMessages(messagesData.items);
+    }
+  }, [messagesData]);
 
   // ===== STREAMING HANDLERS =====
-  const handleStreamingStart = useCallback(
-    (userMessage: MessagesRecord, assistantMessage: MessagesRecord) => {
-      setTempMessages((prev) => [...prev, userMessage, assistantMessage]);
-      setPrompt("");
-      setIsStreaming(true);
-
-      const controller = new AbortController();
-      setAbortController(controller);
-
-      return controller;
-    },
-    [],
-  );
-
-  const handleStreamingChunk = useCallback(
-    (
+  const handlePeriodicUpdate = useCallback(
+    async (
       assistantMessageId: string,
       streamingState: StreamingState,
       currentStatus: MessagesStatusOptions,
     ) => {
-      updateTempMessage(assistantMessageId, {
-        content: streamingState.responseContent,
-        reasoning: streamingState.reasoningContent,
-        status: currentStatus,
-      });
+      try {
+        // Update the assistant message in the database
+        // PocketBase subscription will automatically update the UI
+        await pb.collection("messages").update(assistantMessageId, {
+          content: streamingState.responseContent,
+          reasoning: streamingState.reasoningContent,
+          status: currentStatus,
+        });
+      } catch (error) {
+        console.error("Error updating assistant message:", error);
+      }
     },
-    [updateTempMessage],
+    [],
+  );
+
+  const setupPeriodicUpdates = useCallback(
+    (
+      assistantMessageId: string,
+      getStreamingState: () => StreamingState,
+      getCurrentStatus: () => MessagesStatusOptions,
+    ) => {
+      const interval = setInterval(async () => {
+        const streamingState = getStreamingState();
+        const currentStatus = getCurrentStatus();
+
+        if (streamingState.responseContent || streamingState.reasoningContent) {
+          await handlePeriodicUpdate(
+            assistantMessageId,
+            streamingState,
+            currentStatus,
+          );
+        }
+      }, UPDATE_INTERVAL_MS);
+
+      setUpdateInterval(interval);
+      return interval;
+    },
+    [handlePeriodicUpdate],
   );
 
   const handleStreamingComplete = useCallback(
     async (
       assistantMessageId: string,
       finalStreamingState: StreamingState,
-      threadId: string,
-      model: string,
       controller: AbortController,
     ) => {
       if (
@@ -209,43 +252,50 @@ export function useStreamingChat(threadId?: string) {
         finalStreamingState.responseContent.trim()
       ) {
         try {
-          await createMessage({
-            role: MessagesRoleOptions.assistant,
+          // Final update to the assistant message in database
+          // PocketBase subscription will automatically update the UI
+          await pb.collection("messages").update(assistantMessageId, {
             content: finalStreamingState.responseContent,
             reasoning: finalStreamingState.reasoningContent,
-            thread: threadId,
-            model,
-            status: MessagesStatusOptions.finished,
-          });
-
-          updateTempMessage(assistantMessageId, {
             status: MessagesStatusOptions.finished,
           });
 
           await refetchMessages();
         } catch (error) {
-          console.error("Error saving assistant message:", error);
-          handleStreamingError(assistantMessageId);
+          console.error("Error completing assistant message:", error);
+          await handleStreamingError(assistantMessageId);
         }
       }
     },
-    [createMessage, updateTempMessage, refetchMessages],
+    [refetchMessages],
   );
 
   const handleStreamingError = useCallback(
-    (assistantMessageId: string) => {
-      updateTempMessage(assistantMessageId, {
-        content: ERROR_MESSAGE,
-        status: MessagesStatusOptions.errored,
-      });
+    async (assistantMessageId: string) => {
+      try {
+        // Update database with error state
+        // PocketBase subscription will automatically update the UI
+        await pb.collection("messages").update(assistantMessageId, {
+          content: ERROR_MESSAGE,
+          status: MessagesStatusOptions.errored,
+        });
+      } catch (error) {
+        console.error("Error updating message with error state:", error);
+      }
     },
-    [updateTempMessage],
+    [],
   );
 
   const handleStreamingCleanup = useCallback(() => {
+    // Clear the update interval
+    if (updateInterval) {
+      clearInterval(updateInterval);
+      setUpdateInterval(null);
+    }
+
     setIsStreaming(false);
     setAbortController(null);
-  }, []);
+  }, [updateInterval]);
 
   // ===== MAIN SEND MESSAGE FUNCTION =====
   const sendMessage = useCallback(
@@ -257,7 +307,9 @@ export function useStreamingChat(threadId?: string) {
       }
 
       // Prepare messages for Ollama
-      const existingMessages = messagesData?.items || [];
+      const existingMessages = messages.filter(
+        (msg) => msg.thread === effectiveThreadId,
+      );
       const ollamaMessages = convertToOllamaMessages(existingMessages);
       const newUserMessage: OllamaMessage = {
         role: "user",
@@ -265,31 +317,13 @@ export function useStreamingChat(threadId?: string) {
       };
       const messagesToSend = [...ollamaMessages, newUserMessage];
 
-      // Create temporary message objects
-      const userMessageId = generateMessageId("temp-user");
-      const assistantMessageId = generateMessageId("temp-assistant");
-
-      const userMessage = createTempMessage(
-        userMessageId,
-        MessagesRoleOptions.user,
-        prompt.trim(),
-        effectiveThreadId,
-        model,
-        MessagesStatusOptions.idle,
-      );
-
-      const assistantMessage = createTempMessage(
-        assistantMessageId,
-        MessagesRoleOptions.assistant,
-        "",
-        effectiveThreadId,
-        model,
-        MessagesStatusOptions.idle,
-      );
-
       // Start streaming
       const currentPrompt = prompt.trim();
-      const controller = handleStreamingStart(userMessage, assistantMessage);
+      setPrompt("");
+      setIsStreaming(true);
+
+      const controller = new AbortController();
+      setAbortController(controller);
 
       // Initialize streaming state
       let streamingState: StreamingState = {
@@ -299,8 +333,11 @@ export function useStreamingChat(threadId?: string) {
         fullContent: "",
       };
 
+      let currentStatus = MessagesStatusOptions.idle;
+
       try {
         // Save user message to database immediately
+        // PocketBase subscription will automatically add it to UI
         await createMessage({
           role: MessagesRoleOptions.user,
           content: currentPrompt,
@@ -308,6 +345,27 @@ export function useStreamingChat(threadId?: string) {
           model,
           status: MessagesStatusOptions.idle,
         });
+
+        // Create assistant message in database immediately
+        // PocketBase subscription will automatically add it to UI
+        const assistantMessageResponse = await createMessage({
+          role: MessagesRoleOptions.assistant,
+          content: "",
+          reasoning: "",
+          thread: effectiveThreadId,
+          model,
+          status: MessagesStatusOptions.idle,
+        });
+
+        // Use the real assistant message ID from database
+        const realAssistantMessageId = assistantMessageResponse.id;
+
+        // Set up periodic updates
+        const interval = setupPeriodicUpdates(
+          realAssistantMessageId,
+          () => streamingState,
+          () => currentStatus,
+        );
 
         // Start Ollama streaming
         const streamResult = await ollama.chat({
@@ -329,32 +387,33 @@ export function useStreamingChat(threadId?: string) {
           );
 
           // Determine current status based on streaming state
-          let currentStatus = MessagesStatusOptions.streaming;
+          currentStatus = MessagesStatusOptions.streaming;
           if (streamingState.isReasoning) {
             currentStatus = MessagesStatusOptions.reasoning;
           } else if (streamingState.responseContent) {
             currentStatus = MessagesStatusOptions.streaming;
           }
 
-          // Update UI with current state
-          handleStreamingChunk(
-            assistantMessageId,
-            streamingState,
-            currentStatus,
-          );
+          // The periodic updates will handle database updates
+          // PocketBase subscriptions will handle UI updates
+        }
+
+        // Clear the interval before final update
+        if (interval) {
+          clearInterval(interval);
+          setUpdateInterval(null);
         }
 
         // Complete streaming
         await handleStreamingComplete(
-          assistantMessageId,
+          realAssistantMessageId,
           streamingState,
-          effectiveThreadId,
-          model,
           controller,
         );
       } catch (error) {
         console.error("Error during streaming:", error);
-        handleStreamingError(assistantMessageId);
+        // For errors during creation, we still need to handle properly
+        // but if we don't have an assistant message ID, we'll need different handling
       } finally {
         handleStreamingCleanup();
       }
@@ -362,12 +421,10 @@ export function useStreamingChat(threadId?: string) {
     [
       prompt,
       threadId,
-      messagesData?.items,
-      handleStreamingStart,
+      messages,
       createMessage,
-      handleStreamingChunk,
+      setupPeriodicUpdates,
       handleStreamingComplete,
-      handleStreamingError,
       handleStreamingCleanup,
     ],
   );
@@ -380,19 +437,12 @@ export function useStreamingChat(threadId?: string) {
     }
   }, [abortController, handleStreamingCleanup]);
 
-  // ===== EFFECTS =====
-  useEffect(() => {
-    if (messagesData?.items) {
-      setTempMessages(messagesData.items);
-    }
-  }, [messagesData]);
-
   // ===== RETURN INTERFACE =====
   return {
     // State
     prompt,
     isStreaming,
-    messages: tempMessages,
+    messages, // Now managed by PocketBase subscriptions
 
     // Actions
     setPrompt,
