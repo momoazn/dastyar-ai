@@ -1,4 +1,4 @@
-import { Mic, Pause, Send } from "lucide-react";
+import { Send, Pause } from "lucide-react";
 
 import {
   Button,
@@ -9,7 +9,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { useAudioRecording, useModelsList } from "@/hooks";
+import { useModelsList } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 
@@ -32,9 +32,6 @@ export function ChatInput({
   prompt,
   setPrompt,
 }: ChatInputProps) {
-  const { isRecording, startRecording, stopRecording } =
-    useAudioRecording(setPrompt);
-
   const { data: models } = useModelsList();
 
   // Handle key presses in the textarea
@@ -55,15 +52,6 @@ export function ChatInput({
       stopStreaming();
     } else {
       handleSendPrompt();
-    }
-  };
-
-  // Handle record button click
-  const handleRecordButtonClick = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
     }
   };
 
@@ -108,23 +96,8 @@ export function ChatInput({
           </Select>
         </div>
 
-        {/* Right side - Action buttons */}
+        {/* Right side - Send button */}
         <div className="flex items-center gap-2">
-          {/* Record Button */}
-          <Button
-            size="icon"
-            variant={isRecording ? "destructive" : "ghost"}
-            onClick={handleRecordButtonClick}
-            className="size-8"
-          >
-            {isRecording ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </Button>
-
-          {/* Send button inside input */}
           <Button
             size="icon"
             variant={isStreaming ? "destructive" : "ghost"}

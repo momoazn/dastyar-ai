@@ -1,11 +1,13 @@
 # Persian AI Assistant - Cursor Rules
 
 ## Project Overview
+
 This is a Persian AI Assistant project featuring a React/TypeScript frontend and Go backend, providing AI chat capabilities, image generation, translation services, and Persian language support with RTL layout.
 
 ## Core Technologies & Dependencies
 
 ### Frontend Stack
+
 - **Framework**: React 18+ with TypeScript 5.8+
 - **Build Tool**: Vite 6.2+ with Bun runtime
 - **Styling**: Tailwind CSS 4.1+ with shadcn/ui components
@@ -15,6 +17,7 @@ This is a Persian AI Assistant project featuring a React/TypeScript frontend and
 - **UI Components**: Radix UI primitives with custom shadcn/ui components
 
 ### Backend Stack
+
 - **Language**: Go 1.24+
 - **Framework**: Echo 4.13+ for HTTP handling
 - **Database**: SQLite with GORM ORM
@@ -23,6 +26,7 @@ This is a Persian AI Assistant project featuring a React/TypeScript frontend and
 - **Documentation**: Swagger/OpenAPI 3.0
 
 ### External Services
+
 - **AI Models**: Ollama (port 11434) for local AI inference
 - **Image Generation**: Stable Diffusion (port 7860)
 - **Speech-to-Text**: Whisper integration
@@ -32,12 +36,14 @@ This is a Persian AI Assistant project featuring a React/TypeScript frontend and
 ### TypeScript/React Frontend
 
 #### File & Component Naming
-- **Components**: PascalCase with `.tsx` extension (`Message.tsx`, `ChatInput.tsx`)
-- **Utilities**: camelCase with `.ts` extension (`utils.ts`, `atoms.ts`)
-- **Hooks**: camelCase starting with `use` (`useGetDefaultChatModel`)
+
+- **Components**: kebab-case with `.tsx` extension (`message.tsx`, `chat-input.tsx`)
+- **Utilities**: kebab-case with `.ts` extension (`utils.ts`, `atoms.ts`)
+- **Hooks**: kebab-case starting with `use` (`use-get-default-chat-model.ts`)
 - **Constants**: SCREAMING_SNAKE_CASE (`DEFAULT_CHAT_MODEL_STORAGE_KEY`)
 
 #### Component Structure
+
 ```tsx
 // Use interface for props
 export interface MessageProps {
@@ -51,13 +57,15 @@ export function Message({ message }: MessageProps) {
 ```
 
 #### State Management Patterns
+
 - Use Jotai atoms for global state with custom hooks
 - Prefix storage keys with descriptive names
 - Combine localStorage with atoms for persistence
+
 ```tsx
 export const useSetDefaultChatModel = () => {
   const setDefaultChatModel = useSetAtom(defaultChatModelAtom);
-  
+
   return (model: string) => {
     localStorage.setItem(DEFAULT_CHAT_MODEL_STORAGE_KEY, model);
     setDefaultChatModel(model);
@@ -66,6 +74,7 @@ export const useSetDefaultChatModel = () => {
 ```
 
 #### Styling Conventions
+
 - Use `cn()` utility function for combining Tailwind classes
 - Implement RTL/LTR detection with `detectTextDirection()`
 - Apply dark mode variants consistently
@@ -73,6 +82,7 @@ export const useSetDefaultChatModel = () => {
 - Organizing classes is done via prettier-tailwindcss plugin
 
 #### Import Organization
+
 ```tsx
 // External libraries
 import { useState } from "react";
@@ -90,18 +100,21 @@ import { cn, detectTextDirection } from "@/lib/utils";
 ### Go Backend
 
 #### File & Package Structure
+
 - **Handlers**: Organize by feature (`chat.go`, `translate.go`)
 - **Types**: Define in `types.go` within relevant packages
 - **Database**: Separate models in `db/models.go`
 - **Utilities**: Helper functions in `utils/` directory
 
 #### Code Conventions
+
 - Use structured logging with zerolog
 - Implement proper error handling with context
 - Follow Go standard package organization
 - Use middleware for cross-cutting concerns
 
 #### Handler Pattern
+
 ```go
 type Handler struct {
     db           *gorm.DB
@@ -117,6 +130,7 @@ func NewHandler(db *gorm.DB, ollamaClient *api.Client) *Handler {
 ```
 
 #### Logging Standards
+
 ```go
 log.Info().
     Str("method", v.Method).
@@ -128,6 +142,7 @@ log.Info().
 ## Project Structure Guidelines
 
 ### Frontend Directory Structure
+
 ```
 src/
 ├── components/          # Reusable UI components
@@ -145,6 +160,7 @@ src/
 ```
 
 ### Backend Directory Structure
+
 ```
 backend/
 ├── handlers/           # HTTP request handlers
@@ -158,12 +174,14 @@ backend/
 ## Development Workflow
 
 ### Build & Development Commands
+
 - `make install` - Install all dependencies
 - `make dev` - Start both frontend and backend in development mode
 - `make build` - Build production-ready application
 - `make generate-types` - Generate TypeScript types from Go API
 
 ### Code Quality
+
 - **Frontend**: ESLint + Prettier with Tailwind plugin
 - **Backend**: Standard Go formatting with gofmt
 - **Type Safety**: Strict TypeScript configuration
@@ -172,11 +190,13 @@ backend/
 ## Persian Language & RTL Support
 
 ### Text Direction Handling
+
 - Detect text direction automatically using `detectTextDirection()`
 - Apply `dir="rtl"` or `dir="ltr"` attributes dynamically
 - Use RTL-aware Tailwind classes (`rtl:`, `ltr:`)
 
 ### Font & Typography
+
 - Primary font: Vazirmatn variable font for Persian text
 - Ensure proper Persian character rendering
 - Support mixed LTR/RTL content in chat messages
@@ -184,6 +204,7 @@ backend/
 ## API Design Patterns
 
 ### Response Structures
+
 ```typescript
 interface Response<T> {
   data: T;
@@ -198,6 +219,7 @@ interface PaginatedResponse<T> {
 ```
 
 ### Streaming Responses
+
 - Use Server-Sent Events for real-time chat responses
 - Implement proper error handling in streams
 - Support abortable requests with AbortController
@@ -205,23 +227,26 @@ interface PaginatedResponse<T> {
 ## Database Conventions
 
 ### Model Relationships
+
 - Use GORM associations for related data
 - Implement soft deletes where appropriate
 - Include timestamps (CreatedAt, UpdatedAt)
 
 ### Schema Design
+
 ```go
 type ChatThread struct {
     ID       uint      `gorm:"primaryKey"`
-    Title    string    
+    Title    string
     Messages []Message `gorm:"foreignKey:ChatThreadID"`
-    Model    string    
+    Model    string
     CreatedAt time.Time
     UpdatedAt time.Time
 }
 ```
 
 ## Security & Privacy
+
 - All AI processing happens locally (Ollama, Stable Diffusion)
 - No external API calls for sensitive data
 - Proper CORS configuration for development
@@ -230,11 +255,13 @@ type ChatThread struct {
 ## Error Handling
 
 ### Frontend
+
 - Use TanStack Query for API error handling
 - Implement loading states and error boundaries
 - Provide user-friendly error messages in Persian
 
 ### Backend
+
 - Structured error responses with proper HTTP status codes
 - Comprehensive logging with context
 - Graceful degradation for external service failures
@@ -242,11 +269,13 @@ type ChatThread struct {
 ## Performance Considerations
 
 ### Frontend
+
 - Use React.memo for expensive components
 - Implement proper loading states
 - Optimize bundle size with dynamic imports
 
 ### Backend
+
 - Connection pooling for database
 - Proper middleware ordering
 - Streaming responses for long-running operations
@@ -254,11 +283,13 @@ type ChatThread struct {
 ## Testing Guidelines
 
 ### Frontend
+
 - Component testing with React Testing Library
 - Type checking with TypeScript compiler
 - ESLint for code quality
 
 ### Backend
+
 - Unit tests for handlers and utilities
 - Integration tests for API endpoints
 - Database migration testing
@@ -266,11 +297,13 @@ type ChatThread struct {
 ## Deployment & Build
 
 ### Environment Configuration
+
 - Use `.env` files for configuration
 - Separate development and production configs
 - Embed static files in Go binary for distribution
 
 ### Build Process
+
 - Frontend: Vite build with TypeScript checking
 - Backend: Go build with embedded static files
 - Single binary deployment target
@@ -278,13 +311,15 @@ type ChatThread struct {
 ## Documentation Standards
 
 ### Code Documentation
+
 - JSDoc comments for complex functions
 - Go doc comments for exported functions
 - README sections for major features
 
 ### API Documentation
+
 - OpenAPI 3.0 specifications
 - Auto-generated TypeScript types
 - Swagger UI for development
 
-Remember to maintain consistency with these patterns and always consider Persian language support and RTL layout requirements when implementing new features. 
+Remember to maintain consistency with these patterns and always consider Persian language support and RTL layout requirements when implementing new features.
