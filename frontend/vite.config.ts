@@ -19,6 +19,7 @@ export default defineConfig({
         target: "http://localhost:8080",
       },
     },
+    port: 5175
   },
   build: {
     outDir: path.resolve(__dirname, "..", "backend", "dist"),

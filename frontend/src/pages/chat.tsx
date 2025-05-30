@@ -20,7 +20,7 @@ const generateTempId = () => Date.now() + Math.floor(Math.random() * 1000);
 
 // Utility function to check if a message is optimistic (has temporary ID)
 const isOptimisticMessage = (msg: DbMessage) => {
-  return typeof msg.id === 'number' && msg.id > Date.now() - 60000; // Messages created in last minute with timestamp-based IDs
+  return typeof msg.id === "number" && msg.id > Date.now() - 60000; // Messages created in last minute with timestamp-based IDs
 };
 
 export default function ChatPage() {
@@ -29,7 +29,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<DbMessage[]>([]);
   const [currentChatModel, setCurrentChatModel] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState<DbMessage | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<DbMessage | null>(
+    null,
+  );
 
   // ===== REFS & NAVIGATION =====
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,9 @@ export default function ChatPage() {
     refetch: refetchMessages,
     isLoading: isLoadingMessages,
   } = useGetChatThreadMessages(
-    chatThreadIdNumber ? { pathParams: { id: chatThreadIdNumber.toString() } } : skipToken
+    chatThreadIdNumber
+      ? { pathParams: { id: chatThreadIdNumber.toString() } }
+      : skipToken,
   );
 
   const { mutateAsync: createChatThread } = useCreateChatThread();
@@ -102,31 +106,33 @@ export default function ChatPage() {
 
     // Set messages from thread, but only if we don't have any local optimistic messages
     // This prevents overriding messages that were added optimistically during streaming
-    setMessages(prev => {
+    setMessages((prev) => {
       const dbMessages = chatThreadMessagesData.data;
       if (!dbMessages) return prev;
 
       // If we have optimistic messages (with temporary IDs), merge them with database messages
-      const hasOptimisticMessages = prev.some(msg => isOptimisticMessage(msg));
-      
+      const hasOptimisticMessages = prev.some((msg) =>
+        isOptimisticMessage(msg),
+      );
+
       if (hasOptimisticMessages) {
         // Keep optimistic messages and only add new database messages that aren't duplicated
         const lastDbMessage = dbMessages[dbMessages.length - 1];
-        
+
         // If the last database message is newer than our optimistic messages, replace all with DB messages
         if (lastDbMessage && lastDbMessage.sent_at) {
           const lastDbTime = new Date(lastDbMessage.sent_at).getTime();
           const optimisticTimes = prev
-            .filter(msg => isOptimisticMessage(msg))
-            .map(msg => new Date(msg.sent_at || '').getTime());
-          
+            .filter((msg) => isOptimisticMessage(msg))
+            .map((msg) => new Date(msg.sent_at || "").getTime());
+
           const latestOptimistic = Math.max(...optimisticTimes);
-          
+
           if (lastDbTime > latestOptimistic) {
             return dbMessages;
           }
         }
-        
+
         return prev; // Keep optimistic messages
       } else {
         return dbMessages;
@@ -202,7 +208,7 @@ export default function ChatPage() {
     // Clear the prompt and add user message to display immediately
     const messageContent = prompt;
     setPrompt("");
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     // Create initial assistant message
     const initialAssistantMessage: DbMessage = {
@@ -229,11 +235,11 @@ export default function ChatPage() {
         },
         {
           onMessageUpdate: (message) => {
-            setStreamingMessage(prev => {
+            setStreamingMessage((prev) => {
               if (!prev) {
                 return message;
               }
-              
+
               // Accumulate the content and reasoning incrementally
               return {
                 ...message, // Use the latest message properties (status, timestamps, etc.)
@@ -255,16 +261,18 @@ export default function ChatPage() {
             // Restore the prompt if sending failed
             setPrompt(messageContent);
             // Remove the user message we added optimistically
-            setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+            setMessages((prev) =>
+              prev.filter((msg) => msg.id !== userMessage.id),
+            );
           },
-        }
+        },
       );
     } catch (error) {
       console.error("Failed to send message:", error);
       // Restore the prompt if sending failed
       setPrompt(messageContent);
       // Remove the user message we added optimistically
-      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
       setStreamingMessage(null);
     }
   }, [
@@ -283,17 +291,20 @@ export default function ChatPage() {
   const allMessages = [...messages];
   if (streamingMessage) {
     // Only add streaming message if it's not already in the messages array
-    const existingMessage = messages.find(msg => 
-      msg.role === "assistant" && 
-      msg.chat_thread_id === streamingMessage.chat_thread_id &&
-      msg.id === streamingMessage.id
+    const existingMessage = messages.find(
+      (msg) =>
+        msg.role === "assistant" &&
+        msg.chat_thread_id === streamingMessage.chat_thread_id &&
+        msg.id === streamingMessage.id,
     );
-    
+
     if (!existingMessage) {
       allMessages.push(streamingMessage);
     } else {
       // Replace the existing message with the streaming version
-      const index = allMessages.findIndex(msg => msg.id === existingMessage.id);
+      const index = allMessages.findIndex(
+        (msg) => msg.id === existingMessage.id,
+      );
       if (index !== -1) {
         allMessages[index] = streamingMessage;
       }
@@ -301,20 +312,25 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="flex h-full flex-col gap-4">
-      {/* Chat Messages Container */}
-      <div className="bg-card rounded-md border shadow-sm flex-1 overflow-hidden">
+    <div className="flex h-full flex-col">
+      {/* Chat Messages Container - Seamless design */}
+      <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <section className="flex flex-col gap-4 p-4">
+          <div className="mx-auto max-w-4xl px-6 py-8 pb-32">
             {allMessages.length > 0 ? (
-              allMessages.map((message, index) => (
-                <Message key={message.id || `streaming-${index}`} message={message} />
-              ))
+              <div className="space-y-8">
+                {allMessages.map((message, index) => (
+                  <Message
+                    key={message.id || `streaming-${index}`}
+                    message={message}
+                  />
+                ))}
+              </div>
             ) : !inNewChat && isLoadingMessages ? (
               <div className="flex h-32 items-center justify-center">
-                <div className="flex items-center gap-3 rounded-md bg-muted p-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
-                  <span className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                  <span className="text-muted-foreground text-sm">
                     {PERSIAN_TEXTS.general.loading}...
                   </span>
                 </div>
@@ -322,35 +338,37 @@ export default function ChatPage() {
             ) : (
               <div className="flex h-64 items-center justify-center">
                 <div className="text-center">
-                  <div className="bg-sidebar-primary text-sidebar-primary-foreground mx-auto mb-4 h-16 w-16 rounded-md p-4">
-                    <BotIcon className="h-full w-full" />
+                  <div className="bg-muted mx-auto mb-4 h-16 w-16 rounded-full p-4">
+                    <BotIcon className="text-muted-foreground h-full w-full" />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-foreground">
-                    مکالمه جدید را شروع کنید
+                  <h3 className="text-foreground mb-2 text-lg font-semibold">
+                    {PERSIAN_TEXTS.chat.askQuestion}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    سوال خود را بپرسید تا بتوانم به شما کمک کنم
+                  <p className="text-muted-foreground text-sm">
+                    {PERSIAN_TEXTS.chat.askQuestionDescription}
                   </p>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
-          </section>
+          </div>
         </ScrollArea>
       </div>
 
-      {/* Chat Input Container */}
-      <div className="bg-card rounded-md border shadow-sm">
-        <ChatInput
-          prompt={prompt}
-          setPrompt={setPrompt}
-          handleSendPrompt={handleSendPrompt}
-          currentChatModel={currentChatModel}
-          setCurrentChatModel={setCurrentChatModel}
-          isStreaming={isStreaming}
-          stopStreaming={stopStreaming}
-        />
+      {/* Chat Input Container - Sticky at bottom within content area */}
+      <div className="sticky bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto max-w-4xl">
+          <ChatInput
+            prompt={prompt}
+            setPrompt={setPrompt}
+            handleSendPrompt={handleSendPrompt}
+            currentChatModel={currentChatModel}
+            setCurrentChatModel={setCurrentChatModel}
+            isStreaming={isStreaming}
+            stopStreaming={stopStreaming}
+          />
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
