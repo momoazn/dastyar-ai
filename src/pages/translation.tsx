@@ -9,11 +9,11 @@ import { useModelsList } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { skipToken } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  useCreateTranslation,
-  useGetTranslation,
-  useGetTranslations,
-} from "../../generated/apiComponents";
+// import {
+//   useCreateTranslation,
+//   useGetTranslation,
+//   useGetTranslations,
+// } from "../../generated/apiComponents";
 
 const languages = [
   {

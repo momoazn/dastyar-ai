@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui";
 import { useModelsList, useStreamingChat } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { pb } from "@/lib/pocketbase";
+import { MessagesRoleOptions } from "@/lib/pocketbase-types";
 
 export default function ChatPage() {
   // ===== URL PARAMS & NAVIGATION =====
@@ -30,6 +31,24 @@ export default function ChatPage() {
         title: PERSIAN_TEXTS.navigation.newChat,
         model: chatModel,
       });
+    },
+  });
+
+  const { mutateAsync: updateMessage } = useMutation({
+    mutationFn: ({
+      messageId,
+      content,
+    }: {
+      messageId: string;
+      content: string;
+    }) => {
+      return pb.collection("messages").update(messageId, { content });
+    },
+  });
+
+  const { mutateAsync: deleteMessage } = useMutation({
+    mutationFn: (messageId: string) => {
+      return pb.collection("messages").delete(messageId);
     },
   });
 
@@ -93,6 +112,65 @@ export default function ChatPage() {
     sendMessage(chatModel, effectiveThreadId);
   }, [prompt, chatModel, threadId, createNewThread, navigate, sendMessage]);
 
+  // ===== MESSAGE ACTIONS =====
+  const handleCopyMessage = useCallback((content: string) => {
+    console.log("Message copied:", content.slice(0, 50) + "...");
+  }, []);
+
+  const handleEditMessage = useCallback(
+    async (messageId: string, newContent: string) => {
+      if (!threadId) return;
+
+      try {
+        // Update the message content
+        await updateMessage({ messageId, content: newContent });
+
+        // Delete this message and regenerate
+        await deleteMessage(messageId);
+
+        // Find the model used in the edited message to regenerate with the same model
+        const editedMessage = messages.find((msg) => msg.id === messageId);
+        const modelToUse = editedMessage?.model || chatModel;
+
+        // Regenerate from this point
+        if (modelToUse) {
+          sendMessage(modelToUse, threadId);
+        }
+      } catch (error) {
+        console.error("Failed to edit message:", error);
+      }
+    },
+    [threadId, updateMessage, deleteMessage, messages, chatModel, sendMessage],
+  );
+
+  const handleRegenerateMessage = useCallback(
+    async (messageId: string) => {
+      if (!threadId) return;
+
+      try {
+        // Find the message to regenerate
+        const messageToRegenerate = messages.find(
+          (msg) => msg.id === messageId,
+        );
+        if (!messageToRegenerate) return;
+
+        // Delete this message (it will be recreated during regeneration)
+        await deleteMessage(messageId);
+
+        // Use the same model for regeneration
+        const modelToUse = messageToRegenerate.model || chatModel;
+
+        // Trigger regeneration by sending with the same model
+        if (modelToUse) {
+          sendMessage(modelToUse, threadId);
+        }
+      } catch (error) {
+        console.error("Failed to regenerate message:", error);
+      }
+    },
+    [threadId, messages, deleteMessage, chatModel, sendMessage],
+  );
+
   // ===== EFFECTS =====
   useEffect(() => {
     scrollToBottom();
@@ -104,12 +182,23 @@ export default function ChatPage() {
     if (messages.length > 0) {
       return (
         <div className="space-y-8">
-          {messages.map((message, index) => (
-            <Message
-              key={message.id || `streaming-${index}`}
-              message={message}
-            />
-          ))}
+          {messages.map((message, index) => {
+            // Determine if this is the last assistant message for regenerate option
+            const isLastAssistantMessage =
+              message.role === MessagesRoleOptions.assistant &&
+              index === messages.length - 1;
+
+            return (
+              <Message
+                key={message.id || `streaming-${index}`}
+                message={message}
+                onCopy={handleCopyMessage}
+                onEdit={handleEditMessage}
+                onRegenerate={handleRegenerateMessage}
+                isLastAssistantMessage={isLastAssistantMessage}
+              />
+            );
+          })}
         </div>
       );
     }

@@ -14,13 +14,16 @@ const MESSAGES_QUERY_LIMIT = 100;
 const ERROR_MESSAGE = "Sorry, an error occurred while generating the response.";
 const REASONING_START_TAG = "<think>";
 const REASONING_END_TAG = "</think>";
-const UPDATE_INTERVAL_MS = 100; // Update assistant message every 100ms
+const UPDATE_INTERVAL_MS = 100; // Update assistant message every 100ms for real-time feel
 
 // ===== TYPES =====
 type CreateMessagePayload = Pick<
   MessagesRecord,
-  "content" | "role" | "thread" | "model" | "status" | "reasoning" | "sent_at"
->;
+  "content" | "role" | "thread" | "model" | "status"
+> & {
+  reasoning?: string;
+  sent_at?: string;
+};
 
 type OllamaMessage = {
   role: "user" | "assistant";
@@ -339,26 +342,26 @@ export function useStreamingChat(threadId?: string) {
         // Save user message to database immediately
         // PocketBase subscription will automatically add it to UI
         await createMessage({
-          role: MessagesRoleOptions.user,
+      role: MessagesRoleOptions.user,
           content: currentPrompt,
           thread: effectiveThreadId,
-          model,
-          status: MessagesStatusOptions.idle,
+      model,
+      status: MessagesStatusOptions.idle,
         });
 
         // Create assistant message in database immediately
         // PocketBase subscription will automatically add it to UI
         const assistantMessageResponse = await createMessage({
-          role: MessagesRoleOptions.assistant,
-          content: "",
+      role: MessagesRoleOptions.assistant,
+      content: "",
           reasoning: "",
           thread: effectiveThreadId,
-          model,
-          status: MessagesStatusOptions.idle,
+      model,
+      status: MessagesStatusOptions.idle,
         });
 
         // Use the real assistant message ID from database
-        const realAssistantMessageId = assistantMessageResponse.id;
+        const realAssistantMessageId = (assistantMessageResponse as any).id;
 
         // Set up periodic updates
         const interval = setupPeriodicUpdates(
@@ -369,10 +372,10 @@ export function useStreamingChat(threadId?: string) {
 
         // Start Ollama streaming
         const streamResult = await ollama.chat({
-          model,
+      model,
           messages: messagesToSend,
-          stream: true,
-        });
+      stream: true,
+    });
 
         // Process streaming chunks
         for await (const chunk of streamResult) {

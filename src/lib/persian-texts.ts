@@ -61,6 +61,13 @@ export const PERSIAN_TEXTS = {
     askQuestion: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
     askQuestionDescription:
       "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
+    edit: "ویرایش",
+    regenerate: "تولید مجدد",
+    delete: "حذف",
+    copy: "کپی",
+    save: "ذخیره",
+    cancel: "لغو",
+    copied: "کپی شد",
   },
 
   // Translation Interface
