@@ -37,9 +37,9 @@ This is a Persian AI Assistant project featuring a React/TypeScript frontend and
 ### TypeScript/React Frontend
 
 #### File & Component Naming
-- **Components**: PascalCase with `.tsx` extension (`Message.tsx`, `ChatInput.tsx`)
-- **Utilities**: camelCase with `.ts` extension (`utils.ts`, `atoms.ts`)
-- **Hooks**: camelCase starting with `use` (`useGetDefaultChatModel`)
+- **Components**: kebab-case with `.tsx` extension (`message.tsx`, `chat-input.tsx`)
+- **Utilities**: kebab-case with `.ts` extension (`utils.ts`, `atoms.ts`)
+- **Hooks**: kebab-case starting with `use` (`use-get-default-chat-model.ts`)
 - **Constants**: SCREAMING_SNAKE_CASE (`DEFAULT_CHAT_MODEL_STORAGE_KEY`)
 
 #### Component Structure

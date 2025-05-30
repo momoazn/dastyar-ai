@@ -22,15 +22,10 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  useCreateChatThread,
-  useDeleteChatThread,
-  useDeleteTranslation,
-  useGetChatThreads,
-  useGetTranslations,
-  useUpdateChatThread,
-} from "../../generated/apiComponents";
+
 import { Button } from "./ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { pb } from "@/lib/pocketbase";
 
 // Types
 type NavItem = {
@@ -91,34 +86,47 @@ function useActiveNavItem() {
 
 function useChatThreadsData(isActive: boolean) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  const { data: chatThreads, refetch: refetchChatThreads } = useGetChatThreads(
-    {
-      queryParams: {
-        is_archived: false,
-      },
-    },
-    {
-      enabled: isActive,
-    },
-  );
+  const { data: chatThreads, refetch: refetchChatThreads } = useQuery({
+    queryKey: ["chat-threads"],
+    queryFn: () =>
+      pb.collection("threads").getList(1, 100, {
+        filter: "is_archived = false",
+      }),
+    enabled: isActive,
+  });
 
-  const { mutate: createChatThread } = useCreateChatThread({
-    onSuccess: ({ data }) => {
-      if (!data?.id) return;
+  const { mutate: createChatThread } = useMutation({
+    mutationFn: () => {
+      return pb.collection("threads").create({
+        title: PERSIAN_TEXTS.navigation.newChat,
+      });
+    },
+    onSuccess: (newChatThread) => {
       refetchChatThreads();
-      navigate(`/chat/${data.id}`);
+      navigate(`/chat/${newChatThread.id}`);
     },
   });
 
-  const { mutate: deleteChatThread } = useDeleteChatThread({
-    onSuccess: () => {
+  const { mutate: deleteChatThread } = useMutation({
+    mutationFn: (id: string) => {
+      return pb.collection("threads").delete(id);
+    },
+    onSuccess: (_, id) => {
       refetchChatThreads();
-      navigate("/chat");
+      if (pathname === `/chat/${id}`) {
+        navigate("/chat");
+      }
     },
   });
 
-  const { mutate: updateChatThread } = useUpdateChatThread({
+  const { mutate: updateChatThread } = useMutation({
+    mutationFn: (id: string) => {
+      return pb.collection("threads").update(id, {
+        is_archived: true,
+      });
+    },
     onSuccess: () => {
       refetchChatThreads();
     },
@@ -136,18 +144,18 @@ function useChatThreadsData(isActive: boolean) {
 function useTranslationsData(isActive: boolean) {
   const navigate = useNavigate();
 
-  const { data: translations, refetch: refetchTranslations } =
-    useGetTranslations(
-      {},
-      {
-        enabled: isActive,
-      },
-    );
+  const { data: translations, refetch: refetchTranslations } = useQuery({
+    queryKey: ["translations"],
+    queryFn: () => pb.collection("translations").getList(1, 100),
+    enabled: isActive,
+  });
 
-  const { mutate: deleteTranslation } = useDeleteTranslation({
+  const { mutate: deleteTranslation } = useMutation({
+    mutationFn: (id: string) => {
+      return pb.collection("translations").delete(id);
+    },
     onSuccess: () => {
       refetchTranslations();
-      navigate("/translation");
     },
     onError: (error) => {
       console.error("Failed to delete translation:", error);
@@ -273,25 +281,15 @@ function ChatThreadsList() {
 
   return (
     <>
-      {chatThreads?.data?.map((thread) => (
+      {chatThreads?.items?.map((thread) => (
         <SidebarItem
           to={`/chat/${thread.id}`}
           key={thread.id}
           title={thread.title}
           onArchive={() => {
-            updateChatThread({
-              pathParams: {
-                id: thread.id?.toString() ?? "",
-              },
-            });
+            updateChatThread(thread.id);
           }}
-          onDelete={() => {
-            deleteChatThread({
-              pathParams: {
-                id: thread.id?.toString() ?? "",
-              },
-            });
-          }}
+          onDelete={() => deleteChatThread(thread.id)}
         />
       ))}
     </>
@@ -309,7 +307,7 @@ function TranslationsList() {
 
   return (
     <>
-      {translations?.data?.map((translation) => (
+      {translations?.items?.map((translation) => (
         <SidebarItem
           to={`/translation/${translation.id}`}
           key={translation.id}
@@ -317,13 +315,9 @@ function TranslationsList() {
           onDelete={(e) => {
             e.stopPropagation();
             if (translation.id) {
-              deleteTranslation({
-                pathParams: {
-                  id: translation.id.toString(),
-                },
-              });
+              deleteTranslation(translation.id);
 
-              if (translation.id === Number(pathname.split("/").pop())) {
+              if (translation.id === pathname.split("/").pop()?.toString()) {
                 navigate("/translation");
               }
             }
@@ -369,11 +363,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleNew = () => {
     if (activeItem?.url === "/chat") {
-      createChatThread({
-        body: {
-          title: PERSIAN_TEXTS.navigation.newChat,
-        },
-      });
+      createChatThread();
     } else if (activeItem?.url === "/translation") {
       handleNewTranslation();
     }
