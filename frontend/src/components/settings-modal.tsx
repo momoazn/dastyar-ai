@@ -21,8 +21,12 @@ import {
   TabsTrigger,
   Textarea,
 } from "@/components/ui";
-import { samplers, useChatSettings, useImageSettings } from "@/hooks";
-import { useGetModels } from "../../generated/apiComponents";
+import {
+  samplers,
+  useChatSettings,
+  useImageSettings,
+  useModelsList,
+} from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import {
   useGetDefaultChatModel,
@@ -32,7 +36,7 @@ import {
 } from "@/atoms";
 
 export function SettingsModal() {
-  const { data: aiModels } = useGetModels({});
+  const { data: aiModels } = useModelsList();
 
   const defaultChatModel = useGetDefaultChatModel();
   const defaultTranslationModel = useGetDefaultTranslationModel();
@@ -97,11 +101,13 @@ export function SettingsModal() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {aiModels?.data?.filter(model => model.name).map((model) => (
-                        <SelectItem key={model.name} value={model.name!}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
+                      {aiModels
+                        ?.filter((model) => model.name)
+                        .map((model) => (
+                          <SelectItem key={model.name} value={model.name!}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -122,11 +128,13 @@ export function SettingsModal() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {aiModels?.data?.filter(model => model.name).map((model) => (
-                        <SelectItem key={model.name} value={model.name!}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
+                      {aiModels
+                        ?.filter((model) => model.name)
+                        .map((model) => (
+                          <SelectItem key={model.name} value={model.name!}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

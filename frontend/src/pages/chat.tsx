@@ -5,7 +5,6 @@ import { Loader2, BotIcon } from "lucide-react";
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
 import {
-  useGetModels,
   useGetChatThreadMessages,
   useCreateChatThread,
 } from "../../generated/apiComponents";
@@ -13,7 +12,7 @@ import { type DbMessage } from "../../generated/apiSchemas";
 import { skipToken } from "@tanstack/react-query";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { useGetDefaultChatModel } from "@/atoms";
-import { useStreamingChat } from "@/hooks";
+import { useModelsList, useStreamingChat } from "@/hooks";
 
 // Utility function to generate temporary IDs for optimistic updates
 const generateTempId = () => Date.now() + Math.floor(Math.random() * 1000);
@@ -43,7 +42,7 @@ export default function ChatPage() {
 
   // ===== API HOOKS =====
   const defaultChatModel = useGetDefaultChatModel();
-  const { data: models } = useGetModels({});
+  const { data: models } = useModelsList();
   const { sendMessage, stopStreaming, isStreaming } = useStreamingChat();
 
   const {
@@ -75,9 +74,9 @@ export default function ChatPage() {
     } else if (defaultChatModel) {
       // Use default model from user preferences
       setCurrentChatModel(defaultChatModel);
-    } else if (models?.data?.length) {
+    } else if (models?.length) {
       // Fallback to first available model
-      const firstModel = models.data[0]?.name;
+      const firstModel = models[0]?.name;
       if (firstModel) {
         setCurrentChatModel(firstModel);
       }
@@ -91,8 +90,8 @@ export default function ChatPage() {
     if (!currentChatModel) {
       if (defaultChatModel) {
         setCurrentChatModel(defaultChatModel);
-      } else if (models?.data?.length) {
-        const firstModel = models.data[0]?.name;
+      } else if (models?.length) {
+        const firstModel = models[0]?.name;
         if (firstModel) {
           setCurrentChatModel(firstModel);
         }
@@ -240,19 +239,42 @@ export default function ChatPage() {
                 return message;
               }
 
-              // Accumulate the content and reasoning incrementally
-              return {
+              const updatedMessage = {
                 ...message, // Use the latest message properties (status, timestamps, etc.)
-                content: (prev.content || "") + (message.content || ""),
-                reasoning: message.reasoning || prev.reasoning || "",
+                content: message.content || "", // Use accumulated content from backend
+                reasoning: message.reasoning || "", // Use accumulated reasoning from backend
               };
+
+              // If the message is stopped, immediately add it to the messages array
+              if (message.status === "stopped") {
+                setMessages((prevMessages) => {
+                  const existingIndex = prevMessages.findIndex(
+                    (msg) => msg.id === message.id,
+                  );
+                  if (existingIndex >= 0) {
+                    const newMessages = [...prevMessages];
+                    newMessages[existingIndex] = updatedMessage;
+                    return newMessages;
+                  } else {
+                    return [...prevMessages, updatedMessage];
+                  }
+                });
+              }
+
+              return updatedMessage;
             });
           },
           onComplete: () => {
+            // Clear streaming message immediately since stopped messages are already in messages array
             setStreamingMessage(null);
+
             // Replace optimistic messages with final database messages
-            setTimeout(() => {
-              refetchMessages();
+            setTimeout(async () => {
+              try {
+                await refetchMessages();
+              } catch (error) {
+                console.error("Failed to refetch messages:", error);
+              }
             }, 100);
           },
           onError: (error) => {
@@ -289,8 +311,8 @@ export default function ChatPage() {
 
   // Combine regular messages with streaming message, avoiding duplicates
   const allMessages = [...messages];
-  if (streamingMessage) {
-    // Only add streaming message if it's not already in the messages array
+  if (streamingMessage && streamingMessage.status !== "stopped") {
+    // Only add streaming message if it's not already in the messages array and not stopped
     const existingMessage = messages.find(
       (msg) =>
         msg.role === "assistant" &&
@@ -356,7 +378,7 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Input Container - Sticky at bottom within content area */}
-      <div className="sticky bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky bottom-0 z-50 border-t backdrop-blur">
         <div className="mx-auto max-w-4xl">
           <ChatInput
             prompt={prompt}

@@ -7,7 +7,9 @@ export const useModelsList = () => {
   return useQuery({
     queryKey: ["ollama-models"],
     queryFn: async () => {
-      return ollama.list();
+      const res = await ollama.list();
+      return res.models;
     },
+    refetchInterval: 5000,
   });
 };

@@ -369,36 +369,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/list-model": {
-            "get": {
-                "description": "Get list of all available models from Ollama",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Model"
-                ],
-                "summary": "Get available models",
-                "operationId": "getModels",
-                "responses": {
-                    "200": {
-                        "description": "List of models",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response-array_handlers_ModelListResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/translations": {
             "get": {
                 "description": "Retrieve a paginated list of all translation records, ordered by creation date (newest first)",
@@ -741,37 +711,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.ModelListResponse": {
-            "description": "Information about an available model",
-            "type": "object",
-            "properties": {
-                "details": {
-                    "description": "Additional model details (format, family, etc.)",
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "digest": {
-                    "description": "Model digest/hash",
-                    "type": "string",
-                    "example": "sha256:abc123..."
-                },
-                "modified_at": {
-                    "description": "Last modification timestamp",
-                    "type": "string",
-                    "example": "2023-01-01T00:00:00Z"
-                },
-                "name": {
-                    "description": "Model name and tag",
-                    "type": "string",
-                    "example": "llama3.2:latest"
-                },
-                "size": {
-                    "description": "Model size in bytes",
-                    "type": "integer",
-                    "example": 4661224676
-                }
-            }
-        },
         "handlers.PaginatedResponse-db_ChatThread": {
             "type": "object",
             "properties": {
@@ -873,18 +812,6 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "description": "The response data"
-                }
-            }
-        },
-        "handlers.Response-array_handlers_ModelListResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "The response data",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handlers.ModelListResponse"
-                    }
                 }
             }
         },

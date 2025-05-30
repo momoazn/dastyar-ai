@@ -143,42 +143,6 @@ export type HandlersErrorResponse = {
   message?: string;
 };
 
-/**
- * Information about an available model
- */
-export type HandlersModelListResponse = {
-  /**
-   * Additional model details (format, family, etc.)
-   */
-  details?: {
-    [key: string]: any;
-  };
-  /**
-   * Model digest/hash
-   *
-   * @example sha256:abc123...
-   */
-  digest?: string;
-  /**
-   * Last modification timestamp
-   *
-   * @example 2023-01-01T00:00:00Z
-   */
-  modified_at?: string;
-  /**
-   * Model name and tag
-   *
-   * @example llama3.2:latest
-   */
-  name?: string;
-  /**
-   * Model size in bytes
-   *
-   * @example 4661224676
-   */
-  size?: number;
-};
-
 export type HandlersPaginatedResponseDbChatThread = {
   /**
    * Current page number
@@ -265,13 +229,6 @@ export type HandlersResponseAny = {
    * The response data
    */
   data?: void;
-};
-
-export type HandlersResponseArrayHandlersModelListResponse = {
-  /**
-   * The response data
-   */
-  data?: HandlersModelListResponse[];
 };
 
 export type HandlersResponseDbChatThread = {

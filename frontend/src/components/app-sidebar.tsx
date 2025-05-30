@@ -114,6 +114,7 @@ function useChatThreadsData(isActive: boolean) {
   const { mutate: deleteChatThread } = useDeleteChatThread({
     onSuccess: () => {
       refetchChatThreads();
+      navigate("/chat");
     },
   });
 
@@ -146,6 +147,7 @@ function useTranslationsData(isActive: boolean) {
   const { mutate: deleteTranslation } = useDeleteTranslation({
     onSuccess: () => {
       refetchTranslations();
+      navigate("/translation");
     },
     onError: (error) => {
       console.error("Failed to delete translation:", error);
@@ -388,7 +390,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <NavigationSidebar />
-      <ContentSidebar activeItem={activeItem} onNew={handleNew} />
+      {pathname !== "/" && (
+        <ContentSidebar activeItem={activeItem} onNew={handleNew} />
+      )}
     </Sidebar>
   );
 }

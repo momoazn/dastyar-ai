@@ -766,126 +766,6 @@ export const useHealthCheck = <TData = Schemas.HandlersResponseString,>(
   });
 };
 
-export type GetModelsError = Fetcher.ErrorWrapper<{
-  status: 500;
-  payload: Schemas.HandlersErrorResponse;
-}>;
-
-export type GetModelsVariables = ApiContext["fetcherOptions"];
-
-/**
- * Get list of all available models from Ollama
- */
-export const fetchGetModels = (
-  variables: GetModelsVariables,
-  signal?: AbortSignal,
-) =>
-  apiFetch<
-    Schemas.HandlersResponseArrayHandlersModelListResponse,
-    GetModelsError,
-    undefined,
-    {},
-    {},
-    {}
-  >({ url: "/list-model", method: "get", ...variables, signal });
-
-/**
- * Get list of all available models from Ollama
- */
-export function getModelsQuery(variables: GetModelsVariables): {
-  queryKey: reactQuery.QueryKey;
-  queryFn: (
-    options: QueryFnOptions,
-  ) => Promise<Schemas.HandlersResponseArrayHandlersModelListResponse>;
-};
-
-export function getModelsQuery(
-  variables: GetModelsVariables | reactQuery.SkipToken,
-): {
-  queryKey: reactQuery.QueryKey;
-  queryFn:
-    | ((
-        options: QueryFnOptions,
-      ) => Promise<Schemas.HandlersResponseArrayHandlersModelListResponse>)
-    | reactQuery.SkipToken;
-};
-
-export function getModelsQuery(
-  variables: GetModelsVariables | reactQuery.SkipToken,
-) {
-  return {
-    queryKey: queryKeyFn({
-      path: "/list-model",
-      operationId: "getModels",
-      variables,
-    }),
-    queryFn:
-      variables === reactQuery.skipToken
-        ? reactQuery.skipToken
-        : ({ signal }: QueryFnOptions) => fetchGetModels(variables, signal),
-  };
-}
-
-/**
- * Get list of all available models from Ollama
- */
-export const useSuspenseGetModels = <
-  TData = Schemas.HandlersResponseArrayHandlersModelListResponse,
->(
-  variables: GetModelsVariables,
-  options?: Omit<
-    reactQuery.UseQueryOptions<
-      Schemas.HandlersResponseArrayHandlersModelListResponse,
-      GetModelsError,
-      TData
-    >,
-    "queryKey" | "queryFn" | "initialData"
-  >,
-) => {
-  const { queryOptions, fetcherOptions } = useApiContext(options);
-  return reactQuery.useSuspenseQuery<
-    Schemas.HandlersResponseArrayHandlersModelListResponse,
-    GetModelsError,
-    TData
-  >({
-    ...getModelsQuery(deepMerge(fetcherOptions, variables)),
-    ...options,
-    ...queryOptions,
-  });
-};
-
-/**
- * Get list of all available models from Ollama
- */
-export const useGetModels = <
-  TData = Schemas.HandlersResponseArrayHandlersModelListResponse,
->(
-  variables: GetModelsVariables | reactQuery.SkipToken,
-  options?: Omit<
-    reactQuery.UseQueryOptions<
-      Schemas.HandlersResponseArrayHandlersModelListResponse,
-      GetModelsError,
-      TData
-    >,
-    "queryKey" | "queryFn" | "initialData"
-  >,
-) => {
-  const { queryOptions, fetcherOptions } = useApiContext(options);
-  return reactQuery.useQuery<
-    Schemas.HandlersResponseArrayHandlersModelListResponse,
-    GetModelsError,
-    TData
-  >({
-    ...getModelsQuery(
-      variables === reactQuery.skipToken
-        ? variables
-        : deepMerge(fetcherOptions, variables),
-    ),
-    ...options,
-    ...queryOptions,
-  });
-};
-
 export type GetTranslationsError = Fetcher.ErrorWrapper<{
   status: 500;
   payload: Schemas.HandlersErrorResponse;
@@ -1282,11 +1162,6 @@ export type QueryOperation =
       path: "/health";
       operationId: "healthCheck";
       variables: HealthCheckVariables | reactQuery.SkipToken;
-    }
-  | {
-      path: "/list-model";
-      operationId: "getModels";
-      variables: GetModelsVariables | reactQuery.SkipToken;
     }
   | {
       path: "/translations";

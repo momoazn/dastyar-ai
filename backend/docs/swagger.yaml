@@ -135,30 +135,6 @@ definitions:
         example: Error message
         type: string
     type: object
-  handlers.ModelListResponse:
-    description: Information about an available model
-    properties:
-      details:
-        additionalProperties: true
-        description: Additional model details (format, family, etc.)
-        type: object
-      digest:
-        description: Model digest/hash
-        example: sha256:abc123...
-        type: string
-      modified_at:
-        description: Last modification timestamp
-        example: "2023-01-01T00:00:00Z"
-        type: string
-      name:
-        description: Model name and tag
-        example: llama3.2:latest
-        type: string
-      size:
-        description: Model size in bytes
-        example: 4661224676
-        type: integer
-    type: object
   handlers.PaginatedResponse-db_ChatThread:
     properties:
       current_page:
@@ -232,14 +208,6 @@ definitions:
     properties:
       data:
         description: The response data
-    type: object
-  handlers.Response-array_handlers_ModelListResponse:
-    properties:
-      data:
-        description: The response data
-        items:
-          $ref: '#/definitions/handlers.ModelListResponse'
-        type: array
     type: object
   handlers.Response-db_ChatThread:
     properties:
@@ -558,26 +526,6 @@ paths:
       summary: Health check endpoint
       tags:
       - Health
-  /list-model:
-    get:
-      consumes:
-      - application/json
-      description: Get list of all available models from Ollama
-      operationId: getModels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of models
-          schema:
-            $ref: '#/definitions/handlers.Response-array_handlers_ModelListResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get available models
-      tags:
-      - Model
   /translations:
     get:
       description: Retrieve a paginated list of all translation records, ordered by

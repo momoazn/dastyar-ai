@@ -273,7 +273,7 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 			}
 
 			// Prepare response
-			chatResponse := h.prepareChatResponse(assistantMsg, currentChunk, result.FullReasoning, currentStatus, isReasoning)
+			chatResponse := h.prepareChatResponse(assistantMsg, &result, currentStatus, isReasoning)
 
 			// Send the chunk to the client
 			if err := json.NewEncoder(c.Response()).Encode(chatResponse); err != nil {
@@ -289,11 +289,19 @@ func (h *Handler) streamResponse(c echo.Context, assistantMsg db.Message, messag
 	result.EndTime = time.Now()
 
 	// If streaming was stopped by client, update the result accordingly
-	if wasStopped {
+	if wasStopped || (err != nil && c.Request().Context().Err() != nil) {
 		result.FinalStatus = StatusStopped
 		// Save partial content to database immediately
-		h.updateMessageWithStoppedStatus(assistantMsg, result)
-		return result, nil // Return success instead of error
+		log.Info().
+			Uint("message_id", assistantMsg.ID).
+			Int("content_length", len(result.FullContent)).
+			Int("reasoning_length", len(result.FullReasoning)).
+			Msg("Saving partial content after stream stopped")
+
+		if saveErr := h.updateMessageWithStoppedStatus(assistantMsg, result); saveErr != nil {
+			log.Error().Err(saveErr).Uint("message_id", assistantMsg.ID).Msg("Failed to save stopped message")
+		}
+		return result, nil // Return success instead of error for stopped streams
 	}
 
 	result.FinalStatus = StatusDone
@@ -326,7 +334,7 @@ func (h *Handler) processStandardModelResponse(result *StreamResult, currentChun
 	result.FullContent += content
 }
 
-func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk string, fullReasoning string, currentStatus string, isReasoning bool) ChatResponse {
+func (h *Handler) prepareChatResponse(assistantMsg db.Message, result *StreamResult, currentStatus string, isReasoning bool) ChatResponse {
 	res := ChatResponse{
 		ID:       assistantMsg.ID,
 		ThreadID: assistantMsg.ChatThreadID,
@@ -337,11 +345,11 @@ func (h *Handler) prepareChatResponse(assistantMsg db.Message, currentChunk stri
 	}
 
 	if isReasoning {
-		res.Content = ""
-		res.Reasoning = currentChunk
+		res.Content = result.FullContent     // Send accumulated content
+		res.Reasoning = result.FullReasoning // Send accumulated reasoning
 	} else {
-		res.Content = currentChunk
-		res.Reasoning = fullReasoning
+		res.Content = result.FullContent     // Send accumulated content
+		res.Reasoning = result.FullReasoning // Send accumulated reasoning
 	}
 
 	return res
@@ -373,8 +381,8 @@ func (h *Handler) updateMessageWithStoppedStatus(assistantMsg db.Message, result
 		return err
 	}
 
-	// Update chat thread's updated_at timestamp
-	return h.db.Model(&assistantMsg.ChatThread).Update("updated_at", time.Now()).Error
+	// Update chat thread's updated_at timestamp using the thread ID
+	return h.db.Model(&db.ChatThread{}).Where("id = ?", assistantMsg.ChatThreadID).Update("updated_at", time.Now()).Error
 }
 
 func logStreamError(err error, chatThreadID uint, result StreamResult) {

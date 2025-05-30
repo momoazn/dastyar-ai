@@ -41,7 +41,11 @@ export function ChatInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendPrompt();
+      if (isStreaming) {
+        stopStreaming();
+      } else {
+        handleSendPrompt();
+      }
     }
   };
 
@@ -92,7 +96,7 @@ export function ChatInput({
               />
             </SelectTrigger>
             <SelectContent>
-              {(models?.models || []).map((model) => (
+              {(models || []).map((model) => (
                 <SelectItem key={model.name} value={model.name}>
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-green-500" />
@@ -123,8 +127,8 @@ export function ChatInput({
           {/* Send button inside input */}
           <Button
             size="icon"
-            variant="ghost"
-            disabled={!prompt.trim()}
+            variant={isStreaming ? "destructive" : "ghost"}
+            disabled={!isStreaming && !prompt.trim()}
             onClick={handleSendButtonClick}
             className="size-8"
           >

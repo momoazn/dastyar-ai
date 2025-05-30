@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { useGetModels } from "../../generated/apiComponents";
 import {
   useGetDefaultChatModel,
   useGetDefaultTranslationModel,
   useSetDefaultTranslationModel,
   useSetDefaultChatModel,
 } from "@/atoms";
+import { useModelsList } from "./use-models-list";
 
 /**
  * Hook that initializes selected models on application startup
@@ -21,15 +21,15 @@ export function useInitializeSelectedModels() {
   const setDefaultTranslationModel = useSetDefaultTranslationModel();
 
   // Fetch available models
-  const { data: chatModels, isSuccess } = useGetModels({});
+  const { data: chatModels, isSuccess } = useModelsList();
 
   useEffect(() => {
     // Only proceed if we have successfully loaded chat models
-    if (!isSuccess || !chatModels?.data?.length) {
+    if (!isSuccess || !chatModels?.length) {
       return;
     }
 
-    const defaultModel = chatModels.data[0]?.name;
+    const defaultModel = chatModels[0]?.name;
     if (!defaultModel) {
       return;
     }

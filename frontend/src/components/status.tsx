@@ -1,28 +1,12 @@
-import { useHealthCheck, useGetChatThreads } from "../../generated/apiComponents";
-import {
-  Brain,
-  CloudIcon,
-  ImageIcon,
-  LucideIcon,
-  MessageCircle,
-} from "lucide-react";
+import { useModelsList } from "@/hooks";
+import { Brain, CloudIcon, ImageIcon, LucideIcon } from "lucide-react";
 
 export function Status() {
-  const { data: healthCheck } = useHealthCheck({});
-  const { isError: isChatThreadsError } = useGetChatThreads({});
+  const { isError } = useModelsList();
 
   return (
     <header className="flex gap-2">
-      <StatusItem
-        name="Chat"
-        icon={MessageCircle}
-        status={!isChatThreadsError}
-      />
-      <StatusItem
-        name="Ollama"
-        icon={Brain}
-        status={healthCheck?.data === "ok"}
-      />
+      <StatusItem name="Ollama" icon={Brain} status={!isError} />
 
       <StatusItem name="Whisper" icon={CloudIcon} status={false} />
       <StatusItem name="Stable Diffusion" icon={ImageIcon} status={false} />
