@@ -96,7 +96,8 @@ export enum MessagesStatusOptions {
 	"idle" = "idle",
 	"reasoning" = "reasoning",
 	"streaming" = "streaming",
-	"stopped" = "stopped",
+	"finished" = "finished",
+	"errored" = "errored",
 }
 
 export enum MessagesRoleOptions {

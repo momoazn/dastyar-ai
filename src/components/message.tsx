@@ -6,7 +6,11 @@ import { Button } from "@/components/ui";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { Eye, EyeOff, Loader2, StopCircle } from "lucide-react";
-import type { DbMessage as MessageType } from "../../generated/apiSchemas";
+import {
+  MessagesRecord,
+  MessagesRoleOptions,
+  MessagesStatusOptions,
+} from "@/lib/pocketbase-types";
 
 const THINKING_MODELS = ["deepseek-r1", "deepscaler"];
 
@@ -15,24 +19,26 @@ const isThinkingModel = (model: string) => {
 };
 
 export interface MessageProps {
-  message: MessageType;
+  message: MessagesRecord;
 }
 
 export function Message({ message }: MessageProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const hasThinking =
-    message?.role === "assistant" &&
+    message?.role === MessagesRoleOptions.assistant &&
     message?.reasoning !== "" &&
     message?.model &&
     isThinkingModel(message.model);
 
-  const isUser = message.role === "user";
-  const isStopped = message.status === "stopped";
+  const isUser = message.role === MessagesRoleOptions.user;
+  const isStopped =
+    message.status === MessagesStatusOptions.finished ||
+    message.status === MessagesStatusOptions.errored;
   const isGenerating =
-    message.status === "idle" ||
-    message.status === "reasoning" ||
-    message.status === "responding";
+    message.status === MessagesStatusOptions.idle ||
+    message.status === MessagesStatusOptions.streaming ||
+    message.status === MessagesStatusOptions.reasoning;
 
   // User message with bubble
   if (isUser) {
@@ -43,10 +49,7 @@ export function Message({ message }: MessageProps) {
             dir={detectTextDirection(message.content || "")}
             className="text-sm leading-relaxed"
           >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              className="prose prose-sm prose-invert max-w-none break-words [&>*]:m-0"
-            >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content || ""}
             </ReactMarkdown>
           </div>
@@ -94,10 +97,7 @@ export function Message({ message }: MessageProps) {
             )}
           >
             <div dir="ltr" className="text-muted-foreground text-sm">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                className="prose prose-sm max-w-none"
-              >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.reasoning || ""}
               </ReactMarkdown>
             </div>
@@ -122,17 +122,7 @@ export function Message({ message }: MessageProps) {
           className="w-full"
         >
           <div className="text-foreground leading-relaxed">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              className={cn(
-                "prose prose-gray dark:prose-invert max-w-none break-words",
-                "prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground",
-                "prose-li:text-foreground prose-code:text-foreground prose-blockquote:text-foreground",
-                "prose-a:text-blue-600 dark:prose-a:text-blue-400",
-                "prose-pre:bg-muted prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded",
-                "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-              )}
-            >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content || ""}
             </ReactMarkdown>
           </div>

@@ -17,8 +17,8 @@ interface ChatInputProps {
   handleSendPrompt: () => void;
   isStreaming: boolean;
   stopStreaming: () => void;
-  currentChatModel?: string;
-  setCurrentChatModel: (model: string) => void;
+  chatModel?: string;
+  setChatModel: (model: string) => void;
   prompt: string;
   setPrompt: (prompt: string) => void;
 }
@@ -27,8 +27,8 @@ export function ChatInput({
   handleSendPrompt,
   isStreaming,
   stopStreaming,
-  currentChatModel,
-  setCurrentChatModel,
+  chatModel,
+  setChatModel,
   prompt,
   setPrompt,
 }: ChatInputProps) {
@@ -74,9 +74,9 @@ export function ChatInput({
         {/* Left side - Model selector */}
         <div className="flex items-center gap-3">
           <Select
-            defaultValue={currentChatModel}
-            value={currentChatModel}
-            onValueChange={setCurrentChatModel}
+            defaultValue={chatModel}
+            value={chatModel}
+            onValueChange={setChatModel}
           >
             <SelectTrigger className="w-[180px] border-0 bg-transparent text-sm shadow-none focus:ring-0">
               <SelectValue
