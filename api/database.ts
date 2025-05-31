@@ -1,6 +1,7 @@
 import PocketBase from "pocketbase";
 import {
   MessagesRecord,
+  MessagesStatusOptions,
   PdfsRecord,
   ThreadsRecord,
   TypedPocketBase,
@@ -35,12 +36,24 @@ export class Database {
     threadId: string,
     content: string,
     role: "user" | "assistant",
+    status: MessagesStatusOptions = MessagesStatusOptions.idle,
   ): Promise<MessagesRecord> {
     const record = await this.pb.collection<MessagesRecord>("messages").create({
       thread: threadId,
       content,
       role,
+      status,
     });
+    return record;
+  }
+
+  async updateMessage(
+    messageId: string,
+    updates: Partial<MessagesRecord>,
+  ): Promise<MessagesRecord> {
+    const record = await this.pb
+      .collection<MessagesRecord>("messages")
+      .update(messageId, updates);
     return record;
   }
 
@@ -55,22 +68,41 @@ export class Database {
   }
 
   async createPDF(
-    messageId: string,
+    threadId: string,
     filename: string,
     filePath: string,
   ): Promise<PdfsRecord> {
     const record = await this.pb.collection<PdfsRecord>("pdfs").create({
-      message: messageId,
+      thread: threadId,
       filename,
-      file_path: filePath,
+      file: filePath,
     });
     return record;
   }
 
+  async getPDF(id: string): Promise<PdfsRecord | null> {
+    try {
+      const record = await this.pb
+        .collection<PdfsRecord>("pdfs")
+        .getOne(id);
+      return record;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async deletePDF(id: string): Promise<boolean> {
+    try {
+      await this.pb.collection<PdfsRecord>("pdfs").delete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   async getPDFsByThread(threadId: string): Promise<PdfsRecord[]> {
     const records = await this.pb.collection<PdfsRecord>("pdfs").getFullList({
-      expand: "message",
-      filter: `message.thread = "${threadId}"`,
+      filter: `thread = "${threadId}"`,
     });
     return records;
   }

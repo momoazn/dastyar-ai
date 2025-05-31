@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
-import { useModelsList, useStreamingChat } from "@/hooks";
+import { useModelsList, useSimplifiedChat } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { pb } from "@/lib/pocketbase";
 
@@ -33,14 +33,22 @@ export default function ChatPage() {
     },
   });
 
+  // ===== SIMPLIFIED CHAT HOOK =====
   const {
     prompt,
     setPrompt,
     sendMessage,
-    stopStreaming,
-    isStreaming,
+    stopGeneration,
+    isGenerating,
     messages,
-  } = useStreamingChat(threadId);
+    // RAG functionality
+    attachedPDFs,
+    uploadPDF,
+    removePDF,
+    isUploading,
+    uploadProgress,
+    hasRAGDocuments,
+  } = useSimplifiedChat(threadId);
 
   // ===== UTILITY FUNCTIONS =====
   const scrollToBottom = useCallback(() => {
@@ -90,13 +98,31 @@ export default function ChatPage() {
     }
 
     // Send the message with the thread ID
-    sendMessage(chatModel, effectiveThreadId);
+    await sendMessage(prompt, chatModel);
   }, [prompt, chatModel, threadId, createNewThread, navigate, sendMessage]);
 
   // ===== MESSAGE ACTIONS =====
   const handleCopyMessage = useCallback((content: string) => {
     console.log("Message copied:", content.slice(0, 50) + "...");
   }, []);
+
+  // ===== PDF HANDLING =====
+  const handleFileSelect = useCallback(async (file: File) => {
+    if (!threadId) return;
+    try {
+      await uploadPDF(file);
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+    }
+  }, [threadId, uploadPDF]);
+
+  const handleRemovePDF = useCallback(async (pdfId: string) => {
+    try {
+      await removePDF(pdfId);
+    } catch (error) {
+      console.error("Error removing PDF:", error);
+    }
+  }, [removePDF]);
 
   // ===== EFFECTS =====
   useEffect(() => {
@@ -122,7 +148,7 @@ export default function ChatPage() {
       );
     }
 
-    if (!isNewChat && isStreaming) {
+    if (!isNewChat && isGenerating) {
       return (
         <div className="flex h-32 items-center justify-center">
           <div className="flex items-center gap-3">
@@ -174,8 +200,15 @@ export default function ChatPage() {
             handleSendPrompt={handleSendMessage}
             chatModel={chatModel}
             setChatModel={setChatModel}
-            isStreaming={isStreaming}
-            stopStreaming={stopStreaming}
+            isStreaming={isGenerating}
+            stopStreaming={stopGeneration}
+            // RAG functionality props
+            attachedPDFs={attachedPDFs}
+            onFileSelect={handleFileSelect}
+            onRemovePDF={handleRemovePDF}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+            hasRAGDocuments={hasRAGDocuments}
           />
         </div>
       </div>

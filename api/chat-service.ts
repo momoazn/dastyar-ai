@@ -15,6 +15,7 @@ export class ChatService {
   async getRelevantContext(
     threadId: string,
     message: string,
+    pdfIds?: string[],
   ): Promise<{
     context: string;
     sources: { filename: string; chunk: number }[];
@@ -52,6 +53,13 @@ Answer:`;
 
   async addPDFToThread(threadId: string, documents: Document[]): Promise<void> {
     await this.vectorManager.addDocuments(threadId, documents);
+  }
+
+  async removePDFFromThread(threadId: string, pdfId: string): Promise<void> {
+    // Remove PDF documents from vector store
+    // This is a simplified implementation - you might need to add metadata
+    // to track which documents belong to which PDF
+    await this.vectorManager.removeDocuments(threadId, pdfId);
   }
 
   async hasDocuments(threadId: string): Promise<boolean> {

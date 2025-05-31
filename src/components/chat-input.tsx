@@ -9,9 +9,11 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
+import { PDFAttachment } from "@/components/pdf-attachment";
 import { useModelsList } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
+import type { UploadedPDF } from "@/hooks/use-pdf-upload";
 
 interface ChatInputProps {
   handleSendPrompt: () => void;
@@ -21,6 +23,13 @@ interface ChatInputProps {
   setChatModel: (model: string) => void;
   prompt: string;
   setPrompt: (prompt: string) => void;
+  // PDF attachment props
+  attachedPDFs?: UploadedPDF[];
+  onFileSelect?: (file: File) => void;
+  onRemovePDF?: (pdfId: string) => void;
+  isUploading?: boolean;
+  uploadProgress?: number;
+  hasRAGDocuments?: boolean;
 }
 
 export function ChatInput({
@@ -31,6 +40,12 @@ export function ChatInput({
   setChatModel,
   prompt,
   setPrompt,
+  attachedPDFs = [],
+  onFileSelect,
+  onRemovePDF,
+  isUploading = false,
+  uploadProgress = 0,
+  hasRAGDocuments = false,
 }: ChatInputProps) {
   const { data: models } = useModelsList();
 
@@ -57,6 +72,30 @@ export function ChatInput({
 
   return (
     <div className="space-y-4 px-6 py-4">
+      {/* RAG Mode Indicator */}
+      {hasRAGDocuments && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 p-2 text-sm dark:border-blue-800 dark:bg-blue-950/20">
+          <div className="font-medium text-blue-700 dark:text-blue-300">
+            {PERSIAN_TEXTS.chat.ragMode}
+          </div>
+          <div className="text-xs text-blue-600 dark:text-blue-400">
+            {PERSIAN_TEXTS.chat.ragModeDescription}
+          </div>
+        </div>
+      )}
+
+      {/* PDF Attachments */}
+      {onFileSelect && onRemovePDF && (
+        <PDFAttachment
+          attachedPDFs={attachedPDFs}
+          onFileSelect={onFileSelect}
+          onRemovePDF={onRemovePDF}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
+          disabled={isStreaming}
+        />
+      )}
+
       {/* Message Input Area */}
       <div className="relative">
         <Textarea

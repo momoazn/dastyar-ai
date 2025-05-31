@@ -123,7 +123,7 @@ export type PdfsRecord = {
 	file: string
 	filename: string
 	id: string
-	message?: RecordIdString
+	thread?: RecordIdString
 	updated?: IsoDateString
 }
 

@@ -8,6 +8,6 @@ import type { TypedPocketBase } from "./pocketbase-types";
 //
 // 👉 Be sure to keep a trailing / in the baseUrl as its value is used to build
 //    other URLs for images and links and those would break if the trailing / is missing
-const baseUrl = import.meta.env.PROD ? "/" : "http://127.0.0.1:8090/";
+const baseUrl = import.meta.env.PROD ? "/pb/" : "http://localhost:8090/";
 
 export const pb = new PocketBase(baseUrl) as TypedPocketBase;

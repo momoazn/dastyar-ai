@@ -1,8 +1,10 @@
-export * from "./assistant-message";
-export * from "./chat-input";
-export * from "./delete-dialog";
-export * from "./header";
-export * from "./message";
-export * from "./settings-modal";
-export * from "./status";
-export * from "./user-message";
+export { ChatInput } from "./chat-input";
+export { AppSidebar } from "./app-sidebar";
+export { AssistantMessage } from "./assistant-message";
+export { Message } from "./message";
+export { UserMessage } from "./user-message";
+export { SettingsModal } from "./settings-modal";
+export { Status } from "./status";
+export { Header } from "./header";
+export { DeleteDialog } from "./delete-dialog";
+export { PDFAttachment } from "./pdf-attachment";

@@ -24,21 +24,44 @@ import {
   EyeOff,
   Loader2,
   StopCircle,
+  FileText,
+  BookOpen,
 } from "lucide-react";
 
+export interface ExtendedMessage extends MessagesRecord {
+  context?: string;
+  sources?: Array<{ filename: string; chunk: number }> | string;
+}
+
 export interface AssistantMessageProps {
-  message: MessagesRecord;
+  message: ExtendedMessage;
   onCopy?: (content: string) => void;
 }
 
 export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showSources, setShowSources] = useState(false);
 
   const hasThinking =
     message?.role === MessagesRoleOptions.assistant &&
     message?.reasoning !== "" &&
     message?.model;
+
+  // Parse sources - handle both string and array formats
+  const parsedSources = (() => {
+    if (!message.sources) return [];
+    if (typeof message.sources === 'string') {
+      try {
+        return JSON.parse(message.sources);
+      } catch {
+        return [];
+      }
+    }
+    return message.sources;
+  })();
+
+  const hasRAGContext = message.context && parsedSources.length > 0;
 
   const isStopped =
     message.status === MessagesStatusOptions.finished ||
@@ -101,6 +124,24 @@ export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
             <p>{message.model || "Unknown Model"}</p>
           </TooltipContent>
         </Tooltip>
+
+        {hasRAGContext && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-md p-0"
+                onClick={() => setShowSources(!showSources)}
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>نمایش منابع استفاده شده</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </TooltipProvider>
   );
@@ -147,6 +188,31 @@ export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
                 {message.reasoning || ""}
               </ReactMarkdown>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* RAG Sources Section */}
+      {hasRAGContext && showSources && (
+        <div className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 mb-4 rounded-lg border p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <BookOpen className="text-green-600 dark:text-green-400 h-4 w-4" />
+            <span className="text-green-700 dark:text-green-300 text-sm font-medium">
+              منابع استفاده شده در پاسخ
+            </span>
+          </div>
+          
+          <div className="space-y-2">
+            {parsedSources.map((source: { filename: string; chunk: number }, index: number) => (
+              <div key={index} className="bg-green-100 dark:bg-green-900/30 rounded p-2 text-sm">
+                <div className="text-green-800 dark:text-green-200 font-medium">
+                  📄 {source.filename}
+                </div>
+                <div className="text-green-600 dark:text-green-400 text-xs">
+                  بخش {source.chunk}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

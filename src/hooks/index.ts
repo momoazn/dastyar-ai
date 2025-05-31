@@ -2,3 +2,8 @@ export * from "./use-chat-settings";
 export * from "./use-chat-streaming";
 export * from "./use-mobile";
 export * from "./use-models-list";
+export * from "./use-pdf-upload";
+export * from "./use-rag-chat";
+export * from "./use-rag-streaming-chat";
+export * from "./use-simplified-chat";
+export * from "./use-unified-chat";
