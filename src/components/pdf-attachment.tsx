@@ -1,24 +1,19 @@
-import { Paperclip, X, FileText, Loader2 } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 import { useCallback, useRef } from "react";
 
 import { Button } from "@/components/ui";
-import { cn } from "@/lib/utils";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import type { UploadedPDF } from "@/hooks/use-pdf-upload";
+import { cn } from "@/lib/utils";
 
 interface PDFAttachmentProps {
-  attachedPDFs: UploadedPDF[];
   onFileSelect: (file: File) => void;
-  onRemovePDF: (pdfId: string) => void;
   isUploading: boolean;
   uploadProgress: number;
   disabled?: boolean;
 }
 
 export function PDFAttachment({
-  attachedPDFs,
   onFileSelect,
-  onRemovePDF,
   isUploading,
   uploadProgress,
   disabled = false,
@@ -46,31 +41,6 @@ export function PDFAttachment({
 
   return (
     <div className="space-y-2">
-      {/* Attached PDFs List */}
-      {attachedPDFs.length > 0 && (
-        <div className="space-y-1">
-          {attachedPDFs.map((pdf) => (
-            <div
-              key={pdf.id}
-              className="bg-muted/50 flex items-center gap-2 rounded-md p-2 text-sm"
-            >
-              <FileText className="text-muted-foreground h-4 w-4" />
-              <span className="flex-1 truncate" title={pdf.filename}>
-                {pdf.filename}
-              </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={() => onRemovePDF(pdf.id)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Upload Progress */}
       {isUploading && (
         <div className="bg-muted/50 flex items-center gap-2 rounded-md p-2 text-sm">

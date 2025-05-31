@@ -19,29 +19,19 @@ export const usePDFUpload = () => {
         setIsUploading(true);
         setUploadProgress(0);
 
-        // Use the Hono API endpoint for upload
+        // Upload directly to PocketBase using FormData
         const formData = new FormData();
-        formData.append("pdf", file);
-        formData.append("threadId", threadId);
+        formData.append("file", file);
+        formData.append("filename", file.name);
+        formData.append("thread", threadId);
 
-        const response = await fetch("/api/pdf/upload", {
-          method: "POST",
-          body: formData,
-        });
+        // Create the PDF record directly in PocketBase
+        const record: PdfsResponse = await pb
+          .collection("pdfs")
+          .create(formData);
 
-        if (!response.ok) {
-          throw new Error("Upload failed");
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.error || "Upload failed");
-        }
-
-        // Get the PDF record from PocketBase
-        const record: PdfsResponse = await pb.collection("pdfs").getOne(result.pdfId);
-        const fileUrl = pb.files.getUrl(record, record.file);
+        // Get the file URL using PocketBase files service
+        const fileUrl = pb.files.getURL(record, record.file);
 
         setUploadProgress(100);
 
@@ -73,7 +63,7 @@ export const usePDFUpload = () => {
         id: pdf.id,
         filename: pdf.filename,
         file: pdf.file,
-        url: pb.files.getUrl(pdf, pdf.file),
+        url: pb.files.getURL(pdf, pdf.file),
       }));
     } catch (error) {
       console.error("Error fetching thread PDFs:", error);
@@ -81,30 +71,10 @@ export const usePDFUpload = () => {
     }
   }, []);
 
-  const deletePDF = useCallback(async (pdfId: string) => {
-    try {
-      // Use the Hono API endpoint for deletion
-      const response = await fetch(`/api/pdf/${pdfId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Delete failed");
-      }
-
-      const result = await response.json();
-      return result.success;
-    } catch (error) {
-      console.error("Error deleting PDF:", error);
-      return false;
-    }
-  }, []);
-
   return {
     uploadPDF,
     getThreadPDFs,
-    deletePDF,
     isUploading,
     uploadProgress,
   };
-}; 
+};

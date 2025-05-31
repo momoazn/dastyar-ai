@@ -17,13 +17,7 @@ const REASONING_END_TAG = "</think>";
 const UPDATE_INTERVAL_MS = 100; // Update assistant message every 100ms for real-time feel
 
 // ===== TYPES =====
-type CreateMessagePayload = Pick<
-  MessagesRecord,
-  "content" | "role" | "thread" | "model" | "status"
-> & {
-  reasoning?: string;
-  sent_at?: string;
-};
+type CreateMessagePayload = Omit<MessagesRecord, "id">;
 
 type OllamaMessage = {
   role: "user" | "assistant";
@@ -131,7 +125,7 @@ export function useStreamingChat(threadId?: string) {
 
   const { mutateAsync: createMessage } = useMutation({
     mutationFn: (message: CreateMessagePayload) => {
-      return pb.collection("messages").create(message);
+      return pb.collection("messages").create<MessagesRecord>(message);
     },
   });
 
@@ -139,10 +133,8 @@ export function useStreamingChat(threadId?: string) {
   useEffect(() => {
     if (!threadId) return;
 
-    let unsubscribePromise: Promise<() => void> | null = null;
-
     // Subscribe to all messages changes for this thread
-    unsubscribePromise = pb.collection("messages").subscribe(
+    const unsubscribePromise = pb.collection("messages").subscribe(
       "*",
       (event) => {
         const record = event.record as MessagesRecord;
@@ -192,9 +184,7 @@ export function useStreamingChat(threadId?: string) {
 
   // ===== INITIAL MESSAGES LOAD =====
   useEffect(() => {
-    if (messagesData?.items) {
-      setMessages(messagesData.items);
-    }
+    if (messagesData?.items) setMessages(messagesData.items);
   }, [messagesData]);
 
   // ===== STREAMING HANDLERS =====
@@ -304,8 +294,9 @@ export function useStreamingChat(threadId?: string) {
   const sendMessage = useCallback(
     async (model: string, overrideThreadId?: string) => {
       const effectiveThreadId = overrideThreadId || threadId;
+      const currentPrompt = prompt.trim();
 
-      if (!prompt.trim() || !effectiveThreadId) {
+      if (!currentPrompt || !effectiveThreadId) {
         return;
       }
 
@@ -316,12 +307,11 @@ export function useStreamingChat(threadId?: string) {
       const ollamaMessages = convertToOllamaMessages(existingMessages);
       const newUserMessage: OllamaMessage = {
         role: "user",
-        content: prompt.trim(),
+        content: currentPrompt,
       };
       const messagesToSend = [...ollamaMessages, newUserMessage];
 
       // Start streaming
-      const currentPrompt = prompt.trim();
       setPrompt("");
       setIsStreaming(true);
 
@@ -342,26 +332,26 @@ export function useStreamingChat(threadId?: string) {
         // Save user message to database immediately
         // PocketBase subscription will automatically add it to UI
         await createMessage({
-      role: MessagesRoleOptions.user,
+          role: MessagesRoleOptions.user,
           content: currentPrompt,
           thread: effectiveThreadId,
-      model,
-      status: MessagesStatusOptions.idle,
+          model,
+          status: MessagesStatusOptions.idle,
         });
 
         // Create assistant message in database immediately
         // PocketBase subscription will automatically add it to UI
         const assistantMessageResponse = await createMessage({
-      role: MessagesRoleOptions.assistant,
-      content: "",
+          role: MessagesRoleOptions.assistant,
+          content: "",
           reasoning: "",
           thread: effectiveThreadId,
-      model,
-      status: MessagesStatusOptions.idle,
+          model,
+          status: MessagesStatusOptions.idle,
         });
 
         // Use the real assistant message ID from database
-        const realAssistantMessageId = (assistantMessageResponse as any).id;
+        const realAssistantMessageId = assistantMessageResponse.id;
 
         // Set up periodic updates
         const interval = setupPeriodicUpdates(
@@ -372,10 +362,10 @@ export function useStreamingChat(threadId?: string) {
 
         // Start Ollama streaming
         const streamResult = await ollama.chat({
-      model,
+          model,
           messages: messagesToSend,
-      stream: true,
-    });
+          stream: true,
+        });
 
         // Process streaming chunks
         for await (const chunk of streamResult) {
@@ -445,7 +435,7 @@ export function useStreamingChat(threadId?: string) {
     // State
     prompt,
     isStreaming,
-    messages, // Now managed by PocketBase subscriptions
+    messages,
 
     // Actions
     setPrompt,

@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
-import { useModelsList, useSimplifiedChat } from "@/hooks";
+import { useModelsList, usePDFUpload, useStreamingChat } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { pb } from "@/lib/pocketbase";
 
@@ -38,17 +38,12 @@ export default function ChatPage() {
     prompt,
     setPrompt,
     sendMessage,
-    stopGeneration,
-    isGenerating,
     messages,
-    // RAG functionality
-    attachedPDFs,
-    uploadPDF,
-    removePDF,
-    isUploading,
-    uploadProgress,
-    hasRAGDocuments,
-  } = useSimplifiedChat(threadId);
+    isStreaming,
+    stopStreaming,
+  } = useStreamingChat(threadId);
+
+  const { isUploading, uploadPDF, uploadProgress } = usePDFUpload();
 
   // ===== UTILITY FUNCTIONS =====
   const scrollToBottom = useCallback(() => {
@@ -74,55 +69,53 @@ export default function ChatPage() {
     }
   }, [messages, availableModels]);
 
+  const createNewThreadIfNeeded = useCallback(async (): Promise<
+    string | null
+  > => {
+    let effectiveThreadId = threadId;
+    if (effectiveThreadId) return effectiveThreadId;
+    try {
+      const newThread = await createNewThread();
+      if (!newThread.id) throw new Error("Failed to create chat thread");
+
+      effectiveThreadId = newThread.id;
+      navigate(`/chat/${effectiveThreadId}`, { replace: true });
+      return effectiveThreadId;
+    } catch (error) {
+      console.error("Failed to create new thread:", error);
+      return null;
+    }
+  }, [createNewThread, navigate, threadId]);
+
   // ===== MESSAGE HANDLING =====
   const handleSendMessage = useCallback(async () => {
     if (!prompt.trim() || !chatModel) return;
 
-    let effectiveThreadId = threadId;
+    const effectiveThreadId = await createNewThreadIfNeeded();
+    if (!effectiveThreadId) return;
 
-    // Create a new thread if we're starting a new chat
-    if (!effectiveThreadId) {
-      try {
-        const newThread = await createNewThread();
-
-        if (newThread.id) {
-          effectiveThreadId = newThread.id;
-          navigate(`/chat/${newThread.id}`, { replace: true });
-        } else {
-          throw new Error("Failed to create chat thread");
-        }
-      } catch (error) {
-        console.error("Failed to create new thread:", error);
-        return;
-      }
-    }
-
-    // Send the message with the thread ID
-    await sendMessage(prompt, chatModel);
-  }, [prompt, chatModel, threadId, createNewThread, navigate, sendMessage]);
+    await sendMessage(chatModel, effectiveThreadId);
+  }, [chatModel, createNewThreadIfNeeded, sendMessage]);
 
   // ===== MESSAGE ACTIONS =====
   const handleCopyMessage = useCallback((content: string) => {
-    console.log("Message copied:", content.slice(0, 50) + "...");
+    navigator.clipboard.writeText(content);
   }, []);
 
   // ===== PDF HANDLING =====
-  const handleFileSelect = useCallback(async (file: File) => {
-    if (!threadId) return;
-    try {
-      await uploadPDF(file);
-    } catch (error) {
-      console.error("Error uploading PDF:", error);
-    }
-  }, [threadId, uploadPDF]);
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      const effectiveThreadId = await createNewThreadIfNeeded();
+      if (!effectiveThreadId) return;
 
-  const handleRemovePDF = useCallback(async (pdfId: string) => {
-    try {
-      await removePDF(pdfId);
-    } catch (error) {
-      console.error("Error removing PDF:", error);
-    }
-  }, [removePDF]);
+      try {
+        await uploadPDF(file, effectiveThreadId);
+      } catch (error) {
+        console.error("Error uploading PDF:", error);
+      }
+    },
+    [createNewThreadIfNeeded, uploadPDF],
+  );
 
   // ===== EFFECTS =====
   useEffect(() => {
@@ -133,6 +126,7 @@ export default function ChatPage() {
   // ===== RENDER HELPERS =====
   const renderMessages = () => {
     if (messages.length > 0) {
+      // Existing chat
       return (
         <div className="space-y-8">
           {messages.map((message, index) => {
@@ -148,7 +142,8 @@ export default function ChatPage() {
       );
     }
 
-    if (!isNewChat && isGenerating) {
+    // Existing chat, streaming
+    if (!isNewChat && isStreaming) {
       return (
         <div className="flex h-32 items-center justify-center">
           <div className="flex items-center gap-3">
@@ -161,6 +156,7 @@ export default function ChatPage() {
       );
     }
 
+    // New chat, not streaming
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
@@ -200,15 +196,11 @@ export default function ChatPage() {
             handleSendPrompt={handleSendMessage}
             chatModel={chatModel}
             setChatModel={setChatModel}
-            isStreaming={isGenerating}
-            stopStreaming={stopGeneration}
-            // RAG functionality props
-            attachedPDFs={attachedPDFs}
+            isStreaming={isStreaming}
+            stopStreaming={stopStreaming}
             onFileSelect={handleFileSelect}
-            onRemovePDF={handleRemovePDF}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
-            hasRAGDocuments={hasRAGDocuments}
           />
         </div>
       </div>
