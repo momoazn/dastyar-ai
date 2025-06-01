@@ -1,6 +1,7 @@
 import PocketBase from "pocketbase";
 import {
   MessagesRecord,
+  MessagesRoleOptions,
   MessagesStatusOptions,
   PdfsRecord,
   ThreadsRecord,
@@ -32,17 +33,25 @@ export class Database {
     }
   }
 
-  async createMessage(
-    threadId: string,
-    content: string,
-    role: "user" | "assistant",
-    status: MessagesStatusOptions = MessagesStatusOptions.idle,
-  ): Promise<MessagesRecord> {
+  async createMessage({
+    threadId,
+    content,
+    role,
+    status = MessagesStatusOptions.idle,
+    model,
+  }: {
+    threadId: string;
+    content: string;
+    role: MessagesRoleOptions;
+    status?: MessagesStatusOptions;
+    model: string;
+  }): Promise<MessagesRecord> {
     const record = await this.pb.collection<MessagesRecord>("messages").create({
       thread: threadId,
       content,
       role,
       status,
+      model,
     });
     return record;
   }
@@ -82,9 +91,7 @@ export class Database {
 
   async getPDF(id: string): Promise<PdfsRecord | null> {
     try {
-      const record = await this.pb
-        .collection<PdfsRecord>("pdfs")
-        .getOne(id);
+      const record = await this.pb.collection<PdfsRecord>("pdfs").getOne(id);
       return record;
     } catch (error) {
       return null;
