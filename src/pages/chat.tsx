@@ -97,11 +97,6 @@ export default function ChatPage() {
     await sendMessage(chatModel, effectiveThreadId);
   }, [chatModel, createNewThreadIfNeeded, sendMessage]);
 
-  // ===== MESSAGE ACTIONS =====
-  const handleCopyMessage = useCallback((content: string) => {
-    navigator.clipboard.writeText(content);
-  }, []);
-
   // ===== PDF HANDLING =====
   const handleFileSelect = useCallback(
     async (file: File) => {
@@ -134,7 +129,6 @@ export default function ChatPage() {
               <Message
                 key={message.id || `streaming-${index}`}
                 message={message}
-                onCopy={handleCopyMessage}
               />
             );
           })}

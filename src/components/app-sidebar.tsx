@@ -21,18 +21,17 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
-import { Button } from "./ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { pb } from "@/lib/pocketbase";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Button } from "./ui/button";
 
-// Types
-type NavItem = {
+interface NavItem {
   title: string;
   url: string;
   icon: React.ElementType;
-};
+}
 
 interface SidebarItemProps {
   title: string | undefined;
@@ -46,7 +45,6 @@ interface ContentSidebarProps {
   onNew: () => void;
 }
 
-// Navigation configuration
 const navMain: NavItem[] = [
   {
     title: PERSIAN_TEXTS.navigation.home,
@@ -70,7 +68,6 @@ const navMain: NavItem[] = [
   },
 ] as const satisfies NavItem[];
 
-// Custom hooks
 function useActiveNavItem() {
   const { pathname } = useLocation();
 
@@ -151,20 +148,12 @@ function useTranslationsData(isActive: boolean) {
   });
 
   const { mutate: deleteTranslation } = useMutation({
-    mutationFn: (id: string) => {
-      return pb.collection("translations").delete(id);
-    },
-    onSuccess: () => {
-      refetchTranslations();
-    },
-    onError: (error) => {
-      console.error("Failed to delete translation:", error);
-    },
+    mutationFn: (id: string) => pb.collection("translations").delete(id),
+    onSuccess: () => refetchTranslations(),
+    onError: (error) => console.error("Failed to delete translation:", error),
   });
 
-  const handleNewTranslation = () => {
-    navigate("/translation");
-  };
+  const handleNewTranslation = () => navigate("/translation");
 
   return {
     translations,
@@ -174,7 +163,6 @@ function useTranslationsData(isActive: boolean) {
   };
 }
 
-// Components
 function NavigationSidebar() {
   const navigate = useNavigate();
   const { setOpen } = useSidebar();
@@ -189,11 +177,11 @@ function NavigationSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-              <a href="/">
+              <Link to="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -217,7 +205,7 @@ function NavigationSidebar() {
                     isActive={activeItem?.url === item.url}
                     className="px-2.5 md:px-2"
                   >
-                    <item.icon />
+                    <item.icon className="size-8" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -232,48 +220,63 @@ function NavigationSidebar() {
 
 function SidebarItem({ title, to, onArchive, onDelete }: SidebarItemProps) {
   return (
-    <Link
+    <NavLink
       to={to}
-      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-12 items-center justify-between border-b p-4 text-sm"
+      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative flex h-12 items-center justify-between border-b p-4 text-sm"
     >
-      <span className="font-medium">{title ?? "Untitled"}</span>
+      {({ isActive }) => {
+        return (
+          <>
+            {isActive && (
+              <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
+            )}
 
-      <div className="flex items-center gap-0">
-        {onArchive && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer hover:text-blue-500"
-            onClick={(e) => {
-              e.preventDefault();
-              onArchive?.(e);
-            }}
-          >
-            <ArchiveIcon className="size-4" />
-          </Button>
-        )}
+            <span className="font-medium">{title ?? "Untitled"}</span>
 
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer hover:text-red-500"
-            onClick={(e) => {
-              e.preventDefault();
-              onDelete?.(e);
-            }}
-          >
-            <TrashIcon className="size-4" />
-          </Button>
-        )}
-      </div>
-    </Link>
+            <div className="flex items-center gap-0">
+              {onArchive && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer hover:text-blue-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onArchive?.(e);
+                  }}
+                >
+                  <ArchiveIcon className="size-4" />
+                </Button>
+              )}
+
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer hover:text-red-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete?.(e);
+                  }}
+                >
+                  <TrashIcon className="size-4" />
+                </Button>
+              )}
+            </div>
+          </>
+        );
+      }}
+    </NavLink>
   );
 }
 
 function ChatThreadsList() {
   const activeItem = useActiveNavItem();
   const isActive = activeItem?.url === "/chat";
+
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { chatThreads, deleteChatThread, updateChatThread } =
     useChatThreadsData(isActive);
 
@@ -281,15 +284,26 @@ function ChatThreadsList() {
 
   return (
     <>
+      {chatThreads?.items?.length === 0 && (
+        <div className="mt-4 flex h-full items-center justify-center">
+          <p className="text-muted-foreground text-sm">
+            {PERSIAN_TEXTS.navigation.noChatThreads}
+          </p>
+        </div>
+      )}
+
       {chatThreads?.items?.map((thread) => (
         <SidebarItem
           to={`/chat/${thread.id}`}
           key={thread.id}
           title={thread.title}
-          onArchive={() => {
-            updateChatThread(thread.id);
+          onArchive={() => updateChatThread(thread.id)}
+          onDelete={() => {
+            deleteChatThread(thread.id);
+            if (thread.id === pathname.split("/").pop()?.toString()) {
+              navigate("/chat");
+            }
           }}
-          onDelete={() => deleteChatThread(thread.id)}
         />
       ))}
     </>

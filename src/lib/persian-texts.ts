@@ -33,6 +33,7 @@ export const PERSIAN_TEXTS = {
     newChat: "مکالمه جدید",
     newTranslation: "ترجمه جدید",
     new: "جدید",
+    noChatThreads: "هیچ گفتگویی وجود ندارد",
   },
 
   // Settings

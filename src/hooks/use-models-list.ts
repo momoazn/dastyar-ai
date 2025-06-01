@@ -8,7 +8,9 @@ export const useModelsList = () => {
     queryKey: ["ollama-models"],
     queryFn: async () => {
       const res = await ollama.list();
-      return res.models;
+      return res.models.filter(
+        (model) => !model.name.includes("nomic-embed-text"),
+      );
     },
     refetchInterval: 5000,
   });

@@ -113,14 +113,11 @@ export function useStreamingChat(threadId?: string) {
           model,
         },
         signal: controller.signal,
-        onMessage: (payload) => {
-          console.log("streaming, message", payload);
-        },
+        onMessage: () => {},
         onError: (error) => {
           console.error("Error during streaming:", error);
         },
         onComplete: () => {
-          console.log("Streaming complete");
           setIsStreaming(false);
         },
       });

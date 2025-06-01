@@ -29,10 +29,9 @@ import {
 
 export interface AssistantMessageProps {
   message: MessagesRecord;
-  onCopy?: (content: string) => void;
 }
 
-export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
+export function AssistantMessage({ message }: AssistantMessageProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -52,7 +51,6 @@ export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
     try {
       await navigator.clipboard.writeText(content);
       setCopySuccess(true);
-      onCopy?.(content);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
       console.error("Failed to copy text:", error);
@@ -142,7 +140,10 @@ export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
               collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100",
             )}
           >
-            <div dir="ltr" className="text-muted-foreground text-sm">
+            <div
+              dir="ltr"
+              className="text-muted-foreground text-justify text-sm"
+            >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.reasoning || ""}
               </ReactMarkdown>
@@ -168,7 +169,7 @@ export function AssistantMessage({ message, onCopy }: AssistantMessageProps) {
             dir={detectTextDirection(message.content || "")}
             className="w-full"
           >
-            <div className="text-foreground leading-relaxed">
+            <div className="text-foreground text-justify leading-relaxed">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.content || ""}
               </ReactMarkdown>
