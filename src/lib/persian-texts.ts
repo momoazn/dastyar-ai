@@ -58,6 +58,7 @@ export const PERSIAN_TEXTS = {
     hideThoughts: "پنهان کردن افکار",
     writeMessage: "پیام خود را بنویسید...",
     generationStopped: "تولید پاسخ متوقف شد",
+    generationErrored: "خطا در تولید پاسخ",
     askQuestion: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
     askQuestionDescription:
       "سوال خود را بپرسید تا بتوانم به شما کمک کنم",

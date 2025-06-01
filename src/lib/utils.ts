@@ -97,7 +97,7 @@ export async function postAndStreamSSE({
       console.error("SSE stream error:", err);
       onError?.(err);
     }
-
-    onComplete?.();
   }
+
+  onComplete?.();
 }

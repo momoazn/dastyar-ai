@@ -99,6 +99,7 @@ export enum MessagesStatusOptions {
 	"streaming" = "streaming",
 	"finished" = "finished",
 	"errored" = "errored",
+	"stopped" = "stopped",
 }
 
 export enum MessagesRoleOptions {

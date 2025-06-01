@@ -33,6 +33,16 @@ export class Database {
     }
   }
 
+  async updateThread(
+    id: string,
+    updates: Partial<ThreadsRecord>,
+  ): Promise<ThreadsRecord> {
+    const record = await this.pb
+      .collection<ThreadsRecord>("threads")
+      .update(id, updates);
+    return record;
+  }
+
   async createMessage({
     threadId,
     content,

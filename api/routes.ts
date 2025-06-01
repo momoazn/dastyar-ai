@@ -148,6 +148,10 @@ const app = new Hono()
           model: body.model,
         });
 
+        await db.updateThread(body.threadId, {
+          last_message_at: new Date().toISOString(),
+        });
+
         // Stream response from Ollama using SDK and update PocketBase
         return streamSSE(c, async (stream) => {
           try {
@@ -199,7 +203,7 @@ const app = new Hono()
 
                 // Update PocketBase every 100ms
                 const now = Date.now();
-                if (now - lastUpdateTime >= 100 || stream.aborted) {
+                if (now - lastUpdateTime >= 100) {
                   await db.updateMessage(assistantMessage.id, {
                     reasoning: reasoningContent,
                     content: responseContent,
@@ -208,6 +212,14 @@ const app = new Hono()
                       : MessagesStatusOptions.streaming,
                   });
                   lastUpdateTime = now;
+                }
+
+                if (stream.aborted) {
+                  console.log("@@@@ stream.aborted");
+                  await db.updateMessage(assistantMessage.id, {
+                    status: MessagesStatusOptions.stopped,
+                  });
+                  break;
                 }
               }
 

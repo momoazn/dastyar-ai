@@ -105,28 +105,25 @@ export function useStreamingChat(threadId?: string) {
       const controller = new AbortController();
       setAbortController(controller);
 
-      try {
-        postAndStreamSSE({
-          url: client.api.chat.$url().toString(),
-          body: {
-            message: currentPrompt,
-            threadId: effectiveThreadId,
-            model,
-          },
-          signal: controller.signal,
-          onMessage: (payload) => {
-            console.log("streaming, message", payload);
-          },
-          onError: (error) => {
-            console.error("Error during streaming:", error);
-          },
-          onComplete: () => {
-            console.log("Streaming complete");
-          },
-        });
-      } catch (error) {
-        console.error("Error during streaming:", error);
-      }
+      postAndStreamSSE({
+        url: client.api.chat.$url().toString(),
+        body: {
+          message: currentPrompt,
+          threadId: effectiveThreadId,
+          model,
+        },
+        signal: controller.signal,
+        onMessage: (payload) => {
+          console.log("streaming, message", payload);
+        },
+        onError: (error) => {
+          console.error("Error during streaming:", error);
+        },
+        onComplete: () => {
+          console.log("Streaming complete");
+          setIsStreaming(false);
+        },
+      });
     },
     [prompt, threadId, messages],
   );
