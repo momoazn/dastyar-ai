@@ -2,9 +2,10 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
-import { Ollama } from "ollama";
+import { ollama } from "ollama-ai-provider";
 import { z } from "zod";
 
+import { streamText } from "ai";
 import {
   MessagesRoleOptions,
   MessagesStatusOptions,
@@ -12,14 +13,11 @@ import {
 import { ChatService } from "./chat-service";
 import { Database } from "./database";
 import { PDFProcessor } from "./pdf";
-import { convertToOllamaMessages, parseReasoningTokens } from "./utils";
+import { convertToCoreMessages, parseReasoningTokens } from "./utils";
 
 const pdfProcessor = new PDFProcessor();
 const chatService = new ChatService();
 const db = new Database();
-const ollama = new Ollama({
-  host: "http://localhost:11434",
-});
 
 const app = new Hono()
   .use("*", cors())
@@ -109,167 +107,137 @@ const app = new Hono()
       }),
     ),
     async (c) => {
-      try {
-        const body = (await c.req.json()) as {
-          message: string;
-          threadId: string;
-          model: string;
-        };
+      const body = (await c.req.json()) as {
+        message: string;
+        threadId: string;
+        model: string;
+      };
 
-        if (!body.message || !body.threadId || !body.model) {
-          return c.json(
-            { error: "Message, threadId and model are required" },
-            400,
-          );
-        }
-
-        const messages = await db.getMessages(body.threadId);
-        const messagesToSend = convertToOllamaMessages(messages);
-        messagesToSend.push({
-          role: "user",
-          content: body.message,
-        });
-
-        // Create user message in PocketBase
-        await db.createMessage({
-          threadId: body.threadId,
-          content: body.message,
-          role: MessagesRoleOptions.user,
-          status: MessagesStatusOptions.finished,
-          model: body.model,
-        });
-
-        // Create assistant message placeholder
-        const assistantMessage = await db.createMessage({
-          threadId: body.threadId,
-          content: "",
-          role: MessagesRoleOptions.assistant,
-          status: MessagesStatusOptions.idle,
-          model: body.model,
-        });
-
-        await db.updateThread(body.threadId, {
-          last_message_at: new Date().toISOString(),
-        });
-
-        // Stream response from Ollama using SDK and update PocketBase
-        return streamSSE(c, async (stream) => {
-          try {
-            let fullContent = "";
-            let reasoningContent = "";
-            let responseContent = "";
-            let lastUpdateTime = Date.now();
-
-            // Update message status to streaming
-            await db.updateMessage(assistantMessage.id, {
-              status: MessagesStatusOptions.reasoning,
-            });
-
-            // Use Ollama SDK for streaming
-            const response = await ollama.chat({
-              model: body.model,
-              messages: messagesToSend,
-              stream: true,
-            });
-
-            // Iterate through the streaming response
-            for await (const part of response) {
-              if (part.message) {
-                fullContent += part.message.content;
-
-                // Parse reasoning and response content
-                const {
-                  reasoning: newReasoning,
-                  response: newResponse,
-                  isReasoning,
-                } = parseReasoningTokens(fullContent);
-
-                reasoningContent = newReasoning;
-                responseContent = newResponse;
-
-                await stream.writeSSE({
-                  data: JSON.stringify({
-                    status: isReasoning
-                      ? MessagesStatusOptions.reasoning
-                      : MessagesStatusOptions.streaming,
-                    reasoning: reasoningContent,
-                    response: responseContent,
-                    fullContent,
-                  }),
-                  event: "message",
-                  id: assistantMessage.id,
-                  retry: 1000,
-                });
-
-                // Update PocketBase every 100ms
-                const now = Date.now();
-                if (now - lastUpdateTime >= 100) {
-                  await db.updateMessage(assistantMessage.id, {
-                    reasoning: reasoningContent,
-                    content: responseContent,
-                    status: isReasoning
-                      ? MessagesStatusOptions.reasoning
-                      : MessagesStatusOptions.streaming,
-                  });
-                  lastUpdateTime = now;
-                }
-
-                if (stream.aborted) {
-                  console.log("@@@@ stream.aborted");
-                  await db.updateMessage(assistantMessage.id, {
-                    status: MessagesStatusOptions.stopped,
-                  });
-                  break;
-                }
-              }
-
-              if (part.done) {
-                await db.updateMessage(assistantMessage.id, {
-                  content: responseContent,
-                  reasoning: reasoningContent,
-                  status: MessagesStatusOptions.finished,
-                });
-
-                await stream.writeSSE({
-                  data: JSON.stringify({
-                    status: MessagesStatusOptions.finished,
-                  }),
-                  event: "message",
-                  id: assistantMessage.id,
-                  retry: 1000,
-                });
-                break;
-              }
-            }
-          } catch (error) {
-            console.error("Streaming error:", error);
-
-            // Update message with error status
-            await db.updateMessage(assistantMessage.id, {
-              content: "متأسفم، خطایی در تولید پاسخ رخ داد.", // Persian: Sorry, an error occurred while generating the response.
-              status: MessagesStatusOptions.errored,
-            });
-
-            await stream.writeSSE({
-              data: JSON.stringify({
-                status: MessagesStatusOptions.errored,
-              }),
-              event: "message",
-              id: assistantMessage.id,
-              retry: 1000,
-            });
-          }
-        });
-      } catch (error) {
-        console.error("Chat error:", error);
+      if (!body.message || !body.threadId || !body.model) {
         return c.json(
-          {
-            error: "Failed to process chat message",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-          500,
+          { error: "Message, threadId and model are required" },
+          400,
         );
       }
+
+      const messages = await db.getMessages(body.threadId);
+      const messagesToSend = convertToCoreMessages(messages);
+      messagesToSend.push({
+        role: "user",
+        content: body.message,
+      });
+
+      // Create user message in PocketBase
+      await db.createMessage({
+        threadId: body.threadId,
+        content: body.message,
+        role: MessagesRoleOptions.user,
+        status: MessagesStatusOptions.finished,
+        model: body.model,
+      });
+
+      // Create assistant message placeholder
+      const assistantMessage = await db.createMessage({
+        threadId: body.threadId,
+        content: "",
+        role: MessagesRoleOptions.assistant,
+        status: MessagesStatusOptions.idle,
+        model: body.model,
+      });
+
+      await db.updateThread(body.threadId, {
+        last_message_at: new Date().toISOString(),
+      });
+
+      return streamSSE(c, async (stream) => {
+        let accumulatedFullResponse = "";
+        let accumulatedReasoning = "";
+        let accumulatedResponse = "";
+        let lastUpdateTime = Date.now();
+        const updateInterval = 100;
+
+        await db.updateMessage(assistantMessage.id, {
+          status: MessagesStatusOptions.streaming,
+        });
+
+        try {
+          const result = streamText({
+            model: ollama(body.model),
+            messages: messagesToSend,
+          });
+
+          for await (const delta of result.textStream) {
+            accumulatedFullResponse += delta;
+
+            const { reasoning: newReasoning, response: newResponse } =
+              parseReasoningTokens(accumulatedFullResponse);
+
+            accumulatedReasoning = newReasoning;
+            accumulatedResponse = newResponse;
+
+            // Send to client
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "delta",
+                content: delta,
+              }),
+            });
+
+            console.log(">>>>>>>>>>>> Aborted", stream.aborted);
+            console.log(">>>>>>>>>>>> Closed", stream.closed);
+
+            const now = Date.now();
+            if (now - lastUpdateTime >= updateInterval) {
+              await db.updateMessage(assistantMessage.id, {
+                reasoning: accumulatedReasoning,
+                content: accumulatedResponse,
+                status: MessagesStatusOptions.streaming,
+              });
+              lastUpdateTime = now;
+            }
+
+            if (stream.aborted || stream.closed) {
+              break;
+            }
+          }
+
+          const finalStatus = stream.aborted
+            ? MessagesStatusOptions.stopped
+            : MessagesStatusOptions.finished;
+
+          // Final database update
+          await db.updateMessage(assistantMessage.id, {
+            content: accumulatedResponse,
+            reasoning: accumulatedReasoning,
+            status: finalStatus,
+          });
+
+          // Send completion event
+          await stream.writeSSE({
+            data: JSON.stringify({
+              type: "complete",
+              content: accumulatedResponse,
+              reasoning: accumulatedReasoning,
+            }),
+          });
+        } catch (error) {
+          const finalStatus = stream.aborted
+            ? MessagesStatusOptions.stopped
+            : MessagesStatusOptions.errored;
+
+          await db.updateMessage(assistantMessage.id, {
+            status: finalStatus,
+          });
+
+          await stream.writeSSE({
+            data: JSON.stringify({
+              type: "error",
+              error: error instanceof Error ? error.message : "Unknown error",
+              status: finalStatus,
+            }),
+          });
+        }
+      });
     },
   );
 

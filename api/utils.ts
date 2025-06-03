@@ -1,3 +1,5 @@
+import type { CoreMessage } from "ai";
+
 import { MessagesRecord } from "../src/lib/pocketbase-types";
 import { ChatService } from "./chat-service";
 import { Database } from "./database";
@@ -78,14 +80,9 @@ export const parseReasoningTokens = (
   return { reasoning, response, isReasoning };
 };
 
-type OllamaMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-export const convertToOllamaMessages = (
+export const convertToCoreMessages = (
   messages: MessagesRecord[],
-): OllamaMessage[] => {
+): CoreMessage[] => {
   return messages.map((message) => ({
     role: message.role as "user" | "assistant",
     content: message.content || "",
