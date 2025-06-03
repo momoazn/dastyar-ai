@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { client } from "@/lib/hono";
 import { pb } from "@/lib/pocketbase";
@@ -9,7 +9,6 @@ import { postAndStreamSSE } from "@/lib/utils";
 // ===== CONSTANTS =====
 const MESSAGES_QUERY_LIMIT = 100;
 
-// ===== MAIN HOOK =====
 export function useStreamingChat(threadId?: string) {
   // ===== STATE MANAGEMENT =====
   const [prompt, setPrompt] = useState("");
@@ -17,6 +16,10 @@ export function useStreamingChat(threadId?: string) {
   const [messages, setMessages] = useState<MessagesRecord[]>([]);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
+  
+  // ===== REFS FOR PERFORMANCE =====
+  const messagesRef = useRef<MessagesRecord[]>([]);
+  const isSubscribedRef = useRef(false);
 
   // ===== API QUERIES & MUTATIONS =====
   const { data: messagesData } = useQuery({
@@ -29,12 +32,45 @@ export function useStreamingChat(threadId?: string) {
     enabled: !!threadId,
   });
 
+  // ===== OPTIMIZED MESSAGE SORTING =====
+  const sortMessages = useCallback((msgs: MessagesRecord[]): MessagesRecord[] => {
+    return [...msgs].sort((a, b) => {
+      const aTime = a.created ? new Date(a.created).getTime() : 0;
+      const bTime = b.created ? new Date(b.created).getTime() : 0;
+      return aTime - bTime;
+    });
+  }, []);
+
+  // ===== OPTIMIZED MESSAGE HANDLERS =====
+  const handleMessageCreate = useCallback((record: MessagesRecord) => {
+    setMessages((prev) => {
+      // Check if message already exists to avoid duplicates
+      const exists = prev.some((msg) => msg.id === record.id);
+      if (exists) return prev;
+
+      const newMessages = [...prev, record];
+      return sortMessages(newMessages);
+    });
+  }, [sortMessages]);
+
+  const handleMessageUpdate = useCallback((record: MessagesRecord) => {
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === record.id ? record : msg))
+    );
+  }, []);
+
+  const handleMessageDelete = useCallback((recordId: string) => {
+    setMessages((prev) => prev.filter((msg) => msg.id !== recordId));
+  }, []);
+
   // ===== POCKETBASE SUBSCRIPTION EFFECTS =====
   useEffect(() => {
-    if (!threadId) return;
+    if (!threadId || isSubscribedRef.current) return;
 
     // Subscribe to all messages changes for this thread
     console.log("subscribing to messages");
+    isSubscribedRef.current = true;
+
     const unsubscribePromise = pb.collection("messages").subscribe(
       "*",
       (event) => {
@@ -43,27 +79,13 @@ export function useStreamingChat(threadId?: string) {
         // Only handle messages from the current thread
         if (record.thread !== threadId) return;
 
+        // Use separate handlers for better performance
         if (event.action === "create") {
-          setMessages((prev) => {
-            // Check if message already exists to avoid duplicates
-            const exists = prev.some((msg) => msg.id === record.id);
-            if (exists) return prev;
-
-            // Insert in correct chronological order
-            const newMessages = [...prev, record];
-            newMessages.sort((a, b) => {
-              const aTime = a.created ? new Date(a.created).getTime() : 0;
-              const bTime = b.created ? new Date(b.created).getTime() : 0;
-              return aTime - bTime;
-            });
-            return newMessages;
-          });
+          handleMessageCreate(record);
         } else if (event.action === "update") {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === record.id ? record : msg)),
-          );
+          handleMessageUpdate(record);
         } else if (event.action === "delete") {
-          setMessages((prev) => prev.filter((msg) => msg.id !== record.id));
+          handleMessageDelete(record.id);
         }
       },
       {
@@ -73,6 +95,7 @@ export function useStreamingChat(threadId?: string) {
 
     // Cleanup subscription on unmount or threadId change
     return () => {
+      isSubscribedRef.current = false;
       if (unsubscribePromise) {
         unsubscribePromise
           .then((unsubscribe) => {
@@ -81,12 +104,21 @@ export function useStreamingChat(threadId?: string) {
           .catch(console.error);
       }
     };
-  }, [threadId]);
+  }, [threadId, handleMessageCreate, handleMessageUpdate, handleMessageDelete]);
 
   // ===== INITIAL MESSAGES LOAD =====
   useEffect(() => {
-    if (messagesData?.items) setMessages(messagesData.items);
-  }, [messagesData]);
+    if (messagesData?.items) {
+      const sortedMessages = sortMessages(messagesData.items);
+      setMessages(sortedMessages);
+      messagesRef.current = sortedMessages;
+    }
+  }, [messagesData, sortMessages]);
+
+  // ===== SYNC MESSAGES REF =====
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // ===== MAIN SEND MESSAGE FUNCTION =====
   const sendMessage = useCallback(
@@ -113,22 +145,27 @@ export function useStreamingChat(threadId?: string) {
           model,
         },
         signal: controller.signal,
-        onMessage: () => {},
+        onMessage: () => {
+          // Let PocketBase subscriptions handle the updates
+          // This reduces direct state manipulation during streaming
+        },
         onError: (error) => {
           console.error("Error during streaming:", error);
+          setIsStreaming(false);
         },
         onComplete: () => {
           setIsStreaming(false);
         },
       });
     },
-    [prompt, threadId, messages],
+    [prompt, threadId],
   );
 
   // ===== STREAMING CONTROL =====
   const stopStreaming = useCallback(() => {
     if (abortController) {
       abortController.abort();
+      setIsStreaming(false);
     }
   }, [abortController]);
 

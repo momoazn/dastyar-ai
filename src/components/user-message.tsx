@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -18,10 +18,24 @@ export interface UserMessageProps {
   message: MessagesRecord;
 }
 
-export function UserMessage({ message }: UserMessageProps) {
+export const UserMessage = memo(({ message }: UserMessageProps) => {
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const handleCopy = async (content: string) => {
+  // Memoize expensive computations
+  const textDirection = useMemo(
+    () => detectTextDirection(message.content || ""),
+    [message.content],
+  );
+
+  const formattedTime = useMemo(() => {
+    if (!message.created) return null;
+    return new Date(message.created).toLocaleTimeString("fa-IR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [message.created]);
+
+  const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
       setCopySuccess(true);
@@ -29,37 +43,40 @@ export function UserMessage({ message }: UserMessageProps) {
     } catch (error) {
       console.error("Failed to copy text:", error);
     }
-  };
+  }, []);
 
   // User message actions below content
-  const UserMessageActions = () => (
-    <TooltipProvider>
-      <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-md p-0"
-              onClick={() => handleCopy(message.content || "")}
-            >
-              {copySuccess ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              {copySuccess
-                ? PERSIAN_TEXTS.chat.copied
-                : PERSIAN_TEXTS.chat.copy}
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </TooltipProvider>
+  const UserMessageActions = useMemo(
+    () => (
+      <TooltipProvider>
+        <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-md p-0"
+                onClick={() => handleCopy(message.content || "")}
+              >
+                {copySuccess ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {copySuccess
+                  ? PERSIAN_TEXTS.chat.copied
+                  : PERSIAN_TEXTS.chat.copy}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+    ),
+    [copySuccess, handleCopy, message.content],
   );
 
   return (
@@ -67,7 +84,7 @@ export function UserMessage({ message }: UserMessageProps) {
       <div className="max-w-[85%]">
         <div
           className="rounded-sm bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
-          dir={detectTextDirection(message.content || "")}
+          dir={textDirection}
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {message.content || ""}
@@ -75,20 +92,17 @@ export function UserMessage({ message }: UserMessageProps) {
         </div>
 
         {/* Message timestamp */}
-        {message.created && (
+        {formattedTime && (
           <div className="mt-2">
             <time className="text-xs text-black dark:text-white">
-              {new Date(message.created).toLocaleTimeString("fa-IR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formattedTime}
             </time>
           </div>
         )}
 
         {/* Actions below message bubble */}
-        <UserMessageActions />
+        {UserMessageActions}
       </div>
     </div>
   );
-}
+});

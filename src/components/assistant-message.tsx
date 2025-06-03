@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -31,23 +31,44 @@ export interface AssistantMessageProps {
   message: MessagesRecord;
 }
 
-export function AssistantMessage({ message }: AssistantMessageProps) {
+export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const hasThinking =
-    message?.role === MessagesRoleOptions.assistant &&
-    message?.reasoning !== "" &&
-    message?.model;
+  // Memoize expensive computations
+  const hasThinking = useMemo(() => {
+    return (
+      message?.role === MessagesRoleOptions.assistant &&
+      message?.reasoning !== "" &&
+      message?.model
+    );
+  }, [message?.role, message?.reasoning, message?.model]);
 
-  const isStopped = message.status === MessagesStatusOptions.stopped;
-  const isErrored = message.status === MessagesStatusOptions.errored;
-  const isGenerating =
-    message.status === MessagesStatusOptions.idle ||
-    message.status === MessagesStatusOptions.streaming ||
-    message.status === MessagesStatusOptions.reasoning;
+  const messageStatus = useMemo(() => {
+    const isStopped = message.status === MessagesStatusOptions.stopped;
+    const isErrored = message.status === MessagesStatusOptions.errored;
+    const isGenerating =
+      message.status === MessagesStatusOptions.idle ||
+      message.status === MessagesStatusOptions.streaming ||
+      message.status === MessagesStatusOptions.reasoning;
 
-  const handleCopy = async (content: string) => {
+    return { isStopped, isErrored, isGenerating };
+  }, [message.status]);
+
+  const textDirection = useMemo(
+    () => detectTextDirection(message.content || ""),
+    [message.content],
+  );
+
+  const formattedTime = useMemo(() => {
+    if (!message.sent_at) return null;
+    return new Date(message.sent_at).toLocaleTimeString("fa-IR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [message.sent_at]);
+
+  const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
       setCopySuccess(true);
@@ -55,53 +76,62 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
     } catch (error) {
       console.error("Failed to copy text:", error);
     }
-  };
+  }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((c) => !c);
+  }, []);
 
   // Assistant message actions below content
-  const AssistantMessageActions = () => (
-    <TooltipProvider>
-      <div className="mt-4 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-md p-0"
-              onClick={() => handleCopy(message.content || "")}
-            >
-              {copySuccess ? (
-                <Check className="h-4 w-4 text-green-600" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              {copySuccess
-                ? PERSIAN_TEXTS.chat.copied
-                : PERSIAN_TEXTS.chat.copy}
-            </p>
-          </TooltipContent>
-        </Tooltip>
+  const AssistantMessageActions = useMemo(
+    () => (
+      <TooltipProvider>
+        <div className="mt-4 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-md p-0"
+                onClick={() => handleCopy(message.content || "")}
+              >
+                {copySuccess ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {copySuccess
+                  ? PERSIAN_TEXTS.chat.copied
+                  : PERSIAN_TEXTS.chat.copy}
+              </p>
+            </TooltipContent>
+          </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-md p-0"
-            >
-              <Bot className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{message.model || "Unknown Model"}</p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-md p-0"
+              >
+                <Bot className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{message.model || "Unknown Model"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+    ),
+    [copySuccess, handleCopy, message.content, message.model],
   );
+
+  const { isStopped, isErrored, isGenerating } = messageStatus;
 
   return (
     <div className="group w-full">
@@ -121,7 +151,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
               variant="ghost"
               size="sm"
               className="h-6 px-2 text-xs"
-              onClick={() => setCollapsed((c) => !c)}
+              onClick={toggleCollapsed}
             >
               {collapsed ? (
                 <Eye className="mr-1 h-3 w-3" />
@@ -165,10 +195,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
       {/* Main message content (flowing without bubble) */}
       {(message.content || !isGenerating) && (
         <div className="w-full">
-          <div
-            dir={detectTextDirection(message.content || "")}
-            className="w-full"
-          >
+          <div dir={textDirection} className="w-full">
             <div className="text-foreground text-justify leading-relaxed">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.content || ""}
@@ -191,22 +218,19 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
             )}
 
             {/* Message timestamp */}
-            {message.sent_at && (
+            {formattedTime && (
               <div className="mt-4">
                 <time className="text-muted-foreground/70 text-xs">
-                  {new Date(message.sent_at).toLocaleTimeString("fa-IR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formattedTime}
                 </time>
               </div>
             )}
           </div>
 
           {/* Actions below the message content */}
-          <AssistantMessageActions />
+          {AssistantMessageActions}
         </div>
       )}
     </div>
   );
-}
+});

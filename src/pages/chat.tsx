@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { BotIcon, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
@@ -45,29 +45,32 @@ export default function ChatPage() {
 
   const { isUploading, uploadPDF, uploadProgress } = usePDFUpload();
 
+  // ===== MEMOIZED VALUES =====
+  const memoizedMessages = useMemo(() => messages, [messages]);
+  
   // ===== UTILITY FUNCTIONS =====
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const determineModelToUse = useCallback(() => {
-    if (!messages) return;
+    if (!memoizedMessages) return;
 
     // Priority 1: Use model from the last message in the thread
-    const lastMessageModel = messages.at(-1)?.model;
-    if (lastMessageModel) {
+    const lastMessageModel = memoizedMessages.at(-1)?.model;
+    if (lastMessageModel && lastMessageModel !== chatModel) {
       setChatModel(lastMessageModel);
       return;
     }
 
     // Priority 2: Use first available model as fallback
-    if (availableModels?.length) {
+    if (availableModels?.length && !chatModel) {
       const firstModel = availableModels[0]?.name;
       if (firstModel) {
         setChatModel(firstModel);
       }
     }
-  }, [messages, availableModels]);
+  }, [memoizedMessages, availableModels, chatModel]);
 
   const createNewThreadIfNeeded = useCallback(async (): Promise<
     string | null
@@ -95,7 +98,7 @@ export default function ChatPage() {
     if (!effectiveThreadId) return;
 
     await sendMessage(chatModel, effectiveThreadId);
-  }, [chatModel, createNewThreadIfNeeded, sendMessage]);
+  }, [chatModel, createNewThreadIfNeeded, sendMessage, prompt]);
 
   // ===== PDF HANDLING =====
   const handleFileSelect = useCallback(
@@ -112,19 +115,24 @@ export default function ChatPage() {
     [createNewThreadIfNeeded, uploadPDF],
   );
 
-  // ===== EFFECTS =====
+  // ===== OPTIMIZED EFFECTS =====
+  // Only scroll when messages change
   useEffect(() => {
     scrollToBottom();
-    determineModelToUse();
-  }, [scrollToBottom, determineModelToUse]);
+  }, [memoizedMessages, scrollToBottom]);
 
-  // ===== RENDER HELPERS =====
-  const renderMessages = () => {
-    if (messages.length > 0) {
+  // Only determine model when necessary
+  useEffect(() => {
+    determineModelToUse();
+  }, [determineModelToUse]);
+
+  // ===== MEMOIZED RENDER HELPERS =====
+  const renderMessages = useMemo(() => {
+    if (memoizedMessages.length > 0) {
       // Existing chat
       return (
         <div className="space-y-8">
-          {messages.map((message, index) => {
+          {memoizedMessages.map((message, index) => {
             return (
               <Message
                 key={message.id || `streaming-${index}`}
@@ -166,7 +174,7 @@ export default function ChatPage() {
         </div>
       </div>
     );
-  };
+  }, [memoizedMessages, isNewChat, isStreaming]);
 
   // ===== MAIN RENDER =====
   return (
@@ -175,7 +183,7 @@ export default function ChatPage() {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="mx-auto max-w-4xl px-6 py-8 pb-32">
-            {renderMessages()}
+            {renderMessages}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>

@@ -12,6 +12,8 @@ export const useModelsList = () => {
         (model) => !model.name.includes("nomic-embed-text"),
       );
     },
-    refetchInterval: 5000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 1000 * 60 * 5,
   });
 };

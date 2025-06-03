@@ -6,11 +6,88 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// ===== PERFORMANCE OPTIMIZATION UTILITIES =====
+
+// Cache for text direction detection to avoid repeated calculations
+const textDirectionCache = new Map<string, "rtl" | "ltr">();
+const maxCacheSize = 1000;
+
 export const detectTextDirection = (text: string): "rtl" | "ltr" => {
+  // Check cache first
+  if (textDirectionCache.has(text)) {
+    return textDirectionCache.get(text)!;
+  }
+
   const rtlRegex =
     /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-  return rtlRegex.test(text) ? "rtl" : "ltr";
+  const direction = rtlRegex.test(text) ? "rtl" : "ltr";
+
+  // Cache the result (with size limit)
+  if (textDirectionCache.size >= maxCacheSize) {
+    // Remove oldest entry
+    const firstKey = textDirectionCache.keys().next().value;
+    if (firstKey) {
+      textDirectionCache.delete(firstKey);
+    }
+  }
+  textDirectionCache.set(text, direction);
+
+  return direction;
 };
+
+// Debounce utility for expensive operations
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+// Throttle utility for limiting function calls
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number,
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean;
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
+// Memoization utility for pure functions
+export function memoize<T extends (...args: any[]) => any>(
+  func: T,
+  cacheSize: number = 100,
+): T {
+  const cache = new Map();
+
+  return ((...args: Parameters<T>): ReturnType<T> => {
+    const key = JSON.stringify(args);
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+
+    const result = func(...args);
+
+    // Limit cache size
+    if (cache.size >= cacheSize) {
+      const firstKey = cache.keys().next().value;
+      cache.delete(firstKey);
+    }
+
+    cache.set(key, result);
+    return result;
+  }) as T;
+}
 
 interface SSEPayload {
   status: MessagesStatusOptions;
