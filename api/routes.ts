@@ -5,7 +5,7 @@ import { streamSSE } from "hono/streaming";
 import { ollama } from "ollama-ai-provider";
 import { z } from "zod";
 
-import { streamText } from "ai";
+import { generateObject, streamText } from "ai";
 import {
   MessagesRoleOptions,
   MessagesStatusOptions,
@@ -18,6 +18,25 @@ import { convertToCoreMessages, parseReasoningTokens } from "./utils";
 const pdfProcessor = new PDFProcessor();
 const chatService = new ChatService();
 const db = new Database();
+
+const languageCodeToName = {
+  fa: "Persian",
+  en: "English",
+  ar: "Arabic",
+  fr: "French",
+  de: "German",
+  es: "Spanish",
+} as const;
+
+const toneCodeToName = {
+  formal: "Formal",
+  casual: "Casual",
+  technical: "Technical",
+  friendly: "Friendly",
+} as const;
+
+type LanguageCode = keyof typeof languageCodeToName;
+type ToneCode = keyof typeof toneCodeToName;
 
 const app = new Hono()
   .use("*", cors())
@@ -237,6 +256,58 @@ const app = new Hono()
             }),
           });
         }
+      });
+    },
+  )
+  .post(
+    "/api/translation",
+    zValidator(
+      "json",
+      z.object({
+        source_text: z.string(),
+        source_language: z.enum(
+          Object.keys(languageCodeToName) as [LanguageCode, ...LanguageCode[]],
+        ),
+        target_language: z.enum(
+          Object.keys(languageCodeToName) as [LanguageCode, ...LanguageCode[]],
+        ),
+        tone: z.enum(Object.keys(toneCodeToName) as [ToneCode, ...ToneCode[]]),
+        model: z.string(),
+      }),
+    ),
+    async (c) => {
+      const body = (await c.req.json()) as {
+        source_text: string;
+        source_language: LanguageCode;
+        target_language: LanguageCode;
+        tone: ToneCode;
+        model: string;
+      };
+
+      const sourceLanguageName = languageCodeToName[body.source_language];
+      const targetLanguageName = languageCodeToName[body.target_language];
+      const toneName = toneCodeToName[body.tone];
+
+      const result = await generateObject({
+        model: ollama(body.model),
+        schema: z.object({
+          translated_text: z.string().describe("The translated text"),
+        }),
+        prompt: `Translate the following text from ${sourceLanguageName} to ${targetLanguageName} in ${toneName} tone: ${body.source_text}`,
+      });
+
+      const translation = await db.createTranslation({
+        source_text: body.source_text,
+        source_language: body.source_language,
+        target_language: body.target_language,
+        tone: body.tone,
+        model: body.model,
+        translated_text: result.object.translated_text,
+      });
+
+      return c.json({
+        translated_text: result.object.translated_text,
+        translationId: translation.id,
       });
     },
   );

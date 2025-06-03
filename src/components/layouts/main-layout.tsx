@@ -14,15 +14,15 @@ import { Header } from "../header";
 const HomePage = lazy(() => import("../../pages/home"));
 const ChatPage = lazy(() => import("../../pages/chat"));
 const ImagePage = lazy(() => import("../../pages/image"));
-// const TranslationPage = lazy(() => import("../../pages/translation"));
+const TranslationPage = lazy(() => import("../../pages/translation"));
 
 const routes = [
   { path: "/", element: <HomePage /> },
   { path: "/chat", element: <ChatPage /> },
   { path: "/chat/:id", element: <ChatPage /> },
   { path: "/image", element: <ImagePage /> },
-  // { path: "/translation", element: <TranslationPage /> },
-  // { path: "/translation/:id", element: <TranslationPage /> },
+  { path: "/translation", element: <TranslationPage /> },
+  { path: "/translation/:id", element: <TranslationPage /> },
 ] as const;
 
 export function MainLayout() {
