@@ -1,247 +1,248 @@
 /**
- * This file was @generated using pocketbase-typegen
- */
+* This file was @generated using pocketbase-typegen
+*/
 
-import type PocketBase from "pocketbase";
-import type { RecordService } from "pocketbase";
+import type PocketBase from 'pocketbase'
+import type { RecordService } from 'pocketbase'
 
 export enum Collections {
-  Authorigins = "_authOrigins",
-  Externalauths = "_externalAuths",
-  Mfas = "_mfas",
-  Otps = "_otps",
-  Superusers = "_superusers",
-  Messages = "messages",
-  Pdfs = "pdfs",
-  Threads = "threads",
-  Translations = "translations",
-  Users = "users",
+	Authorigins = "_authOrigins",
+	Externalauths = "_externalAuths",
+	Mfas = "_mfas",
+	Otps = "_otps",
+	Superusers = "_superusers",
+	Messages = "messages",
+	Pdfs = "pdfs",
+	Threads = "threads",
+	Translations = "translations",
+	Users = "users",
 }
 
 // Alias types for improved usability
-export type IsoDateString = string;
-export type RecordIdString = string;
-export type HTMLString = string;
+export type IsoDateString = string
+export type RecordIdString = string
+export type HTMLString = string
 
 type ExpandType<T> = unknown extends T
-  ? T extends unknown
-    ? { expand?: unknown }
-    : { expand: T }
-  : { expand: T };
+	? T extends unknown
+		? { expand?: unknown }
+		: { expand: T }
+	: { expand: T }
 
 // System fields
 export type BaseSystemFields<T = unknown> = {
-  id: RecordIdString;
-  collectionId: string;
-  collectionName: Collections;
-} & ExpandType<T>;
+	id: RecordIdString
+	collectionId: string
+	collectionName: Collections
+} & ExpandType<T>
 
 export type AuthSystemFields<T = unknown> = {
-  email: string;
-  emailVisibility: boolean;
-  username: string;
-  verified: boolean;
-} & BaseSystemFields<T>;
+	email: string
+	emailVisibility: boolean
+	username: string
+	verified: boolean
+} & BaseSystemFields<T>
 
 // Record types for each collection
 
 export type AuthoriginsRecord = {
-  collectionRef: string;
-  created?: IsoDateString;
-  fingerprint: string;
-  id: string;
-  recordRef: string;
-  updated?: IsoDateString;
-};
+	collectionRef: string
+	created?: IsoDateString
+	fingerprint: string
+	id: string
+	recordRef: string
+	updated?: IsoDateString
+}
 
 export type ExternalauthsRecord = {
-  collectionRef: string;
-  created?: IsoDateString;
-  id: string;
-  provider: string;
-  providerId: string;
-  recordRef: string;
-  updated?: IsoDateString;
-};
+	collectionRef: string
+	created?: IsoDateString
+	id: string
+	provider: string
+	providerId: string
+	recordRef: string
+	updated?: IsoDateString
+}
 
 export type MfasRecord = {
-  collectionRef: string;
-  created?: IsoDateString;
-  id: string;
-  method: string;
-  recordRef: string;
-  updated?: IsoDateString;
-};
+	collectionRef: string
+	created?: IsoDateString
+	id: string
+	method: string
+	recordRef: string
+	updated?: IsoDateString
+}
 
 export type OtpsRecord = {
-  collectionRef: string;
-  created?: IsoDateString;
-  id: string;
-  password: string;
-  recordRef: string;
-  sentTo?: string;
-  updated?: IsoDateString;
-};
+	collectionRef: string
+	created?: IsoDateString
+	id: string
+	password: string
+	recordRef: string
+	sentTo?: string
+	updated?: IsoDateString
+}
 
 export type SuperusersRecord = {
-  created?: IsoDateString;
-  email: string;
-  emailVisibility?: boolean;
-  id: string;
-  password: string;
-  tokenKey: string;
-  updated?: IsoDateString;
-  verified?: boolean;
-};
+	created?: IsoDateString
+	email: string
+	emailVisibility?: boolean
+	id: string
+	password: string
+	tokenKey: string
+	updated?: IsoDateString
+	verified?: boolean
+}
 
 export enum MessagesStatusOptions {
-  "idle" = "idle",
-  "reasoning" = "reasoning",
-  "streaming" = "streaming",
-  "finished" = "finished",
-  "errored" = "errored",
-  "stopped" = "stopped",
+	"idle" = "idle",
+	"reasoning" = "reasoning",
+	"streaming" = "streaming",
+	"finished" = "finished",
+	"errored" = "errored",
+	"stopped" = "stopped",
 }
 
 export enum MessagesRoleOptions {
-  "user" = "user",
-  "assistant" = "assistant",
+	"user" = "user",
+	"assistant" = "assistant",
 }
 export type MessagesRecord = {
-  content?: string;
-  created?: IsoDateString;
-  id: string;
-  model?: string;
-  reasoning?: string;
-  role?: MessagesRoleOptions;
-  sentAt?: IsoDateString;
-  status?: MessagesStatusOptions;
-  thread?: RecordIdString;
-  updated?: IsoDateString;
-};
+	content?: string
+	created?: IsoDateString
+	id: string
+	model?: string
+	reasoning?: string
+	role?: MessagesRoleOptions
+	sentAt?: IsoDateString
+	status?: MessagesStatusOptions
+	thread?: RecordIdString
+	updated?: IsoDateString
+}
 
 export type PdfsRecord = {
-  created?: IsoDateString;
-  file: string;
-  filename: string;
-  id: string;
-  thread?: RecordIdString;
-  updated?: IsoDateString;
-};
+	created?: IsoDateString
+	file: string
+	filename: string
+	id: string
+	thread?: RecordIdString
+	updated?: IsoDateString
+}
 
 export type ThreadsRecord = {
-  created?: IsoDateString;
-  id: string;
-  isArchived?: boolean;
-  lastMessageAt?: IsoDateString;
-  title?: string;
-  updated?: IsoDateString;
-};
+	created?: IsoDateString
+	id: string
+	isArchived?: boolean
+	lastMessageAt?: IsoDateString
+	title?: string
+	updated?: IsoDateString
+}
+
+export enum TranslationsSourceLanguageOptions {
+	"fa" = "fa",
+	"en" = "en",
+	"ar" = "ar",
+	"fr" = "fr",
+	"de" = "de",
+	"es" = "es",
+}
+
+export enum TranslationsTargetLanguageOptions {
+	"fa" = "fa",
+	"en" = "en",
+	"ar" = "ar",
+	"fr" = "fr",
+	"de" = "de",
+	"es" = "es",
+}
 
 export enum TranslationsToneOptions {
-  "formal" = "formal",
-  "informal" = "informal",
-  "academic" = "academic",
-  "business" = "business",
-  "creative" = "creative",
-  "technical" = "technical",
-  "friendly" = "friendly",
-  "neutral" = "neutral",
-}
-
-export enum TranslationsStatusOptions {
-  "pending" = "pending",
-  "completed" = "completed",
-  "failed" = "failed",
+	"formal" = "formal",
+	"informal" = "informal",
+	"academic" = "academic",
+	"business" = "business",
+	"creative" = "creative",
+	"technical" = "technical",
+	"friendly" = "friendly",
+	"neutral" = "neutral",
 }
 export type TranslationsRecord = {
-  created?: IsoDateString;
-  id: string;
-  model?: string;
-  sourceLanguage?: string;
-  sourceText?: string;
-  status?: TranslationsStatusOptions;
-  targetLanguage?: string;
-  tone?: TranslationsToneOptions;
-  translatedText?: string;
-  updated?: IsoDateString;
-};
+	created?: IsoDateString
+	id: string
+	model: string
+	sourceLanguage: TranslationsSourceLanguageOptions
+	sourceText: string
+	targetLanguage: TranslationsTargetLanguageOptions
+	tone: TranslationsToneOptions
+	translatedText?: string
+	updated?: IsoDateString
+}
 
 export type UsersRecord = {
-  avatar?: string;
-  created?: IsoDateString;
-  email: string;
-  emailVisibility?: boolean;
-  id: string;
-  name?: string;
-  password: string;
-  tokenKey: string;
-  updated?: IsoDateString;
-  verified?: boolean;
-};
+	avatar?: string
+	created?: IsoDateString
+	email: string
+	emailVisibility?: boolean
+	id: string
+	name?: string
+	password: string
+	tokenKey: string
+	updated?: IsoDateString
+	verified?: boolean
+}
 
 // Response types include system fields and match responses from the PocketBase API
-export type AuthoriginsResponse<Texpand = unknown> =
-  Required<AuthoriginsRecord> & BaseSystemFields<Texpand>;
-export type ExternalauthsResponse<Texpand = unknown> =
-  Required<ExternalauthsRecord> & BaseSystemFields<Texpand>;
-export type MfasResponse<Texpand = unknown> = Required<MfasRecord> &
-  BaseSystemFields<Texpand>;
-export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> &
-  BaseSystemFields<Texpand>;
-export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> &
-  AuthSystemFields<Texpand>;
-export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> &
-  BaseSystemFields<Texpand>;
-export type PdfsResponse<Texpand = unknown> = Required<PdfsRecord> &
-  BaseSystemFields<Texpand>;
-export type ThreadsResponse<Texpand = unknown> = Required<ThreadsRecord> &
-  BaseSystemFields<Texpand>;
-export type TranslationsResponse<Texpand = unknown> =
-  Required<TranslationsRecord> & BaseSystemFields<Texpand>;
-export type UsersResponse<Texpand = unknown> = Required<UsersRecord> &
-  AuthSystemFields<Texpand>;
+export type AuthoriginsResponse<Texpand = unknown> = Required<AuthoriginsRecord> & BaseSystemFields<Texpand>
+export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRecord> & BaseSystemFields<Texpand>
+export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
+export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
+export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
+export type MessagesResponse<Texpand = unknown> = Required<MessagesRecord> & BaseSystemFields<Texpand>
+export type PdfsResponse<Texpand = unknown> = Required<PdfsRecord> & BaseSystemFields<Texpand>
+export type ThreadsResponse<Texpand = unknown> = Required<ThreadsRecord> & BaseSystemFields<Texpand>
+export type TranslationsResponse<Texpand = unknown> = Required<TranslationsRecord> & BaseSystemFields<Texpand>
+export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
-  _authOrigins: AuthoriginsRecord;
-  _externalAuths: ExternalauthsRecord;
-  _mfas: MfasRecord;
-  _otps: OtpsRecord;
-  _superusers: SuperusersRecord;
-  messages: MessagesRecord;
-  pdfs: PdfsRecord;
-  threads: ThreadsRecord;
-  translations: TranslationsRecord;
-  users: UsersRecord;
-};
+	_authOrigins: AuthoriginsRecord
+	_externalAuths: ExternalauthsRecord
+	_mfas: MfasRecord
+	_otps: OtpsRecord
+	_superusers: SuperusersRecord
+	messages: MessagesRecord
+	pdfs: PdfsRecord
+	threads: ThreadsRecord
+	translations: TranslationsRecord
+	users: UsersRecord
+}
 
 export type CollectionResponses = {
-  _authOrigins: AuthoriginsResponse;
-  _externalAuths: ExternalauthsResponse;
-  _mfas: MfasResponse;
-  _otps: OtpsResponse;
-  _superusers: SuperusersResponse;
-  messages: MessagesResponse;
-  pdfs: PdfsResponse;
-  threads: ThreadsResponse;
-  translations: TranslationsResponse;
-  users: UsersResponse;
-};
+	_authOrigins: AuthoriginsResponse
+	_externalAuths: ExternalauthsResponse
+	_mfas: MfasResponse
+	_otps: OtpsResponse
+	_superusers: SuperusersResponse
+	messages: MessagesResponse
+	pdfs: PdfsResponse
+	threads: ThreadsResponse
+	translations: TranslationsResponse
+	users: UsersResponse
+}
 
 // Type for usage with type asserted PocketBase instance
 // https://github.com/pocketbase/js-sdk#specify-typescript-definitions
 
 export type TypedPocketBase = PocketBase & {
-  collection(idOrName: "_authOrigins"): RecordService<AuthoriginsResponse>;
-  collection(idOrName: "_externalAuths"): RecordService<ExternalauthsResponse>;
-  collection(idOrName: "_mfas"): RecordService<MfasResponse>;
-  collection(idOrName: "_otps"): RecordService<OtpsResponse>;
-  collection(idOrName: "_superusers"): RecordService<SuperusersResponse>;
-  collection(idOrName: "messages"): RecordService<MessagesResponse>;
-  collection(idOrName: "pdfs"): RecordService<PdfsResponse>;
-  collection(idOrName: "threads"): RecordService<ThreadsResponse>;
-  collection(idOrName: "translations"): RecordService<TranslationsResponse>;
-  collection(idOrName: "users"): RecordService<UsersResponse>;
-};
+	collection(idOrName: '_authOrigins'): RecordService<AuthoriginsResponse>
+	collection(idOrName: '_externalAuths'): RecordService<ExternalauthsResponse>
+	collection(idOrName: '_mfas'): RecordService<MfasResponse>
+	collection(idOrName: '_otps'): RecordService<OtpsResponse>
+	collection(idOrName: '_superusers'): RecordService<SuperusersResponse>
+	collection(idOrName: 'messages'): RecordService<MessagesResponse>
+	collection(idOrName: 'pdfs'): RecordService<PdfsResponse>
+	collection(idOrName: 'threads'): RecordService<ThreadsResponse>
+	collection(idOrName: 'translations'): RecordService<TranslationsResponse>
+	collection(idOrName: 'users'): RecordService<UsersResponse>
+}

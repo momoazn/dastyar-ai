@@ -1124,7 +1124,7 @@
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "text"
       },
@@ -1145,34 +1145,6 @@
       {
         "autogeneratePattern": "",
         "hidden": false,
-        "id": "text2549827431",
-        "max": 0,
-        "min": 0,
-        "name": "sourceLanguage",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text242262492",
-        "max": 0,
-        "min": 0,
-        "name": "targetLanguage",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
         "id": "text3616895705",
         "max": 0,
         "min": 0,
@@ -1180,9 +1152,45 @@
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select272255734",
+        "maxSelect": 1,
+        "name": "sourceLanguage",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "fa",
+          "en",
+          "ar",
+          "fr",
+          "de",
+          "es"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "select2458733557",
+        "maxSelect": 1,
+        "name": "targetLanguage",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "fa",
+          "en",
+          "ar",
+          "fr",
+          "de",
+          "es"
+        ]
       },
       {
         "hidden": false,
@@ -1190,7 +1198,7 @@
         "maxSelect": 1,
         "name": "tone",
         "presentable": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "select",
         "values": [
@@ -1202,21 +1210,6 @@
           "technical",
           "friendly",
           "neutral"
-        ]
-      },
-      {
-        "hidden": false,
-        "id": "select2063623452",
-        "maxSelect": 1,
-        "name": "status",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "select",
-        "values": [
-          "pending",
-          "completed",
-          "failed"
         ]
       },
       {

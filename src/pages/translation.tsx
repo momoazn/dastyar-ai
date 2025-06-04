@@ -1,4 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   TranslateButton,
@@ -9,47 +11,75 @@ import { useModelsList } from "@/hooks";
 import { client } from "@/lib/hono";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { pb } from "@/lib/pocketbase";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  TranslationsSourceLanguageOptions,
+  TranslationsTargetLanguageOptions,
+  TranslationsToneOptions,
+} from "@/lib/pocketbase-types";
 
-const languages = [
+const languages: {
+  value: TranslationsSourceLanguageOptions | TranslationsTargetLanguageOptions;
+  label: string;
+}[] = [
   {
-    value: "fa",
+    value: TranslationsSourceLanguageOptions.fa,
     label: PERSIAN_TEXTS.languages.persian,
-    fullName: "Persian (Farsi)",
   },
   {
-    value: "en",
+    value: TranslationsSourceLanguageOptions.en,
     label: PERSIAN_TEXTS.languages.english,
-    fullName: "English",
   },
   {
-    value: "ar",
+    value: TranslationsSourceLanguageOptions.ar,
     label: PERSIAN_TEXTS.languages.arabic,
-    fullName: "Modern Standard Arabic",
   },
   {
-    value: "fr",
+    value: TranslationsSourceLanguageOptions.fr,
     label: PERSIAN_TEXTS.languages.french,
-    fullName: "French",
   },
   {
-    value: "de",
+    value: TranslationsSourceLanguageOptions.de,
     label: PERSIAN_TEXTS.languages.german,
-    fullName: "German",
   },
   {
-    value: "es",
+    value: TranslationsSourceLanguageOptions.es,
     label: PERSIAN_TEXTS.languages.spanish,
-    fullName: "Spanish",
   },
 ] as const;
 
-const tones = [
-  { value: "formal", label: PERSIAN_TEXTS.tones.formal },
-  { value: "casual", label: PERSIAN_TEXTS.tones.casual },
-  { value: "technical", label: PERSIAN_TEXTS.tones.technical },
-  { value: "friendly", label: PERSIAN_TEXTS.tones.friendly },
+const tones: {
+  value: TranslationsToneOptions;
+  label: string;
+}[] = [
+  { value: TranslationsToneOptions.formal, label: PERSIAN_TEXTS.tones.formal },
+  {
+    value: TranslationsToneOptions.informal,
+    label: PERSIAN_TEXTS.tones.casual,
+  },
+  {
+    value: TranslationsToneOptions.technical,
+    label: PERSIAN_TEXTS.tones.technical,
+  },
+  {
+    value: TranslationsToneOptions.friendly,
+    label: PERSIAN_TEXTS.tones.friendly,
+  },
+  {
+    value: TranslationsToneOptions.academic,
+    label: PERSIAN_TEXTS.tones.academic,
+  },
+  {
+    value: TranslationsToneOptions.business,
+    label: PERSIAN_TEXTS.tones.business,
+  },
+  {
+    value: TranslationsToneOptions.creative,
+    label: PERSIAN_TEXTS.tones.creative,
+  },
+  {
+    value: TranslationsToneOptions.neutral,
+    label: PERSIAN_TEXTS.tones.neutral,
+  },
 ] as const;
 
 type Language = (typeof languages)[number]["value"];
@@ -58,13 +88,18 @@ type Tone = (typeof tones)[number]["value"];
 export default function TranslationPage() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
-  const [sourceLanguage, setSourceLanguage] = useState<Language>("en");
-  const [targetLanguage, setTargetLanguage] = useState<Language>("fa");
-  const [tone, setTone] = useState<Tone>("formal");
+  const [sourceLanguage, setSourceLanguage] = useState<Language>(
+    TranslationsSourceLanguageOptions.en,
+  );
+  const [targetLanguage, setTargetLanguage] = useState<Language>(
+    TranslationsTargetLanguageOptions.fa,
+  );
+  const [tone, setTone] = useState<Tone>(TranslationsToneOptions.formal);
   const [model, setModel] = useState<string>("");
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: models } = useModelsList();
 
@@ -98,19 +133,25 @@ export default function TranslationPage() {
   ]);
 
   const { mutate: createTranslation, isPending: isTranslating } = useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async (): Promise<{
+      translationId: string;
+      translatedText: string;
+    }> => {
       const response = await client.api.translation.$post({
         json: {
           sourceText,
           model,
-          sourceLanguage,
-          targetLanguage,
+          sourceLanguage: sourceLanguage as TranslationsSourceLanguageOptions,
+          targetLanguage: targetLanguage as TranslationsTargetLanguageOptions,
           tone,
         },
       });
-      const data = await response.json();
+      return await response.json();
+    },
+    onSuccess: (data) => {
       setTranslatedText(data.translatedText);
       navigate(`/translation/${data.translationId}`, { replace: true });
+      queryClient.invalidateQueries({ queryKey: ["translations"] });
     },
   });
 
@@ -129,15 +170,15 @@ export default function TranslationPage() {
     if (!translation) return;
 
     const loadedData = {
-      sourceText: translation.source_text || "",
-      sourceLang: (translation.source_language as Language) || "en",
-      targetLang: (translation.target_language as Language) || "fa",
+      sourceText: translation.sourceText || "",
+      sourceLang: (translation.sourceLanguage as Language) || "en",
+      targetLang: (translation.targetLanguage as Language) || "fa",
       tone: (translation.tone as Tone) || "formal",
       model: translation.model || "",
     };
 
     setSourceText(loadedData.sourceText);
-    setTranslatedText(translation.translated_text || "");
+    setTranslatedText(translation.translatedText || "");
     setSourceLanguage(loadedData.sourceLang);
     setTargetLanguage(loadedData.targetLang);
     setTone(loadedData.tone);
@@ -204,15 +245,9 @@ export default function TranslationPage() {
         onTargetLangChange={handleTargetLangChange}
         onToneChange={handleToneChange}
         onModelChange={handleModelChange}
-        languages={
-          languages as unknown as {
-            value: string;
-            label: string;
-            fullName: string;
-          }[]
-        }
-        tones={tones as unknown as { value: string; label: string }[]}
-        models={models || []}
+        languages={languages}
+        tones={tones}
+        models={models ?? []}
         labels={{
           sourceLanguage: PERSIAN_TEXTS.translation.sourceLanguage,
           targetLanguage: PERSIAN_TEXTS.translation.targetLanguage,

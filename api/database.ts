@@ -125,31 +125,12 @@ export class Database {
     return records;
   }
 
-  async createTranslation({
-    source_text,
-    source_language,
-    target_language,
-    tone,
-    model,
-    translated_text,
-  }: {
-    source_text: string;
-    source_language: string;
-    target_language: string;
-    tone: string;
-    model: string;
-    translated_text: string;
-  }): Promise<TranslationsRecord> {
+  async createTranslation(
+    newTranslation: Omit<TranslationsRecord, "id" | "created" | "updated">,
+  ): Promise<TranslationsRecord> {
     const record = await this.pb
       .collection<TranslationsRecord>("translations")
-      .create({
-        source_text,
-        source_language,
-        target_language,
-        tone,
-        model,
-        translated_text,
-      });
+      .create(newTranslation);
     return record;
   }
 }

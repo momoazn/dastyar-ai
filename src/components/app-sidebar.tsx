@@ -325,7 +325,7 @@ function TranslationsList() {
         <SidebarItem
           to={`/translation/${translation.id}`}
           key={translation.id}
-          title={translation.source_text?.slice(0, 30) || "Untitled"}
+          title={translation.sourceText?.slice(0, 30) || "بدون عنوان"}
           onDelete={(e) => {
             e.stopPropagation();
             if (translation.id) {

@@ -156,5 +156,9 @@ export const PERSIAN_TEXTS = {
     casual: "غیر رسمی",
     technical: "تخصصی",
     friendly: "دوستانه",
+    academic: "آکادمیک",
+    business: "کسب و کار",
+    creative: "خلاقانه",
+    neutral: "متعادل",
   },
 } as const;

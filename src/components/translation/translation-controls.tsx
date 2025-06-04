@@ -1,13 +1,17 @@
+import {
+  TranslationsSourceLanguageOptions,
+  TranslationsTargetLanguageOptions,
+  TranslationsToneOptions,
+} from "@/lib/pocketbase-types";
 import { Selector } from "./selector";
 
 interface Language {
-  value: string;
+  value: TranslationsSourceLanguageOptions | TranslationsTargetLanguageOptions;
   label: string;
-  fullName: string;
 }
 
 interface Tone {
-  value: string;
+  value: TranslationsToneOptions;
   label: string;
 }
 
