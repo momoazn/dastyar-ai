@@ -95,11 +95,13 @@ export const PERSIAN_TEXTS = {
     negativePrompt: "پرامپت منفی...",
     translating: "در حال ترجمه...",
     translate: "ترجمه",
+    retranslate: "ترجمه مجدد",
     error: "خطا در ترجمه",
     tryAgain: "لطفا دوباره تلاش کنید.",
     translations: "ترجمه‌ها",
     translatedText: "ترجمه",
     noTranslations: "هیچ ترجمه‌ای وجود ندارد",
+    parametersChanged: "پارامترها تغییر کرده‌اند. برای ایجاد ترجمه جدید روی دکمه ترجمه کلیک کنید.",
   },
 
   // Model Selection

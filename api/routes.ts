@@ -202,9 +202,6 @@ const app = new Hono()
               }),
             });
 
-            console.log(">>>>>>>>>>>> Aborted", stream.aborted);
-            console.log(">>>>>>>>>>>> Closed", stream.closed);
-
             const now = Date.now();
             if (now - lastUpdateTime >= updateInterval) {
               await db.updateMessage(assistantMessage.id, {
@@ -264,11 +261,11 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-        source_text: z.string(),
-        source_language: z.enum(
+        sourceText: z.string(),
+        sourceLanguage: z.enum(
           Object.keys(languageCodeToName) as [LanguageCode, ...LanguageCode[]],
         ),
-        target_language: z.enum(
+        targetLanguage: z.enum(
           Object.keys(languageCodeToName) as [LanguageCode, ...LanguageCode[]],
         ),
         tone: z.enum(Object.keys(toneCodeToName) as [ToneCode, ...ToneCode[]]),
@@ -277,37 +274,37 @@ const app = new Hono()
     ),
     async (c) => {
       const body = (await c.req.json()) as {
-        source_text: string;
-        source_language: LanguageCode;
-        target_language: LanguageCode;
+        sourceText: string;
+        sourceLanguage: LanguageCode;
+        targetLanguage: LanguageCode;
         tone: ToneCode;
         model: string;
       };
 
-      const sourceLanguageName = languageCodeToName[body.source_language];
-      const targetLanguageName = languageCodeToName[body.target_language];
+      const sourceLanguageName = languageCodeToName[body.sourceLanguage];
+      const targetLanguageName = languageCodeToName[body.targetLanguage];
       const toneName = toneCodeToName[body.tone];
 
       const result = await generateObject({
         model: ollama(body.model),
         schema: z.object({
-          translated_text: z.string().describe("The translated text"),
+          translatedText: z.string().describe("The translated text"),
         }),
-        prompt: `Translate the following text from ${sourceLanguageName} to ${targetLanguageName} in ${toneName} tone: ${body.source_text}`,
+        prompt: `Translate the following text from ${sourceLanguageName} to ${targetLanguageName} in ${toneName} tone: ${body.sourceText}`,
       });
 
       const translation = await db.createTranslation({
-        source_text: body.source_text,
-        source_language: body.source_language,
-        target_language: body.target_language,
+        source_text: body.sourceText,
+        translated_text: result.object.translatedText,
+        source_language: body.sourceLanguage,
+        target_language: body.targetLanguage,
         tone: body.tone,
         model: body.model,
-        translated_text: result.object.translated_text,
       });
 
       return c.json({
-        translated_text: result.object.translated_text,
         translationId: translation.id,
+        translatedText: result.object.translatedText,
       });
     },
   );
