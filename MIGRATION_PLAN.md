@@ -45,64 +45,73 @@ bun add zod superjson react-markdown remark-gfm
 bun add -d @types/node concurrently
 ```
 
-#### 1.3 Project Directory Structure
+#### 1.3 Project Directory Structure (Updated to match existing src/)
 ```
 persian-ai-assistant-next/
-├── pages/
-│   ├── _app.tsx                 # App wrapper with providers
-│   ├── index.tsx                # Home page
-│   ├── chat/
-│   │   ├── index.tsx            # New chat page
-│   │   └── [id].tsx             # Existing chat page
-│   ├── translation/index.tsx    # Placeholder
-│   └── image/index.tsx          # Placeholder
-│
-├── pages/api/
-│   └── trpc/[trpc].ts           # tRPC HTTP handler (Pages API)
-│
-├── server/
-│   ├── trpc/
-│   │   ├── trpc.ts              # tRPC initialization
-│   │   ├── context.ts           # Request context creation
-│   │   └── middleware.ts        # Auth & logging middleware
-│   ├── routers/
-│   │   ├── _app.ts              # Root router composition
-│   │   ├── chat.ts              # Chat procedures
-│   │   ├── threads.ts           # Thread CRUD procedures
-│   │   ├── messages.ts          # Message procedures
-│   │   └── models.ts            # Model listing procedures
-│   ├── services/
-│   │   ├── pocketbase.ts        # PocketBase client & helpers
-│   │   ├── ollama.ts            # Ollama integration
-│   │   └── streaming.ts         # Streaming utilities
-│   └── types/
-│       └── pocketbase-types.ts  # Generated PocketBase types
-│
-├── lib/
-│   ├── trpc/
-│   │   ├── client.ts            # tRPC client configuration
-│   │   └── server.ts            # Server-side tRPC helpers
+├── src/
+│   ├── pages/
+│   │   ├── _app.tsx             # App wrapper with providers
+│   │   ├── index.tsx            # Home page
+│   │   ├── chat/
+│   │   │   ├── index.tsx        # New chat page
+│   │   │   └── [id].tsx         # Existing chat page
+│   │   ├── translation/index.tsx # Placeholder
+│   │   ├── image/index.tsx      # Placeholder
+│   │   └── api/
+│   │       └── trpc/[trpc].ts   # tRPC HTTP handler (Pages API)
+│   │
+│   ├── server/
+│   │   ├── api/
+│   │   │   ├── root.ts          # Root router composition
+│   │   │   ├── trpc.ts          # tRPC initialization
+│   │   │   └── routers/
+│   │   │       ├── chat.ts      # Chat procedures
+│   │   │       ├── threads.ts   # Thread CRUD procedures
+│   │   │       ├── messages.ts  # Message procedures
+│   │   │       └── models.ts    # Model listing procedures
+│   │   ├── services/
+│   │   │   ├── pocketbase.ts    # PocketBase client & helpers
+│   │   │   ├── ollama.ts        # Ollama integration
+│   │   │   └── streaming.ts     # Streaming utilities
+│   │   └── types/
+│   │       └── pocketbase-types.ts # Generated PocketBase types
+│   │
+│   ├── lib/
+│   │   ├── utils.ts             # General utilities (includes cn)
+│   │   ├── persian-texts.ts     # Persian text constants
+│   │   ├── pocketbase.ts        # Client-side PB instance
+│   │   └── pocketbase-types.ts  # Generated PocketBase types
+│   │
 │   ├── hooks/
-│   │   ├── use-chat.ts          # Chat hook with AI SDK
+│   │   ├── use-chat.ts          # Chat hook with AI SDK  
 │   │   ├── use-threads.ts       # Thread management
-│   │   └── use-subscriptions.ts # PocketBase subscriptions
-│   ├── atoms/                   # Jotai atoms
-│   │   ├── chat.ts
-│   │   └── settings.ts
+│   │   ├── use-subscriptions.ts # PocketBase subscriptions
+│   │   ├── use-chat-settings.ts # Existing chat settings
+│   │   ├── use-chat-streaming.ts # Existing streaming hook
+│   │   ├── use-models-list.ts   # Existing models hook
+│   │   ├── use-pdf-upload.ts    # Existing PDF hook
+│   │   └── use-performance.ts   # Existing performance hook
+│   │
+│   ├── components/
+│   │   ├── ui/                  # shadcn/ui components (existing)
+│   │   ├── chat/
+│   │   │   ├── message.tsx      # Based on existing message.tsx
+│   │   │   ├── chat-input.tsx   # Based on existing chat-input.tsx
+│   │   │   └── message-list.tsx # New component
+│   │   ├── layouts/
+│   │   │   └── main-layout.tsx  # Based on existing main-layout.tsx
+│   │   ├── translation/         # Existing translation components
+│   │   ├── app-sidebar.tsx      # Existing sidebar
+│   │   ├── header.tsx           # Existing header
+│   │   └── [other existing components...]
+│   │
 │   ├── utils/
-│   │   ├── cn.ts                # Class name utility
-│   │   └── persian.ts           # Persian text constants
-│   └── pocketbase.ts            # Client-side PB instance
-│
-├── components/
-│   ├── ui/                      # shadcn/ui components
-│   ├── chat/
-│   │   ├── message.tsx
-│   │   ├── chat-input.tsx
-│   │   └── message-list.tsx
-│   └── layout/
-│       ├── sidebar.tsx
-│       └── header.tsx
+│   │   └── api.ts               # tRPC client configuration
+│   │
+│   ├── styles/
+│   │   └── globals.css          # Global styles
+│   │
+│   └── atoms.ts                 # Existing Jotai atoms
 │
 ├── public/                      # Static assets
 ├── .env.local                   # Environment variables
@@ -114,7 +123,7 @@ persian-ai-assistant-next/
 
 ### Phase 2: tRPC Server Implementation
 
-#### 2.1 tRPC Initialization (`server/trpc/trpc.ts`)
+#### 2.1 tRPC Initialization (`src/server/api/trpc.ts`)
 ```typescript
 import { initTRPC, TRPCError } from '@trpc/server';
 import superjson from 'superjson';
@@ -154,7 +163,7 @@ export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
 });
 ```
 
-#### 2.2 Context Creation (`server/trpc/context.ts`)
+#### 2.2 Context Creation (`src/server/api/context.ts`)
 ```typescript
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import { pb } from '../services/pocketbase';
@@ -190,7 +199,7 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
 export type Context = Awaited<ReturnType<typeof createContext>>;
 ```
 
-#### 2.3 Chat Router with Streaming (`server/routers/chat.ts`)
+#### 2.3 Chat Router with Streaming (`src/server/api/routers/chat.ts`)
 ```typescript
 import { z } from 'zod';
 import { router, publicProcedure } from '../trpc/trpc';
@@ -355,7 +364,7 @@ type StreamEvent =
   | { type: 'error'; error: unknown };
 ```
 
-#### 2.4 Thread Router (`server/routers/threads.ts`)
+#### 2.4 Thread Router (`src/server/api/routers/threads.ts`)
 ```typescript
 import { z } from 'zod';
 import { router, publicProcedure } from '../trpc/trpc';
@@ -431,7 +440,7 @@ export const threadRouter = router({
 });
 ```
 
-#### 2.5 Root Router Composition (`server/routers/_app.ts`)
+#### 2.5 Root Router Composition (`src/server/api/root.ts`)
 ```typescript
 import { router } from '../trpc/trpc';
 import { chatRouter } from './chat';
@@ -452,7 +461,7 @@ export type AppRouter = typeof appRouter;
 
 ### Phase 3: tRPC Client Configuration
 
-#### 3.1 tRPC Client Setup (`lib/trpc/client.ts`)
+#### 3.1 tRPC Client Setup (`src/utils/api.ts`)
 ```typescript
 import { createTRPCReact } from '@trpc/react-query';
 import { createTRPCNext } from '@trpc/next';
@@ -518,7 +527,7 @@ export const trpc = createTRPCNext<AppRouter>({
 export const api = trpc;
 ```
 
-#### 3.2 App Providers (`pages/_app.tsx`)
+#### 3.2 App Providers (`src/pages/_app.tsx`)
 ```typescript
 'use client';
 
@@ -570,7 +579,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ### Phase 4: Next.js API Route (Pages Router)
 
-#### 4.1 tRPC Route Handler (`pages/api/trpc/[trpc].ts`)
+#### 4.1 tRPC Route Handler (`src/pages/api/trpc/[trpc].ts`)
 ```typescript
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
@@ -599,7 +608,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 ### Phase 5: Client-Side Implementation
 
-#### 5.1 Chat Hook with Vercel AI SDK (`lib/hooks/use-chat.ts`)
+#### 5.1 Chat Hook with Vercel AI SDK (`src/hooks/use-chat.ts`)
 ```typescript
 import { useChat as useAIChat } from '@ai-sdk/react';
 import { api } from '@/lib/trpc/client';
@@ -703,7 +712,7 @@ export function useChat(threadId?: string) {
 }
 ```
 
-#### 5.2 Chat Page Component (`pages/chat/[id].tsx`)
+#### 5.2 Chat Page Component (`src/pages/chat/[id].tsx`)
 ```typescript
 'use client';
 
@@ -773,7 +782,7 @@ export default function ChatPage() {
 
 ### Phase 6: PocketBase Integration
 
-#### 6.1 Server-side PocketBase Client (`server/services/pocketbase.ts`)
+#### 6.1 Server-side PocketBase Client (`src/server/services/pocketbase.ts`)
 ```typescript
 import PocketBase from 'pocketbase';
 import type { TypedPocketBase } from '../types/pocketbase-types';
@@ -823,7 +832,7 @@ export const pocketbase = {
 };
 ```
 
-#### 6.2 Client-side PocketBase (`lib/pocketbase.ts`)
+#### 6.2 Client-side PocketBase (`src/lib/pocketbase.ts`)
 ```typescript
 import PocketBase from 'pocketbase';
 import type { TypedPocketBase } from '@/server/types/pocketbase-types';

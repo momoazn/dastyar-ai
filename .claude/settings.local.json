@@ -6,7 +6,9 @@
       "mcp__context7__get-library-docs",
       "Bash(bun list:*)",
       "Bash(grep:*)",
-      "Bash(bun add:*)"
+      "Bash(bun add:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

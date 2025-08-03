@@ -179,18 +179,19 @@ bun add -d @types/node concurrently
 
 ### [ ] Task 2.1: Create Pages Directory Structure
 
-**Description:** Set up the Next.js Pages Router directory structure with nested pages and API routes.
+**Description:** Set up the Next.js Pages Router directory structure with nested pages and API routes in src/ directory.
 
 **Technical Details:**
 
-- `pages` directory for application routes
+- `src/pages` directory for application routes
 - API directory for tRPC endpoint
 - Separate directories for each feature
+- Styles directory for global CSS
 
 **Directory Structure to Create:**
 
 ```
-pages/
+src/pages/
 ├── _app.tsx
 ├── index.tsx
 ├── chat/
@@ -198,34 +199,35 @@ pages/
 │   └── [id].tsx
 ├── translation/
 │   └── index.tsx
-└── image/
-    └── index.tsx
+├── image/
+│   └── index.tsx
+└── api/
+    └── trpc/
+        └── [trpc].ts
 
-pages/api/
-└── trpc/
-    └── [trpc].ts
-
-globals.css
+src/styles/
+└── globals.css
 ```
 
 **Commands to Execute:**
 
 ```bash
 # Create pages directories
-mkdir -p pages/chat
-mkdir -p pages/translation
-mkdir -p pages/image
-mkdir -p pages/api/trpc
+mkdir -p src/pages/chat
+mkdir -p src/pages/translation
+mkdir -p src/pages/image
+mkdir -p src/pages/api/trpc
+mkdir -p src/styles
 
 # Create placeholder files
-touch pages/_app.tsx
-touch pages/index.tsx
-touch pages/chat/index.tsx
-touch pages/chat/\[id\].tsx
-touch pages/translation/index.tsx
-touch pages/image/index.tsx
-touch pages/api/trpc/\[trpc\].ts
-touch globals.css
+touch src/pages/_app.tsx
+touch src/pages/index.tsx
+touch src/pages/chat/index.tsx
+touch src/pages/chat/\[id\].tsx
+touch src/pages/translation/index.tsx
+touch src/pages/image/index.tsx
+touch src/pages/api/trpc/\[trpc\].ts
+touch src/styles/globals.css
 ```
 
 **Success Criteria:**
@@ -237,27 +239,28 @@ touch globals.css
 
 ### [ ] Task 2.2: Create Server Directory Structure
 
-**Description:** Set up server-side directory structure for tRPC routers, services, and types.
+**Description:** Set up server-side directory structure for tRPC routers, services, and types in src/ directory.
 
 **Technical Details:**
 
-- Separate directories for tRPC configuration, routers, and services
-- TypeScript types directory for generated PocketBase types
+- Server directory under src/ for all backend logic
+- API directory with tRPC configuration and routers
+- Services directory for external integrations
+- Types directory for generated PocketBase types
 
 **Directory Structure to Create:**
 
 ```
-server/
-├── trpc/
+src/server/
+├── api/
+│   ├── root.ts
 │   ├── trpc.ts
 │   ├── context.ts
-│   └── middleware.ts
-├── routers/
-│   ├── _app.ts
-│   ├── chat.ts
-│   ├── threads.ts
-│   ├── messages.ts
-│   └── models.ts
+│   └── routers/
+│       ├── chat.ts
+│       ├── threads.ts
+│       ├── messages.ts
+│       └── models.ts
 ├── services/
 │   ├── pocketbase.ts
 │   ├── ollama.ts
@@ -270,24 +273,22 @@ server/
 
 ```bash
 # Create server directories
-mkdir -p server/trpc
-mkdir -p server/routers
-mkdir -p server/services
-mkdir -p server/types
+mkdir -p src/server/api/routers
+mkdir -p src/server/services
+mkdir -p src/server/types
 
 # Create files
-touch server/trpc/trpc.ts
-touch server/trpc/context.ts
-touch server/trpc/middleware.ts
-touch server/routers/_app.ts
-touch server/routers/chat.ts
-touch server/routers/threads.ts
-touch server/routers/messages.ts
-touch server/routers/models.ts
-touch server/services/pocketbase.ts
-touch server/services/ollama.ts
-touch server/services/streaming.ts
-touch server/types/pocketbase-types.ts
+touch src/server/api/root.ts
+touch src/server/api/trpc.ts
+touch src/server/api/context.ts
+touch src/server/api/routers/chat.ts
+touch src/server/api/routers/threads.ts
+touch src/server/api/routers/messages.ts
+touch src/server/api/routers/models.ts
+touch src/server/services/pocketbase.ts
+touch src/server/services/ollama.ts
+touch src/server/services/streaming.ts
+touch src/server/types/pocketbase-types.ts
 ```
 
 **Success Criteria:**
@@ -297,56 +298,55 @@ touch server/types/pocketbase-types.ts
 
 ---
 
-### [ ] Task 2.3: Create Library Directory Structure
+### [ ] Task 2.3: Create Library and Hooks Directory Structure
 
-**Description:** Set up client-side library structure for hooks, utilities, and state management.
+**Description:** Set up client-side library structure and hooks in src/ directory matching existing organization.
 
 **Technical Details:**
 
-- Hooks directory for custom React hooks
-- Atoms directory for Jotai state atoms
-- Utils for helper functions
+- Lib directory for utilities and PocketBase client
+- Separate hooks directory for custom React hooks
+- Utils directory for tRPC client configuration
+- Use existing atoms.ts structure
 
 **Directory Structure to Create:**
 
 ```
-lib/
-├── trpc/
-│   ├── client.ts
-│   └── server.ts
-├── hooks/
-│   ├── use-chat.ts
-│   ├── use-threads.ts
-│   └── use-subscriptions.ts
-├── atoms/
-│   ├── chat.ts
-│   └── settings.ts
-├── utils/
-│   ├── cn.ts
-│   └── persian.ts
-└── pocketbase.ts
+src/lib/
+├── utils.ts          # General utilities (includes cn)
+├── persian-texts.ts  # Persian text constants
+├── pocketbase.ts     # Client-side PB instance
+└── pocketbase-types.ts # Generated types (will be copied)
+
+src/hooks/
+├── use-chat.ts          # Chat hook with AI SDK
+├── use-threads.ts       # Thread management
+├── use-subscriptions.ts # PocketBase subscriptions
+├── use-chat-settings.ts # Keep existing
+├── use-chat-streaming.ts # Keep existing
+├── use-models-list.ts   # Keep existing
+├── use-pdf-upload.ts    # Keep existing
+└── use-performance.ts   # Keep existing
+
+src/utils/
+└── api.ts           # tRPC client configuration
+
+src/atoms.ts         # Keep existing Jotai atoms
 ```
 
 **Commands to Execute:**
 
 ```bash
-# Create lib directories
-mkdir -p lib/trpc
-mkdir -p lib/hooks
-mkdir -p lib/atoms
-mkdir -p lib/utils
+# Create directories (some may already exist)
+mkdir -p src/lib
+mkdir -p src/hooks
+mkdir -p src/utils
 
-# Create files
-touch lib/trpc/client.ts
-touch lib/trpc/server.ts
-touch lib/hooks/use-chat.ts
-touch lib/hooks/use-threads.ts
-touch lib/hooks/use-subscriptions.ts
-touch lib/atoms/chat.ts
-touch lib/atoms/settings.ts
-touch lib/utils/cn.ts
-touch lib/utils/persian.ts
-touch lib/pocketbase.ts
+# Create new files (preserve existing ones)
+touch src/hooks/use-chat.ts
+touch src/hooks/use-threads.ts
+touch src/hooks/use-subscriptions.ts
+touch src/utils/api.ts
 ```
 
 **Success Criteria:**
@@ -356,45 +356,48 @@ touch lib/pocketbase.ts
 
 ---
 
-### [ ] Task 2.4: Create Components Directory Structure
+### [ ] Task 2.4: Verify and Extend Components Directory Structure
 
-**Description:** Set up component directory structure for UI components and feature components.
+**Description:** Verify existing component structure and add new components needed for Next.js migration.
 
 **Technical Details:**
 
-- UI directory for reusable components
-- Feature-specific component directories
-- Layout components separate from feature components
+- UI directory already exists with shadcn/ui components
+- Keep existing components structure
+- Add new components for Next.js migration
+- Maintain existing organization
 
-**Directory Structure to Create:**
+**Existing Structure (to preserve):**
 
 ```
-components/
-├── ui/
-│   └── (will be populated later)
-├── chat/
-│   ├── message.tsx
-│   ├── chat-input.tsx
-│   └── message-list.tsx
-└── layout/
-    ├── sidebar.tsx
-    └── header.tsx
+src/components/
+├── ui/                    # shadcn/ui components (existing)
+├── layouts/               # Existing layout components
+├── translation/           # Existing translation components
+├── app-sidebar.tsx        # Keep existing
+├── header.tsx            # Keep existing
+├── message.tsx           # Keep existing
+├── chat-input.tsx        # Keep existing
+└── [other existing components]
+```
+
+**New Components to Add:**
+
+```
+src/components/
+└── chat/
+    └── message-list.tsx   # New component for message list
 ```
 
 **Commands to Execute:**
 
 ```bash
-# Create component directories
-mkdir -p components/ui
-mkdir -p components/chat
-mkdir -p components/layout
+# Create chat directory if needed and add new component
+mkdir -p src/components/chat
+touch src/components/chat/message-list.tsx
 
-# Create component files
-touch components/chat/message.tsx
-touch components/chat/chat-input.tsx
-touch components/chat/message-list.tsx
-touch components/layout/sidebar.tsx
-touch components/layout/header.tsx
+# Verify existing structure
+ls -la src/components/
 ```
 
 **Success Criteria:**
@@ -584,7 +587,7 @@ WS_URL=ws://localhost:3001
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "pb:typegen": "bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types.ts",
+    "pb:typegen": "bunx pocketbase-typegen --db ../data/data.db --out src/server/types/pocketbase-types.ts",
     "db:seed": "bun run server/scripts/seed.ts",
     "clean": "rm -rf .next node_modules",
     "clean:all": "rm -rf .next node_modules ../data/storage/* ../tmp/*"
@@ -646,7 +649,7 @@ WS_URL=ws://localhost:3001
 - Set up error formatter for Zod validation errors
 - Export router and procedure builders
 
-**File:** `server/trpc/trpc.ts`
+**File:** `src/server/api/trpc.ts`
 
 **Key Implementation Points:**
 
@@ -683,7 +686,7 @@ WS_URL=ws://localhost:3001
 - Return context with user and PocketBase instance
 - Handle auth errors gracefully
 
-**File:** `server/trpc/context.ts`
+**File:** `src/server/api/context.ts`
 
 **Key Implementation Points:**
 
@@ -714,7 +717,7 @@ WS_URL=ws://localhost:3001
 - Reasoning token parsing
 - Error handling for stream failures
 
-**File:** `server/routers/chat.ts`
+**File:** `src/server/api/routers/chat.ts`
 
 **Key Implementation Points:**
 
@@ -755,7 +758,7 @@ WS_URL=ws://localhost:3001
 - Update thread properties (title, archived status)
 - Delete thread with cascade
 
-**File:** `server/routers/threads.ts`
+**File:** `src/server/api/routers/threads.ts`
 
 **Key Implementation Points:**
 
@@ -785,7 +788,7 @@ WS_URL=ws://localhost:3001
 - Compose into single router
 - Export AppRouter type for client
 
-**File:** `server/routers/_app.ts`
+**File:** `src/server/api/root.ts`
 
 **Key Implementation Points:**
 
@@ -814,7 +817,7 @@ WS_URL=ws://localhost:3001
 - Delete messages
 - Batch operations for efficiency
 
-**File:** `server/routers/messages.ts`
+**File:** `src/server/api/routers/messages.ts`
 
 **Key Implementation Points:**
 
@@ -840,7 +843,7 @@ WS_URL=ws://localhost:3001
 - Cache model list for performance
 - Return formatted model information
 
-**File:** `server/routers/models.ts`
+**File:** `src/server/api/routers/models.ts`
 
 **Key Implementation Points:**
 
@@ -869,7 +872,7 @@ WS_URL=ws://localhost:3001
 - Superjson transformer for serialization
 - Logger link for development
 
-**File:** `lib/trpc/client.ts`
+**File:** `src/utils/api.ts`
 
 **Key Implementation Points:**
 
@@ -902,7 +905,7 @@ WS_URL=ws://localhost:3001
 - Theme provider for dark mode
 - React Query DevTools in development
 
-**File:** `app/providers.tsx`
+**File:** `src/pages/_app.tsx`
 
 **Key Implementation Points:**
 
@@ -934,7 +937,7 @@ WS_URL=ws://localhost:3001
 - Handle errors in development
 - Use Node runtime (Pages API)
 
-**File:** `pages/api/trpc/[trpc].ts`
+**File:** `src/pages/api/trpc/[trpc].ts`
 
 **Key Implementation Points:**
 
@@ -969,7 +972,7 @@ WS_URL=ws://localhost:3001
 **Command:**
 
 ```bash
-bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types.ts
+bunx pocketbase-typegen --db ../data/data.db --out src/server/types/pocketbase-types.ts
 ```
 
 **Success Criteria:**
@@ -991,7 +994,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 - Create helper functions for common operations
 - Type with generated types
 
-**File:** `server/services/pocketbase.ts`
+**File:** `src/server/services/pocketbase.ts`
 
 **Key Implementation Points:**
 
@@ -1021,7 +1024,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 - Create auth helper functions
 - Set up for real-time subscriptions
 
-**File:** `lib/pocketbase.ts`
+**File:** `src/lib/pocketbase.ts`
 
 **Key Implementation Points:**
 
@@ -1053,7 +1056,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 - Sync messages between AI SDK and PocketBase
 - Handle streaming and completion events
 
-**File:** `lib/hooks/use-chat.ts`
+**File:** `src/hooks/use-chat.ts`
 
 **Key Implementation Points:**
 
@@ -1084,7 +1087,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 - Manage loading states
 - Cache invalidation strategy
 
-**File:** `lib/hooks/use-threads.ts`
+**File:** `src/hooks/use-threads.ts`
 
 **Key Implementation Points:**
 
@@ -1149,9 +1152,9 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Files to Migrate:**
 
-- `components/chat/message.tsx`
-- `components/chat/chat-input.tsx`
-- `components/chat/message-list.tsx`
+- `src/components/message.tsx` (existing)
+- `src/components/chat-input.tsx` (existing)
+- `src/components/chat/message-list.tsx` (new)
 
 **Key Changes:**
 
@@ -1180,14 +1183,15 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Files to Migrate:**
 
-- `components/layout/sidebar.tsx`
-- `components/layout/header.tsx`
+- `src/components/app-sidebar.tsx` (existing)
+- `src/components/header.tsx` (existing)
+- `src/components/layouts/main-layout.tsx` (existing)
 
 **Key Changes:**
 
-- Pages Router uses useRouter from next/router
-- Update import paths
-- Remove App Router-specific patterns
+- Use useRouter from next/router for navigation
+- Update import paths to src/ structure
+- Adapt existing components to Next.js patterns
 
 **Success Criteria:**
 
@@ -1274,7 +1278,8 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 **Key Implementation Points:**
 
 ```typescript
-- Use useRouter from next/router to read route params
+- Use useRouter from next/router to read route params (Pages Router)
+- Import { useRouter } from 'next/router' instead of next/navigation
 - Implement useChat hook
 - Query thread with api.threads.get
 - Auto-scroll to bottom
