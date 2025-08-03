@@ -2,7 +2,7 @@
 
 ## After task
 
-- After completing each task mark it as completed, then stage the changes and commit them with a proper commit message, after that you can declare task as done.
+- After completing each task mark it as completed, then stage the changes, after that you can declare task as done.
 
 ---
 
@@ -177,7 +177,7 @@ bun add -d @types/node concurrently
 
 ## Section 2: Project Structure Setup Tasks
 
-### [ ] Task 2.1: Create Pages Directory Structure
+### [x] Task 2.1: Create Pages Directory Structure
 
 **Description:** Set up the Next.js Pages Router directory structure with nested pages and API routes in src/ directory.
 
@@ -237,7 +237,7 @@ touch src/styles/globals.css
 
 ---
 
-### [ ] Task 2.2: Create Server Directory Structure
+### [x] Task 2.2: Create Server Directory Structure
 
 **Description:** Set up server-side directory structure for tRPC routers, services, and types in src/ directory.
 
@@ -298,7 +298,7 @@ touch src/server/types/pocketbase-types.ts
 
 ---
 
-### [ ] Task 2.3: Create Library and Hooks Directory Structure
+### [x] Task 2.3: Create Library and Hooks Directory Structure
 
 **Description:** Set up client-side library structure and hooks in src/ directory matching existing organization.
 
@@ -356,7 +356,7 @@ touch src/utils/api.ts
 
 ---
 
-### [ ] Task 2.4: Verify and Extend Components Directory Structure
+### [x] Task 2.4: Verify and Extend Components Directory Structure
 
 **Description:** Verify existing component structure and add new components needed for Next.js migration.
 
