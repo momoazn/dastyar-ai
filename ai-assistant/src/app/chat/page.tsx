@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
 import {
@@ -29,6 +29,8 @@ import {
   Eye,
   EyeOff,
   Paperclip,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import {
   Tooltip,
@@ -36,6 +38,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Mock message type
 interface MockMessage {
@@ -45,72 +50,67 @@ interface MockMessage {
   reasoning?: string;
   model?: string;
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 export default function Page() {
   const [prompt, setPrompt] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedModel, setSelectedModel] = useState("llama3.2:latest");
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
-  // Mock messages
-  const [messages] = useState<MockMessage[]>([
+  // Mock messages with enhanced content
+  const [messages, setMessages] = useState<MockMessage[]>([
     {
       id: "1",
       role: "assistant",
       content:
-        "سلام! این یک نمونه رابط چت فارسی (RTL) است که طراحی آن دقیقاً مطابق با اپ اصلی است. رابط کاربری شامل پیام‌های بدون bubble برای دستیار و پیام‌های آبی برای کاربر می‌باشد.",
+        "سلام و درود! 👋\n\nبه **دستیار هوشمند فارسی** خوش آمدید. این رابط چت پیشرفته با ویژگی‌های زیر طراحی شده:\n\n✨ **طراحی مدرن**: رابط کاربری زیبا و کاربردی\n🎨 **تم تاریک/روشن**: پشتیبانی کامل از حالت‌های مختلف نمایش\n🧠 **نمایش تفکرات**: قابلیت مشاهده فرآیند تفکر هوش مصنوعی\n📱 **طراحی ریسپانسیو**: سازگار با تمام دستگاه‌ها\n\nچه کاری می‌توانم برایتان انجام دهم؟",
       reasoning:
-        "کاربر وارد صفحه چت شده و باید با یک پیام خوشامدگویی مناسب روبرو شود. این پیام باید ویژگی‌های رابط را توضیح دهد و نشان دهد که طراحی مطابق با اپ اصلی است.",
+        "کاربر وارد صفحه چت شده و نیاز به یک پیام خوشامدگویی جامع و دوستانه دارد. باید ویژگی‌های اصلی رابط را معرفی کنم و احساس راحتی و اعتماد ایجاد کنم.",
       model: "llama3.2:latest",
-      timestamp: new Date(),
+      timestamp: new Date(Date.now() - 5 * 60000),
     },
     {
       id: "2",
       role: "user",
-      content: "سلام! عالیه. امکانات رابط چیست؟",
-      timestamp: new Date(),
+      content: "سلام! رابط خیلی زیبا و کاربردی شده. امکانات جدید چه چیزهایی هستند؟",
+      timestamp: new Date(Date.now() - 3 * 60000),
     },
     {
       id: "3",
       role: "assistant",
       content:
-        "این رابط شامل ویژگی‌های زیر است:\n\n• **پیام‌های دستیار**: بدون bubble و با قابلیت نمایش تفکرات\n• **پیام‌های کاربر**: در bubble آبی و راست‌چین\n• **انتخاب مدل**: امکان تغییر مدل AI\n• **آپلود فایل**: پیوست کردن اسناد PDF\n• **کپی متن**: با کلیک روی آیکون کپی\n• **طراحی RTL**: کاملاً مناسب برای فارسی",
+        "ممنون از بازخورد مثبت شما! 😊 رابط جدید شامل بهبودهای مهمی شده:\n\n## 🎨 **بهبودهای بصری**\n- رنگ‌بندی هوشمند با تم‌های روشن/تاریک\n- انیمیشن‌های روان و طبیعی\n- Typography بهتر با فونت Vazirmatn\n\n## ⚡ **عملکرد بهتر**\n- پاسخ‌دهی سریع‌تر\n- Streaming متن در زمان واقعی\n- مدیریت بهتر حالت‌های Loading\n\n## 🛠️ **ابزارهای جدید**\n- کپی متن با یک کلیک\n- نمایش اطلاعات مدل AI\n- پیوست فایل‌های PDF\n- Regenerate پیام‌ها\n\nآیا می‌خواهید یکی از این ویژگی‌ها را امتحان کنید؟",
       reasoning:
-        "کاربر درباره امکانات رابط سوال کرده است. باید لیست کاملی از ویژگی‌های موجود در رابط چت ارائه دهم تا کاربر با عملکردهای مختلف آشنا شود.",
+        "کاربر از بهبودهای رابط تشکر کرده و درباره امکانات جدید سوال پرسیده. باید لیست جامع و سازمان‌یافته‌ای از ویژگی‌های جدید ارائه دهم تا کاربر بتواند آنها را بهتر درک کند.",
       model: "llama3.2:latest",
-      timestamp: new Date(),
+      timestamp: new Date(Date.now() - 1 * 60000),
     },
   ]);
 
-  // Mock models list
+  // Mock models list with more details
   const mockModels = [
-    { name: "llama3.2:latest" },
-    { name: "gemma2:latest" },
-    { name: "qwen2.5:latest" },
+    { name: "llama3.2:latest", displayName: "Llama 3.2 (Latest)" },
+    { name: "gemma2:latest", displayName: "Gemma 2 (Google)" },
+    { name: "qwen2.5:latest", displayName: "Qwen 2.5 (Alibaba)" },
+    { name: "mixtral:8x7b", displayName: "Mixtral 8x7B" },
   ];
 
   const handleSendMessage = useCallback(() => {
     if (!prompt.trim()) return;
-    setIsStreaming(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsStreaming(false);
-      setPrompt("");
-    }, 2000);
+    console.log("Sending message:", prompt);
+    setPrompt("");
   }, [prompt]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (isStreaming) {
-          setIsStreaming(false);
-        } else {
-          handleSendMessage();
-        }
+        handleSendMessage();
       }
     },
-    [isStreaming, handleSendMessage],
+    [handleSendMessage],
   );
 
   const renderMessages = useMemo(() => {
@@ -208,6 +208,10 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
     }
   }, []);
 
+  const handleRegenerate = useCallback(() => {
+    console.log("Regenerating message:", message.id);
+  }, [message.id]);
+
   const hasThinking = Boolean(message.reasoning);
   const formattedTime = message.timestamp.toLocaleTimeString("fa-IR", {
     hour: "2-digit",
@@ -215,74 +219,131 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
   });
 
   return (
-    <div className="group w-full">
-      {/* Thinking section */}
+    <div className="group w-full animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+      {/* Thinking section with improved styling */}
       {hasThinking && (
-        <div className="bg-muted/50 mb-6 rounded-lg border p-4">
+        <div className="mb-6 rounded-xl border border-amber-200/50 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 p-4 shadow-sm dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/20">
           <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
-              <span className="text-muted-foreground text-sm font-medium">
-                تفکر
+            <div className="flex items-center gap-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
+              </div>
+              <span className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                💭 فرآیند تفکر
               </span>
             </div>
 
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs"
+              className="h-7 px-3 text-xs text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/50"
               onClick={() => setCollapsed(!collapsed)}
             >
               {collapsed ? (
-                <Eye className="mr-1 h-3 w-3" />
+                <Eye className="ml-1 h-3 w-3" />
               ) : (
-                <EyeOff className="mr-1 h-3 w-3" />
+                <EyeOff className="ml-1 h-3 w-3" />
               )}
-              {collapsed
-                ? PERSIAN_TEXTS.chat.showThoughts
-                : PERSIAN_TEXTS.chat.hideThoughts}
+              {collapsed ? "نمایش" : "پنهان"}
             </Button>
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            className={cn(
+              "overflow-hidden transition-all duration-300 ease-in-out",
               collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100"
-            }`}
+            )}
           >
-            <div
-              dir="ltr"
-              className="text-muted-foreground text-justify text-sm"
-            >
-              {message.reasoning}
+            <div className="rounded-lg bg-white/50 p-3 dark:bg-black/20">
+              <div
+                dir="ltr"
+                className="text-amber-800 dark:text-amber-200 text-justify text-sm leading-relaxed"
+              >
+                {message.reasoning}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main message content (flowing without bubble) */}
+      {/* Main message content with enhanced styling */}
       <div className="w-full">
         <div dir="rtl" className="w-full">
-          <div className="text-foreground text-justify leading-relaxed">
-            {message.content}
+          <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-muted-foreground prose-code:text-primary prose-pre:bg-muted prose-ul:list-none prose-li:flex prose-li:items-start prose-li:gap-2 prose-li:my-1">
+            <div className="text-justify leading-relaxed">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                h2: ({ children }) => (
+                  <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
+                    {children}
+                  </h3>
+                ),
+                h3: ({ children }) => (
+                  <h4 className="text-base font-semibold text-foreground mt-3 mb-2">
+                    {children}
+                  </h4>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-primary">
+                    {children}
+                  </strong>
+                ),
+                li: ({ children }) => (
+                  <div className="flex items-start gap-2 my-1">
+                    <span className="text-primary mt-1">•</span>
+                    <span>{children}</span>
+                  </div>
+                ),
+                p: ({ children }) => (
+                  <div className="mb-3">
+                    {children}
+                  </div>
+                ),
+                code: ({ children, ...props }) => {
+                  const isInline = !String(props.className).includes('language-');
+                  return isInline ? (
+                    <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm font-mono">
+                      {children}
+                    </code>
+                  ) : (
+                    <pre className="bg-muted p-3 rounded-lg overflow-x-auto">
+                      <code className="text-sm font-mono">{children}</code>
+                    </pre>
+                  );
+                },
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+            </div>
           </div>
 
-          {/* Message timestamp */}
-          <div className="mt-4">
+          {/* Enhanced message metadata */}
+          <div className="mt-4 flex items-center gap-3">
             <time className="text-muted-foreground/70 text-xs">
               {formattedTime}
             </time>
+            {message.model && (
+              <div className="flex items-center gap-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                <span className="text-muted-foreground/70 text-xs">
+                  {message.model}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Actions below the message content */}
+        {/* Enhanced action buttons */}
         <TooltipProvider>
-          <div className="mt-4 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="mt-4 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 rounded-md p-0"
+                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
                   onClick={() => handleCopy(message.content)}
                 >
                   {copySuccess ? (
@@ -306,7 +367,23 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 rounded-md p-0"
+                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
+                  onClick={handleRegenerate}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{PERSIAN_TEXTS.chat.regenerate}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
                 >
                   <Bot className="h-4 w-4" />
                 </Button>
@@ -341,50 +418,63 @@ function UserMessageComponent({ message }: { message: MockMessage }) {
   });
 
   return (
-    <div className="group flex w-full justify-end">
-      <div className="max-w-[85%]">
-        <div
-          className="rounded-sm bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
-          dir="rtl"
-        >
-          {message.content}
+    <div className="group flex w-full justify-end animate-in fade-in-50 slide-in-from-left-2 duration-300">
+      <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
+        {/* Enhanced message bubble with gradient and shadows */}
+        <div className="relative">
+          <div
+            className="relative rounded-2xl rounded-br-md bg-primary/80 dark:bg-primary/70 px-4 py-3 text-sm leading-relaxed text-primary-foreground shadow-lg shadow-primary/15 backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:shadow-primary/20"
+            dir="rtl"
+          >
+            {/* Subtle overlay for depth */}
+            <div className="absolute inset-0 rounded-2xl rounded-br-md bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+            
+            {/* Message content */}
+            <div className="relative z-10 whitespace-pre-wrap break-words">
+              {message.content}
+            </div>
+          </div>
+          
+          {/* Message tail/pointer */}
+          <div className="absolute -bottom-0.5 right-0 h-3 w-3 rotate-45 bg-primary/80 dark:bg-primary/70" />
         </div>
 
-        {/* Message timestamp */}
-        <div className="mt-2">
-          <time className="text-xs text-black dark:text-white">
+        {/* Enhanced metadata and actions */}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          {/* Timestamp with better styling */}
+          <time className="text-xs text-muted-foreground/80 font-medium">
             {formattedTime}
           </time>
-        </div>
 
-        {/* Actions below message bubble */}
-        <TooltipProvider>
-          <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 rounded-md p-0"
-                  onClick={() => handleCopy(message.content)}
-                >
-                  {copySuccess ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {copySuccess
-                    ? PERSIAN_TEXTS.chat.copied
-                    : PERSIAN_TEXTS.chat.copy}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+          {/* Actions with improved positioning */}
+          <TooltipProvider>
+            <div className="opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 rounded-full p-0 hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105"
+                    onClick={() => handleCopy(message.content)}
+                  >
+                    {copySuccess ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p className="text-xs">
+                    {copySuccess
+                      ? PERSIAN_TEXTS.chat.copied
+                      : PERSIAN_TEXTS.chat.copy}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        </div>
       </div>
     </div>
   );
