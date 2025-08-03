@@ -27,16 +27,16 @@ bun add ai @ai-sdk/react ollama-ai-provider
 bun add @tanstack/react-query@latest @tanstack/react-query-devtools
 bun add jotai pocketbase
 
-# UI components and styling
-bun add @radix-ui/react-dialog @radix-ui/react-dropdown-menu \
-        @radix-ui/react-label @radix-ui/react-select \
-        @radix-ui/react-separator @radix-ui/react-slot \
-        @radix-ui/react-switch @radix-ui/react-tabs \
-        @radix-ui/react-tooltip @radix-ui/react-scroll-area \
-        @radix-ui/react-avatar @radix-ui/react-collapsible
-
+# UI components via shadcn/ui CLI
+bunx shadcn@latest init
 bun add lucide-react class-variance-authority clsx tailwind-merge
 bun add @fontsource-variable/vazirmatn
+
+# Add core shadcn/ui components
+bunx shadcn@latest add button card dialog dropdown-menu input label \
+                     select separator switch tabs textarea tooltip \
+                     scroll-area avatar progress slider skeleton sheet \
+                     collapsible badge alert breadcrumb
 
 # Utilities
 bun add zod superjson react-markdown remark-gfm

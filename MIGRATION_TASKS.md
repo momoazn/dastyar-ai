@@ -115,37 +115,44 @@ bun add jotai pocketbase
 
 ---
 
-### [ ] Task 1.5: Install UI Component Libraries
+### [ ] Task 1.5: Initialize shadcn/ui and Install Base Dependencies
 
-**Description:** Install Radix UI primitives and styling utilities for building the UI.
+**Description:** Initialize shadcn/ui for the project and install base styling utilities.
 
 **Technical Details:**
 
-- Radix UI provides unstyled, accessible components
-- Lucide React for icons
-- CVA for component variants
-- Tailwind utilities for styling
+- Initialize shadcn/ui with Next.js 15 and App Router
+- Configure with existing Tailwind CSS setup
+- Install base styling utilities and Persian font
+- Set up components.json configuration
 
 **Commands to Execute:**
 
 ```bash
-bun add @radix-ui/react-dialog @radix-ui/react-dropdown-menu \
-        @radix-ui/react-label @radix-ui/react-select \
-        @radix-ui/react-separator @radix-ui/react-slot \
-        @radix-ui/react-switch @radix-ui/react-tabs \
-        @radix-ui/react-tooltip @radix-ui/react-scroll-area \
-        @radix-ui/react-avatar @radix-ui/react-collapsible \
-        @radix-ui/react-sidebar @radix-ui/react-progress \
-        @radix-ui/react-slider
+# Initialize shadcn/ui
+bunx shadcn@latest init
 
+# Install base styling utilities
 bun add lucide-react class-variance-authority clsx tailwind-merge
 bun add @fontsource-variable/vazirmatn
+
+# Install core shadcn components that will be needed
+bunx shadcn@latest add button card dialog dropdown-menu input label select separator switch tabs textarea tooltip scroll-area avatar progress slider
 ```
+
+**Configuration Notes:**
+- Use TypeScript: Yes
+- Use Tailwind CSS: Yes  
+- Use src directory: No (we're using app directory)
+- Use import alias: @/* 
+- Configure components.json for RTL and Persian support
 
 **Success Criteria:**
 
-- All Radix UI components installed
-- Styling utilities available
+- shadcn/ui initialized with components.json
+- Base styling utilities installed
+- Core UI components added via CLI
+- Persian font available
 
 ---
 
@@ -600,30 +607,36 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### [ ] Task 3.5: Configure Tailwind CSS
+### [ ] Task 3.5: Configure Tailwind CSS and shadcn/ui for RTL
 
-**Description:** Set up Tailwind configuration with RTL support and Persian fonts.
+**Description:** Set up Tailwind configuration with RTL support, Persian fonts, and shadcn/ui integration.
 
 **Technical Details:**
 
 - Configure Vazirmatn font for Persian text
 - Set up dark mode with class strategy
 - Configure content paths for Tailwind scanning
+- Update shadcn/ui components.json for RTL support
 
-**File to Update:** `tailwind.config.ts`
+**Files to Update:** 
+- `tailwind.config.ts`
+- `components.json`
 
 **Key Configurations:**
 
 - Font family with Vazirmatn
 - Dark mode class strategy
-- RTL utilities
-- Custom color scheme
+- RTL utilities and direction support
+- Custom color scheme compatible with shadcn/ui
+- Update components.json to support RTL layout
 
 **Success Criteria:**
 
 - Tailwind processing styles
 - Persian font loading
 - Dark mode working
+- shadcn/ui components support RTL
+- components.json configured properly
 
 ---
 
@@ -1097,33 +1110,36 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ## Section 9: Component Migration Tasks
 
-### [ ] Task 9.1: Copy UI Components from Original Project
+### [ ] Task 9.1: Add Additional UI Components via shadcn/ui CLI
 
-**Description:** Copy all shadcn/ui components from the original project maintaining structure.
+**Description:** Add any missing shadcn/ui components that weren't installed in Task 1.5 but are needed from the original project.
 
 **Technical Details:**
 
-- Copy entire ui directory
-- Maintain component exports
-- Preserve styling and variants
-- Keep accessibility features
+- Use shadcn/ui CLI to add components
+- Compare with original project's ui directory
+- Add any missing components needed
+- Ensure RTL compatibility
 
-**Source:** `src/components/ui/`
-**Destination:** `components/ui/`
+**Commands to Execute:**
 
-**Components to Copy:**
+```bash
+# Check original project components and add missing ones
+bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
+# Add any other components found in original src/components/ui/
+```
 
-- button, card, dialog, dropdown-menu
-- input, label, select, separator
-- sidebar, skeleton, scroll-area
-- switch, tabs, textarea, tooltip
-- All other UI components
+**Components to verify and add if missing:**
+
+- From original: sidebar, skeleton, loading-spinner, theme-toggle
+- Standard shadcn: badge, alert, sheet, breadcrumb, collapsible
+- Custom components may need manual migration
 
 **Success Criteria:**
 
-- All components copied
-- Imports updated to new paths
-- No missing dependencies
+- All standard shadcn/ui components available
+- Custom components identified for manual migration
+- Components compatible with RTL layout
 
 ---
 
