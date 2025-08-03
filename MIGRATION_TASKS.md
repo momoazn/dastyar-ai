@@ -68,7 +68,7 @@ bun add @trpc/server @trpc/client @trpc/react-query @trpc/next
 
 ---
 
-### [ ] Task 1.3: Install Vercel AI SDK Dependencies
+### [x] Task 1.3: Install Vercel AI SDK Dependencies
 
 **Description:** Install Vercel AI SDK for handling AI model streaming and Ollama provider for local LLM integration.
 
@@ -91,7 +91,7 @@ bun add ai @ai-sdk/react ollama-ai-provider
 
 ---
 
-### [ ] Task 1.4: Install State Management and Data Fetching Libraries
+### [x] Task 1.4: Install State Management and Data Fetching Libraries
 
 **Description:** Install TanStack Query for server state management and Jotai for client state.
 
