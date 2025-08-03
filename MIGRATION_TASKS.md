@@ -1,13 +1,8 @@
 # Next.js + tRPC + Vercel AI SDK Migration Task List
 
-## Prerequisites
+## After task
 
-Before starting any tasks, ensure the following are running:
-
-- PocketBase server on port 8090
-- Ollama server on port 11434
-- Current project is backed up
-- After completing each task mark it as completed
+- After completing each task mark it as completed, then stage the changes and commit them with a proper commit message, after that you can declare task as done.
 
 ---
 
