@@ -10,14 +10,14 @@
 
 ### [x] Task 1.1: Create Next.js Project
 
-**Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and App Router.
+**Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and Pages Router.
 
 **Technical Details:**
 
 - Use Bun package manager for initialization
 - Enable TypeScript for type safety
 - Enable Tailwind CSS for styling
-- Use App Router (not Pages Router)
+- Use Pages Router
 - Set import alias to `@/*` for cleaner imports
 
 **Commands to Execute:**
@@ -26,7 +26,7 @@
 bunx create-next-app@latest persian-ai-assistant-next \
   --typescript \
   --tailwind \
-  --app \
+  --pages \
   --no-src-dir \
   --import-alias "@/*"
 
@@ -37,7 +37,7 @@ cd persian-ai-assistant-next
 
 - New directory `persian-ai-assistant-next` created
 - `package.json` exists with Next.js dependencies
-- `app` directory exists (not `pages`)
+- `pages` directory exists (not `app`)
 - TypeScript config files present
 
 ---
@@ -113,7 +113,7 @@ bun add jotai pocketbase
 
 ---
 
-### [ ] Task 1.5: Initialize shadcn/ui and Install Base Dependencies
+### [x] Task 1.5: Initialize shadcn/ui and Install Base Dependencies
 
 **Description:** Initialize shadcn/ui for the project and install base styling utilities.
 
@@ -177,64 +177,61 @@ bun add -d @types/node concurrently
 
 ## Section 2: Project Structure Setup Tasks
 
-### [ ] Task 2.1: Create App Directory Structure
+### [ ] Task 2.1: Create Pages Directory Structure
 
-**Description:** Set up the Next.js App Router directory structure with route groups and API routes.
+**Description:** Set up the Next.js Pages Router directory structure with nested pages and API routes.
 
 **Technical Details:**
 
-- `(app)` route group for main application routes
+- `pages` directory for application routes
 - API directory for tRPC endpoint
 - Separate directories for each feature
 
 **Directory Structure to Create:**
 
 ```
-app/
-├── (app)/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── chat/
-│   │   ├── page.tsx
-│   │   └── [id]/
-│   │       └── page.tsx
-│   ├── translation/
-│   │   └── page.tsx
-│   └── image/
-│       └── page.tsx
-├── api/
-│   └── trpc/
-│       └── [trpc]/
-│           └── route.ts
-├── layout.tsx
-├── globals.css
-└── providers.tsx
+pages/
+├── _app.tsx
+├── index.tsx
+├── chat/
+│   ├── index.tsx
+│   └── [id].tsx
+├── translation/
+│   └── index.tsx
+└── image/
+    └── index.tsx
+
+pages/api/
+└── trpc/
+    └── [trpc].ts
+
+globals.css
 ```
 
 **Commands to Execute:**
 
 ```bash
-# Create app directories
-mkdir -p app/\(app\)/chat/\[id\]
-mkdir -p app/\(app\)/translation
-mkdir -p app/\(app\)/image
-mkdir -p app/api/trpc/\[trpc\]
+# Create pages directories
+mkdir -p pages/chat
+mkdir -p pages/translation
+mkdir -p pages/image
+mkdir -p pages/api/trpc
 
 # Create placeholder files
-touch app/\(app\)/layout.tsx
-touch app/\(app\)/page.tsx
-touch app/\(app\)/chat/page.tsx
-touch app/\(app\)/chat/\[id\]/page.tsx
-touch app/\(app\)/translation/page.tsx
-touch app/\(app\)/image/page.tsx
-touch app/api/trpc/\[trpc\]/route.ts
-touch app/providers.tsx
+touch pages/_app.tsx
+touch pages/index.tsx
+touch pages/chat/index.tsx
+touch pages/chat/\[id\].tsx
+touch pages/translation/index.tsx
+touch pages/image/index.tsx
+touch pages/api/trpc/\[trpc\].ts
+touch globals.css
 ```
 
 **Success Criteria:**
 
 - All directories created
-- Route structure follows Next.js App Router conventions
+- Route structure follows Next.js Pages Router conventions
 
 ---
 
@@ -935,9 +932,9 @@ WS_URL=ws://localhost:3001
 - Use fetchRequestHandler from tRPC
 - Pass app router and context
 - Handle errors in development
-- Enable edge runtime for performance
+- Use Node runtime (Pages API)
 
-**File:** `app/api/trpc/[trpc]/route.ts`
+**File:** `pages/api/trpc/[trpc].ts`
 
 **Key Implementation Points:**
 
@@ -1188,9 +1185,9 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Key Changes:**
 
-- Add 'use client' directive where needed
-- Use next/navigation
+- Pages Router uses useRouter from next/router
 - Update import paths
+- Remove App Router-specific patterns
 
 **Success Criteria:**
 
@@ -1213,7 +1210,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Wrap with Providers component
 - Set HTML attributes for RTL
 
-**File:** `app/layout.tsx`
+**File:** `pages/_app.tsx`
 
 **Key Implementation Points:**
 
@@ -1243,7 +1240,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Set up responsive layout
 - Maintain sidebar state
 
-**File:** `app/(app)/layout.tsx`
+[Removed] Not applicable in Pages Router
 
 **Key Implementation Points:**
 
@@ -1272,12 +1269,12 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Implement auto-scrolling
 - Handle loading states
 
-**File:** `app/(app)/chat/[id]/page.tsx`
+**File:** `pages/chat/[id].tsx`
 
 **Key Implementation Points:**
 
 ```typescript
-- Use useParams for thread ID
+- Use useRouter from next/router to read route params
 - Implement useChat hook
 - Query thread with api.threads.get
 - Auto-scroll to bottom
@@ -1304,7 +1301,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Show empty state
 - Handle model selection
 
-**File:** `app/(app)/chat/page.tsx`
+**File:** `pages/chat/index.tsx`
 
 **Key Implementation Points:**
 
@@ -1333,8 +1330,8 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Files:**
 
-- `app/(app)/translation/page.tsx`
-- `app/(app)/image/page.tsx`
+- `pages/translation/index.tsx`
+- `pages/image/index.tsx`
 
 **Content:**
 
@@ -1731,9 +1728,9 @@ bun run start
 ### Common Pitfalls to Avoid:
 
 1. Don't forget 'use client' directive for client components
-2. Remember to export runtime = 'edge' for API routes
+2. Use Pages API handler signature (req, res)
 3. Use proper environment variable prefixes (NEXT*PUBLIC*)
-4. Maintain exact file structure for App Router
+4. Maintain exact file structure for Pages Router
 5. Copy UI components before implementing pages
 
 ### Verification Steps After Each Section:

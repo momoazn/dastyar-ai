@@ -1,14 +1,14 @@
-## Comprehensive Next.js + tRPC + Vercel AI SDK Migration Plan
+## Comprehensive Next.js (Pages Router) + tRPC + Vercel AI SDK Migration Plan
 
 ### Phase 1: Project Initialization and Setup
 
 #### 1.1 Create Next.js Project Structure
 ```bash
-# Create new Next.js project with TypeScript and App Router
+# Create new Next.js project with TypeScript and Pages Router
 bunx create-next-app@latest persian-ai-assistant-next \
   --typescript \
   --tailwind \
-  --app \
+  --pages \
   --no-src-dir \
   --import-alias "@/*"
 
@@ -48,25 +48,17 @@ bun add -d @types/node concurrently
 #### 1.3 Project Directory Structure
 ```
 persian-ai-assistant-next/
-├── app/
-│   ├── (app)/                    # Route group for main app
-│   │   ├── layout.tsx            # App layout with sidebar
-│   │   ├── page.tsx              # Home page
-│   │   ├── chat/
-│   │   │   ├── page.tsx          # New chat page
-│   │   │   └── [id]/
-│   │   │       └── page.tsx      # Existing chat page
-│   │   ├── translation/          # Placeholder
-│   │   │   └── page.tsx
-│   │   └── image/                # Placeholder
-│   │       └── page.tsx
-│   ├── api/
-│   │   └── trpc/
-│   │       └── [trpc]/
-│   │           └── route.ts      # tRPC HTTP handler
-│   ├── layout.tsx                # Root layout
-│   ├── globals.css               # Global styles
-│   └── providers.tsx             # Client providers wrapper
+├── pages/
+│   ├── _app.tsx                 # App wrapper with providers
+│   ├── index.tsx                # Home page
+│   ├── chat/
+│   │   ├── index.tsx            # New chat page
+│   │   └── [id].tsx             # Existing chat page
+│   ├── translation/index.tsx    # Placeholder
+│   └── image/index.tsx          # Placeholder
+│
+├── pages/api/
+│   └── trpc/[trpc].ts           # tRPC HTTP handler (Pages API)
 │
 ├── server/
 │   ├── trpc/
@@ -114,10 +106,10 @@ persian-ai-assistant-next/
 │
 ├── public/                      # Static assets
 ├── .env.local                   # Environment variables
-├── next.config.js              # Next.js configuration
-├── tailwind.config.ts          # Tailwind configuration
-├── tsconfig.json               # TypeScript configuration
-└── package.json                # Project dependencies
+├── next.config.js               # Next.js configuration
+├── tailwind.config.ts           # Tailwind configuration
+├── tsconfig.json                # TypeScript configuration
+└── package.json                 # Project dependencies
 ```
 
 ### Phase 2: tRPC Server Implementation
@@ -526,7 +518,7 @@ export const trpc = createTRPCNext<AppRouter>({
 export const api = trpc;
 ```
 
-#### 3.2 App Providers (`app/providers.tsx`)
+#### 3.2 App Providers (`pages/_app.tsx`)
 ```typescript
 'use client';
 
@@ -576,35 +568,33 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Phase 4: Next.js Route Handler
+### Phase 4: Next.js API Route (Pages Router)
 
-#### 4.1 tRPC Route Handler (`app/api/trpc/[trpc]/route.ts`)
+#### 4.1 tRPC Route Handler (`pages/api/trpc/[trpc].ts`)
 ```typescript
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from '@/server/routers/_app';
 import { createContext } from '@/server/trpc/context';
-import { NextRequest } from 'next/server';
 
-const handler = (req: NextRequest) =>
-  fetchRequestHandler({
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  return fetchRequestHandler({
     endpoint: '/api/trpc',
-    req,
+    req: req as any,
     router: appRouter,
-    createContext,
+    createContext: createContext as any,
     onError:
       process.env.NODE_ENV === 'development'
         ? ({ path, error }) => {
-            console.error(
-              `❌ tRPC failed on ${path ?? '<no-path>'}: ${error.message}`
-            );
+            console.error(`tRPC failed on ${path ?? '<no-path>'}: ${error.message}`);
           }
         : undefined,
+  } as any).then((response: Response) => {
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+    res.status(response.status);
+    response.text().then((text) => res.end(text));
   });
-
-export { handler as GET, handler as POST };
-
-// Enable edge runtime for better performance
-export const runtime = 'edge';
+}
 ```
 
 ### Phase 5: Client-Side Implementation
@@ -713,7 +703,7 @@ export function useChat(threadId?: string) {
 }
 ```
 
-#### 5.2 Chat Page Component (`app/(app)/chat/[id]/page.tsx`)
+#### 5.2 Chat Page Component (`pages/chat/[id].tsx`)
 ```typescript
 'use client';
 
@@ -866,7 +856,7 @@ export const auth = {
 };
 ```
 
-### Phase 7: Configuration Files
+### Phase 7: Configuration Files (Pages Router)
 
 #### 7.1 Next.js Configuration (`next.config.js`)
 ```javascript
@@ -1055,7 +1045,7 @@ go build -o persian-ai-assistant main.go
 
 1. **tRPC over REST** - Type-safe API with automatic client generation
 2. **Vercel AI SDK** - Streamlined AI integration with built-in streaming
-3. **App Router** - Modern Next.js patterns with RSC support
+3. **Pages Router** - Classic Next.js routing with API routes and _app.tsx
 4. **Bun** - Fast package management and runtime
 5. **PocketBase subscriptions** - Keep real-time functionality
 6. **Ollama provider** - Local LLM inference unchanged
