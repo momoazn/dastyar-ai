@@ -9,9 +9,10 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { Plus, MessageSquare, MessageCircle, Image, ArchiveIcon, TrashIcon } from "lucide-react";
+import { Plus, MessageSquare, Image, TrashIcon, Languages } from "lucide-react";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
+import { Badge } from "./ui/badge";
 
 interface Thread {
   id: string;
@@ -41,6 +42,9 @@ interface SidebarItemProps {
   isActive?: boolean;
   onArchive?: () => void;
   onDelete?: () => void;
+  icon?: React.ReactNode;
+  timestamp?: Date;
+  badge?: string;
 }
 
 function SidebarItem({
@@ -49,43 +53,47 @@ function SidebarItem({
   isActive,
   onArchive,
   onDelete,
+  icon,
+  timestamp,
+  badge,
 }: SidebarItemProps) {
   return (
     <div
-      className={`hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative flex h-auto min-h-12 items-center justify-between border-b p-4 text-sm ${isActive ? "bg-sidebar-accent" : ""}`}
+      className={`group/item relative flex h-auto min-h-12 cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-accent ${
+        isActive ? "bg-accent/50" : ""
+      }`}
     >
+      {/* Active indicator */}
       {isActive && (
-        <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
+        <div className="absolute right-0 top-0 h-full w-1 bg-primary" />
       )}
 
-      <div className="flex-1 truncate">
-        <div className="truncate font-medium">{title ?? "Untitled"}</div>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="truncate font-medium text-foreground">
+          {title ?? "Untitled"}
+        </div>
         {subtitle && (
-          <div className="text-muted-foreground mt-1 truncate text-xs">{subtitle}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground">
+            {subtitle}
+          </div>
         )}
       </div>
 
-      <div className="flex items-center gap-0 opacity-0 transition-opacity group-hover:opacity-100">
-        {onArchive && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 cursor-pointer hover:text-blue-500"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onArchive();
-            }}
-          >
-            <ArchiveIcon className="size-3" />
-          </Button>
-        )}
+      {/* Badge */}
+      {badge && isActive && (
+        <Badge variant="secondary" className="text-xs h-5 px-2">
+          {badge}
+        </Badge>
+      )}
 
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
         {onDelete && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 cursor-pointer hover:text-red-500"
+            className="h-6 w-6 hover:text-destructive"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -102,10 +110,10 @@ function SidebarItem({
 
 function ChatSidebar() {
   const mockThreads: Thread[] = [
-    { id: "1", title: "پرسش درباره پروژه", created: new Date() },
-    { id: "2", title: "ایده‌های محصول", created: new Date() },
-    { id: "3", title: "رفع اشکال", created: new Date() },
-    { id: "4", title: "پژوهش کوتاه", created: new Date() },
+    { id: "1", title: "پرسش درباره پروژه", created: new Date(Date.now() - 5 * 60 * 1000) },
+    { id: "2", title: "ایده‌های محصول", created: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+    { id: "3", title: "رفع اشکال", created: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+    { id: "4", title: "پژوهش کوتاه", created: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
   ];
 
   const handleNewThread = () => console.log("Creating new thread");
@@ -114,10 +122,10 @@ function ChatSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between gap-2 px-2 py-2">
+      <SidebarHeader className="border-b px-4 py-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="text-sidebar-primary size-5" />
+            <MessageSquare className="size-5 text-primary" />
             <span className="font-semibold">{PERSIAN_TEXTS.navigation.chat}</span>
           </div>
           <Button variant="ghost" size="icon" className="size-8" onClick={handleNewThread}>
@@ -128,22 +136,21 @@ function ChatSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>رشته‌های گفتگو</SidebarGroupLabel>
-          <SidebarGroupContent className="px-0">
+          <SidebarGroupContent>
             {mockThreads.length === 0 ? (
-              <div className="mt-4 flex h-full items-center justify-center">
+              <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
                   {PERSIAN_TEXTS.navigation.noChatThreads}
                 </p>
               </div>
             ) : (
-              <div className="group">
+              <div className="space-y-1">
                 {mockThreads.map((thread, index) => (
                   <SidebarItem
                     key={thread.id}
                     title={thread.title}
                     isActive={index === 0}
-                    onArchive={() => handleArchiveThread(thread.id)}
+                    badge={index === 0 ? "فعال" : undefined}
                     onDelete={() => handleDeleteThread(thread.id)}
                   />
                 ))}
@@ -164,7 +171,7 @@ function TranslationSidebar() {
       targetText: "سلام، حال شما چطور است؟",
       sourceLanguage: "انگلیسی",
       targetLanguage: "فارسی",
-      created: new Date(),
+      created: new Date(Date.now() - 10 * 60 * 1000),
     },
     {
       id: "2",
@@ -172,7 +179,7 @@ function TranslationSidebar() {
       targetText: "صبح بخیر",
       sourceLanguage: "انگلیسی",
       targetLanguage: "فارسی",
-      created: new Date(),
+      created: new Date(Date.now() - 45 * 60 * 1000),
     },
     {
       id: "3",
@@ -180,7 +187,7 @@ function TranslationSidebar() {
       targetText: "Greetings to you",
       sourceLanguage: "فارسی",
       targetLanguage: "انگلیسی",
-      created: new Date(),
+      created: new Date(Date.now() - 2 * 60 * 60 * 1000),
     },
   ];
 
@@ -189,10 +196,10 @@ function TranslationSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between gap-2 px-2 py-2">
+      <SidebarHeader className="border-b px-4 py-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageCircle className="text-sidebar-primary size-5" />
+            <Languages className="size-5 text-primary" />
             <span className="font-semibold">{PERSIAN_TEXTS.navigation.translation}</span>
           </div>
           <Button variant="ghost" size="icon" className="size-8" onClick={handleNewTranslation}>
@@ -203,22 +210,22 @@ function TranslationSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>تاریخچه ترجمه</SidebarGroupLabel>
-          <SidebarGroupContent className="px-0">
+          <SidebarGroupContent>
             {mockTranslations.length === 0 ? (
-              <div className="mt-4 flex h-full items-center justify-center">
+              <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
                   {PERSIAN_TEXTS.translation.noTranslations}
                 </p>
               </div>
             ) : (
-              <div className="group">
+              <div className="space-y-1">
                 {mockTranslations.map((translation, index) => (
                   <SidebarItem
                     key={translation.id}
-                    title={translation.sourceText.slice(0, 30) + (translation.sourceText.length > 30 ? "..." : "")}
+                    title={translation.sourceText.slice(0, 35) + (translation.sourceText.length > 35 ? "..." : "")}
                     subtitle={`${translation.sourceLanguage} → ${translation.targetLanguage}`}
                     isActive={index === 0}
+                    badge={index === 0 ? "اخیر" : undefined}
                     onDelete={() => handleDeleteTranslation(translation.id)}
                   />
                 ))}
@@ -236,17 +243,17 @@ function ImageSidebar() {
     {
       id: "1",
       prompt: "یک منظره زیبا از کوه‌های برفی",
-      created: new Date(),
+      created: new Date(Date.now() - 20 * 60 * 1000),
     },
     {
       id: "2", 
       prompt: "گربه‌ای در حال بازی در باغ",
-      created: new Date(),
+      created: new Date(Date.now() - 1 * 60 * 60 * 1000),
     },
     {
       id: "3",
       prompt: "شهر مدرن در شب با نور‌های رنگی",
-      created: new Date(),
+      created: new Date(Date.now() - 4 * 60 * 60 * 1000),
     },
   ];
 
@@ -255,10 +262,10 @@ function ImageSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between gap-2 px-2 py-2">
+      <SidebarHeader className="border-b px-4 py-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image className="text-sidebar-primary size-5" />
+            <Image className="size-5 text-primary" />
             <span className="font-semibold">{PERSIAN_TEXTS.navigation.imageGeneration}</span>
           </div>
           <Button variant="ghost" size="icon" className="size-8" onClick={handleNewImage}>
@@ -269,21 +276,21 @@ function ImageSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>تصاویر تولید شده</SidebarGroupLabel>
-          <SidebarGroupContent className="px-0">
+          <SidebarGroupContent>
             {mockImages.length === 0 ? (
-              <div className="mt-4 flex h-full items-center justify-center">
+              <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
                   هیچ تصویری تولید نشده است
                 </p>
               </div>
             ) : (
-              <div className="group">
+              <div className="space-y-1">
                 {mockImages.map((image, index) => (
                   <SidebarItem
                     key={image.id}
                     title={image.prompt.slice(0, 40) + (image.prompt.length > 40 ? "..." : "")}
                     isActive={index === 0}
+                    badge={index === 0 ? "جدید" : undefined}
                     onDelete={() => handleDeleteImage(image.id)}
                   />
                 ))}
