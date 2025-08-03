@@ -13,7 +13,7 @@ Before starting any tasks, ensure the following are running:
 
 ## Section 1: Project Initialization Tasks
 
-### [ ] Task 1.1: Create Next.js Project
+### [x] Task 1.1: Create Next.js Project
 
 **Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and App Router.
 
@@ -47,7 +47,7 @@ cd persian-ai-assistant-next
 
 ---
 
-### [ ] Task 1.2: Install Core tRPC Dependencies
+### [x] Task 1.2: Install Core tRPC Dependencies
 
 **Description:** Install tRPC packages for type-safe API communication between client and server.
 
