@@ -10,15 +10,16 @@
 
 ### [x] Task 1.1: Create Next.js Project
 
-**Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and Pages Router.
+**Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and App Router.
 
 **Technical Details:**
 
 - Use Bun package manager for initialization
 - Enable TypeScript for type safety
 - Enable Tailwind CSS for styling
-- Use Pages Router
+- Use App Router (default in Next.js 15)
 - Set import alias to `@/*` for cleaner imports
+- Use src directory for better organization
 
 **Commands to Execute:**
 
@@ -26,8 +27,8 @@
 bunx create-next-app@latest persian-ai-assistant-next \
   --typescript \
   --tailwind \
-  --pages \
-  --no-src-dir \
+  --app \
+  --src-dir \
   --import-alias "@/*"
 
 cd persian-ai-assistant-next
@@ -37,7 +38,7 @@ cd persian-ai-assistant-next
 
 - New directory `persian-ai-assistant-next` created
 - `package.json` exists with Next.js dependencies
-- `pages` directory exists (not `app`)
+- `app` directory exists (not `pages`)
 - TypeScript config files present
 
 ---
@@ -177,63 +178,62 @@ bun add -d @types/node concurrently
 
 ## Section 2: Project Structure Setup Tasks
 
-### [x] Task 2.1: Create Pages Directory Structure
+### [x] Task 2.1: Create App Directory Structure
 
-**Description:** Set up the Next.js Pages Router directory structure with nested pages and API routes in src/ directory.
+**Description:** Set up the Next.js App Router directory structure with nested routes and API routes in src/ directory.
 
 **Technical Details:**
 
-- `src/pages` directory for application routes
-- API directory for tRPC endpoint
+- `src/app` directory for application routes and layouts
+- API directory for tRPC endpoint (Route Handlers)
 - Separate directories for each feature
-- Styles directory for global CSS
+- Global styles and layout files
 
 **Directory Structure to Create:**
 
 ```
-src/pages/
-├── _app.tsx
-├── index.tsx
+src/app/
+├── layout.tsx
+├── page.tsx
+├── globals.css
 ├── chat/
-│   ├── index.tsx
-│   └── [id].tsx
+│   ├── page.tsx
+│   └── [id]/
+│       └── page.tsx
 ├── translation/
-│   └── index.tsx
+│   └── page.tsx
 ├── image/
-│   └── index.tsx
+│   └── page.tsx
 └── api/
     └── trpc/
-        └── [trpc].ts
-
-src/styles/
-└── globals.css
+        └── [trpc]/
+            └── route.ts
 ```
 
 **Commands to Execute:**
 
 ```bash
-# Create pages directories
-mkdir -p src/pages/chat
-mkdir -p src/pages/translation
-mkdir -p src/pages/image
-mkdir -p src/pages/api/trpc
-mkdir -p src/styles
+# Create app directories
+mkdir -p src/app/chat/\[id\]
+mkdir -p src/app/translation
+mkdir -p src/app/image
+mkdir -p src/app/api/trpc/\[trpc\]
 
 # Create placeholder files
-touch src/pages/_app.tsx
-touch src/pages/index.tsx
-touch src/pages/chat/index.tsx
-touch src/pages/chat/\[id\].tsx
-touch src/pages/translation/index.tsx
-touch src/pages/image/index.tsx
-touch src/pages/api/trpc/\[trpc\].ts
-touch src/styles/globals.css
+touch src/app/layout.tsx
+touch src/app/page.tsx
+touch src/app/globals.css
+touch src/app/chat/page.tsx
+touch src/app/chat/\[id\]/page.tsx
+touch src/app/translation/page.tsx
+touch src/app/image/page.tsx
+touch src/app/api/trpc/\[trpc\]/route.ts
 ```
 
 **Success Criteria:**
 
 - All directories created
-- Route structure follows Next.js Pages Router conventions
+- Route structure follows Next.js App Router conventions
 
 ---
 
@@ -316,7 +316,10 @@ src/lib/
 ├── utils.ts          # General utilities (includes cn)
 ├── persian-texts.ts  # Persian text constants
 ├── pocketbase.ts     # Client-side PB instance
-└── pocketbase-types.ts # Generated types (will be copied)
+├── pocketbase-types.ts # Generated types (will be copied)
+└── trpc/
+    ├── client.ts     # tRPC client configuration
+    └── server.ts     # Server-side tRPC utilities
 
 src/hooks/
 ├── use-chat.ts          # Chat hook with AI SDK
@@ -328,9 +331,6 @@ src/hooks/
 ├── use-pdf-upload.ts    # Keep existing
 └── use-performance.ts   # Keep existing
 
-src/utils/
-└── api.ts           # tRPC client configuration
-
 src/atoms.ts         # Keep existing Jotai atoms
 ```
 
@@ -338,15 +338,15 @@ src/atoms.ts         # Keep existing Jotai atoms
 
 ```bash
 # Create directories (some may already exist)
-mkdir -p src/lib
+mkdir -p src/lib/trpc
 mkdir -p src/hooks
-mkdir -p src/utils
 
 # Create new files (preserve existing ones)
 touch src/hooks/use-chat.ts
 touch src/hooks/use-threads.ts
 touch src/hooks/use-subscriptions.ts
-touch src/utils/api.ts
+touch src/lib/trpc/client.ts
+touch src/lib/trpc/server.ts
 ```
 
 **Success Criteria:**
@@ -472,7 +472,6 @@ ls -la src/components/
 
 - Configure rewrites to proxy PocketBase requests
 - Set up CORS headers for API routes
-- Enable experimental features for server actions
 - Configure image domains for avatars
 
 **File to Create:** `next.config.js`
@@ -862,7 +861,7 @@ WS_URL=ws://localhost:3001
 
 ### [ ] Task 5.1: Configure tRPC Client
 
-**Description:** Set up tRPC client with proper links, transformers, and error handling.
+**Description:** Set up tRPC client with proper links, transformers, and error handling for App Router.
 
 **Technical Details:**
 
@@ -872,12 +871,12 @@ WS_URL=ws://localhost:3001
 - Superjson transformer for serialization
 - Logger link for development
 
-**File:** `src/utils/api.ts`
+**File:** `src/lib/trpc/client.ts`
 
 **Key Implementation Points:**
 
 ```typescript
-- Import createTRPCNext from @trpc/next
+- Import createTRPCReact from @trpc/react-query
 - Configure httpBatchLink with dynamic base URL
 - Set up wsLink for subscriptions (optional)
 - Use splitLink to route operations
@@ -893,7 +892,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### [ ] Task 5.2: Implement App Providers
+### [ ] Task 5.2: Implement Providers Component
 
 **Description:** Create providers component wrapping the app with necessary contexts.
 
@@ -904,12 +903,14 @@ WS_URL=ws://localhost:3001
 - Jotai provider for state
 - Theme provider for dark mode
 - React Query DevTools in development
+- **IMPORTANT**: Always use `'use client'` at the top of client components
 
-**File:** `src/pages/_app.tsx`
+**File:** `src/lib/providers.tsx`
 
 **Key Implementation Points:**
 
 ```typescript
+- Add 'use client' directive at the very top of the file
 - Create QueryClient with configuration
 - Create tRPC client instance
 - Wrap providers in correct order
@@ -928,25 +929,25 @@ WS_URL=ws://localhost:3001
 
 ### [ ] Task 6.1: Implement tRPC Route Handler
 
-**Description:** Create Next.js route handler for tRPC requests using fetch adapter.
+**Description:** Create Next.js route handler for tRPC requests using App Router Route Handlers.
 
 **Technical Details:**
 
 - Use fetchRequestHandler from tRPC
 - Pass app router and context
 - Handle errors in development
-- Use Node runtime (Pages API)
+- Use Web Request/Response API
 
-**File:** `src/pages/api/trpc/[trpc].ts`
+**File:** `src/app/api/trpc/[trpc]/route.ts`
 
 **Key Implementation Points:**
 
 ```typescript
 - Import fetchRequestHandler from @trpc/server/adapters/fetch
 - Import appRouter and createContext
-- Create handler for GET and POST
+- Export async GET and POST functions
 - Add error logging in development
-- Export runtime = 'edge'
+- Use Web Request/Response APIs
 ```
 
 **Success Criteria:**
@@ -1149,6 +1150,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Replace API calls with tRPC
 - Use new chat hook
 - Maintain Persian text support
+- **IMPORTANT**: Always use `'use client'` at the top of client components
 
 **Files to Migrate:**
 
@@ -1158,6 +1160,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Key Changes:**
 
+- Add 'use client' directive at the very top if component uses hooks or interactivity
 - Import from new paths
 - Use tRPC api object
 - Integrate with new hooks
@@ -1213,16 +1216,19 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Import Persian font
 - Wrap with Providers component
 - Set HTML attributes for RTL
+- Required html and body tags
 
-**File:** `pages/_app.tsx`
+**File:** `src/app/layout.tsx`
 
 **Key Implementation Points:**
 
 ```typescript
 - Import globals.css
 - Import Vazirmatn font
-- Set dir="rtl" and lang="fa"
+- Set dir="rtl" and lang="fa" on html tag
 - Wrap children with Providers
+- Export metadata for SEO
+- Include required html and body tags
 ```
 
 **Success Criteria:**
@@ -1230,6 +1236,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Styles applied globally
 - RTL layout working
 - Providers wrapping app
+- Metadata configured
 
 ---
 
@@ -1239,19 +1246,23 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Technical Details:**
 
-- Use client component
+- Use client component for interactivity
 - Import sidebar and header
 - Set up responsive layout
 - Maintain sidebar state
+- Create nested layout structure
+- **IMPORTANT**: Always use `'use client'` at the top of client components
 
-[Removed] Not applicable in Pages Router
+**File:** `src/app/(dashboard)/layout.tsx`
 
 **Key Implementation Points:**
 
+- Add 'use client' directive at the very top if component needs interactivity
 - Import layout components
 - Set up sidebar provider
 - Create responsive grid
 - Handle mobile/desktop views
+- Use route groups for organization
 
 **Success Criteria:**
 
@@ -1267,23 +1278,25 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 
 **Technical Details:**
 
-- Get thread ID from params
+- Get thread ID from params prop
 - Use chat hook for messaging
 - Fetch thread data with tRPC
 - Implement auto-scrolling
 - Handle loading states
+- Server Component for initial load
 
-**File:** `pages/chat/[id].tsx`
+**File:** `src/app/chat/[id]/page.tsx`
 
 **Key Implementation Points:**
 
 ```typescript
-- Use useRouter from next/router to read route params (Pages Router)
-- Import { useRouter } from 'next/router' instead of next/navigation
-- Implement useChat hook
+- Accept params as prop from App Router
+- Use params.id to get thread ID
+- Implement useChat hook in client components
 - Query thread with api.threads.get
 - Auto-scroll to bottom
 - Render message list and input
+- Use Server Component for initial data loading
 ```
 
 **Success Criteria:**
@@ -1305,15 +1318,19 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Redirect to thread page
 - Show empty state
 - Handle model selection
+- Use App Router navigation
+- **IMPORTANT**: Always use `'use client'` at the top of client components
 
-**File:** `pages/chat/index.tsx`
+**File:** `src/app/chat/page.tsx`
 
 **Key Implementation Points:**
 
+- Add 'use client' directive at the very top if using hooks or interactivity
 - Use api.threads.create mutation
-- Redirect with next/navigation
+- Redirect with useRouter from next/navigation
 - Show welcome message
 - Model selector component
+- Use client components for interactions
 
 **Success Criteria:**
 
@@ -1332,17 +1349,19 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Simple coming soon pages
 - Maintain consistent layout
 - Persian text for messages
+- Use App Router structure
 
 **Files:**
 
-- `pages/translation/index.tsx`
-- `pages/image/index.tsx`
+- `src/app/translation/page.tsx`
+- `src/app/image/page.tsx`
 
 **Content:**
 
 - Coming soon message in Persian
 - Consistent styling with app
 - Basic layout structure
+- Export metadata for SEO
 
 **Success Criteria:**
 
@@ -1363,7 +1382,7 @@ bunx shadcn@latest add skeleton sheet collapsible badge alert breadcrumb
 - Use clsx for conditional classes
 - Use twMerge for Tailwind deduplication
 
-**File:** `lib/utils/cn.ts`
+**File:** `src/lib/utils.ts`
 
 **Implementation:**
 
@@ -1394,7 +1413,7 @@ export function cn(...inputs: ClassValue[]) {
 - Update imports if needed
 
 **Source:** `src/lib/persian-texts.ts`
-**Destination:** `lib/utils/persian.ts`
+**Destination:** `src/lib/persian-texts.ts`
 
 **Success Criteria:**
 
@@ -1417,8 +1436,8 @@ export function cn(...inputs: ClassValue[]) {
 
 **Files:**
 
-- `lib/atoms/chat.ts`
-- `lib/atoms/settings.ts`
+- `src/lib/atoms/chat.ts`
+- `src/lib/atoms/settings.ts`
 
 **Key Atoms:**
 
@@ -1732,11 +1751,12 @@ bun run start
 
 ### Common Pitfalls to Avoid:
 
-1. Don't forget 'use client' directive for client components
-2. Use Pages API handler signature (req, res)
-3. Use proper environment variable prefixes (NEXT*PUBLIC*)
-4. Maintain exact file structure for Pages Router
+1. **CRITICAL**: Always add `'use client'` directive at the very top of any component that uses hooks, state, event handlers, or browser APIs
+2. Use Route Handler signature (Request/Response) for App Router APIs
+3. Use proper environment variable prefixes (NEXT_PUBLIC_)
+4. Maintain exact file structure for App Router
 5. Copy UI components before implementing pages
+6. Server Components are default - only use Client Components when necessary
 
 ### Verification Steps After Each Section:
 

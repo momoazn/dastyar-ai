@@ -1,15 +1,15 @@
-## Comprehensive Next.js (Pages Router) + tRPC + Vercel AI SDK Migration Plan
+## Comprehensive Next.js (App Router) + tRPC + Vercel AI SDK Migration Plan
 
 ### Phase 1: Project Initialization and Setup
 
 #### 1.1 Create Next.js Project Structure
 ```bash
-# Create new Next.js project with TypeScript and Pages Router
+# Create new Next.js project with TypeScript and App Router
 bunx create-next-app@latest persian-ai-assistant-next \
   --typescript \
   --tailwind \
-  --pages \
-  --no-src-dir \
+  --app \
+  --src-dir \
   --import-alias "@/*"
 
 cd persian-ai-assistant-next
@@ -49,16 +49,22 @@ bun add -d @types/node concurrently
 ```
 persian-ai-assistant-next/
 ├── src/
-│   ├── pages/
-│   │   ├── _app.tsx             # App wrapper with providers
-│   │   ├── index.tsx            # Home page
+│   ├── app/
+│   │   ├── layout.tsx           # Root layout with providers
+│   │   ├── page.tsx             # Home page
+│   │   ├── globals.css          # Global styles
 │   │   ├── chat/
-│   │   │   ├── index.tsx        # New chat page
-│   │   │   └── [id].tsx         # Existing chat page
-│   │   ├── translation/index.tsx # Placeholder
-│   │   ├── image/index.tsx      # Placeholder
+│   │   │   ├── page.tsx         # New chat page
+│   │   │   └── [id]/
+│   │   │       └── page.tsx     # Existing chat page
+│   │   ├── translation/
+│   │   │   └── page.tsx         # Placeholder
+│   │   ├── image/
+│   │   │   └── page.tsx         # Placeholder
 │   │   └── api/
-│   │       └── trpc/[trpc].ts   # tRPC HTTP handler (Pages API)
+│   │       └── trpc/
+│   │           └── [trpc]/
+│   │               └── route.ts # tRPC HTTP handler (Route Handler)
 │   │
 │   ├── server/
 │   │   ├── api/
@@ -80,7 +86,11 @@ persian-ai-assistant-next/
 │   │   ├── utils.ts             # General utilities (includes cn)
 │   │   ├── persian-texts.ts     # Persian text constants
 │   │   ├── pocketbase.ts        # Client-side PB instance
-│   │   └── pocketbase-types.ts  # Generated PocketBase types
+│   │   ├── pocketbase-types.ts  # Generated PocketBase types
+│   │   ├── providers.tsx        # Client providers component
+│   │   └── trpc/
+│   │       ├── client.ts        # tRPC client configuration
+│   │       └── server.ts        # Server-side tRPC utilities
 │   │
 │   ├── hooks/
 │   │   ├── use-chat.ts          # Chat hook with AI SDK  
@@ -105,11 +115,6 @@ persian-ai-assistant-next/
 │   │   ├── header.tsx           # Existing header
 │   │   └── [other existing components...]
 │   │
-│   ├── utils/
-│   │   └── api.ts               # tRPC client configuration
-│   │
-│   ├── styles/
-│   │   └── globals.css          # Global styles
 │   │
 │   └── atoms.ts                 # Existing Jotai atoms
 │
@@ -461,14 +466,13 @@ export type AppRouter = typeof appRouter;
 
 ### Phase 3: tRPC Client Configuration
 
-#### 3.1 tRPC Client Setup (`src/utils/api.ts`)
+#### 3.1 tRPC Client Setup (`src/lib/trpc/client.ts`)
 ```typescript
 import { createTRPCReact } from '@trpc/react-query';
-import { createTRPCNext } from '@trpc/next';
 import { httpBatchLink, loggerLink, splitLink, wsLink } from '@trpc/client';
 import { createWSClient } from '@trpc/client';
 import superjson from 'superjson';
-import type { AppRouter } from '@/server/routers/_app';
+import type { AppRouter } from '@/server/api/root';
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') return '';
@@ -483,59 +487,47 @@ const wsClient = typeof window !== 'undefined'
     })
   : null;
 
-export const trpc = createTRPCNext<AppRouter>({
-  config(opts) {
-    return {
-      transformer: superjson,
-      links: [
-        loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === 'development' ||
-            (op.direction === 'down' && op.result instanceof Error),
-        }),
-        splitLink({
-          condition(op) {
-            return op.type === 'subscription';
-          },
-          true: wsLink({
-            client: wsClient!,
-          }),
-          false: httpBatchLink({
-            url: `${getBaseUrl()}/api/trpc`,
-            headers() {
-              // Include auth headers if available
-              const token = localStorage.getItem('pb_auth');
-              return token ? { authorization: token } : {};
-            },
-          }),
-        }),
-      ],
-      queryClientConfig: {
-        defaultOptions: {
-          queries: {
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            refetchOnWindowFocus: false,
-          },
-        },
-      },
-    };
-  },
-  ssr: false, // We'll handle SSR manually where needed
-});
+export const api = createTRPCReact<AppRouter>();
 
-// Export hooks for client components
-export const api = trpc;
+export function getQueryClient() {
+  return {
+    links: [
+      loggerLink({
+        enabled: (op) =>
+          process.env.NODE_ENV === 'development' ||
+          (op.direction === 'down' && op.result instanceof Error),
+      }),
+      splitLink({
+        condition(op) {
+          return op.type === 'subscription';
+        },
+        true: wsLink({
+          client: wsClient!,
+        }),
+        false: httpBatchLink({
+          url: `${getBaseUrl()}/api/trpc`,
+          headers() {
+            // Include auth headers if available
+            const token = localStorage.getItem('pb_auth');
+            return token ? { authorization: token } : {};
+          },
+        }),
+      }),
+    ],
+    transformer: superjson,
+  };
+}
 ```
 
-#### 3.2 App Providers (`src/pages/_app.tsx`)
+#### 3.2 App Providers (`src/lib/providers.tsx`)
 ```typescript
-'use client';
+'use client'; // ALWAYS at the very top of client components
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Provider as JotaiProvider } from 'jotai';
 import { ThemeProvider } from 'next-themes';
-import { api } from '@/lib/trpc/client';
+import { api, getQueryClient } from '@/lib/trpc/client';
 import { useState } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -552,9 +544,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
   
   const [trpcClient] = useState(() =>
-    api.createClient({
-      // Client configuration
-    })
+    api.createClient(getQueryClient())
   );
   
   return (
@@ -577,33 +567,29 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Phase 4: Next.js API Route (Pages Router)
+### Phase 4: Next.js API Route (App Router)
 
-#### 4.1 tRPC Route Handler (`src/pages/api/trpc/[trpc].ts`)
+#### 4.1 tRPC Route Handler (`src/app/api/trpc/[trpc]/route.ts`)
 ```typescript
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { appRouter } from '@/server/routers/_app';
-import { createContext } from '@/server/trpc/context';
+import { appRouter } from '@/server/api/root';
+import { createContext } from '@/server/api/context';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  return fetchRequestHandler({
+const handler = (req: Request) =>
+  fetchRequestHandler({
     endpoint: '/api/trpc',
-    req: req as any,
+    req,
     router: appRouter,
-    createContext: createContext as any,
+    createContext,
     onError:
       process.env.NODE_ENV === 'development'
         ? ({ path, error }) => {
             console.error(`tRPC failed on ${path ?? '<no-path>'}: ${error.message}`);
           }
         : undefined,
-  } as any).then((response: Response) => {
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    res.status(response.status);
-    response.text().then((text) => res.end(text));
   });
-}
+
+export { handler as GET, handler as POST };
 ```
 
 ### Phase 5: Client-Side Implementation
@@ -712,21 +698,37 @@ export function useChat(threadId?: string) {
 }
 ```
 
-#### 5.2 Chat Page Component (`src/pages/chat/[id].tsx`)
+#### 5.2 Chat Page Component (`src/app/chat/[id]/page.tsx`)
 ```typescript
-'use client';
+import { ChatPageClient } from './chat-page-client';
 
-import { useParams } from 'next/navigation';
+export default async function ChatPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  
+  return <ChatPageClient threadId={id} />;
+}
+```
+
+#### 5.3 Chat Page Client Component (`src/app/chat/[id]/chat-page-client.tsx`)
+```typescript
+'use client'; // ALWAYS at the very top of client components
+
 import { api } from '@/lib/trpc/client';
-import { useChat } from '@/lib/hooks/use-chat';
+import { useChat } from '@/hooks/use-chat';
 import { ChatInput } from '@/components/chat/chat-input';
 import { MessageList } from '@/components/chat/message-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useRef } from 'react';
 
-export default function ChatPage() {
-  const params = useParams();
-  const threadId = params.id as string;
+interface ChatPageClientProps {
+  threadId: string;
+}
+
+export function ChatPageClient({ threadId }: ChatPageClientProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Fetch thread data
@@ -865,7 +867,7 @@ export const auth = {
 };
 ```
 
-### Phase 7: Configuration Files (Pages Router)
+### Phase 7: Configuration Files (App Router)
 
 #### 7.1 Next.js Configuration (`next.config.js`)
 ```javascript
@@ -976,8 +978,8 @@ WS_URL=ws://localhost:3001
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "pb:typegen": "bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types.ts",
-    "db:seed": "bun run server/scripts/seed.ts",
+    "pb:typegen": "bunx pocketbase-typegen --db ../data/data.db --out src/server/types/pocketbase-types.ts",
+    "db:seed": "bun run src/server/scripts/seed.ts",
     "clean": "rm -rf .next node_modules",
     "clean:all": "rm -rf .next node_modules ../data/storage/* ../tmp/*"
   }
@@ -993,9 +995,10 @@ WS_URL=ws://localhost:3001
 
 #### 8.2 Component Migration Order
 1. **UI Components** - Direct copy with minor adjustments
-2. **Layout Components** - Convert to Next.js App Router layouts
-3. **Chat Components** - Integrate with new tRPC/AI SDK hooks
-4. **Thread Management** - Use tRPC queries instead of direct API calls
+2. **Root Layout** - Create src/app/layout.tsx with providers
+3. **Route-specific Layouts** - Use nested layouts in App Router
+4. **Chat Components** - Integrate with new tRPC/AI SDK hooks
+5. **Thread Management** - Use tRPC queries instead of direct API calls
 
 #### 8.3 Feature Migration Priority
 1. **Core Chat Functionality** ✅
@@ -1024,13 +1027,40 @@ WS_URL=ws://localhost:3001
 - [ ] Dark mode toggles properly
 - [ ] Build completes without errors
 - [ ] Production build runs correctly
+- [ ] Server Components render correctly
+- [ ] Client Components hydrate properly
+- [ ] Route handlers work with App Router
 
 #### 9.2 Performance Optimizations
-1. **Use React Server Components** where possible
-2. **Implement proper caching** with tRPC query client
-3. **Enable ISR** for static pages
-4. **Use dynamic imports** for heavy components
-5. **Optimize bundle size** with tree shaking
+1. **Use React Server Components** for initial page loads and data fetching
+2. **Implement proper caching** with tRPC query client and Next.js caching
+3. **Use static rendering** where possible with generateStaticParams
+4. **Use dynamic imports** for heavy client components
+5. **Optimize bundle size** with tree shaking and route-based code splitting
+6. **Leverage App Router's** automatic code splitting per route segment
+
+### Phase 9.5: App Router Specific Considerations
+
+#### 9.5.1 Server vs Client Components
+- **Server Components (default)**: Use for data fetching, static content, and layouts
+- **Client Components**: **ALWAYS use `'use client'` directive at the very top of file** for interactivity, hooks, and state
+- **Hybrid approach**: Server Components can import Client Components but not vice versa
+- **Critical Rule**: `'use client'` must be the first line in any component that uses hooks, event handlers, or browser APIs
+
+#### 9.5.2 Data Fetching Patterns
+- **Server Components**: Use async/await directly in components
+- **Client Components**: Use tRPC hooks (useQuery, useMutation)
+- **Streaming**: Leverage Suspense boundaries for progressive loading
+
+#### 9.5.3 Route Organization
+- **Route Groups**: Use (dashboard) for layout organization without affecting URL
+- **Parallel Routes**: Use @slot for simultaneous rendering of multiple pages
+- **Intercepting Routes**: Use (.) syntax for modal-like behavior
+
+#### 9.5.4 Metadata and SEO
+- **Static Metadata**: Export metadata object from page/layout
+- **Dynamic Metadata**: Use generateMetadata function
+- **Open Graph**: Built-in support with metadata API
 
 ### Phase 10: Deployment Preparation
 
@@ -1049,14 +1079,18 @@ go build -o persian-ai-assistant main.go
 3. **Rate limiting** on tRPC procedures
 4. **Error tracking** with Sentry or similar
 5. **Monitoring** with Vercel Analytics
+6. **Server Component caching** configuration
+7. **Route Handler optimization** for API endpoints
+8. **Build analysis** with @next/bundle-analyzer
 
 ### Summary of Key Technical Decisions
 
 1. **tRPC over REST** - Type-safe API with automatic client generation
 2. **Vercel AI SDK** - Streamlined AI integration with built-in streaming
-3. **Pages Router** - Classic Next.js routing with API routes and _app.tsx
+3. **App Router** - Modern Next.js routing with Route Handlers and layouts
 4. **Bun** - Fast package management and runtime
 5. **PocketBase subscriptions** - Keep real-time functionality
 6. **Ollama provider** - Local LLM inference unchanged
 7. **Superjson transformer** - Handle Date/Map/Set serialization
-8. **Edge runtime** - Better performance for API routes
+8. **Server Components** - Better performance and SEO
+9. **Route Groups** - Better organization and nested layouts
