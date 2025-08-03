@@ -138,3 +138,6 @@ tmp/
 persian-ai-assistant
 
 data/
+
+# Crush working dir
+.crush/
