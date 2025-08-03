@@ -7,12 +7,13 @@ Before starting any tasks, ensure the following are running:
 - PocketBase server on port 8090
 - Ollama server on port 11434
 - Current project is backed up
+- After completing each task mark it as completed
 
 ---
 
 ## Section 1: Project Initialization Tasks
 
-### Task 1.1: Create Next.js Project
+### [ ] Task 1.1: Create Next.js Project
 
 **Description:** Initialize a new Next.js 15 project with TypeScript, Tailwind CSS, and App Router.
 
@@ -46,7 +47,7 @@ cd persian-ai-assistant-next
 
 ---
 
-### Task 1.2: Install Core tRPC Dependencies
+### [ ] Task 1.2: Install Core tRPC Dependencies
 
 **Description:** Install tRPC packages for type-safe API communication between client and server.
 
@@ -72,7 +73,7 @@ bun add @trpc/server @trpc/client @trpc/react-query @trpc/next
 
 ---
 
-### Task 1.3: Install Vercel AI SDK Dependencies
+### [ ] Task 1.3: Install Vercel AI SDK Dependencies
 
 **Description:** Install Vercel AI SDK for handling AI model streaming and Ollama provider for local LLM integration.
 
@@ -95,7 +96,7 @@ bun add ai @ai-sdk/react ollama-ai-provider
 
 ---
 
-### Task 1.4: Install State Management and Data Fetching Libraries
+### [ ] Task 1.4: Install State Management and Data Fetching Libraries
 
 **Description:** Install TanStack Query for server state management and Jotai for client state.
 
@@ -119,7 +120,7 @@ bun add jotai pocketbase
 
 ---
 
-### Task 1.5: Install UI Component Libraries
+### [ ] Task 1.5: Install UI Component Libraries
 
 **Description:** Install Radix UI primitives and styling utilities for building the UI.
 
@@ -153,7 +154,7 @@ bun add @fontsource-variable/vazirmatn
 
 ---
 
-### Task 1.6: Install Utility Libraries
+### [ ] Task 1.6: Install Utility Libraries
 
 **Description:** Install validation, serialization, and markdown rendering libraries.
 
@@ -179,7 +180,7 @@ bun add -d @types/node concurrently
 
 ## Section 2: Project Structure Setup Tasks
 
-### Task 2.1: Create App Directory Structure
+### [ ] Task 2.1: Create App Directory Structure
 
 **Description:** Set up the Next.js App Router directory structure with route groups and API routes.
 
@@ -240,7 +241,7 @@ touch app/providers.tsx
 
 ---
 
-### Task 2.2: Create Server Directory Structure
+### [ ] Task 2.2: Create Server Directory Structure
 
 **Description:** Set up server-side directory structure for tRPC routers, services, and types.
 
@@ -302,7 +303,7 @@ touch server/types/pocketbase-types.ts
 
 ---
 
-### Task 2.3: Create Library Directory Structure
+### [ ] Task 2.3: Create Library Directory Structure
 
 **Description:** Set up client-side library structure for hooks, utilities, and state management.
 
@@ -361,7 +362,7 @@ touch lib/pocketbase.ts
 
 ---
 
-### Task 2.4: Create Components Directory Structure
+### [ ] Task 2.4: Create Components Directory Structure
 
 **Description:** Set up component directory structure for UI components and feature components.
 
@@ -411,7 +412,7 @@ touch components/layout/header.tsx
 
 ## Section 3: Configuration Tasks
 
-### Task 3.1: Configure TypeScript
+### [ ] Task 3.1: Configure TypeScript
 
 **Description:** Set up TypeScript configuration with strict mode and proper path aliases.
 
@@ -466,7 +467,7 @@ touch components/layout/header.tsx
 
 ---
 
-### Task 3.2: Configure Next.js
+### [ ] Task 3.2: Configure Next.js
 
 **Description:** Set up Next.js configuration with rewrites for PocketBase proxy and CORS headers.
 
@@ -529,7 +530,7 @@ module.exports = nextConfig;
 
 ---
 
-### Task 3.3: Configure Environment Variables
+### [ ] Task 3.3: Configure Environment Variables
 
 **Description:** Set up environment variables for PocketBase, Ollama, and application URLs.
 
@@ -565,7 +566,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 3.4: Configure Package.json Scripts
+### [ ] Task 3.4: Configure Package.json Scripts
 
 **Description:** Update package.json with development, build, and utility scripts.
 
@@ -604,7 +605,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 3.5: Configure Tailwind CSS
+### [ ] Task 3.5: Configure Tailwind CSS
 
 **Description:** Set up Tailwind configuration with RTL support and Persian fonts.
 
@@ -633,7 +634,7 @@ WS_URL=ws://localhost:3001
 
 ## Section 4: tRPC Server Implementation Tasks
 
-### Task 4.1: Implement tRPC Initialization
+### [ ] Task 4.1: Implement tRPC Initialization
 
 **Description:** Set up tRPC server with superjson transformer and error formatting.
 
@@ -670,7 +671,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.2: Implement Context Creation
+### [ ] Task 4.2: Implement Context Creation
 
 **Description:** Create tRPC context with PocketBase instance and user authentication.
 
@@ -700,7 +701,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.3: Implement Chat Router with Streaming
+### [ ] Task 4.3: Implement Chat Router with Streaming
 
 **Description:** Create chat router with streaming support using Vercel AI SDK and Ollama.
 
@@ -741,7 +742,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.4: Implement Thread Router
+### [ ] Task 4.4: Implement Thread Router
 
 **Description:** Create CRUD operations for chat threads using tRPC procedures.
 
@@ -773,7 +774,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.5: Implement Root Router Composition
+### [ ] Task 4.5: Implement Root Router Composition
 
 **Description:** Compose all routers into a single app router and export types.
 
@@ -801,7 +802,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.6: Implement Message Router
+### [ ] Task 4.6: Implement Message Router
 
 **Description:** Create router for message-specific operations.
 
@@ -828,7 +829,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 4.7: Implement Models Router
+### [ ] Task 4.7: Implement Models Router
 
 **Description:** Create router for listing available Ollama models.
 
@@ -855,7 +856,7 @@ WS_URL=ws://localhost:3001
 
 ## Section 5: tRPC Client Configuration Tasks
 
-### Task 5.1: Configure tRPC Client
+### [ ] Task 5.1: Configure tRPC Client
 
 **Description:** Set up tRPC client with proper links, transformers, and error handling.
 
@@ -888,7 +889,7 @@ WS_URL=ws://localhost:3001
 
 ---
 
-### Task 5.2: Implement App Providers
+### [ ] Task 5.2: Implement App Providers
 
 **Description:** Create providers component wrapping the app with necessary contexts.
 
@@ -921,7 +922,7 @@ WS_URL=ws://localhost:3001
 
 ## Section 6: Next.js Route Handler Tasks
 
-### Task 6.1: Implement tRPC Route Handler
+### [ ] Task 6.1: Implement tRPC Route Handler
 
 **Description:** Create Next.js route handler for tRPC requests using fetch adapter.
 
@@ -954,7 +955,7 @@ WS_URL=ws://localhost:3001
 
 ## Section 7: PocketBase Integration Tasks
 
-### Task 7.1: Generate PocketBase Types
+### [ ] Task 7.1: Generate PocketBase Types
 
 **Description:** Generate TypeScript types from existing PocketBase schema.
 
@@ -978,7 +979,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 7.2: Implement Server-side PocketBase Client
+### [ ] Task 7.2: Implement Server-side PocketBase Client
 
 **Description:** Create PocketBase client for server-side operations with helper functions.
 
@@ -1008,7 +1009,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 7.3: Implement Client-side PocketBase
+### [ ] Task 7.3: Implement Client-side PocketBase
 
 **Description:** Create PocketBase client for client-side subscriptions and auth.
 
@@ -1040,7 +1041,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ## Section 8: Hook Implementation Tasks
 
-### Task 8.1: Implement Chat Hook with AI SDK
+### [ ] Task 8.1: Implement Chat Hook with AI SDK
 
 **Description:** Create custom hook integrating Vercel AI SDK with PocketBase subscriptions.
 
@@ -1071,7 +1072,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 8.2: Implement Thread Management Hook
+### [ ] Task 8.2: Implement Thread Management Hook
 
 **Description:** Create hook for managing thread operations with tRPC.
 
@@ -1101,7 +1102,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ## Section 9: Component Migration Tasks
 
-### Task 9.1: Copy UI Components from Original Project
+### [ ] Task 9.1: Copy UI Components from Original Project
 
 **Description:** Copy all shadcn/ui components from the original project maintaining structure.
 
@@ -1131,7 +1132,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 9.2: Migrate Chat Components
+### [ ] Task 9.2: Migrate Chat Components
 
 **Description:** Migrate chat-specific components adapting to new hooks and tRPC.
 
@@ -1162,7 +1163,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 9.3: Migrate Layout Components
+### [ ] Task 9.3: Migrate Layout Components
 
 **Description:** Migrate sidebar and header components to Next.js App Router structure.
 
@@ -1194,7 +1195,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ## Section 10: Page Implementation Tasks
 
-### Task 10.1: Implement Root Layout
+### [ ] Task 10.1: Implement Root Layout
 
 **Description:** Create root layout with providers and global styles.
 
@@ -1224,7 +1225,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 10.2: Implement App Layout with Sidebar
+### [ ] Task 10.2: Implement App Layout with Sidebar
 
 **Description:** Create app-specific layout with sidebar navigation.
 
@@ -1252,7 +1253,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 10.3: Implement Chat Page with Thread ID
+### [ ] Task 10.3: Implement Chat Page with Thread ID
 
 **Description:** Create dynamic chat page using thread ID parameter.
 
@@ -1285,7 +1286,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 10.4: Implement New Chat Page
+### [ ] Task 10.4: Implement New Chat Page
 
 **Description:** Create page for starting new chat threads.
 
@@ -1313,7 +1314,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ---
 
-### Task 10.5: Create Placeholder Pages
+### [ ] Task 10.5: Create Placeholder Pages
 
 **Description:** Create placeholder pages for translation and image features.
 
@@ -1344,7 +1345,7 @@ bunx pocketbase-typegen --db ../data/data.db --out server/types/pocketbase-types
 
 ## Section 11: Utility Implementation Tasks
 
-### Task 11.1: Implement Class Name Utility
+### [ ] Task 11.1: Implement Class Name Utility
 
 **Description:** Create cn utility for merging Tailwind classes.
 
@@ -1373,7 +1374,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 11.2: Copy Persian Text Constants
+### [ ] Task 11.2: Copy Persian Text Constants
 
 **Description:** Copy Persian language constants from original project.
 
@@ -1394,7 +1395,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 11.3: Implement Jotai Atoms
+### [ ] Task 11.3: Implement Jotai Atoms
 
 **Description:** Create state atoms for chat and settings using Jotai.
 
@@ -1426,7 +1427,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ## Section 12: Testing and Validation Tasks
 
-### Task 12.1: Test tRPC Endpoints
+### [ ] Task 12.1: Test tRPC Endpoints
 
 **Description:** Verify all tRPC procedures respond correctly.
 
@@ -1452,7 +1453,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 12.2: Test Chat Streaming
+### [ ] Task 12.2: Test Chat Streaming
 
 **Description:** Verify chat streaming works with Ollama integration.
 
@@ -1479,7 +1480,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 12.3: Test PocketBase Subscriptions
+### [ ] Task 12.3: Test PocketBase Subscriptions
 
 **Description:** Verify real-time updates via PocketBase subscriptions.
 
@@ -1498,7 +1499,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 12.4: Test UI Features
+### [ ] Task 12.4: Test UI Features
 
 **Description:** Verify all UI features work correctly.
 
@@ -1526,7 +1527,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Task 12.5: Build and Production Test
+### [ ] Task 12.5: Build and Production Test
 
 **Description:** Verify production build completes and runs correctly.
 
@@ -1555,7 +1556,7 @@ bun run start
 
 ## Section 13: Cleanup and Optimization Tasks
 
-### Task 13.1: Remove Unused Dependencies
+### [ ] Task 13.1: Remove Unused Dependencies
 
 **Description:** Clean up package.json removing unused dependencies.
 
@@ -1572,7 +1573,7 @@ bun run start
 
 ---
 
-### Task 13.2: Optimize Bundle Size
+### [ ] Task 13.2: Optimize Bundle Size
 
 **Description:** Analyze and optimize JavaScript bundle size.
 
@@ -1591,7 +1592,7 @@ bun run start
 
 ---
 
-### Task 13.3: Add Error Boundaries
+### [ ] Task 13.3: Add Error Boundaries
 
 **Description:** Implement error boundaries for graceful error handling.
 
@@ -1610,7 +1611,7 @@ bun run start
 
 ---
 
-### Task 13.4: Document API Endpoints
+### [ ] Task 13.4: Document API Endpoints
 
 **Description:** Create documentation for tRPC endpoints.
 
@@ -1630,7 +1631,7 @@ bun run start
 
 ## Section 14: Final Verification Tasks
 
-### Task 14.1: Complete Feature Checklist
+### [ ] Task 14.1: Complete Feature Checklist
 
 **Description:** Verify all required features are working.
 
@@ -1653,7 +1654,7 @@ bun run start
 
 ---
 
-### Task 14.2: Performance Verification
+### [ ] Task 14.2: Performance Verification
 
 **Description:** Verify application performance meets requirements.
 
@@ -1672,7 +1673,7 @@ bun run start
 
 ---
 
-### Task 14.3: Cross-browser Testing
+### [ ] Task 14.3: Cross-browser Testing
 
 **Description:** Test application in different browsers.
 
@@ -1691,7 +1692,7 @@ bun run start
 
 ---
 
-### Task 14.4: Create Deployment Instructions
+### [ ] Task 14.4: Create Deployment Instructions
 
 **Description:** Document deployment process for production.
 
