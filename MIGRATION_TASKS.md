@@ -93,18 +93,16 @@ bun add ai @ai-sdk/react ollama-ai-provider
 
 ### [x] Task 1.4: Install State Management and Data Fetching Libraries
 
-**Description:** Install TanStack Query for server state management and Jotai for client state.
+**Description:** Install Jotai for client state.
 
 **Technical Details:**
 
-- TanStack Query v5 for caching and synchronization
 - Jotai for atomic state management
 - PocketBase client for database operations
 
 **Commands to Execute:**
 
 ```bash
-bun add @tanstack/react-query@latest @tanstack/react-query-devtools
 bun add jotai pocketbase
 ```
 
@@ -130,21 +128,18 @@ bun add jotai pocketbase
 
 ```bash
 # Initialize shadcn/ui
-bunx shadcn@latest init
-
-# Install base styling utilities
-bun add lucide-react class-variance-authority clsx tailwind-merge
-bun add @fontsource-variable/vazirmatn
+bunx --bun shadcn@latest init
 
 # Install core shadcn components that will be needed
-bunx shadcn@latest add button card dialog dropdown-menu input label select separator switch tabs textarea tooltip scroll-area avatar progress slider
+bunx --bun shadcn@latest add button card dialog dropdown-menu input label select separator switch tabs textarea tooltip scroll-area avatar progress slider
 ```
 
 **Configuration Notes:**
+
 - Use TypeScript: Yes
-- Use Tailwind CSS: Yes  
+- Use Tailwind CSS: Yes
 - Use src directory: No (we're using app directory)
-- Use import alias: @/* 
+- Use import alias: @/\*
 - Configure components.json for RTL and Persian support
 
 **Success Criteria:**
@@ -156,7 +151,7 @@ bunx shadcn@latest add button card dialog dropdown-menu input label select separ
 
 ---
 
-### [ ] Task 1.6: Install Utility Libraries
+### [x] Task 1.6: Install Utility Libraries
 
 **Description:** Install validation, serialization, and markdown rendering libraries.
 
@@ -618,7 +613,8 @@ WS_URL=ws://localhost:3001
 - Configure content paths for Tailwind scanning
 - Update shadcn/ui components.json for RTL support
 
-**Files to Update:** 
+**Files to Update:**
+
 - `tailwind.config.ts`
 - `components.json`
 
