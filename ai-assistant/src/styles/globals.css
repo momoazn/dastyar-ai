@@ -129,6 +129,10 @@
   .rtl {
     direction: rtl;
   }
+
+  .font-vazirmatn {
+    font-family: "Vazirmatn Variable", sans-serif;
+  }
 }
 
 @layer base {
