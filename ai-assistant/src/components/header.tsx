@@ -2,6 +2,7 @@
 
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { HomeIcon, MessageSquare, MessageCircle, Image } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -66,28 +67,35 @@ export function Header({ SideBarTrigger }: HeaderProps) {
         </div>
       </div>
 
-      {/* Navigation Modes */}
-      <nav className="flex items-center gap-1">
-        {navModes.map((mode) => {
-          const isActive = activeMode?.url === mode.url;
-          const Icon = mode.icon;
-          
-          return (
-            <Button
-              key={mode.url}
-              variant={isActive ? "default" : "ghost"}
-              size="sm"
-              asChild
-              className="gap-2"
-            >
-              <Link href={mode.url}>
-                <Icon className="size-4" />
-                <span className="hidden sm:inline">{mode.title}</span>
-              </Link>
-            </Button>
-          );
-        })}
-      </nav>
+      {/* Navigation Modes + Theme Toggle */}
+      <div className="flex items-center gap-1">
+        <nav className="flex items-center gap-1">
+          {navModes.map((mode) => {
+            const isActive = activeMode?.url === mode.url;
+            const Icon = mode.icon;
+            
+            return (
+              <Button
+                key={mode.url}
+                variant={isActive ? "default" : "ghost"}
+                size="sm"
+                asChild
+                className="gap-2"
+              >
+                <Link href={mode.url}>
+                  <Icon className="size-4" />
+                  <span className="hidden sm:inline">{mode.title}</span>
+                </Link>
+              </Button>
+            );
+          })}
+        </nav>
+        
+        {/* Theme Toggle */}
+        <div className="ml-2 border-r pr-2">
+          <ThemeToggle />
+        </div>
+      </div>
     </header>
   );
 }
