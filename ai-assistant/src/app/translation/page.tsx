@@ -11,7 +11,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Languages, ArrowRightLeft } from "lucide-react";
 
@@ -55,7 +61,7 @@ export default function TranslationPage() {
 
   const handleTranslate = useCallback(() => {
     if (!sourceText.trim()) return;
-    
+
     setIsTranslating(true);
     // Mock translation
     setTimeout(() => {
@@ -65,10 +71,11 @@ export default function TranslationPage() {
         "Thank you": "متشکرم",
         "How can I help you?": "چگونه می‌توانم به شما کمک کنم؟",
       };
-      
-      const translation = mockTranslations[sourceText as keyof typeof mockTranslations] || 
-        `ترجمه ${sourceText} به ${languages.find(l => l.code === targetLanguage)?.name}`;
-      
+
+      const translation =
+        mockTranslations[sourceText as keyof typeof mockTranslations] ||
+        `ترجمه ${sourceText} به ${languages.find((l) => l.code === targetLanguage)?.name}`;
+
       setTranslatedText(translation);
       setIsTranslating(false);
     }, 1500);
@@ -95,10 +102,12 @@ export default function TranslationPage() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="mx-auto w-full max-w-4xl space-y-6">
             {/* Header */}
-            <div className="text-center space-y-2">
+            <div className="space-y-2 text-center">
               <div className="flex items-center justify-center gap-2">
-                <Languages className="size-6 text-primary" />
-                <h1 className="text-2xl font-bold">{PERSIAN_TEXTS.navigation.translation}</h1>
+                <Languages className="text-primary size-6" />
+                <h1 className="text-2xl font-bold">
+                  {PERSIAN_TEXTS.navigation.translation}
+                </h1>
               </div>
               <p className="text-muted-foreground">
                 ترجمه متن‌های خود با کیفیت بالا و لحن مناسب
@@ -106,11 +115,16 @@ export default function TranslationPage() {
             </div>
 
             {/* Translation Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* Source Language */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{PERSIAN_TEXTS.translation.sourceLanguage}</label>
-                <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                <label className="text-sm font-medium">
+                  {PERSIAN_TEXTS.translation.sourceLanguage}
+                </label>
+                <Select
+                  value={sourceLanguage}
+                  onValueChange={setSourceLanguage}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -138,8 +152,13 @@ export default function TranslationPage() {
 
               {/* Target Language */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{PERSIAN_TEXTS.translation.targetLanguage}</label>
-                <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                <label className="text-sm font-medium">
+                  {PERSIAN_TEXTS.translation.targetLanguage}
+                </label>
+                <Select
+                  value={targetLanguage}
+                  onValueChange={setTargetLanguage}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -156,7 +175,9 @@ export default function TranslationPage() {
 
             {/* Tone Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{PERSIAN_TEXTS.translation.translationTone}</label>
+              <label className="text-sm font-medium">
+                {PERSIAN_TEXTS.translation.translationTone}
+              </label>
               <Select value={tone} onValueChange={setTone}>
                 <SelectTrigger className="w-full md:w-64">
                   <SelectValue />
@@ -172,12 +193,12 @@ export default function TranslationPage() {
             </div>
 
             {/* Translation Interface */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* Source Text */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {languages.find(l => l.code === sourceLanguage)?.name}
+                    {languages.find((l) => l.code === sourceLanguage)?.name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -186,7 +207,12 @@ export default function TranslationPage() {
                     onChange={(e) => setSourceText(e.target.value)}
                     placeholder={PERSIAN_TEXTS.translation.enterText}
                     className="min-h-32 resize-none"
-                    dir={sourceLanguage === "persian" || sourceLanguage === "arabic" ? "rtl" : "ltr"}
+                    dir={
+                      sourceLanguage === "persian" ||
+                      sourceLanguage === "arabic"
+                        ? "rtl"
+                        : "ltr"
+                    }
                   />
                 </CardContent>
               </Card>
@@ -195,23 +221,34 @@ export default function TranslationPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {languages.find(l => l.code === targetLanguage)?.name}
+                    {languages.find((l) => l.code === targetLanguage)?.name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="relative">
                     <Textarea
                       value={translatedText}
-                      placeholder={isTranslating ? PERSIAN_TEXTS.translation.translating : PERSIAN_TEXTS.translation.translatedText}
+                      placeholder={
+                        isTranslating
+                          ? PERSIAN_TEXTS.translation.translating
+                          : PERSIAN_TEXTS.translation.translatedText
+                      }
                       className="min-h-32 resize-none"
-                      dir={targetLanguage === "persian" || targetLanguage === "arabic" ? "rtl" : "ltr"}
+                      dir={
+                        targetLanguage === "persian" ||
+                        targetLanguage === "arabic"
+                          ? "rtl"
+                          : "ltr"
+                      }
                       readOnly
                     />
                     {isTranslating && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                      <div className="bg-background/50 absolute inset-0 flex items-center justify-center">
                         <div className="flex items-center gap-2">
-                          <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          <span className="text-sm">{PERSIAN_TEXTS.translation.translating}</span>
+                          <div className="border-primary size-4 animate-spin rounded-full border-2 border-t-transparent" />
+                          <span className="text-sm">
+                            {PERSIAN_TEXTS.translation.translating}
+                          </span>
                         </div>
                       </div>
                     )}
@@ -228,7 +265,9 @@ export default function TranslationPage() {
                 size="lg"
                 className="px-8"
               >
-                {isTranslating ? PERSIAN_TEXTS.translation.translating : PERSIAN_TEXTS.translation.translate}
+                {isTranslating
+                  ? PERSIAN_TEXTS.translation.translating
+                  : PERSIAN_TEXTS.translation.translate}
               </Button>
             </div>
 
@@ -238,10 +277,10 @@ export default function TranslationPage() {
                 <CardTitle>نمونه ترجمه‌ها</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <p className="text-sm font-medium">انگلیسی به فارسی:</p>
-                    <div className="space-y-1 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground space-y-1 text-sm">
                       <p>Hello, how are you? → سلام، حال شما چطور است؟</p>
                       <p>Good morning → صبح بخیر</p>
                       <p>Thank you → متشکرم</p>
@@ -249,7 +288,7 @@ export default function TranslationPage() {
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm font-medium">فارسی به انگلیسی:</p>
-                    <div className="space-y-1 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground space-y-1 text-sm">
                       <p>درود بر شما → Greetings to you</p>
                       <p>چطور می‌تونم کمکتون کنم؟ → How can I help you?</p>
                       <p>خوش آمدید → Welcome</p>

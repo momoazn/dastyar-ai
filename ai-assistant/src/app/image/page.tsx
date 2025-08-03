@@ -11,7 +11,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
@@ -47,7 +53,7 @@ export default function ImagePage() {
   const [negativePrompt, setNegativePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  
+
   const [settings, setSettings] = useState<ImageSettings>({
     width: 512,
     height: 512,
@@ -58,24 +64,33 @@ export default function ImagePage() {
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim()) return;
-    
+
     setIsGenerating(true);
     // Mock image generation
     setTimeout(() => {
       // Mock generated image URL
-      setGeneratedImage(`https://picsum.photos/${settings.width}/${settings.height}?random=${Date.now()}`);
+      setGeneratedImage(
+        `https://picsum.photos/${settings.width}/${settings.height}?random=${Date.now()}`,
+      );
       setIsGenerating(false);
     }, 3000);
   }, [prompt, settings]);
 
   const handleSizeChange = useCallback((sizeLabel: string) => {
-    const size = imageSizes.find(s => s.label === sizeLabel);
+    const size = imageSizes.find((s) => s.label === sizeLabel);
     if (size) {
-      setSettings(prev => ({ ...prev, width: size.width, height: size.height }));
+      setSettings((prev) => ({
+        ...prev,
+        width: size.width,
+        height: size.height,
+      }));
     }
   }, []);
 
-  const currentSizeLabel = imageSizes.find(s => s.width === settings.width && s.height === settings.height)?.label || "پیشفرض";
+  const currentSizeLabel =
+    imageSizes.find(
+      (s) => s.width === settings.width && s.height === settings.height,
+    )?.label || "پیشفرض";
 
   return (
     <SidebarProvider
@@ -91,17 +106,19 @@ export default function ImagePage() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="mx-auto w-full max-w-6xl space-y-6">
             {/* Header */}
-            <div className="text-center space-y-2">
+            <div className="space-y-2 text-center">
               <div className="flex items-center justify-center gap-2">
-                <ImageIcon className="size-6 text-primary" />
-                <h1 className="text-2xl font-bold">{PERSIAN_TEXTS.navigation.imageGeneration}</h1>
+                <ImageIcon className="text-primary size-6" />
+                <h1 className="text-2xl font-bold">
+                  {PERSIAN_TEXTS.navigation.imageGeneration}
+                </h1>
               </div>
               <p className="text-muted-foreground">
                 تصاویر زیبا و با کیفیت از روی توضیحات متنی بسازید
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               {/* Settings Panel */}
               <div className="space-y-6">
                 <Card>
@@ -111,8 +128,14 @@ export default function ImagePage() {
                   <CardContent className="space-y-4">
                     {/* Image Size */}
                     <div className="space-y-2">
-                      <Label>{PERSIAN_TEXTS.imageSettings.width} × {PERSIAN_TEXTS.imageSettings.height}</Label>
-                      <Select value={currentSizeLabel} onValueChange={handleSizeChange}>
+                      <Label>
+                        {PERSIAN_TEXTS.imageSettings.width} ×{" "}
+                        {PERSIAN_TEXTS.imageSettings.height}
+                      </Label>
+                      <Select
+                        value={currentSizeLabel}
+                        onValueChange={handleSizeChange}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -129,16 +152,21 @@ export default function ImagePage() {
                     {/* Sampler */}
                     <div className="space-y-2">
                       <Label>{PERSIAN_TEXTS.imageSettings.sampler}</Label>
-                      <Select 
-                        value={settings.sampler} 
-                        onValueChange={(value) => setSettings(prev => ({ ...prev, sampler: value }))}
+                      <Select
+                        value={settings.sampler}
+                        onValueChange={(value) =>
+                          setSettings((prev) => ({ ...prev, sampler: value }))
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {samplers.map((sampler) => (
-                            <SelectItem key={sampler.value} value={sampler.value}>
+                            <SelectItem
+                              key={sampler.value}
+                              value={sampler.value}
+                            >
                               {sampler.label}
                             </SelectItem>
                           ))}
@@ -148,10 +176,14 @@ export default function ImagePage() {
 
                     {/* Steps */}
                     <div className="space-y-2">
-                      <Label>{PERSIAN_TEXTS.imageSettings.steps}: {settings.steps}</Label>
+                      <Label>
+                        {PERSIAN_TEXTS.imageSettings.steps}: {settings.steps}
+                      </Label>
                       <Slider
                         value={[settings.steps]}
-                        onValueChange={([value]) => setSettings(prev => ({ ...prev, steps: value }))}
+                        onValueChange={([value]) =>
+                          setSettings((prev) => ({ ...prev, steps: value }))
+                        }
                         max={50}
                         min={10}
                         step={1}
@@ -160,10 +192,18 @@ export default function ImagePage() {
 
                     {/* Guidance Scale */}
                     <div className="space-y-2">
-                      <Label>{PERSIAN_TEXTS.imageSettings.guidanceScale}: {settings.guidanceScale}</Label>
+                      <Label>
+                        {PERSIAN_TEXTS.imageSettings.guidanceScale}:{" "}
+                        {settings.guidanceScale}
+                      </Label>
                       <Slider
                         value={[settings.guidanceScale]}
-                        onValueChange={([value]) => setSettings(prev => ({ ...prev, guidanceScale: value }))}
+                        onValueChange={([value]) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            guidanceScale: value,
+                          }))
+                        }
                         max={20}
                         min={1}
                         step={0.5}
@@ -189,7 +229,7 @@ export default function ImagePage() {
                         <Button
                           key={index}
                           variant="ghost"
-                          className="h-auto text-right justify-start p-2 text-sm text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground h-auto justify-start p-2 text-right text-sm"
                           onClick={() => setPrompt(samplePrompt)}
                         >
                           {samplePrompt}
@@ -201,7 +241,7 @@ export default function ImagePage() {
               </div>
 
               {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-6 lg:col-span-2">
                 {/* Prompt Input */}
                 <Card>
                   <CardHeader>
@@ -237,7 +277,7 @@ export default function ImagePage() {
                       size="lg"
                       className="w-full"
                     >
-                      <Wand2 className="size-4 ml-2" />
+                      <Wand2 className="ml-2 size-4" />
                       {isGenerating ? "در حال تولید..." : "تولید تصویر"}
                     </Button>
                   </CardContent>
@@ -249,34 +289,40 @@ export default function ImagePage() {
                     <CardTitle className="text-lg">تصویر تولید شده</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="aspect-square max-w-lg mx-auto bg-muted rounded-lg flex items-center justify-center">
+                    <div className="bg-muted mx-auto flex aspect-square max-w-lg items-center justify-center rounded-lg">
                       {isGenerating ? (
-                        <div className="text-center space-y-4">
-                          <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-                          <p className="text-sm text-muted-foreground">در حال تولید تصویر...</p>
+                        <div className="space-y-4 text-center">
+                          <div className="border-primary mx-auto size-8 animate-spin rounded-full border-2 border-t-transparent" />
+                          <p className="text-muted-foreground text-sm">
+                            در حال تولید تصویر...
+                          </p>
                         </div>
                       ) : generatedImage ? (
                         <div className="space-y-4">
-                          <img 
-                            src={generatedImage} 
+                          <img
+                            src={generatedImage}
                             alt="Generated artwork"
-                            className="rounded-lg max-w-full max-h-96 object-contain" 
+                            className="max-h-96 max-w-full rounded-lg object-contain"
                           />
                           <div className="flex justify-center gap-2">
                             <Button variant="outline" size="sm">
-                              <Download className="size-4 ml-2" />
+                              <Download className="ml-2 size-4" />
                               دانلود
                             </Button>
-                            <Button variant="outline" size="sm" onClick={handleGenerate}>
-                              <Wand2 className="size-4 ml-2" />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleGenerate}
+                            >
+                              <Wand2 className="ml-2 size-4" />
                               تولید مجدد
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center space-y-2">
-                          <ImageIcon className="size-12 text-muted-foreground mx-auto" />
-                          <p className="text-sm text-muted-foreground">
+                        <div className="space-y-2 text-center">
+                          <ImageIcon className="text-muted-foreground mx-auto size-12" />
+                          <p className="text-muted-foreground text-sm">
                             تصویر تولید شده اینجا نمایش داده می‌شود
                           </p>
                         </div>

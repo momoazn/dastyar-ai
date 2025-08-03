@@ -7,12 +7,15 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuAction,
 } from "@/components/ui/sidebar";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { Plus, MessageSquare, Image, TrashIcon, Languages } from "lucide-react";
+import { Plus, MessageSquare, Image, TrashIcon, Languages, ArchiveIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
-import { Badge } from "./ui/badge";
 
 interface Thread {
   id: string;
@@ -36,77 +39,7 @@ interface ImageGeneration {
   created: Date;
 }
 
-interface SidebarItemProps {
-  title: string;
-  subtitle?: string;
-  isActive?: boolean;
-  onArchive?: () => void;
-  onDelete?: () => void;
-  icon?: React.ReactNode;
-  timestamp?: Date;
-  badge?: string;
-}
-
-function SidebarItem({
-  title,
-  subtitle,
-  isActive,
-  onArchive,
-  onDelete,
-  icon,
-  timestamp,
-  badge,
-}: SidebarItemProps) {
-  return (
-    <div
-      className={`group/item relative flex h-auto min-h-12 cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-accent ${
-        isActive ? "bg-accent/50" : ""
-      }`}
-    >
-      {/* Active indicator */}
-      {isActive && (
-        <div className="absolute right-0 top-0 h-full w-1 bg-primary" />
-      )}
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="truncate font-medium text-foreground">
-          {title ?? "Untitled"}
-        </div>
-        {subtitle && (
-          <div className="mt-0.5 truncate text-xs text-muted-foreground">
-            {subtitle}
-          </div>
-        )}
-      </div>
-
-      {/* Badge */}
-      {badge && isActive && (
-        <Badge variant="secondary" className="text-xs h-5 px-2">
-          {badge}
-        </Badge>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 hover:text-destructive"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete();
-            }}
-          >
-            <TrashIcon className="size-3" />
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
+// Remove the custom SidebarItem - we'll use shadcn components directly
 
 function ChatSidebar() {
   const mockThreads: Thread[] = [
@@ -117,26 +50,32 @@ function ChatSidebar() {
   ];
 
   const handleNewThread = () => console.log("Creating new thread");
-  const handleArchiveThread = (threadId: string) => console.log("Archiving thread:", threadId);
   const handleDeleteThread = (threadId: string) => console.log("Deleting thread:", threadId);
+  const handleArchiveThread = (threadId: string) => console.log("Archiving thread:", threadId);
 
   return (
     <>
-      <SidebarHeader className="border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="size-5 text-primary" />
-            <span className="font-semibold">{PERSIAN_TEXTS.navigation.chat}</span>
-          </div>
-          <Button variant="ghost" size="icon" className="size-8" onClick={handleNewThread}>
-            <Plus className="size-4" />
-          </Button>
-        </div>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" onClick={handleNewThread}>
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <MessageSquare className="size-4" />
+              </div>
+              <div className="grid flex-1 text-right text-sm leading-tight">
+                <span className="truncate font-semibold">{PERSIAN_TEXTS.navigation.chat}</span>
+                <span className="truncate text-xs">گفتگو با هوش مصنوعی</span>
+              </div>
+              <Plus className="size-4" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupLabel>رشته‌های گفتگو</SidebarGroupLabel>
+          <SidebarMenu>
             {mockThreads.length === 0 ? (
               <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
@@ -144,19 +83,44 @@ function ChatSidebar() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {mockThreads.map((thread, index) => (
-                  <SidebarItem
-                    key={thread.id}
-                    title={thread.title}
-                    isActive={index === 0}
-                    badge={index === 0 ? "فعال" : undefined}
-                    onDelete={() => handleDeleteThread(thread.id)}
-                  />
-                ))}
-              </div>
+              mockThreads.map((thread, index) => (
+                <SidebarMenuItem key={thread.id} className="group/item relative">
+                  <SidebarMenuButton asChild isActive={index === 0} className="h-12">
+                    <a href="#" title={thread.title}>
+                      <MessageSquare className="size-4" />
+                      <span className="truncate">{thread.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleArchiveThread(thread.id);
+                      }}
+                    >
+                      <ArchiveIcon className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteThread(thread.id);
+                      }}
+                    >
+                      <TrashIcon className="size-3" />
+                    </Button>
+                  </div>
+                </SidebarMenuItem>
+              ))
             )}
-          </SidebarGroupContent>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
     </>
@@ -196,21 +160,27 @@ function TranslationSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Languages className="size-5 text-primary" />
-            <span className="font-semibold">{PERSIAN_TEXTS.navigation.translation}</span>
-          </div>
-          <Button variant="ghost" size="icon" className="size-8" onClick={handleNewTranslation}>
-            <Plus className="size-4" />
-          </Button>
-        </div>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" onClick={handleNewTranslation}>
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Languages className="size-4" />
+              </div>
+              <div className="grid flex-1 text-right text-sm leading-tight">
+                <span className="truncate font-semibold">{PERSIAN_TEXTS.navigation.translation}</span>
+                <span className="truncate text-xs">ترجمه متن</span>
+              </div>
+              <Plus className="size-4" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupLabel>تاریخچه ترجمه</SidebarGroupLabel>
+          <SidebarMenu>
             {mockTranslations.length === 0 ? (
               <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
@@ -218,20 +188,39 @@ function TranslationSidebar() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {mockTranslations.map((translation, index) => (
-                  <SidebarItem
-                    key={translation.id}
-                    title={translation.sourceText.slice(0, 35) + (translation.sourceText.length > 35 ? "..." : "")}
-                    subtitle={`${translation.sourceLanguage} → ${translation.targetLanguage}`}
-                    isActive={index === 0}
-                    badge={index === 0 ? "اخیر" : undefined}
-                    onDelete={() => handleDeleteTranslation(translation.id)}
-                  />
-                ))}
-              </div>
+              mockTranslations.map((translation, index) => (
+                <SidebarMenuItem key={translation.id} className="group/item relative">
+                  <SidebarMenuButton asChild isActive={index === 0} className="h-14">
+                    <a href="#" title={translation.sourceText}>
+                      <Languages className="size-4" />
+                      <div className="grid flex-1 text-right text-sm leading-tight">
+                        <span className="truncate font-medium">
+                          {translation.sourceText.slice(0, 30) + (translation.sourceText.length > 30 ? "..." : "")}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {translation.sourceLanguage} → {translation.targetLanguage}
+                        </span>
+                      </div>
+                    </a>
+                  </SidebarMenuButton>
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteTranslation(translation.id);
+                      }}
+                    >
+                      <TrashIcon className="size-3" />
+                    </Button>
+                  </div>
+                </SidebarMenuItem>
+              ))
             )}
-          </SidebarGroupContent>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
     </>
@@ -262,21 +251,27 @@ function ImageSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image className="size-5 text-primary" />
-            <span className="font-semibold">{PERSIAN_TEXTS.navigation.imageGeneration}</span>
-          </div>
-          <Button variant="ghost" size="icon" className="size-8" onClick={handleNewImage}>
-            <Plus className="size-4" />
-          </Button>
-        </div>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" onClick={handleNewImage}>
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Image className="size-4" />
+              </div>
+              <div className="grid flex-1 text-right text-sm leading-tight">
+                <span className="truncate font-semibold">{PERSIAN_TEXTS.navigation.imageGeneration}</span>
+                <span className="truncate text-xs">تولید تصویر</span>
+              </div>
+              <Plus className="size-4" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupLabel>تصاویر تولید شده</SidebarGroupLabel>
+          <SidebarMenu>
             {mockImages.length === 0 ? (
               <div className="flex h-32 items-center justify-center">
                 <p className="text-muted-foreground text-sm">
@@ -284,19 +279,34 @@ function ImageSidebar() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {mockImages.map((image, index) => (
-                  <SidebarItem
-                    key={image.id}
-                    title={image.prompt.slice(0, 40) + (image.prompt.length > 40 ? "..." : "")}
-                    isActive={index === 0}
-                    badge={index === 0 ? "جدید" : undefined}
-                    onDelete={() => handleDeleteImage(image.id)}
-                  />
-                ))}
-              </div>
+              mockImages.map((image, index) => (
+                <SidebarMenuItem key={image.id} className="group/item relative">
+                  <SidebarMenuButton asChild isActive={index === 0} className="h-12">
+                    <a href="#" title={image.prompt}>
+                      <Image className="size-4" />
+                      <span className="truncate">
+                        {image.prompt.slice(0, 35) + (image.prompt.length > 35 ? "..." : "")}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteImage(image.id);
+                      }}
+                    >
+                      <TrashIcon className="size-3" />
+                    </Button>
+                  </div>
+                </SidebarMenuItem>
+              ))
             )}
-          </SidebarGroupContent>
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
     </>

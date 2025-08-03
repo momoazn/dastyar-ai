@@ -57,7 +57,9 @@ export default function Page() {
   const [prompt, setPrompt] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedModel, setSelectedModel] = useState("llama3.2:latest");
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null,
+  );
 
   // Mock messages with enhanced content
   const [messages, setMessages] = useState<MockMessage[]>([
@@ -74,7 +76,8 @@ export default function Page() {
     {
       id: "2",
       role: "user",
-      content: "سلام! رابط خیلی زیبا و کاربردی شده. امکانات جدید چه چیزهایی هستند؟",
+      content:
+        "سلام! رابط خیلی زیبا و کاربردی شده. امکانات جدید چه چیزهایی هستند؟",
       timestamp: new Date(Date.now() - 3 * 60000),
     },
     {
@@ -219,7 +222,7 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
   });
 
   return (
-    <div className="group w-full animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+    <div className="group animate-in fade-in-50 slide-in-from-bottom-2 w-full duration-500">
       {/* Thinking section with improved styling */}
       {hasThinking && (
         <div className="mb-6 rounded-xl border border-amber-200/50 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 p-4 shadow-sm dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/20">
@@ -228,7 +231,7 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
               </div>
-              <span className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
                 💭 فرآیند تفکر
               </span>
             </div>
@@ -251,13 +254,13 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
           <div
             className={cn(
               "overflow-hidden transition-all duration-300 ease-in-out",
-              collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100"
+              collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100",
             )}
           >
             <div className="rounded-lg bg-white/50 p-3 dark:bg-black/20">
               <div
                 dir="ltr"
-                className="text-amber-800 dark:text-amber-200 text-justify text-sm leading-relaxed"
+                className="text-justify text-sm leading-relaxed text-amber-800 dark:text-amber-200"
               >
                 {message.reasoning}
               </div>
@@ -269,53 +272,51 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
       {/* Main message content with enhanced styling */}
       <div className="w-full">
         <div dir="rtl" className="w-full">
-          <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-muted-foreground prose-code:text-primary prose-pre:bg-muted prose-ul:list-none prose-li:flex prose-li:items-start prose-li:gap-2 prose-li:my-1">
+          <div className="prose prose-sm text-foreground prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-muted-foreground prose-code:text-primary prose-pre:bg-muted prose-ul:list-none prose-li:flex prose-li:items-start prose-li:gap-2 prose-li:my-1 max-w-none">
             <div className="text-justify leading-relaxed">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                h2: ({ children }) => (
-                  <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
-                    {children}
-                  </h3>
-                ),
-                h3: ({ children }) => (
-                  <h4 className="text-base font-semibold text-foreground mt-3 mb-2">
-                    {children}
-                  </h4>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-semibold text-primary">
-                    {children}
-                  </strong>
-                ),
-                li: ({ children }) => (
-                  <div className="flex items-start gap-2 my-1">
-                    <span className="text-primary mt-1">•</span>
-                    <span>{children}</span>
-                  </div>
-                ),
-                p: ({ children }) => (
-                  <div className="mb-3">
-                    {children}
-                  </div>
-                ),
-                code: ({ children, ...props }) => {
-                  const isInline = !String(props.className).includes('language-');
-                  return isInline ? (
-                    <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-sm font-mono">
+                  h2: ({ children }) => (
+                    <h3 className="text-foreground mt-4 mb-2 text-lg font-semibold">
                       {children}
-                    </code>
-                  ) : (
-                    <pre className="bg-muted p-3 rounded-lg overflow-x-auto">
-                      <code className="text-sm font-mono">{children}</code>
-                    </pre>
-                  );
-                },
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
+                    </h3>
+                  ),
+                  h3: ({ children }) => (
+                    <h4 className="text-foreground mt-3 mb-2 text-base font-semibold">
+                      {children}
+                    </h4>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="text-primary font-semibold">
+                      {children}
+                    </strong>
+                  ),
+                  li: ({ children }) => (
+                    <div className="my-1 flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>{children}</span>
+                    </div>
+                  ),
+                  p: ({ children }) => <div className="mb-3">{children}</div>,
+                  code: ({ children, ...props }) => {
+                    const isInline = !String(props.className).includes(
+                      "language-",
+                    );
+                    return isInline ? (
+                      <code className="bg-muted text-primary rounded px-1.5 py-0.5 font-mono text-sm">
+                        {children}
+                      </code>
+                    ) : (
+                      <pre className="bg-muted overflow-x-auto rounded-lg p-3">
+                        <code className="font-mono text-sm">{children}</code>
+                      </pre>
+                    );
+                  },
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
             </div>
           </div>
 
@@ -343,7 +344,7 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
+                  className="hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-lg p-0"
                   onClick={() => handleCopy(message.content)}
                 >
                   {copySuccess ? (
@@ -367,7 +368,7 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
+                  className="hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-lg p-0"
                   onClick={handleRegenerate}
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -383,7 +384,7 @@ function AssistantMessageComponent({ message }: { message: MockMessage }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
+                  className="hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-lg p-0"
                 >
                   <Bot className="h-4 w-4" />
                 </Button>
@@ -418,43 +419,43 @@ function UserMessageComponent({ message }: { message: MockMessage }) {
   });
 
   return (
-    <div className="group flex w-full justify-end animate-in fade-in-50 slide-in-from-left-2 duration-300">
+    <div className="group animate-in fade-in-50 slide-in-from-left-2 flex w-full justify-end duration-300">
       <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
         {/* Enhanced message bubble with gradient and shadows */}
         <div className="relative">
           <div
-            className="relative rounded-2xl rounded-br-md bg-primary/80 dark:bg-primary/70 px-4 py-3 text-sm leading-relaxed text-primary-foreground shadow-lg shadow-primary/15 backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:shadow-primary/20"
+            className="bg-primary/80 dark:bg-primary/70 text-primary-foreground shadow-primary/15 hover:shadow-primary/20 relative rounded-2xl rounded-br-md px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl"
             dir="rtl"
           >
             {/* Subtle overlay for depth */}
-            <div className="absolute inset-0 rounded-2xl rounded-br-md bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-            
+            <div className="pointer-events-none absolute inset-0 rounded-2xl rounded-br-md bg-gradient-to-br from-white/5 to-transparent" />
+
             {/* Message content */}
-            <div className="relative z-10 whitespace-pre-wrap break-words">
+            <div className="relative z-10 break-words whitespace-pre-wrap">
               {message.content}
             </div>
           </div>
-          
+
           {/* Message tail/pointer */}
-          <div className="absolute -bottom-0.5 right-0 h-3 w-3 rotate-45 bg-primary/80 dark:bg-primary/70" />
+          <div className="bg-primary/80 dark:bg-primary/70 absolute right-0 -bottom-0.5 h-3 w-3 rotate-45" />
         </div>
 
         {/* Enhanced metadata and actions */}
         <div className="mt-3 flex items-center justify-between gap-3">
           {/* Timestamp with better styling */}
-          <time className="text-xs text-muted-foreground/80 font-medium">
+          <time className="text-muted-foreground/80 text-xs font-medium">
             {formattedTime}
           </time>
 
           {/* Actions with improved positioning */}
           <TooltipProvider>
-            <div className="opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0 translate-y-1">
+            <div className="translate-y-1 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 rounded-full p-0 hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105"
+                    className="hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105"
                     onClick={() => handleCopy(message.content)}
                   >
                     {copySuccess ? (
