@@ -1,3 +1,4 @@
+import { messagesRouter } from "@/server/api/routers/messages";
 import { threadsRouter } from "@/server/api/routers/threads";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
@@ -8,6 +9,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   threads: threadsRouter,
+  messages: messagesRouter,
 });
 
 // export type definition of API
