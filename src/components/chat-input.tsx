@@ -1,4 +1,4 @@
-import { ChevronDown, Globe, Paperclip, Pause, Send } from "lucide-react";
+import { ChevronDown, Globe, Mic, Paperclip, Pause, Send } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 
 import {
@@ -131,16 +131,6 @@ export const ChatInput = memo(
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-9 gap-2 px-3"
-                type="button"
-              >
-                <Globe className="h-4 w-4" />
-                <span className="text-sm">Search</span>
-              </Button>
-
-              <Button
-                size="sm"
-                variant="ghost"
                 className="text-muted-foreground hover:text-foreground h-9 px-2"
                 type="button"
                 onClick={() => {
@@ -161,6 +151,15 @@ export const ChatInput = memo(
 
             {/* Right side - Send button */}
             <div className="flex items-center gap-2">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground h-9 w-9 rounded-full"
+                type="button"
+                disabled={isStreaming}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
               <Button
                 size="icon"
                 variant={isStreaming ? "destructive" : "default"}
