@@ -131,7 +131,7 @@ export default function ChatPage() {
     if (memoizedMessages.length > 0) {
       // Existing chat
       return (
-        <div className="space-y-8">
+        <div className="space-y-0">
           {memoizedMessages.map((message, index) => {
             return (
               <Message
@@ -190,21 +190,19 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Input Area */}
-      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky bottom-0 z-50 border-t backdrop-blur">
-        <div className="mx-auto max-w-4xl">
-          <ChatInput
-            prompt={prompt}
-            setPrompt={setPrompt}
-            handleSendPrompt={handleSendMessage}
-            chatModel={chatModel}
-            setChatModel={setChatModel}
-            isStreaming={isStreaming}
-            stopStreaming={stopStreaming}
-            onFileSelect={handleFileSelect}
-            isUploading={isUploading}
-            uploadProgress={uploadProgress}
-          />
-        </div>
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky bottom-0 z-50 backdrop-blur">
+        <ChatInput
+          prompt={prompt}
+          setPrompt={setPrompt}
+          handleSendPrompt={handleSendMessage}
+          chatModel={chatModel}
+          setChatModel={setChatModel}
+          isStreaming={isStreaming}
+          stopStreaming={stopStreaming}
+          onFileSelect={handleFileSelect}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
+        />
       </div>
     </div>
   );

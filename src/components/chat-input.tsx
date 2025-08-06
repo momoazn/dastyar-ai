@@ -1,7 +1,6 @@
+import { ChevronDown, Globe, Paperclip, Pause, Send } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
-import { Pause, Send } from "lucide-react";
 
-import { PDFAttachment } from "@/components/pdf-attachment";
 import {
   Button,
   Select,
@@ -95,59 +94,87 @@ export const ChatInput = memo(
     }, [models]);
 
     return (
-      <div className="space-y-4 px-6 py-4">
-        {/* Message Input Area */}
-        <div className="relative">
-          <Textarea
-            value={prompt}
-            onChange={handlePromptChange}
-            placeholder={PERSIAN_TEXTS.chat.writeMessage}
-            className="min-h-[60px] w-full resize-none border-0 bg-transparent px-4 py-3 pr-12 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            dir={textDirection}
-            onKeyDown={handleKeyDown}
-          />
-        </div>
-
-        {/* Bottom Controls */}
-        <div className="flex items-center justify-between">
-          {/* Left side - Model selector */}
-          <div className="flex items-center gap-3">
-            <Select
-              defaultValue={chatModel}
-              value={chatModel}
-              onValueChange={setChatModel}
-            >
-              <SelectTrigger className="w-[180px] border-0 bg-transparent text-sm shadow-none focus:ring-0">
-                <SelectValue
-                  placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
-                />
-              </SelectTrigger>
-              <SelectContent>{modelItems}</SelectContent>
-            </Select>
+      <div className="mx-auto max-w-4xl px-6 py-4">
+        <div className="bg-muted/30 rounded-2xl border shadow-sm transition-all focus-within:shadow-md hover:shadow-md">
+          {/* Message Input Area */}
+          <div className="relative">
+            <Textarea
+              value={prompt}
+              onChange={handlePromptChange}
+              placeholder={PERSIAN_TEXTS.chat.writeMessage}
+              className="placeholder:text-muted-foreground/60 min-h-[100px] w-full resize-none border-0 bg-transparent px-6 py-4 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              dir={textDirection}
+              onKeyDown={handleKeyDown}
+            />
           </div>
 
-          {/* Right side - Send button */}
-          <div className="flex items-center gap-2">
-            {/* PDF Attachments */}
-            <PDFAttachment
-              onFileSelect={onFileSelect}
-              isUploading={isUploading}
-              uploadProgress={uploadProgress}
-              disabled={isStreaming}
-            />
-            <Button
-              size="icon"
-              variant={isStreaming ? "destructive" : "ghost"}
-              disabled={!isStreaming && !prompt.trim()}
-              onClick={handleSendButtonClick}
-              className="size-8"
-            >
-              {isStreaming ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+          {/* Bottom Controls */}
+          <div className="flex items-center justify-between border-t px-4 py-3">
+            {/* Left side - Model selector and Actions */}
+            <div className="flex items-center gap-2">
+              {/* Model Selector */}
+              <Select
+                defaultValue={chatModel}
+                value={chatModel}
+                onValueChange={setChatModel}
+              >
+                <SelectTrigger className="bg-background/50 hover:bg-background/80 h-9 gap-2 border-0 px-3 text-sm font-medium shadow-none focus:ring-0">
+                  <SelectValue
+                    placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
+                  />
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </SelectTrigger>
+                <SelectContent>{modelItems}</SelectContent>
+              </Select>
+
+              {/* Action Buttons */}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground h-9 gap-2 px-3"
+                type="button"
+              >
+                <Globe className="h-4 w-4" />
+                <span className="text-sm">Search</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground h-9 px-2"
+                type="button"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = ".pdf";
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) onFileSelect(file);
+                  };
+                  input.click();
+                }}
+                disabled={isUploading || isStreaming}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Right side - Send button */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="icon"
+                variant={isStreaming ? "destructive" : "default"}
+                disabled={!isStreaming && (!prompt.trim() || !chatModel)}
+                onClick={handleSendButtonClick}
+                className="h-9 w-9 rounded-full"
+              >
+                {isStreaming ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

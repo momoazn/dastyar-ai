@@ -45,63 +45,63 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
     }
   }, []);
 
-  // User message actions below content
-  const UserMessageActions = useMemo(
-    () => (
-      <TooltipProvider>
-        <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 rounded-md p-0"
-                onClick={() => handleCopy(message.content || "")}
-              >
-                {copySuccess ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {copySuccess
-                  ? PERSIAN_TEXTS.chat.copied
-                  : PERSIAN_TEXTS.chat.copy}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-    ),
-    [copySuccess, handleCopy, message.content],
-  );
-
   return (
-    <div className="group flex w-full justify-end">
-      <div className="max-w-[85%]">
-        <div
-          className="rounded-sm bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
-          dir={textDirection}
-        >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {message.content || ""}
-          </ReactMarkdown>
+    <div className="group animate-in fade-in-50 slide-in-from-left-2 flex w-full justify-end duration-300">
+      <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
+        {/* Enhanced message bubble with gradient and shadows */}
+        <div className="relative">
+          <div
+            className="bg-primary text-primary-foreground border-primary/20 relative rounded-lg rounded-br-sm border px-4 py-3 text-sm leading-relaxed shadow-md transition-all duration-200 hover:shadow-lg"
+            dir={textDirection}
+          >
+            {/* Subtle overlay for depth */}
+            <div className="pointer-events-none absolute inset-0 rounded-lg rounded-br-sm bg-gradient-to-br from-white/8 to-black/5" />
+
+            {/* Message content */}
+            <div className="relative z-10 break-words whitespace-pre-wrap">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content || ""}
+              </ReactMarkdown>
+            </div>
+          </div>
         </div>
 
-        {/* Message timestamp */}
-        {formattedTime && (
-          <div className="mt-2">
-            <time className="text-xs text-black dark:text-white">
-              {formattedTime}
-            </time>
-          </div>
-        )}
+        {/* Enhanced metadata and actions */}
+        <div className="mt-1 flex items-center justify-between gap-3">
+          {/* Timestamp with better styling */}
+          <time className="text-muted-foreground/80 text-xs font-medium">
+            {formattedTime}
+          </time>
 
-        {/* Actions below message bubble */}
-        {UserMessageActions}
+          {/* Actions with improved positioning */}
+          <TooltipProvider>
+            <div className="translate-y-1 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105"
+                    onClick={() => handleCopy(message.content || "")}
+                  >
+                    {copySuccess ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p className="text-xs">
+                    {copySuccess
+                      ? PERSIAN_TEXTS.chat.copied
+                      : PERSIAN_TEXTS.chat.copy}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        </div>
       </div>
     </div>
   );
