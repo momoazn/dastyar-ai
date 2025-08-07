@@ -1,23 +1,29 @@
-import { createORPCClient } from '@orpc/client';
-import type { RouterClient } from '@orpc/server';
-import { createTanstackQueryUtils } from '@orpc/tanstack-query';
-import type { QueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { createORPCClient } from "@orpc/client";
+import type { RouterClient } from "@orpc/server";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   useRouterState,
-} from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-import { useState } from 'react';
-import Header from '@/components/header';
-import Loader from '@/components/loader';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/ui/sonner';
-import { link, type orpc } from '@/utils/orpc';
-import type { appRouter } from '../../../server/src/routers';
-import '../index.css';
+} from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { useState } from "react";
+import { Header } from "@/components/header";
+import Loader from "@/components/loader";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { link, type orpc } from "@/utils/orpc";
+import type { appRouter } from "../../../server/src/routers";
+import "../index.css";
 
 export interface RouterAppContext {
   orpc: typeof orpc;
@@ -29,17 +35,17 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        title: 'ai-app',
+        title: "ai-app",
       },
       {
-        name: 'description',
-        content: 'ai-app is a web application',
+        name: "description",
+        content: "ai-app is a web application",
       },
     ],
     links: [
       {
-        rel: 'icon',
-        href: '/favicon.ico',
+        rel: "icon",
+        href: "/favicon.ico",
       },
     ],
   }),
@@ -64,10 +70,21 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <div className="grid h-svh grid-rows-[auto_1fr]">
-          <Header />
-          {isFetching ? <Loader /> : <Outlet />}
-        </div>
+        <SidebarProvider
+          style={
+            {
+              "--sidebar-width": "350px",
+            } as React.CSSProperties
+          }
+        >
+          <AppSidebar side="right" />
+          <SidebarInset>
+            <div className="grid h-svh grid-rows-[auto_1fr]">
+              <Header SideBarTrigger={<SidebarTrigger />} />
+              {isFetching ? <Loader /> : <Outlet />}
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
