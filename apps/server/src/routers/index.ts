@@ -74,6 +74,7 @@ export const appRouter = {
 					threadId: z.string(),
 					limit: z.number().optional(),
 					cursor: z.string().optional(),
+					order: z.enum(["asc", "desc"]).optional(),
 				}),
 			)
 			.handler(async ({ input }) => {
@@ -81,6 +82,7 @@ export const appRouter = {
 					threadId: input.threadId,
 					limit: input.limit,
 					cursor: input.cursor ?? null,
+					order: input.order ?? "desc",
 				});
 				return rows;
 			}),

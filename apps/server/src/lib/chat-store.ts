@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { and, desc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { db } from "../db";
 import { messages, threads } from "../db/schema";
 import { generateId } from "./ids";
@@ -78,14 +78,19 @@ export async function getMessagesByThread(params: {
 	threadId: string;
 	limit?: number;
 	cursor?: string | null;
+	order?: "asc" | "desc";
 }) {
 	const limit = params.limit ?? 50;
-	const rows = await db
+	const order = params.order ?? "desc";
+	const query = db
 		.select()
 		.from(messages)
-		.where(eq(messages.threadId, params.threadId))
-		.orderBy(desc(messages.sentAt), desc(messages.createdAt))
-		.limit(limit);
+		.where(eq(messages.threadId, params.threadId));
+	const ordered =
+		order === "asc"
+			? query.orderBy(asc(messages.sentAt), asc(messages.createdAt))
+			: query.orderBy(desc(messages.sentAt), desc(messages.createdAt));
+	const rows = await ordered.limit(limit);
 	return rows;
 }
 

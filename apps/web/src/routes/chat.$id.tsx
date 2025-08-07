@@ -41,7 +41,9 @@ function ChatThreadRouteComponent() {
 		}),
 	);
 	const { data: persistedMessages } = useQuery(
-		orpc.messages.listByThread.queryOptions({ input: { threadId } }),
+		orpc.messages.listByThread.queryOptions({
+			input: { threadId, order: "asc" },
+		}),
 	);
 
 	// Default-select the first available model when none is chosen
@@ -51,9 +53,7 @@ function ChatThreadRouteComponent() {
 
 	const initialMessages = useMemo(() => {
 		if (!persistedMessages || persistedMessages.length === 0) return [];
-		// server returns newest first; convert to oldest -> newest
-		const asc = [...persistedMessages].reverse();
-		return asc.map((m) => {
+		return persistedMessages.map((m) => {
 			const parts: Array<
 				{ type: "text"; text: string } | { type: "reasoning"; text: string }
 			> = [];
@@ -66,7 +66,7 @@ function ChatThreadRouteComponent() {
 				role: m.role as "user" | "assistant",
 				parts,
 			} as const;
-		}) as any;
+		});
 	}, [persistedMessages]);
 
 	const chatId = useMemo(
