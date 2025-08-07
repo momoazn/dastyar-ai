@@ -7,6 +7,7 @@ The Persian AI Assistant now uses **PocketBase real-time subscriptions** for a f
 ## Architecture Flow
 
 ### 1. **Message Creation & Streaming**
+
 ```mermaid
 sequenceDiagram
     participant UI as React UI
@@ -19,18 +20,18 @@ sequenceDiagram
     Hook->>PB: Create user message
     PB->>Sub: Notify subscription (create)
     Sub->>UI: Update messages state
-    
+
     Hook->>PB: Create empty assistant message
-    PB->>Sub: Notify subscription (create)  
+    PB->>Sub: Notify subscription (create)
     Sub->>UI: Update messages state
-    
+
     Hook->>Ollama: Start streaming chat
     loop Every 100ms
         Hook->>PB: Update assistant message
         PB->>Sub: Notify subscription (update)
         Sub->>UI: Update messages state
     end
-    
+
     Hook->>PB: Final update (status: finished)
     PB->>Sub: Notify subscription (update)
     Sub->>UI: Update messages state
@@ -39,31 +40,38 @@ sequenceDiagram
 ### 2. **Key Components**
 
 #### **useStreamingChat Hook**
+
 - **Subscribes** to PocketBase messages collection
 - **Filters** by thread ID to only receive relevant updates
 - **Handles** real-time create/update/delete events
 - **Manages** Ollama streaming and periodic database updates
 
 #### **PocketBase Subscription**
-```typescript
-pb.collection("messages").subscribe("*", (event) => {
-  const record = event.record as MessagesRecord;
-  
-  if (record.thread !== threadId) return;
 
-  if (event.action === "create") {
-    // Add new message to state
-  } else if (event.action === "update") {
-    // Update existing message in state
-  } else if (event.action === "delete") {
-    // Remove message from state
-  }
-}, {
-  filter: `thread = "${threadId}"`,
-});
+```typescript
+pb.collection("messages").subscribe(
+  "*",
+  (event) => {
+    const record = event.record as MessagesRecord;
+
+    if (record.thread !== threadId) return;
+
+    if (event.action === "create") {
+      // Add new message to state
+    } else if (event.action === "update") {
+      // Update existing message in state
+    } else if (event.action === "delete") {
+      // Remove message from state
+    }
+  },
+  {
+    filter: `thread = "${threadId}"`,
+  },
+);
 ```
 
 #### **Streaming State Management**
+
 ```typescript
 // Initialize streaming state
 let streamingState: StreamingState = {
@@ -76,10 +84,10 @@ let streamingState: StreamingState = {
 // Progressive reasoning parsing during streaming
 const parseReasoningTokens = (content: string) => {
   const thinkStartIndex = content.indexOf("<think>");
-  
+
   if (thinkStartIndex !== -1) {
     const thinkEndIndex = content.indexOf("</think>", thinkStartIndex);
-    
+
     if (thinkEndIndex !== -1) {
       // Complete reasoning block - parse both reasoning and response
       const reasoning = content.substring(thinkStartIndex + 7, thinkEndIndex);
@@ -91,7 +99,7 @@ const parseReasoningTokens = (content: string) => {
       return { reasoning, response: "" };
     }
   }
-  
+
   // No reasoning tags - treat as response content
   return { reasoning: "", response: content };
 };
@@ -109,21 +117,25 @@ setInterval(async () => {
 ## Benefits
 
 ### 🚀 **Real-time Synchronization**
+
 - Messages persist across page refreshes during streaming
 - Multiple browser tabs stay synchronized
 - No manual state management required
 
-### 🎯 **Simplified Architecture** 
+### 🎯 **Simplified Architecture**
+
 - Eliminates temporary message state
 - Reduces complex state synchronization logic
 - Single source of truth (PocketBase database)
 
 ### 🔄 **Automatic Updates**
+
 - UI updates automatically via subscriptions
 - No need for manual refetching
 - Consistent data across all components
 
 ### 🛡️ **Error Recovery**
+
 - Data survives network interruptions
 - Progressive saving prevents data loss
 - Better debugging capabilities
@@ -131,6 +143,7 @@ setInterval(async () => {
 ## Technical Implementation
 
 ### **Database Schema**
+
 ```typescript
 type MessagesRecord = {
   id: string;
@@ -147,6 +160,7 @@ type MessagesRecord = {
 ```
 
 ### **Status Flow**
+
 1. **idle** → Message created
 2. **reasoning** → AI is thinking (for reasoning models)
 3. **streaming** → AI is generating response
@@ -154,6 +168,7 @@ type MessagesRecord = {
 5. **errored** → Generation failed
 
 ### **Reasoning Model Support**
+
 - **Progressive parsing**: Starts displaying reasoning as soon as `<think>` tag appears
 - **Real-time updates**: Reasoning content updates live during streaming
 - **Seamless transition**: Automatically switches to response content after `</think>`
@@ -176,12 +191,14 @@ await sendMessage("llama3.2", threadId);
 ## Migration Benefits
 
 ### **Before** (Manual State Management)
+
 - Complex temporary message handling
 - Manual UI updates after each chunk
 - State synchronization issues
 - Data loss on page refresh during streaming
 
 ### **After** (PocketBase Subscriptions)
+
 - Automatic real-time updates
 - Persistent data during streaming
 - Simplified component logic
@@ -194,4 +211,4 @@ await sendMessage("llama3.2", threadId);
 - **Error handling**: Database errors don't crash the UI
 - **Performance**: Only relevant messages trigger updates via filtering
 
-This architecture provides a robust, scalable foundation for real-time chat functionality while maintaining simplicity and developer experience. 
+This architecture provides a robust, scalable foundation for real-time chat functionality while maintaining simplicity and developer experience.

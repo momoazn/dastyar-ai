@@ -125,9 +125,7 @@
     },
     "passwordAuth": {
       "enabled": true,
-      "identityFields": [
-        "email"
-      ]
+      "identityFields": ["email"]
     },
     "mfa": {
       "enabled": false,
@@ -331,9 +329,7 @@
     },
     "passwordAuth": {
       "enabled": true,
-      "identityFields": [
-        "email"
-      ]
+      "identityFields": ["email"]
     },
     "mfa": {
       "enabled": false,
@@ -852,10 +848,7 @@
         "required": false,
         "system": false,
         "type": "select",
-        "values": [
-          "user",
-          "assistant"
-        ]
+        "values": ["user", "assistant"]
       },
       {
         "autogeneratePattern": "",
@@ -1076,14 +1069,7 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": [
-          "fa",
-          "en",
-          "ar",
-          "fr",
-          "de",
-          "es"
-        ]
+        "values": ["fa", "en", "ar", "fr", "de", "es"]
       },
       {
         "hidden": false,
@@ -1094,14 +1080,7 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": [
-          "fa",
-          "en",
-          "ar",
-          "fr",
-          "de",
-          "es"
-        ]
+        "values": ["fa", "en", "ar", "fr", "de", "es"]
       },
       {
         "hidden": false,

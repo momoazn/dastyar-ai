@@ -61,8 +61,7 @@ export const PERSIAN_TEXTS = {
     generationStopped: "تولید پاسخ متوقف شد",
     generationErrored: "خطا در تولید پاسخ",
     askQuestion: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
-    askQuestionDescription:
-      "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
+    askQuestionDescription: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
     edit: "ویرایش",
     regenerate: "تولید مجدد",
     delete: "حذف",
@@ -88,7 +87,8 @@ export const PERSIAN_TEXTS = {
     translations: "ترجمه‌ها",
     translatedText: "ترجمه",
     noTranslations: "هیچ ترجمه‌ای وجود ندارد",
-    parametersChanged: "پارامترها تغییر کرده‌اند. برای ایجاد ترجمه جدید روی دکمه ترجمه کلیک کنید.",
+    parametersChanged:
+      "پارامترها تغییر کرده‌اند. برای ایجاد ترجمه جدید روی دکمه ترجمه کلیک کنید.",
   },
 
   // Model Selection

@@ -36,7 +36,7 @@ export const detectTextDirection = (text: string): "rtl" | "ltr" => {
 };
 
 // Debounce utility for expensive operations
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number,
 ): (...args: Parameters<T>) => void {
@@ -48,7 +48,7 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 // Throttle utility for limiting function calls
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number,
 ): (...args: Parameters<T>) => void {
@@ -63,7 +63,7 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 // Memoization utility for pure functions
-export function memoize<T extends (...args: any[]) => any>(
+export function memoize<T extends (...args: unknown[]) => unknown>(
   func: T,
   cacheSize: number = 100,
 ): T {
@@ -159,7 +159,7 @@ export async function postAndStreamSSE({
           try {
             const payload: SSEPayload = JSON.parse(jsonStr);
             onMessage(payload);
-          } catch (err) {
+          } catch {
             console.error("Invalid SSE JSON:", jsonStr);
           }
         }

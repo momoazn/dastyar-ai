@@ -119,7 +119,6 @@ export const ChatInput = memo(
                 </SelectTrigger>
                 <SelectContent>{modelItems}</SelectContent>
               </Select>
-
             </div>
 
             {/* Right side - Send button */}

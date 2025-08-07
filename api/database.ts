@@ -28,7 +28,7 @@ export class Database {
         .collection<ThreadsRecord>("threads")
         .getOne(id);
       return record;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

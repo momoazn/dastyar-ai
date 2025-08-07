@@ -199,7 +199,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
           <div dir={textDirection} className="w-full">
             <div className="prose prose-sm text-foreground prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-muted-foreground prose-code:text-primary prose-pre:bg-muted prose-ul:list-none prose-li:flex prose-li:items-start prose-li:gap-2 prose-li:my-1 max-w-none">
               <div className="text-justify leading-relaxed">
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h2: ({ children }) => (

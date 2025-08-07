@@ -17,10 +17,7 @@ import {
   Slider,
   Textarea,
 } from "@/components/ui";
-import {
-  useChatSettings,
-  useModelsList,
-} from "@/hooks";
+import { useChatSettings, useModelsList } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import {
   useGetDefaultChatModel,
@@ -77,9 +74,7 @@ export function SettingsModal() {
                 >
                   <SelectTrigger>
                     <SelectValue
-                      placeholder={
-                        PERSIAN_TEXTS.modelSelection.selectChatModel
-                      }
+                      placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
                     />
                   </SelectTrigger>
                   <SelectContent>

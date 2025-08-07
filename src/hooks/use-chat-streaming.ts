@@ -16,7 +16,7 @@ export function useStreamingChat(threadId?: string) {
   const [messages, setMessages] = useState<MessagesRecord[]>([]);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
-  
+
   // ===== REFS FOR PERFORMANCE =====
   const messagesRef = useRef<MessagesRecord[]>([]);
   const isSubscribedRef = useRef(false);
@@ -33,29 +33,35 @@ export function useStreamingChat(threadId?: string) {
   });
 
   // ===== OPTIMIZED MESSAGE SORTING =====
-  const sortMessages = useCallback((msgs: MessagesRecord[]): MessagesRecord[] => {
-    return [...msgs].sort((a, b) => {
-      const aTime = a.created ? new Date(a.created).getTime() : 0;
-      const bTime = b.created ? new Date(b.created).getTime() : 0;
-      return aTime - bTime;
-    });
-  }, []);
+  const sortMessages = useCallback(
+    (msgs: MessagesRecord[]): MessagesRecord[] => {
+      return [...msgs].sort((a, b) => {
+        const aTime = a.created ? new Date(a.created).getTime() : 0;
+        const bTime = b.created ? new Date(b.created).getTime() : 0;
+        return aTime - bTime;
+      });
+    },
+    [],
+  );
 
   // ===== OPTIMIZED MESSAGE HANDLERS =====
-  const handleMessageCreate = useCallback((record: MessagesRecord) => {
-    setMessages((prev) => {
-      // Check if message already exists to avoid duplicates
-      const exists = prev.some((msg) => msg.id === record.id);
-      if (exists) return prev;
+  const handleMessageCreate = useCallback(
+    (record: MessagesRecord) => {
+      setMessages((prev) => {
+        // Check if message already exists to avoid duplicates
+        const exists = prev.some((msg) => msg.id === record.id);
+        if (exists) return prev;
 
-      const newMessages = [...prev, record];
-      return sortMessages(newMessages);
-    });
-  }, [sortMessages]);
+        const newMessages = [...prev, record];
+        return sortMessages(newMessages);
+      });
+    },
+    [sortMessages],
+  );
 
   const handleMessageUpdate = useCallback((record: MessagesRecord) => {
     setMessages((prev) =>
-      prev.map((msg) => (msg.id === record.id ? record : msg))
+      prev.map((msg) => (msg.id === record.id ? record : msg)),
     );
   }, []);
 

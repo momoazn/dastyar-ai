@@ -53,12 +53,12 @@ export function usePerformanceMonitor(
     }
 
     startTime.current = performance.now();
-  });
+  }, [componentName]);
 
   return metrics;
 }
 
-export function useDebounceCallback<T extends (...args: any[]) => any>(
+export function useDebounceCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number,
 ): T {
@@ -78,7 +78,7 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
   ) as T;
 }
 
-export function useThrottleCallback<T extends (...args: any[]) => any>(
+export function useThrottleCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
   limit: number,
 ): T {

@@ -19,7 +19,7 @@ export function TranslateButton({
       <Button
         variant="outline"
         size="lg"
-        className="cursor-pointer w-full"
+        className="w-full cursor-pointer"
         onClick={onTranslate}
         disabled={disabled || isTranslating}
       >

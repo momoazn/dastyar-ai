@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error - CSS import
 import "@fontsource-variable/vazirmatn";
 
 import { StrictMode } from "react";

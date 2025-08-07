@@ -16,12 +16,14 @@ A comprehensive AI-powered platform providing Persian language support with mode
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Node.js 18+** and **Bun** for frontend
-- **Go 1.24+** for backend  
+- **Go 1.24+** for backend
 - **Ollama** running on port 11434
 - **Stable Diffusion** running on port 7860
 
 ### Installation & Running
+
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
@@ -37,6 +39,7 @@ make dev
 The application will be available at `http://localhost:8080`
 
 ### Build for Production
+
 ```bash
 make build
 ./persian-ai-assistant  # Run the built binary
@@ -61,6 +64,7 @@ make build
 - 📋 **Planned**: User authentication, cloud deployment
 
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
 2. [Technical Architecture](#technical-architecture)
 3. [Core Features](#core-features)
@@ -77,6 +81,7 @@ make build
 ## Project Overview
 
 ### Project Identity
+
 - **Name**: Persian AI Assistant
 - **Type**: Modern Web Application
 - **Primary Language**: Persian (Farsi)
@@ -84,6 +89,7 @@ make build
 - **Architecture**: Full-stack application with React frontend and Go backend
 
 ### Mission Statement
+
 A comprehensive AI-powered platform providing Persian language support with modern web technologies, featuring real-time chat capabilities, image generation, and translation services powered by local AI models.
 
 ---
@@ -91,6 +97,7 @@ A comprehensive AI-powered platform providing Persian language support with mode
 ## Technical Architecture
 
 ### High-Level Architecture
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │  External AI    │
@@ -103,6 +110,7 @@ A comprehensive AI-powered platform providing Persian language support with mode
 ```
 
 ### Frontend Architecture
+
 ```typescript
 // Core Structure
 src/
@@ -131,6 +139,7 @@ src/
 ```
 
 ### Backend Architecture
+
 ```go
 backend/
 ├── main.go          // Server entry point & initialization
@@ -154,6 +163,7 @@ backend/
 ## Core Features
 
 ### 1. Chat Interface
+
 - **Local Model Integration**: Powered by Ollama for privacy and performance
 - **Real-time Conversation**: Streaming responses with TypeScript support
 - **Model Selection**: Dynamic model switching capability
@@ -161,9 +171,10 @@ backend/
 - **RTL Support**: Full Persian language display support
 
 ### 2. Image Generation
+
 - **Stable Diffusion Integration**: Local image generation
 - **Text-to-Image**: Persian and English prompt support
-- **Customization Options**: 
+- **Customization Options**:
   - Adjustable steps (1-150)
   - Guidance scale control
   - Negative prompts
@@ -171,6 +182,7 @@ backend/
 - **Progress Tracking**: Real-time generation progress
 
 ### 3. Translation Service
+
 - **Multi-language Support**: Comprehensive language coverage
 - **Translation Threads**: Organized translation history
 - **Tone Control**: Formal, informal, and neutral tone options
@@ -178,6 +190,7 @@ backend/
 - **Context Preservation**: Thread-based translation memory
 
 ### 4. Audio Features
+
 - **Whisper Integration**: Local speech-to-text processing
 - **Audio Recording**: Browser-based recording capabilities
 - **Real-time Transcription**: Live audio processing
@@ -188,31 +201,34 @@ backend/
 ## Technology Stack
 
 ### Frontend Technologies
+
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite 6.2+ with hot reloading
 - **Package Manager**: Bun (modern, fast JavaScript runtime)
-- **Styling**: 
+- **Styling**:
   - Tailwind CSS 4.1+ for utility-first styling
   - shadcn/ui for component library
   - Persian font support (Vazirmatn)
-- **State Management**: 
+- **State Management**:
   - Jotai for atomic state management
   - TanStack Query for server state
 - **Routing**: React Router DOM 7.4+
 - **UI Components**: Radix UI primitives
 
 ### Backend Technologies
+
 - **Language**: Go 1.24+ for performance and concurrency
 - **Web Framework**: Echo 4.13+ for HTTP handling
-- **Database**: 
+- **Database**:
   - SQLite with GORM for local data persistence
   - Automatic migrations and schema management
-- **Logging**: 
+- **Logging**:
   - Zerolog for structured logging
   - Lumberjack for log rotation
 - **API Documentation**: Swagger/OpenAPI 3.0
 
 ### External Services & Dependencies
+
 - **Model**: Ollama (local deployment) for privacy
 - **Image Generation**: Stable Diffusion (local instance)
 - **Speech Processing**: Whisper for transcription
@@ -226,6 +242,7 @@ backend/
 ## Project Structure
 
 ### Database Schema
+
 ```sql
 -- Chat Management
 ChatThread {
@@ -268,6 +285,7 @@ Translation {
 ```
 
 ### API Endpoints Structure
+
 ```yaml
 # Chat Management
 GET    /api/chat-threads          # List all chat threads
@@ -300,6 +318,7 @@ POST   /api/transcribe            # Transcribe audio to text
 ## Development Environment
 
 ### Prerequisites
+
 - **Node.js 18+** for frontend development
 - **Go 1.24+** for backend development
 - **Bun** for fast package management
@@ -307,7 +326,9 @@ POST   /api/transcribe            # Transcribe audio to text
 - **Stable Diffusion** running locally on port 7860
 
 ### Environment Configuration
+
 Create a `.env` file in the root directory:
+
 ```bash
 # Backend Configuration
 SERVER_ADDR=localhost:8080
@@ -323,6 +344,7 @@ LOG_FILE=logs/app.log
 ```
 
 ### Development Setup
+
 ```bash
 # 1. Install dependencies
 make install
@@ -346,6 +368,7 @@ make clean
 ## API Documentation
 
 ### Request/Response Patterns
+
 ```typescript
 // Standard Response Wrapper
 interface Response<T> {
@@ -369,6 +392,7 @@ interface ErrorResponse {
 ```
 
 ### Chat API Example
+
 ```typescript
 // Send Chat Message
 POST /api/chat
@@ -384,6 +408,7 @@ data: {"content": "complete response", "status": "completed"}
 ```
 
 ### Translation API Example
+
 ```typescript
 // Translate Text
 POST /api/translate
@@ -402,12 +427,14 @@ POST /api/translate
 ## Development Workflow
 
 ### Code Quality Standards
+
 - **TypeScript**: Strict type checking enabled
 - **ESLint**: Enforced linting rules for consistency
 - **Prettier**: Automated code formatting
 - **Git Hooks**: Pre-commit validation
 
 ### State Management Patterns
+
 ```typescript
 // Atomic State (Jotai)
 export const currentChatThreadAtom = atom<ChatThread | null>(null);
@@ -416,14 +443,15 @@ export const messagesAtom = atom<Message[]>([]);
 // Server State (TanStack Query)
 export const useChatThreads = (options?: QueryOptions) => {
   return useQuery({
-    queryKey: ['chatThreads'],
+    queryKey: ["chatThreads"],
     queryFn: fetchChatThreads,
-    ...options
+    ...options,
   });
 };
 ```
 
 ### Error Handling
+
 - **Frontend**: Error boundaries with graceful fallbacks
 - **Backend**: Structured error responses with logging
 - **Network**: Retry mechanisms for failed requests
@@ -433,6 +461,7 @@ export const useChatThreads = (options?: QueryOptions) => {
 ## Build & Deployment
 
 ### Build Process
+
 ```bash
 # Production Build
 make build
@@ -444,6 +473,7 @@ persian-ai-assistant/          # Executable binary
 ```
 
 ### Docker Support (Future)
+
 ```dockerfile
 # Multi-stage build for optimal image size
 FROM node:18-alpine AS frontend-builder
@@ -457,6 +487,7 @@ FROM alpine:latest
 ```
 
 ### Configuration Management
+
 - **Environment Variables**: `.env` file support
 - **Build Flags**: Conditional compilation
 - **Static Asset Embedding**: Go embed for SPA serving
@@ -466,23 +497,27 @@ FROM alpine:latest
 ## Recent Development Activities
 
 ### Navigation Improvements
+
 - **Active Item Logic**: Fixed sidebar navigation to properly highlight active routes
 - **URL Matching**: Implemented longest prefix matching for nested routes
 - **Type Safety**: Added proper TypeScript types for navigation items
 
 ### Architecture Decisions
+
 - **Local AI Models**: Emphasis on privacy with local Ollama deployment
 - **SQLite Database**: Lightweight, embedded database for development simplicity
 - **Streaming Responses**: Real-time chat experience with Server-Sent Events
 - **RTL Support**: First-class Persian language support throughout the UI
 
 ### Performance Optimizations
+
 - **Bun Runtime**: Fast JavaScript execution and package management
 - **Vite Build Tool**: Lightning-fast development builds
 - **Go Concurrency**: Efficient handling of concurrent requests
 - **Asset Embedding**: Single binary deployment with embedded static files
 
 ### Security Considerations
+
 - **Local Processing**: All AI operations happen locally for privacy
 - **CORS Configuration**: Proper cross-origin request handling
 - **Input Validation**: Server-side request validation
@@ -493,6 +528,7 @@ FROM alpine:latest
 ## Future Roadmap
 
 ### Planned Features
+
 - **User Authentication**: Multi-user support with sessions
 - **Cloud Deployment**: Docker containerization and cloud deployment guides
 - **Plugin System**: Extensible AI model integration
@@ -501,6 +537,7 @@ FROM alpine:latest
 - **API Rate Limiting**: Production-ready API protection
 
 ### Technical Debt
+
 - **Testing Suite**: Comprehensive unit and integration tests
 - **Documentation**: Complete API documentation with examples
 - **Monitoring**: Application metrics and health checks
@@ -511,6 +548,7 @@ FROM alpine:latest
 ## Contributing Guidelines
 
 ### Development Process
+
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
 3. Follow code quality standards (ESLint, Prettier)
@@ -519,12 +557,14 @@ FROM alpine:latest
 6. Submit pull request with detailed description
 
 ### Code Style
+
 - **Go**: Follow standard Go formatting (`gofmt`)
 - **TypeScript**: Use provided ESLint configuration
 - **Commits**: Follow conventional commit messages
 - **Documentation**: Update relevant documentation for changes
 
 ### Getting Help
+
 - Check existing issues and discussions
 - Review API documentation and code examples
 - Follow setup instructions carefully
@@ -532,4 +572,4 @@ FROM alpine:latest
 
 ---
 
-*This documentation is maintained as a living document and updated regularly to reflect the current state of the Persian AI Assistant project.* 
+_This documentation is maintained as a living document and updated regularly to reflect the current state of the Persian AI Assistant project._

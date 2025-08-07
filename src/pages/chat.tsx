@@ -19,7 +19,7 @@ export default function ChatPage() {
   const [chatModel, setChatModel] = useState("");
 
   // ===== DERIVED STATE =====
-  const isNewChat = !Boolean(threadId);
+  const isNewChat = !threadId;
 
   // ===== API HOOKS =====
   const { data: availableModels } = useModelsList();
@@ -43,10 +43,9 @@ export default function ChatPage() {
     stopStreaming,
   } = useStreamingChat(threadId);
 
-
   // ===== MEMOIZED VALUES =====
   const memoizedMessages = useMemo(() => messages, [messages]);
-  
+
   // ===== UTILITY FUNCTIONS =====
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,7 +97,6 @@ export default function ChatPage() {
 
     await sendMessage(chatModel, effectiveThreadId);
   }, [chatModel, createNewThreadIfNeeded, sendMessage, prompt]);
-
 
   // ===== OPTIMIZED EFFECTS =====
   // Only scroll when messages change

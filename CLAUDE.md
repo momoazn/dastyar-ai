@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Development Commands
 
 ### Development
+
 ```bash
 # Run all services (frontend, API, and PocketBase)
 bun run dev
@@ -19,6 +20,7 @@ bun run seed
 ```
 
 ### Build & Production
+
 ```bash
 # Build for production (creates single Go binary with embedded frontend)
 bun run build
@@ -31,6 +33,7 @@ bun run pb:build:win
 ```
 
 ### Code Quality
+
 ```bash
 # Run linter
 bun run lint
@@ -49,6 +52,7 @@ This is a full-stack AI assistant application with a three-server architecture:
 1. **Frontend (React/Vite)**: Modern React app with TypeScript, Jotai state management, and TanStack Query. Uses shadcn/ui components with full RTL/Persian support.
 
 2. **API Server (Bun/Hono on :3000)**: Handles AI integrations:
+
    - `/api/chat` - Ollama chat with SSE streaming and reasoning tokens
    - `/api/translation` - Multi-language translation with tone control
    - `/api/pdf/upload` - PDF processing and vector storage
@@ -63,12 +67,14 @@ This is a full-stack AI assistant application with a three-server architecture:
 ## Key Development Patterns
 
 ### Frontend State Management
+
 - **Jotai atoms** in `src/lib/atoms/` for global state
 - **TanStack Query** for server state with optimistic updates
 - **Custom hooks** in `src/hooks/` for reusable logic
 - **Persian-first constants** in `src/lib/constants/persian.ts`
 
 ### API Integration
+
 - All AI processing happens locally via:
   - Ollama (port 11434) for chat
   - Stable Diffusion (port 7860) for images
@@ -78,13 +84,16 @@ This is a full-stack AI assistant application with a three-server architecture:
 - Zod schemas for request/response validation
 
 ### Performance Considerations
+
 - Aggressive React memoization (memo, useMemo, useCallback)
 - Text direction detection caching in `useTextDirection`
 - Debouncing utilities in `src/lib/utils/debounce.ts`
 - Performance monitoring via `usePerformanceMonitor`
 
 ### Database Schema
+
 Schema defined in `pb_schema.json`:
+
 - **users**: Auth collection with avatar support
 - **threads**: Chat conversations with archiving
 - **messages**: Chat messages with status tracking (idle, reasoning, streaming, finished, errored, stopped)
@@ -92,6 +101,7 @@ Schema defined in `pb_schema.json`:
 - **translations**: Translation history with language pairs and tones
 
 Relationships:
+
 - messages → threads (cascade delete)
 - pdfs → threads
 - All collections have user-based access rules
@@ -99,6 +109,7 @@ Relationships:
 ### API Endpoints
 
 #### Chat Endpoint (`POST /api/chat`)
+
 ```typescript
 {
   message: string,
@@ -106,11 +117,13 @@ Relationships:
   model?: string
 }
 ```
+
 - Streams responses via SSE
 - Parses reasoning tokens from AI output
 - Handles stop signals and errors
 
 #### Translation Endpoint (`POST /api/translation`)
+
 ```typescript
 {
   text: string,
@@ -121,11 +134,13 @@ Relationships:
 ```
 
 #### PDF Upload (`POST /api/pdf/upload`)
+
 - Accepts PDF files only
 - Processes into chunks for vector search
 - Creates Persian notification in chat
 
 ### UI Component Patterns
+
 - **Shadcn/ui** with Radix UI primitives
 - **CVA (class-variance-authority)** for component variants
 - **Compound components** (Dialog, Sheet, Sidebar)
@@ -134,6 +149,7 @@ Relationships:
 - **Persian RTL** support throughout
 
 ### Error Handling
+
 - Try-catch blocks at all API endpoints
 - Stream error handling for SSE
 - User-friendly Persian error messages
@@ -141,7 +157,9 @@ Relationships:
 - Graceful degradation strategies
 
 ### Build Configuration
+
 Vite config (`vite.config.ts`):
+
 - Path alias: `@/` → `src/`
 - Dev proxy:
   - `/api` → `http://localhost:3000`
@@ -150,6 +168,7 @@ Vite config (`vite.config.ts`):
 - Tailwind CSS via Vite plugin
 
 ### Deployment
+
 - Single Go binary with embedded frontend
 - No Docker configuration (native deployment)
 - Platform-specific build scripts
@@ -157,6 +176,7 @@ Vite config (`vite.config.ts`):
 - Air for Go hot-reloading in development
 
 ### Code Style Guidelines
+
 - TypeScript-first with generated types from PocketBase
 - Class-based services for API layer
 - Functional React components
