@@ -89,7 +89,7 @@ function useChatThreadsData(isActive: boolean) {
     queryKey: ["chat-threads"],
     queryFn: () =>
       pb.collection("threads").getList(1, 100, {
-        filter: "is_archived = false",
+        filter: "isArchived = false",
       }),
     enabled: isActive,
   });
@@ -121,7 +121,7 @@ function useChatThreadsData(isActive: boolean) {
   const { mutate: updateChatThread } = useMutation({
     mutationFn: (id: string) => {
       return pb.collection("threads").update(id, {
-        is_archived: true,
+        isArchived: true,
       });
     },
     onSuccess: () => {

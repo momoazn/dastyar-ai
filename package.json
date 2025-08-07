@@ -9,7 +9,7 @@
     "dev:api": "bun --watch api/index.ts",
     "dev:db": "air",
     "build": "npm-run-all build:web build:backend",
-    "build:web": "vite build --emptyOutDir",
+    "build:web": "vite build",
     "build:backend": "go build -o persian-ai-assistant main.go",
     "build:windows": "npm-run-all build:web build:backend:windows",
     "build:backend:windows": "go build -o persian-ai-assistant.exe main.go",

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 import { Status } from "@/components/status";
 import { ThemeToggle } from "@/components/ui";
@@ -10,10 +10,13 @@ export function Header({
 }: {
   SideBarTrigger: React.ReactNode;
 }) {
+  // Get the current route using React Router's useLocation hook
+  const location = useLocation();
+
   return (
     <header className="bg-background sticky top-0 z-10 flex h-14 items-center justify-between border-b p-4">
       <div className="flex items-center gap-2">
-        {SideBarTrigger}
+        {location.pathname !== "/" && SideBarTrigger}
 
         <Separator orientation="vertical" className="bg-border me-2 h-4" />
 
