@@ -1,0 +1,11 @@
+- [x] Write plan to `docs/ai-chat-thread-plan.md`
+- [x] Add Ollama provider utilities (`apps/server/src/lib/ai.ts`)
+- [x] Add id generator (`apps/server/src/lib/ids.ts`)
+- [x] Add message mapping helpers (`apps/server/src/lib/messages.ts`)
+- [x] Add chat store (threads/messages persistence) (`apps/server/src/lib/chat-store.ts`)
+- [x] Extend POST `/ai` to accept `{ messages, model, threadId }`, use `resolveModel`, and persist assistant response
+- [x] Add ORPC procedure: `models.listOllama`
+- [x] Add ORPC procedures: `threads.create/list/get/rename/archive/delete`
+- [x] Add ORPC procedures: `messages.listByThread/delete/clearThread`
+- [x] Run linter and fix issues
+- [ ] Frontend: fetch Ollama models via ORPC, add model selector, pass `model` in chat request body
