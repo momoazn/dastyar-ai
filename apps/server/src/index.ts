@@ -15,6 +15,7 @@ import { z } from "zod";
 import { runMigrations } from "./db/migrate";
 import { ollama, resolveModel } from "./lib/ai";
 import {
+	getMessagesByThread,
 	getThread,
 	saveMessage,
 	updateThreadOnNewMessage,
@@ -76,6 +77,54 @@ app.post("/chat", async (c) => {
 			}
 		}
 
+		// (Removed) Early persistence to avoid double-saving user message. We persist below
+
+		// Build full conversation history to send to the model
+		let history: UIMessage[] = uiMessages;
+		if (threadId) {
+			try {
+				const rows = await getMessagesByThread({ threadId });
+				const asc = [...rows].reverse();
+				history = asc.map((row) => ({
+					id: row.id,
+					role: row.role as "user" | "assistant",
+					parts: [
+						{ type: "text", text: row.content ?? "" },
+						// keep reasoning separate in UI; do not include as prompt content
+					],
+				}));
+			} catch {}
+		}
+
+		// Persist the latest user message prior to generation and include it in the prompt
+		try {
+			const lastUser = [...uiMessages].reverse().find((m) => m.role === "user");
+			if (threadId && lastUser) {
+				let text = "";
+				for (const part of lastUser.parts)
+					if (part.type === "text") text += part.text;
+				if (text.trim().length > 0) {
+					await saveMessage({
+						threadId,
+						role: "user",
+						content: text,
+						model: null,
+						status: "submitted",
+					});
+					await updateThreadOnNewMessage(threadId);
+					// also include it at the end of the history sent to the model
+					history = [
+						...history,
+						{
+							id: generateId(15),
+							role: "user",
+							parts: [{ type: "text", text }],
+						},
+					];
+				}
+			}
+		} catch {}
+
 		const modelId = await resolveModel(body.model);
 		const result = streamText({
 			model: wrapLanguageModel({
@@ -85,7 +134,7 @@ app.post("/chat", async (c) => {
 					separator: "\n",
 				}),
 			}),
-			messages: convertToModelMessages(uiMessages),
+			messages: convertToModelMessages(history),
 			system: body.system,
 		});
 

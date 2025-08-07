@@ -44,7 +44,10 @@ async function fetchModelsOllamaNative(root: string): Promise<string[]> {
 		throw new Error(`Failed to fetch models (Ollama native): ${res.status}`);
 	}
 	const data = (await res.json()) as { models?: Array<{ name: string }> };
-	return (data.models || []).map((m) => m.name).filter(Boolean);
+	return (data.models || [])
+		.map((m) => m.name)
+		.filter(Boolean)
+		.sort();
 }
 
 export async function listOllamaModels(): Promise<OllamaModel[]> {

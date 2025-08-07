@@ -35,13 +35,48 @@ function ChatThreadRouteComponent() {
 	const [prompt, setPrompt] = useState(navigationState.initialPrompt || "");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const { data: modelList } = useQuery(orpc.models.listOllama.queryOptions());
-	const availableModels = useMemo(
-		() => (modelList ? modelList.map((m) => m.id) : []),
-		[modelList],
+	const { data: modelList } = useQuery(
+		orpc.models.listOllama.queryOptions({
+			select: (data) => data.map((m) => m.id),
+		}),
+	);
+	const { data: persistedMessages } = useQuery(
+		orpc.messages.listByThread.queryOptions({ input: { threadId } }),
+	);
+
+	// Default-select the first available model when none is chosen
+	useEffect(() => {
+		if (!chatModel && modelList?.length) setChatModel(modelList[0]);
+	}, [modelList, chatModel]);
+
+	const initialMessages = useMemo(() => {
+		if (!persistedMessages || persistedMessages.length === 0) return [];
+		// server returns newest first; convert to oldest -> newest
+		const asc = [...persistedMessages].reverse();
+		return asc.map((m) => {
+			const parts: Array<
+				{ type: "text"; text: string } | { type: "reasoning"; text: string }
+			> = [];
+			if (m.role === "assistant" && m.reasoning) {
+				parts.push({ type: "reasoning", text: m.reasoning as string });
+			}
+			parts.push({ type: "text", text: (m.content as string) ?? "" });
+			return {
+				id: m.id as string,
+				role: m.role as "user" | "assistant",
+				parts,
+			} as const;
+		}) as any;
+	}, [persistedMessages]);
+
+	const chatId = useMemo(
+		() => `${threadId}:${persistedMessages ? "loaded" : "loading"}`,
+		[threadId, persistedMessages],
 	);
 
 	const { messages, sendMessage, status, stop } = useChat({
+		id: chatId,
+		messages: initialMessages,
 		transport: new DefaultChatTransport({
 			api: `${import.meta.env.VITE_SERVER_URL}/chat`,
 			body: () => ({ model: chatModel, threadId }),
@@ -155,6 +190,20 @@ function ChatThreadRouteComponent() {
 			</div>
 
 			<div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				{isStreaming ? (
+					<div
+						aria-live="polite"
+						role="status"
+						className="border-t border-border/60"
+					>
+						<div className="mx-auto max-w-4xl px-6 py-2">
+							<div className="flex items-center gap-2 text-xs text-muted-foreground">
+								<Loader2 className="h-3 w-3 animate-spin" />
+								<span>Generating response…</span>
+							</div>
+						</div>
+					</div>
+				) : null}
 				<ChatInput
 					prompt={prompt}
 					setPrompt={setPrompt}
@@ -163,7 +212,7 @@ function ChatThreadRouteComponent() {
 					setChatModel={setChatModel}
 					isStreaming={isStreaming}
 					stopStreaming={stopStreaming}
-					models={availableModels}
+					models={modelList || []}
 				/>
 			</div>
 		</div>
