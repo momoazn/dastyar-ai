@@ -33,10 +33,14 @@ export const appRouter = {
 		list: publicProcedure
 			.input(z.object({ includeArchived: z.boolean().optional() }).optional())
 			.handler(async ({ input }) => {
-				const rows = await listThreads({
-					includeArchived: input?.includeArchived,
-				});
-				return rows;
+				try {
+					const rows = await listThreads({
+						includeArchived: input?.includeArchived,
+					});
+					return rows;
+				} catch {
+					return [] as const;
+				}
 			}),
 		get: publicProcedure
 			.input(z.object({ id: z.string() }))

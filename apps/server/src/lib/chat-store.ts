@@ -23,12 +23,11 @@ export async function getThread(id: string) {
 
 export async function listThreads(options?: { includeArchived?: boolean }) {
 	const includeArchived = options?.includeArchived ?? false;
-	const where = includeArchived ? undefined : eq(threads.isArchived, false);
-	return db
-		.select()
-		.from(threads)
-		.where(where as any)
-		.orderBy(desc(threads.lastMessageAt), desc(threads.updatedAt));
+	const baseQuery = db.select().from(threads);
+	const query = includeArchived
+		? baseQuery
+		: baseQuery.where(eq(threads.isArchived, false));
+	return query.orderBy(desc(threads.lastMessageAt), desc(threads.updatedAt));
 }
 
 export async function renameThread(id: string, title: string) {

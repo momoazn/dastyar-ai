@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { z } from "zod";
+import { runMigrations } from "./db/migrate";
 import { ollama, resolveModel } from "./lib/ai";
 import {
 	getThread,
@@ -21,6 +22,11 @@ import { appRouter } from "./routers/index";
 const app = new Hono();
 
 app.use(logger());
+app.use(async (c, next) => {
+	// Ensure migrations are applied once per process
+	await runMigrations();
+	await next();
+});
 app.use(
 	"/*",
 	cors({
