@@ -1,4 +1,4 @@
-import { ChevronDown, Globe, Mic, Paperclip, Pause, Send } from "lucide-react";
+import { ChevronDown, Pause, Send } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 
 import {
@@ -22,10 +22,6 @@ interface ChatInputProps {
   setChatModel: (model: string) => void;
   prompt: string;
   setPrompt: (prompt: string) => void;
-  // PDF attachment props
-  onFileSelect: (file: File) => void;
-  isUploading?: boolean;
-  uploadProgress?: number;
 }
 
 export const ChatInput = memo(
@@ -37,9 +33,6 @@ export const ChatInput = memo(
     setChatModel,
     prompt,
     setPrompt,
-    onFileSelect,
-    isUploading = false,
-    uploadProgress = 0,
   }: ChatInputProps) => {
     const { data: models } = useModelsList();
 
@@ -127,39 +120,10 @@ export const ChatInput = memo(
                 <SelectContent>{modelItems}</SelectContent>
               </Select>
 
-              {/* Action Buttons */}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-9 px-2"
-                type="button"
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.accept = ".pdf";
-                  input.onchange = (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) onFileSelect(file);
-                  };
-                  input.click();
-                }}
-                disabled={isUploading || isStreaming}
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
             </div>
 
             {/* Right side - Send button */}
             <div className="flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-9 w-9 rounded-full"
-                type="button"
-                disabled={isStreaming}
-              >
-                <Mic className="h-4 w-4" />
-              </Button>
               <Button
                 size="icon"
                 variant={isStreaming ? "destructive" : "default"}

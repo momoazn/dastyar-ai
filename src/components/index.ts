@@ -7,4 +7,3 @@ export { SettingsModal } from "./settings-modal";
 export { Status } from "./status";
 export { Header } from "./header";
 export { DeleteDialog } from "./delete-dialog";
-export { PDFAttachment } from "./pdf-attachment";

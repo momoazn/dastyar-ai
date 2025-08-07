@@ -70,19 +70,6 @@ export const PERSIAN_TEXTS = {
     save: "ذخیره",
     cancel: "لغو",
     copied: "کپی شد",
-    ragMode: "حالت چت با اسناد",
-    ragModeDescription: "از اسناد آپلود شده برای پاسخ استفاده می‌شود",
-  },
-
-  // Attachments
-  attachments: {
-    attachPDF: "ضمیمه کردن فایل PDF",
-    uploading: "در حال آپلود",
-    uploadError: "خطا در آپلود فایل",
-    attachedDocuments: "اسناد ضمیمه شده",
-    removeDocument: "حذف سند",
-    onlyPDFSupported: "فقط فایل‌های PDF پشتیبانی می‌شوند",
-    maxFileSize: "حداکثر حجم فایل ۱۰ مگابایت",
   },
 
   // Translation Interface

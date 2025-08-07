@@ -1,42 +1,6 @@
 import type { CoreMessage } from "ai";
 
 import { MessagesRecord } from "../src/lib/pocketbase-types";
-import { ChatService } from "./chat-service";
-import { Database } from "./database";
-
-export const enhanceMessageWithRAG = async ({
-  db,
-  chatService,
-  threadId,
-  message,
-}: {
-  db: Database;
-  chatService: ChatService;
-  threadId: string;
-  message: string;
-}) => {
-  const threadPDFs = await db.getPDFsByThread(threadId);
-  const hasDocuments = threadPDFs.length > 0;
-
-  let finalMessage = message;
-  let sources: Array<{ filename: string; chunk: number }> = [];
-
-  if (hasDocuments) {
-    try {
-      const ragResult = await chatService.getRelevantContext(
-        threadId,
-        message,
-        threadPDFs.map((pdf) => pdf.id),
-      );
-      finalMessage = chatService.buildRAGPrompt(message, ragResult.context);
-      sources = ragResult.sources;
-    } catch (error) {
-      console.error("RAG enhancement error:", error);
-    }
-  }
-
-  return { finalMessage, sources };
-};
 
 // ===== REASONING PARSER =====
 const REASONING_START_TAG = "<think>";

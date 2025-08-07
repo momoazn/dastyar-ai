@@ -13,13 +13,9 @@ import {
   TranslationsTargetLanguageOptions,
   TranslationsToneOptions,
 } from "../src/lib/pocketbase-types";
-import { ChatService } from "./chat-service";
 import { Database } from "./database";
-import { PDFProcessor } from "./pdf";
 import { convertToCoreMessages, parseReasoningTokens } from "./utils";
 
-const pdfProcessor = new PDFProcessor();
-const chatService = new ChatService();
 const db = new Database();
 
 const languageCodeToName: Record<
@@ -48,77 +44,10 @@ const translationSchema = z.object({
   model: z.string(),
 });
 
-const uploadSchema = z.object({
-  pdf: z.instanceof(File),
-  threadId: z.string(),
-});
-
 const app = new Hono()
   .use("*", cors())
   .get("/health", (c) => {
     return c.json({ status: "ok", timestamp: new Date().toISOString() }, 200);
-  })
-  .post("/api/pdf/upload", zValidator("form", uploadSchema), async (c) => {
-    try {
-      const formData = await c.req.formData();
-      const file = formData.get("pdf") as File;
-      const threadId = formData.get("threadId") as string;
-
-      if (!file) {
-        return c.json({ error: "No file provided" }, 400);
-      }
-
-      if (file.type !== "application/pdf") {
-        return c.json({ error: "Only PDF files are allowed" }, 400);
-      }
-
-      // Convert file to buffer
-      const buffer = Buffer.from(await file.arrayBuffer());
-
-      // Process PDF and get documents
-      const documents = await pdfProcessor.processPDF(buffer, file.name);
-
-      // Create Persian upload message for the user
-      const uploadMessage = await db.createMessage({
-        threadId,
-        content: `فایل PDF "${file.name}" آپلود شد.`,
-        role: MessagesRoleOptions.user,
-        status: MessagesStatusOptions.finished,
-        model: "",
-      });
-
-      // Save PDF record with thread reference
-      const pdfRecord = await db.createPDF(
-        threadId,
-        file.name,
-        `/uploads/${file.name}`,
-      );
-
-      // Add documents to vector store for this thread
-      await chatService.addPDFToThread(threadId, documents);
-
-      return c.json(
-        {
-          success: true,
-          pdfId: pdfRecord.id,
-          threadId,
-          messageId: uploadMessage.id,
-          filename: file.name,
-          chunks: documents.length,
-        },
-        200,
-      );
-    } catch (error) {
-      console.error("Upload error:", error);
-      return c.json(
-        {
-          success: false,
-          error: "Failed to process PDF",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-        500,
-      );
-    }
   })
   .post("/api/chat", zValidator("json", chatSchema), async (c) => {
     const body = (await c.req.json()) as {
@@ -265,8 +194,6 @@ const app = new Hono()
         temperature: 0.5,
         prompt: `Translate the following text from ${sourceLanguageName} to ${targetLanguageName} in ${body.tone} tone: ${body.sourceText}`,
       });
-
-      console.log("=======>>>", result.object.translatedText);
 
       const translation = await db.createTranslation({
         sourceText: body.sourceText,

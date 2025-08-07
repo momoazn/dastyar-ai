@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { ChatInput, Message } from "@/components";
 import { ScrollArea } from "@/components/ui";
-import { useModelsList, usePDFUpload, useStreamingChat } from "@/hooks";
+import { useModelsList, useStreamingChat } from "@/hooks";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { pb } from "@/lib/pocketbase";
 
@@ -43,7 +43,6 @@ export default function ChatPage() {
     stopStreaming,
   } = useStreamingChat(threadId);
 
-  const { isUploading, uploadPDF, uploadProgress } = usePDFUpload();
 
   // ===== MEMOIZED VALUES =====
   const memoizedMessages = useMemo(() => messages, [messages]);
@@ -100,20 +99,6 @@ export default function ChatPage() {
     await sendMessage(chatModel, effectiveThreadId);
   }, [chatModel, createNewThreadIfNeeded, sendMessage, prompt]);
 
-  // ===== PDF HANDLING =====
-  const handleFileSelect = useCallback(
-    async (file: File) => {
-      const effectiveThreadId = await createNewThreadIfNeeded();
-      if (!effectiveThreadId) return;
-
-      try {
-        await uploadPDF(file, effectiveThreadId);
-      } catch (error) {
-        console.error("Error uploading PDF:", error);
-      }
-    },
-    [createNewThreadIfNeeded, uploadPDF],
-  );
 
   // ===== OPTIMIZED EFFECTS =====
   // Only scroll when messages change
@@ -199,9 +184,6 @@ export default function ChatPage() {
           setChatModel={setChatModel}
           isStreaming={isStreaming}
           stopStreaming={stopStreaming}
-          onFileSelect={handleFileSelect}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
         />
       </div>
     </div>
