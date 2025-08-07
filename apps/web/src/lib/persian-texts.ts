@@ -1,0 +1,51 @@
+export const PERSIAN_TEXTS = {
+  navigation: {
+    newChat: "گفتگوی جدید",
+  },
+  general: {
+    loading: "در حال بارگذاری",
+    themeToggle: "تم",
+  },
+  chat: {
+    askQuestion: "یک سوال بپرسید",
+    askQuestionDescription: "شروع مکالمه با چت بات",
+    writeMessage: "پیام خود را بنویسید...",
+    copy: "کپی",
+    copied: "کپی شد",
+    generationStopped: "تولید پاسخ متوقف شد",
+    generationErrored: "خطا در تولید پاسخ",
+  },
+  modelSelection: {
+    selectChatModel: "انتخاب مدل",
+  },
+  languages: {
+    persian: "فارسی",
+    english: "انگلیسی",
+    arabic: "عربی",
+    french: "فرانسوی",
+    german: "آلمانی",
+    spanish: "اسپانیایی",
+  },
+  tones: {
+    formal: "رسمی",
+    casual: "محاوره‌ای",
+    technical: "تکنیکی",
+    friendly: "دوستانه",
+    academic: "آکادمیک",
+    business: "کسب‌وکاری",
+    creative: "خلاقانه",
+    neutral: "خنثی",
+  },
+  translation: {
+    sourceLanguage: "زبان مبدا",
+    targetLanguage: "زبان مقصد",
+    translationTone: "لحن",
+    model: "مدل",
+    enterText: "متن را وارد کنید",
+    translatedText: "متن ترجمه شده",
+    translating: "در حال ترجمه",
+    translate: "ترجمه",
+    retranslate: "ترجمه مجدد",
+    parametersChanged: "پارامترها تغییر کرده‌اند",
+  },
+};
