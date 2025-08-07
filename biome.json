@@ -17,9 +17,8 @@
       "!**/.expo",
       "!**/.wrangler",
       "!**/.source"
-    ]
+    ],
+    "ignore": ["**/routeTree.gen.ts"]
   },
-  "extends": [
-    "ultracite"
-  ]
+  "extends": ["ultracite"]
 }

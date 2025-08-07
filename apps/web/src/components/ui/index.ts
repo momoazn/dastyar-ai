@@ -76,4 +76,4 @@ export {
   TooltipProvider,
   TooltipTrigger,
 } from "./tooltip";
-export { Toaster, toast } from "./sonner";
+export { Toaster } from "./sonner";
