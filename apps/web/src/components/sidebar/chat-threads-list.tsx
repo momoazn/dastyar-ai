@@ -39,7 +39,7 @@ export function ChatThreadsList() {
 			)}
 			{items.map((thread) => (
 				<SidebarItem
-					to={`/chat?id=${thread.id}`}
+					to={`/chat/${thread.id}`}
 					key={thread.id}
 					title={thread.title}
 					onArchive={() =>

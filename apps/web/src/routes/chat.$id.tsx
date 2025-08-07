@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useParams, useRouterState } from "@tanstack/react-router";
 import { DefaultChatTransport } from "ai";
 import { BotIcon, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,13 +9,22 @@ import { ScrollArea } from "@/components/ui";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/chat")({
-	component: ChatRouteComponent,
+export const Route = createFileRoute("/chat/$id")({
+	component: ChatThreadRouteComponent,
 });
 
-function ChatRouteComponent() {
-	const [chatModel, setChatModel] = useState("");
-	const [prompt, setPrompt] = useState("");
+function ChatThreadRouteComponent() {
+	const params = useParams({ from: "/chat/$id" });
+	const threadId = params.id;
+
+	const routerState = useRouterState();
+	const navigationState = (routerState.location.state ?? {}) as {
+		initialPrompt?: string;
+		initialModel?: string;
+	};
+
+	const [chatModel, setChatModel] = useState(navigationState.initialModel || "");
+	const [prompt, setPrompt] = useState(navigationState.initialPrompt || "");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const { data: modelList } = useQuery(orpc.models.listOllama.queryOptions());
@@ -27,7 +36,7 @@ function ChatRouteComponent() {
 	const { messages, sendMessage, status, stop } = useChat({
 		transport: new DefaultChatTransport({
 			api: `${import.meta.env.VITE_SERVER_URL}/ai`,
-			body: () => ({ model: chatModel }),
+			body: () => ({ model: chatModel, threadId }),
 		}),
 	});
 
@@ -50,6 +59,16 @@ function ChatRouteComponent() {
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages, scrollToBottom]);
+
+	useEffect(() => {
+		if (navigationState.initialPrompt && navigationState.initialModel) {
+			// Clear the initial state after first render submission
+			setTimeout(() => {
+				sendMessage({ text: navigationState.initialPrompt! });
+			}, 0);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const renderMessages = useMemo(() => {
 		if (messages.length > 0) {

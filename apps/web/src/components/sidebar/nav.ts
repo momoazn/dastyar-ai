@@ -31,7 +31,7 @@ export function useActiveNavItem(): NavItem | undefined {
 	const currentPath = location.pathname;
 
 	for (const item of navMain) {
-		if (item.url === currentPath) {
+		if (currentPath === item.url || currentPath.startsWith(`${item.url}/`)) {
 			return item;
 		}
 	}
