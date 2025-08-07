@@ -1,3 +1,17 @@
+import "@fontsource-variable/vazirmatn";
+import "../index.css";
+
+import { AppSidebar } from "@/components/app-sidebar";
+import { Header } from "@/components/header";
+import Loader from "@/components/loader";
+import { ThemeProvider } from "@/components/theme-provider";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { link, type orpc } from "@/utils/orpc";
 import { createORPCClient } from "@orpc/client";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
@@ -11,19 +25,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
-import { Header } from "@/components/header";
-import Loader from "@/components/loader";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { link, type orpc } from "@/utils/orpc";
 import type { appRouter } from "../../../server/src/routers";
-import "../index.css";
 
 export interface RouterAppContext {
   orpc: typeof orpc;

@@ -20,7 +20,9 @@ import {
   Plus,
   TrashIcon,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+
 import { Button } from "@/components/ui";
 
 interface NavItem {
@@ -70,233 +72,304 @@ function useActiveNavItem() {
 }
 
 function useChatThreadsData(isActive: boolean) {
+  const navigate = useNavigate();
+
   // Mock data
   const chatThreads = isActive
-    ? [
-        { id: "1", title: "گفتگوی جدید", created: "2024-01-01" },
-        { id: "2", title: "مکالمه درباره هوش مصنوعی", created: "2024-01-02" },
-      ]
-    : [];
+    ? {
+        items: [
+          { id: "1", title: "گفتگوی جدید", created: "2024-01-01" },
+          { id: "2", title: "مکالمه درباره هوش مصنوعی", created: "2024-01-02" },
+        ],
+      }
+    : { items: [] };
 
   const createChatThread = () => {
     console.log("Create new chat thread");
+    navigate({ to: "/chat" });
   };
 
-  return { chatThreads, createChatThread };
+  const deleteChatThread = (id: string) => {
+    console.log("Delete chat thread:", id);
+  };
+
+  const updateChatThread = (id: string) => {
+    console.log("Archive chat thread:", id);
+  };
+
+  return {
+    chatThreads,
+    createChatThread,
+    deleteChatThread,
+    updateChatThread,
+  };
 }
 
 function useTranslationsData(isActive: boolean) {
+  const navigate = useNavigate();
+
   // Mock data
   const translations = isActive
-    ? [
-        {
-          id: "1",
-          sourceText: "Hello world",
-          translatedText: "سلام دنیا",
-          created: "2024-01-01",
-        },
-        {
-          id: "2",
-          sourceText: "How are you?",
-          translatedText: "حال شما چطور است؟",
-          created: "2024-01-02",
-        },
-      ]
-    : [];
+    ? {
+        items: [
+          {
+            id: "1",
+            sourceText: "Hello world",
+            translatedText: "سلام دنیا",
+            created: "2024-01-01",
+          },
+          {
+            id: "2",
+            sourceText: "How are you?",
+            translatedText: "حال شما چطور است؟",
+            created: "2024-01-02",
+          },
+        ],
+      }
+    : { items: [] };
 
-  const createTranslation = () => {
-    console.log("Create new translation");
+  const deleteTranslation = (id: string) => {
+    console.log("Delete translation:", id);
   };
 
-  return { translations, createTranslation };
+  const handleNewTranslation = () => navigate({ to: "/translation" });
+
+  return {
+    translations,
+    deleteTranslation,
+    handleNewTranslation,
+  };
 }
 
 function NavigationSidebar() {
+  const navigate = useNavigate();
   const { setOpen } = useSidebar();
   const activeItem = useActiveNavItem();
 
   return (
-    <SidebarContent>
+    <Sidebar
+      collapsible="none"
+      className="w-[calc(var(--sidebar-width-icon)+1px)]! border-e"
+    >
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <Command className="h-4 w-4" />
-          <span className="text-sm font-semibold">Navigation</span>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
+              <Link to="/">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Command className="size-4" />
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
-
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {navMain.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeItem?.url === item.url;
-
-              return (
-                <SidebarMenuItem key={item.url}>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent className="px-1.5 md:px-0">
+            <SidebarMenu>
+              {navMain.map((item) => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    onClick={() => setOpen(false)}
+                    tooltip={{
+                      children: item.title,
+                      hidden: false,
+                      side: "left",
+                    }}
+                    onClick={() => {
+                      navigate({ to: item.url });
+                      setOpen(true);
+                    }}
+                    isActive={activeItem?.url === item.url}
+                    className="px-2.5 md:px-2"
                   >
-                    <Link to={item.url}>
-                      <Icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon className="size-8" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    </SidebarContent>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
 
 function SidebarItem({ title, to, onArchive, onDelete }: SidebarItemProps) {
   return (
-    <div className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent">
-      <Link to={to} className="flex-1 truncate">
-        {title}
-      </Link>
-      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        {onArchive && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={onArchive}
-          >
-            <ArchiveIcon className="h-3 w-3" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={onDelete}
-          >
-            <TrashIcon className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    </div>
+    <Link
+      to={to}
+      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative flex h-12 items-center justify-between border-b p-4 text-sm"
+    >
+      {({ isActive }) => {
+        return (
+          <>
+            {isActive && (
+              <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
+            )}
+
+            <span className="font-medium">{title ?? "Untitled"}</span>
+
+            <div className="flex items-center gap-0">
+              {onArchive && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer hover:text-blue-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onArchive?.(e);
+                  }}
+                >
+                  <ArchiveIcon className="size-4" />
+                </Button>
+              )}
+
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer hover:text-red-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete?.(e);
+                  }}
+                >
+                  <TrashIcon className="size-4" />
+                </Button>
+              )}
+            </div>
+          </>
+        );
+      }}
+    </Link>
   );
 }
 
 function ChatThreadsList() {
-  const { chatThreads, createChatThread } = useChatThreadsData(true);
+  const activeItem = useActiveNavItem();
+  const isActive = activeItem?.url === "/chat";
+
+  const navigate = useNavigate();
+  const { chatThreads, deleteChatThread, updateChatThread } =
+    useChatThreadsData(isActive);
+
+  if (!isActive) return null;
 
   return (
-    <SidebarGroup>
-      <SidebarHeader>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Chat Threads</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={createChatThread}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </SidebarHeader>
-      <SidebarGroupContent>
-        {chatThreads.length === 0 ? (
-          <div className="text-muted-foreground px-3 py-2 text-sm">
+    <>
+      {chatThreads?.items?.length === 0 && (
+        <div className="mt-4 flex h-full items-center justify-center">
+          <p className="text-muted-foreground text-sm">
             {PERSIAN_TEXTS.navigation.noChatThreads}
-          </div>
-        ) : (
-          chatThreads.map((thread) => (
-            <SidebarItem
-              key={thread.id}
-              title={thread.title}
-              to={`/chat?id=${thread.id}`}
-            />
-          ))
-        )}
-      </SidebarGroupContent>
-    </SidebarGroup>
+          </p>
+        </div>
+      )}
+
+      {chatThreads?.items?.map((thread) => (
+        <SidebarItem
+          to={`/chat?id=${thread.id}`}
+          key={thread.id}
+          title={thread.title}
+          onArchive={() => updateChatThread(thread.id)}
+          onDelete={() => {
+            deleteChatThread(thread.id);
+            navigate({ to: "/chat" });
+          }}
+        />
+      ))}
+    </>
   );
 }
 
 function TranslationsList() {
-  const { translations, createTranslation } = useTranslationsData(true);
+  const activeItem = useActiveNavItem();
+  const isActive = activeItem?.url === "/translation";
+  const navigate = useNavigate();
+  const { translations, deleteTranslation } = useTranslationsData(isActive);
+
+  if (!isActive) return null;
 
   return (
-    <SidebarGroup>
-      <SidebarHeader>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Translations</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={createTranslation}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </SidebarHeader>
-      <SidebarGroupContent>
-        {translations.length === 0 ? (
-          <div className="text-muted-foreground px-3 py-2 text-sm">
-            No translations yet
-          </div>
-        ) : (
-          translations.map((translation) => (
-            <SidebarItem
-              key={translation.id}
-              title={translation.sourceText}
-              to={`/translation?id=${translation.id}`}
-            />
-          ))
-        )}
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <>
+      {translations?.items?.map((translation) => (
+        <SidebarItem
+          to={`/translation?id=${translation.id}`}
+          key={translation.id}
+          title={translation.sourceText?.slice(0, 30) || "بدون عنوان"}
+          onDelete={(e) => {
+            e.stopPropagation();
+            if (translation.id) {
+              deleteTranslation(translation.id);
+              navigate({ to: "/translation" });
+            }
+          }}
+        />
+      ))}
+    </>
   );
 }
 
 function ContentSidebar({ activeItem, onNew }: ContentSidebarProps) {
   return (
-    <SidebarContent>
-      <SidebarHeader>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">{activeItem?.title}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={onNew}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
+    <Sidebar collapsible="none" className="hidden flex-1 md:flex">
+      <SidebarHeader className="h-14 flex-row items-center justify-between gap-3.5 border-b">
+        <h3 className="text-foreground ms-2 text-lg font-medium">
+          {activeItem?.title}
+        </h3>
+        <Button variant="ghost" size="icon" onClick={onNew}>
+          <Plus />
+        </Button>
       </SidebarHeader>
-
-      {activeItem?.url === "/chat" && <ChatThreadsList />}
-      {activeItem?.url === "/translation" && <TranslationsList />}
-    </SidebarContent>
+      <SidebarContent>
+        <SidebarGroup className="px-0">
+          <SidebarGroupContent>
+            <ChatThreadsList />
+            <TranslationsList />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
 
+// Main component
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const navigate = useNavigate();
+  const { setOpen } = useSidebar();
   const activeItem = useActiveNavItem();
+  const { createChatThread } = useChatThreadsData(activeItem?.url === "/chat");
+  const { handleNewTranslation } = useTranslationsData(
+    activeItem?.url === "/translation"
+  );
 
   const handleNew = () => {
     if (activeItem?.url === "/chat") {
-      console.log("Create new chat");
+      createChatThread();
     } else if (activeItem?.url === "/translation") {
-      console.log("Create new translation");
+      handleNewTranslation();
     }
   };
 
+  useEffect(() => {
+    // Close sidebar on home page
+    const currentPath = window.location.pathname;
+    if (currentPath === "/") setOpen(false);
+  }, [setOpen]);
+
   return (
-    <Sidebar {...props}>
+    <Sidebar
+      collapsible="icon"
+      className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
+      {...props}
+    >
       <NavigationSidebar />
-      <ContentSidebar activeItem={activeItem} onNew={handleNew} />
+      {window.location.pathname !== "/" && (
+        <ContentSidebar activeItem={activeItem} onNew={handleNew} />
+      )}
     </Sidebar>
   );
 }
