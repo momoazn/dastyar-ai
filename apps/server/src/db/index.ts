@@ -6,4 +6,3 @@ const client = createClient({
 });
 
 export const db = drizzle({ client });
-
