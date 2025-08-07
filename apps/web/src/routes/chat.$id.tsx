@@ -1,11 +1,17 @@
 import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useParams, useRouterState } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useParams,
+	useRouterState,
+} from "@tanstack/react-router";
 import { DefaultChatTransport } from "ai";
 import { BotIcon, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AssistantMessage } from "@/components/assistant-message";
 import { ChatInput } from "@/components/chat-input";
 import { ScrollArea } from "@/components/ui";
+import { UserMessage } from "@/components/user-message";
 import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
@@ -23,7 +29,9 @@ function ChatThreadRouteComponent() {
 		initialModel?: string;
 	};
 
-	const [chatModel, setChatModel] = useState(navigationState.initialModel || "");
+	const [chatModel, setChatModel] = useState(
+		navigationState.initialModel || "",
+	);
 	const [prompt, setPrompt] = useState(navigationState.initialPrompt || "");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -72,42 +80,35 @@ function ChatThreadRouteComponent() {
 
 	const renderMessages = useMemo(() => {
 		if (messages.length > 0) {
+			const parsed = messages.map((m) => {
+				let text = "";
+				let reasoning = "";
+				for (const p of m.parts) {
+					if (p.type === "text") text += p.text;
+					if (p.type === "reasoning") reasoning += p.text;
+				}
+				return { id: m.id, role: m.role, text, reasoning };
+			});
+
 			return (
 				<div className="space-y-4">
-					{messages.map((message) => (
-						<div
-							key={message.id}
-							className={`rounded-lg p-3 ${
-								message.role === "user"
-									? "ml-8 bg-primary/10"
-									: "mr-8 bg-secondary/20"
-							}`}
-						>
-							<p className="mb-1 text-sm font-semibold">
-								{message.role === "user" ? "You" : "AI Assistant"}
-							</p>
-							<div className="whitespace-pre-wrap">
-								{message.parts.map((part, idx) => {
-									if (part.type === "text") {
-										return (
-											<span key={`${message.id}-text-${idx}`}>{part.text}</span>
-										);
-									}
-									if (part.type === "reasoning") {
-										return (
-											<pre
-												key={`${message.id}-reason-${idx}`}
-												className="mt-2 rounded bg-muted p-2 text-xs"
-											>
-												{part.text}
-											</pre>
-										);
-									}
-									return null;
-								})}
-							</div>
-						</div>
-					))}
+					{parsed.map((m) =>
+						m.role === "user" ? (
+							<UserMessage
+								key={m.id}
+								message={{ role: "user", content: m.text }}
+							/>
+						) : (
+							<AssistantMessage
+								key={m.id}
+								message={{
+									role: "assistant",
+									content: m.text,
+									reasoning: m.reasoning,
+								}}
+							/>
+						),
+					)}
 				</div>
 			);
 		}
