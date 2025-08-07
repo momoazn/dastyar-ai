@@ -1,22 +1,17 @@
 import 'dotenv/config';
 
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { RPCHandler } from '@orpc/server/fetch';
-import { streamText } from 'ai';
+import { convertToModelMessages, streamText, type UIMessage } from 'ai';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { stream } from 'hono/streaming';
 import { createContext } from './lib/context';
 import { appRouter } from './routers/index';
 
-// const google = createGoogleGenerativeAI({
-//   apiKey: process.env.GOOGLE_API_KEY,
-// });
-
-const ollama = createOpenAI({
-  baseURL: 'http://localhost:11434',
-  apiKey: '',
+const ollama = createOpenAICompatible({
+  baseURL: 'http://localhost:11434/v1',
+  name: 'ollama',
 });
 
 const app = new Hono();
@@ -46,16 +41,13 @@ app.use('/rpc/*', async (c, next) => {
 
 app.post('/ai', async (c) => {
   const body = await c.req.json();
-  const messages = body.messages || [];
+  const messages: UIMessage[] = body.messages || [];
   const result = streamText({
-    // model: google('gemini-2.0-flash'),
-    model: ollama('llama3.1:8b'),
-    messages,
+    model: ollama('smollm2:1.7b'),
+    messages: convertToModelMessages(messages),
   });
 
-  c.header('X-Vercel-AI-Data-Stream', 'v1');
-  c.header('Content-Type', 'text/plain; charset=utf-8');
-  return stream(c, (s) => s.pipe(result.toDataStream()));
+  return result.toUIMessageStreamResponse();
 });
 
 app.get('/', (c) => {
