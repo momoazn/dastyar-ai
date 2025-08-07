@@ -1,7 +1,13 @@
 import "dotenv/config";
 
 import { RPCHandler } from "@orpc/server/fetch";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import {
+	convertToModelMessages,
+	extractReasoningMiddleware,
+	streamText,
+	type UIMessage,
+	wrapLanguageModel,
+} from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -71,7 +77,13 @@ app.post("/ai", async (c) => {
 
 		const modelId = await resolveModel(body.model);
 		const result = streamText({
-			model: ollama(modelId),
+			model: wrapLanguageModel({
+				model: ollama(modelId),
+				middleware: extractReasoningMiddleware({
+					tagName: "think",
+					separator: "\n",
+				}),
+			}),
 			messages: convertToModelMessages(uiMessages),
 			system: body.system,
 		});
@@ -79,6 +91,7 @@ app.post("/ai", async (c) => {
 		return result.toUIMessageStreamResponse({
 			originalMessages: uiMessages,
 			generateMessageId: () => generateId(15),
+			sendReasoning: true,
 			onFinish: async ({ responseMessage }) => {
 				try {
 					// If no threadId, skip persistence silently

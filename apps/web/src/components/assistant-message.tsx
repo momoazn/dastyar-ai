@@ -36,12 +36,10 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
 	const [collapsed, setCollapsed] = useState(false);
 	const [copySuccess, setCopySuccess] = useState(false);
 
-	// Memoize expensive computations
+	// Show thinking only when reasoning tokens exist
 	const hasThinking = useMemo(() => {
-		return (
-			message?.role === "assistant" && message?.content !== "" && message?.model
-		);
-	}, [message?.role, message?.content, message?.model]);
+		return message?.role === "assistant" && Boolean(message?.reasoning?.trim());
+	}, [message?.role, message?.reasoning]);
 
 	const messageStatus = useMemo(() => {
 		const isStopped = message.status === "stopped";
