@@ -43,7 +43,7 @@ function ChatThreadRouteComponent() {
 
 	const { messages, sendMessage, status, stop } = useChat({
 		transport: new DefaultChatTransport({
-			api: `${import.meta.env.VITE_SERVER_URL}/ai`,
+			api: `${import.meta.env.VITE_SERVER_URL}/chat`,
 			body: () => ({ model: chatModel, threadId }),
 		}),
 	});

@@ -42,6 +42,7 @@ app.use(
 );
 
 const handler = new RPCHandler(appRouter);
+
 app.use("/rpc/*", async (c, next) => {
 	const context = await createContext({ context: c });
 	const { matched, response } = await handler.handle(c.req.raw, {
@@ -55,7 +56,7 @@ app.use("/rpc/*", async (c, next) => {
 	await next();
 });
 
-app.post("/ai", async (c) => {
+app.post("/chat", async (c) => {
 	try {
 		const schema = z.object({
 			messages: z.array(z.any()).default([]),
