@@ -1,32 +1,32 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { client, orpc, queryClient } from "@/utils/orpc";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { client, orpc, queryClient } from '@/utils/orpc';
 
 export function useCreateThread(isActive: boolean) {
-	const navigate = useNavigate();
+  const navigate = useNavigate();
 
-	const listQuery = useQuery({
-		...orpc.threads.list.queryOptions({ includeArchived: false }),
-		enabled: isActive,
-	});
+  const listQuery = useQuery({
+    ...orpc.threads.list.queryOptions({ includeArchived: false }),
+    enabled: isActive,
+  });
 
-	const createMutation = useMutation({
-		mutationFn: (title?: string) => client.threads.create({ title }),
-		onSuccess: (res) => {
-			void queryClient.invalidateQueries();
-			navigate({ to: "/chat/$id", params: { id: res.id } });
-		},
-	});
+  const createMutation = useMutation({
+    mutationFn: (title?: string) => client.threads.create({ title }),
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries();
+      navigate({ to: '/chat/$id', params: { id: res.id } });
+    },
+  });
 
-	return {
-		createChatThread: () => createMutation.mutate(undefined),
-		listQuery,
-	} as const;
+  return {
+    createChatThread: () => createMutation.mutate(undefined),
+    listQuery,
+  } as const;
 }
 
 export function useTranslationActions() {
-	const navigate = useNavigate();
-	return {
-		handleNewTranslation: () => navigate({ to: "/translation" }),
-	} as const;
+  const navigate = useNavigate();
+  return {
+    handleNewTranslation: () => navigate({ to: '/translation' }),
+  } as const;
 }

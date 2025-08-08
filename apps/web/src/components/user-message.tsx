@@ -1,18 +1,16 @@
-import { memo, useCallback, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-
-import { Button } from "@/components/ui";
+import { Check, Copy } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
+  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui";
-import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { detectTextDirection } from "@/lib/utils";
-
-import { Check, Copy } from "lucide-react";
+} from '@/components/ui';
+import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { detectTextDirection } from '@/lib/utils';
 
 export interface UserMessageProps {
   message: {
@@ -26,15 +24,15 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
   const [copySuccess, setCopySuccess] = useState(false);
 
   const textDirection = useMemo(
-    () => detectTextDirection(message.content || ""),
+    () => detectTextDirection(message.content || ''),
     [message.content]
   );
 
   const formattedTime = useMemo(() => {
     if (!message.created) return null;
-    return new Date(message.created).toLocaleTimeString("fa-IR", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(message.created).toLocaleTimeString('fa-IR', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }, [message.created]);
 
@@ -44,29 +42,29 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
-      console.error("Failed to copy text:", error);
+      console.error('Failed to copy text:', error);
     }
   }, []);
 
   return (
-    <div className="group animate-in fade-in-50 slide-in-from-left-2 flex w-full justify-end duration-300">
+    <div className="group fade-in-50 slide-in-from-left-2 flex w-full animate-in justify-end duration-300">
       <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
         <div className="relative">
           <div
-            className="bg-primary text-primary-foreground border-primary/20 relative rounded-lg rounded-br-sm border px-4 py-3 text-sm leading-relaxed shadow-md transition-all duration-200 hover:shadow-lg"
+            className="relative rounded-lg rounded-br-sm border border-primary/20 bg-primary px-4 py-3 text-primary-foreground text-sm leading-relaxed shadow-md transition-all duration-200 hover:shadow-lg"
             dir={textDirection}
           >
             <div className="pointer-events-none absolute inset-0 rounded-lg rounded-br-sm bg-gradient-to-br from-white/8 to-black/5" />
-            <div className="relative z-10 break-words whitespace-pre-wrap">
+            <div className="relative z-10 whitespace-pre-wrap break-words">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content || ""}
+                {message.content || ''}
               </ReactMarkdown>
             </div>
           </div>
         </div>
 
         <div className="mt-1 flex items-center justify-between gap-3">
-          <time className="text-muted-foreground/80 text-xs font-medium">
+          <time className="font-medium text-muted-foreground/80 text-xs">
             {formattedTime}
           </time>
 
@@ -75,10 +73,10 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
+                    className="h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105 hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => handleCopy(message.content || '')}
                     size="sm"
-                    className="hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105"
-                    onClick={() => handleCopy(message.content || "")}
+                    variant="ghost"
                   >
                     {copySuccess ? (
                       <Check className="h-3.5 w-3.5 text-green-600" />

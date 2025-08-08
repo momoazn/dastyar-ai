@@ -1,8 +1,8 @@
-import { Status } from "@/components/status";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Separator } from "@/components/ui";
-import { PERSIAN_TEXTS } from "@/lib/persian-texts";
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router';
+import { Status } from '@/components/status';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Separator } from '@/components/ui';
+import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 
 export function Header({
   SideBarTrigger,
@@ -10,14 +10,14 @@ export function Header({
   SideBarTrigger: React.ReactNode;
 }) {
   return (
-    <header className="bg-background sticky top-0 z-10 flex h-14 items-center justify-between border-b p-4">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background p-4">
       <div className="flex items-center gap-2">
         {SideBarTrigger}
 
-        <Separator orientation="vertical" className="bg-border me-2 h-4" />
+        <Separator className="me-2 h-4 bg-border" orientation="vertical" />
 
         <Link to="/">
-          <h1 className="text-primary text-2xl font-semibold">
+          <h1 className="font-semibold text-2xl text-primary">
             {PERSIAN_TEXTS.navigation.appTitle}
           </h1>
         </Link>

@@ -1,6 +1,6 @@
-import { memo } from "react";
-import { AssistantMessage } from "./assistant-message";
-import { UserMessage } from "./user-message";
+import { memo } from 'react';
+import { AssistantMessage } from './assistant-message';
+import { UserMessage } from './user-message';
 
 export interface MessageProps {
   message: {
@@ -15,7 +15,7 @@ export interface MessageProps {
 }
 
 export const Message = memo(({ message }: MessageProps) => {
-  const isUser = message.role === "user";
+  const isUser = message.role === 'user';
   return isUser ? (
     <UserMessage message={message} />
   ) : (

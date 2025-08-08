@@ -69,11 +69,11 @@
   --input: oklch(0.885 0.005 250);
   --ring: oklch(0.63 0.12 270);
   /* Charts — complementary, boardroom-ready */
-  --chart-1: oklch(0.55 0.1 270);  /* indigo */
+  --chart-1: oklch(0.55 0.1 270); /* indigo */
   --chart-2: oklch(0.68 0.12 170); /* emerald */
-  --chart-3: oklch(0.78 0.13 85);  /* amber */
+  --chart-3: oklch(0.78 0.13 85); /* amber */
   --chart-4: oklch(0.62 0.14 305); /* magenta */
-  --chart-5: oklch(0.70 0.12 200); /* cyan */
+  --chart-5: oklch(0.7 0.12 200); /* cyan */
   /* Sidebar */
   --sidebar: oklch(0.978 0.003 250);
   --sidebar-foreground: oklch(0.28 0.02 250);
@@ -109,7 +109,7 @@
   /* Charts */
   --chart-1: oklch(0.72 0.13 270);
   --chart-2: oklch(0.68 0.12 170);
-  --chart-3: oklch(0.70 0.12 305);
+  --chart-3: oklch(0.7 0.12 305);
   --chart-4: oklch(0.72 0.12 200);
   --chart-5: oklch(0.74 0.12 85);
   /* Sidebar */

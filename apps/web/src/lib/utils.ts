@@ -1,15 +1,15 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // Cache for text direction detection to avoid repeated calculations
-const textDirectionCache = new Map<string, "rtl" | "ltr">();
+const textDirectionCache = new Map<string, 'rtl' | 'ltr'>();
 const maxCacheSize = 1000;
 
-export const detectTextDirection = (text: string): "rtl" | "ltr" => {
+export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
   // Check cache first
   if (textDirectionCache.has(text)) {
     return textDirectionCache.get(text)!;
@@ -17,7 +17,7 @@ export const detectTextDirection = (text: string): "rtl" | "ltr" => {
 
   const rtlRegex =
     /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-  const direction = rtlRegex.test(text) ? "rtl" : "ltr";
+  const direction = rtlRegex.test(text) ? 'rtl' : 'ltr';
 
   // Cache the result (with size limit)
   if (textDirectionCache.size >= maxCacheSize) {
