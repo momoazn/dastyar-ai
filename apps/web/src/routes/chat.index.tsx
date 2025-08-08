@@ -16,7 +16,7 @@ function ChatIndexRouteComponent() {
 	const [chatModel, setChatModel] = useState("");
 	const [prompt, setPrompt] = useState("");
 
-	const { data: modelList } = useQuery(orpc.models.listOllama.queryOptions());
+	const { data: modelList } = useQuery(orpc.models.list.queryOptions());
 	const availableModels = useMemo(
 		() => (modelList ? modelList.map((m) => m.id) : []),
 		[modelList],

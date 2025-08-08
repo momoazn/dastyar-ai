@@ -45,7 +45,11 @@ function TranslationPage() {
 	// Queries
 	const { data: modelList } = useQuery(modelsQueryOptions());
 	const models =
-		modelList?.map((m) => ({ model: m.modelId, name: m.name })) ?? [];
+		modelList?.map((m) => ({
+			model: m.modelId,
+			name: m.name,
+			provider: m.provider,
+		})) ?? [];
 
 	// Effects
 	useEffect(() => {
@@ -76,6 +80,13 @@ function TranslationPage() {
 			return;
 		}
 
+		// Find the selected model to get its provider
+		const selectedModel = models.find((m) => m.model === model);
+		if (!selectedModel) {
+			setErrorMessage("مدل انتخاب شده یافت نشد");
+			return;
+		}
+
 		setIsTranslating(true);
 		setErrorMessage(null);
 
@@ -86,7 +97,15 @@ function TranslationPage() {
 				targetLanguage,
 				tone,
 				model,
-				provider: "ollama",
+				provider: selectedModel.provider as
+					| "ollama"
+					| "lmstudio"
+					| "openai"
+					| "anthropic"
+					| "gemini"
+					| "mistral"
+					| "openrouter"
+					| "requesty",
 			});
 			setTranslatedText(result.translatedText ?? "");
 		} catch (error) {
@@ -95,7 +114,7 @@ function TranslationPage() {
 		} finally {
 			setIsTranslating(false);
 		}
-	}, [sourceText, sourceLanguage, targetLanguage, tone, model]);
+	}, [sourceText, sourceLanguage, targetLanguage, tone, model, models]);
 
 	const handleCopy = async () => {
 		try {

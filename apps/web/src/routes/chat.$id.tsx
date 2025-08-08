@@ -36,19 +36,11 @@ function ChatThreadRouteComponent() {
 	const [prompt, setPrompt] = useState(navigationState.initialPrompt || "");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const { data: modelList } = useQuery({
-		...orpc.models.listOllama.queryOptions(),
-		refetchInterval: 5 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		select: (
-			data: Array<{
-				id: string;
-				name: string;
-				provider: string;
-				modelId: string;
-			}>,
-		) => data,
+	const { data: models } = useQuery({
+		...orpc.models.list.queryOptions(),
+		refetchInterval: 5 * 60 * 1000, // 5 minutes
 	});
+
 	const { data: persistedMessages } = useQuery(
 		orpc.messages.listByThread.queryOptions({
 			input: { threadId, order: "asc" },
@@ -57,8 +49,8 @@ function ChatThreadRouteComponent() {
 
 	// Default-select the first available model when none is chosen
 	useEffect(() => {
-		if (!chatModel && modelList?.length) setChatModel(modelList[0].id);
-	}, [modelList, chatModel]);
+		if (!chatModel && models?.length) setChatModel(models[0].id);
+	}, [models, chatModel]);
 
 	const initialMessages = useMemo(() => {
 		if (!persistedMessages || persistedMessages.length === 0) return [];
@@ -89,8 +81,8 @@ function ChatThreadRouteComponent() {
 		transport: new DefaultChatTransport({
 			api: `${import.meta.env.VITE_SERVER_URL}/chat`,
 			body: () => {
-				const row = (modelList || []).find((m) => m.id === chatModel);
-				return { model: row?.modelId, provider: row?.provider, threadId };
+				const row = (models || []).find((m) => m.id === chatModel);
+				return { modelId: row?.modelId, threadId };
 			},
 		}),
 	});
@@ -111,18 +103,20 @@ function ChatThreadRouteComponent() {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages, scrollToBottom]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages
 	useEffect(() => {
 		if (navigationState.initialPrompt && navigationState.initialModel) {
 			// Clear the initial state after first render submission
 			setTimeout(() => {
+				// biome-ignore lint/style/noNonNullAssertion: navigationState.initialPrompt is not null
 				sendMessage({ text: navigationState.initialPrompt! });
 			}, 0);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const renderMessages = useMemo(() => {
@@ -203,18 +197,14 @@ function ChatThreadRouteComponent() {
 
 			<div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				{isStreaming ? (
-					<div
-						aria-live="polite"
-						role="status"
-						className="border-t border-border/60"
-					>
+					<output aria-live="polite" className="border-t border-border/60">
 						<div className="mx-auto max-w-4xl px-6 py-2">
 							<div className="flex items-center gap-2 text-xs text-muted-foreground">
 								<Loader2 className="h-3 w-3 animate-spin" />
-								<span>Generating response…</span>
+								<span>{PERSIAN_TEXTS.general.loading}...</span>
 							</div>
 						</div>
-					</div>
+					</output>
 				) : null}
 				<ChatInput
 					prompt={prompt}
@@ -224,11 +214,7 @@ function ChatThreadRouteComponent() {
 					setChatModel={setChatModel}
 					isStreaming={isStreaming}
 					stopStreaming={stopStreaming}
-					models={(modelList || []).map((m) => ({
-						value: m.id,
-						label: m.name,
-						provider: m.provider,
-					}))}
+					models={models}
 				/>
 			</div>
 		</div>

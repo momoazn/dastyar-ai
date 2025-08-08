@@ -7,7 +7,15 @@ export interface TranslateParams {
 	targetLanguage: LanguageCode;
 	tone?: ToneOption;
 	model?: string;
-	provider?: "ollama" | "lmstudio";
+	provider?:
+		| "ollama"
+		| "lmstudio"
+		| "openai"
+		| "anthropic"
+		| "gemini"
+		| "mistral"
+		| "openrouter"
+		| "requesty";
 }
 
 export interface ModelOption {
@@ -24,8 +32,6 @@ export async function translateText(
 	return result;
 }
 
-export const modelsQueryOptions = () => orpc.models.listOllama.queryOptions();
+export const modelsQueryOptions = () => orpc.models.list.queryOptions();
 
-export type ModelsListResult = Awaited<
-	ReturnType<typeof client.models.listOllama>
->;
+export type ModelsListResult = Awaited<ReturnType<typeof client.models.list>>;

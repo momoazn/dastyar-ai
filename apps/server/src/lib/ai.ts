@@ -1,104 +1,104 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { Ollama } from "ollama";
-import { z } from "zod";
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import type { LanguageModel } from 'ai';
+import OpenAI from 'openai';
+import { z } from 'zod';
+import { type Model, type ModelProvider, ModelProviderEnum } from '@/db/schema';
 
 const envSchema = z.object({
-	OLLAMA_BASE_URL: z.string().min(1),
-	OLLAMA_DEFAULT_MODEL: z.string().optional(),
-	LMSTUDIO_BASE_URL: z.string().min(1),
-	LMSTUDIO_DEFAULT_MODEL: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().min(1),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
 
-const DEFAULT_OLLAMA_OPENAI_BASE_URL = "http://localhost:11434/v1" as const;
-const DEFAULT_LMSTUDIO_OPENAI_BASE_URL = "http://127.0.0.1:1234/v1" as const;
-const DEFAULT_FALLBACK_MODEL = "smollm2:1.7b" as const;
+const OLLAMA_OPENAI_BASE_URL = 'http://localhost:11434/v1' as const;
+const LMSTUDIO_OPENAI_BASE_URL = 'http://localhost:1234/v1' as const;
+const OPENROUTER_BASE_URL = 'http://api.openrouter.ai/v1' as const;
 
-const OLLAMA_OPENAI_BASE_URL =
-	(parsedEnv.success
-		? parsedEnv.data.OLLAMA_BASE_URL
-		: process.env.OLLAMA_BASE_URL) ?? DEFAULT_OLLAMA_OPENAI_BASE_URL;
-
-const LMSTUDIO_OPENAI_BASE_URL =
-	(parsedEnv.success
-		? parsedEnv.data.LMSTUDIO_BASE_URL
-		: process.env.LMSTUDIO_BASE_URL) ?? DEFAULT_LMSTUDIO_OPENAI_BASE_URL;
-
-const OLLAMA_DEFAULT_MODEL = parsedEnv.success
-	? parsedEnv.data.OLLAMA_DEFAULT_MODEL
-	: process.env.OLLAMA_DEFAULT_MODEL;
-
-export const ollama = createOpenAICompatible({
-	baseURL: OLLAMA_OPENAI_BASE_URL,
-	name: "ollama",
+export const ollamaProvider = createOpenAICompatible({
+  baseURL: OLLAMA_OPENAI_BASE_URL,
+  name: 'ollama',
 });
 
-export const lmstudio = createOpenAICompatible({
-	baseURL: LMSTUDIO_OPENAI_BASE_URL,
-	name: "lmstudio",
+export const lmstudioProvider = createOpenAICompatible({
+  baseURL: LMSTUDIO_OPENAI_BASE_URL,
+  name: 'lmstudio',
 });
 
-export type ModelType = { id: string; displayName: string };
-
-const ensureTrailingSlash = (value: string): string =>
-	value.endsWith("/") ? value : `${value}/`;
-
-const stripSuffix = (value: string, suffix: string): string =>
-	value.endsWith(suffix) ? value.slice(0, value.length - suffix.length) : value;
+export const openrouterProvider = createOpenAICompatible({
+  baseURL: OPENROUTER_BASE_URL,
+  name: 'openrouter',
+  apiKey: parsedEnv.data?.OPENROUTER_API_KEY,
+});
 
 const fetchOpenAICompatibleModels = async (
-	apiBase: string,
-): Promise<string[]> => {
-	const url = new URL("models", ensureTrailingSlash(apiBase));
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error(
-			`Failed to fetch models (OpenAI-compatible): ${response.status}`,
-		);
-	}
-	const json: { data?: Array<{ id: string }> } = await response.json();
-	return (json.data ?? []).map((m) => m.id).filter(Boolean);
+  apiBase: string
+): Promise<OpenAI.Models.Model[]> => {
+  const client = new OpenAI({
+    baseURL: apiBase,
+  });
+  const response = await client.models.list();
+  return response.data;
 };
 
-export const listOllamaModels = async (): Promise<ModelType[]> => {
-	const foundIds = new Set<string>();
-
-	// Primary: OpenAI-compatible endpoint
-	try {
-		const ids = await fetchOpenAICompatibleModels(OLLAMA_OPENAI_BASE_URL);
-		for (const id of ids) foundIds.add(id);
-	} catch {}
-
-	// Fallback: Ollama native endpoint
-	if (foundIds.size === 0) {
-		const host = ensureTrailingSlash(
-			stripSuffix(OLLAMA_OPENAI_BASE_URL, "/v1"),
-		);
-		try {
-			const response = await new Ollama({ host }).list();
-			const ids = response.models.map((m) => m.model).filter(Boolean);
-			for (const id of ids) foundIds.add(id);
-		} catch {}
-	}
-
-	return Array.from(foundIds).map((id) => ({ id, displayName: id }));
+export const listLmstudioModels = async () => {
+  try {
+    const models = await fetchOpenAICompatibleModels(LMSTUDIO_OPENAI_BASE_URL);
+    return models;
+  } catch {
+    return [];
+  }
 };
 
-export const listLmstudioModels = async (): Promise<ModelType[]> => {
-	try {
-		const ids = await fetchOpenAICompatibleModels(LMSTUDIO_OPENAI_BASE_URL);
-		return ids.map((id) => ({ id, displayName: id }));
-	} catch {
-		return [];
-	}
+export const listOllamaModels = async () => {
+  try {
+    const models = await fetchOpenAICompatibleModels(OLLAMA_OPENAI_BASE_URL);
+    return models;
+  } catch {
+    return [];
+  }
 };
 
-export const resolveModel = async (requested?: string): Promise<string> => {
-	const available = await listOllamaModels();
-	const allowed = new Set(available.map((m) => m.id));
-	const fallback =
-		OLLAMA_DEFAULT_MODEL || available[0]?.id || DEFAULT_FALLBACK_MODEL;
-	if (!requested) return fallback;
-	return allowed.has(requested) ? requested : fallback;
+export const listOpenrouterModels = async () => {
+  try {
+    const models = await fetchOpenAICompatibleModels(OPENROUTER_BASE_URL);
+    return models;
+  } catch {
+    return [];
+  }
+};
+
+export const listAllModels = async (): Promise<
+  (OpenAI.Models.Model & { provider: ModelProvider })[]
+> => {
+  const ollamaModels = await listOllamaModels();
+  const lmstudioModels = await listLmstudioModels();
+  const openrouterModels = await listOpenrouterModels();
+
+  return [
+    ...ollamaModels.map((m) => ({
+      ...m,
+      provider: ModelProviderEnum.OLLAMA,
+    })),
+    ...lmstudioModels.map((m) => ({
+      ...m,
+      provider: ModelProviderEnum.LMSTUDIO,
+    })),
+    ...openrouterModels.map((m) => ({
+      ...m,
+      provider: ModelProviderEnum.OPENROUTER,
+    })),
+  ];
+};
+
+export const getProviderForModel = (model: Model): LanguageModel => {
+  switch (model.provider) {
+    case ModelProviderEnum.OLLAMA:
+      return ollamaProvider(model.name);
+    case ModelProviderEnum.LMSTUDIO:
+      return lmstudioProvider(model.name);
+    case ModelProviderEnum.OPENROUTER:
+      return openrouterProvider(model.name);
+    default:
+      return ollamaProvider(model.name);
+  }
 };
