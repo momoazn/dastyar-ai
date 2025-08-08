@@ -13,6 +13,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { z } from "zod";
 import { runMigrations } from "./db/migrate";
+import { ModelProviderEnum } from "./db/schema";
 import { lmstudio, ollama, resolveModel } from "./lib/ai";
 import {
 	getMessagesByThread,
@@ -62,18 +63,7 @@ app.post("/chat", async (c) => {
 		const schema = z.object({
 			messages: z.array(z.any()).default([]),
 			model: z.string().optional(),
-			provider: z
-				.enum([
-					"ollama",
-					"lmstudio",
-					"openai",
-					"anthropic",
-					"gemini",
-					"mistral",
-					"openrouter",
-					"requesty",
-				])
-				.optional(),
+			provider: z.enum(Object.values(ModelProviderEnum)).optional(),
 			threadId: z.string().optional(),
 			system: z.string().optional(),
 		});
@@ -88,8 +78,6 @@ app.post("/chat", async (c) => {
 				return c.json({ error: "Thread not found" }, 404);
 			}
 		}
-
-		// (Removed) Early persistence to avoid double-saving user message. We persist below
 
 		// Build full conversation history to send to the model
 		let history: UIMessage[] = uiMessages;
