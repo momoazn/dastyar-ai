@@ -1,31 +1,32 @@
-import { Button } from "@/components/ui";
 import { SendIcon } from "lucide-react";
+import { Button } from "@/components/ui";
 
 interface TranslateButtonProps {
-  onTranslate: () => void;
-  isTranslating: boolean;
-  text: string;
-  disabled?: boolean;
+	onTranslate: () => void;
+	isTranslating: boolean;
+	text: string;
+	disabled?: boolean;
 }
 
 export function TranslateButton({
-  onTranslate,
-  isTranslating,
-  text,
-  disabled = false,
+	onTranslate,
+	isTranslating,
+	text,
+	disabled = false,
 }: TranslateButtonProps) {
-  return (
-    <div className="mt-4 flex w-full flex-1/5 justify-end">
-      <Button
-        variant="outline"
-        size="lg"
-        className="w-full cursor-pointer"
-        onClick={onTranslate}
-        disabled={disabled || isTranslating}
-      >
-        <span className="text-sm">{text}</span>
-        <SendIcon className="size-4" />
-      </Button>
-    </div>
-  );
+	return (
+		<div className="mt-4 flex w-full flex-1/5 justify-end">
+			<Button
+				type="button"
+				variant="outline"
+				size="lg"
+				className="w-full cursor-pointer"
+				onClick={onTranslate}
+				disabled={disabled || isTranslating}
+			>
+				<span className="text-sm">{text}</span>
+				<SendIcon className="size-4" />
+			</Button>
+		</div>
+	);
 }
