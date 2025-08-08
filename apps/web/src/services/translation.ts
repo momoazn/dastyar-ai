@@ -18,7 +18,7 @@ export interface ModelOption {
 // Wrap API calls behind a small service for easier testing and future changes
 export async function translateText(
 	params: TranslateParams,
-): Promise<{ id: string; translatedText: string }> {
+): Promise<{ id: string | null; translatedText: string | null }> {
 	// The client throws on error; callers should handle
 	const result = await client.translations.translate(params);
 	return result;

@@ -190,6 +190,7 @@ export const appRouter = {
 					`You are a professional translator. Translate the text from ${input.sourceLanguage} to ${input.targetLanguage}.`,
 					input.tone ? `Use a ${input.tone} tone.` : undefined,
 					"Preserve meaning and formatting. Return only the translated text without extra commentary.",
+					"Always return a json object with the translated text.",
 					"---",
 					input.text,
 				]
@@ -204,7 +205,14 @@ export const appRouter = {
 							.describe("Only the translated text. No extra commentary."),
 					}),
 					prompt,
+				}).catch((error) => {
+					console.error("========> error", error);
+					return null;
 				});
+
+				if (!result) {
+					return { id: null, translatedText: null } as const;
+				}
 
 				const id = generateId(15);
 				try {
@@ -218,7 +226,9 @@ export const appRouter = {
 						tone:
 							(input.tone as (typeof ToneEnum)[keyof typeof ToneEnum]) ?? null,
 					});
-				} catch {}
+				} catch (error) {
+					console.error("========> error", error);
+				}
 
 				return { id, translatedText: result.object.translatedText } as const;
 			}),
