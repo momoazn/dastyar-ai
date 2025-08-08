@@ -1,102 +1,92 @@
+import { ArrowLeftRightIcon } from "lucide-react";
+import { Button } from "@/components/ui";
+import { PERSIAN_TEXTS } from "@/lib/persian-texts";
 import { Selector } from "./selector";
-
-interface Language {
-  value: string;
-  label: string;
-}
-
-interface Tone {
-  value: string;
-  label: string;
-}
-
-interface Model {
-  model: string;
-  name?: string;
-}
+import { type LanguageCode, languages, type ToneOption, tones } from "./types";
 
 interface TranslationControlsProps {
-  sourceLang: string;
-  targetLang: string;
-  tone: string;
-  model: string;
-  onSourceLangChange: (value: string) => void;
-  onTargetLangChange: (value: string) => void;
-  onToneChange: (value: string) => void;
-  onModelChange: (value: string) => void;
-  languages: Language[];
-  tones: Tone[];
-  models: Model[];
-  labels: {
-    sourceLanguage: string;
-    targetLanguage: string;
-    translationTone: string;
-    model: string;
-  };
+	sourceLang: LanguageCode;
+	targetLang: LanguageCode;
+	tone: ToneOption;
+	model: string;
+	onSourceLangChange: (value: string) => void;
+	onTargetLangChange: (value: string) => void;
+	onToneChange: (value: string) => void;
+	onModelChange: (value: string) => void;
+	models: Array<{ model: string; name?: string }>;
+	onSwapLanguages?: () => void;
+	disabled?: boolean;
 }
 
 export function TranslationControls({
-  sourceLang,
-  targetLang,
-  tone,
-  model,
-  onSourceLangChange,
-  onTargetLangChange,
-  onToneChange,
-  onModelChange,
-  languages,
-  tones,
-  models,
-  labels,
+	sourceLang,
+	targetLang,
+	tone,
+	model,
+	onSourceLangChange,
+	onTargetLangChange,
+	onToneChange,
+	onModelChange,
+	models,
+	onSwapLanguages,
+	disabled,
 }: TranslationControlsProps) {
-  const languageOptions = languages.map((lang) => ({
-    value: lang.value,
-    label: lang.label,
-  }));
+	const modelOptions = models.map((m) => ({
+		value: m.model,
+		label: m.name || m.model,
+	}));
 
-  const toneOptions = tones.map((t) => ({
-    value: t.value,
-    label: t.label,
-  }));
+	return (
+		<div className="bg-background p-4">
+			<div className="w-full">
+				<div className="grid grid-cols-4 gap-4">
+					<Selector
+						label={PERSIAN_TEXTS.translation.sourceLanguage}
+						value={sourceLang}
+						onChange={onSourceLangChange}
+						options={languages}
+						disabled={disabled}
+					/>
 
-  const modelOptions = models.map((m) => ({
-    value: m.model,
-    label: m.name || m.model,
-  }));
+					<Selector
+						label={PERSIAN_TEXTS.translation.targetLanguage}
+						value={targetLang}
+						onChange={onTargetLangChange}
+						options={languages}
+						disabled={disabled}
+					/>
 
-  return (
-    <div className="bg-background p-4">
-      <div className="w-full">
-        <div className="grid grid-cols-4 gap-4">
-          <Selector
-            label={labels.sourceLanguage}
-            value={sourceLang}
-            onChange={onSourceLangChange}
-            options={languageOptions}
-          />
+					<Selector
+						label={PERSIAN_TEXTS.translation.translationTone}
+						value={tone}
+						onChange={onToneChange}
+						options={tones}
+						disabled={disabled}
+					/>
 
-          <Selector
-            label={labels.targetLanguage}
-            value={targetLang}
-            onChange={onTargetLangChange}
-            options={languageOptions}
-          />
-
-          <Selector
-            label={labels.translationTone}
-            value={tone}
-            onChange={onToneChange}
-            options={toneOptions}
-          />
-
-          <Selector
-            label={labels.model}
-            value={model}
-            onChange={onModelChange}
-            options={modelOptions}
-          />
-        </div>
-      </div>
-    </div>
-  );
+					<Selector
+						label={PERSIAN_TEXTS.translation.model}
+						value={model}
+						onChange={onModelChange}
+						options={modelOptions}
+						disabled={disabled}
+					/>
+				</div>
+				{onSwapLanguages && (
+					<div className="mt-3 flex justify-end">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onSwapLanguages}
+							disabled={disabled}
+						>
+							<ArrowLeftRightIcon className="mr-2 h-4 w-4" />
+							{PERSIAN_TEXTS.translation.sourceLanguage} ↔{" "}
+							{PERSIAN_TEXTS.translation.targetLanguage}
+						</Button>
+					</div>
+				)}
+			</div>
+		</div>
+	);
 }

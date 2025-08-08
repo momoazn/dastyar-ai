@@ -1,8 +1,21 @@
+import { generateObject } from "ai";
 import { inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { ModelProviderEnum, models } from "../db/schema";
-import { listLmstudioModels, listOllamaModels } from "../lib/ai";
+import {
+	LanguageEnum,
+	ModelProviderEnum,
+	models,
+	ToneEnum,
+	translations,
+} from "../db/schema";
+import {
+	listLmstudioModels,
+	listOllamaModels,
+	lmstudio,
+	ollama,
+	resolveModel,
+} from "../lib/ai";
 import {
 	clearThread,
 	createThread,
@@ -148,6 +161,66 @@ export const appRouter = {
 			.handler(async ({ input }) => {
 				await clearThread(input.threadId);
 				return { ok: true } as const;
+			}),
+	},
+	translations: {
+		translate: publicProcedure
+			.input(
+				z.object({
+					text: z.string().min(1),
+					sourceLanguage: z.enum(Object.values(LanguageEnum)),
+					targetLanguage: z.enum(Object.values(LanguageEnum)),
+					tone: z.enum(Object.values(ToneEnum)).optional(),
+					model: z.string().optional(),
+					provider: z.enum(Object.values(ModelProviderEnum)).optional(),
+				}),
+			)
+			.handler(async ({ input }) => {
+				const selectedProvider = input.provider ?? ModelProviderEnum.OLLAMA;
+				const modelId =
+					selectedProvider === ModelProviderEnum.OLLAMA
+						? await resolveModel(input.model)
+						: (input.model ?? "");
+				const providerModel =
+					selectedProvider === ModelProviderEnum.LMSTUDIO
+						? lmstudio(modelId)
+						: ollama(modelId);
+
+				const prompt = [
+					`You are a professional translator. Translate the text from ${input.sourceLanguage} to ${input.targetLanguage}.`,
+					input.tone ? `Use a ${input.tone} tone.` : undefined,
+					"Preserve meaning and formatting. Return only the translated text without extra commentary.",
+					"---",
+					input.text,
+				]
+					.filter(Boolean)
+					.join("\n");
+
+				const result = await generateObject({
+					model: providerModel,
+					schema: z.object({
+						translatedText: z
+							.string()
+							.describe("Only the translated text. No extra commentary."),
+					}),
+					prompt,
+				});
+
+				const id = generateId(15);
+				try {
+					await db.insert(translations).values({
+						id,
+						sourceText: input.text,
+						translatedText: result.object.translatedText,
+						model: modelId,
+						sourceLanguage: input.sourceLanguage,
+						targetLanguage: input.targetLanguage,
+						tone:
+							(input.tone as (typeof ToneEnum)[keyof typeof ToneEnum]) ?? null,
+					});
+				} catch {}
+
+				return { id, translatedText: result.object.translatedText } as const;
 			}),
 	},
 };
