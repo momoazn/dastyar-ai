@@ -1,5 +1,4 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import type { LanguageModel } from 'ai';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { type Model, type ModelProvider, ModelProviderEnum } from '@/db/schema';
@@ -90,7 +89,9 @@ export const listAllModels = async (): Promise<
   ];
 };
 
-export const getProviderForModel = (model: Model): LanguageModel => {
+export const getProviderForModel = (
+  model: Model
+): ReturnType<typeof ollamaProvider> => {
   switch (model.provider) {
     case ModelProviderEnum.OLLAMA:
       return ollamaProvider(model.name);

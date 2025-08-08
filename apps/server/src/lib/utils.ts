@@ -1,7 +1,4 @@
 import type { UIMessage } from 'ai';
-import type OpenAI from 'openai';
-import type { ModelProvider } from '@/db/schema';
-import { generateId } from './ids';
 
 export function extractTextFromParts(message: UIMessage): {
   content: string;
@@ -24,14 +21,14 @@ export function extractTextFromParts(message: UIMessage): {
   };
 }
 
-export function convertOpenAICompatibleModelsToDbModel(
-  providerModels: Partial<Record<ModelProvider, OpenAI.Models.Model[]>>
-) {
-  return Object.values(providerModels)
-    .flat()
-    .map((model) => ({
-      id: generateId(),
-      name: model.id,
-      provider: model.provider,
-    }));
+const ALPHABET =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+export function generateId(length = 15): string {
+  let id = '';
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  for (let i = 0; i < length; i++) {
+    id += ALPHABET[bytes[i] % ALPHABET.length];
+  }
+  return id;
 }

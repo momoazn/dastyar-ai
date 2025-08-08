@@ -1,7 +1,6 @@
 import { generateObject } from 'ai';
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../db';
 import {
   LanguageEnum,
   ModelProviderEnum,
@@ -10,6 +9,7 @@ import {
   translations,
 } from '../db/schema';
 import { getProviderForModel, listAllModels } from '../lib/ai';
+import { publicProcedure } from '../lib/orpc';
 import {
   clearThread,
   createThread,
@@ -19,9 +19,8 @@ import {
   listThreads,
   renameThread,
   setArchived,
-} from '../lib/chat-store';
-import { generateId } from '../lib/ids';
-import { publicProcedure } from '../lib/orpc';
+} from '../lib/repository';
+import { generateId } from '../lib/utils';
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -200,7 +199,7 @@ export const appRouter = {
         }
 
         const id = generateId(15);
-        await db.insert(translations).values({
+        await context.db.insert(translations).values({
           id,
           sourceText: input.text,
           translatedText: result.object.translatedText,
@@ -215,4 +214,5 @@ export const appRouter = {
       }),
   },
 };
+
 export type AppRouter = typeof appRouter;

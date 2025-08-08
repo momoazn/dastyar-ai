@@ -2,8 +2,7 @@ import type { UIMessage } from 'ai';
 import { asc, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { messages, models, threads } from '../db/schema';
-import { generateId } from './ids';
-import { extractTextFromParts } from './utils';
+import { extractTextFromParts, generateId } from './utils';
 
 export async function getModelById(id: string) {
   const rows = await db.select().from(models).where(eq(models.id, id)).limit(1);
