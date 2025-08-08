@@ -24,7 +24,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   useEffect(() => {
     const currentPath = window.location.pathname;
-    if (currentPath === '/') setOpen(false);
+    if (currentPath === '/') {
+      setOpen(false);
+    }
   }, [setOpen]);
 
   return (

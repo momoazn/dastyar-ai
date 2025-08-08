@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Image, Languages, MessageSquare } from 'lucide-react';
-
 import { Button, Card } from '@/components/ui';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 
@@ -44,8 +43,11 @@ function HomeComponent() {
         </header>
 
         <main className="grid gap-6 md:grid-cols-3">
-          {features.map((feature, index) => (
-            <Card className="p-6 transition-all hover:scale-105" key={index}>
+          {features.map((feature) => (
+            <Card
+              className="p-6 transition-all hover:scale-105"
+              key={feature.link}
+            >
               <div className={feature.color}>{feature.icon}</div>
               <h2 className="mt-4 font-semibold text-xl">{feature.title}</h2>
               <p className="mt-4 h-10 text-muted-foreground text-sm">

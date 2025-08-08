@@ -11,7 +11,7 @@ export function TranslationsList() {
         <Link
           className="relative flex h-12 items-center justify-between border-b p-4 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           key={t.id}
-          search={{ id: t.id as string } as any}
+          search={{ id: t.id as string }}
           to="/translation"
         >
           {({ isActive }) => (

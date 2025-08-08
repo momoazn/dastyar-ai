@@ -13,7 +13,7 @@ export function useCreateThread(isActive: boolean) {
   const createMutation = useMutation({
     mutationFn: (title?: string) => client.threads.create({ title }),
     onSuccess: (res) => {
-      void queryClient.invalidateQueries();
+      queryClient.invalidateQueries();
       navigate({ to: '/chat/$id', params: { id: res.id } });
     },
   });

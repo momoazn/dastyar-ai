@@ -8,16 +8,19 @@ export function cn(...inputs: ClassValue[]) {
 // Cache for text direction detection to avoid repeated calculations
 const textDirectionCache = new Map<string, 'rtl' | 'ltr'>();
 const maxCacheSize = 1000;
+const TOP_LEVEL_RTL_REGEX =
+  /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
 
 export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
   // Check cache first
   if (textDirectionCache.has(text)) {
-    return textDirectionCache.get(text)!;
+    const cached = textDirectionCache.get(text);
+    if (cached) {
+      return cached;
+    }
   }
 
-  const rtlRegex =
-    /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-  const direction = rtlRegex.test(text) ? 'rtl' : 'ltr';
+  const direction = TOP_LEVEL_RTL_REGEX.test(text) ? 'rtl' : 'ltr';
 
   // Cache the result (with size limit)
   if (textDirectionCache.size >= maxCacheSize) {

@@ -42,14 +42,14 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   }, [message?.role, message?.reasoning]);
 
   const messageStatus = useMemo(() => {
-    const isStopped = message.status === 'stopped';
-    const isErrored = message.status === 'errored';
-    const isGenerating =
+    const stopped = message.status === 'stopped';
+    const errored = message.status === 'errored';
+    const generating =
       message.status === 'idle' ||
       message.status === 'streaming' ||
       message.status === 'reasoning';
 
-    return { isStopped, isErrored, isGenerating };
+    return { isStopped: stopped, isErrored: errored, isGenerating: generating };
   }, [message.status]);
 
   const textDirection = useMemo(
@@ -58,7 +58,9 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   );
 
   const formattedTime = useMemo(() => {
-    if (!message.sent_at) return null;
+    if (!message.sent_at) {
+      return null;
+    }
     return new Date(message.sent_at).toLocaleTimeString('fa-IR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -70,8 +72,8 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
       await navigator.clipboard.writeText(content);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy text:', error);
+    } catch (_error) {
+      setCopySuccess(false);
     }
   }, []);
 

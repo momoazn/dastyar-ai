@@ -1,30 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { BotIcon } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChatInput } from '@/components/chat-input';
 import { ScrollArea } from '@/components/ui';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/chat/')({
-  component: ChatIndexRouteComponent,
+  component: ChatIndexComponent,
 });
 
-function ChatIndexRouteComponent() {
+function ChatIndexComponent() {
   const navigate = useNavigate();
   const [chatModel, setChatModel] = useState('');
   const [prompt, setPrompt] = useState('');
 
-  const { data: modelList } = useQuery(orpc.models.list.queryOptions());
-  const availableModels = useMemo(
-    () => (modelList ? modelList.map((m) => m.id) : []),
-    [modelList]
-  );
+  const { data: modelsList } = useQuery(orpc.models.list.queryOptions());
 
   const handleSendFirstMessage = useCallback(async () => {
     const trimmed = prompt.trim();
-    if (!(trimmed && chatModel)) return;
+    if (!(trimmed && chatModel)) {
+      return;
+    }
     const created = await client.threads.create({ title: undefined });
     await queryClient.invalidateQueries({
       queryKey: orpc.threads.list.queryKey(),
@@ -64,11 +62,13 @@ function ChatIndexRouteComponent() {
           chatModel={chatModel}
           handleSendPrompt={handleSendFirstMessage}
           isStreaming={false}
-          models={availableModels}
+          models={modelsList}
           prompt={prompt}
           setChatModel={setChatModel}
           setPrompt={setPrompt}
-          stopStreaming={() => {}}
+          stopStreaming={() => {
+            // noop
+          }}
         />
       </div>
     </div>

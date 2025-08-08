@@ -13,20 +13,26 @@ export function ChatThreadsList() {
 
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => client.threads.delete({ id }),
-    onSuccess: () => void queryClient.invalidateQueries(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+    },
   });
 
   const archiveMutation = useMutation({
     mutationFn: ({ id, isArchived }: { id: string; isArchived: boolean }) =>
       client.threads.archive({ id, isArchived }),
-    onSuccess: () => void queryClient.invalidateQueries(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+    },
   });
 
-  const items = (listQuery.data ?? []).map((t: any) => ({
-    id: t.id as string,
-    title: t.title as string,
-    isArchived: Boolean(t.isArchived),
-  }));
+  const items = (listQuery.data ?? []).map(
+    (t: { id: string; title?: string; isArchived?: boolean }) => ({
+      id: t.id as string,
+      title: t.title as string,
+      isArchived: Boolean(t.isArchived),
+    })
+  );
 
   return (
     <>

@@ -29,7 +29,9 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
   );
 
   const formattedTime = useMemo(() => {
-    if (!message.created) return null;
+    if (!message.created) {
+      return null;
+    }
     return new Date(message.created).toLocaleTimeString('fa-IR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -41,8 +43,8 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
       await navigator.clipboard.writeText(content);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy text:', error);
+    } catch {
+      setCopySuccess(false);
     }
   }, []);
 

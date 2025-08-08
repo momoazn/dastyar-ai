@@ -49,11 +49,15 @@ function ChatThreadRouteComponent() {
 
   // Default-select the first available model when none is chosen
   useEffect(() => {
-    if (!chatModel && models?.length) setChatModel(models[0].id);
+    if (!chatModel && models?.length) {
+      setChatModel(models[0].id);
+    }
   }, [models, chatModel]);
 
   const initialMessages = useMemo(() => {
-    if (!persistedMessages || persistedMessages.length === 0) return [];
+    if (!persistedMessages || persistedMessages.length === 0) {
+      return [];
+    }
     return persistedMessages.map((m) => {
       const parts: Array<
         { type: 'text'; text: string } | { type: 'reasoning'; text: string }
@@ -90,7 +94,9 @@ function ChatThreadRouteComponent() {
   const isStreaming = status === 'streaming' || status === 'submitted';
 
   const handleSendMessage = useCallback(() => {
-    if (!(prompt.trim() && chatModel)) return;
+    if (!(prompt.trim() && chatModel)) {
+      return;
+    }
     sendMessage({ text: prompt });
     setPrompt('');
   }, [prompt, chatModel, sendMessage]);
@@ -125,8 +131,12 @@ function ChatThreadRouteComponent() {
         let text = '';
         let reasoning = '';
         for (const p of m.parts) {
-          if (p.type === 'text') text += p.text;
-          if (p.type === 'reasoning') reasoning += p.text;
+          if (p.type === 'text') {
+            text += p.text;
+          }
+          if (p.type === 'reasoning') {
+            reasoning += p.text;
+          }
         }
         return { id: m.id, role: m.role, text, reasoning };
       });
