@@ -1,5 +1,8 @@
+import { inArray, sql } from "drizzle-orm";
 import { z } from "zod";
-import { listOllamaModels } from "../lib/ai";
+import { db } from "../db";
+import { ModelProviderEnum, models } from "../db/schema";
+import { listLmstudioModels, listOllamaModels } from "../lib/ai";
 import {
 	clearThread,
 	createThread,
@@ -11,6 +14,7 @@ import {
 	renameThread,
 	setArchived,
 } from "../lib/chat-store";
+import { generateId } from "../lib/ids";
 import { publicProcedure } from "../lib/orpc";
 
 export const appRouter = {
@@ -19,8 +23,55 @@ export const appRouter = {
 	}),
 	models: {
 		listOllama: publicProcedure.handler(async () => {
-			const models = await listOllamaModels();
-			return models;
+			const [lmstudioList, ollamaList] = await Promise.all([
+				listLmstudioModels(),
+				listOllamaModels(),
+			]);
+
+			const toUpsert = [
+				...ollamaList.map((m) => ({
+					id: generateId(),
+					name: m.displayName,
+					modelId: m.id,
+					provider: ModelProviderEnum.OLLAMA,
+				})),
+				...lmstudioList.map((m) => ({
+					id: generateId(),
+					name: m.displayName,
+					modelId: m.id,
+					provider: ModelProviderEnum.LMSTUDIO,
+				})),
+			];
+
+			if (toUpsert.length > 0) {
+				await db
+					.insert(models)
+					.values(toUpsert)
+					.onConflictDoUpdate({
+						target: [models.provider, models.modelId],
+						set: {
+							name: sql`excluded.name`,
+							updatedAt: sql`(unixepoch())`,
+						},
+					});
+			}
+
+			const rows = await db
+				.select({
+					id: models.id,
+					name: models.name,
+					modelId: models.modelId,
+					provider: models.provider,
+					isEnabled: models.isEnabled,
+				})
+				.from(models)
+				.where(
+					inArray(models.provider, [
+						ModelProviderEnum.LMSTUDIO,
+						ModelProviderEnum.OLLAMA,
+					]),
+				);
+			return rows;
 		}),
 	},
 	threads: {

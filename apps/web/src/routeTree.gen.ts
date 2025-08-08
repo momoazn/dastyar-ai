@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TranslationRouteImport } from './routes/translation'
 import { Route as ImageRouteImport } from './routes/image'
-import { Route as AiRouteImport } from './routes/ai'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
@@ -24,11 +23,6 @@ const TranslationRoute = TranslationRouteImport.update({
 const ImageRoute = ImageRouteImport.update({
   id: '/image',
   path: '/image',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiRoute = AiRouteImport.update({
-  id: '/ai',
-  path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,7 +43,6 @@ const ChatIdRoute = ChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/ai': typeof AiRoute
   '/image': typeof ImageRoute
   '/translation': typeof TranslationRoute
   '/chat/$id': typeof ChatIdRoute
@@ -57,7 +50,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/ai': typeof AiRoute
   '/image': typeof ImageRoute
   '/translation': typeof TranslationRoute
   '/chat/$id': typeof ChatIdRoute
@@ -66,7 +58,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/ai': typeof AiRoute
   '/image': typeof ImageRoute
   '/translation': typeof TranslationRoute
   '/chat/$id': typeof ChatIdRoute
@@ -74,22 +65,14 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ai' | '/image' | '/translation' | '/chat/$id' | '/chat'
+  fullPaths: '/' | '/image' | '/translation' | '/chat/$id' | '/chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ai' | '/image' | '/translation' | '/chat/$id' | '/chat'
-  id:
-    | '__root__'
-    | '/'
-    | '/ai'
-    | '/image'
-    | '/translation'
-    | '/chat/$id'
-    | '/chat/'
+  to: '/' | '/image' | '/translation' | '/chat/$id' | '/chat'
+  id: '__root__' | '/' | '/image' | '/translation' | '/chat/$id' | '/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AiRoute: typeof AiRoute
   ImageRoute: typeof ImageRoute
   TranslationRoute: typeof TranslationRoute
   ChatIdRoute: typeof ChatIdRoute
@@ -110,13 +93,6 @@ declare module '@tanstack/react-router' {
       path: '/image'
       fullPath: '/image'
       preLoaderRoute: typeof ImageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai': {
-      id: '/ai'
-      path: '/ai'
-      fullPath: '/ai'
-      preLoaderRoute: typeof AiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -145,7 +121,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AiRoute: AiRoute,
   ImageRoute: ImageRoute,
   TranslationRoute: TranslationRoute,
   ChatIdRoute: ChatIdRoute,

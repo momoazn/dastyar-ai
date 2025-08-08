@@ -13,7 +13,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { z } from "zod";
 import { runMigrations } from "./db/migrate";
-import { ollama, resolveModel } from "./lib/ai";
+import { lmstudio, ollama, resolveModel } from "./lib/ai";
 import {
 	getMessagesByThread,
 	getThread,
@@ -62,6 +62,18 @@ app.post("/chat", async (c) => {
 		const schema = z.object({
 			messages: z.array(z.any()).default([]),
 			model: z.string().optional(),
+			provider: z
+				.enum([
+					"ollama",
+					"lmstudio",
+					"openai",
+					"anthropic",
+					"gemini",
+					"mistral",
+					"openrouter",
+					"requesty",
+				])
+				.optional(),
 			threadId: z.string().optional(),
 			system: z.string().optional(),
 		});
@@ -125,10 +137,16 @@ app.post("/chat", async (c) => {
 			}
 		} catch {}
 
-		const modelId = await resolveModel(body.model);
+		const selectedProvider = body.provider ?? "ollama";
+		const modelId =
+			selectedProvider === "ollama"
+				? await resolveModel(body.model)
+				: (body.model ?? "");
+		const providerModel =
+			selectedProvider === "lmstudio" ? lmstudio(modelId) : ollama(modelId);
 		const result = streamText({
 			model: wrapLanguageModel({
-				model: ollama(modelId),
+				model: providerModel,
 				middleware: extractReasoningMiddleware({
 					tagName: "think",
 					separator: "\n",

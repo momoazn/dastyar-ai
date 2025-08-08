@@ -29,17 +29,26 @@ function ChatThreadRouteComponent() {
 		initialModel?: string;
 	};
 
+	// chatModel stores models row id
 	const [chatModel, setChatModel] = useState(
 		navigationState.initialModel || "",
 	);
 	const [prompt, setPrompt] = useState(navigationState.initialPrompt || "");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const { data: modelList } = useQuery(
-		orpc.models.listOllama.queryOptions({
-			select: (data) => data.map((m) => m.id),
-		}),
-	);
+	const { data: modelList } = useQuery({
+		...orpc.models.listOllama.queryOptions(),
+		refetchInterval: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		select: (
+			data: Array<{
+				id: string;
+				name: string;
+				provider: string;
+				modelId: string;
+			}>,
+		) => data,
+	});
 	const { data: persistedMessages } = useQuery(
 		orpc.messages.listByThread.queryOptions({
 			input: { threadId, order: "asc" },
@@ -48,7 +57,7 @@ function ChatThreadRouteComponent() {
 
 	// Default-select the first available model when none is chosen
 	useEffect(() => {
-		if (!chatModel && modelList?.length) setChatModel(modelList[0]);
+		if (!chatModel && modelList?.length) setChatModel(modelList[0].id);
 	}, [modelList, chatModel]);
 
 	const initialMessages = useMemo(() => {
@@ -79,7 +88,10 @@ function ChatThreadRouteComponent() {
 		messages: initialMessages,
 		transport: new DefaultChatTransport({
 			api: `${import.meta.env.VITE_SERVER_URL}/chat`,
-			body: () => ({ model: chatModel, threadId }),
+			body: () => {
+				const row = (modelList || []).find((m) => m.id === chatModel);
+				return { model: row?.modelId, provider: row?.provider, threadId };
+			},
 		}),
 	});
 
@@ -212,7 +224,11 @@ function ChatThreadRouteComponent() {
 					setChatModel={setChatModel}
 					isStreaming={isStreaming}
 					stopStreaming={stopStreaming}
-					models={modelList || []}
+					models={(modelList || []).map((m) => ({
+						value: m.id,
+						label: m.name,
+						provider: m.provider,
+					}))}
 				/>
 			</div>
 		</div>
