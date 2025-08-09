@@ -8,16 +8,9 @@ export function ChatThreadsList() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const listQuery = useQuery({
-    ...orpc.threads.list.queryOptions({ includeArchived: false }),
-    select: (data) => {
-      return data.map((t) => ({
-        id: t.id as string,
-        title: t.title as string,
-        isArchived: Boolean(t.isArchived),
-      }));
-    },
-  });
+  const listQuery = useQuery(
+    orpc.threads.list.queryOptions({ includeArchived: false })
+  );
 
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => client.threads.delete({ id }),

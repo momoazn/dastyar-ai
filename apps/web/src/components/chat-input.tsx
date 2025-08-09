@@ -1,4 +1,4 @@
-import { Pause, Send } from 'lucide-react';
+import { Pause, RefreshCcw, Send } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import {
   Button,
@@ -11,13 +11,14 @@ import {
 } from '@/components/ui';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
+import { client, orpc, queryClient } from '@/utils/orpc';
 
 interface ChatInputProps {
   handleSendPrompt: () => void;
   isStreaming: boolean;
   stopStreaming: () => void;
-  chatModel?: string; // `${provider}:${modelId}`
-  setChatModel: (model: string) => void;
+  chatModelId?: string; // `${provider}:${modelId}`
+  setChatModelId: (model: string) => void;
   prompt: string;
   setPrompt: (prompt: string) => void;
   models?: Array<{
@@ -32,8 +33,8 @@ export const ChatInput = memo(
     handleSendPrompt,
     isStreaming,
     stopStreaming,
-    chatModel,
-    setChatModel,
+    chatModelId,
+    setChatModelId,
     prompt,
     setPrompt,
     models = [],
@@ -90,6 +91,15 @@ export const ChatInput = memo(
       });
     }, [models]);
 
+    const handleSyncModels = async () => {
+      await client.models.sync();
+      await queryClient.invalidateQueries({
+        queryKey: orpc.models.list.queryKey({
+          input: { isEnabled: true },
+        }),
+      });
+    };
+
     return (
       <div className="mx-auto max-w-4xl px-6 py-4">
         <div className="rounded-2xl border bg-muted/30 shadow-sm transition-all focus-within:shadow-md hover:shadow-md">
@@ -111,24 +121,33 @@ export const ChatInput = memo(
             <div className="flex items-center gap-2">
               {/* Model Selector */}
               <Select
-                defaultValue={chatModel}
-                onValueChange={setChatModel}
-                value={chatModel}
+                defaultValue={chatModelId}
+                onValueChange={setChatModelId}
+                value={chatModelId}
               >
-                <SelectTrigger className="h-9 w-80 gap-2 border-0 bg-background/50 px-3 font-medium text-sm shadow-none hover:bg-background/80 focus:ring-0">
+                <SelectTrigger className="h-9 w-80 cursor-pointer gap-2 border-0 bg-background/50 px-3 font-medium text-sm shadow-none hover:bg-background/80 focus:ring-0">
                   <SelectValue
                     placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
                   />
                 </SelectTrigger>
                 <SelectContent>{modelItems}</SelectContent>
               </Select>
+
+              <Button
+                className="cursor-pointer"
+                onClick={handleSyncModels}
+                size="icon"
+                variant="outline"
+              >
+                <RefreshCcw className="size-4" />
+              </Button>
             </div>
 
             {/* Right side - Send button */}
             <div className="flex items-center gap-2">
               <Button
                 className="size-9 cursor-pointer"
-                disabled={!(isStreaming || (prompt.trim() && chatModel))}
+                disabled={!(isStreaming || (prompt.trim() && chatModelId))}
                 onClick={handleSendButtonClick}
                 size="icon"
                 variant={isStreaming ? 'destructive' : 'default'}

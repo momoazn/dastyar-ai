@@ -30,8 +30,7 @@ function ChatThreadRouteComponent() {
     initialModel?: string;
   };
 
-  // chatModel stores models row id
-  const [chatModel, setChatModel] = useState(
+  const [chatModelId, setChatModelId] = useState(
     navigationState.initialModel || ''
   );
   const [prompt, setPrompt] = useState(navigationState.initialPrompt || '');
@@ -52,10 +51,10 @@ function ChatThreadRouteComponent() {
 
   // Default-select the first available model when none is chosen
   useEffect(() => {
-    if (!chatModel && models?.length) {
-      setChatModel(models[0].id);
+    if (!chatModelId && models?.length) {
+      setChatModelId(models[0].id);
     }
-  }, [models, chatModel]);
+  }, [models, chatModelId]);
 
   const initialMessages = useMemo(() => {
     if (!threadMessages || threadMessages.length === 0) {
@@ -77,30 +76,26 @@ function ChatThreadRouteComponent() {
     });
   }, [threadMessages]);
 
-  // Keep a stable chat id across data loads to prevent resetting the stream state
-  const chatId = useMemo(() => `${threadId}`, [threadId]);
-
   const { messages, sendMessage, status, stop } = useChat({
-    id: chatId,
+    id: threadId,
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: `${import.meta.env.VITE_SERVER_URL}/chat`,
       body: () => {
-        const row = (models || []).find((m) => m.id === chatModel);
-        return { modelId: row?.modelId, threadId };
+        return { modelId: chatModelId, threadId };
       },
     }),
   });
 
   const isStreaming = status === 'streaming' || status === 'submitted';
 
-  const handleSendMessage = useCallback(() => {
-    if (!(prompt.trim() && chatModel)) {
+  const handleSendMessage = () => {
+    if (!(prompt.trim() && chatModelId)) {
       return;
     }
     sendMessage({ text: prompt });
     setPrompt('');
-  }, [prompt, chatModel, sendMessage]);
+  };
 
   const stopStreaming = useCallback(() => {
     stop();
@@ -210,12 +205,12 @@ function ChatThreadRouteComponent() {
           </output>
         ) : null}
         <ChatInput
-          chatModel={chatModel}
+          chatModelId={chatModelId}
           handleSendPrompt={handleSendMessage}
           isStreaming={isStreaming}
           models={models}
           prompt={prompt}
-          setChatModel={setChatModel}
+          setChatModelId={setChatModelId}
           setPrompt={setPrompt}
           stopStreaming={stopStreaming}
         />

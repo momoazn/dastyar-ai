@@ -1,9 +1,26 @@
-import type { UIMessage } from 'ai';
 import { and, asc, desc, eq, inArray, not } from 'drizzle-orm';
+import type {
+  InsertMessageInput,
+  InsertThreadInput,
+  SelectMessageOutput,
+  SelectModelOutput,
+  SelectThreadOutput,
+} from '@/db/schema';
+import {
+  insertMessageSchema,
+  insertModelSchema,
+  insertThreadSchema,
+  ModelProviderEnum,
+  messages,
+  models,
+  selectMessageSchema,
+  selectModelSchema,
+  selectThreadSchema,
+  threads,
+} from '@/db/schema';
 import { db } from '../db';
-import { ModelProviderEnum, messages, models, threads } from '../db/schema';
 import { listAllModels } from './ai';
-import { extractTextFromParts, generateId } from './utils';
+import { generateId } from './utils';
 
 export async function syncModels() {
   console.log('--- Syncing models...');
@@ -80,12 +97,16 @@ export async function syncModels() {
   console.log('--- Models synced');
 }
 
-export async function getModelById(id: string) {
+export async function getModelById(id: SelectModelOutput['id']) {
+  // Validate using schema id
+  selectModelSchema.shape.id.parse(id);
   const rows = await db.select().from(models).where(eq(models.id, id)).limit(1);
   return rows[0] || null;
 }
 
-export async function getModelByName(name: string) {
+export async function getModelByName(name: SelectModelOutput['name']) {
+  // Validate using schema name
+  selectModelSchema.shape.name.parse(name);
   const rows = await db
     .select()
     .from(models)
@@ -94,14 +115,18 @@ export async function getModelByName(name: string) {
   return rows[0] || null;
 }
 
-export async function createThread(params?: { title?: string }) {
+export async function createThread(
+  params?: Partial<Pick<InsertThreadInput, 'title'>>
+) {
   const id = generateId();
-  const title = params?.title?.trim() || 'New Chat';
-  await db.insert(threads).values({ id, title, isArchived: false });
+  const title = (params?.title ?? 'New Chat').trim();
+  const row = insertThreadSchema.parse({ id, title, isArchived: false });
+  await db.insert(threads).values(row);
   return { id };
 }
 
-export async function getThread(id: string) {
+export async function getThread(id: SelectThreadOutput['id']) {
+  selectThreadSchema.shape.id.parse(id);
   const rows = await db
     .select()
     .from(threads)
@@ -119,56 +144,121 @@ export function listThreads(options?: { includeArchived?: boolean }) {
   return query.orderBy(desc(threads.lastMessageAt), desc(threads.updatedAt));
 }
 
-export async function renameThread(id: string, title: string) {
+export async function renameThread(
+  id: SelectThreadOutput['id'],
+  title: InsertThreadInput['title']
+) {
+  insertThreadSchema.shape.id.parse(id);
+  insertThreadSchema.shape.title.parse(title);
   await db.update(threads).set({ title }).where(eq(threads.id, id));
 }
 
-export async function setArchived(id: string, isArchived: boolean) {
+export async function setArchived(
+  id: SelectThreadOutput['id'],
+  isArchived: InsertThreadInput['isArchived']
+) {
+  insertThreadSchema.shape.id.parse(id);
   await db.update(threads).set({ isArchived }).where(eq(threads.id, id));
 }
 
-export async function deleteThread(id: string) {
+export async function deleteThread(id: SelectThreadOutput['id']) {
+  insertThreadSchema.shape.id.parse(id);
   await db.delete(threads).where(eq(threads.id, id));
 }
 
-export async function saveMessage(params: {
-  id?: string;
-  threadId: string;
-  role: 'user' | 'assistant';
-  uiMessage?: UIMessage; // optional raw UI message (assistant)
-  content?: string; // raw text (user)
-  reasoning?: string | null;
-  status?: string | null;
-  modelId?: string | null;
-  sentAt?: Date | null;
-}) {
+export async function saveMessage(
+  params: Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
+) {
   const id = params.id ?? generateId();
-  let content = params.content ?? '';
-  let reasoning = params.reasoning ?? null;
-  if (params.uiMessage) {
-    const parts = extractTextFromParts(params.uiMessage);
-    content = parts.content;
-    reasoning = parts.reasoning;
-  }
-  await db.insert(messages).values({
+  const row = insertMessageSchema.parse({
     id,
     threadId: params.threadId,
     role: params.role,
-    content,
-    reasoning,
+    content: params.content,
+    reasoning: params.reasoning ?? null,
     status: params.status ?? null,
     modelId: params.modelId ?? null,
     sentAt: params.sentAt ?? new Date(),
   });
+  await db.insert(messages).values(row);
   return { id };
 }
 
-export async function getMessagesByThread(params: {
-  threadId: string;
-  limit?: number;
-  cursor?: string | null;
-  order?: 'asc' | 'desc';
-}) {
+export async function updateMessage(
+  params: Pick<InsertMessageInput, 'id'> &
+    Partial<
+      Pick<
+        InsertMessageInput,
+        'content' | 'reasoning' | 'status' | 'modelId' | 'sentAt'
+      >
+    >
+) {
+  selectMessageSchema.shape.id.parse(params.id);
+  const update: Partial<{
+    content: string;
+    reasoning: string | null;
+    status: string | null;
+    modelId: string | null;
+    sentAt: Date | null;
+  }> = {};
+  if (params.content !== undefined) {
+    insertMessageSchema.shape.content.parse(params.content);
+    update.content = params.content;
+  }
+  if (params.reasoning !== undefined) {
+    update.reasoning = params.reasoning;
+  }
+  if (params.status !== undefined) {
+    insertMessageSchema.shape.status.parse(params.status);
+    update.status = params.status;
+  }
+  if (params.modelId !== undefined) {
+    insertModelSchema.shape.id.parse(params.modelId);
+    update.modelId = params.modelId;
+  }
+  if (params.sentAt !== undefined) {
+    update.sentAt = params.sentAt;
+  }
+  if (Object.keys(update).length === 0) {
+    return;
+  }
+  await db.update(messages).set(update).where(eq(messages.id, params.id));
+}
+
+export async function saveMessages(
+  params: Array<
+    Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
+  >
+) {
+  const prepared = params.map((p) => {
+    const id = p.id ?? generateId();
+    const row = insertMessageSchema.parse({
+      id,
+      threadId: p.threadId,
+      role: p.role,
+      content: p.content,
+      reasoning: p.reasoning ?? null,
+      status: p.status ?? null,
+      modelId: p.modelId ?? null,
+      sentAt: p.sentAt ?? new Date(),
+    });
+    return row;
+  });
+  if (prepared.length === 0) {
+    return { ids: [] };
+  }
+  await db.insert(messages).values(prepared);
+  return { ids: prepared.map((r) => r.id) };
+}
+
+export async function getMessagesByThread(
+  params: Pick<InsertMessageInput, 'threadId'> & {
+    limit?: number;
+    cursor?: string | null;
+    order?: 'asc' | 'desc';
+  }
+) {
+  insertMessageSchema.shape.threadId.parse(params.threadId);
   const limit = params.limit ?? 50;
   const order = params.order ?? 'desc';
   const query = db
@@ -183,16 +273,16 @@ export async function getMessagesByThread(params: {
   return rows;
 }
 
-export async function deleteMessage(id: string) {
+export async function deleteMessage(id: SelectMessageOutput['id']) {
   await db.delete(messages).where(eq(messages.id, id));
 }
 
-export async function clearThread(threadId: string) {
+export async function clearThread(threadId: InsertMessageInput['threadId']) {
   await db.delete(messages).where(eq(messages.threadId, threadId));
 }
 
 export async function updateThreadOnNewMessage(
-  threadId: string,
+  threadId: SelectThreadOutput['id'],
   date: Date = new Date()
 ) {
   await db

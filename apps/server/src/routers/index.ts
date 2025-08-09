@@ -33,17 +33,16 @@ export const appRouter = {
       .input(
         z.object({
           isEnabled: z.boolean().optional(),
+          providers: z
+            .array(z.enum(Object.values(ModelProviderEnum)))
+            .optional(),
         })
       )
       .handler(async ({ context, input }) => {
-        // Sync models from all providers
-        await syncModels();
-
-        // Return all models from database (limited to supported providers)
+        // Return all models from database (limited to supported providers if provided)
         const rows = await context.db
           .select({
             id: models.id,
-            modelId: models.name, // expose name as modelId for clients
             name: models.name,
             provider: models.provider,
             isEnabled: models.isEnabled,
@@ -52,16 +51,22 @@ export const appRouter = {
           .where(
             and(
               input.isEnabled ? eq(models.isEnabled, true) : undefined,
-              inArray(models.provider, [
-                ModelProviderEnum.LMSTUDIO,
-                ModelProviderEnum.OLLAMA,
-                ModelProviderEnum.OPENROUTER,
-              ])
+              input.providers
+                ? inArray(models.provider, input.providers)
+                : inArray(models.provider, [
+                    ModelProviderEnum.LMSTUDIO,
+                    ModelProviderEnum.OLLAMA,
+                    ModelProviderEnum.OPENROUTER,
+                  ])
             )
           );
 
         return rows;
       }),
+    sync: publicProcedure.handler(async () => {
+      await syncModels();
+      return { ok: true } as const;
+    }),
   },
   threads: {
     create: publicProcedure
@@ -71,7 +76,11 @@ export const appRouter = {
         return created;
       }),
     list: publicProcedure
-      .input(z.object({ includeArchived: z.boolean().optional() }).optional())
+      .input(
+        z
+          .object({ includeArchived: z.boolean().optional().default(false) })
+          .optional()
+      )
       .handler(async ({ input }) => {
         try {
           const rows = await listThreads({

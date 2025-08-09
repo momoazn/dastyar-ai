@@ -11,7 +11,7 @@ export const Route = createFileRoute('/chat/')({
 
 function ChatIndexComponent() {
   const navigate = useNavigate();
-  const [chatModel, setChatModel] = useState('');
+  const [chatModelId, setChatModelId] = useState('');
   const [prompt, setPrompt] = useState('');
 
   const { data: models } = useQuery(
@@ -22,24 +22,28 @@ function ChatIndexComponent() {
 
   // Default-select the first available model when none is chosen
   useEffect(() => {
-    if (!chatModel && models?.length) {
-      setChatModel(models[0].id);
+    if (!chatModelId && models?.length) {
+      setChatModelId(models[0].id);
     }
-  }, [models, chatModel]);
+  }, [models, chatModelId]);
 
   const handleSendFirstMessage = async () => {
     const trimmed = prompt.trim();
-    if (!(trimmed && chatModel)) {
+    if (!(trimmed && chatModelId)) {
       return;
     }
-    const created = await client.threads.create({ title: undefined });
+    const created = await client.threads.create({
+      title: trimmed.slice(0, 20),
+    });
     await queryClient.invalidateQueries({
-      queryKey: orpc.threads.list.queryKey(),
+      queryKey: orpc.threads.list.queryKey({
+        input: { includeArchived: false },
+      }),
     });
     navigate({
       to: '/chat/$id',
       params: { id: created.id },
-      state: { initialPrompt: trimmed, initialModel: chatModel },
+      state: { initialPrompt: trimmed, initialModel: chatModelId },
     });
     setPrompt('');
   };
@@ -49,12 +53,12 @@ function ChatIndexComponent() {
       <NoMessages />
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <ChatInput
-          chatModel={chatModel}
+          chatModelId={chatModelId}
           handleSendPrompt={handleSendFirstMessage}
           isStreaming={false}
           models={models}
           prompt={prompt}
-          setChatModel={setChatModel}
+          setChatModelId={setChatModelId}
           setPrompt={setPrompt}
           stopStreaming={() => {
             // noop

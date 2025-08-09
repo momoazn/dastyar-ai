@@ -13,10 +13,11 @@ import {
   getModelById,
   getModelByName,
   getThread,
-  saveMessage,
+  saveMessages,
+  updateMessage,
   updateThreadOnNewMessage,
 } from '../lib/repository';
-import { generateId } from '../lib/utils';
+import { extractTextFromParts, generateId } from '../lib/utils';
 
 const app = new Hono();
 
@@ -24,7 +25,6 @@ const sendMessageSchema = z.object({
   messages: z.array(z.any()).default([]),
   modelId: z.string(),
   threadId: z.string(),
-  system: z.string().optional(),
 });
 
 app.post('/', async (c) => {
@@ -32,28 +32,15 @@ app.post('/', async (c) => {
     const body = sendMessageSchema.parse(await c.req.json());
     const uiMessages: UIMessage[] = body.messages as UIMessage[];
 
-    // Ensure thread exists if provided, otherwise optionally create one
     const threadId = body.threadId;
     if (threadId) {
-      const t = await getThread(threadId);
-      if (!t) {
+      const thread = await getThread(threadId);
+      if (!thread) {
         return c.json({ error: 'Thread not found' }, 404);
       }
     }
 
-    // Build full conversation history to send to the model
-    let history: UIMessage[] = await buildHistory(threadId, uiMessages);
-
-    // Persist the latest user message prior to generation and include it in the prompt
-    const appendedUserMessage = await persistLatestUserMessage(
-      threadId,
-      uiMessages
-    );
-    if (appendedUserMessage) {
-      history = [...history, appendedUserMessage];
-    }
-
-    // Accept either database model id or provider model name
+    // Resolve model by id or name
     let model = await getModelById(body.modelId);
     if (!model) {
       model = await getModelByName(body.modelId);
@@ -62,6 +49,35 @@ app.post('/', async (c) => {
       return c.json({ error: 'Model not found' }, 400);
     }
     const providerModel = getProviderForModel(model);
+
+    // Persist latest user text and create assistant placeholder (single DB hit)
+    const latestUserText = getLatestUserText(uiMessages);
+    let assistantPlaceholderId: string | undefined;
+    if (threadId && latestUserText) {
+      const result = await saveMessages([
+        {
+          threadId,
+          role: 'user',
+          content: latestUserText,
+          modelId: null,
+          status: null,
+        },
+        {
+          threadId,
+          role: 'assistant',
+          content: '',
+          modelId: model.id,
+          status: 'streaming',
+        },
+      ]);
+      assistantPlaceholderId = result.ids[1];
+      await updateThreadOnNewMessage(threadId);
+    }
+
+    // Build conversation history excluding the assistant placeholder (if any)
+    const history: UIMessage[] = threadId
+      ? await loadThreadHistory(threadId, assistantPlaceholderId)
+      : [];
 
     const result = streamText({
       model: wrapLanguageModel({
@@ -72,7 +88,7 @@ app.post('/', async (c) => {
         }),
       }),
       messages: convertToModelMessages(history),
-      system: body.system,
+      system: 'You are a helpful assistant that can answer questions.',
     });
 
     return result.toUIMessageStreamResponse({
@@ -80,17 +96,18 @@ app.post('/', async (c) => {
       generateMessageId: () => generateId(15),
       sendReasoning: true,
       onFinish: async ({ responseMessage }) => {
-        // If no threadId, skip persistence silently
         if (!threadId) {
           return;
         }
         try {
-          await saveMessage({
-            threadId,
-            role: 'assistant',
-            uiMessage: responseMessage,
+          const { content, reasoning } = extractTextFromParts(responseMessage);
+          await updateMessage({
+            id: assistantPlaceholderId as string,
+            content,
+            reasoning,
             modelId: model.id,
             status: 'finished',
+            sentAt: new Date(),
           });
           await updateThreadOnNewMessage(threadId);
         } catch {
@@ -107,65 +124,42 @@ app.post('/', async (c) => {
   }
 });
 
-const buildHistory = async (
-  historyThreadId: string | undefined,
-  historyMessages: UIMessage[]
+const loadThreadHistory = async (
+  threadId: string,
+  excludeMessageId?: string
 ): Promise<UIMessage[]> => {
-  if (!historyThreadId) {
-    return historyMessages;
-  }
-  const rows = await getMessagesByThread({ threadId: historyThreadId });
-  const asc = [...rows].reverse();
-  return asc.map((row) => ({
+  const rows = await getMessagesByThread({ threadId });
+  const ascending = [...rows].reverse();
+  const filtered = excludeMessageId
+    ? ascending.filter((row) => row.id !== excludeMessageId)
+    : ascending;
+  return filtered.map((row) => ({
     id: row.id,
     role: row.role as 'user' | 'assistant',
-    parts: [
-      { type: 'text', text: row.content ?? '' },
-      // keep reasoning separate in UI; do not include as prompt content
-    ],
+    parts: [{ type: 'text', text: row.content ?? '' }],
   }));
 };
 
-const extractTextFromParts = (parts: UIMessage['parts']): string => {
-  let text = '';
-  for (const part of parts) {
-    if (part.type === 'text') {
-      text += part.text;
+const getLatestUserText = (messages: UIMessage[]): string | undefined => {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role !== 'user') {
+      continue;
     }
-  }
-  return text;
-};
-
-const persistLatestUserMessage = async (
-  persistThreadId: string | undefined,
-  persistMessages: UIMessage[]
-): Promise<UIMessage | undefined> => {
-  if (!persistThreadId) {
+    const combined = message.parts
+      .reduce((acc, part) => {
+        if (part.type === 'text') {
+          return acc + part.text;
+        }
+        return acc;
+      }, '')
+      .trim();
+    if (combined.length > 0) {
+      return combined;
+    }
     return;
   }
-  const lastUser = [...persistMessages]
-    .reverse()
-    .find((m) => m.role === 'user');
-  if (!lastUser) {
-    return;
-  }
-  const text = extractTextFromParts(lastUser.parts);
-  if (text.trim().length === 0) {
-    return;
-  }
-  await saveMessage({
-    threadId: persistThreadId,
-    role: 'user',
-    content: text,
-    modelId: null,
-    status: null,
-  });
-  await updateThreadOnNewMessage(persistThreadId);
-  return {
-    id: generateId(15),
-    role: 'user',
-    parts: [{ type: 'text', text }],
-  } satisfies UIMessage;
+  return;
 };
 
 export default app;
