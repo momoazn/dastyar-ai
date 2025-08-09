@@ -31,9 +31,9 @@ function ChatThreadRouteComponent() {
   };
 
   const [chatModelId, setChatModelId] = useState(
-    navigationState.initialModel || ''
+    navigationState.initialModel ?? ''
   );
-  const [prompt, setPrompt] = useState(navigationState.initialPrompt || '');
+  const [prompt, setPrompt] = useState(navigationState.initialPrompt ?? '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: models } = useQuery({
@@ -76,7 +76,7 @@ function ChatThreadRouteComponent() {
     });
   }, [threadMessages]);
 
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, status, stop, setMessages } = useChat({
     id: threadId,
     messages: initialMessages,
     transport: new DefaultChatTransport({
@@ -85,6 +85,21 @@ function ChatThreadRouteComponent() {
   });
 
   const isStreaming = status === 'streaming' || status === 'submitted';
+
+  // Hydrate useChat state with thread messages after they load on initial mount (e.g., on page reload)
+  const hasHydratedFromThreadRef = useRef(false);
+  useEffect(() => {
+    if (
+      !hasHydratedFromThreadRef.current &&
+      threadMessages &&
+      messages.length === 0 &&
+      status === 'ready' &&
+      initialMessages.length > 0
+    ) {
+      setMessages(initialMessages);
+      hasHydratedFromThreadRef.current = true;
+    }
+  }, [threadMessages, messages.length, status, initialMessages, setMessages]);
 
   const handleSendMessage = () => {
     if (!(prompt.trim() && chatModelId)) {
