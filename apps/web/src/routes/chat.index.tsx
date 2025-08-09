@@ -16,7 +16,11 @@ function ChatIndexComponent() {
   const [chatModel, setChatModel] = useState('');
   const [prompt, setPrompt] = useState('');
 
-  const { data: modelsList } = useQuery(orpc.models.list.queryOptions());
+  const { data: modelsList } = useQuery(
+    orpc.models.list.queryOptions({
+      input: { isEnabled: true },
+    })
+  );
 
   const handleSendFirstMessage = useCallback(async () => {
     const trimmed = prompt.trim();

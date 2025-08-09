@@ -37,11 +37,13 @@ function ChatThreadRouteComponent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: models } = useQuery({
-    ...orpc.models.list.queryOptions(),
+    ...orpc.models.list.queryOptions({
+      input: { isEnabled: true },
+    }),
     refetchInterval: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: persistedMessages } = useQuery(
+  const { data: threadMessages } = useQuery(
     orpc.messages.listByThread.queryOptions({
       input: { threadId, order: 'asc' },
     })
@@ -55,10 +57,10 @@ function ChatThreadRouteComponent() {
   }, [models, chatModel]);
 
   const initialMessages = useMemo(() => {
-    if (!persistedMessages || persistedMessages.length === 0) {
+    if (!threadMessages || threadMessages.length === 0) {
       return [];
     }
-    return persistedMessages.map((m) => {
+    return threadMessages.map((m) => {
       const parts: Array<
         { type: 'text'; text: string } | { type: 'reasoning'; text: string }
       > = [];
@@ -72,11 +74,11 @@ function ChatThreadRouteComponent() {
         parts,
       } as const;
     });
-  }, [persistedMessages]);
+  }, [threadMessages]);
 
   const chatId = useMemo(
-    () => `${threadId}:${persistedMessages ? 'loaded' : 'loading'}`,
-    [threadId, persistedMessages]
+    () => `${threadId}:${threadMessages ? 'loaded' : 'loading'}`,
+    [threadId, threadMessages]
   );
 
   const { messages, sendMessage, status, stop } = useChat({

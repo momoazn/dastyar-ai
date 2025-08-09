@@ -13,13 +13,19 @@ function resolveDatabasePath(): string {
       ? envUrl.replace(FILE_PROTOCOL_RE, '')
       : envUrl;
   }
-  // Dev-friendly fallback to local file database
-  const filePath = resolve(process.cwd(), 'apps/server/.data/local.db');
-  const dir = dirname(filePath);
+  // Dev-friendly fallback to local file database; support being run from repo root or server dir
+  const candidates = [
+    resolve(process.cwd(), 'apps/server/.data/local.db'),
+    resolve(process.cwd(), '.data/local.db'),
+  ];
+  // Prefer the first candidate that already exists; otherwise use the second within current cwd
+  const existing = candidates.find((p) => existsSync(dirname(p)));
+  const selected = existing ?? candidates[1];
+  const dir = dirname(selected);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
-  return filePath;
+  return selected;
 }
 
 const sqlite = new Database(resolveDatabasePath(), {

@@ -1,11 +1,96 @@
 import type { UIMessage } from 'ai';
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, not } from 'drizzle-orm';
 import { db } from '../db';
-import { messages, models, threads } from '../db/schema';
+import { ModelProviderEnum, messages, models, threads } from '../db/schema';
+import { listAllModels } from './ai';
 import { extractTextFromParts, generateId } from './utils';
+
+export async function syncModels() {
+  console.log('--- Syncing models...');
+
+  const allModels = await listAllModels();
+
+  console.log('--- Found', allModels.length, 'models');
+
+  // Prepare rows for upsert (no preloading from DB)
+  const rowsToUpsert = allModels.map((m) => ({
+    id: generateId(),
+    name: m.id,
+    provider: m.provider,
+    isEnabled: true,
+  }));
+
+  if (rowsToUpsert.length > 0) {
+    // Single bulk insert; on conflicts (provider, name) do nothing (no updates)
+    await db
+      .insert(models)
+      .values(rowsToUpsert)
+      .onConflictDoNothing({ target: [models.provider, models.name] });
+  }
+
+  // Enable models that are present in the latest provider lists
+  const modelsByProvider = new Map<string, string[]>();
+  for (const m of allModels) {
+    const list = modelsByProvider.get(m.provider) ?? [];
+    list.push(m.id);
+    modelsByProvider.set(m.provider, list);
+  }
+
+  const enableUpdates: Promise<unknown>[] = [];
+  for (const [provider, names] of modelsByProvider.entries()) {
+    if (names.length > 0) {
+      enableUpdates.push(
+        db
+          .update(models)
+          .set({ isEnabled: true })
+          .where(
+            and(eq(models.provider, provider), inArray(models.name, names))
+          )
+      );
+    }
+  }
+
+  // Disable models that are NOT present in the latest lists (per provider)
+  // If a provider had no models returned, disable all of that provider.
+  const allProviders = Object.values(ModelProviderEnum);
+  const disableUpdates: Promise<unknown>[] = [];
+  for (const provider of allProviders) {
+    const names = modelsByProvider.get(provider) ?? [];
+    if (names.length === 0) {
+      disableUpdates.push(
+        db
+          .update(models)
+          .set({ isEnabled: false })
+          .where(eq(models.provider, provider))
+      );
+    } else {
+      disableUpdates.push(
+        db
+          .update(models)
+          .set({ isEnabled: false })
+          .where(
+            and(eq(models.provider, provider), not(inArray(models.name, names)))
+          )
+      );
+    }
+  }
+
+  await Promise.all([...enableUpdates, ...disableUpdates]);
+
+  console.log('--- Models synced');
+}
 
 export async function getModelById(id: string) {
   const rows = await db.select().from(models).where(eq(models.id, id)).limit(1);
+  return rows[0] || null;
+}
+
+export async function getModelByName(name: string) {
+  const rows = await db
+    .select()
+    .from(models)
+    .where(eq(models.name, name))
+    .limit(1);
   return rows[0] || null;
 }
 

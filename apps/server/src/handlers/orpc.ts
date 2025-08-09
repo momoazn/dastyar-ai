@@ -7,7 +7,7 @@ const handler = new RPCHandler(appRouter);
 
 const app = new Hono();
 
-app.use('/rpc/*', async (c, next) => {
+app.use('*', async (c, next) => {
   const context = createContext({ context: c });
   const { matched, response } = await handler.handle(c.req.raw, {
     prefix: '/rpc',

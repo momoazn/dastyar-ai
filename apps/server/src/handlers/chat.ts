@@ -11,6 +11,7 @@ import { getProviderForModel } from '../lib/ai';
 import {
   getMessagesByThread,
   getModelById,
+  getModelByName,
   getThread,
   saveMessage,
   updateThreadOnNewMessage,
@@ -51,7 +52,14 @@ app.post('/', async (c) => {
       history = [...history, appendedUserMessage];
     }
 
-    const model = await getModelById(body.modelId);
+    // Accept either database model id or provider model name
+    let model = await getModelById(body.modelId);
+    if (!model) {
+      model = await getModelByName(body.modelId);
+    }
+    if (!model) {
+      return c.json({ error: 'Model not found' }, 400);
+    }
     const providerModel = getProviderForModel(model);
 
     const result = streamText({
@@ -80,7 +88,7 @@ app.post('/', async (c) => {
             threadId,
             role: 'assistant',
             uiMessage: responseMessage,
-            modelId: body.modelId,
+            modelId: model.id,
             status: 'finished',
           });
           await updateThreadOnNewMessage(threadId);
@@ -89,8 +97,12 @@ app.post('/', async (c) => {
         }
       },
     });
-  } catch {
-    return c.json({ error: 'Bad request' }, 400);
+  } catch (error) {
+    const message =
+      error && typeof error === 'object' && 'message' in error
+        ? String((error as { message?: unknown }).message)
+        : undefined;
+    return c.json({ error: 'Bad request', details: message }, 400);
   }
 });
 
@@ -145,7 +157,7 @@ const persistLatestUserMessage = async (
     role: 'user',
     content: text,
     modelId: null,
-    status: 'submitted',
+    status: null,
   });
   await updateThreadOnNewMessage(persistThreadId);
   return {

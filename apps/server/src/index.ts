@@ -6,6 +6,7 @@ import { logger } from 'hono/logger';
 import { runMigrations } from './db/migrate';
 import chatHandler from './handlers/chat';
 import orpcsHandler from './handlers/orpc';
+import { syncModels } from './lib/repository';
 
 const app = new Hono();
 
@@ -13,6 +14,7 @@ app.use(logger());
 app.use(async (_c, next) => {
   // Ensure migrations are applied once per process
   await runMigrations();
+  await syncModels();
   await next();
 });
 
@@ -32,3 +34,9 @@ app.get('/', (c) => {
 });
 
 export default app;
+
+if (import.meta.main) {
+  const port = Number(process.env.PORT) || 8787;
+  // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
+  Bun.serve({ fetch: app.fetch, port, hostname: '0.0.0.0' });
+}

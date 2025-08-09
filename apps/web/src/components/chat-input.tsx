@@ -22,7 +22,12 @@ interface ChatInputProps {
   setChatModel: (model: string) => void;
   prompt: string;
   setPrompt: (prompt: string) => void;
-  models?: Array<{ modelId: string; name: string; provider?: string }>;
+  models?: Array<{
+    id: string;
+    modelId: string;
+    name: string;
+    provider?: string;
+  }>;
 }
 
 export const ChatInput = memo(
@@ -78,7 +83,7 @@ export const ChatInput = memo(
     // Memoize models list rendering
     const modelItems = useMemo(() => {
       return (models || []).map((model) => {
-        const value = model.name;
+        const value = model.id;
         const label = model.name;
         const provider = model.provider;
         return (

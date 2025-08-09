@@ -1,74 +1,80 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
-import { z } from 'zod';
-import { type Model, type ModelProvider, ModelProviderEnum } from '@/db/schema';
-
-const envSchema = z.object({
-  OPENROUTER_API_KEY: z.string().min(1),
-});
-
-const parsedEnv = envSchema.safeParse(process.env);
+import { type Model, ModelProviderEnum } from '@/db/schema';
 
 const OLLAMA_OPENAI_BASE_URL = 'http://localhost:11434/v1' as const;
 const LMSTUDIO_OPENAI_BASE_URL = 'http://localhost:1234/v1' as const;
-const OPENROUTER_BASE_URL = 'http://api.openrouter.ai/v1' as const;
+const OPENROUTER_BASE_URL = 'https://api.openrouter.ai/v1' as const;
+
+const OPENROUTER_API_KEY =
+  process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || '';
+
+export const ollamaClient = new OpenAI({
+  baseURL: OLLAMA_OPENAI_BASE_URL,
+  apiKey: 'ollama',
+});
 
 export const ollamaProvider = createOpenAICompatible({
   baseURL: OLLAMA_OPENAI_BASE_URL,
   name: 'ollama',
+  apiKey: 'ollama',
+});
+
+export const lmstudioClient = new OpenAI({
+  baseURL: LMSTUDIO_OPENAI_BASE_URL,
+  apiKey: 'lmstudio',
 });
 
 export const lmstudioProvider = createOpenAICompatible({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
   name: 'lmstudio',
+  apiKey: 'lmstudio',
 });
+
+let cachedOpenrouterClient: OpenAI | null = null;
+const getOpenrouterClient = (): OpenAI | null => {
+  if (!OPENROUTER_API_KEY) {
+    return null;
+  }
+  if (cachedOpenrouterClient) {
+    return cachedOpenrouterClient;
+  }
+  cachedOpenrouterClient = new OpenAI({
+    baseURL: OPENROUTER_BASE_URL,
+    apiKey: OPENROUTER_API_KEY,
+  });
+  return cachedOpenrouterClient;
+};
 
 export const openrouterProvider = createOpenAICompatible({
   baseURL: OPENROUTER_BASE_URL,
   name: 'openrouter',
-  apiKey: parsedEnv.data?.OPENROUTER_API_KEY,
+  apiKey: OPENROUTER_API_KEY,
 });
 
-const fetchOpenAICompatibleModels = async (
-  apiBase: string
-): Promise<OpenAI.Models.Model[]> => {
-  const client = new OpenAI({
-    baseURL: apiBase,
-  });
-  const response = await client.models.list();
-  return response.data;
-};
+type OpenAIModelsData = Awaited<ReturnType<OpenAI['models']['list']>>['data'];
 
-export const listLmstudioModels = async () => {
+const safeListModels = async (
+  client: OpenAI | null
+): Promise<OpenAIModelsData> => {
+  if (!client) {
+    return [];
+  }
   try {
-    const models = await fetchOpenAICompatibleModels(LMSTUDIO_OPENAI_BASE_URL);
-    return models;
+    const models = await client.models.list();
+    return models.data;
   } catch {
     return [];
   }
 };
 
-export const listOllamaModels = async () => {
-  try {
-    const models = await fetchOpenAICompatibleModels(OLLAMA_OPENAI_BASE_URL);
-    return models;
-  } catch {
-    return [];
-  }
-};
+export const listLmstudioModels = () => safeListModels(lmstudioClient);
 
-export const listOpenrouterModels = async () => {
-  try {
-    const models = await fetchOpenAICompatibleModels(OPENROUTER_BASE_URL);
-    return models;
-  } catch {
-    return [];
-  }
-};
+export const listOllamaModels = () => safeListModels(ollamaClient);
 
-export const listAllModels = async (): Promise<
-  (OpenAI.Models.Model & { provider: ModelProvider })[]
-> => {
+export const listOpenrouterModels = () => safeListModels(getOpenrouterClient());
+
+export const listAllModels = async () => {
   const ollamaModels = await listOllamaModels();
   const lmstudioModels = await listLmstudioModels();
   const openrouterModels = await listOpenrouterModels();
@@ -92,14 +98,16 @@ export const listAllModels = async (): Promise<
 export const getProviderForModel = (
   model: Model
 ): ReturnType<typeof ollamaProvider> => {
-  switch (model.provider) {
-    case ModelProviderEnum.OLLAMA:
-      return ollamaProvider(model.name);
-    case ModelProviderEnum.LMSTUDIO:
-      return lmstudioProvider(model.name);
-    case ModelProviderEnum.OPENROUTER:
-      return openrouterProvider(model.name);
-    default:
-      return ollamaProvider(model.name);
-  }
+  const providers = {
+    [ModelProviderEnum.OLLAMA]: ollamaProvider,
+    [ModelProviderEnum.LMSTUDIO]: lmstudioProvider,
+    [ModelProviderEnum.OPENROUTER]: openrouterProvider,
+  } as const;
+  type ProviderKey = keyof typeof providers;
+  const key: ProviderKey = (
+    Object.hasOwn(providers, model.provider)
+      ? (model.provider as ProviderKey)
+      : ModelProviderEnum.OLLAMA
+  ) as ProviderKey;
+  return providers[key](model.name);
 };

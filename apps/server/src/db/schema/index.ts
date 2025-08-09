@@ -70,12 +70,8 @@ export type MessageRole =
 export const ModelProviderEnum = {
   OLLAMA: 'ollama',
   LMSTUDIO: 'lmstudio',
-  OPENAI: 'openai',
-  ANTHROPIC: 'anthropic',
   GEMINI: 'gemini',
-  MISTRAL: 'mistral',
   OPENROUTER: 'openrouter',
-  REQUESTY: 'requesty',
 } as const;
 
 export type ModelProvider =
@@ -92,17 +88,9 @@ export const models = sqliteTable(
     provider: text('provider', {
       enum: Object.values(ModelProviderEnum) as [string, ...string[]],
     }).notNull(),
-    description: text('description'),
-    contextWindow: integer('contextWindow'),
     isEnabled: integer('isEnabled', { mode: 'boolean' })
       .notNull()
       .default(true),
-    isVisionCapable: integer('isVisionCapable', { mode: 'boolean' })
-      .notNull()
-      .default(false),
-    isReasoningCapable: integer('isReasoningCapable', { mode: 'boolean' })
-      .notNull()
-      .default(false),
     createdAt: integer('created', { mode: 'timestamp' }).default(
       sql`(unixepoch())`
     ),
@@ -119,7 +107,6 @@ export const models = sqliteTable(
 export type Model = typeof models.$inferSelect;
 export type NewModel = typeof models.$inferInsert;
 
-// Drizzle-Zod schemas for models (no overrides)
 export const insertModelSchema = createInsertSchema(models);
 export const selectModelSchema = createSelectSchema(models);
 

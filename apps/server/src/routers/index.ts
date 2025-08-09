@@ -1,5 +1,5 @@
 import { generateObject } from 'ai';
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   LanguageEnum,
@@ -8,7 +8,7 @@ import {
   ToneEnum,
   translations,
 } from '../db/schema';
-import { getProviderForModel, listAllModels } from '../lib/ai';
+import { getProviderForModel } from '../lib/ai';
 import { publicProcedure } from '../lib/orpc';
 import {
   clearThread,
@@ -19,6 +19,7 @@ import {
   listThreads,
   renameThread,
   setArchived,
+  syncModels,
 } from '../lib/repository';
 import { generateId } from '../lib/utils';
 
@@ -27,50 +28,39 @@ export const appRouter = {
     return 'OK';
   }),
   models: {
-    list: publicProcedure.handler(async ({ context }) => {
-      // Fetch models from all providers
-      const allModels = await listAllModels();
-
-      // Prepare rows for upsert (no preloading from DB)
-      const rowsToUpsert = allModels.map((m) => ({
-        id: generateId(),
-        name: m.id,
-        provider: m.provider,
-        description: null,
-        contextWindow: null,
-        isEnabled: true,
-        isVisionCapable: false,
-        isReasoningCapable: false,
-      }));
-
-      // Single bulk insert; on conflicts (provider, name) do nothing (no updates)
-      if (rowsToUpsert.length > 0) {
-        await context.db
-          .insert(models)
-          .values(rowsToUpsert)
-          .onConflictDoNothing({ target: [models.provider, models.name] });
-      }
-
-      // Return all models from database (limited to supported providers)
-      const rows = await context.db
-        .select({
-          id: models.id,
-          modelId: models.name, // expose name as modelId for clients
-          name: models.name,
-          provider: models.provider,
-          isEnabled: models.isEnabled,
+    list: publicProcedure
+      .input(
+        z.object({
+          isEnabled: z.boolean().optional(),
         })
-        .from(models)
-        .where(
-          inArray(models.provider, [
-            ModelProviderEnum.LMSTUDIO,
-            ModelProviderEnum.OLLAMA,
-            ModelProviderEnum.OPENROUTER,
-          ])
-        );
+      )
+      .handler(async ({ context, input }) => {
+        // Sync models from all providers
+        await syncModels();
 
-      return rows;
-    }),
+        // Return all models from database (limited to supported providers)
+        const rows = await context.db
+          .select({
+            id: models.id,
+            modelId: models.name, // expose name as modelId for clients
+            name: models.name,
+            provider: models.provider,
+            isEnabled: models.isEnabled,
+          })
+          .from(models)
+          .where(
+            and(
+              input.isEnabled ? eq(models.isEnabled, true) : undefined,
+              inArray(models.provider, [
+                ModelProviderEnum.LMSTUDIO,
+                ModelProviderEnum.OLLAMA,
+                ModelProviderEnum.OPENROUTER,
+              ])
+            )
+          );
+
+        return rows;
+      }),
   },
   threads: {
     create: publicProcedure
