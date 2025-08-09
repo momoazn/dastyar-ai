@@ -81,9 +81,6 @@ function ChatThreadRouteComponent() {
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: `${import.meta.env.VITE_SERVER_URL}/chat`,
-      body: () => {
-        return { modelId: chatModelId, threadId };
-      },
     }),
   });
 
@@ -93,7 +90,7 @@ function ChatThreadRouteComponent() {
     if (!(prompt.trim() && chatModelId)) {
       return;
     }
-    sendMessage({ text: prompt });
+    sendMessage({ text: prompt }, { body: { modelId: chatModelId, threadId } });
     setPrompt('');
   };
 
