@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { BotIcon } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChatInput } from '@/components/chat-input';
-import { ScrollArea } from '@/components/ui';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { NoMessages } from '@/components/no-messages';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/chat/')({
@@ -16,13 +14,20 @@ function ChatIndexComponent() {
   const [chatModel, setChatModel] = useState('');
   const [prompt, setPrompt] = useState('');
 
-  const { data: modelsList } = useQuery(
+  const { data: models } = useQuery(
     orpc.models.list.queryOptions({
       input: { isEnabled: true },
     })
   );
 
-  const handleSendFirstMessage = useCallback(async () => {
+  // Default-select the first available model when none is chosen
+  useEffect(() => {
+    if (!chatModel && models?.length) {
+      setChatModel(models[0].id);
+    }
+  }, [models, chatModel]);
+
+  const handleSendFirstMessage = async () => {
     const trimmed = prompt.trim();
     if (!(trimmed && chatModel)) {
       return;
@@ -37,36 +42,17 @@ function ChatIndexComponent() {
       state: { initialPrompt: trimmed, initialModel: chatModel },
     });
     setPrompt('');
-  }, [prompt, chatModel, navigate]);
+  };
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="mx-auto max-w-4xl px-6 py-8 pb-32">
-            <div className="flex h-64 items-center justify-center">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted p-4">
-                  <BotIcon className="h-full w-full text-muted-foreground" />
-                </div>
-                <h3 className="mb-2 font-semibold text-foreground text-lg">
-                  {PERSIAN_TEXTS.chat.askQuestion}
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  {PERSIAN_TEXTS.chat.askQuestionDescription}
-                </p>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-
+      <NoMessages />
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <ChatInput
           chatModel={chatModel}
           handleSendPrompt={handleSendFirstMessage}
           isStreaming={false}
-          models={modelsList}
+          models={models}
           prompt={prompt}
           setChatModel={setChatModel}
           setPrompt={setPrompt}

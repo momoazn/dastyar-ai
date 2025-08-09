@@ -1,6 +1,5 @@
-import { ChevronDown, Pause, Send } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
-
+import { Pause, Send } from 'lucide-react';
+import { memo, useMemo } from 'react';
 import {
   Button,
   Select,
@@ -10,7 +9,6 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 
@@ -24,7 +22,6 @@ interface ChatInputProps {
   setPrompt: (prompt: string) => void;
   models?: Array<{
     id: string;
-    modelId: string;
     name: string;
     provider?: string;
   }>;
@@ -49,51 +46,42 @@ export const ChatInput = memo(
     );
 
     // Handle key presses in the textarea
-    const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          if (isStreaming) {
-            stopStreaming();
-          } else {
-            handleSendPrompt();
-          }
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (isStreaming) {
+          stopStreaming();
+        } else {
+          handleSendPrompt();
         }
-      },
-      [isStreaming, stopStreaming, handleSendPrompt]
-    );
+      }
+    };
 
     // Handle send/stop button click
-    const handleSendButtonClick = useCallback(() => {
+    const handleSendButtonClick = () => {
       if (isStreaming) {
         stopStreaming();
       } else {
         handleSendPrompt();
       }
-    }, [isStreaming, stopStreaming, handleSendPrompt]);
+    };
 
     // Memoize prompt change handler
-    const handlePromptChange = useCallback(
-      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setPrompt(e.target.value);
-      },
-      [setPrompt]
-    );
+    const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setPrompt(e.target.value);
+    };
 
     // Memoize models list rendering
     const modelItems = useMemo(() => {
       return (models || []).map((model) => {
-        const value = model.id;
-        const label = model.name;
-        const provider = model.provider;
         return (
-          <SelectItem key={value} value={value}>
+          <SelectItem key={model.id} value={model.id}>
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span>{label}</span>
-              {provider ? (
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  {provider}
+              <div className="size-2 rounded-full bg-green-500" />
+              <span className="text-sm">{model.name}</span>
+              {model.provider ? (
+                <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
+                  {model.provider}
                 </span>
               ) : null}
             </div>
@@ -127,11 +115,10 @@ export const ChatInput = memo(
                 onValueChange={setChatModel}
                 value={chatModel}
               >
-                <SelectTrigger className="h-9 gap-2 border-0 bg-background/50 px-3 font-medium text-sm shadow-none hover:bg-background/80 focus:ring-0">
+                <SelectTrigger className="h-9 w-80 gap-2 border-0 bg-background/50 px-3 font-medium text-sm shadow-none hover:bg-background/80 focus:ring-0">
                   <SelectValue
                     placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
                   />
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </SelectTrigger>
                 <SelectContent>{modelItems}</SelectContent>
               </Select>
@@ -140,16 +127,16 @@ export const ChatInput = memo(
             {/* Right side - Send button */}
             <div className="flex items-center gap-2">
               <Button
-                className="h-9 w-9 rounded-full"
+                className="size-9 cursor-pointer"
                 disabled={!(isStreaming || (prompt.trim() && chatModel))}
                 onClick={handleSendButtonClick}
                 size="icon"
                 variant={isStreaming ? 'destructive' : 'default'}
               >
                 {isStreaming ? (
-                  <Pause className="h-4 w-4" />
+                  <Pause className="size-4" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="size-4" />
                 )}
               </Button>
             </div>

@@ -18,7 +18,12 @@ export function ContentSidebar({ activeItem, onNew }: ContentSidebarProps) {
         <h3 className="ms-2 font-medium text-foreground text-lg">
           {activeItem?.title}
         </h3>
-        <Button onClick={onNew} size="icon" variant="ghost">
+        <Button
+          className="cursor-pointer"
+          onClick={onNew}
+          size="icon"
+          variant="secondary"
+        >
           <Plus />
         </Button>
       </SidebarHeader>

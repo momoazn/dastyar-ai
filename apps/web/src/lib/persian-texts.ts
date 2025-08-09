@@ -26,6 +26,7 @@ export const PERSIAN_TEXTS = {
     newTranslation: 'ترجمه جدید',
     new: 'جدید',
     noChatThreads: 'هیچ گفتگویی وجود ندارد',
+    loadingThreads: 'در حال بارگذاری گفتگوها...',
   },
   settings: {
     title: 'تنظیمات',

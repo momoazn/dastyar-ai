@@ -6,10 +6,11 @@ import {
   useRouterState,
 } from '@tanstack/react-router';
 import { DefaultChatTransport } from 'ai';
-import { BotIcon, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AssistantMessage } from '@/components/assistant-message';
 import { ChatInput } from '@/components/chat-input';
+import { NoMessages } from '@/components/no-messages';
 import { ScrollArea } from '@/components/ui';
 import { UserMessage } from '@/components/user-message';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
@@ -76,10 +77,8 @@ function ChatThreadRouteComponent() {
     });
   }, [threadMessages]);
 
-  const chatId = useMemo(
-    () => `${threadId}:${threadMessages ? 'loaded' : 'loading'}`,
-    [threadId, threadMessages]
-  );
+  // Keep a stable chat id across data loads to prevent resetting the stream state
+  const chatId = useMemo(() => `${threadId}`, [threadId]);
 
   const { messages, sendMessage, status, stop } = useChat({
     id: chatId,
@@ -111,18 +110,20 @@ function ChatThreadRouteComponent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (messages.length > 0 || isStreaming) {
+      scrollToBottom();
+    }
+  }, [messages, isStreaming, scrollToBottom]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages
   useEffect(() => {
     if (navigationState.initialPrompt && navigationState.initialModel) {
-      // Clear the initial state after first render submission
+      // Submit the initial prompt once on mount, then clear the input value
       setTimeout(() => {
         // biome-ignore lint/style/noNonNullAssertion: navigationState.initialPrompt is not null
         sendMessage({ text: navigationState.initialPrompt! });
+        setPrompt('');
       }, 0);
     }
   }, []);
@@ -179,28 +180,18 @@ function ChatThreadRouteComponent() {
       );
     }
 
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted p-4">
-            <BotIcon className="h-full w-full text-muted-foreground" />
-          </div>
-          <h3 className="mb-2 font-semibold text-foreground text-lg">
-            {PERSIAN_TEXTS.chat.askQuestion}
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            {PERSIAN_TEXTS.chat.askQuestionDescription}
-          </p>
-        </div>
-      </div>
-    );
+    return <NoMessages className="min-h-[65vh] md:min-h-[75vh]" />;
   }, [messages, isStreaming]);
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="mx-auto max-w-4xl px-6 py-8 pb-32">
+          <div
+            className={`mx-auto max-w-4xl px-6 py-8 ${
+              messages.length > 0 || isStreaming ? 'pb-32' : 'pb-16'
+            }`}
+          >
             {renderMessages}
             <div ref={messagesEndRef} />
           </div>

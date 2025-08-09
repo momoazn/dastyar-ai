@@ -14,6 +14,7 @@ import {
   clearThread,
   createThread,
   deleteMessage,
+  deleteThread,
   getMessagesByThread,
   getThread,
   listThreads,
@@ -102,7 +103,7 @@ export const appRouter = {
     delete: publicProcedure
       .input(z.object({ id: z.string() }))
       .handler(async ({ input }) => {
-        await deleteMessage(input.id);
+        await deleteThread(input.id);
         return { ok: true } as const;
       }),
   },

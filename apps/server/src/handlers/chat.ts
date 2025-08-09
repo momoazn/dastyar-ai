@@ -20,15 +20,16 @@ import { generateId } from '../lib/utils';
 
 const app = new Hono();
 
+const sendMessageSchema = z.object({
+  messages: z.array(z.any()).default([]),
+  modelId: z.string(),
+  threadId: z.string(),
+  system: z.string().optional(),
+});
+
 app.post('/', async (c) => {
   try {
-    const schema = z.object({
-      messages: z.array(z.any()).default([]),
-      modelId: z.string(),
-      threadId: z.string(),
-      system: z.string().optional(),
-    });
-    const body = schema.parse(await c.req.json());
+    const body = sendMessageSchema.parse(await c.req.json());
     const uiMessages: UIMessage[] = body.messages as UIMessage[];
 
     // Ensure thread exists if provided, otherwise optionally create one

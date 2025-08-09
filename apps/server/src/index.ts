@@ -10,11 +10,11 @@ import { syncModels } from './lib/repository';
 
 const app = new Hono();
 
+await runMigrations();
+await syncModels();
+
 app.use(logger());
 app.use(async (_c, next) => {
-  // Ensure migrations are applied once per process
-  await runMigrations();
-  await syncModels();
   await next();
 });
 
