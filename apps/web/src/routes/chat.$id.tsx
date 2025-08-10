@@ -7,10 +7,17 @@ import {
 } from '@tanstack/react-router';
 import type { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChatInput } from '@/components/chat-input';
 import { MessagesList } from '@/components/messages-list';
-import { ScrollArea } from '@/components/ui';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  ScrollArea,
+} from '@/components/ui';
 import {
   mapThreadMessagesToUI,
   useHydrateInitialMessages,
@@ -90,6 +97,29 @@ function ChatThreadRouteComponent() {
     setPrompt('');
   };
 
+  const handleRetryLastPrompt = () => {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    if (!lastUser) {
+      return;
+    }
+    const parts = (lastUser.parts as { type: string; text?: string }[]) || [];
+    const lastText = parts
+      .filter((p) => p.type === 'text')
+      .map((p) => p.text ?? '')
+      .join('')
+      .trim();
+    if (!lastText) {
+      return;
+    }
+    if (!chatModelId) {
+      return;
+    }
+    sendMessage(
+      { text: lastText },
+      { body: { modelId: chatModelId, threadId } }
+    );
+  };
+
   const stopGenerating = useCallback(() => {
     stop();
   }, [stop]);
@@ -131,6 +161,24 @@ function ChatThreadRouteComponent() {
               messages.length > 0 || isGenerating ? 'pb-32' : 'pb-16'
             }`}
           >
+            {status === 'error' ? (
+              <Alert className="mb-4" variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>خطا</AlertTitle>
+                <AlertDescription>
+                  مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.
+                </AlertDescription>
+                <div className="mt-3">
+                  <Button
+                    onClick={handleRetryLastPrompt}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <RotateCcw className="mr-2 h-3 w-3" /> تلاش مجدد
+                  </Button>
+                </div>
+              </Alert>
+            ) : null}
             {renderMessages}
             <div ref={messagesEndRef} />
           </div>
