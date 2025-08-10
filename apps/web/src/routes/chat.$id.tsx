@@ -5,15 +5,17 @@ import {
   useParams,
   useRouterState,
 } from '@tanstack/react-router';
+import type { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
-import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AssistantMessage } from '@/components/assistant-message';
 import { ChatInput } from '@/components/chat-input';
-import { NoMessages } from '@/components/no-messages';
+import { MessagesList } from '@/components/messages-list';
 import { ScrollArea } from '@/components/ui';
-import { UserMessage } from '@/components/user-message';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import {
+  mapThreadMessagesToUI,
+  useHydrateInitialMessages,
+  useSendInitialPrompt,
+} from '@/hooks/use-chat-thread';
 import { orpc } from '@/utils/orpc';
 
 export const Route = createFileRoute('/chat/$id')({
@@ -56,25 +58,10 @@ function ChatThreadRouteComponent() {
     }
   }, [models, chatModelId]);
 
-  const initialMessages = useMemo(() => {
-    if (!threadMessages || threadMessages.length === 0) {
-      return [];
-    }
-    return threadMessages.map((m) => {
-      const parts: Array<
-        { type: 'text'; text: string } | { type: 'reasoning'; text: string }
-      > = [];
-      if (m.role === 'assistant' && m.reasoning) {
-        parts.push({ type: 'reasoning', text: m.reasoning as string });
-      }
-      parts.push({ type: 'text', text: (m.content as string) ?? '' });
-      return {
-        id: m.id as string,
-        role: m.role as 'user' | 'assistant',
-        parts,
-      } as const;
-    });
-  }, [threadMessages]);
+  const initialMessages = useMemo(
+    () => mapThreadMessagesToUI(threadMessages ?? []),
+    [threadMessages]
+  );
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     id: threadId,
@@ -84,22 +71,16 @@ function ChatThreadRouteComponent() {
     }),
   });
 
-  const isStreaming = status === 'streaming' || status === 'submitted';
+  const isGenerating = status === 'streaming' || status === 'submitted';
 
   // Hydrate useChat state with thread messages after they load on initial mount (e.g., on page reload)
-  const hasHydratedFromThreadRef = useRef(false);
-  useEffect(() => {
-    if (
-      !hasHydratedFromThreadRef.current &&
-      threadMessages &&
-      messages.length === 0 &&
-      status === 'ready' &&
-      initialMessages.length > 0
-    ) {
-      setMessages(initialMessages);
-      hasHydratedFromThreadRef.current = true;
-    }
-  }, [threadMessages, messages.length, status, initialMessages, setMessages]);
+  useHydrateInitialMessages({
+    threadMessages,
+    messages: messages as UIMessage[],
+    status,
+    initialMessages,
+    setMessages: setMessages as unknown as (m: UIMessage[]) => void,
+  });
 
   const handleSendMessage = () => {
     if (!(prompt.trim() && chatModelId)) {
@@ -109,7 +90,7 @@ function ChatThreadRouteComponent() {
     setPrompt('');
   };
 
-  const stopStreaming = useCallback(() => {
+  const stopGenerating = useCallback(() => {
     stop();
   }, [stop]);
 
@@ -118,77 +99,28 @@ function ChatThreadRouteComponent() {
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0 || isStreaming) {
+    if (messages.length > 0 || isGenerating) {
       scrollToBottom();
     }
-  }, [messages, isStreaming, scrollToBottom]);
+  }, [messages, isGenerating, scrollToBottom]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages
-  useEffect(() => {
-    if (navigationState.initialPrompt && navigationState.initialModel) {
-      // Submit the initial prompt once on mount, then clear the input value
-      setTimeout(() => {
-        // biome-ignore lint/style/noNonNullAssertion: navigationState.initialPrompt is not null
-        sendMessage({ text: navigationState.initialPrompt! });
-        setPrompt('');
-      }, 0);
-    }
-  }, []);
+  useSendInitialPrompt({
+    initialPrompt: navigationState.initialPrompt,
+    initialModel: navigationState.initialModel,
+    chatModelId,
+    threadId,
+    sendMessage,
+    setPrompt,
+  });
 
   const renderMessages = useMemo(() => {
-    if (messages.length > 0) {
-      const parsed = messages.map((m) => {
-        let text = '';
-        let reasoning = '';
-        for (const p of m.parts) {
-          if (p.type === 'text') {
-            text += p.text;
-          }
-          if (p.type === 'reasoning') {
-            reasoning += p.text;
-          }
-        }
-        return { id: m.id, role: m.role, text, reasoning };
-      });
-
-      return (
-        <div className="space-y-4">
-          {parsed.map((m) =>
-            m.role === 'user' ? (
-              <UserMessage
-                key={m.id}
-                message={{ role: 'user', content: m.text }}
-              />
-            ) : (
-              <AssistantMessage
-                key={m.id}
-                message={{
-                  role: 'assistant',
-                  content: m.text,
-                  reasoning: m.reasoning,
-                }}
-              />
-            )
-          )}
-        </div>
-      );
-    }
-
-    if (isStreaming) {
-      return (
-        <div className="flex h-32 items-center justify-center">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            <span className="text-muted-foreground text-sm">
-              {PERSIAN_TEXTS.general.loading}...
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    return <NoMessages className="min-h-[65vh] md:min-h-[75vh]" />;
-  }, [messages, isStreaming]);
+    return (
+      <MessagesList
+        isSubmitted={status === 'submitted'}
+        messages={messages as UIMessage[]}
+      />
+    );
+  }, [messages, status]);
 
   return (
     <div className="flex h-full flex-col">
@@ -196,7 +128,7 @@ function ChatThreadRouteComponent() {
         <ScrollArea className="h-full">
           <div
             className={`mx-auto max-w-4xl px-6 py-8 ${
-              messages.length > 0 || isStreaming ? 'pb-32' : 'pb-16'
+              messages.length > 0 || isGenerating ? 'pb-32' : 'pb-16'
             }`}
           >
             {renderMessages}
@@ -206,25 +138,15 @@ function ChatThreadRouteComponent() {
       </div>
 
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        {isStreaming ? (
-          <output aria-live="polite" className="border-border/60 border-t">
-            <div className="mx-auto max-w-4xl px-6 py-2">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>{PERSIAN_TEXTS.general.loading}...</span>
-              </div>
-            </div>
-          </output>
-        ) : null}
         <ChatInput
           chatModelId={chatModelId}
           handleSendPrompt={handleSendMessage}
-          isStreaming={isStreaming}
+          isGenerating={isGenerating}
           models={models}
           prompt={prompt}
           setChatModelId={setChatModelId}
           setPrompt={setPrompt}
-          stopStreaming={stopStreaming}
+          stopGenerating={stopGenerating}
         />
       </div>
     </div>

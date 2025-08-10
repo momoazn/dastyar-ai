@@ -15,8 +15,8 @@ import { client, orpc, queryClient } from '@/utils/orpc';
 
 interface ChatInputProps {
   handleSendPrompt: () => void;
-  isStreaming: boolean;
-  stopStreaming: () => void;
+  isGenerating: boolean;
+  stopGenerating: () => void;
   chatModelId?: string; // `${provider}:${modelId}`
   setChatModelId: (model: string) => void;
   prompt: string;
@@ -31,8 +31,8 @@ interface ChatInputProps {
 export const ChatInput = memo(
   ({
     handleSendPrompt,
-    isStreaming,
-    stopStreaming,
+    isGenerating,
+    stopGenerating,
     chatModelId,
     setChatModelId,
     prompt,
@@ -50,8 +50,8 @@ export const ChatInput = memo(
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (isStreaming) {
-          stopStreaming();
+        if (isGenerating) {
+          stopGenerating();
         } else {
           handleSendPrompt();
         }
@@ -60,8 +60,8 @@ export const ChatInput = memo(
 
     // Handle send/stop button click
     const handleSendButtonClick = () => {
-      if (isStreaming) {
-        stopStreaming();
+      if (isGenerating) {
+        stopGenerating();
       } else {
         handleSendPrompt();
       }
@@ -147,12 +147,12 @@ export const ChatInput = memo(
             <div className="flex items-center gap-2">
               <Button
                 className="size-9 cursor-pointer"
-                disabled={!(isStreaming || (prompt.trim() && chatModelId))}
+                disabled={!(isGenerating || (prompt.trim() && chatModelId))}
                 onClick={handleSendButtonClick}
                 size="icon"
-                variant={isStreaming ? 'destructive' : 'default'}
+                variant={isGenerating ? 'destructive' : 'default'}
               >
-                {isStreaming ? (
+                {isGenerating ? (
                   <Pause className="size-4" />
                 ) : (
                   <Send className="size-4" />
