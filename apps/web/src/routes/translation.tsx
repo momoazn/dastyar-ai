@@ -23,7 +23,7 @@ import {
   Textarea,
 } from '@/components/ui';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
-import { client, orpc, queryClient } from '@/utils/orpc';
+import { orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/translation')({
   component: TranslationPage,
@@ -41,21 +41,16 @@ function TranslationPage() {
     orpc.models.list.queryOptions({ input: { isEnabled: true } })
   );
 
-  const translateMutation = useMutation({
-    mutationFn: () =>
-      client.translations.translate({
-        text: sourceText,
-        sourceLanguage,
-        targetLanguage,
-        tone,
-        modelId,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: orpc.translations.list.queryKey(),
-      });
-    },
-  });
+  const translateMutation = useMutation(
+    orpc.translations.translate.mutationOptions({
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.translations.list.queryKey(),
+        });
+        setTranslatedText(data.translatedText ?? '');
+      },
+    })
+  );
 
   useEffect(() => {
     if (modelList && modelList.length > 0 && !modelId) {
@@ -81,7 +76,13 @@ function TranslationPage() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      translateMutation.mutate();
+      translateMutation.mutate({
+        text: sourceText,
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        modelId,
+      });
     }
   };
 
@@ -299,7 +300,15 @@ function TranslationPage() {
           <Button
             className="w-full cursor-pointer"
             disabled={!canTranslate}
-            onClick={() => translateMutation.mutate()}
+            onClick={() =>
+              translateMutation.mutate({
+                text: sourceText,
+                sourceLanguage,
+                targetLanguage,
+                tone,
+                modelId,
+              })
+            }
             size="lg"
             type="button"
             variant="outline"

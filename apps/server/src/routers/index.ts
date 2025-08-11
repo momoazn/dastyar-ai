@@ -1,4 +1,4 @@
-import { type GenerateObjectResult, generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { ModelProviderEnum, models, translations } from '../db/schema';
@@ -27,6 +27,73 @@ import {
   toneToLabelMap,
 } from '../lib/translate';
 import { generateId } from '../lib/utils';
+
+// Regex constants declared at top-level per performance best practices
+const FENCED_JSON_OPEN = /^```json\s*/i;
+const FENCED_OPEN = /^```\s*/i;
+const FENCED_CLOSE = /```\s*$/i;
+
+const extractTranslatedTextFromRaw = (rawOutput: string): string | null => {
+  const cleaned = rawOutput
+    .trim()
+    .replace(FENCED_JSON_OPEN, '')
+    .replace(FENCED_OPEN, '')
+    .replace(FENCED_CLOSE, '');
+  const startIndex = cleaned.indexOf('{');
+  const endIndex = cleaned.lastIndexOf('}');
+  const jsonSlice =
+    startIndex !== -1 && endIndex !== -1
+      ? cleaned.slice(startIndex, endIndex + 1)
+      : cleaned;
+  try {
+    const parsed = JSON.parse(jsonSlice) as { translatedText?: unknown };
+    if (parsed && typeof parsed === 'object' && 'translatedText' in parsed) {
+      return String(parsed.translatedText ?? '');
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const translateWithStructuredOutput = async (
+  model: ReturnType<typeof getProviderForModel>,
+  systemPrompt: string,
+  inputText: string
+): Promise<string | null> => {
+  const result = await generateObject({
+    model,
+    providerOptions: {
+      openai: { structuredOutputs: false },
+      lmstudio: { structuredOutputs: false },
+      ollama: { structuredOutputs: false },
+      openrouter: { structuredOutputs: false },
+    },
+    mode: 'tool',
+    system: systemPrompt,
+    schema: z.object({
+      translatedText: z
+        .string()
+        .optional()
+        .describe('Only the translated text. No extra commentary.'),
+    }),
+    prompt: inputText,
+  });
+  return result.object.translatedText ?? null;
+};
+
+const translateWithPlainJson = async (
+  model: ReturnType<typeof getProviderForModel>,
+  systemPrompt: string,
+  inputText: string
+): Promise<string> => {
+  const { text: rawOutput } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt: inputText,
+  });
+  return extractTranslatedTextFromRaw(rawOutput) ?? rawOutput.trim();
+};
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -204,50 +271,54 @@ export const appRouter = {
           input.tone ? `Use a ${input.tone} tone.` : undefined,
           'Preserve meaning and formatting. Return only the translated text without extra commentary.',
           'Always return a json object with the translated text.',
+          'Please generate only the JSON output. DO NOT provide any preamble.',
         ]
           .filter(Boolean)
           .join('\n');
 
-        console.log('####', systemPrompt);
-
-        let result: GenerateObjectResult<{ translatedText: string }>;
+        let translatedText: string | null = null;
         try {
-          result = await generateObject({
-            model: providerModel,
-            system: systemPrompt,
-            schema: z.object({
-              translatedText: z
-                .string()
-                .optional()
-                .describe('Only the translated text. No extra commentary.'),
-            }),
-            prompt: input.text,
-          });
-
-          console.log('#### in try', result);
-        } catch (error) {
-          console.error('#### in catch', error);
-          throw error;
+          translatedText = await translateWithStructuredOutput(
+            providerModel,
+            systemPrompt,
+            input.text
+          );
+        } catch {
+          // ignore and fallback
+          console.error(
+            '--- could not translate with structured output, falling back to plain json'
+          );
         }
 
-        console.log('#### in finally', result);
-
-        if (!result) {
-          return { id: null, translatedText: null } as const;
+        if (!translatedText) {
+          translatedText = await translateWithPlainJson(
+            providerModel,
+            [
+              `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
+              input.tone ? `Use a ${input.tone} tone.` : undefined,
+              'Preserve meaning and formatting.',
+              'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
+            ]
+              .filter(Boolean)
+              .join('\n'),
+            input.text
+          );
         }
 
         const id = generateId(15);
-        await context.db.insert(translations).values({
-          id,
-          sourceText: input.text,
-          translatedText: result.object.translatedText,
-          modelId: model?.[0].id,
-          sourceLanguage: input.sourceLanguage,
-          targetLanguage: input.targetLanguage,
-          tone: (input.tone as Tone) ?? null,
-        });
-
-        return { id, translatedText: result.object.translatedText } as const;
+        const created = await context.db
+          .insert(translations)
+          .values({
+            id,
+            sourceText: input.text,
+            translatedText,
+            modelId: model?.[0].id,
+            sourceLanguage: input.sourceLanguage,
+            targetLanguage: input.targetLanguage,
+            tone: (input.tone as Tone) ?? null,
+          })
+          .returning();
+        return created[0];
       }),
   },
 };

@@ -97,17 +97,12 @@ export const listAllModels = async () => {
 
 export const getProviderForModel = (
   model: Model
-): ReturnType<typeof ollamaProvider> => {
-  const providers = {
-    [ModelProviderEnum.OLLAMA]: ollamaProvider,
-    [ModelProviderEnum.LMSTUDIO]: lmstudioProvider,
-    [ModelProviderEnum.OPENROUTER]: openrouterProvider,
-  } as const;
-  type ProviderKey = keyof typeof providers;
-  const key: ProviderKey = (
-    Object.hasOwn(providers, model.provider)
-      ? (model.provider as ProviderKey)
-      : ModelProviderEnum.OLLAMA
-  ) as ProviderKey;
-  return providers[key](model.name);
+): ReturnType<typeof ollamaProvider> | ReturnType<typeof lmstudioProvider> => {
+  if (model.provider === ModelProviderEnum.OLLAMA) {
+    return ollamaProvider(model.name);
+  }
+  if (model.provider === ModelProviderEnum.LMSTUDIO) {
+    return lmstudioProvider(model.name);
+  }
+  return ollamaProvider(model.name);
 };
