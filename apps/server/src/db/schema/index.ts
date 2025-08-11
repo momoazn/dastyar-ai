@@ -37,6 +37,7 @@ export const ModelProviderEnum = {
   LMSTUDIO: 'lmstudio',
   GEMINI: 'gemini',
   OPENROUTER: 'openrouter',
+  GROQ: 'groq',
 } as const;
 
 export type ModelProvider =

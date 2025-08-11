@@ -2,8 +2,8 @@ import { generateObject, generateText } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { ModelProviderEnum, models, translations } from '../db/schema';
-import { getProviderForModel } from '../lib/ai';
 import { publicProcedure } from '../lib/orpc';
+import { getProviderForModel } from '../lib/providers';
 import {
   clearThread,
   createThread,
@@ -134,6 +134,8 @@ export const appRouter = {
                     ModelProviderEnum.LMSTUDIO,
                     ModelProviderEnum.OLLAMA,
                     ModelProviderEnum.OPENROUTER,
+                    ModelProviderEnum.GROQ,
+                    ModelProviderEnum.GEMINI,
                   ])
             )
           );

@@ -7,7 +7,7 @@ import {
 } from 'ai';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { getProviderForModel } from '../lib/ai';
+import { getProviderForModel } from '../lib/providers';
 import {
   getMessagesByThread,
   getModelById,

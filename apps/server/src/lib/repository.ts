@@ -22,7 +22,7 @@ import {
   translations,
 } from '@/db/schema';
 import { db } from '../db';
-import { listAllModels } from './ai';
+import { listAllModels } from './providers';
 import { generateId } from './utils';
 
 export async function syncModels() {
@@ -33,7 +33,7 @@ export async function syncModels() {
   console.log('--- Found', allModels.length, 'models');
 
   // Prepare rows for upsert (no preloading from DB)
-  const rowsToUpsert = allModels.map((m) => ({
+  const rowsToUpsert = allModels.map((m: { id: string; provider: string }) => ({
     id: generateId(),
     name: m.id,
     provider: m.provider,
