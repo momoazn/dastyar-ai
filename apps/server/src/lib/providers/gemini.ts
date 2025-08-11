@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import OpenAI from 'openai';
-import { ModelProviderEnum } from '@/db/schema';
+import { ModelProviderEnum } from './constants';
 import type {
   MinimalModel,
   ProviderFactoriesRegistry,

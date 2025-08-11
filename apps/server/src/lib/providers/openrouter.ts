@@ -1,6 +1,6 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
-import { ModelProviderEnum } from '@/db/schema';
+import { ModelProviderEnum } from './constants';
 import type {
   MinimalModel,
   ProviderFactoriesRegistry,

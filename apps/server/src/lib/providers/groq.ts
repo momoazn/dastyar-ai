@@ -1,6 +1,6 @@
 import { createGroq } from '@ai-sdk/groq';
 import { Groq } from 'groq-sdk';
-import { ModelProviderEnum } from '@/db/schema';
+import { ModelProviderEnum } from './constants';
 import type {
   MinimalModel,
   ProviderFactoriesRegistry,

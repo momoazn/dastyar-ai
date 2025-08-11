@@ -1,4 +1,5 @@
-import { type Model, ModelProviderEnum } from '@/db/schema';
+import type { Model } from '@/db/schema';
+import { ModelProviderEnum } from './constants';
 import { geminiFactories, geminiListFns, type geminiProvider } from './gemini';
 import { groqFactories, groqListFns, type groqProvider } from './groq';
 import {

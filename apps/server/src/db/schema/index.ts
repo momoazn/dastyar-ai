@@ -7,6 +7,7 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
+import { ModelProviderEnum } from '@/lib/providers/constants';
 import { codeToLanguageMap, toneToLabelMap } from '@/lib/translate';
 
 // Status enums for messages
@@ -30,18 +31,6 @@ export const MessageRoleEnum = {
 
 export type MessageRole =
   (typeof MessageRoleEnum)[keyof typeof MessageRoleEnum];
-
-// Provider enums for AI models
-export const ModelProviderEnum = {
-  OLLAMA: 'ollama',
-  LMSTUDIO: 'lmstudio',
-  GEMINI: 'gemini',
-  OPENROUTER: 'openrouter',
-  GROQ: 'groq',
-} as const;
-
-export type ModelProvider =
-  (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum];
 
 /*
   Models table – stores metadata about available AI models

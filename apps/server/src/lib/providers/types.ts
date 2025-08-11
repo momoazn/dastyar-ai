@@ -1,4 +1,4 @@
-import type { ModelProviderEnum } from '@/db/schema';
+import type { ModelProviderEnum } from './constants';
 
 export type MinimalModel = { id: string };
 

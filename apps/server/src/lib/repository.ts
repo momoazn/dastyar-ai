@@ -11,7 +11,6 @@ import {
   insertMessageSchema,
   insertModelSchema,
   insertThreadSchema,
-  ModelProviderEnum,
   messages,
   models,
   selectMessageSchema,
@@ -21,6 +20,7 @@ import {
   threads,
   translations,
 } from '@/db/schema';
+import { ModelProviderEnum } from '@/lib/providers/constants';
 import { db } from '../db';
 import { listAllModels } from './providers';
 import { generateId } from './utils';
