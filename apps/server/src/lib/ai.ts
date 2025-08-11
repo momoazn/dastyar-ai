@@ -1,3 +1,4 @@
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
 import { type Model, ModelProviderEnum } from '@/db/schema';
@@ -6,8 +7,13 @@ const OLLAMA_OPENAI_BASE_URL = 'http://localhost:11434/v1' as const;
 const LMSTUDIO_OPENAI_BASE_URL = 'http://localhost:1234/v1' as const;
 const OPENROUTER_BASE_URL = 'https://api.openrouter.ai/v1' as const;
 
+const GEMINI_API_KEY = process.env.GOOGLE_API_KEY || '';
 const OPENROUTER_API_KEY =
   process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || '';
+
+export const geminiProvider = createGoogleGenerativeAI({
+  apiKey: GEMINI_API_KEY,
+});
 
 export const ollamaClient = new OpenAI({
   baseURL: OLLAMA_OPENAI_BASE_URL,
@@ -103,6 +109,9 @@ export const getProviderForModel = (
   }
   if (model.provider === ModelProviderEnum.LMSTUDIO) {
     return lmstudioProvider(model.name);
+  }
+  if (model.provider === ModelProviderEnum.OPENROUTER) {
+    return openrouterProvider(model.name);
   }
   return ollamaProvider(model.name);
 };
