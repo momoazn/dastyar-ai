@@ -1,9 +1,10 @@
 import { generateObject, generateText } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { ModelProviderEnum, models, translations } from '../db/schema';
+import { models, translations } from '../db/schema';
 import { publicProcedure } from '../lib/orpc';
 import { getProviderForModel } from '../lib/providers';
+import { ModelProviderEnum } from '../lib/providers/constants';
 import {
   clearThread,
   createThread,
@@ -130,13 +131,7 @@ export const appRouter = {
               input.isEnabled ? eq(models.isEnabled, true) : undefined,
               input.providers
                 ? inArray(models.provider, input.providers)
-                : inArray(models.provider, [
-                    ModelProviderEnum.LMSTUDIO,
-                    ModelProviderEnum.OLLAMA,
-                    ModelProviderEnum.OPENROUTER,
-                    ModelProviderEnum.GROQ,
-                    ModelProviderEnum.GEMINI,
-                  ])
+                : inArray(models.provider, Object.values(ModelProviderEnum))
             )
           );
 

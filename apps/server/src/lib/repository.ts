@@ -70,11 +70,11 @@ export async function syncModels() {
     }
   }
 
-  // Disable models that are NOT present in the latest lists (per provider)
-  // If a provider had no models returned, disable all of that provider.
-  const allProviders = Object.values(ModelProviderEnum);
+  // Disable models that are NOT present in the latest lists (per local provider)
+  // If a local provider had no models returned, disable all of that provider.
+  const localProviders = [ModelProviderEnum.OLLAMA, ModelProviderEnum.LMSTUDIO];
   const disableUpdates: Promise<unknown>[] = [];
-  for (const provider of allProviders) {
+  for (const provider of localProviders) {
     const names = modelsByProvider.get(provider) ?? [];
     if (names.length === 0) {
       disableUpdates.push(

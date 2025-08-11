@@ -38,15 +38,21 @@ export type AnyProviderModel =
   | ReturnType<typeof geminiProvider>;
 
 export const listAllModels = async () => {
-  const providers = Object.values(
-    ModelProviderEnum
-  ) as (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum][];
+  // Only fetch local providers here; remote providers are seeded via script
+  const providers = Object.values(ModelProviderEnum).filter(
+    (p) =>
+      p !== ModelProviderEnum.GEMINI &&
+      p !== ModelProviderEnum.OPENROUTER &&
+      p !== ModelProviderEnum.GROQ
+  );
+
   const results = await Promise.all(
     providers.map(async (provider) => {
       const listFn = providerListFns[provider];
       if (!listFn) {
         return [] as { id: string; provider: string }[];
       }
+      console.log('--- fetching models for provider', provider, '---');
       const models = await listFn();
       return models.map((m) => ({ id: m.id, provider }));
     })
