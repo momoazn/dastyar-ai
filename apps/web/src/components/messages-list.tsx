@@ -1,9 +1,13 @@
 import type { UIMessage } from 'ai';
 import { Loader2 } from 'lucide-react';
-import { AssistantMessage } from '@/components/assistant-message';
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+} from '@/components/ai-elements/message';
+import { Response } from '@/components/ai-elements/response';
 import { NoMessages } from '@/components/no-messages';
 import { Skeleton } from '@/components/ui';
-import { UserMessage } from '@/components/user-message';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 
 type ParsedMessage = {
@@ -40,24 +44,18 @@ export function MessagesList({
     const parsed: ParsedMessage[] = messages.map((m) => parseMessage(m));
 
     return (
-      <div className="space-y-4">
-        {parsed.map((m) =>
-          m.role === 'user' ? (
-            <UserMessage
-              key={m.id}
-              message={{ role: 'user', content: m.text }}
+      <div className="space-y-2" dir="rtl">
+        {parsed.map((m) => (
+          <Message from={m.role} key={m.id}>
+            <MessageAvatar
+              name={m.role === 'user' ? 'Me' : 'AI'}
+              src={m.role === 'user' ? '/avatar-user.png' : '/avatar-ai.png'}
             />
-          ) : (
-            <AssistantMessage
-              key={m.id}
-              message={{
-                role: 'assistant',
-                content: m.text,
-                reasoning: m.reasoning,
-              }}
-            />
-          )
-        )}
+            <MessageContent>
+              <Response>{m.text}</Response>
+            </MessageContent>
+          </Message>
+        ))}
       </div>
     );
   }

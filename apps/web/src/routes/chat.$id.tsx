@@ -9,15 +9,14 @@ import type { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from '@/components/ai-elements/conversation';
 import { ChatInput } from '@/components/chat-input';
 import { MessagesList } from '@/components/messages-list';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-  ScrollArea,
-} from '@/components/ui';
+import { Alert, AlertDescription, AlertTitle, Button } from '@/components/ui';
 import {
   mapThreadMessagesToUI,
   useHydrateInitialMessages,
@@ -155,34 +154,37 @@ function ChatThreadRouteComponent() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div
-            className={`mx-auto max-w-4xl px-6 py-8 ${
-              messages.length > 0 || isGenerating ? 'pb-32' : 'pb-16'
-            }`}
-          >
-            {status === 'error' ? (
-              <Alert className="mb-4" variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>خطا</AlertTitle>
-                <AlertDescription>
-                  مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.
-                </AlertDescription>
-                <div className="mt-3">
-                  <Button
-                    onClick={handleRetryLastPrompt}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <RotateCcw className="mr-2 h-3 w-3" /> تلاش مجدد
-                  </Button>
-                </div>
-              </Alert>
-            ) : null}
-            {renderMessages}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+        <Conversation>
+          <ConversationContent>
+            <div
+              className={`mx-auto max-w-4xl px-6 py-8 ${
+                messages.length > 0 || isGenerating ? 'pb-32' : 'pb-16'
+              }`}
+            >
+              {status === 'error' ? (
+                <Alert className="mb-4" variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>خطا</AlertTitle>
+                  <AlertDescription>
+                    مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.
+                  </AlertDescription>
+                  <div className="mt-3">
+                    <Button
+                      onClick={handleRetryLastPrompt}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <RotateCcw className="mr-2 h-3 w-3" /> تلاش مجدد
+                    </Button>
+                  </div>
+                </Alert>
+              ) : null}
+              {renderMessages}
+              <div ref={messagesEndRef} />
+            </div>
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       </div>
 
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

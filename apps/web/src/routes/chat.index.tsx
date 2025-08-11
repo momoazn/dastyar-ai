@@ -55,12 +55,12 @@ function ChatIndexComponent() {
         <ChatInput
           chatModelId={chatModelId}
           handleSendPrompt={handleSendFirstMessage}
-          isStreaming={false}
+          isGenerating={false}
           models={models}
           prompt={prompt}
           setChatModelId={setChatModelId}
           setPrompt={setPrompt}
-          stopStreaming={() => {
+          stopGenerating={() => {
             // noop
           }}
         />

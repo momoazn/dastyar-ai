@@ -1,14 +1,19 @@
-import { Pause, RefreshCcw, Send } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import { memo, useMemo } from 'react';
+// no button import needed here
 import {
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-} from '@/components/ui';
+  PromptInput,
+  PromptInputButton,
+  PromptInputModelSelect,
+  PromptInputModelSelectContent,
+  PromptInputModelSelectItem,
+  PromptInputModelSelectTrigger,
+  PromptInputModelSelectValue,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputTools,
+} from '@/components/ai-elements/prompt-input';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
@@ -62,9 +67,9 @@ export const ChatInput = memo(
     const handleSendButtonClick = () => {
       if (isGenerating) {
         stopGenerating();
-      } else {
-        handleSendPrompt();
+        return;
       }
+      handleSendPrompt();
     };
 
     // Memoize prompt change handler
@@ -74,21 +79,21 @@ export const ChatInput = memo(
 
     // Memoize models list rendering
     const modelItems = useMemo(() => {
-      return (models || []).map((model) => {
-        return (
-          <SelectItem key={model.id} value={model.id}>
-            <div className="flex items-center gap-2">
-              <div className="size-2 rounded-full bg-green-500" />
-              <span className="text-sm">{model.name}</span>
-              {model.provider ? (
-                <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
-                  {model.provider}
-                </span>
-              ) : null}
-            </div>
-          </SelectItem>
-        );
-      });
+      return (models || []).map((model) => ({
+        key: model.id,
+        value: model.id,
+        content: (
+          <div className="flex items-center gap-2">
+            <div className="size-2 rounded-full bg-green-500" />
+            <span className="text-sm">{model.name}</span>
+            {model.provider ? (
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
+                {model.provider}
+              </span>
+            ) : null}
+          </div>
+        ),
+      }));
     }, [models]);
 
     const handleSyncModels = async () => {
@@ -101,65 +106,55 @@ export const ChatInput = memo(
     };
 
     return (
-      <div className="mx-auto max-w-4xl px-6 py-4">
+      <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
         <div className="rounded-2xl border bg-muted/30 shadow-sm transition-all focus-within:shadow-md hover:shadow-md">
-          {/* Message Input Area */}
-          <div className="relative">
-            <Textarea
-              className="min-h-[100px] w-full resize-none border-0 bg-transparent px-6 py-4 text-base shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0"
+          <PromptInput
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendButtonClick();
+            }}
+          >
+            <PromptInputTextarea
               dir={textDirection}
               onChange={handlePromptChange}
               onKeyDown={handleKeyDown}
               placeholder={PERSIAN_TEXTS.chat.writeMessage}
               value={prompt}
             />
-          </div>
-
-          {/* Bottom Controls */}
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            {/* Left side - Model selector and Actions */}
-            <div className="flex items-center gap-2">
-              {/* Model Selector */}
-              <Select
-                defaultValue={chatModelId}
-                onValueChange={setChatModelId}
-                value={chatModelId}
-              >
-                <SelectTrigger className="h-9 w-80 cursor-pointer gap-2 border-0 bg-background/50 px-3 font-medium text-sm shadow-none hover:bg-background/80 focus:ring-0">
-                  <SelectValue
-                    placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
-                  />
-                </SelectTrigger>
-                <SelectContent>{modelItems}</SelectContent>
-              </Select>
-
-              <Button
-                className="cursor-pointer"
-                onClick={handleSyncModels}
-                size="icon"
-                variant="outline"
-              >
-                <RefreshCcw className="size-4" />
-              </Button>
-            </div>
-
-            {/* Right side - Send button */}
-            <div className="flex items-center gap-2">
-              <Button
-                className="size-9 cursor-pointer"
+            <PromptInputToolbar>
+              <PromptInputTools>
+                <PromptInputModelSelect
+                  defaultValue={chatModelId}
+                  onValueChange={setChatModelId}
+                  value={chatModelId}
+                >
+                  <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
+                    <PromptInputModelSelectValue
+                      placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
+                    />
+                  </PromptInputModelSelectTrigger>
+                  <PromptInputModelSelectContent>
+                    {modelItems.map((item) => (
+                      <PromptInputModelSelectItem
+                        key={item.key}
+                        value={item.value}
+                      >
+                        {item.content}
+                      </PromptInputModelSelectItem>
+                    ))}
+                  </PromptInputModelSelectContent>
+                </PromptInputModelSelect>
+                <PromptInputButton onClick={handleSyncModels} variant="outline">
+                  <RefreshCcw className="size-4" />
+                </PromptInputButton>
+              </PromptInputTools>
+              <PromptInputSubmit
                 disabled={!(isGenerating || (prompt.trim() && chatModelId))}
-                onClick={handleSendButtonClick}
-                size="icon"
+                status={isGenerating ? 'streaming' : undefined}
                 variant={isGenerating ? 'destructive' : 'default'}
-              >
-                {isGenerating ? (
-                  <Pause className="size-4" />
-                ) : (
-                  <Send className="size-4" />
-                )}
-              </Button>
-            </div>
-          </div>
+              />
+            </PromptInputToolbar>
+          </PromptInput>
         </div>
       </div>
     );
