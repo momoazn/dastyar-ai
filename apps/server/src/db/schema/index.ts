@@ -7,42 +7,7 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
-
-// Language enums
-export const LanguageEnum = {
-  PERSIAN: 'fa',
-  ENGLISH: 'en',
-  ARABIC: 'ar',
-  FRENCH: 'fr',
-  GERMAN: 'de',
-  SPANISH: 'es',
-  ITALIAN: 'it',
-  PORTUGUESE: 'pt',
-  RUSSIAN: 'ru',
-  CHINESE: 'zh',
-  JAPANESE: 'ja',
-  KOREAN: 'ko',
-  TURKISH: 'tr',
-  HINDI: 'hi',
-  URDU: 'ur',
-} as const;
-
-export type Language = (typeof LanguageEnum)[keyof typeof LanguageEnum];
-
-// Tone enums
-export const ToneEnum = {
-  FORMAL: 'formal',
-  INFORMAL: 'informal',
-  BUSINESS: 'business',
-  CASUAL: 'casual',
-  ACADEMIC: 'academic',
-  TECHNICAL: 'technical',
-  CREATIVE: 'creative',
-  FRIENDLY: 'friendly',
-  PROFESSIONAL: 'professional',
-} as const;
-
-export type Tone = (typeof ToneEnum)[keyof typeof ToneEnum];
+import { codeToLanguageMap, toneToLabelMap } from '@/lib/translate';
 
 // Status enums for messages
 export const MessageStatusEnum = {
@@ -178,13 +143,13 @@ export const translations = sqliteTable('translations', {
   translatedText: text('translatedText'),
   modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
   sourceLanguage: text('sourceLanguage', {
-    enum: Object.values(LanguageEnum) as [string, ...string[]],
+    enum: Object.keys(codeToLanguageMap) as [string, ...string[]],
   }).notNull(),
   targetLanguage: text('targetLanguage', {
-    enum: Object.values(LanguageEnum) as [string, ...string[]],
+    enum: Object.keys(codeToLanguageMap) as [string, ...string[]],
   }).notNull(),
   tone: text('tone', {
-    enum: Object.values(ToneEnum) as [string, ...string[]],
+    enum: Object.keys(toneToLabelMap) as [string, ...string[]],
   }),
   createdAt: integer('created', { mode: 'timestamp' }).default(
     sql`(unixepoch())`

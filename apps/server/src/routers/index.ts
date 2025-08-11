@@ -1,13 +1,7 @@
-import { generateObject } from 'ai';
+import { type GenerateObjectResult, generateObject } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import {
-  LanguageEnum,
-  ModelProviderEnum,
-  models,
-  ToneEnum,
-  translations,
-} from '../db/schema';
+import { ModelProviderEnum, models, translations } from '../db/schema';
 import { getProviderForModel } from '../lib/ai';
 import { publicProcedure } from '../lib/orpc';
 import {
@@ -25,6 +19,13 @@ import {
   setArchived,
   syncModels,
 } from '../lib/repository';
+import {
+  codeToLanguage,
+  codeToLanguageMap,
+  type LanguageCode,
+  type Tone,
+  toneToLabelMap,
+} from '../lib/translate';
 import { generateId } from '../lib/utils';
 
 export const appRouter = {
@@ -172,9 +173,9 @@ export const appRouter = {
       .input(
         z.object({
           text: z.string().min(1),
-          sourceLanguage: z.enum(Object.values(LanguageEnum)),
-          targetLanguage: z.enum(Object.values(LanguageEnum)),
-          tone: z.enum(Object.values(ToneEnum)).optional(),
+          sourceLanguage: z.enum(Object.keys(codeToLanguageMap)),
+          targetLanguage: z.enum(Object.keys(codeToLanguageMap)),
+          tone: z.enum(Object.keys(toneToLabelMap)).optional(),
           modelId: z.string().optional(),
         })
       )
@@ -191,27 +192,45 @@ export const appRouter = {
         }
 
         const providerModel = getProviderForModel(model?.[0]);
+        const sourceLanguage = codeToLanguage(
+          input.sourceLanguage as LanguageCode
+        );
+        const targetLanguage = codeToLanguage(
+          input.targetLanguage as LanguageCode
+        );
 
-        const prompt = [
-          `You are a professional translator. Translate the text from ${input.sourceLanguage} to ${input.targetLanguage}.`,
+        const systemPrompt = [
+          `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
           input.tone ? `Use a ${input.tone} tone.` : undefined,
           'Preserve meaning and formatting. Return only the translated text without extra commentary.',
           'Always return a json object with the translated text.',
-          '---',
-          input.text,
         ]
           .filter(Boolean)
           .join('\n');
 
-        const result = await generateObject({
-          model: providerModel,
-          schema: z.object({
-            translatedText: z
-              .string()
-              .describe('Only the translated text. No extra commentary.'),
-          }),
-          prompt,
-        });
+        console.log('####', systemPrompt);
+
+        let result: GenerateObjectResult<{ translatedText: string }>;
+        try {
+          result = await generateObject({
+            model: providerModel,
+            system: systemPrompt,
+            schema: z.object({
+              translatedText: z
+                .string()
+                .optional()
+                .describe('Only the translated text. No extra commentary.'),
+            }),
+            prompt: input.text,
+          });
+
+          console.log('#### in try', result);
+        } catch (error) {
+          console.error('#### in catch', error);
+          throw error;
+        }
+
+        console.log('#### in finally', result);
 
         if (!result) {
           return { id: null, translatedText: null } as const;
@@ -225,8 +244,7 @@ export const appRouter = {
           modelId: model?.[0].id,
           sourceLanguage: input.sourceLanguage,
           targetLanguage: input.targetLanguage,
-          tone:
-            (input.tone as (typeof ToneEnum)[keyof typeof ToneEnum]) ?? null,
+          tone: (input.tone as Tone) ?? null,
         });
 
         return { id, translatedText: result.object.translatedText } as const;
