@@ -143,9 +143,15 @@ function ChatThreadRouteComponent() {
   });
 
   const renderMessages = useMemo(() => {
+    const last = (messages as UIMessage[]).at(-1);
+    const isAwaitingAssistant =
+      status === 'submitted' ||
+      status === 'streaming' ||
+      (status === 'ready' && last?.role === 'user');
+
     return (
       <MessagesList
-        isSubmitted={status === 'submitted'}
+        isLoadingAssistant={isAwaitingAssistant}
         messages={messages as UIMessage[]}
       />
     );
