@@ -1,8 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
   ArrowLeftRightIcon,
-  ClipboardCheck,
   ClipboardIcon,
   SendIcon,
   TriangleAlert,
@@ -24,49 +23,46 @@ import {
   Textarea,
 } from '@/components/ui';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
-import { modelsQueryOptions, translateText } from '@/services/translation';
+import { client, orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/translation')({
   component: TranslationPage,
 });
 
 function TranslationPage() {
-  // State
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('fa');
   const [tone, setTone] = useState<ToneOption>('formal');
-  const [model, setModel] = useState('');
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasCopied, setHasCopied] = useState(false);
+  const [modelId, setModelId] = useState('');
 
-  // Queries
-  const { data: modelList } = useQuery(modelsQueryOptions());
-  const models =
-    modelList?.map((m) => ({
-      model: m.modelId,
-      name: m.name,
-      provider: m.provider,
-    })) ?? [];
+  const { data: modelList } = useQuery(
+    orpc.models.list.queryOptions({ input: { isEnabled: true } })
+  );
 
-  // Effects
+  const translateMutation = useMutation({
+    mutationFn: () =>
+      client.translations.translate({
+        text: sourceText,
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        modelId,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: orpc.translations.list.queryKey(),
+      });
+    },
+  });
+
   useEffect(() => {
-    if (models.length > 0 && !model) {
-      setModel(models[0].model);
+    if (modelList && modelList.length > 0 && !modelId) {
+      setModelId(modelList[0].id);
     }
-  }, [models, model]);
+  }, [modelList, modelId]);
 
-  useEffect(() => {
-    if (!hasCopied) {
-      return;
-    }
-    const timer = setTimeout(() => setHasCopied(false), 1500);
-    return () => clearTimeout(timer);
-  }, [hasCopied]);
-
-  // Handlers
   const swapLanguages = useCallback(() => {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
@@ -74,52 +70,9 @@ function TranslationPage() {
     setTranslatedText('');
   }, [sourceLanguage, targetLanguage, translatedText]);
 
-  const handleTranslate = useCallback(async () => {
-    const trimmed = sourceText.trim();
-    if (!(trimmed && model)) {
-      return;
-    }
-
-    // Find the selected model to get its provider
-    const selectedModel = models.find((m) => m.model === model);
-    if (!selectedModel) {
-      setErrorMessage('مدل انتخاب شده یافت نشد');
-      return;
-    }
-
-    setIsTranslating(true);
-    setErrorMessage(null);
-
-    try {
-      const result = await translateText({
-        text: trimmed,
-        sourceLanguage,
-        targetLanguage,
-        tone,
-        model,
-        provider: selectedModel.provider as
-          | 'ollama'
-          | 'lmstudio'
-          | 'openai'
-          | 'anthropic'
-          | 'gemini'
-          | 'mistral'
-          | 'openrouter'
-          | 'requesty',
-      });
-      setTranslatedText(result.translatedText ?? '');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'خطا در ترجمه';
-      setErrorMessage(message);
-    } finally {
-      setIsTranslating(false);
-    }
-  }, [sourceText, sourceLanguage, targetLanguage, tone, model, models]);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(translatedText);
-      setHasCopied(true);
     } catch {
       // Silent fail
     }
@@ -128,12 +81,12 @@ function TranslationPage() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      handleTranslate();
+      translateMutation.mutate();
     }
   };
 
-  // Computed values
-  const canTranslate = Boolean(sourceText.trim() && model) && !isTranslating;
+  const canTranslate =
+    Boolean(sourceText.trim() && modelId) && !translateMutation.isPending;
   const charCount = sourceText.length;
 
   return (
@@ -147,7 +100,7 @@ function TranslationPage() {
               {PERSIAN_TEXTS.translation.sourceLanguage}
             </div>
             <Select
-              disabled={isTranslating}
+              disabled={translateMutation.isPending}
               onValueChange={(v) => setSourceLanguage(v as LanguageCode)}
               value={sourceLanguage}
             >
@@ -174,7 +127,7 @@ function TranslationPage() {
               {PERSIAN_TEXTS.translation.targetLanguage}
             </div>
             <Select
-              disabled={isTranslating}
+              disabled={translateMutation.isPending}
               onValueChange={(v) => setTargetLanguage(v as LanguageCode)}
               value={targetLanguage}
             >
@@ -201,7 +154,7 @@ function TranslationPage() {
               {PERSIAN_TEXTS.translation.translationTone}
             </div>
             <Select
-              disabled={isTranslating}
+              disabled={translateMutation.isPending}
               onValueChange={(v) => setTone(v as ToneOption)}
               value={tone}
             >
@@ -228,21 +181,17 @@ function TranslationPage() {
               {PERSIAN_TEXTS.translation.model}
             </div>
             <Select
-              disabled={isTranslating}
-              onValueChange={setModel}
-              value={model}
+              disabled={translateMutation.isPending}
+              onValueChange={setModelId}
+              value={modelId}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {models.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.model}
-                    value={m.model}
-                  >
-                    {m.name || m.model}
+                {modelList?.map((m) => (
+                  <SelectItem className="text-right" key={m.id} value={m.id}>
+                    {m.name || m.id}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -253,7 +202,7 @@ function TranslationPage() {
         {/* Swap Languages Button */}
         <div className="mt-3 flex justify-end">
           <Button
-            disabled={isTranslating}
+            disabled={translateMutation.isPending}
             onClick={swapLanguages}
             type="button"
             variant="outline"
@@ -268,11 +217,13 @@ function TranslationPage() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col p-4">
         {/* Error Alert */}
-        {errorMessage && (
+        {translateMutation.error && (
           <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>خطا</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
+            <AlertDescription>
+              {translateMutation.error.message}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -304,7 +255,7 @@ function TranslationPage() {
           {/* Translated Text Area */}
           <Card className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
-              {isTranslating ? (
+              {translateMutation.isPending ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-muted-foreground">
                     {PERSIAN_TEXTS.translation.translating}...
@@ -324,11 +275,7 @@ function TranslationPage() {
                       type="button"
                       variant="ghost"
                     >
-                      {hasCopied ? (
-                        <ClipboardCheck className="h-3 w-3" />
-                      ) : (
-                        <ClipboardIcon className="h-3 w-3" />
-                      )}
+                      <ClipboardIcon className="h-3 w-3" />
                     </Button>
                   </div>
 
@@ -352,7 +299,7 @@ function TranslationPage() {
           <Button
             className="w-full cursor-pointer"
             disabled={!canTranslate}
-            onClick={handleTranslate}
+            onClick={() => translateMutation.mutate()}
             size="lg"
             type="button"
             variant="outline"

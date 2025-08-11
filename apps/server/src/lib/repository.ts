@@ -5,6 +5,7 @@ import type {
   SelectMessageOutput,
   SelectModelOutput,
   SelectThreadOutput,
+  SelectTranslationOutput,
 } from '@/db/schema';
 import {
   insertMessageSchema,
@@ -16,7 +17,9 @@ import {
   selectMessageSchema,
   selectModelSchema,
   selectThreadSchema,
+  selectTranslationSchema,
   threads,
+  translations,
 } from '@/db/schema';
 import { db } from '../db';
 import { listAllModels } from './ai';
@@ -289,4 +292,22 @@ export async function updateThreadOnNewMessage(
     .update(threads)
     .set({ lastMessageAt: date })
     .where(eq(threads.id, threadId));
+}
+
+export function listTranslations() {
+  return db.select().from(translations);
+}
+
+export async function getTranslation(id: SelectTranslationOutput['id']) {
+  selectTranslationSchema.shape.id.parse(id);
+  const rows = await db
+    .select()
+    .from(translations)
+    .where(eq(translations.id, id))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function deleteTranslation(id: SelectTranslationOutput['id']) {
+  await db.delete(translations).where(eq(translations.id, id));
 }

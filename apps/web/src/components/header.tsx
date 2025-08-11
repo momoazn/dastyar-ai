@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import { Status } from '@/components/status';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Separator } from '@/components/ui';
@@ -9,10 +9,12 @@ export function Header({
 }: {
   SideBarTrigger: React.ReactNode;
 }) {
+  const location = useLocation();
+
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background p-4">
       <div className="flex items-center gap-2">
-        {SideBarTrigger}
+        {location.pathname !== '/' && SideBarTrigger}
 
         <Separator className="me-2 h-4 bg-border" orientation="vertical" />
 

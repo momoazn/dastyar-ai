@@ -1,3 +1,4 @@
+import { useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import {
   ContentSidebar,
@@ -13,6 +14,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeItem = useActiveNavItem();
   const { createChatThread } = useCreateThread(activeItem?.url === '/chat');
   const { handleNewTranslation } = useTranslationActions();
+  const location = useLocation();
 
   const handleNew = () => {
     if (activeItem?.url === '/chat') {
@@ -36,7 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <NavigationSidebar />
-      {window.location.pathname !== '/' && (
+      {location.pathname !== '/' && (
         <ContentSidebar activeItem={activeItem} onNew={handleNew} />
       )}
     </Sidebar>

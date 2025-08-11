@@ -8,8 +8,13 @@ export function ChatThreadsList() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isChatPage = location.pathname.startsWith('/chat');
+
   const listQuery = useQuery(
-    orpc.threads.list.queryOptions({ includeArchived: false })
+    orpc.threads.list.queryOptions({
+      includeArchived: false,
+      enabled: isChatPage,
+    })
   );
 
   const deleteMutation = useMutation({
@@ -20,19 +25,31 @@ export function ChatThreadsList() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: ({ id, isArchived }: { id: string; isArchived: boolean }) =>
-      client.threads.archive({ id, isArchived }),
+    mutationFn: ({ id }: { id: string }) => client.threads.archive({ id }),
     onSuccess: async () => {
       await listQuery.refetch();
     },
   });
 
+  const handleArchive = (id: string) => {
+    archiveMutation.mutate({ id });
+    redirectToChat(id);
+  };
+
   const handleDelete = (id: string) => {
     deleteMutation.mutate({ id });
+    redirectToChat(id);
+  };
+
+  const redirectToChat = (id: string) => {
     if (location.pathname === `/chat/${id}`) {
       navigate({ to: '/chat' });
     }
   };
+
+  if (!isChatPage) {
+    return null;
+  }
 
   return (
     <>
@@ -53,12 +70,7 @@ export function ChatThreadsList() {
       {listQuery.data?.map((thread) => (
         <SidebarItem
           key={thread.id}
-          onArchive={() =>
-            archiveMutation.mutate({
-              id: thread.id,
-              isArchived: !thread.isArchived,
-            })
-          }
+          onArchive={() => handleArchive(thread.id)}
           onDelete={() => handleDelete(thread.id)}
           title={thread.title}
           to={`/chat/${thread.id}`}

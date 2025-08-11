@@ -15,9 +15,12 @@ import {
   createThread,
   deleteMessage,
   deleteThread,
+  deleteTranslation,
   getMessagesByThread,
   getThread,
+  getTranslation,
   listThreads,
+  listTranslations,
   renameThread,
   setArchived,
   syncModels,
@@ -104,9 +107,9 @@ export const appRouter = {
         return { ok: true } as const;
       }),
     archive: publicProcedure
-      .input(z.object({ id: z.string(), isArchived: z.boolean() }))
+      .input(z.object({ id: z.string() }))
       .handler(async ({ input }) => {
-        await setArchived(input.id, input.isArchived);
+        await setArchived(input.id, true);
         return { ok: true } as const;
       }),
     delete: publicProcedure
@@ -149,6 +152,22 @@ export const appRouter = {
       }),
   },
   translations: {
+    list: publicProcedure.handler(async () => {
+      const rows = await listTranslations();
+      return rows;
+    }),
+    get: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .handler(async ({ input }) => {
+        const row = await getTranslation(input.id);
+        return row;
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .handler(async ({ input }) => {
+        await deleteTranslation(input.id);
+        return { ok: true } as const;
+      }),
     translate: publicProcedure
       .input(
         z.object({
