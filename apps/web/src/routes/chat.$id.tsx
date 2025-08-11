@@ -57,12 +57,54 @@ function ChatThreadRouteComponent() {
     })
   );
 
-  // Default-select the first available model when none is chosen
+  // Load last selected model from localStorage when models are ready
   useEffect(() => {
-    if (!chatModelId && models?.length) {
-      setChatModelId(models[0].id);
+    if (!models || models.length === 0) {
+      return;
     }
+    if (chatModelId) {
+      return;
+    }
+    const KEY = 'ai:lastModelId';
+    try {
+      const saved =
+        typeof window !== 'undefined' ? window.localStorage.getItem(KEY) : null;
+      const exists = Boolean(
+        saved && (models as Array<{ id: string }>).some((m) => m.id === saved)
+      );
+      if (exists && saved) {
+        setChatModelId(saved);
+        return;
+      }
+    } catch {
+      // noop
+    }
+    setChatModelId((models as Array<{ id: string }>)[0].id);
   }, [models, chatModelId]);
+
+  // Persist selected model to localStorage when valid
+  useEffect(() => {
+    if (!chatModelId) {
+      return;
+    }
+    if (!models || models.length === 0) {
+      return;
+    }
+    const exists = (models as Array<{ id: string }>).some(
+      (m) => m.id === chatModelId
+    );
+    if (!exists) {
+      return;
+    }
+    const KEY = 'ai:lastModelId';
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(KEY, chatModelId);
+      }
+    } catch {
+      // noop
+    }
+  }, [chatModelId, models]);
 
   const initialMessages = useMemo(
     () => mapThreadMessagesToUI(threadMessages ?? []),
