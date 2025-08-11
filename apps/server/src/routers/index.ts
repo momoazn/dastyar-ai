@@ -32,28 +32,34 @@ import { generateId } from '../lib/utils';
 const FENCED_JSON_OPEN = /^```json\s*/i;
 const FENCED_OPEN = /^```\s*/i;
 const FENCED_CLOSE = /```\s*$/i;
+const THINK_BLOCK = /<think>[\s\S]*?<\/think>/gi;
+const JSON_OBJECT_REGEX = /\{[\s\S]*?\}/g;
 
 const extractTranslatedTextFromRaw = (rawOutput: string): string | null => {
-  const cleaned = rawOutput
+  // Remove DeepSeek-style reasoning blocks first
+  const withoutThink = rawOutput.replace(THINK_BLOCK, '');
+  const cleaned = withoutThink
     .trim()
     .replace(FENCED_JSON_OPEN, '')
     .replace(FENCED_OPEN, '')
     .replace(FENCED_CLOSE, '');
-  const startIndex = cleaned.indexOf('{');
-  const endIndex = cleaned.lastIndexOf('}');
-  const jsonSlice =
-    startIndex !== -1 && endIndex !== -1
-      ? cleaned.slice(startIndex, endIndex + 1)
-      : cleaned;
-  try {
-    const parsed = JSON.parse(jsonSlice) as { translatedText?: unknown };
-    if (parsed && typeof parsed === 'object' && 'translatedText' in parsed) {
-      return String(parsed.translatedText ?? '');
+  const candidates = cleaned.match(JSON_OBJECT_REGEX) ?? [];
+  for (let i = candidates.length - 1; i >= 0; i -= 1) {
+    const candidate = candidates[i];
+    try {
+      const parsed = JSON.parse(candidate) as { translatedText?: unknown };
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        Object.hasOwn(parsed, 'translatedText')
+      ) {
+        return String(parsed.translatedText ?? '');
+      }
+    } catch {
+      // ignore and continue
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 };
 
 const translateWithStructuredOutput = async (
