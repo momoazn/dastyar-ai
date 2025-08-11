@@ -1,10 +1,6 @@
 import type { UIMessage } from 'ai';
 import { Loader2 } from 'lucide-react';
-import {
-  Message,
-  MessageAvatar,
-  MessageContent,
-} from '@/components/ai-elements/message';
+import { Message, MessageContent } from '@/components/ai-elements/message';
 import { Response } from '@/components/ai-elements/response';
 import { NoMessages } from '@/components/no-messages';
 import { Skeleton } from '@/components/ui';
@@ -47,13 +43,15 @@ export function MessagesList({
       <div className="space-y-2" dir="rtl">
         {parsed.map((m) => (
           <Message from={m.role} key={m.id}>
-            <MessageAvatar
-              name={m.role === 'user' ? 'Me' : 'AI'}
-              src={m.role === 'user' ? '/avatar-user.png' : '/avatar-ai.png'}
-            />
-            <MessageContent>
-              <Response>{m.text}</Response>
-            </MessageContent>
+            {m.role === 'assistant' ? (
+              <MessageContent className="w-full" variant="plain">
+                <Response>{m.text}</Response>
+              </MessageContent>
+            ) : (
+              <MessageContent>
+                <Response>{m.text}</Response>
+              </MessageContent>
+            )}
           </Message>
         ))}
       </div>
