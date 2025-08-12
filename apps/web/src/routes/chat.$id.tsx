@@ -43,6 +43,7 @@ function ChatThreadRouteComponent() {
   );
   const [prompt, setPrompt] = useState(navigationState.initialPrompt ?? '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef<number>(0);
 
   const { data: models } = useQuery({
     ...orpc.models.list.queryOptions({
@@ -169,11 +170,15 @@ function ChatThreadRouteComponent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  // Only auto-scroll when a new message is appended (e.g., first token of assistant
+  // or when the user sends a new message). Do not auto-scroll on token updates.
   useEffect(() => {
-    if (messages.length > 0 || isGenerating) {
+    const currentCount = messages.length;
+    if (currentCount > previousMessageCountRef.current) {
       scrollToBottom();
     }
-  }, [messages, isGenerating, scrollToBottom]);
+    previousMessageCountRef.current = currentCount;
+  }, [messages.length, scrollToBottom]);
 
   useSendInitialPrompt({
     initialPrompt: navigationState.initialPrompt,
