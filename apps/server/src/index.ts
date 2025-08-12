@@ -8,8 +8,8 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { runMigrations } from './db/migrate';
 import chatHandler from './handlers/chat';
-import orpcsHandler from './handlers/orpc';
 import { syncModels } from './lib/repository';
+import orpcsHandler from './orpc';
 
 const app = new Hono();
 

@@ -2,7 +2,6 @@ import { generateObject, generateText } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { models, translations } from '../db/schema';
-import { publicProcedure } from '../lib/orpc';
 import { getProviderForModel } from '../lib/providers';
 import { ModelProviderEnum } from '../lib/providers/constants';
 import {
@@ -28,6 +27,7 @@ import {
   toneToLabelMap,
 } from '../lib/translate';
 import { generateId } from '../lib/utils';
+import { publicProcedure } from './index';
 
 // Regex constants declared at top-level per performance best practices
 const FENCED_JSON_OPEN = /^```json\s*/i;
