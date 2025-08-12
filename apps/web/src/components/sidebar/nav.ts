@@ -1,5 +1,5 @@
 import { useLocation } from '@tanstack/react-router';
-import { HomeIcon, Image, MessageCircle, MessageSquare } from 'lucide-react';
+import { HomeIcon, Image, MessageCircle, MessageSquare, Mic } from 'lucide-react';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import type { NavItem } from './types';
 
@@ -23,6 +23,11 @@ export const navMain: NavItem[] = [
     title: PERSIAN_TEXTS.navigation.imageGeneration,
     url: '/image',
     icon: Image,
+  },
+  {
+    title: PERSIAN_TEXTS.navigation.transcribe,
+    url: '/transcribe',
+    icon: Mic,
   },
 ] as const satisfies NavItem[];
 

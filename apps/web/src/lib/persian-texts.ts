@@ -21,6 +21,7 @@ export const PERSIAN_TEXTS = {
     chat: 'گفتگو',
     imageGeneration: 'تولید تصویر',
     translation: 'ترجمه',
+    transcribe: 'تبدیل صوت به متن',
     appTitle: 'دستیار هوشمند',
     newChat: 'گفتگوی جدید',
     newTranslation: 'ترجمه جدید',
@@ -106,5 +107,24 @@ export const PERSIAN_TEXTS = {
   },
   ui: {
     themeToggle: 'تغییر تم',
+  },
+  transcribe: {
+    title: 'تبدیل گفتار به متن',
+    description: 'یک پیام کوتاه ضبط کنید تا آن را برای شما تبدیل کنیم.',
+    idle: 'بیکار',
+    recordingPrefix: 'در حال ضبط',
+    transcribing: 'در حال تبدیل...',
+    recordStart: 'شروع ضبط',
+    recordStop: 'پایان ضبط',
+    copy: 'کپی',
+    clear: 'پاک کردن',
+    resultPlaceholder: 'نتیجه تبدیل اینجا نمایش داده می‌شود...',
+    elapsedLabel: 'زمان ضبط',
+    errors: {
+      noAudio: 'هیچ صدایی ضبط نشد.',
+      processFailed: 'پردازش فایل صوتی ناموفق بود.',
+      micAccess: 'عدم دسترسی به میکروفون یا عدم پشتیبانی مرورگر.',
+      transcribeFailed: 'تبدیل گفتار به متن با خطا مواجه شد. دوباره تلاش کنید.',
+    },
   },
 };
