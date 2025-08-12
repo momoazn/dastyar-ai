@@ -1,6 +1,7 @@
 import { generateObject, generateText } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
+import { saveFileToTmp, transcribe } from '@/transcribe';
 import { models, translations } from '../db/schema';
 import { getProviderForModel } from '../lib/providers';
 import { ModelProviderEnum } from '../lib/providers/constants';
@@ -322,6 +323,19 @@ export const appRouter = {
           })
           .returning();
         return created[0];
+      }),
+  },
+  transcribe: {
+    transcribe: publicProcedure
+      .input(
+        z.object({
+          file: z.instanceof(File),
+        })
+      )
+      .handler(async ({ input }) => {
+        const filePath = await saveFileToTmp(input.file);
+        const transcribedText = await transcribe({ filePath });
+        return transcribedText;
       }),
   },
 };
