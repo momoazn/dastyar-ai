@@ -6,8 +6,8 @@ import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import chatHandler from './chat/handler';
 import { runMigrations } from './db/migrate';
-import chatHandler from './handlers/chat';
 import { syncModels } from './lib/repository';
 import orpcsHandler from './orpc';
 
