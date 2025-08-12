@@ -9,7 +9,7 @@ import { logger } from 'hono/logger';
 import chatHandler from './chat/handler';
 import { runMigrations } from './db/migrate';
 import { syncModels } from './lib/repository';
-import orpcsHandler from './orpc';
+import orpcsHandler from './orpc/handler';
 
 const app = new Hono();
 
