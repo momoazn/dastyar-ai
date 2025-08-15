@@ -1,5 +1,5 @@
 import { generateObject, generateText } from 'ai';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { saveFileToTmp, transcribe } from '@/transcribe';
 import { models, translations } from '../db/schema';
@@ -118,7 +118,6 @@ export const appRouter = {
         })
       )
       .handler(async ({ context, input }) => {
-        // Return all models from database (limited to supported providers if provided)
         const rows = await context.db
           .select({
             id: models.id,
@@ -134,7 +133,21 @@ export const appRouter = {
                 ? inArray(models.provider, input.providers)
                 : inArray(models.provider, Object.values(ModelProviderEnum))
             )
-          );
+          )
+          .orderBy(asc(models.name));
+
+        const providerPriority: Record<string, number> = {
+          [ModelProviderEnum.OLLAMA]: 0,
+          [ModelProviderEnum.LMSTUDIO]: 1,
+        };
+        rows.sort((a, b) => {
+          const pa = providerPriority[a.provider] ?? 2;
+          const pb = providerPriority[b.provider] ?? 2;
+          if (pa !== pb) {
+            return pa - pb;
+          }
+          return a.name.localeCompare(b.name);
+        });
 
         return rows;
       }),
@@ -330,11 +343,17 @@ export const appRouter = {
       .input(
         z.object({
           file: z.instanceof(File),
+          language: z.string().optional(),
+          modelId: z.string().optional(),
         })
       )
       .handler(async ({ input }) => {
         const filePath = await saveFileToTmp(input.file);
-        const transcribedText = await transcribe({ filePath });
+        const transcribedText = await transcribe({
+          filePath,
+          language: input.language,
+          modelId: input.modelId,
+        });
         return transcribedText;
       }),
   },

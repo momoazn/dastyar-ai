@@ -12,18 +12,22 @@ export async function saveFileToTmp(file: File) {
 
 export const transcribe = async ({
   filePath,
-  modelName,
+  modelId,
   language,
 }: {
   filePath: string;
-  modelName?: string;
+  modelId?: string;
   language?: string;
 }) => {
   const result = await nodewhisper(filePath, {
-    modelName: modelName ?? 'tiny.en',
+    modelName: modelId ?? 'tiny.en',
+    logger: undefined,
+    removeWavFileAfterTranscription: true,
     whisperOptions: {
       language: language ?? 'en',
       outputInJson: true,
+      splitOnWord: true,
+      wordTimestamps: false,
     },
   });
   return result;
