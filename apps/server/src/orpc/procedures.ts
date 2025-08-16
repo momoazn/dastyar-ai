@@ -1,7 +1,6 @@
 import { generateObject, generateText } from 'ai';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { saveFileToTmp, transcribe } from '@/transcribe';
 import { models, translations } from '../db/schema';
 import { getProviderForModel } from '../lib/providers';
 import { ModelProviderEnum } from '../lib/providers/constants';
@@ -345,16 +344,48 @@ export const appRouter = {
           file: z.instanceof(File),
           language: z.string().optional(),
           modelId: z.string().optional(),
+          responseFormat: z
+            .enum(['json', 'text', 'verbose'])
+            .optional()
+            .default('json'),
+          includeTimestamps: z.boolean().optional().default(true),
+          engine: z.enum(['faster', 'openai']).optional().default('faster'),
         })
       )
       .handler(async ({ input }) => {
-        const filePath = await saveFileToTmp(input.file);
-        const transcribedText = await transcribe({
-          filePath,
+        const whisperServiceUrl =
+          process.env.WHISPER_SERVICE_URL || 'http://localhost:8000';
+
+        // Create FormData to send file to Python whisper service
+        const formData = new FormData();
+        formData.append('file', input.file);
+
+        const model =
+          input.modelId ?? (input.language === 'fa' ? 'base' : 'base.en');
+
+        // Create request body with transcription parameters
+        const requestBody = {
+          model,
           language: input.language,
-          modelId: input.modelId,
+          response_format: input.responseFormat,
+          include_timestamps: input.includeTimestamps,
+          engine: input.engine,
+        };
+
+        // Append request body as JSON string to FormData
+        formData.append('request', JSON.stringify(requestBody));
+
+        const response = await fetch(`${whisperServiceUrl}/api/transcribe`, {
+          method: 'POST',
+          body: formData,
         });
-        return transcribedText;
+
+        if (!response.ok) {
+          throw new Error(`Transcription failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        return result;
       }),
   },
 };

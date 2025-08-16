@@ -40,7 +40,7 @@ This is a full-stack AI application built as a Turborepo monorepo with these key
 - **oRPC** for type-safe RPC procedures
 - **Drizzle ORM** with **SQLite** database
 - **AI SDK** with multiple provider support (OpenAI, Gemini, Groq, Ollama, LMStudio, OpenRouter)
-- **Whisper** integration for transcription via `nodejs-whisper`
+- **Transcription proxy** - forwards requests to the Python whisper service
 
 ### Whisper Service (`apps/whisper`)
 - **FastAPI** Python web service for audio transcription
@@ -53,7 +53,7 @@ This is a full-stack AI application built as a Turborepo monorepo with these key
 1. **Chat Threads** - Persistent chat sessions with AI models
 2. **Multi-Provider AI** - Support for various AI providers with fallback handling
 3. **Translation Service** - Professional translation with tone control
-4. **Audio Transcription** - File upload and Whisper-based transcription
+4. **Audio Transcription** - Frontend → Server → Python Whisper Service flow
 5. **Model Management** - Dynamic model discovery and synchronization
 
 ### Database Schema
@@ -75,6 +75,14 @@ AI providers are abstracted through the AI SDK with configuration in `apps/serve
 - Dynamic model discovery from local providers (Ollama, LMStudio)
 - Fallback handling for different provider capabilities
 - Structured output support with JSON fallback
+
+### Transcription Architecture
+The transcription flow uses a microservice architecture:
+1. **Frontend** uploads audio files via oRPC to the main server
+2. **Server** proxies the file and parameters to the Python whisper service
+3. **Whisper Service** processes the audio and returns transcription results
+4. **Server** returns the results back to the frontend
+- Configurable via `WHISPER_SERVICE_URL` environment variable (defaults to `http://localhost:8000`)
 
 ## Code Quality
 

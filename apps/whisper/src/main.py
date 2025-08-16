@@ -11,6 +11,7 @@ import torch
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
 from faster_whisper_engine import (
     faster_model_cache,
@@ -168,33 +169,35 @@ async def list_models():
     }
 
 
+class TranscribeRequest(BaseModel):
+    """Request model for transcription parameters"""
+    model: ModelSize = ModelSize.base
+    language: Optional[str] = None
+    response_format: str = "json"
+    include_timestamps: bool = True
+    engine: str = "faster"
+
+
 @app.post("/api/transcribe")
 async def transcribe_audio(
     file: UploadFile = File(..., description="Audio file to transcribe"),
-    model: ModelSize = Query(ModelSize.base, description="Whisper model to use"),
-    language: Optional[str] = Query(
-        None,
-        description="Language code (e.g., 'en', 'es', 'fr'). Auto-detect if not specified",
-    ),
-    response_format: str = Query(
-        "json", description="Response format: 'json', 'text', or 'verbose'"
-    ),
-    include_timestamps: bool = Query(
-        True, description="Include word-level timestamps in response"
-    ),
-    engine: str = Query(
-        "faster", description="Transcription engine: 'faster' or 'openai'"
-    ),
+    request: TranscribeRequest = None,
 ):
     """
     Transcribe an audio file using OpenAI Whisper
 
     - **file**: Audio file (mp3, wav, m4a, flac, ogg, etc.)
-    - **model**: Whisper model size (tiny, base, small, medium, large, large-v2, large-v3)
-    - **language**: Language code for the audio (optional, auto-detected if not provided)
-    - **response_format**: Format of the response (json, text, verbose)
-    - **include_timestamps**: Whether to include timestamps in the response
+    - **request**: Transcription parameters in JSON format
+        - **model**: Whisper model size (tiny, base, small, medium, large, large-v2, large-v3)
+        - **language**: Language code for the audio (optional, auto-detected if not provided)
+        - **response_format**: Format of the response (json, text, verbose)
+        - **include_timestamps**: Whether to include timestamps in the response
+        - **engine**: Transcription engine: 'faster' or 'openai'
     """
+
+    # Use default values if no request body is provided
+    if request is None:
+        request = TranscribeRequest()
 
     # Validate file type
     if file.content_type not in SUPPORTED_FORMATS:
@@ -204,7 +207,7 @@ async def transcribe_audio(
         )
 
     # Validate language code if provided
-    if language and len(language) != 2:
+    if request.language and len(request.language) != 2:
         raise HTTPException(
             status_code=400,
             detail="Language code must be 2 characters (e.g., 'en', 'es', 'fr')",
@@ -222,49 +225,49 @@ async def transcribe_audio(
             temp_file_path = temp_file.name
 
         # Load the specified model based on engine
-        if engine not in {"faster", "openai"}:
+        if request.engine not in {"faster", "openai"}:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid engine. Use 'faster' or 'openai'",
             )
 
-        if engine == "faster":
-            whisper_model = load_faster_model(model.value)
+        if request.engine == "faster":
+            whisper_model = load_faster_model(request.model.value)
         else:
-            whisper_model = load_openai_model(model.value)
+            whisper_model = load_openai_model(request.model.value)
 
         # Transcribe audio
         logger.info(
-            f"Transcribing file '{file.filename}' with model '{model.value}', language: {language or 'auto-detect'}"
+            f"Transcribing file '{file.filename}' with model '{request.model.value}', language: {request.language or 'auto-detect'}"
         )
         start_time = time.perf_counter()
-        if engine == "faster":
+        if request.engine == "faster":
             result = await transcribe_faster_async(
-                whisper_model, temp_file_path, language
+                whisper_model, temp_file_path, request.language
             )
         else:
             result = await transcribe_openai_async(
-                whisper_model, temp_file_path, language
+                whisper_model, temp_file_path, request.language
             )
         processing_ms = int((time.perf_counter() - start_time) * 1000)
 
         # Format response based on requested format
-        if response_format == "text":
+        if request.response_format == "text":
             return {"text": result["text"].strip()}
 
-        elif response_format == "verbose":
+        elif request.response_format == "verbose":
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
                 "duration": result.get("segments", [{}])[-1].get("end", 0)
                 if result.get("segments")
                 else 0,
-                "model_used": model.value,
+                "model_used": request.model.value,
                 "processing_ms": processing_ms,
                 "segments": [],
             }
 
-            if include_timestamps and "segments" in result:
+            if request.include_timestamps and "segments" in result:
                 for segment in result["segments"]:
                     response["segments"].append(
                         {
@@ -280,11 +283,11 @@ async def transcribe_audio(
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
-                "model_used": model.value,
+                "model_used": request.model.value,
                 "processing_ms": processing_ms,
             }
 
-            if include_timestamps and "segments" in result:
+            if request.include_timestamps and "segments" in result:
                 response["segments"] = [
                     {
                         "start": segment["start"],
