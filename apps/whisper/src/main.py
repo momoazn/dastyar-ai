@@ -327,8 +327,9 @@ async def supported_languages():
 if __name__ == "__main__":
     import uvicorn
 
+    port = int(os.getenv("WHISPER_PORT", "40002"))
     print("🎤 Starting Whisper Transcription Service...")
-    print("📱 Web UI: http://localhost:8000")
-    print("📚 API Docs: http://localhost:8000/docs")
-    print("🏥 Health Check: http://localhost:8000/api/health")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print(f"📱 Web UI: http://localhost:{port}")
+    print(f"📚 API Docs: http://localhost:{port}/docs")
+    print(f"🏥 Health Check: http://localhost:{port}/api/health")
+    uvicorn.run(app, host="0.0.0.0", port=port)

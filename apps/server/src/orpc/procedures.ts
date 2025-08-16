@@ -353,8 +353,9 @@ export const appRouter = {
         })
       )
       .handler(async ({ input }) => {
+        const whisperPort = process.env.WHISPER_PORT || '40002';
         const whisperServiceUrl =
-          process.env.WHISPER_SERVICE_URL || 'http://localhost:8000';
+          process.env.WHISPER_SERVICE_URL || `http://localhost:${whisperPort}`;
 
         // Create FormData to send file to Python whisper service
         const formData = new FormData();
