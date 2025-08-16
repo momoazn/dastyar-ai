@@ -25,17 +25,29 @@ bun install
 
 ## Environment Variables
 
-This project uses environment variables for port configuration. You can set these in your shell or create `.env` files in each app directory:
+This project uses environment variables for port configuration. Each app has example environment files that you can copy and customize:
 
+### Quick Setup
 ```bash
-# Port configurations (defaults shown)
-export WEB_PORT=40000          # Frontend web app port
-export SERVER_PORT=40001       # Backend server port  
-export WHISPER_PORT=40002      # Whisper service port
-
-# Whisper service URL (auto-constructed from port)
-export WHISPER_SERVICE_URL=http://localhost:40002
+# Copy environment files to .env (run from project root)
+cp apps/web/env.local apps/web/.env
+cp apps/server/env.local apps/server/.env
+cp apps/whisper/env.local apps/whisper/.env
 ```
+
+### Port Configurations
+- **WEB_PORT=40000** - Frontend web app port
+- **SERVER_PORT=40001** - Backend server port  
+- **WHISPER_PORT=40002** - Whisper service port
+
+### Alternative: Set in Shell
+```bash
+export WEB_PORT=40000
+export SERVER_PORT=40001
+export WHISPER_PORT=40002
+```
+
+See `ports.config` for complete configuration details.
 
 ## Database Setup
 
@@ -83,7 +95,7 @@ ai-app/
 - `bun build`: Build all applications
 - `bun dev:web`: Start only the web application
 - `bun dev:server`: Start only the server
-- `bun dev:whisper`: Start only the whisper service
+- `bun dev:whisper`: Start only the whisper service (uses WHISPER_PORT env var)
 - `bun check-types`: Check TypeScript types across all apps
 - `bun db:push`: Push schema changes to database
 - `bun db:studio`: Open database studio UI

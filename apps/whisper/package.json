@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "uv run fastapi dev src/main.py --host 0.0.0.0",
+    "dev": "uv run fastapi dev src/main.py --host 0.0.0.0 --port ${WHISPER_PORT:-40002}",
+    "dev:env": "WHISPER_PORT=${WHISPER_PORT:-40002} uv run fastapi dev src/main.py --host 0.0.0.0 --port $WHISPER_PORT",
     "build": "echo 'Python app build complete'",
-    "start": "uv run fastapi run src/main.py --host 0.0.0.0",
+    "start": "uv run fastapi run src/main.py --host 0.0.0.0 --port ${WHISPER_PORT:-40002}",
+    "start:env": "WHISPER_PORT=${WHISPER_PORT:-40002} uv run fastapi run src/main.py --host 0.0.0.0 --port $WHISPER_PORT",
     "install": "uv sync",
     "check-types": "echo 'Python type checking skipped'",
     "lint": "uv run ruff check src/",
-    "format": "uv run ruff format src/"
+    "format": "uv run ruff format src/",
+    "test:port": "uv run python test_port.py"
   }
 }
