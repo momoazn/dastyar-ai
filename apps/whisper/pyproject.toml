@@ -1,12 +1,11 @@
 [project]
 name = "whisper-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "OpenAI Whisper transcription service"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.116.1",
-    "faster-whisper>=1.2.0",
     "openai-whisper>=20250625",
 ]
 

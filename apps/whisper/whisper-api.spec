@@ -56,7 +56,6 @@ hiddenimports += ['uvicorn.lifespan.on', 'uvicorn.loops.auto', 'uvicorn.protocol
 
 # Whisper dependencies
 hiddenimports += collect_submodules('whisper')
-hiddenimports += collect_submodules('faster_whisper')
 hiddenimports += ['whisper.normalizers.english', 'whisper.normalizers.basic']
 
 # PyTorch and related

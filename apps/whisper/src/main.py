@@ -1,36 +1,19 @@
+import asyncio
 import logging
 import os
+import sys
 import tempfile
 import time
 from contextlib import asynccontextmanager
 from enum import Enum
 from functools import lru_cache
-from typing import Optional
+from typing import Dict, Optional
 
 import torch
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+import whisper
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-
-from faster_whisper_engine import (
-    faster_model_cache,
-)
-from faster_whisper_engine import (
-    load_model as load_faster_model,
-)
-from faster_whisper_engine import (
-    transcribe_audio_async as transcribe_faster_async,
-)
-from openai_whisper_engine import (
-    load_model as load_openai_model,
-)
-from openai_whisper_engine import (
-    openai_model_cache,
-)
-from openai_whisper_engine import (
-    transcribe_audio_async as transcribe_openai_async,
-)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +50,7 @@ SUPPORTED_FORMATS = {
     "video/webm",
 }
 
-# Caches live in engine modules; keep references for health/models endpoints
+openai_model_cache: Dict[str, whisper.Whisper] = {}
 
 
 def get_device():
@@ -86,7 +69,7 @@ def get_device_cached():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        load_faster_model("tiny")
+        load_openai_model("tiny")
         logger.info("Tiny model pre-loaded successfully")
     except Exception as e:
         logger.warning(f"Failed to pre-load tiny model: {str(e)}")
@@ -110,18 +93,13 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_ui():
-    return HTMLResponse(content=open("index.html").read())
-
-
+@app.get("/")
 @app.get("/api")
-async def root():
+async def index():
     return {
         "message": "Whisper Transcription API",
         "docs": "/docs",
         "health": "/health",
-        "ui": "/",
     }
 
 
@@ -133,10 +111,7 @@ async def health_check():
         "status": "healthy",
         "device": device,
         "cuda_available": torch.cuda.is_available(),
-        "loaded_models": {
-            "faster_whisper": list(faster_model_cache.keys()),
-            "openai_whisper": list(openai_model_cache.keys()),
-        },
+        "loaded_models": list(openai_model_cache.keys()),
     }
 
 
@@ -145,10 +120,7 @@ async def list_models():
     """List available models"""
     return {
         "available_models": [model.value for model in ModelSize],
-        "loaded_models": {
-            "faster_whisper": list(faster_model_cache.keys()),
-            "openai_whisper": list(openai_model_cache.keys()),
-        },
+        "loaded_models": list(openai_model_cache.keys()),
         "model_info": {
             "tiny": {"size": "~39 MB", "speed": "fastest", "accuracy": "lowest"},
             "base": {"size": "~74 MB", "speed": "fast", "accuracy": "good"},
@@ -169,35 +141,107 @@ async def list_models():
     }
 
 
-class TranscribeRequest(BaseModel):
-    """Request model for transcription parameters"""
-    model: ModelSize = ModelSize.tiny
-    language: Optional[str] = None
-    response_format: str = "json"
-    include_timestamps: bool = True
-    engine: str = "faster"
+@lru_cache(maxsize=1)
+def _get_device_cached() -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
+def get_models_directory() -> str:
+    """
+    Get the models directory path. Checks for local models directory next to executable,
+    falls back to bundled models directory, or creates local one.
+    """
+    if hasattr(sys, "_MEIPASS"):
+        base_dir = os.path.dirname(sys.executable)
+        bundled_models = os.path.join(sys._MEIPASS, "models")
+    else:
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        bundled_models = os.path.join(base_dir, "models")
+
+    local_models = os.path.join(base_dir, "models")
+
+    if os.path.exists(local_models):
+        logger.info(f"Using local models directory: {local_models}")
+        return local_models
+    elif hasattr(sys, "_MEIPASS") and os.path.exists(bundled_models):
+        logger.info(f"Using bundled models directory: {bundled_models}")
+        return bundled_models
+    else:
+        os.makedirs(local_models, exist_ok=True)
+        logger.info(f"Created local models directory: {local_models}")
+        return local_models
+
+
+def load_openai_model(model_name: str):
+    if model_name not in openai_model_cache:
+        try:
+            device = _get_device_cached()
+            models_dir = get_models_directory()
+            logger.info(
+                f"Loading openai-whisper model '{model_name}' on '{device}' from '{models_dir}'"
+            )
+            os.environ["WHISPER_CACHE_DIR"] = models_dir
+            model = whisper.load_model(model_name, device=device)
+            openai_model_cache[model_name] = model
+            logger.info(f"openai-whisper model '{model_name}' loaded")
+        except Exception as e:
+            logger.error(f"Failed to load openai-whisper model '{model_name}': {e}")
+            raise
+    return openai_model_cache[model_name]
+
+
+async def transcribe_openai_async(
+    model, audio_path: str, language: Optional[str] = None
+):
+    loop = asyncio.get_event_loop()
+
+    def transcribe():
+        transcribe_options = {}
+        if language:
+            transcribe_options["language"] = language
+        result = model.transcribe(audio_path, **transcribe_options)
+
+        segments = []
+        for seg in result.get("segments", []) or []:
+            segments.append(
+                {
+                    "start": seg.get("start"),
+                    "end": seg.get("end"),
+                    "text": (seg.get("text") or "").strip(),
+                }
+            )
+
+        return {
+            "text": (result.get("text") or "").strip(),
+            "language": result.get("language") or language,
+            "segments": segments,
+        }
+
+    return await loop.run_in_executor(None, transcribe)
 
 
 @app.post("/api/transcribe")
 async def transcribe_audio(
     file: UploadFile = File(..., description="Audio file to transcribe"),
-    request: TranscribeRequest = None,
+    model: ModelSize = Form(ModelSize.tiny, description="Whisper model size"),
+    language: Optional[str] = Form(
+        None, description="2-letter language code or omit for auto-detect"
+    ),
+    response_format: str = Form("json", description="json | text | verbose"),
+    include_timestamps: bool = Form(True, description="Include segment timestamps"),
 ):
     """
     Transcribe an audio file using OpenAI Whisper
 
-    - **file**: Audio file (mp3, wav, m4a, flac, ogg, etc.)
-    - **request**: Transcription parameters in JSON format
-        - **model**: Whisper model size (tiny, base, small, medium, large, large-v2, large-v3)
-        - **language**: Language code for the audio (optional, auto-detected if not provided)
-        - **response_format**: Format of the response (json, text, verbose)
-        - **include_timestamps**: Whether to include timestamps in the response
-        - **engine**: Transcription engine: 'faster' or 'openai'
+    Send as multipart/form-data with fields:
+    - file: Audio file (mp3, wav, m4a, flac, ogg, etc.)
+    - model: Whisper model size (tiny, base, small, medium, large, large-v2, large-v3)
+    - language: Language code for the audio (optional, auto-detected if not provided)
+    - response_format: Format of the response (json, text, verbose)
+    - include_timestamps: Whether to include timestamps in the response
     """
-
-    # Use default values if no request body is provided
-    if request is None:
-        request = TranscribeRequest()
 
     # Validate file type
     if file.content_type not in SUPPORTED_FORMATS:
@@ -207,7 +251,7 @@ async def transcribe_audio(
         )
 
     # Validate language code if provided
-    if request.language and len(request.language) != 2:
+    if language and len(language) != 2:
         raise HTTPException(
             status_code=400,
             detail="Language code must be 2 characters (e.g., 'en', 'es', 'fr')",
@@ -224,50 +268,34 @@ async def transcribe_audio(
             temp_file.write(content)
             temp_file_path = temp_file.name
 
-        # Load the specified model based on engine
-        if request.engine not in {"faster", "openai"}:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid engine. Use 'faster' or 'openai'",
-            )
-
-        if request.engine == "faster":
-            whisper_model = load_faster_model(request.model.value)
-        else:
-            whisper_model = load_openai_model(request.model.value)
+        # Load the specified model
+        whisper_model = load_openai_model(model.value)
 
         # Transcribe audio
         logger.info(
-            f"Transcribing file '{file.filename}' with model '{request.model.value}', language: {request.language or 'auto-detect'}"
+            f"Transcribing file '{file.filename}' with model '{model.value}', language: {language or 'auto-detect'}"
         )
         start_time = time.perf_counter()
-        if request.engine == "faster":
-            result = await transcribe_faster_async(
-                whisper_model, temp_file_path, request.language
-            )
-        else:
-            result = await transcribe_openai_async(
-                whisper_model, temp_file_path, request.language
-            )
+        result = await transcribe_openai_async(whisper_model, temp_file_path, language)
         processing_ms = int((time.perf_counter() - start_time) * 1000)
 
         # Format response based on requested format
-        if request.response_format == "text":
+        if response_format == "text":
             return {"text": result["text"].strip()}
 
-        elif request.response_format == "verbose":
+        elif response_format == "verbose":
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
                 "duration": result.get("segments", [{}])[-1].get("end", 0)
                 if result.get("segments")
                 else 0,
-                "model_used": request.model.value,
+                "model_used": model.value,
                 "processing_ms": processing_ms,
                 "segments": [],
             }
 
-            if request.include_timestamps and "segments" in result:
+            if include_timestamps and "segments" in result:
                 for segment in result["segments"]:
                     response["segments"].append(
                         {
@@ -283,11 +311,11 @@ async def transcribe_audio(
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
-                "model_used": request.model.value,
+                "model_used": model.value,
                 "processing_ms": processing_ms,
             }
 
-            if request.include_timestamps and "segments" in result:
+            if include_timestamps and "segments" in result:
                 response["segments"] = [
                     {
                         "start": segment["start"],

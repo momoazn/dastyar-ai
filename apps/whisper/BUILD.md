@@ -48,7 +48,6 @@ The build script performs these steps:
 
 ### Custom Hooks
 
-- `hooks/hook-faster_whisper.py`: Ensures faster-whisper is properly bundled
 - `hooks/hook-whisper.py`: Handles OpenAI Whisper dependencies
 
 ## Output
