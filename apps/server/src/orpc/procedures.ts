@@ -378,7 +378,19 @@ export const appRouter = {
         }
 
         const result = await response.json();
-        return result.text; // Return only the transcribed text
+        const data = result.text;
+
+        if (typeof data === 'string') {
+          return data;
+        }
+        if (data && typeof data === 'object' && 'text' in data) {
+          return String(data.text);
+        }
+        try {
+          return JSON.stringify(data, null, 2);
+        } catch {
+          return String(data);
+        }
       }),
   },
 };

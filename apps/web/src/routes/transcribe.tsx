@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { CopyIcon, Mic, Square, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   AlertDescription,
@@ -25,6 +25,11 @@ import {
   Textarea,
 } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import {
+  formatElapsed,
+  type RecordingError,
+  useVoiceRecorder,
+} from '@/hooks/use-voice-recorder';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { orpc } from '@/utils/orpc';
 
@@ -38,61 +43,6 @@ const MODELS = [
   { id: 'large-v2', name: 'Large v2' },
   { id: 'large-v3', name: 'Large v3' },
 ];
-
-const serializeResult = (data: unknown): string => {
-  if (typeof data === 'string') {
-    return data;
-  }
-  if (data && typeof data === 'object' && 'text' in data) {
-    return String(data.text);
-  }
-  try {
-    return JSON.stringify(data, null, 2);
-  } catch {
-    return String(data);
-  }
-};
-
-const getPreferredMimeType = (): string | null => {
-  if (
-    typeof MediaRecorder !== 'undefined' &&
-    MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-  ) {
-    return 'audio/webm;codecs=opus';
-  }
-  return null;
-};
-
-const buildFileFromChunks = (
-  recorder: MediaRecorder,
-  chunks: BlobPart[]
-): File => {
-  const mimeType = recorder.mimeType || 'audio/webm';
-  const audioBlob = new Blob(chunks, { type: mimeType });
-  const fileExtension = mimeType.includes('webm') ? 'webm' : 'mp4';
-  return new File([audioBlob], `recording-${Date.now()}.${fileExtension}`, {
-    type: mimeType,
-  });
-};
-
-const releaseTracks = (recorder: MediaRecorder) => {
-  try {
-    for (const track of recorder.stream.getTracks()) {
-      track.stop();
-    }
-  } catch {
-    // ignore
-  }
-};
-
-const formatElapsed = (ms: number): string => {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
 
 const getBadgeVariant = (
   isRecording: boolean,
@@ -128,90 +78,59 @@ export const Route = createFileRoute('/transcribe')({
 
 function RouteComponent() {
   const t = PERSIAN_TEXTS.transcribe;
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState('');
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [language, setLanguage] = useState<'fa' | 'en'>('fa');
   const [model, setModel] = useState<string>('tiny');
-  const chunksRef = useRef<BlobPart[]>([]);
-  const timerRef = useRef<number | null>(null);
 
-  const { mutateAsync: transcribe, isPending: isTranscribing } = useMutation(
+  const {
+    isRecording,
+    elapsedMs,
+    startRecording,
+    stopRecording,
+    error: recordingError,
+    recordedFile,
+  } = useVoiceRecorder();
+
+  const { mutate: transcribe, isPending: isTranscribing } = useMutation(
     orpc.transcribe.transcribe.mutationOptions({
       onSuccess: (data) => {
-        setResult(serializeResult(data));
+        setResult(data);
       },
       onError: () => {
-        setError(t.errors.transcribeFailed);
+        setTranscribeError(t.errors.transcribeFailed);
       },
     })
   );
 
-  const attachRecorderHandlers = (recorder: MediaRecorder) => {
-    chunksRef.current = [];
-
-    recorder.ondataavailable = (event: BlobEvent) => {
-      if (event.data && event.data.size > 0) {
-        chunksRef.current.push(event.data);
-      }
-    };
-
-    recorder.onstop = () => handleRecorderStop(recorder);
-  };
-
-  const handleRecorderStop = async (recorder: MediaRecorder) => {
-    try {
-      if (chunksRef.current.length === 0) {
-        setError(t.errors.noAudio);
-        return;
-      }
-      const file = buildFileFromChunks(recorder, chunksRef.current);
-      await transcribe({ file, language, model });
-    } catch {
-      setError(t.errors.processFailed);
-    } finally {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      releaseTracks(recorder);
-      chunksRef.current = [];
-      setMediaRecorder(null);
-      setIsRecording(false);
+  // Map recording errors to localized messages
+  const mapRecordingError = (error: RecordingError): string => {
+    switch (error) {
+      case 'micAccessDenied':
+        return t.errors.micAccess;
+      case 'noAudioCaptured':
+        return t.errors.noAudio;
+      case 'initFailed':
+      case 'processingFailed':
+        return t.errors.processFailed;
+      default:
+        return t.errors.processFailed;
     }
   };
+
+  // Effect to transcribe when recordedFile becomes available
+  useEffect(() => {
+    if (recordedFile) {
+      setTranscribeError(null);
+      setResult('');
+      transcribe({ file: recordedFile, language, model });
+    }
+  }, [recordedFile, transcribe, language, model]);
 
   const handleStartRecording = async () => {
-    setError(null);
+    setTranscribeError(null);
     setResult('');
-    setElapsedMs(0);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const preferred = getPreferredMimeType();
-      const recorder = preferred
-        ? new MediaRecorder(stream, { mimeType: preferred })
-        : new MediaRecorder(stream);
-      attachRecorderHandlers(recorder);
-      setMediaRecorder(recorder);
-      recorder.start();
-      setIsRecording(true);
-      timerRef.current = window.setInterval(() => {
-        setElapsedMs((ms) => ms + 250);
-      }, 250);
-    } catch {
-      setError(t.errors.micAccess);
-    }
-  };
-
-  const handleStopRecording = () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-    }
+    await startRecording();
   };
 
   const handleCopy = async () => {
@@ -224,24 +143,24 @@ function RouteComponent() {
 
   const handleClear = () => {
     setResult('');
-    setError(null);
+    setTranscribeError(null);
   };
 
-  const handleFileUpload = async (file: File | null) => {
+  const handleFileUpload = (file: File | null) => {
     if (!file) {
       return;
     }
-    setError(null);
+    setTranscribeError(null);
     setResult('');
-    try {
-      await transcribe({ file, language, model });
-    } catch {
-      // handled by onError
-    }
+    transcribe({ file, language, model });
   };
 
-  const statusText = getStatusText(isRecording, isTranscribing, elapsedMs, t);
+  // Get the first available error to display
+  const displayError = recordingError
+    ? mapRecordingError(recordingError)
+    : transcribeError;
 
+  const statusText = getStatusText(isRecording, isTranscribing, elapsedMs, t);
   const progressValue = Math.min(100, (elapsedMs / MAX_DURATION_MS) * 100);
   const badgeVariant = getBadgeVariant(isRecording, isTranscribing);
 
@@ -281,10 +200,10 @@ function RouteComponent() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error ? (
+          {displayError ? (
             <Alert variant="destructive">
               <AlertTitle>{PERSIAN_TEXTS.general.error}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{displayError}</AlertDescription>
             </Alert>
           ) : null}
 
@@ -314,9 +233,7 @@ function RouteComponent() {
                   aria-label={isRecording ? t.recordStop : t.recordStart}
                   aria-pressed={isRecording}
                   className="h-12 min-w-48 gap-2 text-base"
-                  onClick={
-                    isRecording ? handleStopRecording : handleStartRecording
-                  }
+                  onClick={isRecording ? stopRecording : handleStartRecording}
                   type="button"
                   variant={isRecording ? 'destructive' : 'default'}
                 >
