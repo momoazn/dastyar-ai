@@ -342,14 +342,13 @@ export const appRouter = {
       .input(
         z.object({
           file: z.instanceof(File),
-          language: z.string().optional(),
-          modelId: z.string().optional(),
+          language: z.string().length(2).optional(),
+          model: z.string().optional().default('tiny'),
           responseFormat: z
             .enum(['json', 'text', 'verbose'])
             .optional()
             .default('json'),
           includeTimestamps: z.boolean().optional().default(true),
-          engine: z.enum(['faster', 'openai']).optional().default('faster'),
         })
       )
       .handler(async ({ input }) => {
@@ -361,20 +360,13 @@ export const appRouter = {
         const formData = new FormData();
         formData.append('file', input.file);
 
-        const model =
-          input.modelId ?? (input.language === 'fa' ? 'base' : 'base.en');
-
-        // Create request body with transcription parameters
-        const requestBody = {
-          model,
-          language: input.language,
-          response_format: input.responseFormat,
-          include_timestamps: input.includeTimestamps,
-          engine: input.engine,
-        };
-
-        // Append request body as JSON string to FormData
-        formData.append('request', JSON.stringify(requestBody));
+        // Append individual fields per updated Whisper API
+        formData.append('model', input.model);
+        if (input.language) {
+          formData.append('language', input.language);
+        }
+        formData.append('response_format', input.responseFormat);
+        formData.append('include_timestamps', String(input.includeTimestamps));
 
         const response = await fetch(`${whisperServiceUrl}/api/transcribe`, {
           method: 'POST',

@@ -30,11 +30,13 @@ import { orpc } from '@/utils/orpc';
 
 const MAX_DURATION_MS = 60_000; // 60s visual progress
 const MODELS = [
-  { id: 'tiny.en', name: 'Tiny English' },
   { id: 'tiny', name: 'Tiny' },
-  { id: 'base.en', name: 'Base English' },
   { id: 'base', name: 'Base' },
-  { id: 'small.en', name: 'Small English' },
+  { id: 'small', name: 'Small' },
+  { id: 'medium', name: 'Medium' },
+  { id: 'large', name: 'Large' },
+  { id: 'large-v2', name: 'Large v2' },
+  { id: 'large-v3', name: 'Large v3' },
 ];
 
 const serializeResult = (data: unknown): string => {
@@ -131,7 +133,7 @@ function RouteComponent() {
   const [result, setResult] = useState('');
   const [elapsedMs, setElapsedMs] = useState(0);
   const [language, setLanguage] = useState<'fa' | 'en'>('fa');
-  const [modelId, setModelId] = useState<string>('tiny.en');
+  const [model, setModel] = useState<string>('tiny');
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
@@ -165,7 +167,7 @@ function RouteComponent() {
         return;
       }
       const file = buildFileFromChunks(recorder, chunksRef.current);
-      await transcribe({ file, language, modelId });
+      await transcribe({ file, language, model });
     } catch {
       setError(t.errors.processFailed);
     } finally {
@@ -229,7 +231,7 @@ function RouteComponent() {
     setError(null);
     setResult('');
     try {
-      await transcribe({ file, language, modelId });
+      await transcribe({ file, language, model });
     } catch {
       // handled by onError
     }
@@ -260,7 +262,7 @@ function RouteComponent() {
                   }
                 />
               </div>
-              <Select onValueChange={setModelId} value={modelId}>
+              <Select onValueChange={setModel} value={model}>
                 <SelectTrigger size="sm">
                   <SelectValue placeholder="مدل" />
                 </SelectTrigger>
