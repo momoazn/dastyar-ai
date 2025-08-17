@@ -5,15 +5,16 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+    "compile": "bun build src/index.ts --compile --minify --target bun --define NODE_ENV=\"production\"  --outfile server",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.js",
     "seed:models": "bun run src/scripts/seed-models.ts",
     "db:local": "bun run src/db/index.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:generate": "drizzle-kit generate && bun run db:bundle",
+    "db:migrate": "drizzle-kit migrate",
+    "db:bundle": "bun run src/scripts/bundle-migrations.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.4",
