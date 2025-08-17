@@ -25,6 +25,7 @@ The Whisper API can be compiled into a standalone executable using PyInstaller. 
 
 ## Quick Build
 
+### Option 1: Native Build
 ```bash
 # Build the executable
 bun run build
@@ -32,6 +33,18 @@ bun run build
 # Or manually:
 uv run python build.py
 ```
+
+### Option 2: Docker Build (Recommended for Linux)
+```bash
+# Build using Docker (cross-platform)
+chmod +x docker-build.sh
+./docker-build.sh
+
+# Or using Docker Compose
+docker-compose --profile build up build
+```
+
+See [DOCKER_BUILD.md](DOCKER_BUILD.md) for detailed Docker build instructions.
 
 ## Build Process
 

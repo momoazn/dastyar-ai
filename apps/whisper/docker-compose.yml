@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Build service - creates the executable
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: whisper-builder
+    volumes:
+      # Mount output directory to extract executable
+      - ./dist:/build/dist
+      - ./build-logs:/build/logs
+    environment:
+      - TARGET_PLATFORM=linux
+    profiles:
+      - build
+
+  # Runtime service - runs the built executable
+  runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: whisper-runtime
+    ports:
+      - "40002:40002"
+    volumes:
+      # Optional: mount local models directory
+      - ./models:/app/models:ro
+      # Optional: mount config or data directories
+      - ./data:/app/data
+    environment:
+      - WHISPER_PORT=40002
+      - TQDM_DISABLE=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:40002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    profiles:
+      - runtime
+
+  # Development service - for development and testing
+  development:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: whisper-dev
+    ports:
+      - "40002:40002"
+    volumes:
+      # Mount source code for development
+      - .:/workspace
+      - /workspace/dist
+      - /workspace/build
+      - /workspace/__pycache__
+    environment:
+      - WHISPER_PORT=40002
+      - PYTHONPATH=/workspace/src
+    working_dir: /workspace
+    command: uv run python src/main.py
+    profiles:
+      - dev
+
+  # Export service - extracts executable to host
+  export:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: exporter
+    container_name: whisper-exporter
+    volumes:
+      - ./dist:/output
+    command: ["sh", "-c", "cp /whisper-api /output/whisper-api && echo 'Executable exported to ./dist/whisper-api'"]
+    profiles:
+      - export
+
+volumes:
+  # Persistent volumes for build artifacts
+  build-cache:
+  models-cache:
