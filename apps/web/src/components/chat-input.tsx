@@ -1,5 +1,6 @@
-import { RefreshCcw } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Mic, RefreshCcw, Square } from 'lucide-react';
+import { memo, useEffect, useMemo } from 'react';
 // no button import needed here
 import {
   PromptInput,
@@ -14,6 +15,12 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
+import { Alert, AlertDescription } from '@/components/ui';
+import {
+  formatElapsed,
+  type RecordingError,
+  useVoiceRecorder,
+} from '@/hooks/use-voice-recorder';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
@@ -25,7 +32,7 @@ interface ChatInputProps {
   chatModelId?: string; // `${provider}:${modelId}`
   setChatModelId: (model: string) => void;
   prompt: string;
-  setPrompt: (prompt: string) => void;
+  setPrompt: (prompt: string | ((prev: string) => string)) => void;
   models?: Array<{
     id: string;
     name: string;
@@ -44,6 +51,71 @@ export const ChatInput = memo(
     setPrompt,
     models = [],
   }: ChatInputProps) => {
+    const t = PERSIAN_TEXTS.chat;
+
+    // Voice recording hook
+    const {
+      isRecording,
+      elapsedMs,
+      startRecording,
+      stopRecording,
+      error: recordingError,
+      recordedFile,
+      clearRecordedFile,
+    } = useVoiceRecorder();
+
+    // Transcription mutation
+    const { mutate: transcribe, isPending: isTranscribing } = useMutation(
+      orpc.transcribe.transcribe.mutationOptions({
+        onSuccess: (data) => {
+          // Append transcribed text to existing prompt
+          const transcribedText = data.text;
+          if (transcribedText.trim()) {
+            setPrompt((prev) => {
+              const separator = prev.trim() ? ' ' : '';
+              return prev + separator + transcribedText.trim();
+            });
+          }
+        },
+        onError: () => {
+          // Error will be handled by the error display logic below
+        },
+      })
+    );
+
+    // Handle transcription when recordedFile becomes available
+    useEffect(() => {
+      if (recordedFile) {
+        // Detect language for transcription - default to Persian
+        const language =
+          prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
+        const model = language === 'fa' ? 'base' : 'tiny';
+        transcribe({ file: recordedFile, language, model });
+        // Clear the recorded file to prevent re-transcription
+        clearRecordedFile();
+      }
+    }, [recordedFile, transcribe, clearRecordedFile, prompt]);
+
+    // Map recording errors to user-friendly messages
+    const mapRecordingError = (error: RecordingError): string => {
+      switch (error) {
+        case 'micAccessDenied':
+          return PERSIAN_TEXTS.transcribe.errors.micAccess;
+        case 'noAudioCaptured':
+          return PERSIAN_TEXTS.transcribe.errors.noAudio;
+        case 'initFailed':
+        case 'processingFailed':
+          return PERSIAN_TEXTS.transcribe.errors.processFailed;
+        default:
+          return t.voiceRecordingError;
+      }
+    };
+
+    // Get display error
+    const voiceError = recordingError
+      ? mapRecordingError(recordingError)
+      : null;
+
     // models prop provided by parent
     // Memoize text direction calculation
     const textDirection = useMemo(
@@ -59,6 +131,14 @@ export const ChatInput = memo(
           stopGenerating();
         } else {
           handleSendPrompt();
+        }
+      }
+
+      // Keyboard shortcut for voice recording (Ctrl/Cmd + M)
+      if (e.key === 'm' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (!isMicDisabled) {
+          handleMicClick();
         }
       }
     };
@@ -105,6 +185,28 @@ export const ChatInput = memo(
       });
     };
 
+    // Voice recording handlers
+    const handleMicClick = async () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        await startRecording();
+      }
+    };
+
+    // Get microphone button status
+    const getMicButtonText = () => {
+      if (isRecording) {
+        return `${t.micStop} • ${formatElapsed(elapsedMs)}`;
+      }
+      if (isTranscribing) {
+        return t.transcribingVoice;
+      }
+      return `${t.micStart} (Ctrl+M)`;
+    };
+
+    const isMicDisabled = isGenerating || isTranscribing;
+
     return (
       <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
         <div className="rounded-2xl border bg-muted/30 shadow-sm transition-all focus-within:shadow-md hover:shadow-md">
@@ -148,14 +250,39 @@ export const ChatInput = memo(
                   <RefreshCcw className="size-4" />
                 </PromptInputButton>
               </PromptInputTools>
-              <PromptInputSubmit
-                disabled={!(isGenerating || (prompt.trim() && chatModelId))}
-                status={isGenerating ? 'streaming' : undefined}
-                variant={isGenerating ? 'destructive' : 'default'}
-              />
+              <div className="flex items-center gap-2">
+                <PromptInputButton
+                  className={isRecording ? 'animate-pulse' : ''}
+                  disabled={isMicDisabled}
+                  onClick={handleMicClick}
+                  title={getMicButtonText()}
+                  variant={isRecording ? 'destructive' : 'outline'}
+                >
+                  {isRecording ? (
+                    <Square className="size-4" />
+                  ) : (
+                    <Mic className="size-4" />
+                  )}
+                  {isRecording && (
+                    <span className="ml-2 text-xs">
+                      {formatElapsed(elapsedMs)}
+                    </span>
+                  )}
+                </PromptInputButton>
+                <PromptInputSubmit
+                  disabled={!(isGenerating || (prompt.trim() && chatModelId))}
+                  status={isGenerating ? 'streaming' : undefined}
+                  variant={isGenerating ? 'destructive' : 'default'}
+                />
+              </div>
             </PromptInputToolbar>
           </PromptInput>
         </div>
+        {voiceError && (
+          <Alert className="mt-2" variant="destructive">
+            <AlertDescription dir="rtl">{voiceError}</AlertDescription>
+          </Alert>
+        )}
       </div>
     );
   }

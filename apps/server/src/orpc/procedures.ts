@@ -351,6 +351,21 @@ export const appRouter = {
           includeTimestamps: z.boolean().optional().default(true),
         })
       )
+      .output(
+        z.object({
+          text: z.string(),
+          language: z.string().optional(),
+          model_used: z.string().optional(),
+          processing_ms: z.number().optional(),
+          segments: z.array(
+            z.object({
+              start: z.number(),
+              end: z.number(),
+              text: z.string(),
+            })
+          ).optional(),
+        })
+      )
       .handler(async ({ input }) => {
         const whisperPort = process.env.WHISPER_PORT || '40002';
         const whisperServiceUrl =
@@ -365,7 +380,7 @@ export const appRouter = {
         if (input.language) {
           formData.append('language', input.language);
         }
-        formData.append('response_format', 'text'); // Request text format for cleaner response
+        formData.append('response_format', input.responseFormat);
         formData.append('include_timestamps', String(input.includeTimestamps));
 
         const response = await fetch(`${whisperServiceUrl}/api/transcribe`, {
@@ -378,19 +393,23 @@ export const appRouter = {
         }
 
         const result = await response.json();
-        const data = result.text;
 
-        if (typeof data === 'string') {
-          return data;
+        // Handle different response formats from the Python service
+        if (input.responseFormat === 'text') {
+          // When format is 'text', Python service returns: { "text": "..." }
+          return {
+            text: typeof result === 'string' ? result : (result.text || String(result)),
+          };
         }
-        if (data && typeof data === 'object' && 'text' in data) {
-          return String(data.text);
-        }
-        try {
-          return JSON.stringify(data, null, 2);
-        } catch {
-          return String(data);
-        }
+
+        // For 'json' and 'verbose' formats, return the structured response
+        return {
+          text: result.text || '',
+          language: result.language,
+          model_used: result.model_used,
+          processing_ms: result.processing_ms,
+          segments: result.segments || undefined,
+        };
       }),
   },
 };

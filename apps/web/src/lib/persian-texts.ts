@@ -59,6 +59,12 @@ export const PERSIAN_TEXTS = {
     save: 'ذخیره',
     cancel: 'لغو',
     copied: 'کپی شد',
+    micStart: 'شروع ضبط صوت',
+    micStop: 'پایان ضبط صوت',
+    voiceRecording: 'در حال ضبط صوت...',
+    transcribingVoice: 'در حال تبدیل صوت به متن...',
+    voiceRecordingError: 'خطا در ضبط صوت',
+    voiceTranscriptionError: 'خطا در تبدیل صوت به متن',
   },
   translation: {
     sourceLanguage: 'زبان مبدا',

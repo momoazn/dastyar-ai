@@ -13,6 +13,7 @@ export interface UseVoiceRecorderReturn {
   stopRecording: () => void;
   error: RecordingError | null;
   recordedFile: File | null;
+  clearRecordedFile: () => void;
 }
 
 const getPreferredMimeType = (): string | null => {
@@ -157,6 +158,11 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
     setIsRecording(false);
   }, []);
 
+  const clearRecordedFile = useCallback(() => {
+    setRecordedFile(null);
+    setError(null);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return cleanup;
@@ -169,5 +175,6 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
     stopRecording,
     error,
     recordedFile,
+    clearRecordedFile,
   };
 };

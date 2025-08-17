@@ -44,6 +44,26 @@ const MODELS = [
   { id: 'large-v3', name: 'Large v3' },
 ];
 
+const serializeResult = (data: { 
+  text: string; 
+  language?: string; 
+  model_used?: string; 
+  processing_ms?: number; 
+  segments?: Array<{ start: number; end: number; text: string }>; 
+}): string => {
+  // For the transcribe page, we might want to show more info
+  if (data.segments && data.segments.length > 0) {
+    // Show verbose output with timestamps if available
+    const segmentsText = data.segments
+      .map(seg => `[${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s]: ${seg.text}`)
+      .join('\n');
+    return `${data.text}\n\n--- Segments ---\n${segmentsText}`;
+  }
+  
+  // Just return the text for simple format
+  return data.text;
+};
+
 const getBadgeVariant = (
   isRecording: boolean,
   isTranscribing: boolean
@@ -90,12 +110,13 @@ function RouteComponent() {
     stopRecording,
     error: recordingError,
     recordedFile,
+    clearRecordedFile,
   } = useVoiceRecorder();
 
   const { mutate: transcribe, isPending: isTranscribing } = useMutation(
     orpc.transcribe.transcribe.mutationOptions({
       onSuccess: (data) => {
-        setResult(data);
+        setResult(serializeResult(data));
       },
       onError: () => {
         setTranscribeError(t.errors.transcribeFailed);
@@ -124,8 +145,10 @@ function RouteComponent() {
       setTranscribeError(null);
       setResult('');
       transcribe({ file: recordedFile, language, model });
+      // Clear the recorded file to prevent re-transcription
+      clearRecordedFile();
     }
-  }, [recordedFile, transcribe, language, model]);
+  }, [recordedFile, transcribe, language, model, clearRecordedFile]);
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
