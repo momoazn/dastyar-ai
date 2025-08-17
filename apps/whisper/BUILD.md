@@ -5,6 +5,7 @@ This document explains how to build a single executable binary from the Whisper 
 ## Overview
 
 The Whisper API can be compiled into a standalone executable using PyInstaller. This creates a single file that includes:
+
 - Python interpreter
 - All dependencies (FastAPI, Whisper, PyTorch, etc.)
 - Application code
@@ -15,7 +16,12 @@ The Whisper API can be compiled into a standalone executable using PyInstaller. 
 - Python 3.13+
 - uv package manager
 - ~2GB free disk space for build process
-- ~1.1GB for final executable
+- ~206MB for final executable
+
+### Platform-Specific Requirements
+
+- **Windows**: See [WINDOWS_BUILD.md](WINDOWS_BUILD.md) for detailed Windows build instructions
+- **macOS/Linux**: Standard build tools (gcc, make)
 
 ## Quick Build
 
@@ -41,7 +47,6 @@ The build script performs these steps:
 ### PyInstaller Spec File (`whisper-api.spec`)
 
 - **Entry Point**: `src/main.py`
-- **UI Assets**: Includes `index.html`
 - **Model Files**: Bundles existing models from `models/` directory
 - **Hidden Imports**: Handles FastAPI, Whisper, PyTorch dependencies
 - **Optimizations**: UPX compression, excludes unnecessary packages
@@ -53,12 +58,13 @@ The build script performs these steps:
 ## Output
 
 - **Location**: `dist/whisper-api`
-- **Size**: ~250MB (includes PyTorch, tiny model, dependencies)
+- **Size**: ~206MB (includes PyTorch, tiny model, dependencies)
 - **Platform**: Native binary for build platform
 
 ## Deployment
 
 ### Basic Deployment (Tiny Model Only)
+
 The executable includes only the tiny model and can be deployed by:
 
 1. Copy `dist/whisper-api` to target machine
@@ -66,6 +72,7 @@ The executable includes only the tiny model and can be deployed by:
 3. Run: `./whisper-api`
 
 ### Extended Deployment (Additional Models)
+
 To use larger models (base, small, medium, large):
 
 1. Copy `dist/whisper-api` to target machine
@@ -75,6 +82,7 @@ To use larger models (base, small, medium, large):
 5. Run: `./whisper-api`
 
 Example deployment structure:
+
 ```
 /opt/whisper/
 ├── whisper-api          # Executable (250MB)
@@ -87,12 +95,14 @@ Example deployment structure:
 ## Configuration
 
 The executable respects these environment variables:
+
 - `WHISPER_PORT`: Port to run on (default: 40002)
 - `TQDM_DISABLE`: Disable progress bars (set to "1")
 
 ## Size Optimization
 
 The executable size breakdown:
+
 - PyTorch (~150MB)
 - Python interpreter and stdlib (~50MB)
 - FastAPI and dependencies (~30MB)
@@ -100,17 +110,20 @@ The executable size breakdown:
 - Additional ML libraries (~100MB)
 
 **Already Optimized:**
+
 - Only bundles tiny model (reduces size by ~800MB)
 - Larger models loaded from local `models/` directory
 - UPX compression enabled
 
 **Further Optimization:**
+
 - Consider removing unused PyTorch features if not needed
 - Use CPU-only PyTorch build for smaller size (if no CUDA needed)
 
 ## Troubleshooting
 
 ### Build Fails
+
 - Ensure all dependencies are installed: `uv sync --group build`
 - Check Python version: `python --version` (should be 3.13+)
 - Clear build cache: `bun run build:clean`
@@ -118,7 +131,9 @@ The executable size breakdown:
 ### Runtime Errors
 
 #### `ModuleNotFoundError: No module named 'jaraco.text'`
+
 This error has been fixed by:
+
 - Adding `jaraco.text` and related modules to hidden imports
 - Including `setuptools` and `jaraco.text` in build dependencies
 - Not excluding `setuptools` from the bundle
@@ -126,11 +141,13 @@ This error has been fixed by:
 The fix has been applied to the build configuration.
 
 ### Large File Size
+
 - Remove unused models from `models/` directory
 - Modify `whisper-api.spec` to exclude more packages
 - Disable UPX compression if causing issues
 
 ### Runtime Issues
+
 - Ensure models directory is accessible
 - Check port availability (default 40002)
 - Verify file permissions on executable

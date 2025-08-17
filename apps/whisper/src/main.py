@@ -7,7 +7,7 @@ import time
 from contextlib import asynccontextmanager
 from enum import Enum
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 import whisper
@@ -50,26 +50,22 @@ SUPPORTED_FORMATS = {
     "video/webm",
 }
 
-openai_model_cache: Dict[str, whisper.Whisper] = {}
+# Cache for loaded Whisper models
+model_cache = {}
 
 
+@lru_cache(maxsize=1)
 def get_device():
     """Get the best available device for inference"""
     if torch.cuda.is_available():
         return "cuda"
-    else:
-        return "cpu"
-
-
-@lru_cache(maxsize=1)
-def get_device_cached():
-    return get_device()
+    return "cpu"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        load_openai_model("tiny")
+        load_model("tiny")
         logger.info("Tiny model pre-loaded successfully")
     except Exception as e:
         logger.warning(f"Failed to pre-load tiny model: {str(e)}")
@@ -93,25 +89,90 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-@app.get("/api")
+@app.get("/", response_class=HTMLResponse)
 async def index():
+    """Simple HTML interface"""
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Whisper Transcription API</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .container { max-width: 600px; margin: 0 auto; }
+            .upload-form { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+            .result { margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎤 Whisper Transcription API</h1>
+            <p>Upload an audio file to transcribe it using OpenAI Whisper.</p>
+            
+            <div class="upload-form">
+                <form action="/api/transcribe" method="post" enctype="multipart/form-data">
+                    <p><strong>Audio File:</strong></p>
+                    <input type="file" name="file" accept="audio/*,video/*" required>
+                    
+                    <p><strong>Model Size:</strong></p>
+                    <select name="model">
+                        <option value="tiny" selected>Tiny (fastest)</option>
+                        <option value="base">Base</option>
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                    
+                    <p><strong>Language (optional):</strong></p>
+                    <input type="text" name="language" placeholder="e.g., en, fa" maxlength="2">
+                    
+                    <p><strong>Response Format:</strong></p>
+                    <select name="response_format">
+                        <option value="json" selected>JSON</option>
+                        <option value="text">Text Only</option>
+                        <option value="verbose">Verbose</option>
+                    </select>
+                    
+                    <p>
+                        <input type="checkbox" name="include_timestamps" checked>
+                        Include timestamps
+                    </p>
+                    
+                    <p><button type="submit">Transcribe</button></p>
+                </form>
+            </div>
+            
+            <p><strong>API Endpoints:</strong></p>
+            <ul>
+                <li><a href="/docs">📚 API Documentation</a></li>
+                <li><a href="/api/health">🏥 Health Check</a></li>
+                <li><a href="/api/models">📋 Available Models</a></li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """
+
+
+@app.get("/api")
+async def api_info():
     return {
         "message": "Whisper Transcription API",
         "docs": "/docs",
-        "health": "/health",
+        "health": "/api/health",
+        "models": "/api/models",
     }
 
 
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    device = get_device_cached()
+    device = get_device()
     return {
         "status": "healthy",
         "device": device,
         "cuda_available": torch.cuda.is_available(),
-        "loaded_models": list(openai_model_cache.keys()),
+        "loaded_models": list(model_cache.keys()),
     }
 
 
@@ -120,7 +181,7 @@ async def list_models():
     """List available models"""
     return {
         "available_models": [model.value for model in ModelSize],
-        "loaded_models": list(openai_model_cache.keys()),
+        "loaded_models": list(model_cache.keys()),
         "model_info": {
             "tiny": {"size": "~39 MB", "speed": "fastest", "accuracy": "lowest"},
             "base": {"size": "~74 MB", "speed": "fast", "accuracy": "good"},
@@ -139,13 +200,6 @@ async def list_models():
             },
         },
     }
-
-
-@lru_cache(maxsize=1)
-def _get_device_cached() -> str:
-    if torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
 
 
 def get_models_directory() -> str:
@@ -174,27 +228,27 @@ def get_models_directory() -> str:
         return local_models
 
 
-def load_openai_model(model_name: str):
-    if model_name not in openai_model_cache:
+def load_model(model_name: str):
+    """Load a Whisper model with caching"""
+    if model_name not in model_cache:
         try:
-            device = _get_device_cached()
+            device = get_device()
             models_dir = get_models_directory()
             logger.info(
-                f"Loading openai-whisper model '{model_name}' on '{device}' from '{models_dir}'"
+                f"Loading whisper model '{model_name}' on '{device}' from '{models_dir}'"
             )
             os.environ["WHISPER_CACHE_DIR"] = models_dir
             model = whisper.load_model(model_name, device=device)
-            openai_model_cache[model_name] = model
-            logger.info(f"openai-whisper model '{model_name}' loaded")
+            model_cache[model_name] = model
+            logger.info(f"Whisper model '{model_name}' loaded")
         except Exception as e:
-            logger.error(f"Failed to load openai-whisper model '{model_name}': {e}")
+            logger.error(f"Failed to load whisper model '{model_name}': {e}")
             raise
-    return openai_model_cache[model_name]
+    return model_cache[model_name]
 
 
-async def transcribe_openai_async(
-    model, audio_path: str, language: Optional[str] = None
-):
+async def transcribe_async(model, audio_path: str, language: Optional[str] = None):
+    """Transcribe audio asynchronously"""
     loop = asyncio.get_event_loop()
 
     def transcribe():
@@ -269,14 +323,14 @@ async def transcribe_audio(
             temp_file_path = temp_file.name
 
         # Load the specified model
-        whisper_model = load_openai_model(model.value)
+        whisper_model = load_model(model.value)
 
         # Transcribe audio
         logger.info(
             f"Transcribing file '{file.filename}' with model '{model.value}', language: {language or 'auto-detect'}"
         )
         start_time = time.perf_counter()
-        result = await transcribe_openai_async(whisper_model, temp_file_path, language)
+        result = await transcribe_async(whisper_model, temp_file_path, language)
         processing_ms = int((time.perf_counter() - start_time) * 1000)
 
         # Format response based on requested format

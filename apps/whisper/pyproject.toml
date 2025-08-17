@@ -17,4 +17,5 @@ build = [
     "pyinstaller>=6.11.1",
     "setuptools>=70.0.0",
     "jaraco.text>=3.7.0",
+    "pywin32>=306; sys_platform == 'win32'",
 ]

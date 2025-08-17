@@ -17,9 +17,6 @@ datas = []
 # FastAPI static files and templates
 datas += collect_data_files('fastapi')
 
-# Add the HTML UI file
-datas += [('index.html', '.')]
-
 # Whisper model files - only include tiny model to reduce size
 if os.path.exists('models'):
     # Only include tiny model files
@@ -93,6 +90,19 @@ hiddenimports += [
     'pkg_resources._vendor.packaging.requirements',
 ]
 
+# Windows-specific imports
+if sys.platform.startswith('win'):
+    hiddenimports += [
+        'win32api',
+        'win32con',
+        'win32file',
+        'win32pipe',
+        'win32process',
+        'win32security',
+        'pywintypes',
+        'winsound',
+    ]
+
 # Binary exclusions - exclude unnecessary binaries to reduce size
 binaries = []
 
@@ -133,7 +143,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='whisper-api',
+    name='whisper-api.exe' if sys.platform.startswith('win') else 'whisper-api',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -146,4 +156,9 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    # Windows-specific options
+    version=None,
+    uac_admin=False,
+    uac_uiaccess=False,
+    icon=None,
 )

@@ -7,6 +7,7 @@ import os
 import sys
 import shutil
 import subprocess
+import platform
 from pathlib import Path
 
 
@@ -57,15 +58,28 @@ def create_executable():
 
 def verify_executable():
     """Verify the executable was created successfully"""
-    exe_path = Path("dist/whisper-api")
+    # Determine executable name based on platform
+    if platform.system() == "Windows":
+        exe_name = "whisper-api.exe"
+    else:
+        exe_name = "whisper-api"
+
+    exe_path = Path("dist") / exe_name
     if not exe_path.exists():
-        print("❌ Executable not found in dist/")
+        print(f"❌ Executable not found: {exe_path}")
+        # List what's actually in dist/
+        dist_path = Path("dist")
+        if dist_path.exists():
+            print("Contents of dist/:")
+            for item in dist_path.iterdir():
+                print(f"  - {item.name}")
         sys.exit(1)
 
     file_size = exe_path.stat().st_size / (1024 * 1024)  # Size in MB
-    print(f"✅ Executable created successfully!")
+    print("✅ Executable created successfully!")
     print(f"📁 Location: {exe_path.absolute()}")
     print(f"📊 Size: {file_size:.1f} MB")
+    print(f"🖥️  Platform: {platform.system()} {platform.machine()}")
 
 
 def main():
@@ -84,9 +98,25 @@ def main():
 
         print("\n🎉 Build completed successfully!")
         print("\n📋 Next steps:")
-        print("   1. Test the executable: ./dist/whisper-api")
-        print("   2. Copy models/ directory alongside the executable if needed")
+
+        # Platform-specific instructions
+        if platform.system() == "Windows":
+            print("   1. Test the executable: .\\dist\\whisper-api.exe")
+            print("   2. Copy models\\ directory alongside the executable if needed")
+        else:
+            print("   1. Test the executable: ./dist/whisper-api")
+            print("   2. Copy models/ directory alongside the executable if needed")
+
         print("   3. Deploy the executable to your target environment")
+
+        # Platform-specific notes
+        if platform.system() == "Windows":
+            print("\n💡 Windows Notes:")
+            print("   - Antivirus software may flag the executable - add to exclusions")
+            print(
+                "   - Windows Defender SmartScreen may show a warning - click 'More info' → 'Run anyway'"
+            )
+            print("   - Ensure Windows firewall allows the application on port 40002")
 
     except KeyboardInterrupt:
         print("\n⚠️  Build interrupted by user")

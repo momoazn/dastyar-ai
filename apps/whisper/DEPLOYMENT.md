@@ -10,7 +10,7 @@ The `whisper-api` executable is a self-contained binary that includes:
 
 ## Deployment Options
 
-### Option 1: Tiny Model Only (250MB)
+### Option 1: Tiny Model Only (206MB)
 
 For basic transcription needs with fastest startup:
 
@@ -28,7 +28,7 @@ chmod +x /opt/whisper-api
 - No additional setup required
 - Smallest deployment footprint
 
-### Option 2: Multiple Models (250MB + models)
+### Option 2: Multiple Models (206MB + models)
 
 For better accuracy with multiple model options:
 
@@ -39,7 +39,7 @@ scp -r models/ user@server:/opt/whisper/
 
 # Deployment structure
 /opt/whisper/
-├── whisper-api          # 250MB executable
+├── whisper-api          # 206MB executable
 └── models/              # Additional models
     ├── base.pt         # ~74MB
     ├── small.pt        # ~244MB  
@@ -79,7 +79,22 @@ curl -X POST "http://localhost:40002/api/transcribe" \
 
 ## Production Deployment
 
-### Systemd Service
+### Windows Service
+
+For Windows deployment, see [WINDOWS_BUILD.md](WINDOWS_BUILD.md#windows-service-installation) for service installation.
+
+**Quick Windows deployment:**
+```powershell
+# Copy executable
+copy dist\whisper-api.exe C:\whisper\
+
+# Run directly
+C:\whisper\whisper-api.exe
+
+# Or install as Windows service (see WINDOWS_BUILD.md)
+```
+
+### Systemd Service (Linux)
 
 Create `/etc/systemd/system/whisper-api.service`:
 
