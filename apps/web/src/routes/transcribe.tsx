@@ -43,6 +43,9 @@ const serializeResult = (data: unknown): string => {
   if (typeof data === 'string') {
     return data;
   }
+  if (data && typeof data === 'object' && 'text' in data) {
+    return String(data.text);
+  }
   try {
     return JSON.stringify(data, null, 2);
   } catch {
@@ -337,6 +340,8 @@ function RouteComponent() {
         <CardFooter className="flex-col gap-3">
           <Textarea
             aria-label={t.title}
+            className={language === 'fa' ? 'rtl text-right' : 'ltr text-left'}
+            dir={language === 'fa' ? 'rtl' : 'ltr'}
             placeholder={t.resultPlaceholder}
             readOnly
             rows={8}

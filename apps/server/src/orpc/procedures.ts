@@ -365,7 +365,7 @@ export const appRouter = {
         if (input.language) {
           formData.append('language', input.language);
         }
-        formData.append('response_format', input.responseFormat);
+        formData.append('response_format', 'text'); // Request text format for cleaner response
         formData.append('include_timestamps', String(input.includeTimestamps));
 
         const response = await fetch(`${whisperServiceUrl}/api/transcribe`, {
@@ -378,7 +378,7 @@ export const appRouter = {
         }
 
         const result = await response.json();
-        return result;
+        return result.text; // Return only the transcribed text
       }),
   },
 };
