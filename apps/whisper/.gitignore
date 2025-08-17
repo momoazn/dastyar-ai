@@ -6,6 +6,10 @@ dist/
 wheels/
 *.egg-info
 
+# PyInstaller build artifacts
+*.spec.bak
+*.log
+
 # Virtual environments
 .venv
 

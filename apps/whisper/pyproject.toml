@@ -14,3 +14,8 @@ dependencies = [
 dev = [
     "ruff>=0.12.8",
 ]
+build = [
+    "pyinstaller>=6.11.1",
+    "setuptools>=70.0.0",
+    "jaraco.text>=3.7.0",
+]

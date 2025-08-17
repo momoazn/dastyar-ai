@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+import sys
 from functools import lru_cache
 from typing import Dict, Optional
 
@@ -20,12 +22,44 @@ def _get_device_cached() -> str:
 faster_model_cache: Dict[str, WhisperModel] = {}
 
 
+def get_models_directory() -> str:
+    """
+    Get the models directory path. Checks for local models directory next to executable,
+    falls back to bundled models directory, or creates local one.
+    """
+    # Get the directory where the executable/script is located
+    if hasattr(sys, '_MEIPASS'):
+        # Running as PyInstaller executable
+        base_dir = os.path.dirname(sys.executable)
+        bundled_models = os.path.join(sys._MEIPASS, 'models')
+    else:
+        # Running as script
+        base_dir = os.path.dirname(os.path.dirname(__file__))  # Go up to app root
+        bundled_models = os.path.join(base_dir, 'models')
+    
+    # Check for local models directory next to executable/script
+    local_models = os.path.join(base_dir, 'models')
+    
+    if os.path.exists(local_models):
+        logger.info(f"Using local models directory: {local_models}")
+        return local_models
+    elif hasattr(sys, '_MEIPASS') and os.path.exists(bundled_models):
+        logger.info(f"Using bundled models directory: {bundled_models}")
+        return bundled_models
+    else:
+        # Create local models directory for downloaded models
+        os.makedirs(local_models, exist_ok=True)
+        logger.info(f"Created local models directory: {local_models}")
+        return local_models
+
+
 def load_model(model_name: str) -> WhisperModel:
     if model_name not in faster_model_cache:
         try:
             device = _get_device_cached()
-            logger.info(f"Loading faster-whisper model '{model_name}' on '{device}'")
-            model = WhisperModel(model_name, device=device, download_root="models")
+            models_dir = get_models_directory()
+            logger.info(f"Loading faster-whisper model '{model_name}' on '{device}' from '{models_dir}'")
+            model = WhisperModel(model_name, device=device, download_root=models_dir)
             faster_model_cache[model_name] = model
             logger.info(f"faster-whisper model '{model_name}' loaded")
         except Exception as e:

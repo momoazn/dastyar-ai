@@ -86,10 +86,10 @@ def get_device_cached():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        load_faster_model("base")
-        logger.info("Base model pre-loaded successfully")
+        load_faster_model("tiny")
+        logger.info("Tiny model pre-loaded successfully")
     except Exception as e:
-        logger.warning(f"Failed to pre-load base model: {str(e)}")
+        logger.warning(f"Failed to pre-load tiny model: {str(e)}")
     yield
 
 
@@ -171,7 +171,7 @@ async def list_models():
 
 class TranscribeRequest(BaseModel):
     """Request model for transcription parameters"""
-    model: ModelSize = ModelSize.base
+    model: ModelSize = ModelSize.tiny
     language: Optional[str] = None
     response_format: str = "json"
     include_timestamps: bool = True
