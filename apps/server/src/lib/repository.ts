@@ -4,6 +4,7 @@ import type {
   InsertThreadInput,
   SelectMessageOutput,
   SelectModelOutput,
+  SelectSummaryOutput,
   SelectThreadOutput,
   SelectTranslationOutput,
 } from '@/db/schema';
@@ -15,8 +16,10 @@ import {
   models,
   selectMessageSchema,
   selectModelSchema,
+  selectSummarySchema,
   selectThreadSchema,
   selectTranslationSchema,
+  summaries,
   threads,
   translations,
 } from '@/db/schema';
@@ -310,4 +313,22 @@ export async function getTranslation(id: SelectTranslationOutput['id']) {
 
 export async function deleteTranslation(id: SelectTranslationOutput['id']) {
   await db.delete(translations).where(eq(translations.id, id));
+}
+
+export function listSummaries() {
+  return db.select().from(summaries).orderBy(desc(summaries.createdAt));
+}
+
+export async function getSummary(id: SelectSummaryOutput['id']) {
+  selectSummarySchema.shape.id.parse(id);
+  const rows = await db
+    .select()
+    .from(summaries)
+    .where(eq(summaries.id, id))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function deleteSummary(id: SelectSummaryOutput['id']) {
+  await db.delete(summaries).where(eq(summaries.id, id));
 }

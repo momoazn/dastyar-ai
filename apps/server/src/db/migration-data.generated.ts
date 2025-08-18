@@ -12,6 +12,13 @@ export const migrationData: { [key: string]: string } = {
       "when": 1755414198514,
       "tag": "0000_skinny_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1755551467559,
+      "tag": "0001_flimsy_captain_cross",
+      "breakpoints": true
     }
   ]
 }`,
@@ -103,12 +110,8 @@ export const migrationData: { [key: string]: string } = {
           "name": "messages_modelId_models_id_fk",
           "tableFrom": "messages",
           "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["modelId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -116,12 +119,8 @@ export const migrationData: { [key: string]: string } = {
           "name": "messages_thread_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": [
-            "thread"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -182,10 +181,7 @@ export const migrationData: { [key: string]: string } = {
       "indexes": {
         "models_provider_name_uq": {
           "name": "models_provider_name_uq",
-          "columns": [
-            "provider",
-            "name"
-          ],
+          "columns": ["provider", "name"],
           "isUnique": true
         }
       },
@@ -324,12 +320,8 @@ export const migrationData: { [key: string]: string } = {
           "name": "translations_modelId_models_id_fk",
           "tableFrom": "translations",
           "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["modelId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -349,7 +341,8 @@ export const migrationData: { [key: string]: string } = {
   "internal": {
     "indexes": {}
   }
-}`,
+}
+`,
   '0000_skinny_maria_hill.sql': `CREATE TABLE \`messages\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`content\` text NOT NULL,
@@ -397,6 +390,18 @@ CREATE TABLE \`translations\` (
 	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
 );
 `,
+  '0001_flimsy_captain_cross.sql': `CREATE TABLE \`summaries\` (
+	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`sourceText\` text NOT NULL,
+	\`summaryText\` text,
+	\`modelId\` text,
+	\`mode\` text NOT NULL,
+	\`tone\` text,
+	\`created\` integer DEFAULT (unixepoch()),
+	\`updated\` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
+);
+`
 };
 
 export default migrationData;

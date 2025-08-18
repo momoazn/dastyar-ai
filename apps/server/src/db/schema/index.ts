@@ -154,3 +154,31 @@ export const selectTranslationSchema = createSelectSchema(translations);
 
 export type InsertTranslationInput = z.infer<typeof insertTranslationSchema>;
 export type SelectTranslationOutput = z.infer<typeof selectTranslationSchema>;
+
+/*
+  Summaries table – stores summary jobs & results
+*/
+export const summaries = sqliteTable('summaries', {
+  id: text('id', { length: 15 }).primaryKey().notNull(),
+  sourceText: text('sourceText').notNull(),
+  summaryText: text('summaryText'),
+  modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
+  mode: text('mode', {
+    enum: ['concise', 'standard', 'detailed'] as const,
+  }).notNull(),
+  tone: text('tone', {
+    enum: Object.keys(toneToLabelMap) as [string, ...string[]],
+  }),
+  createdAt: integer('created', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`
+  ),
+  updatedAt: integer('updated', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`
+  ),
+});
+
+export const insertSummarySchema = createInsertSchema(summaries);
+export const selectSummarySchema = createSelectSchema(summaries);
+
+export type InsertSummaryInput = z.infer<typeof insertSummarySchema>;
+export type SelectSummaryOutput = z.infer<typeof selectSummarySchema>;

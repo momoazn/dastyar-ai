@@ -1,5 +1,6 @@
 import { useLocation } from '@tanstack/react-router';
 import {
+  FileText,
   HomeIcon,
   Image,
   MessageCircle,
@@ -34,6 +35,11 @@ export const navMain: NavItem[] = [
     title: fa.navigation.transcribe,
     url: '/transcribe',
     icon: Mic,
+  },
+  {
+    title: fa.navigation.summarize,
+    url: '/summarize',
+    icon: FileText,
   },
 ] as const satisfies NavItem[];
 
