@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""
-Build script for creating Whisper API executable
-"""
+"""Build script for creating Whisper API executable"""
 
 import os
-import sys
+import platform
 import shutil
 import subprocess
-import platform
+import sys
 from pathlib import Path
 
 
@@ -15,9 +13,7 @@ def run_command(cmd, description):
     """Run a command and handle errors"""
     print(f"🔄 {description}...")
     try:
-        result = subprocess.run(
-            cmd, shell=True, check=True, capture_output=True, text=True
-        )
+        result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
         print(f"✅ {description} completed")
         return result
     except subprocess.CalledProcessError as e:
@@ -59,10 +55,7 @@ def create_executable():
 def verify_executable():
     """Verify the executable was created successfully"""
     # Determine executable name based on platform
-    if platform.system() == "Windows":
-        exe_name = "whisper-api.exe"
-    else:
-        exe_name = "whisper-api"
+    exe_name = "whisper-api.exe" if platform.system() == "Windows" else "whisper-api"
 
     exe_path = Path("dist") / exe_name
     if not exe_path.exists():
@@ -113,9 +106,7 @@ def main():
         if platform.system() == "Windows":
             print("\n💡 Windows Notes:")
             print("   - Antivirus software may flag the executable - add to exclusions")
-            print(
-                "   - Windows Defender SmartScreen may show a warning - click 'More info' → 'Run anyway'"
-            )
+            print("   - Windows Defender SmartScreen may show a warning - click 'More info' → 'Run anyway'")
             print("   - Ensure Windows firewall allows the application on port 40002")
 
     except KeyboardInterrupt:
