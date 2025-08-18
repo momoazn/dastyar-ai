@@ -2,7 +2,10 @@ import { generateObject, generateText } from 'ai';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { models, translations } from '../../db/schema';
-import { getProviderForModel } from '../../lib/providers';
+import {
+  type AnyProviderModel,
+  getProviderForModel,
+} from '../../lib/providers';
 import {
   deleteTranslation,
   getTranslation,
@@ -27,9 +30,9 @@ const JSON_OBJECT_REGEX = /\{[\s\S]*?\}/g;
 
 const extractTranslatedTextFromRaw = (rawOutput: string): string | null => {
   // Remove DeepSeek-style reasoning blocks first
-  const withoutThink = rawOutput.replace(THINK_BLOCK, '');
-  const cleaned = withoutThink
+  const cleaned = rawOutput
     .trim()
+    .replace(THINK_BLOCK, '')
     .replace(FENCED_JSON_OPEN, '')
     .replace(FENCED_OPEN, '')
     .replace(FENCED_CLOSE, '');
@@ -53,7 +56,7 @@ const extractTranslatedTextFromRaw = (rawOutput: string): string | null => {
 };
 
 const translateWithStructuredOutput = async (
-  model: ReturnType<typeof getProviderForModel>,
+  model: AnyProviderModel,
   systemPrompt: string,
   inputText: string
 ): Promise<string | null> => {
@@ -79,7 +82,7 @@ const translateWithStructuredOutput = async (
 };
 
 const translateWithPlainJson = async (
-  model: ReturnType<typeof getProviderForModel>,
+  model: AnyProviderModel,
   systemPrompt: string,
   inputText: string
 ): Promise<string> => {

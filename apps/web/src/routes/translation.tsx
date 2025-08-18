@@ -23,6 +23,7 @@ import {
   Textarea,
 } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
+import { detectTextDirection } from '@/lib/utils';
 import { orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/translation')({
@@ -242,6 +243,7 @@ function TranslationPage() {
               <Textarea
                 aria-label={fa.translation.enterText}
                 className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+                dir={sourceText ? detectTextDirection(sourceText) : 'rtl'}
                 onChange={(e) => setSourceText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={fa.translation.enterText}
@@ -282,6 +284,11 @@ function TranslationPage() {
                     aria-label={fa.translation.translatedText}
                     aria-readonly
                     className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+                    dir={
+                      translatedText
+                        ? detectTextDirection(translatedText)
+                        : 'rtl'
+                    }
                     placeholder={fa.translation.translatedText}
                     readOnly
                     value={translatedText}
