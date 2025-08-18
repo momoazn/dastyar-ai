@@ -15,6 +15,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,12 +67,12 @@ def get_device():
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     try:
         load_model("tiny")
         logger.info("Tiny model pre-loaded successfully")
     except Exception as e:
-        logger.warning(f"Failed to pre-load tiny model: {str(e)}")
+        logger.warning(f"Failed to pre-load tiny model: {e!s}")
     yield
 
 
@@ -111,12 +112,12 @@ async def index():
         <div class="container">
             <h1>🎤 Whisper Transcription API</h1>
             <p>Upload an audio file to transcribe it using OpenAI Whisper.</p>
-            
+
             <div class="upload-form">
                 <form action="/api/transcribe" method="post" enctype="multipart/form-data">
                     <p><strong>Audio File:</strong></p>
                     <input type="file" name="file" accept="audio/*,video/*" required>
-                    
+
                     <p><strong>Model Size:</strong></p>
                     <select name="model">
                         <option value="tiny" selected>Tiny (fastest)</option>
@@ -125,26 +126,26 @@ async def index():
                         <option value="medium">Medium</option>
                         <option value="large">Large</option>
                     </select>
-                    
+
                     <p><strong>Language (optional):</strong></p>
                     <input type="text" name="language" placeholder="e.g., en, fa" maxlength="2">
-                    
+
                     <p><strong>Response Format:</strong></p>
                     <select name="response_format">
                         <option value="json" selected>JSON</option>
                         <option value="text">Text Only</option>
                         <option value="verbose">Verbose</option>
                     </select>
-                    
+
                     <p>
                         <input type="checkbox" name="include_timestamps" checked>
                         Include timestamps
                     </p>
-                    
+
                     <p><button type="submit">Transcribe</button></p>
                 </form>
             </div>
-            
+
             <p><strong>API Endpoints:</strong></p>
             <ul>
                 <li><a href="/docs">📚 API Documentation</a></li>
@@ -206,8 +207,8 @@ async def list_models():
 
 
 def get_models_directory() -> str:
-    """
-    Get the models directory path. Checks for local models directory next to executable,
+    """Get the models directory path. Checks for local models directory next to executable,
+
     falls back to bundled models directory, or creates local one.
     """
     if hasattr(sys, "_MEIPASS"):
@@ -222,13 +223,12 @@ def get_models_directory() -> str:
     if os.path.exists(local_models):
         logger.info(f"Using local models directory: {local_models}")
         return local_models
-    elif hasattr(sys, "_MEIPASS") and os.path.exists(bundled_models):
+    if hasattr(sys, "_MEIPASS") and os.path.exists(bundled_models):
         logger.info(f"Using bundled models directory: {bundled_models}")
         return bundled_models
-    else:
-        os.makedirs(local_models, exist_ok=True)
-        logger.info(f"Created local models directory: {local_models}")
-        return local_models
+    os.makedirs(local_models, exist_ok=True)
+    logger.info(f"Created local models directory: {local_models}")
+    return local_models
 
 
 def load_model(model_name: str):
@@ -237,9 +237,7 @@ def load_model(model_name: str):
         try:
             device = get_device()
             models_dir = get_models_directory()
-            logger.info(
-                f"Loading whisper model '{model_name}' on '{device}' from '{models_dir}'"
-            )
+            logger.info(f"Loading whisper model '{model_name}' on '{device}' from '{models_dir}'")
             os.environ["WHISPER_CACHE_DIR"] = models_dir
             model = whisper.load_model(model_name, device=device)
             model_cache[model_name] = model
@@ -260,15 +258,14 @@ async def transcribe_async(model, audio_path: str, language: Optional[str] = Non
             transcribe_options["language"] = language
         result = model.transcribe(audio_path, **transcribe_options)
 
-        segments = []
-        for seg in result.get("segments", []) or []:
-            segments.append(
-                {
-                    "start": seg.get("start"),
-                    "end": seg.get("end"),
-                    "text": (seg.get("text") or "").strip(),
-                }
-            )
+        segments = [
+            {
+                "start": seg.get("start"),
+                "end": seg.get("end"),
+                "text": (seg.get("text") or "").strip(),
+            }
+            for seg in result.get("segments", []) or []
+        ]
 
         return {
             "text": (result.get("text") or "").strip(),
@@ -290,8 +287,7 @@ async def transcribe_audio(
     response_format: str = Form("json", description="json | text | verbose"),
     include_timestamps: bool = Form(True, description="Include segment timestamps"),
 ):
-    """
-    Transcribe an audio file using OpenAI Whisper
+    """Transcribe an audio file using OpenAI Whisper
 
     Send as multipart/form-data with fields:
     - file: Audio file (mp3, wav, m4a, flac, ogg, etc.)
@@ -300,7 +296,6 @@ async def transcribe_audio(
     - response_format: Format of the response (json, text, verbose)
     - include_timestamps: Whether to include timestamps in the response
     """
-
     # Validate model
     try:
         model_enum = ModelSize(model)
@@ -350,9 +345,7 @@ async def transcribe_audio(
         whisper_model = load_model(model_enum.value)
 
         # Transcribe audio
-        logger.info(
-            f"Transcribing file '{file.filename}' with model '{model_enum.value}', language: {language or 'auto-detect'}"
-        )
+        logger.info(f"Transcribing file '{file.filename}' with model '{model_enum.value}', language: {language or 'auto-detect'}")
         start_time = time.perf_counter()
         result = await transcribe_async(whisper_model, temp_file_path, language)
         processing_ms = int((time.perf_counter() - start_time) * 1000)
@@ -361,13 +354,11 @@ async def transcribe_audio(
         if response_format == "text":
             return {"text": result["text"].strip()}
 
-        elif response_format == "verbose":
+        if response_format == "verbose":
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
-                "duration": result.get("segments", [{}])[-1].get("end", 0)
-                if result.get("segments")
-                else 0,
+                "duration": result.get("segments", [{}])[-1].get("end", 0) if result.get("segments") else 0,
                 "model_used": model_enum.value,
                 "processing_ms": processing_ms,
                 "segments": [],
@@ -385,32 +376,32 @@ async def transcribe_audio(
 
             return response
 
-        else:  # json format (default)
-            response = {
-                "text": result["text"].strip(),
-                "language": result["language"],
-                "model_used": model_enum.value,
-                "processing_ms": processing_ms,
-            }
+        # json format (default)
+        response = {
+            "text": result["text"].strip(),
+            "language": result["language"],
+            "model_used": model_enum.value,
+            "processing_ms": processing_ms,
+        }
 
-            if include_timestamps and "segments" in result:
-                response["segments"] = [
-                    {
-                        "start": segment["start"],
-                        "end": segment["end"],
-                        "text": segment["text"].strip(),
-                    }
-                    for segment in result["segments"]
-                ]
+        if include_timestamps and "segments" in result:
+            response["segments"] = [
+                {
+                    "start": segment["start"],
+                    "end": segment["end"],
+                    "text": segment["text"].strip(),
+                }
+                for segment in result["segments"]
+            ]
 
-            return response
+        return response
 
     except HTTPException:
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        logger.error(f"Transcription failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+        logger.error(f"Transcription failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {e!s}")
 
     finally:
         # Clean up temporary file
