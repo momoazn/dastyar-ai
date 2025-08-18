@@ -1,5 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router';
 import { Copy, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -37,6 +41,8 @@ const tones: Array<{ value: ToneOption; label: string }> = [
 ];
 
 function SummarizePage() {
+  const search = useSearch({ from: '/summarize' }) as { id?: string };
+  const navigate = useNavigate();
   const [sourceText, setSourceText] = useState('');
   const [summaryText, setSummaryText] = useState('');
   const [mode, setMode] = useState<SummarizeMode>('standard');
@@ -47,6 +53,14 @@ function SummarizePage() {
     orpc.models.list.queryOptions({ input: { isEnabled: true } })
   );
 
+  // Load summary if ID is provided in URL
+  const { data: selectedSummary } = useQuery(
+    orpc.summarize.get.queryOptions({
+      input: { id: search.id || '' },
+      enabled: !!search.id,
+    })
+  );
+
   const summarizeMutation = useMutation(
     orpc.summarize.create.mutationOptions({
       onSuccess: (data) => {
@@ -54,9 +68,25 @@ function SummarizePage() {
           queryKey: orpc.summarize.list.queryKey(),
         });
         setSummaryText(data.summaryText ?? '');
+        // Update URL to reflect the new summary
+        navigate({
+          to: '/summarize',
+          search: { id: data.id },
+        });
       },
     })
   );
+
+  // Load summary data when selectedSummary changes
+  useEffect(() => {
+    if (selectedSummary) {
+      setSourceText(selectedSummary.sourceText || '');
+      setSummaryText(selectedSummary.summaryText || '');
+      setMode(selectedSummary.mode as SummarizeMode);
+      setTone((selectedSummary.tone as ToneOption) || 'neutral');
+      setModelId(selectedSummary.modelId || '');
+    }
+  }, [selectedSummary]);
 
   useEffect(() => {
     if (modelList && modelList.length > 0 && !modelId) {
@@ -68,7 +98,7 @@ function SummarizePage() {
     try {
       await navigator.clipboard.writeText(summaryText);
     } catch {
-      // Silent fail
+      console.error('Failed to copy to clipboard');
     }
   };
 
@@ -150,7 +180,7 @@ function SummarizePage() {
             <div className="font-medium text-sm">{fa.summarize.model}</div>
             <Select
               disabled={summarizeMutation.isPending}
-              onValueChange={setModelId}
+              onValueChange={(value) => setModelId(value)}
               value={modelId}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
