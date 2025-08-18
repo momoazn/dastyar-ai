@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { CopyIcon, Mic, Square, Trash2 } from 'lucide-react';
+import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -44,22 +44,25 @@ const MODELS = [
   { id: 'large-v3', name: 'Large v3' },
 ];
 
-const serializeResult = (data: { 
-  text: string; 
-  language?: string; 
-  model_used?: string; 
-  processing_ms?: number; 
-  segments?: Array<{ start: number; end: number; text: string }>; 
+const serializeResult = (data: {
+  text: string;
+  language?: string;
+  model_used?: string;
+  processing_ms?: number;
+  segments?: Array<{ start: number; end: number; text: string }>;
 }): string => {
   // For the transcribe page, we might want to show more info
   if (data.segments && data.segments.length > 0) {
     // Show verbose output with timestamps if available
     const segmentsText = data.segments
-      .map(seg => `[${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s]: ${seg.text}`)
+      .map(
+        (seg) =>
+          `[${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s]: ${seg.text}`
+      )
       .join('\n');
     return `${data.text}\n\n--- Segments ---\n${segmentsText}`;
   }
-  
+
   // Just return the text for simple format
   return data.text;
 };
@@ -117,9 +120,14 @@ function RouteComponent() {
     orpc.transcribe.transcribe.mutationOptions({
       onSuccess: (data) => {
         setResult(serializeResult(data));
+        // Only clear recorded file after successful transcription
+        clearRecordedFile();
       },
-      onError: () => {
-        setTranscribeError(t.errors.transcribeFailed);
+      onError: (error) => {
+        const errorMessage =
+          error instanceof Error ? error.message : t.errors.transcribeFailed;
+        setTranscribeError(errorMessage);
+        // Don't clear recorded file on error, allow retry
       },
     })
   );
@@ -131,6 +139,8 @@ function RouteComponent() {
         return t.errors.micAccess;
       case 'noAudioCaptured':
         return t.errors.noAudio;
+      case 'fileTooLarge':
+        return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
       case 'initFailed':
       case 'processingFailed':
         return t.errors.processFailed;
@@ -144,11 +154,15 @@ function RouteComponent() {
     if (recordedFile) {
       setTranscribeError(null);
       setResult('');
-      transcribe({ file: recordedFile, language, model });
-      // Clear the recorded file to prevent re-transcription
-      clearRecordedFile();
+      transcribe({
+        file: recordedFile,
+        language,
+        model,
+        responseFormat: 'verbose',
+        includeTimestamps: true,
+      });
     }
-  }, [recordedFile, transcribe, language, model, clearRecordedFile]);
+  }, [recordedFile, transcribe, language, model]);
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
@@ -173,9 +187,44 @@ function RouteComponent() {
     if (!file) {
       return;
     }
+
+    // Validate file size (50MB limit)
+    const maxFileSize = 50 * 1024 * 1024;
+    if (file.size > maxFileSize) {
+      setTranscribeError(
+        `فایل خیلی بزرگ است. حداکثر سایز ${maxFileSize / (1024 * 1024)}MB می‌باشد.`
+      );
+      return;
+    }
+
+    // Validate file type
+    const supportedTypes = [
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/m4a',
+      'audio/mp4',
+      'audio/flac',
+      'audio/ogg',
+      'audio/webm',
+      'video/mp4',
+      'video/webm',
+    ];
+    if (!supportedTypes.includes(file.type)) {
+      setTranscribeError(`فرمت فایل پشتیبانی نمی‌شود: ${file.type}`);
+      return;
+    }
+
     setTranscribeError(null);
     setResult('');
-    transcribe({ file, language, model });
+    transcribe({
+      file,
+      language,
+      model,
+      responseFormat: 'verbose',
+      includeTimestamps: true,
+    });
   };
 
   // Get the first available error to display
@@ -244,18 +293,22 @@ function RouteComponent() {
               </div>
               <div className="flex items-center gap-3">
                 <Input
-                  accept="audio/*"
+                  accept="audio/*,video/mp4,video/webm"
                   aria-label="upload audio"
                   className="w-56"
-                  onChange={(e) =>
-                    handleFileUpload(e.currentTarget.files?.[0] ?? null)
-                  }
+                  onChange={(e) => {
+                    const file = e.currentTarget.files?.[0] ?? null;
+                    handleFileUpload(file);
+                    // Reset input value to allow re-selecting same file
+                    e.currentTarget.value = '';
+                  }}
                   type="file"
                 />
                 <Button
                   aria-label={isRecording ? t.recordStop : t.recordStart}
                   aria-pressed={isRecording}
                   className="h-12 min-w-48 gap-2 text-base"
+                  disabled={isTranscribing}
                   onClick={isRecording ? stopRecording : handleStartRecording}
                   type="button"
                   variant={isRecording ? 'destructive' : 'default'}
@@ -294,6 +347,24 @@ function RouteComponent() {
                 : ''}
             </div>
             <div className="flex items-center gap-2">
+              {recordedFile && !isTranscribing && (
+                <Button
+                  className="gap-2"
+                  onClick={() =>
+                    transcribe({
+                      file: recordedFile,
+                      language,
+                      model,
+                      responseFormat: 'verbose',
+                      includeTimestamps: true,
+                    })
+                  }
+                  type="button"
+                  variant="outline"
+                >
+                  <RefreshCcw className="size-4" /> تلاش مجدد
+                </Button>
+              )}
               <Button
                 className="gap-2"
                 disabled={!result}

@@ -1,5 +1,11 @@
 import { useLocation } from '@tanstack/react-router';
-import { HomeIcon, Image, MessageCircle, MessageSquare, Mic } from 'lucide-react';
+import {
+  HomeIcon,
+  Image,
+  MessageCircle,
+  MessageSquare,
+  Mic,
+} from 'lucide-react';
 import { PERSIAN_TEXTS } from '@/lib/persian-texts';
 import type { NavItem } from './types';
 

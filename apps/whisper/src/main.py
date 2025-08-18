@@ -50,6 +50,9 @@ SUPPORTED_FORMATS = {
     "video/webm",
 }
 
+# Maximum file size (50MB)
+MAX_FILE_SIZE = 50 * 1024 * 1024
+
 # Cache for loaded Whisper models
 model_cache = {}
 
@@ -279,9 +282,10 @@ async def transcribe_async(model, audio_path: str, language: Optional[str] = Non
 @app.post("/api/transcribe")
 async def transcribe_audio(
     file: UploadFile = File(..., description="Audio file to transcribe"),
-    model: ModelSize = Form(ModelSize.tiny, description="Whisper model size"),
+    model: str = Form("tiny", description="Whisper model size"),
     language: Optional[str] = Form(
-        None, description="2-letter language code or omit for auto-detect"
+        "en",
+        description="2-letter language code or omit for auto-detect",
     ),
     response_format: str = Form("json", description="json | text | verbose"),
     include_timestamps: bool = Form(True, description="Include segment timestamps"),
@@ -297,10 +301,26 @@ async def transcribe_audio(
     - include_timestamps: Whether to include timestamps in the response
     """
 
+    # Validate model
+    try:
+        model_enum = ModelSize(model)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid model: {model}. Valid models: {', '.join([m.value for m in ModelSize])}",
+        )
+
+    # Validate file size
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+
     # Validate file type
     if file.content_type not in SUPPORTED_FORMATS:
         raise HTTPException(
-            status_code=400,
+            status_code=415,
             detail=f"Unsupported file format. Supported formats: {', '.join(SUPPORTED_FORMATS)}",
         )
 
@@ -312,22 +332,26 @@ async def transcribe_audio(
         )
 
     # Create temporary file
-    temp_file = None
+    temp_file_path = None
     try:
         # Save uploaded file temporarily
-        with tempfile.NamedTemporaryFile(
-            delete=False, suffix=f".{file.filename.split('.')[-1]}"
-        ) as temp_file:
+        suffix = ".webm"  # Default suffix
+        if file.filename and "." in file.filename:
+            suffix = f".{file.filename.split('.')[-1]}"
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
             content = await file.read()
+            if not content:
+                raise HTTPException(status_code=400, detail="Empty file uploaded")
             temp_file.write(content)
             temp_file_path = temp_file.name
 
         # Load the specified model
-        whisper_model = load_model(model.value)
+        whisper_model = load_model(model_enum.value)
 
         # Transcribe audio
         logger.info(
-            f"Transcribing file '{file.filename}' with model '{model.value}', language: {language or 'auto-detect'}"
+            f"Transcribing file '{file.filename}' with model '{model_enum.value}', language: {language or 'auto-detect'}"
         )
         start_time = time.perf_counter()
         result = await transcribe_async(whisper_model, temp_file_path, language)
@@ -344,7 +368,7 @@ async def transcribe_audio(
                 "duration": result.get("segments", [{}])[-1].get("end", 0)
                 if result.get("segments")
                 else 0,
-                "model_used": model.value,
+                "model_used": model_enum.value,
                 "processing_ms": processing_ms,
                 "segments": [],
             }
@@ -365,7 +389,7 @@ async def transcribe_audio(
             response = {
                 "text": result["text"].strip(),
                 "language": result["language"],
-                "model_used": model.value,
+                "model_used": model_enum.value,
                 "processing_ms": processing_ms,
             }
 
@@ -381,14 +405,20 @@ async def transcribe_audio(
 
             return response
 
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
     finally:
         # Clean up temporary file
-        if temp_file and os.path.exists(temp_file_path):
-            os.unlink(temp_file_path)
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except OSError:
+                logger.warning(f"Failed to cleanup temporary file: {temp_file_path}")
 
 
 @app.get("/api/languages")

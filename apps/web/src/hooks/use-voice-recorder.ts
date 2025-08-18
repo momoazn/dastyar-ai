@@ -4,7 +4,8 @@ export type RecordingError =
   | 'micAccessDenied'
   | 'noAudioCaptured'
   | 'initFailed'
-  | 'processingFailed';
+  | 'processingFailed'
+  | 'fileTooLarge';
 
 export interface UseVoiceRecorderReturn {
   isRecording: boolean;
@@ -98,6 +99,15 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
             return;
           }
           const file = buildFileFromChunks(recorder, chunksRef.current);
+
+          // Validate file size (50MB limit)
+          const maxFileSize = 50 * 1024 * 1024;
+          if (file.size > maxFileSize) {
+            setError('fileTooLarge');
+            setRecordedFile(null);
+            return;
+          }
+
           setRecordedFile(file);
           setError(null);
         } catch {

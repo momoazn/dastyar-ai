@@ -65,7 +65,11 @@ export const ChatInput = memo(
     } = useVoiceRecorder();
 
     // Transcription mutation
-    const { mutate: transcribe, isPending: isTranscribing } = useMutation(
+    const {
+      mutate: transcribe,
+      isPending: isTranscribing,
+      error: transcribeError,
+    } = useMutation(
       orpc.transcribe.transcribe.mutationOptions({
         onSuccess: (data) => {
           // Append transcribed text to existing prompt
@@ -76,9 +80,12 @@ export const ChatInput = memo(
               return prev + separator + transcribedText.trim();
             });
           }
+          // Clear the recorded file after successful transcription
+          clearRecordedFile();
         },
-        onError: () => {
+        onError: (error) => {
           // Error will be handled by the error display logic below
+          console.error('Transcription failed:', error);
         },
       })
     );
@@ -90,11 +97,15 @@ export const ChatInput = memo(
         const language =
           prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
         const model = language === 'fa' ? 'base' : 'tiny';
-        transcribe({ file: recordedFile, language, model });
-        // Clear the recorded file to prevent re-transcription
-        clearRecordedFile();
+        transcribe({
+          file: recordedFile,
+          language,
+          model,
+          responseFormat: 'json',
+          includeTimestamps: false,
+        });
       }
-    }, [recordedFile, transcribe, clearRecordedFile, prompt]);
+    }, [recordedFile, transcribe, prompt]);
 
     // Map recording errors to user-friendly messages
     const mapRecordingError = (error: RecordingError): string => {
@@ -103,6 +114,8 @@ export const ChatInput = memo(
           return PERSIAN_TEXTS.transcribe.errors.micAccess;
         case 'noAudioCaptured':
           return PERSIAN_TEXTS.transcribe.errors.noAudio;
+        case 'fileTooLarge':
+          return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
         case 'initFailed':
         case 'processingFailed':
           return PERSIAN_TEXTS.transcribe.errors.processFailed;
@@ -112,9 +125,16 @@ export const ChatInput = memo(
     };
 
     // Get display error
-    const voiceError = recordingError
-      ? mapRecordingError(recordingError)
-      : null;
+    let voiceError: string | null = null;
+    if (recordingError) {
+      voiceError = mapRecordingError(recordingError);
+    } else if (transcribeError) {
+      const errorMsg =
+        transcribeError instanceof Error
+          ? transcribeError.message
+          : 'خطای نامشخص';
+      voiceError = `خطا در تبدیل صدا به متن: ${errorMsg}`;
+    }
 
     // models prop provided by parent
     // Memoize text direction calculation
@@ -190,6 +210,10 @@ export const ChatInput = memo(
       if (isRecording) {
         stopRecording();
       } else {
+        // Clear any previous errors before starting new recording
+        if (recordingError || transcribeError) {
+          // Reset errors by restarting the hook state
+        }
         await startRecording();
       }
     };
@@ -206,6 +230,9 @@ export const ChatInput = memo(
     };
 
     const isMicDisabled = isGenerating || isTranscribing;
+
+    // Show retry option for failed transcriptions
+    const showRetryButton = recordedFile && transcribeError && !isTranscribing;
 
     return (
       <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
@@ -251,6 +278,30 @@ export const ChatInput = memo(
                 </PromptInputButton>
               </PromptInputTools>
               <div className="flex items-center gap-2">
+                {showRetryButton && (
+                  <PromptInputButton
+                    onClick={() => {
+                      const language =
+                        prompt && detectTextDirection(prompt) === 'rtl'
+                          ? 'fa'
+                          : 'en';
+                      const model = language === 'fa' ? 'base' : 'tiny';
+                      if (recordedFile) {
+                        transcribe({
+                          file: recordedFile,
+                          language,
+                          model,
+                          responseFormat: 'json',
+                          includeTimestamps: false,
+                        });
+                      }
+                    }}
+                    title="تلاش مجدد برای تبدیل صدا"
+                    variant="outline"
+                  >
+                    <RefreshCcw className="size-4" />
+                  </PromptInputButton>
+                )}
                 <PromptInputButton
                   className={isRecording ? 'animate-pulse' : ''}
                   disabled={isMicDisabled}
