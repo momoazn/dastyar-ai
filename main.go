@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-//go:embed dist/web dist/server dist/whisper-api
+//go:embed dist/web dist/server dist/whisper-api*
 var assets embed.FS
 
 // Config holds application configuration
@@ -82,15 +82,10 @@ func main() {
 func getConfig() *Config {
 	dataDir := os.Getenv("AI_APP_DATA_DIR")
 	if dataDir == "" {
-		homeDir, _ := os.UserHomeDir()
-		switch runtime.GOOS {
-		case "windows":
-			dataDir = filepath.Join(os.Getenv("APPDATA"), "ai-app")
-		case "darwin":
-			dataDir = filepath.Join(homeDir, "Library", "Application Support", "ai-app")
-		default:
-			dataDir = filepath.Join(homeDir, ".local", "share", "ai-app")
-		}
+		// Extract to a folder next to the binary
+		exePath, _ := os.Executable()
+		exeDir := filepath.Dir(exePath)
+		dataDir = filepath.Join(exeDir, "ai-app-data")
 	}
 
 	serverPort := os.Getenv("SERVER_PORT")
@@ -110,28 +105,19 @@ func getConfig() *Config {
 	}
 }
 
-// setupDataDir creates the necessary directory structure
+// setupDataDir creates the simplified directory structure next to the binary
 func setupDataDir(dataDir string) error {
-	dirs := []string{
-		dataDir,
-		filepath.Join(dataDir, "logs"),
-		filepath.Join(dataDir, "data"),
-		filepath.Join(dataDir, "models"),
-		filepath.Join(dataDir, "uploads"),
-	}
-
-	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
-		}
+	// Create simple structure: ai-app-data/
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("failed to create data directory %s: %w", dataDir, err)
 	}
 
 	return nil
 }
 
-// extractAssets extracts embedded assets to the data directory
+// extractAssets extracts embedded assets directly to the data directory
 func extractAssets(dataDir string) error {
-	// Extract web assets
+	// Extract web folder
 	if err := extractDir("dist/web", filepath.Join(dataDir, "web")); err != nil {
 		return fmt.Errorf("failed to extract web assets: %w", err)
 	}
@@ -146,8 +132,14 @@ func extractAssets(dataDir string) error {
 	}
 
 	// Extract whisper binary
-	whisperPath := filepath.Join(dataDir, "whisper-api")
-	if err := extractFile("dist/whisper-api", whisperPath); err != nil {
+	whisperName := "whisper-api"
+	whisperSrc := "dist/whisper-api"
+	if runtime.GOOS == "windows" {
+		whisperName = "whisper-api.exe"
+		whisperSrc = "dist/whisper-api.exe"
+	}
+	whisperPath := filepath.Join(dataDir, whisperName)
+	if err := extractFile(whisperSrc, whisperPath); err != nil {
 		return fmt.Errorf("failed to extract whisper: %w", err)
 	}
 	if err := os.Chmod(whisperPath, 0755); err != nil {
@@ -231,8 +223,12 @@ func startServices(config *Config) []*Service {
 
 // startWhisperService starts the Whisper API service
 func startWhisperService(config *Config) *Service {
-	whisperPath := filepath.Join(config.DataDir, "whisper-api")
-	logPath := filepath.Join(config.DataDir, "logs", "whisper.log")
+	whisperName := "whisper-api"
+	if runtime.GOOS == "windows" {
+		whisperName = "whisper-api.exe"
+	}
+	whisperPath := filepath.Join(config.DataDir, whisperName)
+	logPath := filepath.Join(config.DataDir, "whisper.log")
 
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
@@ -244,7 +240,7 @@ func startWhisperService(config *Config) *Service {
 	cmd.Env = append(os.Environ(),
 		"HOST=0.0.0.0",
 		"PORT="+config.WhisperPort,
-		"MODEL_DIR="+filepath.Join(config.DataDir, "models"),
+		"MODEL_DIR="+config.DataDir,
 	)
 	cmd.Dir = config.DataDir
 	
@@ -273,7 +269,7 @@ func startWhisperService(config *Config) *Service {
 // startServerService starts the main server
 func startServerService(config *Config) *Service {
 	serverPath := filepath.Join(config.DataDir, "server")
-	logPath := filepath.Join(config.DataDir, "logs", "server.log")
+	logPath := filepath.Join(config.DataDir, "server.log")
 
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
@@ -286,7 +282,7 @@ func startServerService(config *Config) *Service {
 		"PORT="+config.ServerPort,
 		"WHISPER_SERVICE_URL=http://localhost:"+config.WhisperPort,
 		"STATIC_DIR="+filepath.Join(config.DataDir, "web"),
-		"DATABASE_URL="+filepath.Join(config.DataDir, "data", "app.db"),
+		"DATABASE_URL="+filepath.Join(config.DataDir, "app.db"),
 	)
 	cmd.Dir = config.DataDir
 
