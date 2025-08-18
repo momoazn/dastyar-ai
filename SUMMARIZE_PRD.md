@@ -31,7 +31,7 @@ Enable users to generate high‑quality summaries from arbitrary text (and later
 ## 4. UX and IA
 
 - Navigation:
-  - Add a new main nav item "خلاصه‌سازی" (Summarize) at url: `/summarize`, using established nav.ts patterns and PERSIAN_TEXTS.
+  - Add a new main nav item "خلاصه‌سازی" (Summarize) at url: `/summarize`, using established nav.ts patterns and fa.
 - Page layout (mirror of Translation page):
   - Header controls grid with: Mode selector, Optional style selector, Model selector.
   - Main content with two cards stacked vertically on small screens: "Source Text" (textarea with char counter and ⌘/Ctrl+Enter hint) and "Summary" (textarea read-only with copy button).
@@ -39,7 +39,7 @@ Enable users to generate high‑quality summaries from arbitrary text (and later
 - Sidebar list (right side):
   - When on /summarize, the right sidebar lists previous summaries (title = first 30 characters of source text), following translations-list.tsx pattern (active indicator, delete action, navigation via query state or params).
 - RTL/I18N:
-  - Use PERSIAN_TEXTS.summarize namespace similar to translation/transcribe keys for titles, labels, buttons, empty states, error messages.
+  - Use fa.summarize namespace similar to translation/transcribe keys for titles, labels, buttons, empty states, error messages.
 
 ## 5. Functional Requirements
 
@@ -112,15 +112,15 @@ Add a new summarize namespace aligned with existing patterns in apps/server/src/
 - Sidebar integration:
   - New SummariesList component, conditional render on pathname.startsWith('/summarize'), modeled after translations-list.tsx with list/get/delete.
 - Localization:
-  - Add PERSIAN_TEXTS.summarize: { title, description, modeLabel, modes: { concise, standard, detailed }, model, enterText, generating, generatedText, copy, delete, emptyState, errors: { modelNotFound, requestFailed, textTooLong } }.
+  - Add fa.summarize: { title, description, modeLabel, modes: { concise, standard, detailed }, model, enterText, generating, generatedText, copy, delete, emptyState, errors: { modelNotFound, requestFailed, textTooLong } }.
 
 ## 10. Navigation and Texts
 
 - Add nav item to apps/web/src/components/sidebar/nav.ts
-  - title: PERSIAN_TEXTS.navigation.summarize
+  - title: fa.navigation.summarize
   - url: '/summarize'
   - icon: likely FileText or BookOpen (lucide-react).
-- Update PERSIAN_TEXTS in apps/web/src/lib/persian-texts.ts with navigation.summarize and summarize namespace keys.
+- Update fa in apps/web/src/lib/persian-texts.ts with navigation.summarize and summarize namespace keys.
 
 ## 11. Analytics & Metrics
 

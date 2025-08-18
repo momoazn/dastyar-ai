@@ -1,4 +1,4 @@
-export const PERSIAN_TEXTS = {
+export const fa = {
   index: {
     chatTitle: 'چت با دستیار هوشمند',
     chatDescription:

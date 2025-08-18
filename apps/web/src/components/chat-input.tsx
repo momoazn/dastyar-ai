@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Mic, RefreshCcw, Square } from 'lucide-react';
 import { memo, useEffect, useMemo } from 'react';
-// no button import needed here
 import {
   PromptInput,
   PromptInputButton,
@@ -21,7 +20,7 @@ import {
   type RecordingError,
   useVoiceRecorder,
 } from '@/hooks/use-voice-recorder';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
@@ -51,8 +50,6 @@ export const ChatInput = memo(
     setPrompt,
     models = [],
   }: ChatInputProps) => {
-    const t = PERSIAN_TEXTS.chat;
-
     // Voice recording hook
     const {
       isRecording,
@@ -111,16 +108,16 @@ export const ChatInput = memo(
     const mapRecordingError = (error: RecordingError): string => {
       switch (error) {
         case 'micAccessDenied':
-          return PERSIAN_TEXTS.transcribe.errors.micAccess;
+          return fa.transcribe.errors.micAccess;
         case 'noAudioCaptured':
-          return PERSIAN_TEXTS.transcribe.errors.noAudio;
+          return fa.transcribe.errors.noAudio;
         case 'fileTooLarge':
           return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
         case 'initFailed':
         case 'processingFailed':
-          return PERSIAN_TEXTS.transcribe.errors.processFailed;
+          return fa.transcribe.errors.processFailed;
         default:
-          return t.voiceRecordingError;
+          return fa.chat.voiceRecordingError;
       }
     };
 
@@ -221,12 +218,12 @@ export const ChatInput = memo(
     // Get microphone button status
     const getMicButtonText = () => {
       if (isRecording) {
-        return `${t.micStop} • ${formatElapsed(elapsedMs)}`;
+        return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
       }
       if (isTranscribing) {
-        return t.transcribingVoice;
+        return fa.chat.transcribingVoice;
       }
-      return `${t.micStart} (Ctrl+M)`;
+      return `${fa.chat.micStart} (Ctrl+M)`;
     };
 
     const isMicDisabled = isGenerating || isTranscribing;
@@ -247,7 +244,7 @@ export const ChatInput = memo(
               dir={textDirection}
               onChange={handlePromptChange}
               onKeyDown={handleKeyDown}
-              placeholder={PERSIAN_TEXTS.chat.writeMessage}
+              placeholder={fa.chat.writeMessage}
               value={prompt}
             />
             <PromptInputToolbar>
@@ -259,7 +256,7 @@ export const ChatInput = memo(
                 >
                   <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
                     <PromptInputModelSelectValue
-                      placeholder={PERSIAN_TEXTS.modelSelection.selectChatModel}
+                      placeholder={fa.modelSelection.selectChatModel}
                     />
                   </PromptInputModelSelectTrigger>
                   <PromptInputModelSelectContent>

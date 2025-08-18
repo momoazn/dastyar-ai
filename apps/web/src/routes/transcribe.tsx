@@ -30,7 +30,7 @@ import {
   type RecordingError,
   useVoiceRecorder,
 } from '@/hooks/use-voice-recorder';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 import { orpc } from '@/utils/orpc';
 
 const MAX_DURATION_MS = 60_000; // 60s visual progress
@@ -83,16 +83,15 @@ const getBadgeVariant = (
 const getStatusText = (
   isRecording: boolean,
   isTranscribing: boolean,
-  elapsedMs: number,
-  t: typeof PERSIAN_TEXTS.transcribe
+  elapsedMs: number
 ): string => {
   if (isRecording) {
-    return `${t.recordingPrefix} • ${formatElapsed(elapsedMs)}`;
+    return `${fa.transcribe.recordingPrefix} • ${formatElapsed(elapsedMs)}`;
   }
   if (isTranscribing) {
-    return t.transcribing;
+    return fa.transcribe.transcribing;
   }
-  return t.idle;
+  return fa.transcribe.idle;
 };
 
 export const Route = createFileRoute('/transcribe')({
@@ -100,7 +99,6 @@ export const Route = createFileRoute('/transcribe')({
 });
 
 function RouteComponent() {
-  const t = PERSIAN_TEXTS.transcribe;
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState('');
   const [language, setLanguage] = useState<'fa' | 'en'>('fa');
@@ -125,7 +123,9 @@ function RouteComponent() {
       },
       onError: (error) => {
         const errorMessage =
-          error instanceof Error ? error.message : t.errors.transcribeFailed;
+          error instanceof Error
+            ? error.message
+            : fa.transcribe.errors.transcribeFailed;
         setTranscribeError(errorMessage);
         // Don't clear recorded file on error, allow retry
       },
@@ -136,16 +136,16 @@ function RouteComponent() {
   const mapRecordingError = (error: RecordingError): string => {
     switch (error) {
       case 'micAccessDenied':
-        return t.errors.micAccess;
+        return fa.transcribe.errors.micAccess;
       case 'noAudioCaptured':
-        return t.errors.noAudio;
+        return fa.transcribe.errors.noAudio;
       case 'fileTooLarge':
         return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
       case 'initFailed':
       case 'processingFailed':
-        return t.errors.processFailed;
+        return fa.transcribe.errors.processFailed;
       default:
-        return t.errors.processFailed;
+        return fa.transcribe.errors.processFailed;
     }
   };
 
@@ -232,7 +232,7 @@ function RouteComponent() {
     ? mapRecordingError(recordingError)
     : transcribeError;
 
-  const statusText = getStatusText(isRecording, isTranscribing, elapsedMs, t);
+  const statusText = getStatusText(isRecording, isTranscribing, elapsedMs);
   const progressValue = Math.min(100, (elapsedMs / MAX_DURATION_MS) * 100);
   const badgeVariant = getBadgeVariant(isRecording, isTranscribing);
 
@@ -242,8 +242,8 @@ function RouteComponent() {
         <CardHeader className="gap-1">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle>{t.title}</CardTitle>
-              <CardDescription>{t.description}</CardDescription>
+              <CardTitle>{fa.transcribe.title}</CardTitle>
+              <CardDescription>{fa.transcribe.description}</CardDescription>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm">
@@ -274,7 +274,7 @@ function RouteComponent() {
         <CardContent className="space-y-4">
           {displayError ? (
             <Alert variant="destructive">
-              <AlertTitle>{PERSIAN_TEXTS.general.error}</AlertTitle>
+              <AlertTitle>{fa.general.error}</AlertTitle>
               <AlertDescription>{displayError}</AlertDescription>
             </Alert>
           ) : null}
@@ -305,7 +305,11 @@ function RouteComponent() {
                   type="file"
                 />
                 <Button
-                  aria-label={isRecording ? t.recordStop : t.recordStart}
+                  aria-label={
+                    isRecording
+                      ? fa.transcribe.recordStop
+                      : fa.transcribe.recordStart
+                  }
                   aria-pressed={isRecording}
                   className="h-12 min-w-48 gap-2 text-base"
                   disabled={isTranscribing}
@@ -316,12 +320,12 @@ function RouteComponent() {
                   {isRecording ? (
                     <>
                       <Square className="size-4" />
-                      {t.recordStop}
+                      {fa.transcribe.recordStop}
                     </>
                   ) : (
                     <>
                       <Mic className="size-4" />
-                      {t.recordStart}
+                      {fa.transcribe.recordStart}
                     </>
                   )}
                 </Button>
@@ -332,10 +336,10 @@ function RouteComponent() {
         </CardContent>
         <CardFooter className="flex-col gap-3">
           <Textarea
-            aria-label={t.title}
+            aria-label={fa.transcribe.title}
             className={language === 'fa' ? 'rtl text-right' : 'ltr text-left'}
             dir={language === 'fa' ? 'rtl' : 'ltr'}
-            placeholder={t.resultPlaceholder}
+            placeholder={fa.transcribe.resultPlaceholder}
             readOnly
             rows={8}
             value={result}
@@ -343,7 +347,7 @@ function RouteComponent() {
           <div className="flex w-full items-center justify-between gap-2">
             <div className="text-muted-foreground text-xs">
               {isRecording
-                ? `${t.elapsedLabel}: ${formatElapsed(elapsedMs)}`
+                ? `${fa.transcribe.elapsedLabel}: ${formatElapsed(elapsedMs)}`
                 : ''}
             </div>
             <div className="flex items-center gap-2">
@@ -372,7 +376,7 @@ function RouteComponent() {
                 type="button"
                 variant="default"
               >
-                <CopyIcon className="size-4" /> {t.copy}
+                <CopyIcon className="size-4" /> {fa.transcribe.copy}
               </Button>
               <Button
                 className="gap-2"
@@ -381,7 +385,7 @@ function RouteComponent() {
                 type="button"
                 variant="secondary"
               >
-                <Trash2 className="size-4" /> {t.clear}
+                <Trash2 className="size-4" /> {fa.transcribe.clear}
               </Button>
             </div>
           </div>

@@ -6,32 +6,32 @@ import {
   MessageSquare,
   Mic,
 } from 'lucide-react';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 import type { NavItem } from './types';
 
 export const navMain: NavItem[] = [
   {
-    title: PERSIAN_TEXTS.navigation.home,
+    title: fa.navigation.home,
     url: '/',
     icon: HomeIcon,
   },
   {
-    title: PERSIAN_TEXTS.navigation.chat,
+    title: fa.navigation.chat,
     url: '/chat',
     icon: MessageSquare,
   },
   {
-    title: PERSIAN_TEXTS.navigation.translation,
+    title: fa.navigation.translation,
     url: '/translation',
     icon: MessageCircle,
   },
   {
-    title: PERSIAN_TEXTS.navigation.imageGeneration,
+    title: fa.navigation.imageGeneration,
     url: '/image',
     icon: Image,
   },
   {
-    title: PERSIAN_TEXTS.navigation.transcribe,
+    title: fa.navigation.transcribe,
     url: '/transcribe',
     icon: Mic,
   },

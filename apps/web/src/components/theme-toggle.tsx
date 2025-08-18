@@ -1,7 +1,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 
 export function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -9,7 +9,7 @@ export function ThemeToggle() {
 
   return (
     <Button
-      aria-label={PERSIAN_TEXTS.ui.themeToggle}
+      aria-label={fa.ui.themeToggle}
       onClick={() => setTheme(effective === 'light' ? 'dark' : 'light')}
       size="icon"
       variant="ghost"

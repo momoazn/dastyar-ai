@@ -22,7 +22,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 import { orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/translation')({
@@ -98,7 +98,7 @@ function TranslationPage() {
           {/* Source Language */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
-              {PERSIAN_TEXTS.translation.sourceLanguage}
+              {fa.translation.sourceLanguage}
             </div>
             <Select
               disabled={translateMutation.isPending}
@@ -125,7 +125,7 @@ function TranslationPage() {
           {/* Target Language */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
-              {PERSIAN_TEXTS.translation.targetLanguage}
+              {fa.translation.targetLanguage}
             </div>
             <Select
               disabled={translateMutation.isPending}
@@ -152,7 +152,7 @@ function TranslationPage() {
           {/* Tone */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
-              {PERSIAN_TEXTS.translation.translationTone}
+              {fa.translation.translationTone}
             </div>
             <Select
               disabled={translateMutation.isPending}
@@ -178,9 +178,7 @@ function TranslationPage() {
 
           {/* Model */}
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {PERSIAN_TEXTS.translation.model}
-            </div>
+            <div className="font-medium text-sm">{fa.translation.model}</div>
             <Select
               disabled={translateMutation.isPending}
               onValueChange={setModelId}
@@ -209,8 +207,7 @@ function TranslationPage() {
             variant="outline"
           >
             <ArrowLeftRightIcon className="mr-2 h-4 w-4" />
-            {PERSIAN_TEXTS.translation.sourceLanguage} ↔{' '}
-            {PERSIAN_TEXTS.translation.targetLanguage}
+            {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
           </Button>
         </div>
       </div>
@@ -243,11 +240,11 @@ function TranslationPage() {
 
               {/* Text area */}
               <Textarea
-                aria-label={PERSIAN_TEXTS.translation.enterText}
+                aria-label={fa.translation.enterText}
                 className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
                 onChange={(e) => setSourceText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={PERSIAN_TEXTS.translation.enterText}
+                placeholder={fa.translation.enterText}
                 value={sourceText}
               />
             </div>
@@ -259,14 +256,14 @@ function TranslationPage() {
               {translateMutation.isPending ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-muted-foreground">
-                    {PERSIAN_TEXTS.translation.translating}...
+                    {fa.translation.translating}...
                   </div>
                 </div>
               ) : (
                 <>
                   {/* Header with copy button */}
                   <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                    <span>{PERSIAN_TEXTS.translation.translatedText}</span>
+                    <span>{fa.translation.translatedText}</span>
                     <Button
                       aria-label="کپی ترجمه"
                       className="h-6 px-2"
@@ -282,10 +279,10 @@ function TranslationPage() {
 
                   {/* Text area */}
                   <Textarea
-                    aria-label={PERSIAN_TEXTS.translation.translatedText}
+                    aria-label={fa.translation.translatedText}
                     aria-readonly
                     className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-                    placeholder={PERSIAN_TEXTS.translation.translatedText}
+                    placeholder={fa.translation.translatedText}
                     readOnly
                     value={translatedText}
                   />
@@ -315,8 +312,8 @@ function TranslationPage() {
           >
             <span className="text-sm">
               {translatedText
-                ? PERSIAN_TEXTS.translation.retranslate
-                : PERSIAN_TEXTS.translation.translate}
+                ? fa.translation.retranslate
+                : fa.translation.translate}
             </span>
             <SendIcon className="size-4" />
           </Button>

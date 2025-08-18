@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
 import { SidebarItem } from './sidebar-item';
 
@@ -56,14 +56,14 @@ export function ChatThreadsList() {
       {listQuery.isPending && (
         <div className="mt-4 flex h-full items-center justify-center">
           <p className="text-muted-foreground text-sm">
-            {PERSIAN_TEXTS.navigation.loadingThreads}
+            {fa.navigation.loadingThreads}
           </p>
         </div>
       )}
       {listQuery.data?.length === 0 && (
         <div className="mt-4 flex h-full items-center justify-center">
           <p className="text-muted-foreground text-sm">
-            {PERSIAN_TEXTS.navigation.noChatThreads}
+            {fa.navigation.noChatThreads}
           </p>
         </div>
       )}

@@ -2,7 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { Status } from '@/components/status';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Separator } from '@/components/ui';
-import { PERSIAN_TEXTS } from '@/lib/persian-texts';
+import { fa } from '@/lib/persian-texts';
 
 export function Header({
   SideBarTrigger,
@@ -20,7 +20,7 @@ export function Header({
 
         <Link to="/">
           <h1 className="font-semibold text-2xl text-primary">
-            {PERSIAN_TEXTS.navigation.appTitle}
+            {fa.navigation.appTitle}
           </h1>
         </Link>
       </div>
