@@ -4,7 +4,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router';
-import { Copy, Loader2 } from 'lucide-react';
+import { Clipboard, Copy, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -48,6 +48,7 @@ function SummarizePage() {
   const [mode, setMode] = useState<SummarizeMode>('standard');
   const [tone, setTone] = useState<ToneOption>('neutral');
   const [modelId, setModelId] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const { data: modelList } = useQuery(
     orpc.models.list.queryOptions({ input: { isEnabled: true } })
@@ -97,8 +98,19 @@ function SummarizePage() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(summaryText);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
     } catch {
       console.error('Failed to copy to clipboard');
+    }
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setSourceText(text);
+    } catch {
+      console.error('Failed to paste from clipboard');
     }
   };
 
@@ -207,10 +219,16 @@ function SummarizePage() {
         {/* Source Text */}
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="font-medium">متن اصلی</h3>
-            <span className="text-muted-foreground text-sm">
-              {charCount} کاراکتر
-            </span>
+            <h3 className="font-medium">{fa.summarize.sourceText}</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground text-sm">
+                {charCount} کاراکتر
+              </span>
+              <Button onClick={handlePaste} size="sm" variant="ghost">
+                <Clipboard className="h-4 w-4" />
+                {fa.summarize.paste}
+              </Button>
+            </div>
           </div>
           <Textarea
             className="min-h-[200px] resize-none"
@@ -222,7 +240,7 @@ function SummarizePage() {
             value={sourceText}
           />
           <div className="mt-2 text-muted-foreground text-xs">
-            برای خلاصه‌سازی از ⌘/Ctrl+Enter استفاده کنید
+            {fa.summarize.keyboardHint}
           </div>
         </Card>
 
@@ -231,16 +249,21 @@ function SummarizePage() {
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-medium">{fa.summarize.generatedText}</h3>
             {summaryText && (
-              <Button onClick={handleCopy} size="sm" variant="ghost">
+              <Button
+                className={copySuccess ? 'bg-green-600 hover:bg-green-700' : ''}
+                onClick={handleCopy}
+                size="sm"
+                variant={copySuccess ? 'default' : 'ghost'}
+              >
                 <Copy className="h-4 w-4" />
-                {fa.summarize.copy}
+                {copySuccess ? fa.summarize.copied : fa.summarize.copy}
               </Button>
             )}
           </div>
           <Textarea
             className="min-h-[200px] resize-none"
             dir={summaryText ? detectTextDirection(summaryText) : 'rtl'}
-            placeholder="خلاصه اینجا نمایش داده می‌شود..."
+            placeholder={fa.summarize.summaryPlaceholder}
             readOnly
             value={summaryText}
           />
