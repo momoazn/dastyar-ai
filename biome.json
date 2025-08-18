@@ -4,6 +4,7 @@
     "ignoreUnknown": false,
     "includes": [
       "**",
+      "!bts.jsonc",
       "!**/.next",
       "!**/dist",
       "!**/.turbo",
@@ -13,11 +14,14 @@
       "!**/routeTree.gen.ts",
       "!**/src-tauri",
       "!**/.nuxt",
-      "!bts.jsonc",
-      "!**/.expo",
       "!**/.wrangler",
       "!**/.source"
     ]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
   "extends": ["ultracite"],
   "linter": {
@@ -27,6 +31,14 @@
       },
       "suspicious": {
         "noConsole": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": {
+            "maxAllowedComplexity": 50
+          }
+        }
       }
     }
   }

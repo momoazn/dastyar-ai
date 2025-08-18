@@ -1,13 +1,10 @@
 #!/usr/bin/env bun
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 
-const drizzleDir = path.resolve(process.cwd(), 'src/db/migrations');
-const outputFile = path.resolve(
-  process.cwd(),
-  'src/db/migration-data.generated.ts'
-);
+const drizzleDir = resolve(process.cwd(), 'src/db/migrations');
+const outputFile = resolve(process.cwd(), 'src/db/migration-data.generated.ts');
 
 function readDrizzleFiles(): { [key: string]: string } {
   const files: { [key: string]: string } = {};
@@ -15,11 +12,11 @@ function readDrizzleFiles(): { [key: string]: string } {
   console.log(`Reading migrations from: ${drizzleDir}`);
 
   // Read meta/_journal.json
-  const journalPath = path.join(drizzleDir, 'meta', '_journal.json');
-  if (!fs.existsSync(journalPath)) {
+  const journalPath = join(drizzleDir, 'meta', '_journal.json');
+  if (!existsSync(journalPath)) {
     throw new Error(`Journal file not found: ${journalPath}`);
   }
-  const journalContent = fs.readFileSync(journalPath, 'utf-8');
+  const journalContent = readFileSync(journalPath, 'utf-8');
   files['meta/_journal.json'] = journalContent;
 
   // Parse journal to get SQL file names
@@ -31,16 +28,16 @@ function readDrizzleFiles(): { [key: string]: string } {
   console.log(`Found ${sqlFileNames.length} migration files:`, sqlFileNames);
 
   // Read meta/0000_snapshot.json
-  const snapshotPath = path.join(drizzleDir, 'meta', '0000_snapshot.json');
-  if (fs.existsSync(snapshotPath)) {
-    files['meta/0000_snapshot.json'] = fs.readFileSync(snapshotPath, 'utf-8');
+  const snapshotPath = join(drizzleDir, 'meta', '0000_snapshot.json');
+  if (existsSync(snapshotPath)) {
+    files['meta/0000_snapshot.json'] = readFileSync(snapshotPath, 'utf-8');
   }
 
   // Read SQL files
   for (const sqlFileName of sqlFileNames) {
-    const filePath = path.join(drizzleDir, sqlFileName);
-    if (fs.existsSync(filePath)) {
-      files[sqlFileName] = fs.readFileSync(filePath, 'utf-8');
+    const filePath = join(drizzleDir, sqlFileName);
+    if (existsSync(filePath)) {
+      files[sqlFileName] = readFileSync(filePath, 'utf-8');
       console.log(`✓ Bundled: ${sqlFileName}`);
     } else {
       console.warn(`⚠ Missing migration file: ${sqlFileName}`);
@@ -76,7 +73,7 @@ export default migrationData;
 
 function main() {
   try {
-    if (!fs.existsSync(drizzleDir)) {
+    if (!existsSync(drizzleDir)) {
       console.error(`Migrations directory not found: ${drizzleDir}`);
       console.log('Run "bun db:generate" to create migrations first.');
       process.exit(1);
@@ -86,15 +83,15 @@ function main() {
     const generatedContent = generateMigrationDataFile(files);
 
     // Ensure output directory exists
-    const outputDir = path.dirname(outputFile);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    const outputDir = dirname(outputFile);
+    if (!existsSync(outputDir)) {
+      mkdirSync(outputDir, { recursive: true });
     }
 
-    fs.writeFileSync(outputFile, generatedContent, 'utf-8');
+    writeFileSync(outputFile, generatedContent, 'utf-8');
 
     console.log('✅ Migration data bundled successfully!');
-    console.log(`📦 Output: ${path.relative(process.cwd(), outputFile)}`);
+    console.log(`📦 Output: ${relative(process.cwd(), outputFile)}`);
     console.log(`📊 Files bundled: ${Object.keys(files).length}`);
   } catch (error) {
     console.error('❌ Failed to bundle migrations:', error);
