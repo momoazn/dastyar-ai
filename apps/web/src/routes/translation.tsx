@@ -1,5 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router';
 import {
   ArrowLeftRightIcon,
   ClipboardIcon,
@@ -31,6 +35,8 @@ export const Route = createFileRoute('/translation')({
 });
 
 function TranslationPage() {
+  const search = useSearch({ from: '/translation' }) as { id?: string };
+  const navigate = useNavigate();
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
@@ -42,6 +48,14 @@ function TranslationPage() {
     orpc.models.list.queryOptions({ input: { isEnabled: true } })
   );
 
+  // Load translation if ID is provided in URL
+  const { data: selectedTranslation } = useQuery(
+    orpc.translations.get.queryOptions({
+      input: { id: search.id || '' },
+      enabled: !!search.id,
+    })
+  );
+
   const translateMutation = useMutation(
     orpc.translations.translate.mutationOptions({
       onSuccess: (data) => {
@@ -49,9 +63,26 @@ function TranslationPage() {
           queryKey: orpc.translations.list.queryKey(),
         });
         setTranslatedText(data.translatedText ?? '');
+        // Update URL to reflect the new translation
+        navigate({
+          to: '/translation',
+          search: { id: data.id },
+        });
       },
     })
   );
+
+  // Load translation data when selectedTranslation changes
+  useEffect(() => {
+    if (selectedTranslation) {
+      setSourceText(selectedTranslation.sourceText || '');
+      setTranslatedText(selectedTranslation.translatedText || '');
+      setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
+      setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
+      setTone((selectedTranslation.tone as ToneOption) || 'formal');
+      setModelId(selectedTranslation.modelId || '');
+    }
+  }, [selectedTranslation]);
 
   useEffect(() => {
     if (modelList && modelList.length > 0 && !modelId) {
