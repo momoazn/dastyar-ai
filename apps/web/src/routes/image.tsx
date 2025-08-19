@@ -43,7 +43,7 @@ export const Route = createFileRoute('/image')({
 
 function ImageRouteComponent() {
   return (
-    <main className="flex h-full flex-col">
+    <main className="container mx-auto h-full max-w-6xl p-4">
       <ImageSection />
     </main>
   );
@@ -102,7 +102,7 @@ export function ImageSection() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col gap-4">
       {/* Loading Overlay */}
       {isGenerating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -124,7 +124,7 @@ export function ImageSection() {
 
       {/* Service Status */}
       {!isServiceAvailable && (
-        <Alert className="mx-6 mb-4">
+        <Alert>
           <AlertDescription>
             {fa.imageGeneration.serviceUnavailableAlert}
           </AlertDescription>
@@ -132,7 +132,7 @@ export function ImageSection() {
       )}
 
       {/* Header */}
-      <div className="mx-6 mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <h2 className="font-semibold text-lg">{fa.imageGeneration.title}</h2>
         {images.length > 0 && (
           <Button
@@ -148,7 +148,7 @@ export function ImageSection() {
       </div>
 
       {/* Generated Images */}
-      <ScrollArea className="mx-6 mb-6 flex-1 rounded-lg border">
+      <ScrollArea className="flex-1 rounded-lg border">
         {images.length === 0 ? (
           <div className="flex h-48 items-center justify-center text-muted-foreground">
             <div className="text-center">
@@ -157,7 +157,7 @@ export function ImageSection() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
             {images.map((image) => (
               <div
                 className="group relative aspect-square overflow-hidden rounded-lg bg-muted shadow-sm"
@@ -169,7 +169,7 @@ export function ImageSection() {
                   src={image.imageUrl}
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <Button
                       onClick={() => downloadImage(image)}
                       size="sm"
@@ -186,7 +186,7 @@ export function ImageSection() {
                     </Button>
                   </div>
                 </div>
-                <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                   <p className="line-clamp-2 text-white text-xs">
                     {image.prompt}
                   </p>
@@ -198,11 +198,11 @@ export function ImageSection() {
       </ScrollArea>
 
       {/* Generation Controls */}
-      <Card className="mx-6 mb-6 p-6">
+      <Card className="p-4">
         {/* Settings Grid */}
-        <div className="mb-6 grid grid-cols-2 gap-6">
+        <div className="mb-4 grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-3 block font-medium text-sm" htmlFor="size">
+            <label className="mb-2 block font-medium text-sm" htmlFor="size">
               {fa.imageGeneration.size}
             </label>
             <Select onValueChange={handleSizeChange} value={getSizeValue()}>
@@ -220,7 +220,7 @@ export function ImageSection() {
           </div>
 
           <div>
-            <label className="mb-3 block font-medium text-sm" htmlFor="sampler">
+            <label className="mb-2 block font-medium text-sm" htmlFor="sampler">
               {fa.imageGeneration.sampler}
             </label>
             <Select
@@ -244,7 +244,7 @@ export function ImageSection() {
 
           <div>
             <label
-              className="mb-3 block font-medium text-sm"
+              className="mb-2 block font-medium text-sm"
               htmlFor="cfg-scale"
             >
               {fa.imageGeneration.cfgScale}: {settings.cfg_scale}
@@ -262,7 +262,7 @@ export function ImageSection() {
           </div>
 
           <div>
-            <label className="mb-3 block font-medium text-sm" htmlFor="steps">
+            <label className="mb-2 block font-medium text-sm" htmlFor="steps">
               {fa.imageGeneration.steps.replace(
                 '{steps}',
                 String(settings.steps)
@@ -282,9 +282,9 @@ export function ImageSection() {
         </div>
 
         {/* Prompt Inputs */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="mb-3 block font-medium text-sm" htmlFor="prompt">
+            <label className="mb-2 block font-medium text-sm" htmlFor="prompt">
               {fa.imageGeneration.promptLabel}
             </label>
             <Textarea
@@ -298,7 +298,7 @@ export function ImageSection() {
 
           <div>
             <label
-              className="mb-3 block font-medium text-sm"
+              className="mb-2 block font-medium text-sm"
               htmlFor="negative-prompt"
             >
               {fa.imageGeneration.negativePromptLabel}

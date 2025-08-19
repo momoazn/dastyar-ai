@@ -282,7 +282,7 @@ func startServerService(config *Config) *Service {
 		"PORT="+config.ServerPort,
 		"WHISPER_SERVICE_URL=http://localhost:"+config.WhisperPort,
 		"STATIC_DIR="+filepath.Join(config.DataDir, "web"),
-		"DATABASE_URL="+filepath.Join(config.DataDir, "app.db"),
+		"DATABASE_URL="+filepath.Join(config.DataDir, "data.db"),
 	)
 	cmd.Dir = config.DataDir
 

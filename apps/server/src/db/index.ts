@@ -14,10 +14,7 @@ function resolveDatabasePath(): string {
       : envUrl;
   }
   // Dev-friendly fallback to local file database; support being run from repo root or server dir
-  const candidates = [
-    resolve(process.cwd(), 'apps/server/.data/local.db'),
-    resolve(process.cwd(), '.data/local.db'),
-  ];
+  const candidates = [resolve(process.cwd(), './data.db')];
   // Prefer the first candidate that already exists; otherwise use the second within current cwd
   const existing = candidates.find((p) => existsSync(dirname(p)));
   const selected = existing ?? candidates[1];

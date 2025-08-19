@@ -9,22 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1755414198514,
-      "tag": "0000_skinny_maria_hill",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1755551467559,
-      "tag": "0001_flimsy_captain_cross",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1755637947865,
-      "tag": "0002_familiar_wallflower",
+      "when": 1755641164289,
+      "tag": "0000_lyrical_namor",
       "breakpoints": true
     }
   ]
@@ -32,9 +18,70 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "5b14d82f-f81e-483c-b8c6-1f207b85f640",
+  "id": "7df44e83-a606-4249-b5cd-63b4f64b8d3f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "generated_images": {
+      "name": "generated_images",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text(15)",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prompt": {
+          "name": "prompt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "negativePrompt": {
+          "name": "negativePrompt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "imageData": {
+          "name": "imageData",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "settings": {
+          "name": "settings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created": {
+          "name": "created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated": {
+          "name": "updated",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "messages": {
       "name": "messages",
       "columns": {
@@ -117,8 +164,12 @@ export const migrationData: { [key: string]: string } = {
           "name": "messages_modelId_models_id_fk",
           "tableFrom": "messages",
           "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -126,8 +177,12 @@ export const migrationData: { [key: string]: string } = {
           "name": "messages_thread_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": ["thread"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "thread"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -188,11 +243,96 @@ export const migrationData: { [key: string]: string } = {
       "indexes": {
         "models_provider_name_uq": {
           "name": "models_provider_name_uq",
-          "columns": ["provider", "name"],
+          "columns": [
+            "provider",
+            "name"
+          ],
           "isUnique": true
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "summaries": {
+      "name": "summaries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text(15)",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sourceText": {
+          "name": "sourceText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "summaryText": {
+          "name": "summaryText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modelId": {
+          "name": "modelId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tone": {
+          "name": "tone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created": {
+          "name": "created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated": {
+          "name": "updated",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "summaries_modelId_models_id_fk": {
+          "name": "summaries_modelId_models_id_fk",
+          "tableFrom": "summaries",
+          "tableTo": "models",
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -327,8 +467,12 @@ export const migrationData: { [key: string]: string } = {
           "name": "translations_modelId_models_id_fk",
           "tableFrom": "translations",
           "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -348,9 +492,18 @@ export const migrationData: { [key: string]: string } = {
   "internal": {
     "indexes": {}
   }
-}
-`,
-  '0000_skinny_maria_hill.sql': `CREATE TABLE \`messages\` (
+}`,
+  '0000_lyrical_namor.sql': `CREATE TABLE \`generated_images\` (
+	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`prompt\` text NOT NULL,
+	\`negativePrompt\` text,
+	\`imageData\` text NOT NULL,
+	\`settings\` text NOT NULL,
+	\`created\` integer DEFAULT (unixepoch()),
+	\`updated\` integer DEFAULT (unixepoch())
+);
+--> statement-breakpoint
+CREATE TABLE \`messages\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`content\` text NOT NULL,
 	\`reasoning\` text,
@@ -375,6 +528,18 @@ CREATE TABLE \`models\` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX \`models_provider_name_uq\` ON \`models\` (\`provider\`,\`name\`);--> statement-breakpoint
+CREATE TABLE \`summaries\` (
+	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`sourceText\` text NOT NULL,
+	\`summaryText\` text,
+	\`modelId\` text,
+	\`mode\` text NOT NULL,
+	\`tone\` text,
+	\`created\` integer DEFAULT (unixepoch()),
+	\`updated\` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE \`threads\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`title\` text NOT NULL,
@@ -395,28 +560,6 @@ CREATE TABLE \`translations\` (
 	\`created\` integer DEFAULT (unixepoch()),
 	\`updated\` integer DEFAULT (unixepoch()),
 	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
-);
-`,
-  '0001_flimsy_captain_cross.sql': `CREATE TABLE \`summaries\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
-	\`sourceText\` text NOT NULL,
-	\`summaryText\` text,
-	\`modelId\` text,
-	\`mode\` text NOT NULL,
-	\`tone\` text,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
-);
-`,
-  '0002_familiar_wallflower.sql': `CREATE TABLE \`generated_images\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
-	\`prompt\` text NOT NULL,
-	\`negativePrompt\` text,
-	\`imageData\` text NOT NULL,
-	\`settings\` text NOT NULL,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch())
 );
 `
 };

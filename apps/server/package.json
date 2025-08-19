@@ -25,6 +25,7 @@
     "@orpc/client": "^1.5.0",
     "@orpc/server": "^1.5.0",
     "ai": "^5.0.7",
+    "better-sqlite3": "^12.2.0",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.2",
     "drizzle-zod": "^0.8.3",
@@ -34,9 +35,10 @@
     "zod": "^4.0.2"
   },
   "devDependencies": {
-    "tsdown": "^0.12.9",
-    "typescript": "^5.8.2",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "^1.2.6",
-    "drizzle-kit": "^0.31.2"
+    "drizzle-kit": "^0.31.2",
+    "tsdown": "^0.12.9",
+    "typescript": "^5.8.2"
   }
 }

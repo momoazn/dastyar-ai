@@ -112,6 +112,7 @@ export const imageProcedures = {
   // List all generated images
   list: publicProcedure.handler(async () => {
     const images = await listGeneratedImages();
+    console.log('Listing all generated images');
     return images.map((img) => ({
       id: img.id,
       prompt: img.prompt,
