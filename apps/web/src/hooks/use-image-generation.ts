@@ -1,161 +1,121 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
-import type { ImageGenerationParams } from '@/lib/stable-diffusion';
-import { stableDiffusionService } from '@/lib/stable-diffusion';
+import { orpc, queryClient } from '@/utils/orpc';
 
-const STORAGE_KEY = 'generatedImages';
+export interface ImageGenerationParams {
+  prompt: string;
+  steps: number;
+  cfg_scale: number;
+  negative_prompt?: string;
+  sampler_name: string;
+  width: number;
+  height: number;
+}
 
 export interface GeneratedImage {
   id: string;
-  url: string;
+  imageUrl: string;
   prompt: string;
-  timestamp: number;
-  settings: ImageGenerationParams;
-}
-
-export interface ImageGenerationState {
-  images: GeneratedImage[];
-  isGenerating: boolean;
-  progress: number;
-  isServiceAvailable: boolean;
+  createdAt: Date | null;
+  settings?: Record<string, unknown>;
 }
 
 export function useImageGeneration() {
-  const [state, setState] = useState<ImageGenerationState>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return {
-      images: saved ? JSON.parse(saved) : [],
-      isGenerating: false,
-      progress: 0,
-      isServiceAvailable: false,
-    };
-  });
+  // Query for service availability
+  const { data: serviceStatus, refetch: checkAvailability } = useQuery(
+    orpc.images.checkService.queryOptions({})
+  );
 
-  // Save images to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.images));
-  }, [state.images]);
+  // Query for generated images list
+  const { data: images = [] } = useQuery(orpc.images.list.queryOptions({}));
 
-  // Check service availability
-  const checkAvailability = useCallback(async () => {
-    try {
-      const available = await stableDiffusionService.checkAvailability();
-      setState((prev) => ({ ...prev, isServiceAvailable: available }));
-      return available;
-    } catch (error) {
-      console.error('Failed to check SD service availability:', error);
-      setState((prev) => ({ ...prev, isServiceAvailable: false }));
-      return false;
-    }
-  }, []);
+  // Query for available samplers
+  const { data: samplersData } = useQuery(
+    orpc.images.getSamplers.queryOptions({})
+  );
 
-  // Check availability on mount and periodically
-  useEffect(() => {
-    checkAvailability();
-    const interval = setInterval(checkAvailability, 30_000); // every 30s
-    return () => clearInterval(interval);
-  }, [checkAvailability]);
+  // Mutation for generating images
+  const generateMutation = useMutation(
+    orpc.images.generate.mutationOptions({
+      onSuccess: () => {
+        toast.success('تصویر با موفقیت تولید شد');
+        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+      },
+      onError: (error) => {
+        console.error('Image generation failed:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'خطای ناشناخته';
+        toast.error(`خطا در تولید تصویر: ${errorMessage}`);
+      },
+    })
+  );
+
+  // Mutation for deleting images
+  const deleteMutation = useMutation(
+    orpc.images.delete.mutationOptions({
+      onSuccess: () => {
+        toast.success('تصویر حذف شد');
+        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+      },
+      onError: (error) => {
+        console.error('Image deletion failed:', error);
+        toast.error('خطا در حذف تصویر');
+      },
+    })
+  );
+
+  // Mutation for clearing all images
+  const clearMutation = useMutation(
+    orpc.images.clear.mutationOptions({
+      onSuccess: () => {
+        toast.success('تاریخچه تصاویر پاک شد');
+        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+      },
+      onError: (error) => {
+        console.error('Clear images failed:', error);
+        toast.error('خطا در پاک کردن تصاویر');
+      },
+    })
+  );
 
   const generateImage = useCallback(
-    async (settings: ImageGenerationParams) => {
+    (settings: ImageGenerationParams) => {
       if (!settings.prompt.trim()) {
         toast.error('لطفاً توضیحات تصویر را وارد کنید');
         return;
       }
 
-      if (state.isGenerating) {
+      if (generateMutation.isPending) {
         toast.error('در حال تولید تصویر قبلی');
         return;
       }
 
-      if (!state.isServiceAvailable) {
+      if (!serviceStatus?.available) {
         toast.error('سرویس Stable Diffusion در دسترس نیست');
         return;
       }
 
-      setState((prev) => ({ ...prev, isGenerating: true, progress: 0 }));
-
-      try {
-        // Start progress simulation
-        const progressInterval = setInterval(() => {
-          setState((prev) => ({
-            ...prev,
-            progress: Math.min(prev.progress + Math.random() * 10, 90),
-          }));
-        }, 500);
-
-        // Try to get real progress from A1111 API
-        const progressCheckInterval = setInterval(async () => {
-          try {
-            const progressData = await stableDiffusionService.getProgress();
-            if (progressData && progressData.progress > 0) {
-              setState((prev) => ({
-                ...prev,
-                progress: Math.round(progressData.progress * 100),
-              }));
-            }
-          } catch {
-            // Ignore progress check errors
-          }
-        }, 1000);
-
-        const imageUrl = await stableDiffusionService.generateImage(settings);
-
-        clearInterval(progressInterval);
-        clearInterval(progressCheckInterval);
-
-        setState((prev) => ({ ...prev, progress: 100 }));
-
-        const newImage: GeneratedImage = {
-          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          url: imageUrl,
-          prompt: settings.prompt,
-          timestamp: Date.now(),
-          settings,
-        };
-
-        setState((prev) => ({
-          ...prev,
-          images: [newImage, ...prev.images],
-          isGenerating: false,
-          progress: 0,
-        }));
-
-        toast.success('تصویر با موفقیت تولید شد');
-      } catch (error) {
-        console.error('Image generation failed:', error);
-        setState((prev) => ({
-          ...prev,
-          isGenerating: false,
-          progress: 0,
-        }));
-
-        const errorMessage =
-          error instanceof Error ? error.message : 'خطای ناشناخته';
-        toast.error(`خطا در تولید تصویر: ${errorMessage}`);
-      }
+      generateMutation.mutate(settings);
     },
-    [state.isGenerating, state.isServiceAvailable]
+    [generateMutation, serviceStatus?.available]
+  );
+
+  const deleteImage = useCallback(
+    (imageId: string) => {
+      deleteMutation.mutate({ id: imageId });
+    },
+    [deleteMutation]
   );
 
   const clearHistory = useCallback(() => {
-    setState((prev) => ({ ...prev, images: [] }));
-    localStorage.removeItem(STORAGE_KEY);
-    toast.success('تاریخچه تصاویر پاک شد');
-  }, []);
-
-  const deleteImage = useCallback((imageId: string) => {
-    setState((prev) => ({
-      ...prev,
-      images: prev.images.filter((img) => img.id !== imageId),
-    }));
-    toast.success('تصویر حذف شد');
-  }, []);
+    clearMutation.mutate({});
+  }, [clearMutation]);
 
   const downloadImage = useCallback((image: GeneratedImage) => {
     try {
       const link = document.createElement('a');
-      link.href = image.url;
+      link.href = image.imageUrl;
       link.download = `generated_${image.id}.png`;
       document.body.appendChild(link);
       link.click();
@@ -168,7 +128,10 @@ export function useImageGeneration() {
   }, []);
 
   return {
-    ...state,
+    images,
+    samplers: samplersData?.samplers || [],
+    isGenerating: generateMutation.isPending,
+    isServiceAvailable: serviceStatus?.available,
     generateImage,
     clearHistory,
     deleteImage,

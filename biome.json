@@ -39,6 +39,9 @@
             "maxAllowedComplexity": 50
           }
         }
+      },
+      "performance": {
+        "noImgElement": "off"
       }
     }
   }

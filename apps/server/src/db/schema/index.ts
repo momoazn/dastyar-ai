@@ -182,3 +182,26 @@ export const selectSummarySchema = createSelectSchema(summaries);
 
 export type InsertSummaryInput = z.infer<typeof insertSummarySchema>;
 export type SelectSummaryOutput = z.infer<typeof selectSummarySchema>;
+
+/*
+  Generated Images table – stores AI-generated images metadata
+*/
+export const generatedImages = sqliteTable('generated_images', {
+  id: text('id', { length: 15 }).primaryKey().notNull(),
+  prompt: text('prompt').notNull(),
+  negativePrompt: text('negativePrompt'),
+  imageData: text('imageData').notNull(), // base64 encoded image
+  settings: text('settings').notNull(), // JSON string of generation settings
+  createdAt: integer('created', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`
+  ),
+  updatedAt: integer('updated', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`
+  ),
+});
+
+export const insertGeneratedImageSchema = createInsertSchema(generatedImages);
+export const selectGeneratedImageSchema = createSelectSchema(generatedImages);
+
+export type InsertGeneratedImageInput = z.infer<typeof insertGeneratedImageSchema>;
+export type SelectGeneratedImageOutput = z.infer<typeof selectGeneratedImageSchema>;

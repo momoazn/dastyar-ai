@@ -165,4 +165,26 @@ export const fa = {
       textTooLong: 'متن خیلی طولانی است',
     },
   },
+  imageGeneration: {
+    promptRequired: 'لطفاً توضیحات تصویر را وارد کنید',
+    serviceUnavailableError:
+      'سرویس Stable Diffusion در دسترس نیست. لطفاً مطمئن شوید که A1111 در حال اجرا است.',
+    generatingAlt: 'در حال تولید تصویر...',
+    generatingDescription: 'لطفاً صبر کنید، این کار ممکن است چند دقیقه طول بکشد',
+    serviceUnavailableAlert:
+      'سرویس Stable Diffusion در دسترس نیست. لطفاً A1111 را در پورت 7860 راه‌اندازی کنید.',
+    title: 'تولید تصویر',
+    clearAll: 'پاک کردن همه',
+    noImagesYet: 'هنوز تصویری تولید نشده است',
+    size: 'اندازه',
+    sampler: 'سمپلر',
+    cfgScale: 'مقیاس راهنمایی',
+    steps: 'تعداد گام‌ها: {steps}',
+    promptLabel: 'توضیحات تصویر',
+    promptPlaceholder: 'توضیحات تصویر مورد نظر خود را وارد کنید...',
+    negativePromptLabel: 'پرامپت منفی (اختیاری)',
+    negativePromptPlaceholder: 'مواردی که نمی‌خواهید در تصویر باشد...',
+    generatingButton: 'در حال تولید...',
+    generateButton: 'تولید تصویر',
+  },
 };

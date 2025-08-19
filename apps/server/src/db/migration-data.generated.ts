@@ -19,6 +19,13 @@ export const migrationData: { [key: string]: string } = {
       "when": 1755551467559,
       "tag": "0001_flimsy_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1755637947865,
+      "tag": "0002_familiar_wallflower",
+      "breakpoints": true
     }
   ]
 }`,
@@ -400,6 +407,16 @@ CREATE TABLE \`translations\` (
 	\`created\` integer DEFAULT (unixepoch()),
 	\`updated\` integer DEFAULT (unixepoch()),
 	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
+);
+`,
+  '0002_familiar_wallflower.sql': `CREATE TABLE \`generated_images\` (
+	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`prompt\` text NOT NULL,
+	\`negativePrompt\` text,
+	\`imageData\` text NOT NULL,
+	\`settings\` text NOT NULL,
+	\`created\` integer DEFAULT (unixepoch()),
+	\`updated\` integer DEFAULT (unixepoch())
 );
 `
 };

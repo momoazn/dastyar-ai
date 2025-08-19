@@ -1,7 +1,9 @@
 import { and, asc, desc, eq, inArray, not } from 'drizzle-orm';
 import type {
+  InsertGeneratedImageInput,
   InsertMessageInput,
   InsertThreadInput,
+  SelectGeneratedImageOutput,
   SelectMessageOutput,
   SelectModelOutput,
   SelectSummaryOutput,
@@ -9,11 +11,14 @@ import type {
   SelectTranslationOutput,
 } from '@/db/schema';
 import {
+  generatedImages,
+  insertGeneratedImageSchema,
   insertMessageSchema,
   insertModelSchema,
   insertThreadSchema,
   messages,
   models,
+  selectGeneratedImageSchema,
   selectMessageSchema,
   selectModelSchema,
   selectSummarySchema,
@@ -331,4 +336,37 @@ export async function getSummary(id: SelectSummaryOutput['id']) {
 
 export async function deleteSummary(id: SelectSummaryOutput['id']) {
   await db.delete(summaries).where(eq(summaries.id, id));
+}
+
+// Generated Images Repository Functions
+
+export async function createGeneratedImage(
+  params: Omit<InsertGeneratedImageInput, 'id'>
+) {
+  const id = generateId();
+  const row = insertGeneratedImageSchema.parse({ id, ...params });
+  const created = await db.insert(generatedImages).values(row).returning();
+  return created[0];
+}
+
+export function listGeneratedImages() {
+  return db.select().from(generatedImages).orderBy(desc(generatedImages.createdAt));
+}
+
+export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
+  selectGeneratedImageSchema.shape.id.parse(id);
+  const rows = await db
+    .select()
+    .from(generatedImages)
+    .where(eq(generatedImages.id, id))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function deleteGeneratedImage(id: SelectGeneratedImageOutput['id']) {
+  await db.delete(generatedImages).where(eq(generatedImages.id, id));
+}
+
+export async function clearGeneratedImages() {
+  await db.delete(generatedImages);
 }
