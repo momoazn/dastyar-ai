@@ -1,6 +1,6 @@
 # AI App - Project Context for Qwen Code
 
-This document provides an overview of the `ai-app` project to help Qwen Code understand its structure, technologies, and key operational procedures.
+This document provides an overview of the `dastyar-ai` project to help Qwen Code understand its structure, technologies, and key operational procedures.
 
 ## Project Overview
 

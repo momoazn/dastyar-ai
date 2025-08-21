@@ -88,7 +88,7 @@ success "Assets organized"
 # Initialize Go module if needed
 if [ ! -f go.mod ]; then
     step "Initializing Go module"
-    go mod init ai-app
+    go mod init dastyar-ai
     success "Go module initialized"
 fi
 
@@ -97,25 +97,25 @@ TARGET_OS=${1:-$(uname -s | tr '[:upper:]' '[:lower:]')}
 case "$TARGET_OS" in
     "windows"|"win")
         step "Building Windows binary"
-        BINARY_NAME="ai-app.exe"
+        BINARY_NAME="dastyar-ai.exe"
         GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o "$BINARY_NAME" main.go || error "Failed to build Windows binary"
         ;;
     "darwin"|"macos")
         step "Building macOS binary"
-        BINARY_NAME="ai-app"
+        BINARY_NAME="dastyar-ai"
         GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o "$BINARY_NAME" main.go || error "Failed to build macOS binary"
         ;;
     "linux")
         step "Building Linux binary"
-        BINARY_NAME="ai-app"
+        BINARY_NAME="dastyar-ai"
         GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o "$BINARY_NAME" main.go || error "Failed to build Linux binary"
         ;;
     *)
         step "Building native binary"
         if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-            BINARY_NAME="ai-app.exe"
+            BINARY_NAME="dastyar-ai.exe"
         else
-            BINARY_NAME="ai-app"
+            BINARY_NAME="dastyar-ai"
         fi
         go build -ldflags "-s -w" -o "$BINARY_NAME" main.go || error "Failed to build final binary"
         ;;
@@ -132,9 +132,9 @@ echo "📊 Size: $BINARY_SIZE"
 echo ""
 echo "📋 Usage:"
 if [[ "$TARGET_OS" == "windows" || "$TARGET_OS" == "win" ]]; then
-echo "   • Windows: ai-app.exe"
+echo "   • Windows: dastyar-ai.exe"
 else
-echo "   • Unix/Linux: ./ai-app"
+echo "   • Unix/Linux: ./dastyar-ai"
 fi
 echo ""
 echo "📋 Cross-compilation examples:"

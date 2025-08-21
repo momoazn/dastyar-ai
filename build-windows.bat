@@ -7,7 +7,7 @@ echo ==========================================
 :: Clean previous builds
 echo 🔄 Cleaning previous builds...
 if exist dist rmdir /s /q dist
-if exist ai-app.exe del ai-app.exe
+if exist dastyar-ai.exe del dastyar-ai.exe
 echo ✅ Cleaned previous builds
 
 :: Install dependencies
@@ -67,7 +67,7 @@ echo ✅ Assets organized
 :: Initialize Go module if needed
 if not exist go.mod (
     echo 🔄 Initializing Go module...
-    go mod init ai-app
+    go mod init dastyar-ai
     echo ✅ Go module initialized
 )
 
@@ -75,23 +75,23 @@ if not exist go.mod (
 echo 🔄 Building final binary for Windows...
 set GOOS=windows
 set GOARCH=amd64
-go build -ldflags "-s -w" -o ai-app.exe main.go
+go build -ldflags "-s -w" -o dastyar-ai.exe main.go
 if %errorlevel% neq 0 (
     echo ❌ Failed to build final binary
     exit /b 1
 )
-echo ✅ Final binary built: ai-app.exe
+echo ✅ Final binary built: dastyar-ai.exe
 
 :: Show final size
-for %%A in (ai-app.exe) do set BINARY_SIZE=%%~zA
+for %%A in (dastyar-ai.exe) do set BINARY_SIZE=%%~zA
 set /a BINARY_SIZE_MB=!BINARY_SIZE!/1048576
 echo.
 echo 🎉 Build completed successfully!
-echo 📁 Binary: ai-app.exe
+echo 📁 Binary: dastyar-ai.exe
 echo 📊 Size: !BINARY_SIZE_MB!MB
 echo.
 echo 📋 Next steps:
-echo    1. Test: ai-app.exe
+echo    1. Test: dastyar-ai.exe
 echo    2. Deploy to target Windows system
 echo.
 echo 🚀 Ready for deployment!

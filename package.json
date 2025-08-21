@@ -1,5 +1,5 @@
 {
-  "name": "ai-app",
+  "name": "dastyar-ai",
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
     "@types/bun": "^1.2.19",

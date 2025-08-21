@@ -1,4 +1,4 @@
-module ai-app
+module dastyar-ai
 
 go 1.21
 

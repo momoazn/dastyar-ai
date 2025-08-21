@@ -85,7 +85,7 @@ func getConfig() *Config {
 		// Extract to a folder next to the binary
 		exePath, _ := os.Executable()
 		exeDir := filepath.Dir(exePath)
-		dataDir = filepath.Join(exeDir, "ai-app-data")
+		dataDir = filepath.Join(exeDir, "dastyar-ai-data")
 	}
 
 	serverPort := os.Getenv("SERVER_PORT")
@@ -107,7 +107,7 @@ func getConfig() *Config {
 
 // setupDataDir creates the simplified directory structure next to the binary
 func setupDataDir(dataDir string) error {
-	// Create simple structure: ai-app-data/
+	// Create simple structure: dastyar-ai-data/
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create data directory %s: %w", dataDir, err)
 	}

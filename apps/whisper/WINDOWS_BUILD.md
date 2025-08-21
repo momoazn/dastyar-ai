@@ -6,28 +6,32 @@ This guide explains how to build the Whisper API executable on Windows x86_64.
 
 ### Required Software
 
-1. **Python 3.13+** 
+1. **Python 3.13+**
+
    ```powershell
    # Download from python.org or use winget
    winget install Python.Python.3.13
    ```
 
 2. **uv Package Manager**
+
    ```powershell
    # Install uv
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
 
 3. **Git** (if cloning repository)
+
    ```powershell
    winget install Git.Git
    ```
 
 4. **Microsoft Visual C++ Build Tools** (for PyTorch compilation)
+
    ```powershell
    # Option 1: Visual Studio Community (recommended)
    winget install Microsoft.VisualStudio.2022.Community
-   
+
    # Option 2: Build Tools only
    winget install Microsoft.VisualStudio.2022.BuildTools
    ```
@@ -46,7 +50,7 @@ This guide explains how to build the Whisper API executable on Windows x86_64.
 ```powershell
 # Clone or copy the repository
 git clone <repository-url>
-cd ai-app\apps\whisper
+cd dastyar-ai\apps\whisper
 
 # Or if you have the source code
 cd path\to\whisper
@@ -161,7 +165,8 @@ C:\whisper\
 
 **Error**: `Could not find a version that satisfies the requirement torch`
 
-**Solution**: 
+**Solution**:
+
 ```powershell
 # Install PyTorch separately first
 uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
@@ -172,6 +177,7 @@ uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl
 **Error**: `Microsoft Visual C++ 14.0 is required`
 
 **Solution**: Install Visual Studio Build Tools
+
 ```powershell
 winget install Microsoft.VisualStudio.2022.BuildTools
 ```
@@ -181,6 +187,7 @@ winget install Microsoft.VisualStudio.2022.BuildTools
 **Error**: `ImportError: No module named 'win32api'`
 
 **Solution**: Install additional Windows dependencies
+
 ```powershell
 uv add pywin32
 ```
@@ -190,6 +197,7 @@ uv add pywin32
 **Issue**: Antivirus deletes or quarantines the executable
 
 **Solution**:
+
 - Add the build directory to antivirus exclusions
 - Temporarily disable real-time protection during build
 - Submit executable to antivirus vendor for whitelisting
@@ -199,6 +207,7 @@ uv add pywin32
 **Issue**: "Windows protected your PC" message
 
 **Solution**:
+
 - Click "More info"
 - Click "Run anyway"
 - For deployment: Code sign the executable
@@ -208,6 +217,7 @@ uv add pywin32
 **Issue**: Cannot access `http://localhost:40002`
 
 **Solution**:
+
 ```powershell
 # Allow through Windows Firewall
 netsh advfirewall firewall add rule name="Whisper API" dir=in action=allow protocol=TCP localport=40002
@@ -265,6 +275,7 @@ if __name__ == '__main__':
 ```
 
 Install the service:
+
 ```powershell
 python whisper-service.py install
 python whisper-service.py start

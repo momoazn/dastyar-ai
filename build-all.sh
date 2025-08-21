@@ -89,9 +89,9 @@ test_bundle() {
     print_status "Testing the generated bundle..."
     
     local platform=$(go env GOOS)
-    local executable="ai-app"
+    local executable="dastyar-ai"
     if [ "$platform" = "windows" ]; then
-        executable="ai-app.exe"
+        executable="dastyar-ai.exe"
     fi
     
     local bundle_path="bundle/$executable"
@@ -204,9 +204,9 @@ main() {
     print_success "🎉 Complete build pipeline finished!"
     echo ""
     echo "📋 Next steps:"
-    echo "   1. Test the bundle: ./bundle/ai-app"
+    echo "   1. Test the bundle: ./bundle/dastyar-ai"
     echo "   2. Copy to target system"
-    echo "   3. Run: ./ai-app"
+    echo "   3. Run: ./dastyar-ai"
     echo ""
     echo "📦 Bundle contents:"
     echo "   • React frontend (built and embedded)"
