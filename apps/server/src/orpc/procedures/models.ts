@@ -10,9 +10,7 @@ export const modelProcedures = {
     .input(
       z.object({
         isEnabled: z.boolean().optional(),
-        providers: z
-          .array(z.enum(Object.values(ModelProviderEnum)))
-          .optional(),
+        providers: z.array(z.enum(Object.values(ModelProviderEnum))).optional(),
       })
     )
     .handler(async ({ context, input }) => {

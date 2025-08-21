@@ -203,5 +203,9 @@ export const generatedImages = sqliteTable('generated_images', {
 export const insertGeneratedImageSchema = createInsertSchema(generatedImages);
 export const selectGeneratedImageSchema = createSelectSchema(generatedImages);
 
-export type InsertGeneratedImageInput = z.infer<typeof insertGeneratedImageSchema>;
-export type SelectGeneratedImageOutput = z.infer<typeof selectGeneratedImageSchema>;
+export type InsertGeneratedImageInput = z.infer<
+  typeof insertGeneratedImageSchema
+>;
+export type SelectGeneratedImageOutput = z.infer<
+  typeof selectGeneratedImageSchema
+>;

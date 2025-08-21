@@ -350,7 +350,10 @@ export async function createGeneratedImage(
 }
 
 export function listGeneratedImages() {
-  return db.select().from(generatedImages).orderBy(desc(generatedImages.createdAt));
+  return db
+    .select()
+    .from(generatedImages)
+    .orderBy(desc(generatedImages.createdAt));
 }
 
 export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
@@ -363,7 +366,9 @@ export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
   return rows[0] || null;
 }
 
-export async function deleteGeneratedImage(id: SelectGeneratedImageOutput['id']) {
+export async function deleteGeneratedImage(
+  id: SelectGeneratedImageOutput['id']
+) {
   await db.delete(generatedImages).where(eq(generatedImages.id, id));
 }
 

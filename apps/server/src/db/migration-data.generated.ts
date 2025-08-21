@@ -561,7 +561,7 @@ CREATE TABLE \`translations\` (
 	\`updated\` integer DEFAULT (unixepoch()),
 	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
 );
-`
+`,
 };
 
 export default migrationData;

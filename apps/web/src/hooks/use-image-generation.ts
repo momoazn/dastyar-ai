@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { orpc, queryClient } from '@/utils/orpc';
+import { orpc } from '@/utils/orpc';
 
 export interface ImageGenerationParams {
   prompt: string;
@@ -24,15 +24,19 @@ export interface GeneratedImage {
 export function useImageGeneration() {
   // Query for service availability
   const { data: serviceStatus, refetch: checkAvailability } = useQuery(
-    orpc.images.checkService.queryOptions({})
+    orpc.images.checkService.queryOptions()
   );
 
   // Query for generated images list
-  const { data: images = [] } = useQuery(orpc.images.list.queryOptions({}));
+  const {
+    data: images = [],
+    refetch: refetchImages,
+    isLoading: isLoadingImages,
+  } = useQuery(orpc.images.list.queryOptions());
 
   // Query for available samplers
   const { data: samplersData } = useQuery(
-    orpc.images.getSamplers.queryOptions({})
+    orpc.images.getSamplers.queryOptions()
   );
 
   // Mutation for generating images
@@ -40,7 +44,7 @@ export function useImageGeneration() {
     orpc.images.generate.mutationOptions({
       onSuccess: () => {
         toast.success('تصویر با موفقیت تولید شد');
-        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+        refetchImages();
       },
       onError: (error) => {
         console.error('Image generation failed:', error);
@@ -56,7 +60,7 @@ export function useImageGeneration() {
     orpc.images.delete.mutationOptions({
       onSuccess: () => {
         toast.success('تصویر حذف شد');
-        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+        refetchImages();
       },
       onError: (error) => {
         console.error('Image deletion failed:', error);
@@ -70,7 +74,7 @@ export function useImageGeneration() {
     orpc.images.clear.mutationOptions({
       onSuccess: () => {
         toast.success('تاریخچه تصاویر پاک شد');
-        queryClient.invalidateQueries({ queryKey: ['images', 'list'] });
+        refetchImages();
       },
       onError: (error) => {
         console.error('Clear images failed:', error);
@@ -132,6 +136,7 @@ export function useImageGeneration() {
     samplers: samplersData?.samplers || [],
     isGenerating: generateMutation.isPending,
     isServiceAvailable: serviceStatus?.available,
+    isLoadingImages,
     generateImage,
     clearHistory,
     deleteImage,
