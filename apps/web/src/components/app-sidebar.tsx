@@ -25,11 +25,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    if (currentPath === '/') {
+    if (location.pathname === '/') {
       setOpen(false);
+    } else {
+      // Optionally open sidebar when navigating away from home
+      // setOpen(true);
     }
-  }, [setOpen]);
+  }, [location.pathname, setOpen]);
 
   return (
     <Sidebar

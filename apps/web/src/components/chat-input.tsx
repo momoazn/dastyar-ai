@@ -312,7 +312,7 @@ export const ChatInput = memo(
                     <Mic className="size-4" />
                   )}
                   {isRecording && (
-                    <span className="ml-2 text-xs">
+                    <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
                       {formatElapsed(elapsedMs)}
                     </span>
                   )}

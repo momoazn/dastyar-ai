@@ -12,6 +12,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-bg': 'var(--popover)',
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
+          fontFamily: '"Vazirmatn Variable", sans-serif',
         } as React.CSSProperties
       }
       theme={theme as ToasterProps['theme']}

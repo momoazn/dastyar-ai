@@ -46,7 +46,7 @@ export function MessagesList({
     );
 
     return (
-      <div className="space-y-2" dir="rtl">
+      <div className="space-y-4" dir="rtl">
         {parsed.map((m) => {
           const direction = m.text ? detectTextDirection(m.text) : 'rtl';
           return (
@@ -80,7 +80,7 @@ export function MessagesList({
 
   if (isLoadingAssistant) {
     return (
-      <div className="space-y-2" dir="rtl">
+      <div className="space-y-4" dir="rtl">
         <Message from="assistant">
           <MessageContent className="w-full" dir="rtl" variant="plain">
             <Skeleton className="h-4 w-3/5" />

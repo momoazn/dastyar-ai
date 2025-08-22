@@ -13,21 +13,21 @@ const features = [
     title: fa.index.chatTitle,
     description: fa.index.chatDescription,
     link: '/chat',
-    color: 'text-blue-500',
+    color: 'text-primary',
   },
   {
     icon: <Image className="h-12 w-12" />,
     title: fa.index.imageTitle,
     description: fa.index.imageDescription,
     link: '/image',
-    color: 'text-purple-500',
+    color: 'text-accent-foreground',
   },
   {
     icon: <Languages className="h-12 w-12" />,
     title: fa.index.translationTitle,
     description: fa.index.translationDescription,
     link: '/translation',
-    color: 'text-green-500',
+    color: 'text-primary',
   },
 ];
 

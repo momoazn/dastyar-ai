@@ -10,14 +10,16 @@ export function NoMessages({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="text-center">
-        <BotIcon className="mx-auto mb-4 h-16 w-16 rounded-full bg-muted p-4 text-muted-foreground" />
-        <h3 className="mb-2 font-semibold text-foreground text-lg">
-          {fa.chat.askQuestion}
-        </h3>
-        <p className="text-muted-foreground text-sm">
-          {fa.chat.askQuestionDescription}
-        </p>
+      <div className="space-y-4 text-center">
+        <BotIcon className="mx-auto h-16 w-16 rounded-full bg-muted p-4 text-muted-foreground" />
+        <div className="space-y-2">
+          <h3 className="font-semibold text-foreground text-lg">
+            {fa.chat.askQuestion}
+          </h3>
+          <p className="text-muted-foreground text-sm">
+            {fa.chat.askQuestionDescription}
+          </p>
+        </div>
       </div>
     </div>
   );
