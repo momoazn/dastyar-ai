@@ -33,21 +33,18 @@ This project uses environment variables for port configuration. Each app has exa
 # Copy environment files to .env (run from project root)
 cp apps/web/env.local apps/web/.env
 cp apps/server/env.local apps/server/.env
-cp apps/whisper/env.local apps/whisper/.env
 ```
 
 ### Port Configurations
 
 - **WEB_PORT=40000** - Frontend web app port
 - **SERVER_PORT=40001** - Backend server port
-- **WHISPER_PORT=40002** - Whisper service port
 
 ### Alternative: Set in Shell
 
 ```bash
 export WEB_PORT=40000
 export SERVER_PORT=40001
-export WHISPER_PORT=40002
 ```
 
 See `ports.config` for complete configuration details.
@@ -78,7 +75,6 @@ bun dev
 
 Open [http://localhost:40000](http://localhost:40000) in your browser to see the web application.
 The API is running at [http://localhost:40001](http://localhost:40001).
-The Whisper service is running at [http://localhost:40002](http://localhost:40002).
 
 ## Project Structure
 
@@ -86,8 +82,7 @@ The Whisper service is running at [http://localhost:40002](http://localhost:4000
 dastyar-ai/
 ├── apps/
 │   ├── web/         # Frontend application (React + TanStack Router)
-│   ├── server/      # Backend API (Hono, ORPC)
-│   └── whisper/     # Python Whisper transcription service
+│   └── server/      # Backend API (Hono, ORPC)
 ```
 
 ## Available Scripts
@@ -96,7 +91,6 @@ dastyar-ai/
 - `bun build`: Build all applications
 - `bun dev:web`: Start only the web application
 - `bun dev:server`: Start only the server
-- `bun dev:whisper`: Start only the whisper service (uses WHISPER_PORT env var)
 - `bun check-types`: Check TypeScript types across all apps
 - `bun db:push`: Push schema changes to database
 - `bun db:studio`: Open database studio UI

@@ -1,10 +1,10 @@
-import { Brain, CloudIcon, ImageIcon, type LucideIcon } from 'lucide-react';
+import { Brain, ImageIcon, type LucideIcon } from 'lucide-react';
 
 export function Status() {
   return (
     <header className="flex gap-2">
       <StatusItem icon={Brain} name="Ollama" status={true} />
-      <StatusItem icon={CloudIcon} name="Whisper" status={false} />
+
       <StatusItem icon={ImageIcon} name="Stable Diffusion" status={false} />
     </header>
   );
