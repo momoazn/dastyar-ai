@@ -11,7 +11,7 @@ import { runMigrations } from './db/migrate';
 import { syncModels } from './lib/repository';
 import orpcsHandler from './orpc/handler';
 
-const PORT = Number(process.env.SERVER_PORT) || 40_001;
+const PORT = Number(process.env.SERVER_PORT) || 3000;
 
 const app = new Hono();
 
@@ -23,7 +23,7 @@ app.use(async (_c, next) => {
 app.use(
   '/*',
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:40000',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
     allowMethods: ['GET', 'POST', 'OPTIONS'],
   })
 );
