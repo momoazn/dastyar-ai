@@ -69,11 +69,12 @@ export function ChatThreadsList() {
       )}
       {listQuery.data?.map((thread) => (
         <SidebarItem
+          id={thread.id}
           key={thread.id}
           onArchive={() => handleArchive(thread.id)}
           onDelete={() => handleDelete(thread.id)}
           title={thread.title}
-          to={`/chat/${thread.id}`}
+          to="/chat"
         />
       ))}
     </>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui';
 import type { SidebarItemProps } from './types';
 
 export function SidebarItem({
+  id,
   title,
   to,
   onArchive,
@@ -12,6 +13,7 @@ export function SidebarItem({
   return (
     <Link
       className="relative flex h-12 items-center justify-between border-b p-4 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      search={{ id }}
       to={to}
     >
       {({ isActive }) => (

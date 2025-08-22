@@ -2,8 +2,9 @@ import { useChat } from '@ai-sdk/react';
 import { useQuery } from '@tanstack/react-query';
 import {
   createFileRoute,
-  useParams,
+  useNavigate,
   useRouterState,
+  useSearch,
 } from '@tanstack/react-router';
 import type { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
@@ -16,21 +17,23 @@ import {
 } from '@/components/ai-elements/conversation';
 import { ChatInput } from '@/components/chat-input';
 import { MessagesList } from '@/components/messages-list';
+import { NoMessages } from '@/components/no-messages';
 import { Alert, AlertDescription, AlertTitle, Button } from '@/components/ui';
 import {
   mapThreadMessagesToUI,
   useHydrateInitialMessages,
   useSendInitialPrompt,
 } from '@/hooks/use-chat-thread';
-import { orpc } from '@/utils/orpc';
+import { client, orpc, queryClient } from '@/utils/orpc';
 
-export const Route = createFileRoute('/chat/$id')({
-  component: ChatThreadRouteComponent,
+export const Route = createFileRoute('/chat')({
+  component: ChatRouteComponent,
 });
 
-function ChatThreadRouteComponent() {
-  const params = useParams({ from: '/chat/$id' });
-  const threadId = params.id;
+function ChatRouteComponent() {
+  const search = useSearch({ from: '/chat' }) as { id?: string };
+  const navigate = useNavigate();
+  const threadId = search.id ?? '';
 
   const routerState = useRouterState();
   const navigationState = (routerState.location.state ?? {}) as {
@@ -49,16 +52,10 @@ function ChatThreadRouteComponent() {
     ...orpc.models.list.queryOptions({
       input: { isEnabled: true },
     }),
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
 
-  const { data: threadMessages } = useQuery(
-    orpc.messages.listByThread.queryOptions({
-      input: { threadId, order: 'asc' },
-    })
-  );
-
-  // Load last selected model from localStorage when models are ready
+  // Persist/load last selected model
   useEffect(() => {
     if (!models || models.length === 0) {
       return;
@@ -83,7 +80,6 @@ function ChatThreadRouteComponent() {
     setChatModelId((models as Array<{ id: string }>)[0].id);
   }, [models, chatModelId]);
 
-  // Persist selected model to localStorage when valid
   useEffect(() => {
     if (!chatModelId) {
       return;
@@ -107,13 +103,21 @@ function ChatThreadRouteComponent() {
     }
   }, [chatModelId, models]);
 
+  // Thread view
+  const { data: threadMessages } = useQuery(
+    orpc.messages.listByThread.queryOptions({
+      input: { threadId, order: 'asc' },
+      enabled: Boolean(threadId),
+    })
+  );
+
   const initialMessages = useMemo(
     () => mapThreadMessagesToUI(threadMessages ?? []),
     [threadMessages]
   );
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
-    id: threadId,
+    id: threadId || '__new__',
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: `${import.meta.env.VITE_SERVER_URL}/chat`,
@@ -122,7 +126,6 @@ function ChatThreadRouteComponent() {
 
   const isGenerating = status === 'streaming' || status === 'submitted';
 
-  // Hydrate useChat state with thread messages after they load on initial mount (e.g., on page reload)
   useHydrateInitialMessages({
     threadMessages,
     messages: messages as UIMessage[],
@@ -130,6 +133,27 @@ function ChatThreadRouteComponent() {
     initialMessages,
     setMessages: setMessages as unknown as (m: UIMessage[]) => void,
   });
+
+  const handleSendFirstMessage = async () => {
+    const trimmed = prompt.trim();
+    if (!(trimmed && chatModelId)) {
+      return;
+    }
+    const created = await client.threads.create({
+      title: trimmed.slice(0, 20),
+    });
+    await queryClient.invalidateQueries({
+      queryKey: orpc.threads.list.queryKey({
+        input: { includeArchived: false },
+      }),
+    });
+    navigate({
+      to: '/chat',
+      search: { id: created.id },
+      state: { initialPrompt: trimmed, initialModel: chatModelId },
+    });
+    setPrompt('');
+  };
 
   const handleSendMessage = () => {
     if (!(prompt.trim() && chatModelId)) {
@@ -170,8 +194,6 @@ function ChatThreadRouteComponent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // Only auto-scroll when a new message is appended (e.g., first token of assistant
-  // or when the user sends a new message). Do not auto-scroll on token updates.
   useEffect(() => {
     const currentCount = messages.length;
     if (currentCount > previousMessageCountRef.current) {
@@ -203,6 +225,30 @@ function ChatThreadRouteComponent() {
       />
     );
   }, [messages, status]);
+
+  const isIndex = !threadId;
+
+  if (isIndex) {
+    return (
+      <div className="flex h-full flex-col">
+        <NoMessages />
+        <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <ChatInput
+            chatModelId={chatModelId}
+            handleSendPrompt={handleSendFirstMessage}
+            isGenerating={false}
+            models={models}
+            prompt={prompt}
+            setChatModelId={setChatModelId}
+            setPrompt={setPrompt}
+            stopGenerating={() => {
+              /* noop */
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
