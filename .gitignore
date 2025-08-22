@@ -6,3 +6,5 @@ bundle/assets
 dist/
 
 ai-app
+
+.whisper-cache/

@@ -1,7 +1,9 @@
 import 'dotenv/config';
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { env as transformersEnv } from '@huggingface/transformers';
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
@@ -30,6 +32,42 @@ app.use(
 
 app.route('/rpc', orpcsHandler);
 app.route('/chat', chatHandler);
+
+// Configure Transformers.js to load local models in both prod (binary) and dev
+try {
+  const execDir = path.dirname(process.execPath);
+  const srcDir = path.dirname(fileURLToPath(import.meta.url)); // apps/server/src
+  const serverRoot = path.resolve(srcDir, '..'); // apps/server
+  const repoRoot = path.resolve(serverRoot, '..'); // apps
+  const workspaceRoot = path.resolve(repoRoot, '..'); // project root
+
+  const modelCandidates = [
+    process.env.MODELS_DIR,
+    path.join(execDir, 'whisper-models'), // prod default (next to binary)
+    path.join(serverRoot, 'whisper-models'), // apps/server/whisper-models
+    path.join(workspaceRoot, 'whisper-models'), // repo-level
+    path.join(process.cwd(), 'whisper-models'), // cwd
+  ].filter(Boolean) as string[];
+
+  const modelsDir =
+    modelCandidates.find((p) => fs.existsSync(p)) || modelCandidates[0];
+
+  const cacheDir =
+    process.env.TRANSFORMERS_CACHE ||
+    (process.env.NODE_ENV === 'production'
+      ? path.join(execDir, '.whisper-cache') // prod default
+      : path.join(workspaceRoot, '.whisper-cache'));
+
+  transformersEnv.localModelPath = modelsDir;
+  transformersEnv.cacheDir = cacheDir;
+
+  // Allow remote model fetches in dev if local models are missing
+  if (process.env.NODE_ENV !== 'production') {
+    transformersEnv.allowRemoteModels = true;
+  }
+} catch {
+  // ignore configuration errors
+}
 
 // Resolve the absolute path to the built frontend assets directory
 // By default: apps/web/dist. Can be overridden via WEB_DIST_DIR

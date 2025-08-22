@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -14,7 +14,6 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  Input,
   Progress,
   Select,
   SelectContent,
@@ -31,41 +30,10 @@ import {
   useVoiceRecorder,
 } from '@/hooks/use-voice-recorder';
 import { fa } from '@/lib/persian-texts';
+import { fileToWav16kMono } from '@/utils/audio';
 import { orpc } from '@/utils/orpc';
 
 const MAX_DURATION_MS = 60_000; // 60s visual progress
-const MODELS = [
-  { id: 'tiny', name: 'Tiny' },
-  { id: 'base', name: 'Base' },
-  { id: 'small', name: 'Small' },
-  { id: 'medium', name: 'Medium' },
-  { id: 'large', name: 'Large' },
-  { id: 'large-v2', name: 'Large v2' },
-  { id: 'large-v3', name: 'Large v3' },
-];
-
-const serializeResult = (data: {
-  text: string;
-  language?: string;
-  model_used?: string;
-  processing_ms?: number;
-  segments?: Array<{ start: number; end: number; text: string }>;
-}): string => {
-  // For the transcribe page, we might want to show more info
-  if (data.segments && data.segments.length > 0) {
-    // Show verbose output with timestamps if available
-    const segmentsText = data.segments
-      .map(
-        (seg) =>
-          `[${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s]: ${seg.text}`
-      )
-      .join('\n');
-    return `${data.text}\n\n--- Segments ---\n${segmentsText}`;
-  }
-
-  // Just return the text for simple format
-  return data.text;
-};
 
 const getBadgeVariant = (
   isRecording: boolean,
@@ -102,7 +70,7 @@ function RouteComponent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState('');
   const [language, setLanguage] = useState<'fa' | 'en'>('fa');
-  const [model, setModel] = useState<string>('tiny');
+  const [model, setModel] = useState<string>('Xenova/whisper-tiny');
 
   const {
     isRecording,
@@ -114,10 +82,12 @@ function RouteComponent() {
     clearRecordedFile,
   } = useVoiceRecorder();
 
+  const { data: models } = useQuery(orpc.transcribe.models.queryOptions());
+
   const { mutate: transcribe, isPending: isTranscribing } = useMutation(
     orpc.transcribe.transcribe.mutationOptions({
       onSuccess: (data) => {
-        setResult(serializeResult(data));
+        setResult(data);
         // Only clear recorded file after successful transcription
         clearRecordedFile();
       },
@@ -154,13 +124,18 @@ function RouteComponent() {
     if (recordedFile) {
       setTranscribeError(null);
       setResult('');
-      transcribe({
-        file: recordedFile,
-        language,
-        model,
-        responseFormat: 'verbose',
-        includeTimestamps: true,
-      });
+      // Convert to WAV 16k mono for server compatibility
+      fileToWav16kMono(recordedFile)
+        .then((wav) =>
+          transcribe({
+            file: wav,
+            language,
+            model,
+          })
+        )
+        .catch(() => {
+          setTranscribeError(fa.transcribe.errors.processFailed);
+        });
     }
   }, [recordedFile, transcribe, language, model]);
 
@@ -183,49 +158,7 @@ function RouteComponent() {
     setTranscribeError(null);
   };
 
-  const handleFileUpload = (file: File | null) => {
-    if (!file) {
-      return;
-    }
-
-    // Validate file size (50MB limit)
-    const maxFileSize = 50 * 1024 * 1024;
-    if (file.size > maxFileSize) {
-      setTranscribeError(
-        `فایل خیلی بزرگ است. حداکثر سایز ${maxFileSize / (1024 * 1024)}MB می‌باشد.`
-      );
-      return;
-    }
-
-    // Validate file type
-    const supportedTypes = [
-      'audio/mpeg',
-      'audio/mp3',
-      'audio/wav',
-      'audio/x-wav',
-      'audio/m4a',
-      'audio/mp4',
-      'audio/flac',
-      'audio/ogg',
-      'audio/webm',
-      'video/mp4',
-      'video/webm',
-    ];
-    if (!supportedTypes.includes(file.type)) {
-      setTranscribeError(`فرمت فایل پشتیبانی نمی‌شود: ${file.type}`);
-      return;
-    }
-
-    setTranscribeError(null);
-    setResult('');
-    transcribe({
-      file,
-      language,
-      model,
-      responseFormat: 'verbose',
-      includeTimestamps: true,
-    });
-  };
+  // File upload removed; only voice recording is supported
 
   // Get the first available error to display
   const displayError = recordingError
@@ -261,7 +194,7 @@ function RouteComponent() {
                   <SelectValue placeholder="مدل" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MODELS.map((m) => (
+                  {models?.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
                     </SelectItem>
@@ -292,18 +225,6 @@ function RouteComponent() {
                 <Badge variant={badgeVariant}>{statusText}</Badge>
               </div>
               <div className="flex items-center gap-3">
-                <Input
-                  accept="audio/*,video/mp4,video/webm"
-                  aria-label="upload audio"
-                  className="w-56"
-                  onChange={(e) => {
-                    const file = e.currentTarget.files?.[0] ?? null;
-                    handleFileUpload(file);
-                    // Reset input value to allow re-selecting same file
-                    e.currentTarget.value = '';
-                  }}
-                  type="file"
-                />
                 <Button
                   aria-label={
                     isRecording
@@ -354,15 +275,14 @@ function RouteComponent() {
               {recordedFile && !isTranscribing && (
                 <Button
                   className="gap-2"
-                  onClick={() =>
-                    transcribe({
-                      file: recordedFile,
-                      language,
-                      model,
-                      responseFormat: 'verbose',
-                      includeTimestamps: true,
-                    })
-                  }
+                  onClick={async () => {
+                    try {
+                      const wav = await fileToWav16kMono(recordedFile);
+                      transcribe({ file: wav, language, model });
+                    } catch {
+                      setTranscribeError(fa.transcribe.errors.processFailed);
+                    }
+                  }}
                   type="button"
                   variant="outline"
                 >
