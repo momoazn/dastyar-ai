@@ -1,15 +1,17 @@
 import { z } from 'zod';
 import {
   clearThread,
-  createThread,
   deleteMessage,
-  deleteThread,
   getMessagesByThread,
+} from '../../repositories/messages';
+import {
+  createThread,
+  deleteThread,
   getThread,
   listThreads,
   renameThread,
   setArchived,
-} from '../../lib/repository';
+} from '../../repositories/threads';
 import { publicProcedure } from '../index';
 
 export const threadProcedures = {

@@ -7,8 +7,8 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
-import { ModelProviderEnum } from '@/lib/providers/constants';
-import { codeToLanguageMap, toneToLabelMap } from '@/lib/translate';
+import { ModelProviderEnum } from '@/services/ai-providers/constants';
+import { codeToLanguageMap, toneToLabelMap } from '@/utils/constants';
 
 // Status enums for messages
 export const MessageStatusEnum = {

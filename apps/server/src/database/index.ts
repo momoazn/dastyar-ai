@@ -2,7 +2,7 @@ import { Database } from 'bun:sqlite';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { getConfig } from '../lib/config';
+import { getConfig } from '../config';
 
 const FILE_PROTOCOL_RE = /^file:/;
 

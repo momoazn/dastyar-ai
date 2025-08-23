@@ -1,8 +1,8 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { models } from '../../db/schema';
-import { ModelProviderEnum } from '../../lib/providers/constants';
-import { syncModels } from '../../lib/repository';
+import { models } from '../../database/schema';
+import { ModelProviderEnum } from '../../services/ai-providers/constants';
+import { syncModels } from '../../services/model-sync';
 import { publicProcedure } from '../index';
 
 export const modelProcedures = {

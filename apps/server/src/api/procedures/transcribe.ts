@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
-import { getConfig } from '../../lib/config';
+import { getConfig } from '../../config';
 import { publicProcedure } from '../index';
 
 type ASRPipeline = (

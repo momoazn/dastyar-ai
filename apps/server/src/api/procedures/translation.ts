@@ -1,24 +1,24 @@
 import { generateObject, generateText } from 'ai';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, translations } from '../../db/schema';
+import { models, translations } from '../../database/schema';
 import {
   type AnyProviderModel,
   getProviderForModel,
-} from '../../lib/providers';
+} from '../../services/ai-providers';
 import {
   deleteTranslation,
   getTranslation,
   listTranslations,
-} from '../../lib/repository';
+} from '../../repositories/translations';
 import {
   codeToLanguage,
   codeToLanguageMap,
   type LanguageCode,
   type Tone,
   toneToLabelMap,
-} from '../../lib/translate';
-import { generateId } from '../../lib/utils';
+} from '../../utils/constants';
+import { generateId } from '../../utils/id-generator';
 import { publicProcedure } from '../index';
 
 // Regex constants declared at top-level per performance best practices

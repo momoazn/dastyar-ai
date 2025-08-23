@@ -1,5 +1,5 @@
 import type { Context as HonoContext } from 'hono';
-import { db } from '../db';
+import { db } from '../database';
 
 export type CreateContextOptions = {
   context: HonoContext;

@@ -5,11 +5,11 @@ import {
   deleteGeneratedImage,
   getGeneratedImage,
   listGeneratedImages,
-} from '../../lib/repository';
+} from '../../repositories/images';
 import {
   type ImageGenerationParams,
   stableDiffusionService,
-} from '../../lib/stable-diffusion';
+} from '../../services/stable-diffusion';
 import { publicProcedure } from '../index';
 
 const imageGenerationParamsSchema = z.object({

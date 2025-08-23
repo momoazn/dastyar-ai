@@ -1,13 +1,13 @@
 import { generateObject, generateText } from 'ai';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, summaries } from '../../db/schema';
+import { models, summaries } from '../../database/schema';
 import {
   type AnyProviderModel,
   getProviderForModel,
-} from '../../lib/providers';
-import { deleteSummary, getSummary, listSummaries } from '../../lib/repository';
-import { generateId } from '../../lib/utils';
+} from '../../services/ai-providers';
+import { deleteSummary, getSummary, listSummaries } from '../../repositories/summaries';
+import { generateId } from '../../utils/id-generator';
 import { publicProcedure } from '../index';
 
 // Regex constants declared at top-level per performance best practices

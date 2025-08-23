@@ -1,13 +1,13 @@
 import 'dotenv/config';
 
-import { db } from '@/db';
-import { runMigrations } from '@/db/migrate';
-import { models as modelsTable } from '@/db/schema';
-import { ModelProviderEnum } from '@/lib/providers/constants';
-import { GEMINI_MODELS } from '@/lib/providers/gemini';
-import { GROQ_MODELS } from '@/lib/providers/groq';
-import { OPENROUTER_MODELS } from '@/lib/providers/openrouter';
-import { generateId } from '@/lib/utils';
+import { db } from '../database';
+import { runMigrations } from '../database/migrate';
+import { models as modelsTable } from '../database/schema';
+import { ModelProviderEnum } from '../services/ai-providers/constants';
+import { GEMINI_MODELS } from '../services/ai-providers/gemini';
+import { GROQ_MODELS } from '../services/ai-providers/groq';
+import { OPENROUTER_MODELS } from '../services/ai-providers/openrouter';
+import { generateId } from '../utils/id-generator';
 
 const MODELS_BY_PROVIDER = {
   [ModelProviderEnum.GEMINI]: GEMINI_MODELS,
