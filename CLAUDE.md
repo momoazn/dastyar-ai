@@ -47,7 +47,33 @@ bun run dev:server       # Start server only (port 3000)
 bun run build           # Build both applications to dist/
 bun run build:web       # Build web application only to dist/web/
 bun run build:server    # Build server application only
+
+# Cross-platform builds
+bun run build:all       # Build complete application for Unix/Linux/macOS
+bun run build:all:win   # Build complete application for Windows (.exe)
 ```
+
+### Binary Deployment
+The application can be built into a single binary for offline deployment:
+
+**Unix/Linux/macOS:**
+```bash
+bun run build:all       # Creates dist/dastyar-ai
+./dist/dastyar-ai       # Run the application
+```
+
+**Windows:**
+```bash
+bun run build:all:win   # Creates dist/dastyar-ai.exe
+dist\dastyar-ai.exe     # Run the application
+```
+
+The binary includes:
+- Complete web application served from dist/web/
+- SQLite database at dist/data.db
+- Whisper WASM models in dist/wasm/
+- Offline-first configuration (remote models disabled)
+- All dependencies bundled
 
 ### Production Deployment
 ```bash

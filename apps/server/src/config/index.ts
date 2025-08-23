@@ -49,7 +49,10 @@ export type AppConfig = {
 const detectEnvironment = (): 'development' | 'production' => {
   // Check if we're running as a compiled binary
   // For Bun binaries, process.execPath will be the binary path
-  if (process.execPath?.endsWith('dastyar-ai') || process.argv[0]?.endsWith('dastyar-ai')) {
+  if (process.execPath?.endsWith('dastyar-ai') || 
+      process.execPath?.endsWith('dastyar-ai.exe') ||
+      process.argv[0]?.endsWith('dastyar-ai') || 
+      process.argv[0]?.endsWith('dastyar-ai.exe')) {
     return 'production';
   }
 

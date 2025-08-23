@@ -4,8 +4,10 @@
   "type": "module",
   "scripts": {
     "build": "bun build src/index.ts --compile --minify --target bun --conditions=browser --define NODE_ENV=\"production\" --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ../../dist/dastyar-ai && bun run copy-wasm",
+    "build:win": "bun build src/index.ts --compile --minify --target bun --conditions=browser --define NODE_ENV=\"production\" --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ../../dist/dastyar-ai.exe && bun run copy-wasm:win",
     "check-types": "tsc -b",
     "copy-wasm": "mkdir -p ../../dist/wasm && cp ../../node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist/*.wasm ../../dist/wasm 2>/dev/null || true",
+    "copy-wasm:win": "if not exist \"..\\..\\dist\\wasm\" mkdir \"..\\..\\dist\\wasm\" && xcopy /Y /Q \"..\\..\\node_modules\\.bun\\@huggingface+transformers@*\\node_modules\\@huggingface\\transformers\\dist\\*.wasm\" \"..\\..\\dist\\wasm\\\" 2>nul || echo WASM files copied",
     "prepare-offline": "bun run src/scripts/prepare-offline.ts",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run build && ../../dist/dastyar-ai",
