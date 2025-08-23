@@ -44,9 +44,15 @@ bun run dev:server       # Start server only (port 3000)
 
 ### Building
 ```bash
-bun run build           # Build both applications
-bun run build:web       # Build web application only
+bun run build           # Build both applications to dist/
+bun run build:web       # Build web application only to dist/web/
 bun run build:server    # Build server application only
+```
+
+### Production Deployment
+```bash
+bun run compile         # Compile server to standalone binary at dist/dastyar-ai
+bun run prepare-offline # Download Whisper models and WASM files for offline use
 ```
 
 ### Code Quality
@@ -115,11 +121,12 @@ apps/
 3. Apply migrations: `bun run db:migrate`
 4. Migrations are bundled into `migration-data.generated.ts` for deployment
 
-### Environment Configuration
-- Server uses environment variables for AI provider API keys
-- CORS configured for cross-origin requests between web/server
-- Model paths configurable via `MODELS_DIR` environment variable
-- Supports both development and production deployment modes
+### Configuration System
+- **Centralized Config**: Uses `apps/server/src/lib/config.ts` for unified configuration management
+- **Configuration Priority**: Environment variables → `APP_CONFIG` file → `execDir/config.json` → defaults
+- **Environment Variables**: AI provider API keys, `SERVER_PORT`, `CORS_ORIGIN`, `WEB_DIST_DIR`, `DATABASE_URL`, `MODELS_DIR`
+- **JSON Configuration**: Supports external JSON config files for deployment customization
+- **Production Builds**: Optimized paths for standalone binary deployment with co-located assets
 
 ## Common Development Tasks
 
@@ -140,3 +147,22 @@ apps/
 2. Generate and run migrations as described above
 3. Update any affected API procedures and components
 4. Consider backward compatibility for existing data
+
+### Production Deployment
+1. **Build Assets**: `bun run build` (creates `dist/web/` and server build)
+2. **Compile Binary**: `bun run compile` (creates standalone `dist/dastyar-ai` binary)  
+3. **Prepare Offline**: `bun run prepare-offline` (downloads models and WASM files to `dist/`)
+4. **Configuration**: Place `config.json` next to binary for custom settings
+5. **Deploy**: Copy entire `dist/` directory to production server
+
+### Offline Model Preparation
+```bash
+# Download default model (Xenova/whisper-tiny)
+bun run prepare-offline
+
+# Download specific models
+bun run prepare-offline Xenova/whisper-base,Xenova/whisper-small
+
+# Use environment variable
+OFFLINE_MODEL=Xenova/whisper-base bun run prepare-offline
+```

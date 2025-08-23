@@ -3,13 +3,12 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "bun build",
+    "build": "bun build src/index.ts --compile --minify --target bun --conditions=browser --define NODE_ENV=\"production\" --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ../../dist/dastyar-ai && bun run copy-wasm",
     "check-types": "tsc -b",
-    "compile": "bun build src/index.ts --compile --minify --target bun --conditions=browser --define NODE_ENV=\"production\" --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ../../dist/dastyar-ai && bun run copy-wasm",
     "copy-wasm": "mkdir -p ../../dist/wasm && cp ../../node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist/*.wasm ../../dist/wasm 2>/dev/null || true",
     "prepare-offline": "bun run src/scripts/prepare-offline.ts",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run build && bun run dist/index.js",
+    "start": "bun run build && ../../dist/dastyar-ai",
     "seed:models": "bun run src/scripts/seed-models.ts",
     "db:local": "bun run src/db/index.ts",
     "db:push": "drizzle-kit push",
@@ -42,7 +41,6 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "^1.2.6",
     "drizzle-kit": "^0.31.2",
-    "tsdown": "^0.12.9",
     "typescript": "^5.8.2"
   },
   "browser": {
