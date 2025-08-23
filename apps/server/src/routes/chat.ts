@@ -7,22 +7,16 @@ import {
 } from 'ai';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { getProviderForModel } from '../services/ai-providers';
 import {
   getMessagesByThread,
   saveMessages,
   updateMessage,
 } from '../repositories/messages';
-import {
-  getModelById,
-  getModelByName,
-} from '../repositories/models';
-import {
-  getThread,
-  updateThreadOnNewMessage,
-} from '../repositories/threads';
-import { extractTextFromParts } from '../utils/text-extractor';
+import { getModelById, getModelByName } from '../repositories/models';
+import { getThread, updateThreadOnNewMessage } from '../repositories/threads';
+import { getProviderForModel } from '../services/ai-providers';
 import { generateId } from '../utils/id-generator';
+import { extractTextFromParts } from '../utils/text-extractor';
 
 const app = new Hono();
 

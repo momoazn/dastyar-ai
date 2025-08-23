@@ -1,7 +1,7 @@
 import { asc, desc, eq } from 'drizzle-orm';
+import { db } from '../database';
 import type {
   InsertMessageInput,
-  InsertModelInput,
   SelectMessageOutput,
 } from '../database/schema';
 import {
@@ -10,7 +10,6 @@ import {
   messages,
   selectMessageSchema,
 } from '../database/schema';
-import { db } from '../database';
 import { generateId } from '../utils/id-generator';
 
 export async function saveMessage(

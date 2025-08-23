@@ -1,7 +1,7 @@
 import { desc, eq } from 'drizzle-orm';
+import { db } from '../database';
 import type { SelectSummaryOutput } from '../database/schema';
 import { selectSummarySchema, summaries } from '../database/schema';
-import { db } from '../database';
 
 export function listSummaries() {
   return db.select().from(summaries).orderBy(desc(summaries.createdAt));

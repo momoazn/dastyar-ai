@@ -1,14 +1,11 @@
 import { desc, eq } from 'drizzle-orm';
-import type {
-  InsertThreadInput,
-  SelectThreadOutput,
-} from '../database/schema';
+import { db } from '../database';
+import type { InsertThreadInput, SelectThreadOutput } from '../database/schema';
 import {
   insertThreadSchema,
   selectThreadSchema,
   threads,
 } from '../database/schema';
-import { db } from '../database';
 import { generateId } from '../utils/id-generator';
 
 export async function createThread(

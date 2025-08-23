@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
+import { db } from '../database';
 import type { SelectModelOutput } from '../database/schema';
 import { models, selectModelSchema } from '../database/schema';
-import { db } from '../database';
 
 export async function getModelById(id: SelectModelOutput['id']) {
   // Validate using schema id

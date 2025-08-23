@@ -1,4 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
+import { db } from '../database';
 import type {
   InsertGeneratedImageInput,
   SelectGeneratedImageOutput,
@@ -8,7 +9,6 @@ import {
   insertGeneratedImageSchema,
   selectGeneratedImageSchema,
 } from '../database/schema';
-import { db } from '../database';
 import { generateId } from '../utils/id-generator';
 
 export async function createGeneratedImage(
