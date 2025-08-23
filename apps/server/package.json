@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc -b",
-    "compile": "bun build src/index.ts --compile --minify --target bun --define NODE_ENV=\"production\"  --outfile server",
+    "compile": "bun build src/index.ts --compile --minify --target bun --define NODE_ENV=\"production\" --outfile ../../dist/dastyar-ai",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.js",
     "seed:models": "bun run src/scripts/seed-models.ts",

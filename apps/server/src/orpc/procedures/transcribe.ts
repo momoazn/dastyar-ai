@@ -2,7 +2,7 @@ import {
   type AutomaticSpeechRecognitionPipeline,
   pipeline,
 } from '@huggingface/transformers';
-import wavefile from 'wavefile';
+import { WaveFile } from 'wavefile';
 import { z } from 'zod';
 import { publicProcedure } from '../index';
 
@@ -18,7 +18,6 @@ const MODELS_LIST = [
   { id: 'Xenova/whisper-small', name: 'Xenova Small' },
   { id: 'Xenova/whisper-medium', name: 'Xenova Medium' },
   { id: 'Xenova/whisper-large-v3', name: 'Xenova Large v3' },
-  { id: 'distil-whisper/distil-medium.en', name: 'Distil Medium English' },
 ];
 
 const getTranscriber = (
@@ -69,9 +68,9 @@ export const transcribeProcedures = {
         const arrayBuffer = await input.file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        let wav: wavefile.WaveFile;
+        let wav: WaveFile;
         try {
-          wav = new wavefile.WaveFile(buffer);
+          wav = new WaveFile(buffer);
         } catch {
           throw new Error('فرمت صوت نامعتبر است. لطفاً فایل WAV ارسال کنید.');
         }

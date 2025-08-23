@@ -17,6 +17,7 @@
     "build:web": "turbo -F web build",
     "build:server": "turbo -F server build",
     "build:all": "bun run build:web && bun run build:server",
+    "compile": "turbo -F server compile && turbo -F web build",
     "check-types": "turbo check-types",
     "compile:server": "turbo -F server build",
     "dev:native": "turbo -F native dev",
