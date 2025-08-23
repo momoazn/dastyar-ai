@@ -1,16 +1,44 @@
-import {
-  type AutomaticSpeechRecognitionPipeline,
-  pipeline,
-} from '@huggingface/transformers';
+import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
+import { getConfig } from '../../lib/config';
 import { publicProcedure } from '../index';
 
+type ASRPipeline = (
+  input: Float32Array,
+  options: { language?: string; task: 'transcribe' }
+) => Promise<{ text: string } | Array<{ text: string }>>;
+
 // Cache transcribers by model id to avoid reloading per request
-const transcriberCache = new Map<
-  string,
-  Promise<AutomaticSpeechRecognitionPipeline>
->();
+const transcriberCache = new Map<string, Promise<ASRPipeline>>();
+
+// Lazy import transformers to avoid initializing native providers at startup
+const getTransformers = async () => {
+  const libName = ['@huggingface', '/', 'transformers'].join('');
+  const mod = await import(libName as string);
+  // Resolve paths next to the compiled binary for offline execution
+  const cfg = getConfig();
+  const execDir = path.dirname(process.execPath);
+  const localWasmDir = cfg.whisper.wasmDir || path.join(execDir, 'wasm');
+  const localModelsDir =
+    cfg.whisper.modelsDir || path.join(execDir, 'whisper-models');
+
+  // Enforce offline mode and local assets
+  mod.env.allowRemoteModels = cfg.whisper.allowRemoteModels;
+  mod.env.localModelPath = localModelsDir;
+  mod.env.cacheDir =
+    cfg.whisper.cacheDir || path.join(execDir, '.whisper-cache');
+
+  const onnxBackend = mod.env.backends?.onnx;
+  if (onnxBackend) {
+    onnxBackend.backend = 'wasm';
+    if (onnxBackend.wasm) {
+      // Point to local WASM folder next to the binary
+      onnxBackend.wasm.wasmPaths = localWasmDir + path.sep;
+    }
+  }
+  return mod;
+};
 
 const MODELS_LIST = [
   { id: 'Xenova/whisper-tiny', name: 'Xenova Tiny' },
@@ -20,11 +48,10 @@ const MODELS_LIST = [
   { id: 'Xenova/whisper-large-v3', name: 'Xenova Large v3' },
 ];
 
-const getTranscriber = (
-  modelId: string
-): Promise<AutomaticSpeechRecognitionPipeline> => {
+const getTranscriber = (modelId: string): Promise<ASRPipeline> => {
   if (!transcriberCache.has(modelId)) {
     const create = (async () => {
+      const { pipeline } = await getTransformers();
       const p = await pipeline('automatic-speech-recognition', modelId);
       return p;
     })();

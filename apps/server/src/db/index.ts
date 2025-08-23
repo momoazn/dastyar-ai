@@ -2,16 +2,17 @@ import { Database } from 'bun:sqlite';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { getConfig } from '../lib/config';
 
 const FILE_PROTOCOL_RE = /^file:/;
 
 function resolveDatabasePath(): string {
-  const envUrl = process.env.DATABASE_URL?.trim();
-  if (envUrl && envUrl.length > 0) {
-    // Support both file: and plain paths
-    return envUrl.startsWith('file:')
-      ? envUrl.replace(FILE_PROTOCOL_RE, '')
-      : envUrl;
+  const cfg = getConfig();
+  const dbUrl = cfg.database.file?.trim();
+  if (dbUrl && dbUrl.length > 0) {
+    return dbUrl.startsWith('file:')
+      ? dbUrl.replace(FILE_PROTOCOL_RE, '')
+      : dbUrl;
   }
   // Dev-friendly fallback to local file database; support being run from repo root or server dir
   const candidates = [resolve(process.cwd(), './data.db')];
