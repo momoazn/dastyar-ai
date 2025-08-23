@@ -8,16 +8,21 @@ if (import.meta.main) {
   const start = async () => {
     await runMigrations();
     await syncModels();
-    
+
     const { app, config } = createApp();
-    
-    console.log(`Server is running on http://localhost:${config.server.port}`);
+    const { host, port } = config.server;
+
+    console.log(`🌍 Server is running on http://${host}:${port}`);
     // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
-    Bun.serve({ fetch: app.fetch, port: config.server.port, hostname: '0.0.0.0' });
+    Bun.serve({
+      fetch: app.fetch,
+      port,
+      hostname: host,
+    });
   };
-  
+
   start().catch((err) => {
-    console.error(err);
+    console.error('💥 Failed to start server:', err);
     process.exit(1);
   });
 }
