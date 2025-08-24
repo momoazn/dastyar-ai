@@ -5,7 +5,7 @@ import type {
   SelectGeneratedImageOutput,
 } from '../database/schema';
 import {
-  generatedImages,
+  generatedImagesTable,
   insertGeneratedImageSchema,
   selectGeneratedImageSchema,
 } from '../database/schema';
@@ -17,23 +17,23 @@ export async function createGeneratedImage(
 ) {
   const id = 'id' in params ? params.id : generateId();
   const row = insertGeneratedImageSchema.parse({ ...params, id });
-  const created = await db.insert(generatedImages).values(row).returning();
+  const created = await db.insert(generatedImagesTable).values(row).returning();
   return created[0];
 }
 
 export function listGeneratedImages() {
   return db
     .select()
-    .from(generatedImages)
-    .orderBy(desc(generatedImages.createdAt));
+    .from(generatedImagesTable)
+    .orderBy(desc(generatedImagesTable.createdAt));
 }
 
 export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
   selectGeneratedImageSchema.shape.id.parse(id);
   const rows = await db
     .select()
-    .from(generatedImages)
-    .where(eq(generatedImages.id, id))
+    .from(generatedImagesTable)
+    .where(eq(generatedImagesTable.id, id))
     .limit(1);
   return rows[0] || null;
 }
@@ -49,7 +49,7 @@ export async function deleteGeneratedImage(
   }
 
   // Delete from database
-  await db.delete(generatedImages).where(eq(generatedImages.id, id));
+  await db.delete(generatedImagesTable).where(eq(generatedImagesTable.id, id));
 }
 
 export async function clearGeneratedImages() {
@@ -66,7 +66,7 @@ export async function clearGeneratedImages() {
   }
 
   // Delete all records from database
-  await db.delete(generatedImages);
+  await db.delete(generatedImagesTable);
 }
 
 export async function getAllImageFilePaths(): Promise<string[]> {

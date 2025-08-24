@@ -12,14 +12,14 @@ export function SidebarItem({
 }: SidebarItemProps) {
   return (
     <Link
-      className="relative flex h-12 items-center justify-between border-b p-4 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      className="relative flex h-12 items-center justify-between border-b p-4 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       params={params}
       to={to}
     >
       {({ isActive }) => (
         <>
           {isActive && (
-            <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
+            <div className="absolute top-0 right-0 h-full w-1 bg-accent " />
           )}
           <span className="font-medium">{title ?? 'Untitled'}</span>
           <div className="flex items-center gap-0">

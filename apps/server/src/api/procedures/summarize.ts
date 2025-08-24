@@ -1,7 +1,7 @@
 import { generateObject, generateText } from 'ai';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, summaries } from '../../database/schema';
+import { models, summariesTable } from '../../database/schema';
 import {
   deleteSummary,
   getSummary,
@@ -188,7 +188,7 @@ export const summarizeProcedures = {
         updatedAt: now,
       };
 
-      await context.db.insert(summaries).values(summary);
+      await context.db.insert(summariesTable).values(summary);
 
       return summary;
     }),

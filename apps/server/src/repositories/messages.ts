@@ -1,4 +1,5 @@
 import { asc, desc, eq } from 'drizzle-orm';
+import type { Json } from 'drizzle-zod';
 import { db } from '../database';
 import type {
   InsertMessageInput,
@@ -7,7 +8,7 @@ import type {
 import {
   insertMessageSchema,
   insertModelSchema,
-  messages,
+  messagesTable,
   selectMessageSchema,
 } from '../database/schema';
 import { generateId } from '../utils/id-generator';
@@ -16,43 +17,32 @@ export async function saveMessage(
   params: Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
 ) {
   const id = params.id ?? generateId();
+  console.log('======> params', params);
   const row = insertMessageSchema.parse({
     id,
     threadId: params.threadId,
     role: params.role,
-    content: params.content,
-    reasoning: params.reasoning ?? null,
+    parts: params.parts,
     status: params.status ?? null,
     modelId: params.modelId ?? null,
-    sentAt: params.sentAt ?? new Date(),
   });
-  await db.insert(messages).values(row);
+  await db.insert(messagesTable).values(row);
   return { id };
 }
 
 export async function updateMessage(
   params: Pick<InsertMessageInput, 'id'> &
-    Partial<
-      Pick<
-        InsertMessageInput,
-        'content' | 'reasoning' | 'status' | 'modelId' | 'sentAt'
-      >
-    >
+    Partial<Pick<InsertMessageInput, 'parts' | 'status' | 'modelId'>>
 ) {
   selectMessageSchema.shape.id.parse(params.id);
   const update: Partial<{
-    content: string;
-    reasoning: string | null;
+    parts: Json;
     status: string | null;
     modelId: string | null;
-    sentAt: Date | null;
   }> = {};
-  if (params.content !== undefined) {
-    insertMessageSchema.shape.content.parse(params.content);
-    update.content = params.content;
-  }
-  if (params.reasoning !== undefined) {
-    update.reasoning = params.reasoning;
+  if (params.parts !== undefined) {
+    insertMessageSchema.shape.parts.parse(params.parts);
+    update.parts = params.parts;
   }
   if (params.status !== undefined) {
     insertMessageSchema.shape.status.parse(params.status);
@@ -62,13 +52,13 @@ export async function updateMessage(
     insertModelSchema.shape.id.parse(params.modelId);
     update.modelId = params.modelId;
   }
-  if (params.sentAt !== undefined) {
-    update.sentAt = params.sentAt;
-  }
   if (Object.keys(update).length === 0) {
     return;
   }
-  await db.update(messages).set(update).where(eq(messages.id, params.id));
+  await db
+    .update(messagesTable)
+    .set(update)
+    .where(eq(messagesTable.id, params.id));
 }
 
 export async function saveMessages(
@@ -82,18 +72,16 @@ export async function saveMessages(
       id,
       threadId: p.threadId,
       role: p.role,
-      content: p.content,
-      reasoning: p.reasoning ?? null,
+      parts: p.parts,
       status: p.status ?? null,
       modelId: p.modelId ?? null,
-      sentAt: p.sentAt ?? new Date(),
     });
     return row;
   });
   if (prepared.length === 0) {
     return { ids: [] };
   }
-  await db.insert(messages).values(prepared);
+  await db.insert(messagesTable).values(prepared);
   return { ids: prepared.map((r) => r.id) };
 }
 
@@ -109,20 +97,20 @@ export async function getMessagesByThread(
   const order = params.order ?? 'desc';
   const query = db
     .select()
-    .from(messages)
-    .where(eq(messages.threadId, params.threadId));
+    .from(messagesTable)
+    .where(eq(messagesTable.threadId, params.threadId));
   const ordered =
     order === 'asc'
-      ? query.orderBy(asc(messages.sentAt), asc(messages.createdAt))
-      : query.orderBy(desc(messages.sentAt), desc(messages.createdAt));
+      ? query.orderBy(asc(messagesTable.createdAt))
+      : query.orderBy(desc(messagesTable.createdAt));
   const rows = await ordered.limit(limit);
   return rows;
 }
 
 export async function deleteMessage(id: SelectMessageOutput['id']) {
-  await db.delete(messages).where(eq(messages.id, id));
+  await db.delete(messagesTable).where(eq(messagesTable.id, id));
 }
 
 export async function clearThread(threadId: InsertMessageInput['threadId']) {
-  await db.delete(messages).where(eq(messages.threadId, threadId));
+  await db.delete(messagesTable).where(eq(messagesTable.threadId, threadId));
 }

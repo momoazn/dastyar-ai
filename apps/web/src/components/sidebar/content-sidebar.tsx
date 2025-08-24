@@ -7,6 +7,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
 } from '@/components/ui';
+import { fa } from '@/lib/persian-texts';
 import { ChatThreadsList } from './chat-threads-list';
 import { ImagesSidebar } from './images-sidebar';
 import { SummariesList } from './summaries-list';
@@ -32,10 +33,14 @@ export function ContentSidebar({ activeItem, onNew }: ContentSidebarProps) {
       <SidebarContent>
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
-            <ChatThreadsList />
-            <TranslationsList />
-            <SummariesList />
-            <ImagesSidebar />
+            {activeItem?.title === fa.navigation.chat && <ChatThreadsList />}
+            {activeItem?.title === fa.navigation.translation && (
+              <TranslationsList />
+            )}
+            {activeItem?.title === fa.navigation.summarize && <SummariesList />}
+            {activeItem?.title === fa.navigation.imageGeneration && (
+              <ImagesSidebar />
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

@@ -1,3 +1,4 @@
+import type { ProviderFactoriesRegistry, ProviderListRegistry } from '@/config';
 import { ModelProviderEnum } from '@/config';
 import type { Model } from '@/database/schema';
 import { geminiFactories, geminiListFns, type geminiProvider } from './gemini';
@@ -13,7 +14,6 @@ import {
   openrouterListFns,
   type openrouterProvider,
 } from './openrouter';
-import type { ProviderFactoriesRegistry, ProviderListRegistry } from '@/config';
 
 // Merge registries
 export const providerFactories: ProviderFactoriesRegistry = {

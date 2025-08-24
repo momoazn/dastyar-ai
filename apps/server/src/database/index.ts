@@ -1,6 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { getConfig } from '../config';
+import type * as schema from './schema';
 
 const FILE_PROTOCOL_RE = /^file:/;
 
@@ -20,5 +21,5 @@ const sqlite = new Database(resolveDatabasePath(), {
   create: true,
   strict: true,
 });
-export const db = drizzle(sqlite);
+export const db = drizzle<typeof schema>(sqlite);
 export { sqlite };

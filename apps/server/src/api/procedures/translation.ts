@@ -1,7 +1,7 @@
 import { generateObject, generateText } from 'ai';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, translations } from '../../database/schema';
+import { models, translationsTable } from '../../database/schema';
 import {
   deleteTranslation,
   getTranslation,
@@ -182,7 +182,7 @@ export const translationProcedures = {
 
       const id = generateId(15);
       const created = await context.db
-        .insert(translations)
+        .insert(translationsTable)
         .values({
           id,
           sourceText: input.text,

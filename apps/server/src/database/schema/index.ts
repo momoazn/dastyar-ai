@@ -95,10 +95,9 @@ export type SelectThreadOutput = z.infer<typeof selectThreadSchema>;
 /*
   Messages table – individual messages inside a thread
 */
-export const messages = sqliteTable('messages', {
-  id: text('id', { length: 15 }).primaryKey().notNull(),
-  content: text('content').notNull(),
-  reasoning: text('reasoning'),
+export const messagesTable = sqliteTable('messages', {
+  id: text('id', { length: 20 }).primaryKey().notNull(),
+  parts: text('parts', { mode: 'json' }).notNull(),
   status: text('status', {
     enum: Object.values(MessageStatusEnum) as [string, ...string[]],
   }),
@@ -106,8 +105,7 @@ export const messages = sqliteTable('messages', {
     enum: Object.values(MessageRoleEnum) as [string, ...string[]],
   }),
   modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
-  sentAt: integer('sentAt', { mode: 'timestamp' }),
-  threadId: text('thread')
+  threadId: text('threadId')
     .notNull()
     .references(() => threads.id, { onDelete: 'cascade' }),
   createdAt: integer('created', { mode: 'timestamp' }).default(
@@ -118,8 +116,8 @@ export const messages = sqliteTable('messages', {
   ),
 });
 
-export const insertMessageSchema = createInsertSchema(messages);
-export const selectMessageSchema = createSelectSchema(messages);
+export const insertMessageSchema = createInsertSchema(messagesTable);
+export const selectMessageSchema = createSelectSchema(messagesTable);
 
 export type InsertMessageInput = z.infer<typeof insertMessageSchema>;
 export type SelectMessageOutput = z.infer<typeof selectMessageSchema>;
@@ -127,7 +125,7 @@ export type SelectMessageOutput = z.infer<typeof selectMessageSchema>;
 /*
   Translations table – stores translation jobs & results
 */
-export const translations = sqliteTable('translations', {
+export const translationsTable = sqliteTable('translations', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   translatedText: text('translatedText'),
@@ -149,8 +147,8 @@ export const translations = sqliteTable('translations', {
   ),
 });
 
-export const insertTranslationSchema = createInsertSchema(translations);
-export const selectTranslationSchema = createSelectSchema(translations);
+export const insertTranslationSchema = createInsertSchema(translationsTable);
+export const selectTranslationSchema = createSelectSchema(translationsTable);
 
 export type InsertTranslationInput = z.infer<typeof insertTranslationSchema>;
 export type SelectTranslationOutput = z.infer<typeof selectTranslationSchema>;
@@ -158,7 +156,7 @@ export type SelectTranslationOutput = z.infer<typeof selectTranslationSchema>;
 /*
   Summaries table – stores summary jobs & results
 */
-export const summaries = sqliteTable('summaries', {
+export const summariesTable = sqliteTable('summaries', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   summaryText: text('summaryText'),
@@ -177,8 +175,8 @@ export const summaries = sqliteTable('summaries', {
   ),
 });
 
-export const insertSummarySchema = createInsertSchema(summaries);
-export const selectSummarySchema = createSelectSchema(summaries);
+export const insertSummarySchema = createInsertSchema(summariesTable);
+export const selectSummarySchema = createSelectSchema(summariesTable);
 
 export type InsertSummaryInput = z.infer<typeof insertSummarySchema>;
 export type SelectSummaryOutput = z.infer<typeof selectSummarySchema>;
@@ -186,7 +184,7 @@ export type SelectSummaryOutput = z.infer<typeof selectSummarySchema>;
 /*
   Generated Images table – stores AI-generated images metadata
 */
-export const generatedImages = sqliteTable('generated_images', {
+export const generatedImagesTable = sqliteTable('generated_images', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   prompt: text('prompt').notNull(),
   negativePrompt: text('negativePrompt'),
@@ -201,8 +199,10 @@ export const generatedImages = sqliteTable('generated_images', {
   ),
 });
 
-export const insertGeneratedImageSchema = createInsertSchema(generatedImages);
-export const selectGeneratedImageSchema = createSelectSchema(generatedImages);
+export const insertGeneratedImageSchema =
+  createInsertSchema(generatedImagesTable);
+export const selectGeneratedImageSchema =
+  createSelectSchema(generatedImagesTable);
 
 export type InsertGeneratedImageInput = z.infer<
   typeof insertGeneratedImageSchema

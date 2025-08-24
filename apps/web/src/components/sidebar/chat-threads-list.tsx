@@ -12,7 +12,6 @@ export function ChatThreadsList() {
 
   const listQuery = useQuery(
     orpc.threads.list.queryOptions({
-      includeArchived: false,
       enabled: isChatPage,
     })
   );

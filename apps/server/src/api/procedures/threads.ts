@@ -1,17 +1,15 @@
 import { z } from 'zod';
-import {
-  clearThread,
-  deleteMessage,
-  getMessagesByThread,
-} from '../../repositories/messages';
+import { clearThread, deleteMessage } from '../../repositories/messages';
 import {
   createThread,
   deleteThread,
   getThread,
   listThreads,
+  loadThreadMessages,
   renameThread,
   setArchived,
 } from '../../repositories/threads';
+import { convertDbMessagesToUiMessages } from '../../utils/chat';
 import { publicProcedure } from '../index';
 
 export const threadProcedures = {
@@ -21,22 +19,16 @@ export const threadProcedures = {
       const created = await createThread({ title: input?.title });
       return created;
     }),
-  list: publicProcedure
-    .input(
-      z
-        .object({ includeArchived: z.boolean().optional().default(false) })
-        .optional()
-    )
-    .handler(async ({ input }) => {
-      try {
-        const rows = await listThreads({
-          includeArchived: input?.includeArchived,
-        });
-        return rows;
-      } catch {
-        return [] as const;
-      }
-    }),
+  list: publicProcedure.handler(async () => {
+    try {
+      const rows = await listThreads({
+        includeArchived: false,
+      });
+      return rows;
+    } catch {
+      return [] as const;
+    }
+  }),
   get: publicProcedure
     .input(z.object({ id: z.string() }))
     .handler(async ({ input }) => {
@@ -74,13 +66,8 @@ export const messageProcedures = {
       })
     )
     .handler(async ({ input }) => {
-      const rows = await getMessagesByThread({
-        threadId: input.threadId,
-        limit: input.limit,
-        cursor: input.cursor ?? null,
-        order: input.order ?? 'desc',
-      });
-      return rows;
+      const messages = await loadThreadMessages(input.threadId);
+      return convertDbMessagesToUiMessages(messages);
     }),
   delete: publicProcedure
     .input(z.object({ id: z.string() }))

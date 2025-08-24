@@ -10,18 +10,16 @@ CREATE TABLE `generated_images` (
 );
 --> statement-breakpoint
 CREATE TABLE `messages` (
-	`id` text(15) PRIMARY KEY NOT NULL,
-	`content` text NOT NULL,
-	`reasoning` text,
+	`id` text(20) PRIMARY KEY NOT NULL,
+	`parts` text NOT NULL,
 	`status` text,
 	`role` text,
 	`modelId` text,
-	`sentAt` integer,
-	`thread` text NOT NULL,
+	`threadId` text NOT NULL,
 	`created` integer DEFAULT (unixepoch()),
 	`updated` integer DEFAULT (unixepoch()),
 	FOREIGN KEY (`modelId`) REFERENCES `models`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`thread`) REFERENCES `threads`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`threadId`) REFERENCES `threads`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `models` (

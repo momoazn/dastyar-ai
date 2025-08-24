@@ -1,35 +1,38 @@
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
+  generateId,
   streamText,
   type UIMessage,
   wrapLanguageModel,
 } from 'ai';
 import { Hono } from 'hono';
-import { z } from 'zod';
+import { MessageRoleEnum, MessageStatusEnum } from '../database/schema';
+import { saveMessage } from '../repositories/messages';
+import { getModelById } from '../repositories/models';
 import {
-  getMessagesByThread,
-  saveMessages,
-  updateMessage,
-} from '../repositories/messages';
-import { getModelById, getModelByName } from '../repositories/models';
-import { getThread, updateThreadOnNewMessage } from '../repositories/threads';
+  getThread,
+  loadThreadMessages,
+  updateThreadOnNewMessage,
+} from '../repositories/threads';
 import { getProviderForModel } from '../services/ai-providers';
-import { generateId } from '../utils/id-generator';
-import { extractTextFromParts } from '../utils/text-extractor';
+import { convertDbMessagesToUiMessages } from '../utils/chat';
+
+const SYSTEM_PROMPT = `
+You are a helpful assistant that can answer questions.
+`;
 
 const app = new Hono();
 
-const sendMessageSchema = z.object({
-  messages: z.array(z.any()).default([]),
-  modelId: z.string(),
-  threadId: z.string(),
-});
-
 app.post('/', async (c) => {
   try {
-    const body = sendMessageSchema.parse(await c.req.json());
-    const uiMessages: UIMessage[] = body.messages as UIMessage[];
+    const body = (await c.req.json()) as {
+      message: UIMessage;
+      modelId: string;
+      threadId: string;
+    };
+
+    console.log('======> body', body);
 
     const threadId = body.threadId;
     if (threadId) {
@@ -39,44 +42,30 @@ app.post('/', async (c) => {
       }
     }
 
-    // Resolve model by id or name
-    let model = await getModelById(body.modelId);
-    if (!model) {
-      model = await getModelByName(body.modelId);
-    }
+    console.log('======> threadId', threadId);
+
+    // Resolve model by id
+    const model = await getModelById(body.modelId);
     if (!model) {
       return c.json({ error: 'Model not found' }, 400);
     }
     const providerModel = getProviderForModel(model);
 
-    // Persist latest user text and create assistant placeholder (single DB hit)
-    const latestUserText = getLatestUserText(uiMessages);
-    let assistantPlaceholderId: string | undefined;
-    if (threadId && latestUserText) {
-      const result = await saveMessages([
-        {
-          threadId,
-          role: 'user',
-          content: latestUserText,
-          modelId: null,
-          status: null,
-        },
-        {
-          threadId,
-          role: 'assistant',
-          content: '',
-          modelId: model.id,
-          status: 'streaming',
-        },
-      ]);
-      assistantPlaceholderId = result.ids[1];
-      await updateThreadOnNewMessage(threadId);
-    }
+    console.log('======> model', model);
 
-    // Build conversation history excluding the assistant placeholder (if any)
-    const history: UIMessage[] = threadId
-      ? await loadThreadHistory(threadId, assistantPlaceholderId)
-      : [];
+    await saveMessage({
+      id: body.message.id,
+      parts: body.message.parts,
+      modelId: model.id,
+      status: MessageStatusEnum.FINISHED,
+      threadId,
+      role: MessageRoleEnum.USER,
+    });
+
+    console.log('======> body.message.id', body.message.id);
+
+    const messages = await loadThreadMessages(threadId);
+    console.log('======> messages', messages);
 
     const result = streamText({
       model: wrapLanguageModel({
@@ -86,30 +75,31 @@ app.post('/', async (c) => {
           separator: '\n',
         }),
       }),
-      messages: convertToModelMessages(history),
-      system: 'You are a helpful assistant that can answer questions.',
+      messages: convertToModelMessages(convertDbMessagesToUiMessages(messages)),
+      system: SYSTEM_PROMPT,
     });
+    console.log('======> result', result);
 
     return result.toUIMessageStreamResponse({
-      originalMessages: uiMessages,
-      generateMessageId: () => generateId(15),
+      originalMessages: convertDbMessagesToUiMessages(messages),
+      generateMessageId: () => generateId(),
       sendReasoning: true,
       onFinish: async ({ responseMessage }) => {
         if (!threadId) {
           return;
         }
         try {
-          const { content, reasoning } = extractTextFromParts(responseMessage);
-          await updateMessage({
-            id: assistantPlaceholderId as string,
-            content,
-            reasoning,
+          await saveMessage({
+            id: responseMessage.id,
+            threadId,
+            parts: responseMessage.parts,
             modelId: model.id,
-            status: 'finished',
-            sentAt: new Date(),
+            status: MessageStatusEnum.FINISHED,
+            role: MessageRoleEnum.ASSISTANT,
           });
-          await updateThreadOnNewMessage(threadId);
-        } catch {
+          await updateThreadOnNewMessage(threadId, new Date());
+        } catch (error) {
+          console.error('======> error', error);
           return;
         }
       },
@@ -119,46 +109,9 @@ app.post('/', async (c) => {
       error && typeof error === 'object' && 'message' in error
         ? String((error as { message?: unknown }).message)
         : undefined;
+    console.error('======> error in chat route', error);
     return c.json({ error: 'Bad request', details: message }, 400);
   }
 });
-
-const loadThreadHistory = async (
-  threadId: string,
-  excludeMessageId?: string
-): Promise<UIMessage[]> => {
-  const rows = await getMessagesByThread({ threadId });
-  const ascending = [...rows].reverse();
-  const filtered = excludeMessageId
-    ? ascending.filter((row) => row.id !== excludeMessageId)
-    : ascending;
-  return filtered.map((row) => ({
-    id: row.id,
-    role: row.role as 'user' | 'assistant',
-    parts: [{ type: 'text', text: row.content ?? '' }],
-  }));
-};
-
-const getLatestUserText = (messages: UIMessage[]): string | undefined => {
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const message = messages[i];
-    if (message.role !== 'user') {
-      continue;
-    }
-    const combined = message.parts
-      .reduce((acc, part) => {
-        if (part.type === 'text') {
-          return acc + part.text;
-        }
-        return acc;
-      }, '')
-      .trim();
-    if (combined.length > 0) {
-      return combined;
-    }
-    return;
-  }
-  return;
-};
 
 export default app;

@@ -1,8 +1,14 @@
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
+import type { Json } from 'drizzle-zod';
 import { db } from '../database';
-import type { InsertThreadInput, SelectThreadOutput } from '../database/schema';
+import type {
+  InsertThreadInput,
+  SelectMessageOutput,
+  SelectThreadOutput,
+} from '../database/schema';
 import {
   insertThreadSchema,
+  messagesTable,
   selectThreadSchema,
   threads,
 } from '../database/schema';
@@ -68,3 +74,25 @@ export async function updateThreadOnNewMessage(
     .set({ lastMessageAt: date })
     .where(eq(threads.id, threadId));
 }
+
+export const loadThreadMessages = async (
+  threadId: string
+): Promise<SelectMessageOutput[]> => {
+  try {
+    const result = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.threadId, threadId))
+      .orderBy(asc(messagesTable.createdAt));
+
+    console.log('======> result', result);
+
+    return result.map((message) => ({
+      ...message,
+      parts: message.parts as Json,
+    }));
+  } catch (error) {
+    console.error('======> error in loadThreadMessages', error);
+    return [];
+  }
+};

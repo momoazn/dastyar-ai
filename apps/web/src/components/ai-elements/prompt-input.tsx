@@ -1,5 +1,3 @@
-'use client';
-
 import type { ChatStatus } from 'ai';
 import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';
 import type {
@@ -47,6 +45,11 @@ export const PromptInputTextarea = ({
 }: PromptInputTextareaProps) => {
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === 'Enter') {
+      // Don't submit if IME composition is in progress
+      if (e.nativeEvent.isComposing) {
+        return;
+      }
+
       if (e.shiftKey) {
         // Allow newline
         return;
@@ -64,19 +67,9 @@ export const PromptInputTextarea = ({
   return (
     <Textarea
       className={cn(
-        'w-full',
-        'max-h-[6lh]',
-        'resize-none',
-        'rounded-none',
-        'border-none',
-        'p-3',
-        'outline-none',
-        'ring-0',
+        'w-full resize-none rounded-none border-none p-3 shadow-none outline-none ring-0',
+        'field-sizing-content max-h-[6lh] bg-transparent dark:bg-transparent',
         'focus-visible:ring-0',
-        'shadow-none',
-        'bg-transparent',
-        'dark:bg-transparent',
-        'field-sizing-content',
         className
       )}
       name="message"

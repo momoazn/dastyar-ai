@@ -9,8 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1756031925870,
-      "tag": "0000_friendly_scarlet_spider",
+      "when": 1756069026793,
+      "tag": "0000_curly_boom_boom",
       "breakpoints": true
     }
   ]
@@ -18,7 +18,7 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "8ded48cc-9b84-4da8-9406-72870b3d2702",
+  "id": "57765b11-f5db-4970-84b2-a74b8f9148a7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -94,23 +94,16 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(20)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
-        "content": {
-          "name": "content",
+        "parts": {
+          "name": "parts",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "reasoning": {
-          "name": "reasoning",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "status": {
@@ -134,15 +127,8 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "sentAt": {
-          "name": "sentAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "thread": {
-          "name": "thread",
+        "threadId": {
+          "name": "threadId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -180,12 +166,12 @@ export const migrationData: { [key: string]: string } = {
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "messages_thread_threads_id_fk": {
-          "name": "messages_thread_threads_id_fk",
+        "messages_threadId_threads_id_fk": {
+          "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
           "columnsFrom": [
-            "thread"
+            "threadId"
           ],
           "columnsTo": [
             "id"
@@ -500,7 +486,7 @@ export const migrationData: { [key: string]: string } = {
     "indexes": {}
   }
 }`,
-  '0000_friendly_scarlet_spider.sql': `CREATE TABLE \`generated_images\` (
+  '0000_curly_boom_boom.sql': `CREATE TABLE \`generated_images\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`prompt\` text NOT NULL,
 	\`negativePrompt\` text,
@@ -512,18 +498,16 @@ export const migrationData: { [key: string]: string } = {
 );
 --> statement-breakpoint
 CREATE TABLE \`messages\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
-	\`content\` text NOT NULL,
-	\`reasoning\` text,
+	\`id\` text(20) PRIMARY KEY NOT NULL,
+	\`parts\` text NOT NULL,
 	\`status\` text,
 	\`role\` text,
 	\`modelId\` text,
-	\`sentAt\` integer,
-	\`thread\` text NOT NULL,
+	\`threadId\` text NOT NULL,
 	\`created\` integer DEFAULT (unixepoch()),
 	\`updated\` integer DEFAULT (unixepoch()),
 	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (\`thread\`) REFERENCES \`threads\`(\`id\`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (\`threadId\`) REFERENCES \`threads\`(\`id\`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE \`models\` (

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8ded48cc-9b84-4da8-9406-72870b3d2702",
+  "id": "57765b11-f5db-4970-84b2-a74b8f9148a7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -77,23 +77,16 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(20)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
-        "content": {
-          "name": "content",
+        "parts": {
+          "name": "parts",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "reasoning": {
-          "name": "reasoning",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "status": {
@@ -117,15 +110,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sentAt": {
-          "name": "sentAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "thread": {
-          "name": "thread",
+        "threadId": {
+          "name": "threadId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -159,11 +145,11 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "messages_thread_threads_id_fk": {
-          "name": "messages_thread_threads_id_fk",
+        "messages_threadId_threads_id_fk": {
+          "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": ["thread"],
+          "columnsFrom": ["threadId"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"

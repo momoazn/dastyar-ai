@@ -1,43 +1,38 @@
-import {
-  Corner as ScrollAreaCorner,
-  Root as ScrollAreaRoot,
-  ScrollAreaScrollbar as ScrollAreaScrollbarRadix,
-  ScrollAreaThumb as ScrollAreaThumbRadix,
-  Viewport as ScrollAreaViewport,
-} from '@radix-ui/react-scroll-area';
+import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import type * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
-export function ScrollArea({
+function ScrollArea({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof ScrollAreaRoot>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
-    <ScrollAreaRoot
+    <ScrollAreaPrimitive.Root
       className={cn('relative', className)}
       data-slot="scroll-area"
       {...props}
     >
-      <ScrollAreaViewport
+      <ScrollAreaPrimitive.Viewport
         className="size-full rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:ring-ring/50"
         data-slot="scroll-area-viewport"
       >
         {children}
-      </ScrollAreaViewport>
+      </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
-      <ScrollAreaCorner />
-    </ScrollAreaRoot>
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
   );
 }
 
-export function ScrollBar({
+function ScrollBar({
   className,
   orientation = 'vertical',
   ...props
-}: React.ComponentProps<typeof ScrollAreaScrollbarRadix>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
   return (
-    <ScrollAreaScrollbarRadix
+    <ScrollAreaPrimitive.ScrollAreaScrollbar
       className={cn(
         'flex touch-none select-none p-px transition-colors',
         orientation === 'vertical' &&
@@ -50,10 +45,12 @@ export function ScrollBar({
       orientation={orientation}
       {...props}
     >
-      <ScrollAreaThumbRadix
+      <ScrollAreaPrimitive.ScrollAreaThumb
         className="relative flex-1 rounded-full bg-border"
         data-slot="scroll-area-thumb"
       />
-    </ScrollAreaScrollbarRadix>
+    </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );
 }
+
+export { ScrollArea, ScrollBar };
