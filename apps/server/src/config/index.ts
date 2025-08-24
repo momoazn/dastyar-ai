@@ -8,6 +8,14 @@ export type AppConfig = {
     corsOrigin: string;
     host: string;
   };
+  logging: {
+    level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
+    dir: string;
+    file: string; // resolved full path
+    pretty: boolean; // pretty print to console in development
+    redactPaths: string[]; // pino redact paths
+    enableHttpLogging: boolean; // hono/orpc request logs
+  };
   web: {
     distDir: string;
   };
@@ -54,10 +62,12 @@ export type AppConfig = {
 const detectEnvironment = (): 'development' | 'production' => {
   // Check if we're running as a compiled binary
   // For Bun binaries, process.execPath will be the binary path
-  if (process.execPath?.endsWith('dastyar-ai') || 
-      process.execPath?.endsWith('dastyar-ai.exe') ||
-      process.argv[0]?.endsWith('dastyar-ai') || 
-      process.argv[0]?.endsWith('dastyar-ai.exe')) {
+  if (
+    process.execPath?.endsWith('dastyar-ai') ||
+    process.execPath?.endsWith('dastyar-ai.exe') ||
+    process.argv[0]?.endsWith('dastyar-ai') ||
+    process.argv[0]?.endsWith('dastyar-ai.exe')
+  ) {
     return 'production';
   }
 
@@ -100,6 +110,19 @@ const getDevelopmentDefaults = (): AppConfig => ({
     port: Number(process.env.SERVER_PORT) || 3000,
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3001',
     host: '127.0.0.1',
+  },
+  logging: {
+    level: (process.env.LOG_LEVEL as AppConfig['logging']['level']) || 'debug',
+    dir: process.env.LOG_DIR || path.join(getWorkspaceRoot(), 'logs'),
+    file: '',
+    pretty: process.env.LOG_PRETTY !== 'false',
+    redactPaths: [
+      'ai.providers.openai.apiKey',
+      'ai.providers.groq.apiKey',
+      'ai.providers.gemini.apiKey',
+      'ai.providers.openrouter.apiKey',
+    ],
+    enableHttpLogging: true,
   },
   web: {
     distDir:
@@ -167,6 +190,19 @@ const getProductionDefaults = (): AppConfig => {
       corsOrigin: process.env.CORS_ORIGIN || '*',
       host: '0.0.0.0',
     },
+    logging: {
+      level: (process.env.LOG_LEVEL as AppConfig['logging']['level']) || 'info',
+      dir: process.env.LOG_DIR || path.join(execDir, 'logs'),
+      file: '',
+      pretty: false,
+      redactPaths: [
+        'ai.providers.openai.apiKey',
+        'ai.providers.groq.apiKey',
+        'ai.providers.gemini.apiKey',
+        'ai.providers.openrouter.apiKey',
+      ],
+      enableHttpLogging: true,
+    },
     web: {
       distDir: process.env.WEB_DIST_DIR || path.join(execDir, 'web'),
     },
@@ -203,7 +239,6 @@ const getProductionDefaults = (): AppConfig => {
     },
     images: {
       dir: process.env.IMAGES_DIR || path.join(execDir, 'generated-images'),
-      thumbnailDir: path.join(process.env.IMAGES_DIR || path.join(execDir, 'generated-images'), 'thumbnails'),
       maxFileSize: 50 * 1024 * 1024, // 50MB
       allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
     },
@@ -237,10 +272,18 @@ const validateConfig = (config: AppConfig): void => {
       fs.mkdirSync(config.images.dir, { recursive: true });
     }
 
-    if (!fs.existsSync(config.images.thumbnailDir)) {
-      fs.mkdirSync(config.images.thumbnailDir, { recursive: true });
-    }
+    // thumbnailDir removed from type; ensure only base dir exists in prod
   }
+
+  // Ensure logging directory exists and compute file path
+  if (!fs.existsSync(config.logging.dir)) {
+    fs.mkdirSync(config.logging.dir, { recursive: true });
+  }
+  // default logfile path
+  (config.logging as { file: string }).file = path.join(
+    config.logging.dir,
+    'server.log'
+  );
 
   // Validate port
   if (config.server.port < 1 || config.server.port > 65_535) {
@@ -344,6 +387,9 @@ export const getConfig = (): AppConfig => {
   );
   console.log(`💾 Database: ${config.database.file}`);
   console.log(`🌐 Web assets: ${config.web.distDir}`);
+  console.log(
+    `🪵 Logs: ${config.logging.file} (level: ${config.logging.level})`
+  );
   console.log(
     `🎙️  Whisper models: ${config.whisper.modelsDir} (remote: ${config.whisper.allowRemoteModels})`
   );
