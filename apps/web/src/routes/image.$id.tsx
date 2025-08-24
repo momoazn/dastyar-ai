@@ -1,11 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';
 import { Calendar, ImagePlus } from 'lucide-react';
 import { Alert, AlertDescription, Card } from '@/components/ui';
-import {
-  type GeneratedImage,
-  useImageGeneration,
-} from '@/hooks/use-image-generation';
+// import type { GeneratedImage } from '@/hooks/use-image-generation';
 import { fa } from '@/lib/persian-texts';
+import { orpc } from '@/utils/orpc';
 
 export const Route = createFileRoute('/image/$id')({
   component: RouteComponent,
@@ -13,15 +12,11 @@ export const Route = createFileRoute('/image/$id')({
 
 function RouteComponent() {
   const { id } = useParams({ from: '/image/$id' });
-  const { images, isLoadingImages, isGenerating } = useImageGeneration();
+  const { data: image, isLoading: isLoadingImage } = useQuery(
+    orpc.images.get.queryOptions({ input: { id } })
+  );
 
-  const imagesArray = Array.isArray(images)
-    ? (images as unknown as GeneratedImage[])
-    : [];
-  const image = imagesArray.find((img) => img.id === id);
-  // current index reserved for future navigation if needed
-
-  // simplified view: no navigation or inline actions
+  // simplified view: fetch only the selected image
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) {
@@ -58,7 +53,7 @@ function RouteComponent() {
                 </>
               );
             }
-            if (isLoadingImages || isGenerating) {
+            if (isLoadingImage) {
               return (
                 <div className="flex flex-1 items-center justify-center">
                   <Card className="w-[320px] p-6">

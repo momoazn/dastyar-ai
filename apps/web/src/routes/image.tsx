@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from '@tanstack/react-router';
+import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { ChevronRight, ImagePlus, Send, Settings2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -56,12 +50,13 @@ function ImageRouteComponent() {
   const location = useLocation();
   const isDetailView =
     location.pathname.startsWith('/image/') && location.pathname !== '/image';
-  const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [settings, setSettings] =
     useState<Omit<ImageGenerationParams, 'prompt'>>(DEFAULT_SETTINGS);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [lastGeneratedImage, setLastGeneratedImage] =
+    useState<GeneratedImage | null>(null);
 
   const {
     images,
@@ -90,8 +85,8 @@ function ImageRouteComponent() {
       negative_prompt: negativePrompt.trim(),
     };
     const created = await generateImageAsync(params);
-    if (created?.id) {
-      navigate({ to: '/image/$id', params: { id: created.id } });
+    if (created) {
+      setLastGeneratedImage(created as unknown as GeneratedImage);
     }
   };
 
@@ -160,38 +155,24 @@ function ImageRouteComponent() {
           )}
         </div>
 
-        {/* Recent Images Preview */}
-        {(() => {
-          const imagesArray = Array.isArray(images)
-            ? (images as unknown as GeneratedImage[]).slice(0, 6)
-            : [];
-
-          if (imagesArray.length > 0) {
-            return (
-              <Card className="p-4">
-                <h3 className="mb-3 font-medium text-sm">تصاویر اخیر</h3>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                  {imagesArray.map((image: GeneratedImage) => (
-                    <Link
-                      className="group relative aspect-square overflow-hidden rounded-md bg-muted"
-                      key={image.id}
-                      params={{ id: image.id }}
-                      to="/image/$id"
-                    >
-                      <img
-                        alt={image.prompt}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        src={image.imageUrl}
-                      />
-                      <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
-                    </Link>
-                  ))}
-                </div>
-              </Card>
-            );
-          }
-          return null;
-        })()}
+        {/* Session Preview (only after a generation in this session) */}
+        <Card className="p-4">
+          <h3 className="mb-3 font-medium text-sm">پیش‌نمایش تصویر</h3>
+          <div className="mx-auto flex size-52 items-center justify-center overflow-hidden rounded-md bg-muted sm:h-56 sm:w-56 md:h-64 md:w-64">
+            {lastGeneratedImage ? (
+              <img
+                alt={lastGeneratedImage.prompt}
+                className="h-full w-full object-contain"
+                src={lastGeneratedImage.imageUrl}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                <ImagePlus className="mb-2 size-14" />
+                <span className="text-sm">هنوز تصویری تولید نشده است</span>
+              </div>
+            )}
+          </div>
+        </Card>
 
         <Card className="p-4">
           <div className="space-y-4">
