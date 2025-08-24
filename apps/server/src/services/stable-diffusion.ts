@@ -2,8 +2,9 @@
  * Service for interacting with the Stable Diffusion A1111 API
  */
 
-const STABLE_DIFFUSION_BASE_URL =
-  process.env.STABLE_DIFFUSION_URL || 'http://localhost:7860';
+import { getConfig } from '../config/index.js';
+
+const STABLE_DIFFUSION_BASE_URL = getConfig().stableDiffusion.url;
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 

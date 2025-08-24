@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getConfig } from '../config/index.js';
 
 const mkdirp = (dirPath: string) => {
   if (!fs.existsSync(dirPath)) {
@@ -143,7 +144,10 @@ const main = async () => {
     .flatMap((arg) => arg.split(','))
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
-  const fallback = (process.env.OFFLINE_MODEL || 'Xenova/whisper-tiny').trim();
+  const cfg = getConfig();
+  const defaultWhisperModel =
+    cfg.whisper.allowedModels?.[0] || 'Xenova/whisper-tiny';
+  const fallback = (process.env.OFFLINE_MODEL || defaultWhisperModel).trim();
   const modelIds = cliArgs.length > 0 ? cliArgs : [fallback];
 
   await Promise.all(
