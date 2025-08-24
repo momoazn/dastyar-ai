@@ -1,36 +1,21 @@
 import {
   createFileRoute,
+  Link,
+  Outlet,
+  useLocation,
   useNavigate,
-  useSearch,
 } from '@tanstack/react-router';
-import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Eye,
-  ImagePlus,
-  Maximize2,
-  Send,
-  Settings2,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ChevronRight, ImagePlus, Send, Settings2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   Alert,
   AlertDescription,
-  Badge,
   Button,
   Card,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-  ScrollArea,
   Select,
   SelectContent,
   SelectItem,
@@ -39,7 +24,6 @@ import {
   Slider,
   Textarea,
 } from '@/components/ui';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type {
   GeneratedImage,
   ImageGenerationParams,
@@ -48,7 +32,7 @@ import { useImageGeneration } from '@/hooks/use-image-generation';
 import { fa } from '@/lib/persian-texts';
 
 const DEFAULT_SETTINGS: Omit<ImageGenerationParams, 'prompt'> = {
-  steps: 20,
+  steps: 5,
   cfg_scale: 7.5,
   negative_prompt: '',
   sampler_name: 'Euler a',
@@ -66,17 +50,13 @@ const IMAGE_SIZES = [
 
 export const Route = createFileRoute('/image')({
   component: ImageRouteComponent,
-  validateSearch: (search: Record<string, unknown>): { id?: string } => {
-    return {
-      id: search.id as string | undefined,
-    };
-  },
 });
 
 function ImageRouteComponent() {
-  const { id } = useSearch({ from: '/image' });
+  const location = useLocation();
+  const isDetailView =
+    location.pathname.startsWith('/image/') && location.pathname !== '/image';
   const navigate = useNavigate();
-
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [settings, setSettings] =
@@ -88,266 +68,12 @@ function ImageRouteComponent() {
     samplers,
     isServiceAvailable,
     clearHistory,
-    deleteImage,
-    downloadImage,
-    isLoadingImages,
-    generateImage,
+    // generateImage,
+    generateImageAsync,
     isGenerating,
   } = useImageGeneration();
 
-  if (id) {
-    const imagesArray = Array.isArray(images)
-      ? (images as unknown as GeneratedImage[])
-      : [];
-    const image = imagesArray.find((img) => img.id === id);
-    const currentIndex = imagesArray.findIndex((img) => img.id === id);
-
-    const goToPrevious = () => {
-      const prevIndex =
-        currentIndex > 0 ? currentIndex - 1 : imagesArray.length - 1;
-      const prevImage = imagesArray[prevIndex];
-      if (prevImage) {
-        navigate({ to: '/image', search: { id: prevImage.id } });
-      }
-    };
-
-    const goToNext = () => {
-      const nextIndex =
-        currentIndex < imagesArray.length - 1 ? currentIndex + 1 : 0;
-      const nextImage = imagesArray[nextIndex];
-      if (nextImage) {
-        navigate({ to: '/image', search: { id: nextImage.id } });
-      }
-    };
-
-    const handleDownload = () => {
-      if (image) {
-        const link = document.createElement('a');
-        link.href = `/api/images/${image.id}/download`;
-        link.download = `image-${image.id}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    };
-
-    const formatDate = (dateStr: string | null) => {
-      if (!dateStr) {
-        return 'نامشخص';
-      }
-      return new Date(dateStr).toLocaleDateString('fa-IR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
-
-    return (
-      <main className="container mx-auto h-full max-w-7xl p-4">
-        <div className="flex h-full gap-6">
-          {/* Image Preview Section */}
-          <div className="flex flex-1 flex-col">
-            {(() => {
-              if (image) {
-                return (
-                  <>
-                    {/* Image Navigation Header */}
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          disabled={imagesArray.length <= 1}
-                          onClick={goToPrevious}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-muted-foreground text-sm">
-                          {currentIndex + 1} از {imagesArray.length}
-                        </span>
-                        <Button
-                          disabled={imagesArray.length <= 1}
-                          onClick={goToNext}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <Maximize2 className="mr-2 h-4 w-4" />
-                              تمام صفحه
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="h-full max-h-[95vh] w-full max-w-[95vw] p-2">
-                            <img
-                              alt={image.prompt}
-                              className="h-full w-full rounded-lg object-contain"
-                              src={image.imageUrl}
-                            />
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button
-                          onClick={handleDownload}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          دانلود
-                        </Button>
-
-                        <Button
-                          onClick={() => deleteImage(image.id)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          حذف
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Main Image */}
-                    <div className="mb-4 flex flex-1 items-center justify-center rounded-lg bg-muted/30 p-4">
-                      <img
-                        alt={image.prompt}
-                        className="max-h-full max-w-full rounded-lg object-contain shadow-lg"
-                        src={image.imageUrl}
-                      />
-                    </div>
-                  </>
-                );
-              }
-              if (isLoadingImages || isGenerating) {
-                return (
-                  <div className="flex flex-1 items-center justify-center">
-                    <Card className="w-[320px] p-6">
-                      <div className="space-y-4 text-center">
-                        <ImagePlus className="mx-auto h-12 w-12 animate-pulse text-primary" />
-                        <div>
-                          <h3 className="font-semibold">
-                            {fa.imageGeneration.generatingAlt}
-                          </h3>
-                          <p className="text-muted-foreground text-sm">
-                            {fa.imageGeneration.generatingDescription}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                );
-              }
-              return (
-                <div className="flex flex-1 items-center justify-center">
-                  <Alert>
-                    <AlertDescription>
-                      تصویر مورد نظر یافت نشد.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Metadata Panel */}
-          {image && (
-            <Card className="w-80 p-4">
-              <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <h3 className="font-semibold text-lg">جزئیات تصویر</h3>
-                  <Badge variant="outline">
-                    <Eye className="mr-1 h-3 w-3" />
-                    در حال مشاهده
-                  </Badge>
-                </div>
-
-                {/* Prompt */}
-                <div>
-                  <h4 className="mb-2 font-medium">دستور تولید</h4>
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-sm leading-relaxed">{image.prompt}</p>
-                  </div>
-                </div>
-
-                {/* Negative Prompt */}
-                {image.negativePrompt && (
-                  <div>
-                    <h4 className="mb-2 font-medium">دستور منفی</h4>
-                    <div className="rounded-lg bg-muted p-3">
-                      <p className="text-sm leading-relaxed">
-                        {image.negativePrompt}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Creation Date */}
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDate(image.createdAt)}</span>
-                </div>
-
-                {/* Settings */}
-                {image.settings && (
-                  <Collapsible>
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        className="w-full justify-between"
-                        size="sm"
-                        variant="outline"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Settings2 className="h-4 w-4" />
-                          تنظیمات تولید
-                        </div>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">مراحل:</span>
-                          <span>{image.settings?.steps || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            CFG Scale:
-                          </span>
-                          <span>{image.settings?.cfg_scale || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            نمونه‌گیر:
-                          </span>
-                          <span>{image.settings?.sampler_name || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">اندازه:</span>
-                          <span>
-                            {image.settings?.width || 'N/A'}×
-                            {image.settings?.height || 'N/A'}
-                          </span>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
-              </div>
-            </Card>
-          )}
-        </div>
-      </main>
-    );
-  }
-
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast.error(fa.imageGeneration.promptRequired);
       return;
@@ -363,10 +89,10 @@ function ImageRouteComponent() {
       prompt: prompt.trim(),
       negative_prompt: negativePrompt.trim(),
     };
-    generateImage(params);
-
-    // Navigate to a new image when generation completes
-    // The hook will handle the success/error states and toasts
+    const created = await generateImageAsync(params);
+    if (created?.id) {
+      navigate({ to: '/image/$id', params: { id: created.id } });
+    }
   };
 
   const handleSizeChange = (value: string) => {
@@ -385,6 +111,10 @@ function ImageRouteComponent() {
     }
     return `${settings.width}x${settings.height}`;
   };
+
+  if (isDetailView) {
+    return <Outlet />;
+  }
 
   return (
     <main className="container mx-auto h-full max-w-6xl p-4">
@@ -430,69 +160,38 @@ function ImageRouteComponent() {
           )}
         </div>
 
-        <ScrollArea className="flex-1 rounded-lg border">
-          {(() => {
-            const imagesArray = Array.isArray(images)
-              ? (images as unknown as GeneratedImage[])
-              : [];
-            if (isLoadingImages && imagesArray.length === 0) {
-              return (
-                <div className="flex h-48 items-center justify-center">
-                  <LoadingSpinner />
-                </div>
-              );
-            }
-            if (imagesArray.length === 0) {
-              return (
-                <div className="flex h-48 items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <ImagePlus className="mx-auto mb-3 h-12 w-12" />
-                    <p className="text-sm">{fa.imageGeneration.noImagesYet}</p>
-                  </div>
-                </div>
-              );
-            }
+        {/* Recent Images Preview */}
+        {(() => {
+          const imagesArray = Array.isArray(images)
+            ? (images as unknown as GeneratedImage[]).slice(0, 6)
+            : [];
+
+          if (imagesArray.length > 0) {
             return (
-              <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
-                {imagesArray.map((image: GeneratedImage) => (
-                  <div
-                    className="group relative aspect-square overflow-hidden rounded-lg bg-muted shadow-sm"
-                    key={image.id}
-                  >
-                    <img
-                      alt={image.prompt}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      src={image.imageUrl}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => downloadImage(image)}
-                          size="sm"
-                          variant="secondary"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          onClick={() => deleteImage(image.id)}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                      <p className="line-clamp-2 text-white text-xs">
-                        {image.prompt}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Card className="p-4">
+                <h3 className="mb-3 font-medium text-sm">تصاویر اخیر</h3>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                  {imagesArray.map((image: GeneratedImage) => (
+                    <Link
+                      className="group relative aspect-square overflow-hidden rounded-md bg-muted"
+                      key={image.id}
+                      params={{ id: image.id }}
+                      to="/image/$id"
+                    >
+                      <img
+                        alt={image.prompt}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        src={image.imageUrl}
+                      />
+                      <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
+                    </Link>
+                  ))}
+                </div>
+              </Card>
             );
-          })()}
-        </ScrollArea>
+          }
+          return null;
+        })()}
 
         <Card className="p-4">
           <div className="space-y-4">

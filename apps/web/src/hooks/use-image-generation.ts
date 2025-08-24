@@ -18,7 +18,7 @@ export interface GeneratedImage {
   imageUrl: string;
   prompt: string;
   negativePrompt?: string | null;
-  createdAt: string;
+  createdAt: string | null | Date;
   settings?: {
     steps: number;
     cfg_scale: number;
@@ -112,6 +112,34 @@ export function useImageGeneration() {
     [generateMutation, serviceStatus?.available]
   );
 
+  const generateImageAsync = useCallback(
+    async (settings: ImageGenerationParams) => {
+      if (!settings.prompt.trim()) {
+        toast.error('لطفاً توضیحات تصویر را وارد کنید');
+        return null;
+      }
+
+      if (generateMutation.isPending) {
+        toast.error('در حال تولید تصویر قبلی');
+        return null;
+      }
+
+      if (!serviceStatus?.available) {
+        toast.error('سرویس Stable Diffusion در دسترس نیست');
+        return null;
+      }
+
+      try {
+        const result = await generateMutation.mutateAsync(settings);
+        return result as unknown as GeneratedImage;
+      } catch {
+        // Error toast is handled in onError
+        return null;
+      }
+    },
+    [generateMutation, serviceStatus?.available]
+  );
+
   const deleteImage = useCallback(
     (imageId: string) => {
       deleteMutation.mutate({ id: imageId });
@@ -145,6 +173,7 @@ export function useImageGeneration() {
     isServiceAvailable: serviceStatus?.available,
     isLoadingImages,
     generateImage,
+    generateImageAsync,
     clearHistory,
     deleteImage,
     downloadImage,

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getConfig } from '../config/index';
+import { getConfig, isDevelopment } from '../config/index';
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
@@ -24,7 +24,6 @@ export class ImageStorageService {
     const timestamp = Date.now();
     return `${timestamp}-${id}.png`;
   }
-
 
   private getDateBasedDir(): string {
     const now = new Date();
@@ -70,7 +69,14 @@ export class ImageStorageService {
   }
 
   getImageUrl(id: string): string {
-    // This will return the API endpoint URL for serving the image
+    // In development, the web app runs on a different port than the server,
+    // so we must return an absolute URL to avoid broken links.
+    if (isDevelopment()) {
+      const baseUrl = `http://${this.config.server.host}:${this.config.server.port}`;
+      return `${baseUrl}/api/images/${id}/file`;
+    }
+
+    // In production, the server hosts the web assets under the same origin
     return `/api/images/${id}/file`;
   }
 

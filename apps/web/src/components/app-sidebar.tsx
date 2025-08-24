@@ -1,4 +1,4 @@
-import { useLocation } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import {
   ContentSidebar,
@@ -15,12 +15,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { createChatThread } = useCreateThread(activeItem?.url === '/chat');
   const { handleNewTranslation } = useTranslationActions();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleNew = () => {
     if (activeItem?.url === '/chat') {
       createChatThread();
     } else if (activeItem?.url === '/translation') {
       handleNewTranslation();
+    } else if (location.pathname.startsWith('/image')) {
+      navigate({ to: '/image' });
     }
   };
 
