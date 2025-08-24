@@ -222,7 +222,7 @@ function SummarizePage() {
             <h3 className="font-medium">{fa.summarize.sourceText}</h3>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">
-                {charCount} کاراکتر
+                {fa.general.charCount(charCount)}
               </span>
               <Button onClick={handlePaste} size="sm" variant="ghost">
                 <Clipboard className="h-4 w-4" />

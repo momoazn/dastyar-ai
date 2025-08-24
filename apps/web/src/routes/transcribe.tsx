@@ -180,7 +180,11 @@ function RouteComponent() {
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm">
-                <span>{language === 'fa' ? 'فارسی' : 'English'}</span>
+                <span>
+                  {language === 'fa'
+                    ? fa.languages.persian
+                    : fa.languages.english}
+                </span>
                 <Switch
                   aria-label="toggle input audio language"
                   checked={language === 'fa'}
@@ -191,7 +195,7 @@ function RouteComponent() {
               </div>
               <Select onValueChange={setModel} value={model}>
                 <SelectTrigger size="sm">
-                  <SelectValue placeholder="مدل" />
+                  <SelectValue placeholder={fa.modelSelection.model} />
                 </SelectTrigger>
                 <SelectContent>
                   {models?.map((m) => (
@@ -286,7 +290,7 @@ function RouteComponent() {
                   type="button"
                   variant="outline"
                 >
-                  <RefreshCcw className="size-4" /> تلاش مجدد
+                  <RefreshCcw className="size-4" /> {fa.general.retry}
                 </Button>
               )}
               <Button

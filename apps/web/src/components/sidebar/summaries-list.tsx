@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
 
 export function SummariesList() {
@@ -36,13 +37,13 @@ export function SummariesList() {
           search={{ id: s.id }}
           to="/summarize"
         >
-          {({ isActive }) => (
+          {({ isActive }: { isActive: boolean }) => (
             <>
               {isActive && (
                 <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
               )}
               <span className="font-medium">
-                {s.sourceText?.slice(0, 30) || 'بدون عنوان'}
+                {s.sourceText?.slice(0, 30) || fa.general.untitled}
               </span>
               <div className="flex items-center gap-0">
                 <Button

@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { Calendar, Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import type { GeneratedImage } from '@/hooks/use-image-generation';
+import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
 
 export function ImagesSidebar() {
@@ -129,7 +130,7 @@ export function ImagesSidebar() {
                 </div>
                 <div className="mt-1 flex items-center gap-1 text-sidebar-foreground/60 text-xs">
                   <Calendar className="h-3 w-3" />
-                  <span>{formatDate(image.createdAt)}</span>
+                  <span>{formatDate(image.createdAt as string)}</span>
                 </div>
               </div>
 
@@ -141,7 +142,7 @@ export function ImagesSidebar() {
                     handleDownload(e, image.id, `image-${image.id}.png`)
                   }
                   size="icon"
-                  title="دانلود تصویر"
+                  title={fa.imageGeneration.downloadImage}
                   variant="ghost"
                 >
                   <Download className="h-4 w-4" />
@@ -151,7 +152,7 @@ export function ImagesSidebar() {
                   disabled={deleteMutation.isPending}
                   onClick={(e) => handleDelete(e, image.id)}
                   size="icon"
-                  title="حذف تصویر"
+                  title={fa.imageGeneration.deleteImage}
                   variant="ghost"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -298,7 +298,7 @@ function TranslationPage() {
                   <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
                     <span>{fa.translation.translatedText}</span>
                     <Button
-                      aria-label="کپی ترجمه"
+                      aria-label={fa.translation.copyTranslation}
                       className="h-6 px-2"
                       disabled={!translatedText}
                       onClick={handleCopy}

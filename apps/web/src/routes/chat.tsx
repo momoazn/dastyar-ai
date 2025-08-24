@@ -24,6 +24,7 @@ import {
   useHydrateInitialMessages,
   useSendInitialPrompt,
 } from '@/hooks/use-chat-thread';
+import { fa } from '@/lib/persian-texts';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
 export const Route = createFileRoute('/chat')({
@@ -263,17 +264,15 @@ function ChatRouteComponent() {
               {status === 'error' ? (
                 <Alert className="mb-4" variant="destructive">
                   <AlertTriangle className="size-4" />
-                  <AlertTitle>خطا</AlertTitle>
-                  <AlertDescription>
-                    مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.
-                  </AlertDescription>
+                  <AlertTitle>{fa.general.error}</AlertTitle>
+                  <AlertDescription>{fa.chat.responseError}</AlertDescription>
                   <div className="mt-3">
                     <Button
                       onClick={handleRetryLastPrompt}
                       size="sm"
                       variant="outline"
                     >
-                      <RotateCcw className="mr-2 size-3" /> تلاش مجدد
+                      <RotateCcw className="mr-2 size-3" /> {fa.general.retry}
                     </Button>
                   </div>
                 </Alert>

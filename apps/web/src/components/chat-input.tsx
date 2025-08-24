@@ -68,9 +68,8 @@ export const ChatInput = memo(
       error: transcribeError,
     } = useMutation(
       orpc.transcribe.transcribe.mutationOptions({
-        onSuccess: (data) => {
+        onSuccess: (transcribedText) => {
           // Append transcribed text to existing prompt
-          const transcribedText = data.text;
           if (transcribedText.trim()) {
             setPrompt((prev) => {
               const separator = prev.trim() ? ' ' : '';
@@ -98,8 +97,6 @@ export const ChatInput = memo(
           file: recordedFile,
           language,
           model,
-          responseFormat: 'json',
-          includeTimestamps: false,
         });
       }
     }, [recordedFile, transcribe, prompt]);
@@ -288,12 +285,10 @@ export const ChatInput = memo(
                           file: recordedFile,
                           language,
                           model,
-                          responseFormat: 'json',
-                          includeTimestamps: false,
                         });
                       }
                     }}
-                    title="تلاش مجدد برای تبدیل صدا"
+                    title={fa.chat.retryVoiceTranscription}
                     variant="outline"
                   >
                     <RefreshCcw className="size-4" />

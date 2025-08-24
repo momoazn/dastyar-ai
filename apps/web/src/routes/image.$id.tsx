@@ -86,11 +86,15 @@ function RouteComponent() {
         {image && (
           <Card className="w-80 p-4">
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">جزئیات تصویر</h3>
+              <h3 className="font-semibold text-lg">
+                {fa.imageGeneration.imageDetails}
+              </h3>
 
               {/* Prompt */}
               <div>
-                <h4 className="mb-2 font-medium">دستور تولید</h4>
+                <h4 className="mb-2 font-medium">
+                  {fa.imageGeneration.generationCommand}
+                </h4>
                 <div className="rounded-lg bg-muted p-3">
                   <p className="text-sm leading-relaxed">{image.prompt}</p>
                 </div>
@@ -99,7 +103,9 @@ function RouteComponent() {
               {/* Negative Prompt */}
               {image.negativePrompt && (
                 <div>
-                  <h4 className="mb-2 font-medium">دستور منفی</h4>
+                  <h4 className="mb-2 font-medium">
+                    {fa.imageGeneration.negativeCommand}
+                  </h4>
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-sm leading-relaxed">
                       {image.negativePrompt}
@@ -120,7 +126,9 @@ function RouteComponent() {
               {image.settings && (
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">مراحل:</span>
+                    <span className="text-muted-foreground">
+                      {fa.imageGeneration.stepsLabel}
+                    </span>
                     <span>{image.settings?.steps || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
@@ -128,11 +136,15 @@ function RouteComponent() {
                     <span>{image.settings?.cfg_scale || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">نمونه‌گیر:</span>
+                    <span className="text-muted-foreground">
+                      {fa.imageGeneration.samplerLabel}
+                    </span>
                     <span>{image.settings?.sampler_name || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">اندازه:</span>
+                    <span className="text-muted-foreground">
+                      {fa.imageGeneration.sizeLabel}
+                    </span>
                     <span>
                       {image.settings?.width || 'N/A'}×
                       {image.settings?.height || 'N/A'}

@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { fa } from '@/lib/persian-texts';
 import { orpc } from '@/utils/orpc';
 
 export interface ImageGenerationParams {
@@ -159,10 +160,10 @@ export function useImageGeneration() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('تصویر دانلود شد');
+      toast.success(fa.imageGeneration.downloadSuccess);
     } catch (error) {
       console.error('Download failed:', error);
-      toast.error('خطا در دانلود تصویر');
+      toast.error(fa.imageGeneration.downloadError);
     }
   }, []);
 

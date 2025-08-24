@@ -24,6 +24,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { fa } from '@/lib/persian-texts';
 import type { appRouter } from '@/server/api/procedures';
 import { link, type orpc } from '@/utils/orpc';
 
@@ -35,13 +36,11 @@ export interface RouterAppContext {
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
   head: () => ({
+    title: fa.navigation.appTitle,
     meta: [
       {
-        title: 'دستیار هوشمند',
-      },
-      {
         name: 'description',
-        content: 'دستیار هوشمند',
+        content: fa.navigation.appTitle,
       },
     ],
     links: [
