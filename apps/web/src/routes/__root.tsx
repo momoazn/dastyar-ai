@@ -24,7 +24,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
-import type { appRouter } from '@/server/orpc/procedures';
+import type { appRouter } from '@/server/api/procedures';
 import { link, type orpc } from '@/utils/orpc';
 
 export interface RouterAppContext {

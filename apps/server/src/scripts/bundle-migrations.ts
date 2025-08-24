@@ -3,8 +3,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
-const drizzleDir = resolve(process.cwd(), 'src/db/migrations');
-const outputFile = resolve(process.cwd(), 'src/db/migration-data.generated.ts');
+const drizzleDir = resolve(process.cwd(), 'src/database/migrations');
+const outputFile = resolve(
+  process.cwd(),
+  'src/database/migration-data.generated.ts'
+);
 
 function readDrizzleFiles(): { [key: string]: string } {
   const files: { [key: string]: string } = {};

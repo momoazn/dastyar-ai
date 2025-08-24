@@ -6,12 +6,7 @@ import { listAllModels } from './ai-providers';
 import { ModelProviderEnum } from './ai-providers/constants';
 
 export async function syncModels() {
-  console.log('--- Syncing models...');
-
   const allModels = await listAllModels();
-
-  console.log('--- Found', allModels.length, 'models');
-
   // Prepare rows for upsert (no preloading from DB)
   const rowsToUpsert = allModels.map((m: { id: string; provider: string }) => ({
     id: generateId(),
@@ -76,6 +71,4 @@ export async function syncModels() {
   }
 
   await Promise.all([...enableUpdates, ...disableUpdates]);
-
-  console.log('--- Models synced');
 }

@@ -1,6 +1,7 @@
 export * from './chat-threads-list';
 export * from './content-sidebar';
 export * from './hooks';
+export * from './images-sidebar';
 export * from './nav';
 export * from './navigation-sidebar';
 export * from './summaries-list';

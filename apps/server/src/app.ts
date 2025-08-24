@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { getConfig } from './config';
 import chatHandler from './routes/chat';
+import imagesHandler from './routes/images';
 import orpcsHandler from './routes/rpc';
 
 export function createApp() {
@@ -28,6 +29,7 @@ export function createApp() {
   // API routes
   app.route('/rpc', orpcsHandler);
   app.route('/chat', chatHandler);
+  app.route('/api/images', imagesHandler);
 
   // Static file serving
   const resolvedDistDir = path.resolve(config.web.distDir);

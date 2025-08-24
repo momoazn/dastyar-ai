@@ -262,7 +262,7 @@ function ChatRouteComponent() {
             >
               {status === 'error' ? (
                 <Alert className="mb-4" variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTriangle className="size-4" />
                   <AlertTitle>خطا</AlertTitle>
                   <AlertDescription>
                     مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.
@@ -273,7 +273,7 @@ function ChatRouteComponent() {
                       size="sm"
                       variant="outline"
                     >
-                      <RotateCcw className="mr-2 h-3 w-3" /> تلاش مجدد
+                      <RotateCcw className="mr-2 size-3" /> تلاش مجدد
                     </Button>
                   </div>
                 </Alert>

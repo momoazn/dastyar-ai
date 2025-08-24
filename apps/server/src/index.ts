@@ -12,7 +12,7 @@ if (import.meta.main) {
     const { app, config } = createApp();
     const { host, port } = config.server;
 
-    console.log(`🌍 Server is running on http://${host}:${port}`);
+    console.log(`🚀 Server is running on http://${host}:${port}`);
     // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
     Bun.serve({
       fetch: app.fetch,

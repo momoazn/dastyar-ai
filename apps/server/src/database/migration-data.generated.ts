@@ -9,8 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1755641164289,
-      "tag": "0000_lyrical_namor",
+      "when": 1756031925870,
+      "tag": "0000_friendly_scarlet_spider",
       "breakpoints": true
     }
   ]
@@ -18,7 +18,7 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "7df44e83-a606-4249-b5cd-63b4f64b8d3f",
+  "id": "8ded48cc-9b84-4da8-9406-72870b3d2702",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -45,8 +45,15 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "imageData": {
-          "name": "imageData",
+        "filePath": {
+          "name": "filePath",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fileName": {
+          "name": "fileName",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -493,11 +500,12 @@ export const migrationData: { [key: string]: string } = {
     "indexes": {}
   }
 }`,
-  '0000_lyrical_namor.sql': `CREATE TABLE \`generated_images\` (
+  '0000_friendly_scarlet_spider.sql': `CREATE TABLE \`generated_images\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`prompt\` text NOT NULL,
 	\`negativePrompt\` text,
-	\`imageData\` text NOT NULL,
+	\`filePath\` text NOT NULL,
+	\`fileName\` text NOT NULL,
 	\`settings\` text NOT NULL,
 	\`created\` integer DEFAULT (unixepoch()),
 	\`updated\` integer DEFAULT (unixepoch())

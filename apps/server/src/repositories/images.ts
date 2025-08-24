@@ -10,12 +10,13 @@ import {
   selectGeneratedImageSchema,
 } from '../database/schema';
 import { generateId } from '../utils/id-generator';
+import { imageStorageService } from '../services/image-storage';
 
 export async function createGeneratedImage(
-  params: Omit<InsertGeneratedImageInput, 'id'>
+  params: Omit<InsertGeneratedImageInput, 'id'> | InsertGeneratedImageInput
 ) {
-  const id = generateId();
-  const row = insertGeneratedImageSchema.parse({ id, ...params });
+  const id = 'id' in params ? params.id : generateId();
+  const row = insertGeneratedImageSchema.parse({ ...params, id });
   const created = await db.insert(generatedImages).values(row).returning();
   return created[0];
 }
@@ -40,9 +41,40 @@ export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
 export async function deleteGeneratedImage(
   id: SelectGeneratedImageOutput['id']
 ) {
+  // First get the image to access file paths
+  const image = await getGeneratedImage(id);
+  if (image) {
+    // Delete the files from storage
+    imageStorageService.deleteImage(image.filePath);
+  }
+  
+  // Delete from database
   await db.delete(generatedImages).where(eq(generatedImages.id, id));
 }
 
 export async function clearGeneratedImages() {
+  // First get all images to delete their files
+  const allImages = await listGeneratedImages();
+  
+  // Delete all files from storage
+  for (const image of allImages) {
+    try {
+      imageStorageService.deleteImage(image.filePath);
+    } catch (error) {
+      console.error(`Failed to delete files for image ${image.id}:`, error);
+    }
+  }
+  
+  // Delete all records from database
   await db.delete(generatedImages);
+}
+
+export async function getAllImageFilePaths(): Promise<string[]> {
+  const images = await listGeneratedImages();
+  return images.map(img => img.filePath);
+}
+
+export async function cleanupOrphanedFiles(): Promise<number> {
+  const existingPaths = await getAllImageFilePaths();
+  return imageStorageService.cleanupOrphanedFiles(existingPaths);
 }

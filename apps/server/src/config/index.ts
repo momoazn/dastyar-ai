@@ -42,6 +42,11 @@ export type AppConfig = {
     url: string;
     enabled: boolean;
   };
+  images: {
+    dir: string;
+    maxFileSize: number; // in bytes
+    allowedFormats: string[];
+  };
   environment: 'development' | 'production';
 };
 
@@ -144,6 +149,11 @@ const getDevelopmentDefaults = (): AppConfig => ({
     url: process.env.STABLE_DIFFUSION_URL || 'http://localhost:7860',
     enabled: true,
   },
+  images: {
+    dir: process.env.IMAGES_DIR || path.join(workspaceRoot, 'generated-images'),
+    maxFileSize: 50 * 1024 * 1024, // 50MB
+    allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
+  },
   environment: 'development',
 });
 
@@ -191,6 +201,12 @@ const getProductionDefaults = (): AppConfig => {
       url: process.env.STABLE_DIFFUSION_URL || 'http://localhost:7860',
       enabled: Boolean(process.env.STABLE_DIFFUSION_ENABLED !== 'false'),
     },
+    images: {
+      dir: process.env.IMAGES_DIR || path.join(execDir, 'generated-images'),
+      thumbnailDir: path.join(process.env.IMAGES_DIR || path.join(execDir, 'generated-images'), 'thumbnails'),
+      maxFileSize: 50 * 1024 * 1024, // 50MB
+      allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
+    },
     environment: 'production',
   };
 };
@@ -214,6 +230,15 @@ const validateConfig = (config: AppConfig): void => {
 
     if (!fs.existsSync(config.whisper.cacheDir)) {
       fs.mkdirSync(config.whisper.cacheDir, { recursive: true });
+    }
+
+    // Ensure image directories exist
+    if (!fs.existsSync(config.images.dir)) {
+      fs.mkdirSync(config.images.dir, { recursive: true });
+    }
+
+    if (!fs.existsSync(config.images.thumbnailDir)) {
+      fs.mkdirSync(config.images.thumbnailDir, { recursive: true });
     }
   }
 

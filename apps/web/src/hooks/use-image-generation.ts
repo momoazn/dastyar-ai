@@ -17,8 +17,15 @@ export interface GeneratedImage {
   id: string;
   imageUrl: string;
   prompt: string;
-  createdAt: Date | null;
-  settings?: Record<string, unknown>;
+  negativePrompt?: string | null;
+  createdAt: string;
+  settings?: {
+    steps: number;
+    cfg_scale: number;
+    sampler_name: string;
+    width: number;
+    height: number;
+  };
 }
 
 export function useImageGeneration() {

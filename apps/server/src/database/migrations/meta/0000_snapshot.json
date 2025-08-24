@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7df44e83-a606-4249-b5cd-63b4f64b8d3f",
+  "id": "8ded48cc-9b84-4da8-9406-72870b3d2702",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -28,8 +28,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "imageData": {
-          "name": "imageData",
+        "filePath": {
+          "name": "filePath",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fileName": {
+          "name": "fileName",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -147,8 +154,12 @@
           "name": "messages_modelId_models_id_fk",
           "tableFrom": "messages",
           "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -156,8 +167,12 @@
           "name": "messages_thread_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": ["thread"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "thread"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -218,7 +233,10 @@
       "indexes": {
         "models_provider_name_uq": {
           "name": "models_provider_name_uq",
-          "columns": ["provider", "name"],
+          "columns": [
+            "provider",
+            "name"
+          ],
           "isUnique": true
         }
       },
@@ -295,8 +313,12 @@
           "name": "summaries_modelId_models_id_fk",
           "tableFrom": "summaries",
           "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -435,8 +457,12 @@
           "name": "translations_modelId_models_id_fk",
           "tableFrom": "translations",
           "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

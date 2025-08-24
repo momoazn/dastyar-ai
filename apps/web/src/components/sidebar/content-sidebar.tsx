@@ -8,6 +8,7 @@ import {
   SidebarHeader,
 } from '@/components/ui';
 import { ChatThreadsList } from './chat-threads-list';
+import { ImagesSidebar } from './images-sidebar';
 import { SummariesList } from './summaries-list';
 import { TranslationsList } from './translations-list';
 import type { ContentSidebarProps } from './types';
@@ -34,6 +35,7 @@ export function ContentSidebar({ activeItem, onNew }: ContentSidebarProps) {
             <ChatThreadsList />
             <TranslationsList />
             <SummariesList />
+            <ImagesSidebar />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

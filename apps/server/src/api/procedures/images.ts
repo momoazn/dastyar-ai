@@ -1,11 +1,15 @@
+import fs from 'node:fs';
 import { z } from 'zod';
+import { getConfig } from '../../config/index';
 import {
+  cleanupOrphanedFiles,
   clearGeneratedImages,
   createGeneratedImage,
   deleteGeneratedImage,
   getGeneratedImage,
   listGeneratedImages,
 } from '../../repositories/images';
+import { imageStorageService } from '../../services/image-storage';
 import {
   type ImageGenerationParams,
   stableDiffusionService,
@@ -58,11 +62,30 @@ export const imageProcedures = {
           input as ImageGenerationParams
         );
 
-        // Save to database
+        // Generate ID first for storage service
+        const id = require('../../utils/id-generator').generateId();
+
+        // Save image to file system
+        const storageResult = imageStorageService.saveImage(base64Image, {
+          id,
+          prompt: input.prompt,
+          negativePrompt: input.negative_prompt,
+          settings: {
+            steps: input.steps,
+            cfg_scale: input.cfg_scale,
+            sampler_name: input.sampler_name,
+            width: input.width,
+            height: input.height,
+          },
+        });
+
+        // Save metadata to database with the same ID used for storage
         const savedImage = await createGeneratedImage({
+          id,
           prompt: input.prompt,
           negativePrompt: input.negative_prompt || null,
-          imageData: base64Image,
+          filePath: storageResult.filePath,
+          fileName: storageResult.fileName,
           settings: JSON.stringify({
             steps: input.steps,
             cfg_scale: input.cfg_scale,
@@ -76,7 +99,7 @@ export const imageProcedures = {
 
         return {
           id: savedImage.id,
-          imageUrl: `data:image/png;base64,${base64Image}`,
+          imageUrl: imageStorageService.getImageUrl(savedImage.id),
           prompt: savedImage.prompt,
           createdAt: savedImage.createdAt,
         };
@@ -113,10 +136,11 @@ export const imageProcedures = {
   list: publicProcedure.handler(async () => {
     const images = await listGeneratedImages();
     console.log('Listing all generated images');
+
     return images.map((img) => ({
       id: img.id,
       prompt: img.prompt,
-      imageUrl: `data:image/png;base64,${img.imageData}`,
+      imageUrl: imageStorageService.getImageUrl(img.id),
       createdAt: img.createdAt,
       settings: img.settings ? JSON.parse(img.settings) : null,
     }));
@@ -135,7 +159,7 @@ export const imageProcedures = {
         id: image.id,
         prompt: image.prompt,
         negativePrompt: image.negativePrompt,
-        imageUrl: `data:image/png;base64,${image.imageData}`,
+        imageUrl: imageStorageService.getImageUrl(image.id),
         createdAt: image.createdAt,
         settings: image.settings ? JSON.parse(image.settings) : null,
       };
@@ -159,5 +183,66 @@ export const imageProcedures = {
   getSystemInfo: publicProcedure.handler(async () => {
     const info = await stableDiffusionService.getSystemInfo();
     return info;
+  }),
+
+  // Serve image file
+  serve: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .handler(async ({ input }) => {
+      const image = await getGeneratedImage(input.id);
+      if (!image) {
+        throw new Error('Image not found');
+      }
+
+      if (!fs.existsSync(image.filePath)) {
+        throw new Error('Image file not found on disk');
+      }
+
+      // Return file buffer and metadata
+      const fileBuffer = fs.readFileSync(image.filePath);
+
+      return {
+        buffer: fileBuffer,
+        fileName: image.fileName,
+        mimeType: 'image/png',
+        size: fileBuffer.length,
+      };
+    }),
+
+  // Cleanup orphaned files
+  cleanup: publicProcedure.handler(async () => {
+    console.log('Starting cleanup of orphaned image files...');
+    const deletedCount = await cleanupOrphanedFiles();
+
+    // Get storage stats
+    const stats = imageStorageService.getFileStats();
+
+    console.log(`Cleanup completed. Deleted ${deletedCount} orphaned files.`);
+
+    return {
+      deletedFiles: deletedCount,
+      stats: {
+        totalFiles: stats.totalFiles,
+        totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
+      },
+    };
+  }),
+
+  // Get storage statistics
+  getStorageStats: publicProcedure.handler(() => {
+    const stats = imageStorageService.getFileStats();
+    const config = getConfig();
+
+    return {
+      totalFiles: stats.totalFiles,
+      totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
+      storageDir: config.images.dir,
+      maxFileSizeMB: Math.round(config.images.maxFileSize / 1024 / 1024),
+      allowedFormats: config.images.allowedFormats,
+    };
   }),
 };

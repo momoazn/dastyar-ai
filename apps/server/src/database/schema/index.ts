@@ -190,7 +190,8 @@ export const generatedImages = sqliteTable('generated_images', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   prompt: text('prompt').notNull(),
   negativePrompt: text('negativePrompt'),
-  imageData: text('imageData').notNull(), // base64 encoded image
+  filePath: text('filePath').notNull(), // File system path to the image
+  fileName: text('fileName').notNull(), // Original filename for downloads
   settings: text('settings').notNull(), // JSON string of generation settings
   createdAt: integer('created', { mode: 'timestamp' }).default(
     sql`(unixepoch())`
