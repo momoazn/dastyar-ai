@@ -7,9 +7,9 @@ export interface NavItem {
 }
 
 export interface SidebarItemProps {
-  id?: string;
   title: string | undefined;
   to: string;
+  params?: Record<string, string>;
   onArchive?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onDelete?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }

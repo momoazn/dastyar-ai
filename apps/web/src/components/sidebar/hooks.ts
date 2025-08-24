@@ -14,7 +14,7 @@ export function useCreateThread(isActive: boolean) {
     mutationFn: (title?: string) => client.threads.create({ title }),
     onSuccess: (res) => {
       queryClient.invalidateQueries();
-      navigate({ to: '/chat', search: { id: res.id } });
+      navigate({ to: '/chat/$id', params: { id: res.id } });
     },
   });
 
