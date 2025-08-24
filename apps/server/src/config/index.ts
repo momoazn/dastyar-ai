@@ -152,6 +152,19 @@ const getWorkspaceRoot = (): string => {
 
 const workspaceRoot = getWorkspaceRoot();
 
+// Normalize paths: resolve relative paths against the workspace root
+const normalizePath = (p: string): string => {
+  let value = p;
+  if (!value) {
+    return value;
+  }
+  if (value.startsWith('file:')) {
+    // biome-ignore lint/performance/useTopLevelRegex: go
+    value = value.replace(/^file:/, '');
+  }
+  return path.isAbsolute(value) ? value : path.resolve(workspaceRoot, value);
+};
+
 // Development-specific defaults
 const getDevelopmentDefaults = (): AppConfig => ({
   server: {
@@ -523,6 +536,33 @@ export const getConfig = (): AppConfig => {
       break; // Use first found config file
     }
   }
+
+  // Normalize any user-provided relative paths to absolute paths based on workspace root
+  config = {
+    ...config,
+    logging: {
+      ...config.logging,
+      dir: normalizePath(config.logging.dir),
+    },
+    web: {
+      ...config.web,
+      distDir: normalizePath(config.web.distDir),
+    },
+    database: {
+      ...config.database,
+      file: normalizePath(config.database.file),
+    },
+    whisper: {
+      ...config.whisper,
+      modelsDir: normalizePath(config.whisper.modelsDir),
+      cacheDir: normalizePath(config.whisper.cacheDir),
+      wasmDir: normalizePath(config.whisper.wasmDir),
+    },
+    images: {
+      ...config.images,
+      dir: normalizePath(config.images.dir),
+    },
+  };
 
   // Validate the final configuration
   try {

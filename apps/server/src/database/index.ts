@@ -1,6 +1,4 @@
 import { Database } from 'bun:sqlite';
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { getConfig } from '../config';
 
@@ -14,16 +12,8 @@ function resolveDatabasePath(): string {
       ? dbUrl.replace(FILE_PROTOCOL_RE, '')
       : dbUrl;
   }
-  // Dev-friendly fallback to local file database; support being run from repo root or server dir
-  const candidates = [resolve(process.cwd(), './data.db')];
-  // Prefer the first candidate that already exists; otherwise use the second within current cwd
-  const existing = candidates.find((p) => existsSync(dirname(p)));
-  const selected = existing ?? candidates[1];
-  const dir = dirname(selected);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-  return selected;
+  console.log('No database URL found, using default database file');
+  return './data.db';
 }
 
 const sqlite = new Database(resolveDatabasePath(), {
