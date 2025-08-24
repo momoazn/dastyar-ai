@@ -52,7 +52,6 @@ export const listAllModels = async () => {
       if (!listFn) {
         return [] as { id: string; provider: string }[];
       }
-      console.log('--- fetching models for provider', provider, '---');
       const models = await listFn();
       return models.map((m) => ({ id: m.id, provider }));
     })
