@@ -5,7 +5,6 @@ import {
   useLocation,
 } from '@tanstack/react-router';
 import {
-  ArrowUpDown,
   ChevronRight,
   Download,
   ImagePlus,
@@ -43,6 +42,7 @@ import type {
 } from '@/hooks/use-image-generation';
 import { useImageGeneration } from '@/hooks/use-image-generation';
 import { fa } from '@/lib/persian-texts';
+import { detectTextDirection } from '@/lib/utils';
 
 const DEFAULT_SETTINGS: Omit<ImageGenerationParams, 'prompt'> = {
   steps: 5,
@@ -133,14 +133,6 @@ function ImageRouteComponent() {
     return `${settings.width}x${settings.height}`;
   };
 
-  const swapDimensions = () => {
-    setSettings((prev) => ({
-      ...prev,
-      width: prev.height,
-      height: prev.width,
-    }));
-  };
-
   const resetSettings = () => {
     setSettings(DEFAULT_SETTINGS);
   };
@@ -209,179 +201,13 @@ function ImageRouteComponent() {
               size="sm"
               variant="outline"
             >
-              <Trash2 className="ml-2 h-4 w-4" />
+              <Trash2 className="ml-2 size-4" />
               {fa.imageGeneration.clearAll}
             </Button>
           )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-          {/* Left: Preview + Gallery */}
-          <section className="space-y-6 md:col-span-7">
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-sm">پیش‌نمایش تصویر</h3>
-                <div className="flex items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        aria-label="جابجایی ابعاد"
-                        className="h-8 w-8"
-                        onClick={swapDimensions}
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <ArrowUpDown className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>جابجایی عرض و ارتفاع</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        aria-label="بازنشانی تنظیمات"
-                        className="h-8 w-8"
-                        onClick={resetSettings}
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>بازنشانی به پیش‌فرض</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-
-              <div
-                className="relative mt-3 w-full overflow-hidden rounded-md bg-muted"
-                style={{ aspectRatio: previewAspect }}
-              >
-                {lastGeneratedImage ? (
-                  <img
-                    alt={lastGeneratedImage.prompt}
-                    className="h-full w-full object-contain"
-                    src={lastGeneratedImage.imageUrl}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <div className="flex flex-col items-center">
-                      <ImagePlus className="mb-2 h-10 w-10" />
-                      <span className="text-sm">
-                        {fa.imageGeneration.noImagesYet}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Badges overlay */}
-                <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    {settings.width}×{settings.height}
-                  </Badge>
-                  <Badge variant="secondary">{settings.sampler_name}</Badge>
-                  <Badge variant="secondary">steps: {settings.steps}</Badge>
-                  <Badge variant="secondary">cfg: {settings.cfg_scale}</Badge>
-                </div>
-
-                {/* Actions overlay */}
-                {lastGeneratedImage && (
-                  <div className="absolute bottom-2 left-2 flex items-center gap-2">
-                    <Button
-                      onClick={() => downloadImage(lastGeneratedImage)}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      <Download className="ml-2 h-4 w-4" />
-                      دانلود
-                    </Button>
-                    <Button asChild size="sm">
-                      <Link
-                        params={{ id: lastGeneratedImage.id }}
-                        to="/image/$id"
-                      >
-                        مشاهده جزئیات
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-medium text-sm">گالری اخیر</h3>
-                {Array.isArray(images) && images.length > 0 && (
-                  <span className="text-muted-foreground text-xs">
-                    {images.length} تصویر
-                  </span>
-                )}
-              </div>
-
-              {isLoadingImages ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton
-                      className="h-28 w-full rounded-md"
-                      key={`img-skel-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: gallery skeleton
-                        i
-                      }`}
-                    />
-                  ))}
-                </div>
-                // biome-ignore lint/style/noNestedTernary: gallery skeleton
-              ) : Array.isArray(images) && images.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
-                  {(images as unknown as GeneratedImage[]).map((img) => (
-                    <Link key={img.id} params={{ id: img.id }} to="/image/$id">
-                      <div className="group relative overflow-hidden rounded-md border">
-                        <img
-                          alt={img.prompt}
-                          className="h-28 w-full bg-muted object-cover"
-                          src={img.imageUrl}
-                        />
-                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
-                        <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                          <div className="line-clamp-2 text-[11px] text-primary-foreground leading-snug">
-                            {img.prompt}
-                          </div>
-                        </div>
-                        <div className="absolute top-2 left-2 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                aria-label="دانلود"
-                                className="h-7 w-7"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  downloadImage(img);
-                                }}
-                                size="icon"
-                                variant="secondary"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>دانلود</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center rounded-md border border-dashed p-8 text-muted-foreground">
-                  <div className="text-center">
-                    <ImagePlus className="mx-auto mb-2 h-8 w-8" />
-                    <p className="text-sm">{fa.imageGeneration.noImagesYet}</p>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </section>
-
           {/* Right: Controls */}
           <aside className="md:col-span-5">
             <Card className="sticky top-4 p-4">
@@ -400,7 +226,7 @@ function ImageRouteComponent() {
                         onValueChange={handleSizeChange}
                         value={getSizeValue()}
                       >
-                        <SelectTrigger id="size-select">
+                        <SelectTrigger className="w-full" id="size-select">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -414,20 +240,6 @@ function ImageRouteComponent() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            aria-label="جابجایی ابعاد"
-                            className="h-9 w-9"
-                            onClick={swapDimensions}
-                            size="icon"
-                            variant="outline"
-                          >
-                            <ArrowUpDown className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>جابجایی عرض و ارتفاع</TooltipContent>
-                      </Tooltip>
                     </div>
                   </div>
 
@@ -447,7 +259,7 @@ function ImageRouteComponent() {
                       }
                       value={settings.sampler_name}
                     >
-                      <SelectTrigger id="sampler-select">
+                      <SelectTrigger className="w-full" id="sampler-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -473,11 +285,11 @@ function ImageRouteComponent() {
                       variant="outline"
                     >
                       <div className="flex items-center gap-2">
-                        <Settings2 className="h-4 w-4" />
-                        تنظیمات پیشرفته
+                        <Settings2 className="size-4" />
+                        {fa.imageGeneration.advancedSettings}
                       </div>
                       <ChevronRight
-                        className={`h-4 w-4 transition-transform ${advancedSettingsOpen ? 'rotate-90' : ''}`}
+                        className={`size-4 transition-transform ${advancedSettingsOpen ? 'rotate-90' : ''}`}
                       />
                     </Button>
                   </CollapsibleTrigger>
@@ -551,7 +363,7 @@ function ImageRouteComponent() {
                     </label>
                     <Textarea
                       className="min-h-[90px] resize-none"
-                      dir="auto"
+                      dir={prompt ? detectTextDirection(prompt) : 'rtl'}
                       id="prompt-input"
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={onPromptKeyDown}
@@ -559,7 +371,7 @@ function ImageRouteComponent() {
                       value={prompt}
                     />
                     <p className="mt-1 text-muted-foreground text-xs">
-                      برای تولید از ⌘/Ctrl + Enter استفاده کنید
+                      {fa.imageGeneration.shortcutHint}
                     </p>
                   </div>
 
@@ -572,14 +384,18 @@ function ImageRouteComponent() {
                     </label>
                     <Textarea
                       className="min-h-[70px] resize-none"
-                      dir="auto"
+                      dir={
+                        negativePrompt
+                          ? detectTextDirection(negativePrompt)
+                          : 'rtl'
+                      }
                       id="negative-prompt-input"
                       onChange={(e) => setNegativePrompt(e.target.value)}
                       placeholder={fa.imageGeneration.negativePromptPlaceholder}
                       value={negativePrompt}
                     />
                     <p className="mt-1 text-muted-foreground text-xs">
-                      عناصری که نمی‌خواهید در تصویر باشند (اختیاری)
+                      {fa.imageGeneration.negativePromptHint}
                     </p>
                   </div>
 
@@ -594,12 +410,12 @@ function ImageRouteComponent() {
                     >
                       {isGenerating ? (
                         <>
-                          <ImagePlus className="ml-2 h-4 w-4 animate-pulse" />
+                          <ImagePlus className="ml-2 size-4 animate-pulse" />
                           {fa.imageGeneration.generatingButton}
                         </>
                       ) : (
                         <>
-                          <Send className="ml-2 h-4 w-4" />
+                          <Send className="ml-2 size-4" />
                           {fa.imageGeneration.generateButton}
                         </>
                       )}
@@ -607,22 +423,184 @@ function ImageRouteComponent() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          aria-label="بازنشانی تنظیمات"
+                          aria-label={fa.imageGeneration.resetSettings}
                           className="h-10 w-10"
                           onClick={resetSettings}
                           size="icon"
                           variant="outline"
                         >
-                          <RotateCcw className="h-4 w-4" />
+                          <RotateCcw className="size-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>بازنشانی</TooltipContent>
+                      <TooltipContent>
+                        {fa.imageGeneration.resetSettingsTooltip}
+                      </TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
               </div>
             </Card>
           </aside>
+
+          {/* Left: Preview + Gallery */}
+          <section className="space-y-6 md:col-span-7">
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-sm">
+                  {fa.imageGeneration.preview}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        aria-label={fa.imageGeneration.resetSettings}
+                        className="h-8 w-8"
+                        onClick={resetSettings}
+                        size="icon"
+                        variant="ghost"
+                      >
+                        <RotateCcw className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {fa.imageGeneration.resetToDefault}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <div
+                className="relative mt-3 w-full overflow-hidden rounded-md bg-muted"
+                style={{ aspectRatio: previewAspect }}
+              >
+                {lastGeneratedImage ? (
+                  <img
+                    alt={lastGeneratedImage.prompt}
+                    className="h-full w-full object-contain"
+                    src={lastGeneratedImage.imageUrl}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                    <div className="flex flex-col items-center">
+                      <ImagePlus className="mb-2 h-10 w-10" />
+                      <span className="text-sm">
+                        {fa.imageGeneration.noImagesYet}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Badges overlay */}
+                <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
+                  <Badge variant="secondary">
+                    {settings.width}×{settings.height}
+                  </Badge>
+                  <Badge variant="secondary">{settings.sampler_name}</Badge>
+                  <Badge variant="secondary">steps: {settings.steps}</Badge>
+                  <Badge variant="secondary">cfg: {settings.cfg_scale}</Badge>
+                </div>
+
+                {/* Actions overlay */}
+                {lastGeneratedImage && (
+                  <div className="absolute bottom-2 left-2 flex items-center gap-2">
+                    <Button
+                      onClick={() => downloadImage(lastGeneratedImage)}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      <Download className="ml-2 size-4" />
+                      {fa.imageGeneration.downloadImage}
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link
+                        params={{ id: lastGeneratedImage.id }}
+                        to="/image/$id"
+                      >
+                        {fa.imageGeneration.viewDetailsTooltip}
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-medium text-sm">
+                  {fa.imageGeneration.recentGallery}
+                </h3>
+                {Array.isArray(images) && images.length > 0 && (
+                  <span className="text-muted-foreground text-xs">
+                    {fa.imageGeneration.imageCount(images.length)}
+                  </span>
+                )}
+              </div>
+
+              {isLoadingImages ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton
+                      className="h-28 w-full rounded-md"
+                      key={`img-skel-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: gallery skeleton
+                        i
+                      }`}
+                    />
+                  ))}
+                </div>
+                // biome-ignore lint/style/noNestedTernary: gallery skeleton
+              ) : Array.isArray(images) && images.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
+                  {(images as unknown as GeneratedImage[]).map((img) => (
+                    <Link key={img.id} params={{ id: img.id }} to="/image/$id">
+                      <div className="group relative overflow-hidden rounded-md border">
+                        <img
+                          alt={img.prompt}
+                          className="h-28 w-full bg-muted object-cover"
+                          src={img.imageUrl}
+                        />
+                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
+                        <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className="line-clamp-2 text-[11px] text-primary-foreground leading-snug">
+                            {img.prompt}
+                          </div>
+                        </div>
+                        <div className="absolute top-2 left-2 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label={fa.imageGeneration.downloadImage}
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  downloadImage(img);
+                                }}
+                                size="icon"
+                                variant="secondary"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {fa.imageGeneration.downloadImageTooltip}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center rounded-md border border-dashed p-8 text-muted-foreground">
+                  <div className="text-center">
+                    <ImagePlus className="mx-auto mb-2 h-8 w-8" />
+                    <p className="text-sm">{fa.imageGeneration.noImagesYet}</p>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </section>
         </div>
       </div>
     </main>
