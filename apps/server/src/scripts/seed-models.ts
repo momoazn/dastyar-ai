@@ -1,18 +1,17 @@
 import 'dotenv/config';
 
+import { getAiProviderModels, ModelProviderEnum } from '../config';
 import { db } from '../database';
 import { runMigrations } from '../database/migrate';
 import { models as modelsTable } from '../database/schema';
-import { ModelProviderEnum } from '../services/ai-providers/constants';
-import { GEMINI_MODELS } from '../services/ai-providers/gemini';
-import { GROQ_MODELS } from '../services/ai-providers/groq';
-import { OPENROUTER_MODELS } from '../services/ai-providers/openrouter';
 import { generateId } from '../utils/id-generator';
 
 const MODELS_BY_PROVIDER = {
-  [ModelProviderEnum.GEMINI]: GEMINI_MODELS,
-  [ModelProviderEnum.GROQ]: GROQ_MODELS,
-  [ModelProviderEnum.OPENROUTER]: OPENROUTER_MODELS,
+  [ModelProviderEnum.GEMINI]: getAiProviderModels(ModelProviderEnum.GEMINI),
+  [ModelProviderEnum.GROQ]: getAiProviderModels(ModelProviderEnum.GROQ),
+  [ModelProviderEnum.OPENROUTER]: getAiProviderModels(
+    ModelProviderEnum.OPENROUTER
+  ),
 };
 
 async function seedSelectedProviders() {

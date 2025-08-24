@@ -9,8 +9,8 @@ import {
   insertGeneratedImageSchema,
   selectGeneratedImageSchema,
 } from '../database/schema';
-import { generateId } from '../utils/id-generator';
 import { imageStorageService } from '../services/image-storage';
+import { generateId } from '../utils/id-generator';
 
 export async function createGeneratedImage(
   params: Omit<InsertGeneratedImageInput, 'id'> | InsertGeneratedImageInput
@@ -47,7 +47,7 @@ export async function deleteGeneratedImage(
     // Delete the files from storage
     imageStorageService.deleteImage(image.filePath);
   }
-  
+
   // Delete from database
   await db.delete(generatedImages).where(eq(generatedImages.id, id));
 }
@@ -55,7 +55,7 @@ export async function deleteGeneratedImage(
 export async function clearGeneratedImages() {
   // First get all images to delete their files
   const allImages = await listGeneratedImages();
-  
+
   // Delete all files from storage
   for (const image of allImages) {
     try {
@@ -64,14 +64,14 @@ export async function clearGeneratedImages() {
       console.error(`Failed to delete files for image ${image.id}:`, error);
     }
   }
-  
+
   // Delete all records from database
   await db.delete(generatedImages);
 }
 
 export async function getAllImageFilePaths(): Promise<string[]> {
   const images = await listGeneratedImages();
-  return images.map(img => img.filePath);
+  return images.map((img) => img.filePath);
 }
 
 export async function cleanupOrphanedFiles(): Promise<number> {

@@ -10,3 +10,10 @@ ai-app
 .whisper-cache/
 
 generated-images/
+
+# Configuration files (exclude actual configs, keep samples)
+config.dev.json
+config.prod.json
+config.json
+
+logs/

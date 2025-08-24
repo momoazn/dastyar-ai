@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
+import { ModelProviderEnum } from '../../config';
 import { models } from '../../database/schema';
-import { ModelProviderEnum } from '../../services/ai-providers/constants';
 import { syncModels } from '../../services/model-sync';
 import { publicProcedure } from '../index';
 

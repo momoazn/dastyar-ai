@@ -107,13 +107,13 @@ export class StableDiffusionService {
       const requestBody = {
         ...params,
         negative_prompt: params.negative_prompt || '',
-        n_iter: 1,              // Generate only 1 iteration
-        batch_size: 1,          // Generate only 1 image per batch
+        n_iter: 1, // Generate only 1 iteration
+        batch_size: 1, // Generate only 1 image per batch
         restore_faces: false,
         tiling: false,
         do_not_save_samples: true,
         do_not_save_grid: true,
-        enable_hr: false,       // Disable highres fix to avoid extra images
+        enable_hr: false, // Disable highres fix to avoid extra images
       };
 
       console.log('Generating image with params:', {
@@ -148,7 +148,9 @@ export class StableDiffusionService {
       }
 
       // Log for debugging - ensure we're only getting one image
-      console.log(`SD API returned ${data.images.length} images, using the first one`);
+      console.log(
+        `SD API returned ${data.images.length} images, using the first one`
+      );
 
       return data.images[0]; // Return raw base64 without data URL prefix
     } catch (error) {

@@ -1,5 +1,5 @@
+import { ModelProviderEnum } from '@/config';
 import type { Model } from '@/database/schema';
-import { ModelProviderEnum } from './constants';
 import { geminiFactories, geminiListFns, type geminiProvider } from './gemini';
 import { groqFactories, groqListFns, type groqProvider } from './groq';
 import {
@@ -13,7 +13,7 @@ import {
   openrouterListFns,
   type openrouterProvider,
 } from './openrouter';
-import type { ProviderFactoriesRegistry, ProviderListRegistry } from './types';
+import type { ProviderFactoriesRegistry, ProviderListRegistry } from '@/config';
 
 // Merge registries
 export const providerFactories: ProviderFactoriesRegistry = {
@@ -53,7 +53,7 @@ export const listAllModels = async () => {
         return [] as { id: string; provider: string }[];
       }
       const models = await listFn();
-      return models.map((m) => ({ id: m.id, provider }));
+      return models.map((m: { id: string }) => ({ id: m.id, provider }));
     })
   );
   return results.flat();
@@ -67,5 +67,3 @@ export const getProviderForModel = (model: Model): AnyProviderModel => {
   }
   return ollamaProvider(model.name);
 };
-
-export type { MinimalModel } from './types';

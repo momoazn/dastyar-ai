@@ -2,6 +2,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// AI Provider Configuration
+export const ModelProviderEnum = {
+  OLLAMA: 'ollama',
+  LMSTUDIO: 'lmstudio',
+  GEMINI: 'gemini',
+  OPENROUTER: 'openrouter',
+  GROQ: 'groq',
+} as const;
+
+export type ModelProvider =
+  (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum];
+
+export type MinimalModel = { id: string };
+
+export type ProviderId =
+  (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum];
+
+export type ProviderFactory = (name: string) => unknown;
+
+export type ProviderListFn = () => Promise<MinimalModel[]>;
+
+export type ProviderFactoriesRegistry = Partial<
+  Record<ProviderId, ProviderFactory>
+>;
+
+export type ProviderListRegistry = Partial<Record<ProviderId, ProviderListFn>>;
+
 export type AppConfig = {
   server: {
     port: number;
@@ -31,18 +58,39 @@ export type AppConfig = {
   };
   ai: {
     providers: {
+      ollama?: {
+        baseUrl: string;
+        apiKey: string;
+        enabled: boolean;
+        models: readonly string[];
+      };
+      lmstudio?: {
+        baseUrl: string;
+        apiKey: string;
+        enabled: boolean;
+        models: readonly string[];
+      };
       openai?: {
         apiKey?: string;
         baseUrl?: string;
+        enabled: boolean;
       };
       groq?: {
         apiKey?: string;
+        enabled: boolean;
+        models: readonly string[];
       };
       gemini?: {
         apiKey?: string;
+        baseUrl: string;
+        enabled: boolean;
+        models: readonly string[];
       };
       openrouter?: {
         apiKey?: string;
+        baseUrl: string;
+        enabled: boolean;
+        models: readonly string[];
       };
     };
   };
@@ -107,15 +155,15 @@ const workspaceRoot = getWorkspaceRoot();
 // Development-specific defaults
 const getDevelopmentDefaults = (): AppConfig => ({
   server: {
-    port: Number(process.env.SERVER_PORT) || 3000,
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    port: 3000,
+    corsOrigin: 'http://localhost:3001',
     host: '127.0.0.1',
   },
   logging: {
-    level: (process.env.LOG_LEVEL as AppConfig['logging']['level']) || 'debug',
-    dir: process.env.LOG_DIR || path.join(getWorkspaceRoot(), 'logs'),
+    level: 'debug',
+    dir: path.join(workspaceRoot, 'logs'),
     file: '',
-    pretty: process.env.LOG_PRETTY !== 'false',
+    pretty: true,
     redactPaths: [
       'ai.providers.openai.apiKey',
       'ai.providers.groq.apiKey',
@@ -125,18 +173,13 @@ const getDevelopmentDefaults = (): AppConfig => ({
     enableHttpLogging: true,
   },
   web: {
-    distDir:
-      process.env.WEB_DIST_DIR ||
-      path.join(workspaceRoot, 'apps', 'web', 'dist'),
+    distDir: path.join(workspaceRoot, 'apps', 'web', 'dist'),
   },
   database: {
-    file:
-      process.env.DATABASE_URL ||
-      path.join(workspaceRoot, 'apps', 'server', 'data.db'),
+    file: path.join(workspaceRoot, 'apps', 'server', 'data.db'),
   },
   whisper: {
-    modelsDir:
-      process.env.MODELS_DIR || path.join(workspaceRoot, 'whisper-models'),
+    modelsDir: path.join(workspaceRoot, 'whisper-models'),
     cacheDir: path.join(workspaceRoot, '.whisper-cache'),
     wasmDir: path.join(
       workspaceRoot,
@@ -153,27 +196,98 @@ const getDevelopmentDefaults = (): AppConfig => ({
   },
   ai: {
     providers: {
+      ollama: {
+        baseUrl: 'http://localhost:11434/v1',
+        apiKey: 'ollama',
+        enabled: true,
+        models: [],
+      },
+      lmstudio: {
+        baseUrl: 'http://localhost:1234/v1',
+        apiKey: 'lmstudio',
+        enabled: true,
+        models: [],
+      },
       openai: {
-        apiKey: process.env.OPENAI_API_KEY,
-        baseUrl: process.env.OPENAI_BASE_URL,
+        apiKey: '',
+        baseUrl: '',
+        enabled: false,
       },
       groq: {
-        apiKey: process.env.GROQ_API_KEY,
+        apiKey: '',
+        enabled: false,
+        models: [
+          'gemma2-9b-it',
+          'llama-3.1-8b-instant',
+          'llama-3.3-70b-versatile',
+          'meta-llama/llama-guard-4-12b',
+          'openai/gpt-oss-120b',
+          'openai/gpt-oss-20b',
+          'deepseek-r1-distill-llama-70b',
+          'meta-llama/llama-4-maverick-17b-128e-instruct',
+          'meta-llama/llama-4-scout-17b-16e-instruct',
+          'meta-llama/llama-prompt-guard-2-22m',
+          'meta-llama/llama-prompt-guard-2-86m',
+          'mistral-saba-24b',
+          'moonshotai/kimi-k2-instruct',
+          'qwen/qwen3-32b',
+          'llama-guard-3-8b',
+          'llama3-70b-8192',
+          'llama3-8b-8192',
+          'mixtral-8x7b-32768',
+          'qwen-qwq-32b',
+          'qwen-2.5-32b',
+          'deepseek-r1-distill-qwen-32b',
+        ],
       },
       gemini: {
-        apiKey: process.env.GEMINI_API_KEY,
+        apiKey: '',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+        enabled: false,
+        models: [
+          'gemini-2.0-flash',
+          'gemini-2.0-flash-001',
+          'gemini-2.0-flash-lite',
+          'gemini-2.0-pro-exp-02-05',
+          'gemini-2.0-flash-thinking-exp-01-21',
+          'gemini-2.0-flash-exp',
+          'gemini-2.5-flash',
+          'gemini-2.5-flash-lite',
+          'gemini-2.0-pro-exp-03-25',
+          'gemini-2.5-flash-preview-04-17',
+          'gemma-3-12b-it',
+          'gemma-3-27b-it',
+        ],
       },
       openrouter: {
-        apiKey: process.env.OPENROUTER_API_KEY,
+        apiKey: '',
+        baseUrl: 'https://api.openrouter.ai/v1',
+        enabled: false,
+        models: [
+          'openai/gpt-oss-20b:free',
+          'z-ai/glm-4.5-air:free',
+          'qwen/qwen3-coder:free',
+          'moonshotai/kimi-k2:free',
+          'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+          'google/gemma-3n-e2b-it:free',
+          'tencent/hunyuan-a13b-instruct:free',
+          'tngtech/deepseek-r1t2-chimera:free',
+          'mistralai/mistral-small-3.2-24b-instruct:free',
+          'moonshotai/kimi-dev-72b:free',
+          'deepseek/deepseek-r1-0528-qwen3-8b:free',
+          'deepseek/deepseek-r1-0528:free',
+          'microsoft/mai-ds-r1:free',
+          'qwen/qwen2.5-vl-32b-instruct:free',
+        ],
       },
     },
   },
   stableDiffusion: {
-    url: process.env.STABLE_DIFFUSION_URL || 'http://localhost:7860',
+    url: 'http://localhost:7860',
     enabled: true,
   },
   images: {
-    dir: process.env.IMAGES_DIR || path.join(workspaceRoot, 'generated-images'),
+    dir: path.join(workspaceRoot, 'generated-images'),
     maxFileSize: 50 * 1024 * 1024, // 50MB
     allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
   },
@@ -186,15 +300,15 @@ const getProductionDefaults = (): AppConfig => {
 
   return {
     server: {
-      port: Number(process.env.SERVER_PORT) || 3000,
-      corsOrigin: process.env.CORS_ORIGIN || '*',
+      port: 3000,
+      corsOrigin: '*',
       host: '0.0.0.0',
     },
     logging: {
-      level: (process.env.LOG_LEVEL as AppConfig['logging']['level']) || 'info',
-      dir: process.env.LOG_DIR || path.join(execDir, 'logs'),
+      level: 'info',
+      dir: path.join(execDir, 'logs'),
       file: '',
-      pretty: false,
+      pretty: true,
       redactPaths: [
         'ai.providers.openai.apiKey',
         'ai.providers.groq.apiKey',
@@ -204,13 +318,13 @@ const getProductionDefaults = (): AppConfig => {
       enableHttpLogging: true,
     },
     web: {
-      distDir: process.env.WEB_DIST_DIR || path.join(execDir, 'web'),
+      distDir: path.join(execDir, 'web'),
     },
     database: {
-      file: process.env.DATABASE_URL || path.join(execDir, 'data.db'),
+      file: path.join(execDir, 'data.db'),
     },
     whisper: {
-      modelsDir: process.env.MODELS_DIR || path.join(execDir, 'whisper-models'),
+      modelsDir: path.join(execDir, 'whisper-models'),
       cacheDir: path.join(execDir, '.whisper-cache'),
       wasmDir: path.join(execDir, 'wasm'),
       allowRemoteModels: false, // Offline by default in production
@@ -218,27 +332,48 @@ const getProductionDefaults = (): AppConfig => {
     },
     ai: {
       providers: {
+        ollama: {
+          baseUrl: 'http://localhost:11434/v1',
+          apiKey: 'ollama',
+          enabled: true,
+          models: [],
+        },
+        lmstudio: {
+          baseUrl: 'http://localhost:1234/v1',
+          apiKey: 'lmstudio',
+          enabled: false,
+          models: [],
+        },
         openai: {
-          apiKey: process.env.OPENAI_API_KEY,
-          baseUrl: process.env.OPENAI_BASE_URL,
+          apiKey: '',
+          baseUrl: '',
+          enabled: false,
         },
         groq: {
-          apiKey: process.env.GROQ_API_KEY,
+          apiKey: '',
+          enabled: false,
+          models: [],
         },
         gemini: {
-          apiKey: process.env.GEMINI_API_KEY,
+          apiKey: '',
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+          enabled: false,
+          models: [],
         },
         openrouter: {
-          apiKey: process.env.OPENROUTER_API_KEY,
+          apiKey: '',
+          baseUrl: 'https://api.openrouter.ai/v1',
+          enabled: false,
+          models: [],
         },
       },
     },
     stableDiffusion: {
-      url: process.env.STABLE_DIFFUSION_URL || 'http://localhost:7860',
-      enabled: Boolean(process.env.STABLE_DIFFUSION_ENABLED !== 'false'),
+      url: 'http://localhost:7860',
+      enabled: true,
     },
     images: {
-      dir: process.env.IMAGES_DIR || path.join(execDir, 'generated-images'),
+      dir: path.join(execDir, 'generated-images'),
       maxFileSize: 50 * 1024 * 1024, // 50MB
       allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
     },
@@ -342,35 +477,51 @@ export const getConfig = (): AppConfig => {
   // Config resolution order (highest priority first)
   const configCandidates: string[] = [];
 
-  // 1. Environment variable pointing to config file
+  // 1. Environment-specific config files (highest priority)
+  if (environment === 'development') {
+    configCandidates.push(path.join(workspaceRoot, 'config.dev.json'));
+  } else {
+    configCandidates.push(path.join(workspaceRoot, 'config.prod.json'));
+  }
+
+  // 2. Generic config file
+  configCandidates.push(path.join(workspaceRoot, 'config.json'));
+
+  // 3. Environment variable pointing to custom config file
   if (process.env.APP_CONFIG) {
     configCandidates.push(process.env.APP_CONFIG);
   }
 
-  // 2. Config file next to binary (production) or in workspace root (development)
+  // 4. Config file next to binary (production) or in workspace root (development)
   if (environment === 'production') {
     configCandidates.push(
       path.join(path.dirname(process.execPath), 'config.json')
     );
+    // Also look for sample config next to binary
+    configCandidates.push(
+      path.join(path.dirname(process.execPath), 'config.prod.sample.json')
+    );
   } else {
-    configCandidates.push(path.join(workspaceRoot, 'config.json'));
     configCandidates.push(
       path.join(workspaceRoot, 'apps', 'server', 'config.json')
     );
+  }
+
+  // 5. Fallback to sample config files if no actual configs found
+  if (environment === 'development') {
+    configCandidates.push(path.join(workspaceRoot, 'config.dev.sample.json'));
+  } else {
+    configCandidates.push(path.join(workspaceRoot, 'config.prod.sample.json'));
   }
 
   // Load and merge config files
   for (const configPath of configCandidates) {
     const configData = readJsonConfig(configPath);
     if (configData) {
+      console.log(`📄 Loading config from: ${configPath}`);
       config = mergeDeep(config, configData);
       break; // Use first found config file
     }
-  }
-
-  // Apply final environment overrides
-  if (process.env.PORT) {
-    config.server.port = Number(process.env.PORT);
   }
 
   // Validate the final configuration
@@ -403,6 +554,41 @@ export const getConfig = (): AppConfig => {
 export const isDevelopment = (): boolean => environment === 'development';
 export const isProduction = (): boolean => environment === 'production';
 
+// AI Provider configuration helpers
+export const getAiProviderConfig = (provider: ModelProvider) => {
+  const config = getConfig();
+  return config.ai.providers[provider];
+};
+
+export const isAiProviderEnabled = (provider: ModelProvider): boolean => {
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig?.enabled === true;
+};
+
+export const getAiProviderApiKey = (
+  provider: ModelProvider
+): string | undefined => {
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig?.apiKey;
+};
+
+export const getAiProviderBaseUrl = (
+  provider: ModelProvider
+): string | undefined => {
+  const providerConfig = getAiProviderConfig(provider);
+  if (providerConfig && 'baseUrl' in providerConfig) {
+    return providerConfig.baseUrl;
+  }
+  return;
+};
+
+export const getAiProviderModels = (
+  provider: ModelProvider
+): readonly string[] => {
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig?.models || [];
+};
+
 // Create a sample config file for reference
 export const createSampleConfig = (outputPath: string): void => {
   const sampleConfig = {
@@ -420,11 +606,37 @@ export const createSampleConfig = (outputPath: string): void => {
     },
     ai: {
       providers: {
+        ollama: {
+          baseUrl: 'http://localhost:11434/v1',
+          apiKey: 'ollama',
+          enabled: true,
+          models: [],
+        },
+        lmstudio: {
+          baseUrl: 'http://localhost:1234/v1',
+          apiKey: 'lmstudio',
+          enabled: true,
+          models: [],
+        },
         openai: {
           apiKey: 'your-openai-api-key-here',
         },
         groq: {
           apiKey: 'your-groq-api-key-here',
+          enabled: true,
+          models: ['gemma2-9b-it', 'llama-3.1-8b-instant'],
+        },
+        gemini: {
+          apiKey: 'your-google-api-key-here',
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+          enabled: true,
+          models: ['gemini-2.0-flash', 'gemini-2.5-flash'],
+        },
+        openrouter: {
+          apiKey: 'your-openrouter-api-key-here',
+          baseUrl: 'https://api.openrouter.ai/v1',
+          enabled: true,
+          models: ['openai/gpt-oss-20b:free', 'z-ai/glm-4.5-air:free'],
         },
       },
     },

@@ -1,35 +1,40 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
-import { ModelProviderEnum } from './constants';
-import type {
-  MinimalModel,
-  ProviderFactoriesRegistry,
-  ProviderListRegistry,
-} from './types';
+import {
+  getAiProviderApiKey,
+  getAiProviderBaseUrl,
+  type MinimalModel,
+  ModelProviderEnum,
+  type ProviderFactoriesRegistry,
+  type ProviderListRegistry,
+} from '../../config';
 
-const OLLAMA_OPENAI_BASE_URL = 'http://localhost:11434/v1' as const;
-const LMSTUDIO_OPENAI_BASE_URL = 'http://localhost:1234/v1' as const;
+const OLLAMA_OPENAI_BASE_URL =
+  getAiProviderBaseUrl(ModelProviderEnum.OLLAMA) || 'http://localhost:11434/v1';
+const LMSTUDIO_OPENAI_BASE_URL =
+  getAiProviderBaseUrl(ModelProviderEnum.LMSTUDIO) ||
+  'http://localhost:1234/v1';
 
 export const ollamaClient = new OpenAI({
   baseURL: OLLAMA_OPENAI_BASE_URL,
-  apiKey: 'ollama',
+  apiKey: getAiProviderApiKey(ModelProviderEnum.OLLAMA) || 'ollama',
 });
 
 export const lmstudioClient = new OpenAI({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
-  apiKey: 'lmstudio',
+  apiKey: getAiProviderApiKey(ModelProviderEnum.LMSTUDIO) || 'lmstudio',
 });
 
 export const ollamaProvider = createOpenAICompatible({
   baseURL: OLLAMA_OPENAI_BASE_URL,
   name: 'ollama',
-  apiKey: 'ollama',
+  apiKey: getAiProviderApiKey(ModelProviderEnum.OLLAMA) || 'ollama',
 });
 
 export const lmstudioProvider = createOpenAICompatible({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
   name: 'lmstudio',
-  apiKey: 'lmstudio',
+  apiKey: getAiProviderApiKey(ModelProviderEnum.LMSTUDIO) || 'lmstudio',
 });
 
 const safeListModels = async (

@@ -1,9 +1,9 @@
 import { and, eq, inArray, not } from 'drizzle-orm';
-import { db } from '../database';
-import { models } from '../database/schema';
-import { generateId } from '../utils/id-generator';
-import { listAllModels } from './ai-providers';
-import { ModelProviderEnum } from './ai-providers/constants';
+import { ModelProviderEnum } from '@/config';
+import { db } from '@/database';
+import { models } from '@/database/schema';
+import { listAllModels } from '@/services/ai-providers';
+import { generateId } from '@/utils/id-generator';
 
 export async function syncModels() {
   const allModels = await listAllModels();

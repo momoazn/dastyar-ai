@@ -154,12 +154,8 @@
           "name": "messages_modelId_models_id_fk",
           "tableFrom": "messages",
           "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["modelId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -167,12 +163,8 @@
           "name": "messages_thread_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": [
-            "thread"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -233,10 +225,7 @@
       "indexes": {
         "models_provider_name_uq": {
           "name": "models_provider_name_uq",
-          "columns": [
-            "provider",
-            "name"
-          ],
+          "columns": ["provider", "name"],
           "isUnique": true
         }
       },
@@ -313,12 +302,8 @@
           "name": "summaries_modelId_models_id_fk",
           "tableFrom": "summaries",
           "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["modelId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -457,12 +442,8 @@
           "name": "translations_modelId_models_id_fk",
           "tableFrom": "translations",
           "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["modelId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

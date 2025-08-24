@@ -1,0 +1,60 @@
+{
+  "server": {
+    "port": 3000,
+    "corsOrigin": "*",
+    "host": "0.0.0.0"
+  },
+  "logging": {
+    "level": "info",
+    "dir": "./logs",
+    "pretty": true,
+    "enableHttpLogging": true
+  },
+  "web": {
+    "distDir": "./web"
+  },
+  "database": {
+    "file": "./data.db"
+  },
+  "whisper": {
+    "modelsDir": "./whisper-models",
+    "cacheDir": "./.whisper-cache",
+    "wasmDir": "./wasm",
+    "allowRemoteModels": false,
+    "allowedModels": ["Xenova/whisper-tiny"]
+  },
+  "ai": {
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://localhost:11434/v1",
+        "apiKey": "ollama",
+        "enabled": true,
+        "models": []
+      },
+      "lmstudio": {
+        "enabled": false
+      },
+      "openai": {
+        "enabled": false
+      },
+      "groq": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "openrouter": {
+        "enabled": false
+      }
+    }
+  },
+  "stableDiffusion": {
+    "url": "http://localhost:7860",
+    "enabled": true
+  },
+  "images": {
+    "dir": "./generated-images",
+    "maxFileSize": 52428800,
+    "allowedFormats": ["png", "jpg", "jpeg", "webp"]
+  }
+}
