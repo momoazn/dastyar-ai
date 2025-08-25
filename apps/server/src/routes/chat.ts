@@ -4,10 +4,12 @@ import {
   generateId,
   smoothStream,
   streamText,
-  type UIMessage,
   wrapLanguageModel,
 } from 'ai';
+import type { Context } from 'hono';
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { z } from 'zod';
 import { MessageRoleEnum, MessageStatusEnum } from '../database/schema';
 import { saveMessage } from '../repositories/messages';
 import { getModelById } from '../repositories/models';
@@ -25,39 +27,105 @@ You are a helpful assistant that can answer questions.
 
 const app = new Hono();
 
+// Unified error response helper
+const sendError = (
+  c: Context,
+  params: {
+    status: ContentfulStatusCode;
+    code: string;
+    message: string;
+    details?: unknown;
+  }
+) => {
+  const { status, code, message, details } = params;
+  return c.json({ error: { code, message, details } }, status);
+};
+
+// Request validation
+const ChatRequestSchema = z.object({
+  message: z.object({
+    id: z.string().min(1),
+    role: z.literal('user'),
+    parts: z.array(z.unknown()).min(1),
+    metadata: z.unknown().optional(),
+  }),
+  modelId: z.string().min(1),
+  threadId: z.string().min(1),
+});
+
 app.post('/', async (c) => {
   try {
-    const body = (await c.req.json()) as {
-      message: UIMessage;
-      modelId: string;
-      threadId: string;
-    };
-
-    const threadId = body.threadId;
+    const raw = await c.req.json();
+    const parsed = ChatRequestSchema.safeParse(raw);
+    if (!parsed.success) {
+      return sendError(c, {
+        status: 400,
+        code: 'INVALID_REQUEST',
+        message: 'Request body validation failed',
+        details: parsed.error.flatten(),
+      });
+    }
+    const { message: inputMessage, modelId, threadId } = parsed.data;
     if (threadId) {
       const thread = await getThread(threadId);
       if (!thread) {
-        return c.json({ error: 'Thread not found' }, 404);
+        return sendError(c, {
+          status: 404,
+          code: 'THREAD_NOT_FOUND',
+          message: 'No thread exists with the provided id',
+          details: { threadId },
+        });
       }
     }
 
     // Resolve model by id
-    const model = await getModelById(body.modelId);
+    const model = await getModelById(modelId);
     if (!model) {
-      return c.json({ error: 'Model not found' }, 400);
+      return sendError(c, {
+        status: 400,
+        code: 'MODEL_NOT_FOUND',
+        message: 'The requested modelId is not available',
+        details: { modelId },
+      });
     }
     const providerModel = getProviderForModel(model);
 
-    await saveMessage({
-      id: body.message.id,
-      parts: body.message.parts,
-      modelId: model.id,
-      status: MessageStatusEnum.FINISHED,
-      threadId,
-      role: MessageRoleEnum.USER,
-    });
+    try {
+      await saveMessage({
+        id: inputMessage.id as string,
+        parts: inputMessage.parts,
+        modelId: model.id,
+        status: MessageStatusEnum.FINISHED,
+        threadId,
+        role: MessageRoleEnum.USER,
+      });
+    } catch (err) {
+      const log = c.get('log' as never) as
+        | { error: (o?: unknown, m?: string) => void }
+        | undefined;
+      log?.error({ err }, 'failed to persist user message');
+      return sendError(c, {
+        status: 500,
+        code: 'PERSIST_USER_MESSAGE_FAILED',
+        message: 'Could not save the user message',
+        details: undefined,
+      });
+    }
 
-    const messages = await loadThreadMessages(threadId);
+    let messages: Awaited<ReturnType<typeof loadThreadMessages>>;
+    try {
+      messages = await loadThreadMessages(threadId);
+    } catch (err) {
+      const log = c.get('log' as never) as
+        | { error: (o?: unknown, m?: string) => void }
+        | undefined;
+      log?.error({ err }, 'failed to load thread messages');
+      return sendError(c, {
+        status: 500,
+        code: 'LOAD_MESSAGES_FAILED',
+        message: 'Failed to load thread messages',
+      });
+    }
 
     const result = streamText({
       model: wrapLanguageModel({
@@ -94,7 +162,10 @@ app.post('/', async (c) => {
           });
           await updateThreadOnNewMessage(threadId, new Date());
         } catch (error) {
-          console.error('======> error', error);
+          const log = c.get('log' as never) as
+            | { error: (o?: unknown, m?: string) => void }
+            | undefined;
+          log?.error({ err: error }, 'failed to persist assistant message');
           return;
         }
       },
@@ -103,9 +174,16 @@ app.post('/', async (c) => {
     const message =
       error && typeof error === 'object' && 'message' in error
         ? String((error as { message?: unknown }).message)
-        : undefined;
-    console.error('======> error in chat route', error);
-    return c.json({ error: 'Bad request', details: message }, 400);
+        : 'An unexpected error occurred';
+    const log = c.get('log' as never) as
+      | { error: (o?: unknown, m?: string) => void }
+      | undefined;
+    log?.error({ err: error }, 'chat route error');
+    return sendError(c, {
+      status: 500,
+      code: 'INTERNAL_SERVER_ERROR',
+      message,
+    });
   }
 });
 

@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from '@tanstack/react-router';
+import { createFileRoute, useParams, useSearch } from '@tanstack/react-router';
 import { AiChat } from '@/components/chat';
 
 export const Route = createFileRoute('/chat/$id')({
@@ -7,8 +7,7 @@ export const Route = createFileRoute('/chat/$id')({
 
 function ChatThreadRouteComponent() {
   const { id: threadId } = useParams({ from: '/chat/$id' });
+  const search = useSearch({ from: '/chat/$id' }) as { prompt?: string };
 
-  console.log('#### in chat.$id.tsx', threadId);
-
-  return <AiChat threadId={threadId} />;
+  return <AiChat initialPrompt={search.prompt} threadId={threadId} />;
 }

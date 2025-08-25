@@ -58,6 +58,8 @@ export const ChatInput = ({
   useEffect(() => {
     if (!(modelId || lastUsedModelId) && modelsQuery.data?.[0]?.id) {
       setModelId(modelsQuery.data[0].id);
+    } else if (lastUsedModelId) {
+      setModelId(lastUsedModelId);
     }
   }, [modelsQuery.data, modelId, setModelId, lastUsedModelId]);
 
@@ -253,9 +255,9 @@ export const ChatInput = ({
           <PromptInputToolbar>
             <PromptInputTools>
               <PromptInputModelSelect
-                defaultValue={modelId ?? undefined}
+                defaultValue={modelId as string}
                 onValueChange={setModelId}
-                value={modelId ?? undefined}
+                value={modelId as string}
               >
                 <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
                   <PromptInputModelSelectValue

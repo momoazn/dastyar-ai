@@ -5,11 +5,10 @@ export function useHydrateInitialMessages(params: {
   threadMessages?: MyUIMessage[];
   messages: MyUIMessage[];
   status: string;
-  initialMessages: MyUIMessage[];
   setMessages: (messages: MyUIMessage[]) => void;
+  threadId?: string;
 }) {
-  const { threadMessages, messages, status, initialMessages, setMessages } =
-    params;
+  const { threadMessages, messages, status, setMessages, threadId } = params;
   const hasHydratedFromThreadRef = useRef(false);
 
   useEffect(() => {
@@ -18,10 +17,10 @@ export function useHydrateInitialMessages(params: {
       threadMessages &&
       messages.length === 0 &&
       status === 'ready' &&
-      initialMessages.length > 0
+      threadId
     ) {
-      setMessages(initialMessages);
+      setMessages(threadMessages);
       hasHydratedFromThreadRef.current = true;
     }
-  }, [threadMessages, messages.length, status, initialMessages, setMessages]);
+  }, [threadMessages, messages.length, status, setMessages, threadId]);
 }

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { DefaultChatTransport } from 'ai';
 import { useAtomValue } from 'jotai';
+import { useEffect, useRef } from 'react';
 import { modelAtom } from '@/atoms/model';
 import {
   Conversation,
@@ -12,16 +13,18 @@ import {
 import { Loader } from '@/components/ai-elements/loader';
 import { ChatInput } from '@/components/chat-input';
 import { MessagesList } from '@/components/messages-list';
-import { useHydrateInitialMessages } from '@/hooks/use-chat-thread';
+import type { MyUIMessage } from '@/server/utils/chat';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
 interface AiChatProps {
   threadId?: string;
+  initialPrompt?: string;
 }
 
-export function AiChat({ threadId }: AiChatProps) {
+export function AiChat({ threadId, initialPrompt }: AiChatProps) {
   const modelId = useAtomValue(modelAtom);
   const navigate = useNavigate();
+  const isInitialRender = useRef(true);
 
   const messagesQuery = useQuery(
     orpc.messages.listByThread.queryOptions({
@@ -30,32 +33,28 @@ export function AiChat({ threadId }: AiChatProps) {
     })
   );
 
-  const { messages, status, stop, sendMessage, setMessages } = useChat({
-    id: threadId,
-    messages: messagesQuery.data ?? [],
-    transport: new DefaultChatTransport({
-      api: `${import.meta.env.VITE_SERVER_URL}/chat`,
-      prepareSendMessagesRequest: ({ messages: _messages, body }) => {
-        const lastMessage = _messages.at(-1);
-        if (!lastMessage) {
-          throw new Error('No last message');
-        }
-        return {
-          body: {
-            ...body,
-            message: lastMessage,
-            threadId,
-          },
-        };
+  const { messages, status, stop, sendMessage, setMessages } =
+    useChat<MyUIMessage>({
+      id: threadId,
+      transport: new DefaultChatTransport({
+        api: `${import.meta.env.VITE_SERVER_URL}/chat`,
+        prepareSendMessagesRequest: ({ messages: _messages, body }) => {
+          const lastMessage = _messages.at(-1);
+          if (!lastMessage) {
+            throw new Error('No last message');
+          }
+          return {
+            body: {
+              ...body,
+              message: lastMessage,
+            },
+          };
+        },
+      }),
+      onFinish: () => {
+        messagesQuery.refetch();
       },
-    }),
-    onFinish: (message) => {
-      navigate({
-        to: '/chat/$id',
-        params: { id: message.message.metadata?.threadId },
-      });
-    },
-  });
+    });
 
   const lastUsedModelId = messagesQuery.data?.at(-1)?.metadata?.modelId;
 
@@ -69,6 +68,12 @@ export function AiChat({ threadId }: AiChatProps) {
         queryKey: orpc.threads.list.queryKey(),
       });
       effectiveThreadId = created.id;
+      navigate({
+        to: '/chat/$id',
+        params: { id: created.id },
+        search: { prompt },
+      });
+      return; // stream will be initiated on the thread page
     }
 
     sendMessage(
@@ -77,13 +82,30 @@ export function AiChat({ threadId }: AiChatProps) {
     );
   };
 
-  useHydrateInitialMessages({
-    threadMessages: messagesQuery.data,
-    messages,
-    status,
-    initialMessages: messagesQuery.data ?? [],
-    setMessages,
-  });
+  // If we navigated here with an initial prompt (new thread), send it now and clear the search param
+  // to avoid duplicate sends on re-renders.
+  const lastSentKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key =
+      threadId && initialPrompt ? `${threadId}:${initialPrompt}` : null;
+    if (
+      threadId &&
+      initialPrompt &&
+      status === 'ready' &&
+      messages.length === 0 &&
+      key !== lastSentKeyRef.current
+    ) {
+      lastSentKeyRef.current = key;
+      sendMessage({ text: initialPrompt }, { body: { modelId, threadId } });
+    }
+  }, [threadId, initialPrompt, status, messages.length, modelId, sendMessage]);
+
+  useEffect(() => {
+    if (isInitialRender.current && messagesQuery.data) {
+      setMessages([...messagesQuery.data]);
+      isInitialRender.current = false;
+    }
+  }, [messagesQuery.data, setMessages]);
 
   return (
     <div className="flex h-full flex-col">

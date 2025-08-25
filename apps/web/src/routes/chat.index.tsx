@@ -6,7 +6,5 @@ export const Route = createFileRoute('/chat/')({
 });
 
 function ChatRouteComponent() {
-  console.log('#### in chat.index.tsx');
-
   return <AiChat />;
 }
