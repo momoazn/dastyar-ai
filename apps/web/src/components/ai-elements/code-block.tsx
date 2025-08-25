@@ -88,7 +88,7 @@ export const CodeBlock = ({
           {code}
         </SyntaxHighlighter>
         {children && (
-          <div className="absolute top-2 left-2 flex items-center gap-2 rtl:right-2 rtl:left-auto">
+          <div className="absolute top-2 right-2 flex items-center gap-2">
             {children}
           </div>
         )}

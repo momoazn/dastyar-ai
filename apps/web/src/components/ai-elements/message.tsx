@@ -10,46 +10,34 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
-      'group flex w-full items-end gap-2 py-4 rtl:space-x-reverse',
-      from === 'user'
-        ? 'is-user flex-row-reverse justify-end'
-        : 'is-assistant justify-start',
+      'group flex w-full items-end justify-end gap-2 py-4',
+      from === 'user' ? 'is-user flex-row-reverse justify-end' : 'is-assistant',
+      '[&>div]:max-w-[80%]',
       className
     )}
     {...props}
   />
 );
 
-export type MessageContentProps = HTMLAttributes<HTMLDivElement> & {
-  variant?: 'bubble' | 'plain';
-};
+export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
 export const MessageContent = ({
   children,
   className,
-  variant = 'bubble',
   ...props
-}: MessageContentProps) => {
-  const bubbleClasses = cn(
-    'flex max-w-[80%] flex-col gap-2 overflow-hidden rounded-lg px-4 py-3 text-foreground text-sm',
-    'group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground',
-    'group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground'
-  );
-
-  const plainClasses = cn('w-full text-foreground text-sm');
-
-  return (
-    <div
-      className={cn(
-        variant === 'bubble' ? bubbleClasses : plainClasses,
-        className
-      )}
-      {...props}
-    >
-      <div>{children}</div>
-    </div>
-  );
-};
+}: MessageContentProps) => (
+  <div
+    className={cn(
+      'flex flex-col gap-2 overflow-hidden rounded-lg px-4 py-3 text-foreground text-sm',
+      'group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground',
+      'group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground',
+      className
+    )}
+    {...props}
+  >
+    <div className="is-user:dark">{children}</div>
+  </div>
+);
 
 export type MessageAvatarProps = ComponentProps<typeof Avatar> & {
   src: string;
@@ -62,8 +50,11 @@ export const MessageAvatar = ({
   className,
   ...props
 }: MessageAvatarProps) => (
-  <Avatar className={cn('size-8 ring ring-border', className)} {...props}>
-    <AvatarImage alt={name ?? 'avatar'} className="mt-0 mb-0" src={src} />
+  <Avatar
+    className={cn('size-8 ring ring-1 ring-border', className)}
+    {...props}
+  >
+    <AvatarImage alt="" className="mt-0 mb-0" src={src} />
     <AvatarFallback>{name?.slice(0, 2) || 'ME'}</AvatarFallback>
   </Avatar>
 );

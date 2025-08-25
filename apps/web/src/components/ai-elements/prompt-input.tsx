@@ -25,7 +25,6 @@ export const PromptInput = ({ className, ...props }: PromptInputProps) => (
       'w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm',
       className
     )}
-    dir="rtl"
     {...props}
   />
 );
