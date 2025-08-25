@@ -2,6 +2,7 @@ import {
   convertToModelMessages,
   extractReasoningMiddleware,
   generateId,
+  smoothStream,
   streamText,
   type UIMessage,
   wrapLanguageModel,
@@ -32,8 +33,6 @@ app.post('/', async (c) => {
       threadId: string;
     };
 
-    console.log('======> body', body);
-
     const threadId = body.threadId;
     if (threadId) {
       const thread = await getThread(threadId);
@@ -42,16 +41,12 @@ app.post('/', async (c) => {
       }
     }
 
-    console.log('======> threadId', threadId);
-
     // Resolve model by id
     const model = await getModelById(body.modelId);
     if (!model) {
       return c.json({ error: 'Model not found' }, 400);
     }
     const providerModel = getProviderForModel(model);
-
-    console.log('======> model', model);
 
     await saveMessage({
       id: body.message.id,
@@ -62,10 +57,7 @@ app.post('/', async (c) => {
       role: MessageRoleEnum.USER,
     });
 
-    console.log('======> body.message.id', body.message.id);
-
     const messages = await loadThreadMessages(threadId);
-    console.log('======> messages', messages);
 
     const result = streamText({
       model: wrapLanguageModel({
@@ -77,8 +69,11 @@ app.post('/', async (c) => {
       }),
       messages: convertToModelMessages(convertDbMessagesToUiMessages(messages)),
       system: SYSTEM_PROMPT,
+      experimental_transform: smoothStream({
+        delayInMs: 10,
+        chunking: 'word',
+      }),
     });
-    console.log('======> result', result);
 
     return result.toUIMessageStreamResponse({
       originalMessages: convertDbMessagesToUiMessages(messages),

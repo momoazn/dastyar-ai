@@ -1,9 +1,9 @@
-import type { UIMessage } from 'ai';
 import { Message, MessageContent } from '@/components/ai-elements/message';
 import { Response } from '@/components/ai-elements/response';
 import { NoMessages } from '@/components/no-messages';
 import { Skeleton } from '@/components/ui';
 import { detectTextDirection } from '@/lib/utils';
+import type { MyUIMessage } from '@/server/utils/chat';
 
 type ParsedMessage = {
   id: string;
@@ -12,7 +12,7 @@ type ParsedMessage = {
   reasoning: string;
 };
 
-function parseMessage(message: UIMessage): ParsedMessage {
+function parseMessage(message: MyUIMessage): ParsedMessage {
   let text = '';
   let reasoning = '';
   for (const part of message.parts as { type: string; text?: string }[]) {
@@ -32,7 +32,7 @@ export function MessagesList({
   messages,
   isLoadingAssistant,
 }: {
-  messages: UIMessage[];
+  messages: MyUIMessage[];
   isLoadingAssistant?: boolean;
 }) {
   if (messages.length > 0) {

@@ -24,18 +24,20 @@ import {
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
-import { modelAtom } from '../../atoms/model';
+import { modelAtom } from '../atoms/model';
 
 interface ChatInputProps {
   handleSendPrompt: (prompt: string) => void;
-  isGenerating: boolean;
-  stopGenerating: () => void;
+  isGenerating?: boolean;
+  stopGenerating?: () => void;
+  lastUsedModelId?: string;
 }
 
 export const ChatInput = ({
   handleSendPrompt,
   isGenerating,
   stopGenerating,
+  lastUsedModelId,
 }: ChatInputProps) => {
   const [prompt, setPrompt] = useState('');
   const [modelId, setModelId] = useAtom(modelAtom);
@@ -52,6 +54,12 @@ export const ChatInput = ({
   } = useVoiceRecorder();
 
   const modelsQuery = useQuery(orpc.models.list.queryOptions());
+
+  useEffect(() => {
+    if (!(modelId || lastUsedModelId) && modelsQuery.data?.[0]?.id) {
+      setModelId(modelsQuery.data[0].id);
+    }
+  }, [modelsQuery.data, modelId, setModelId, lastUsedModelId]);
 
   // Transcription mutation
   const {
@@ -134,7 +142,7 @@ export const ChatInput = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (isGenerating) {
-        stopGenerating();
+        stopGenerating?.();
       } else {
         handleSendPrompt(prompt);
         setPrompt('');
@@ -153,7 +161,7 @@ export const ChatInput = ({
   // Handle send/stop button click
   const handleSendButtonClick = () => {
     if (isGenerating) {
-      stopGenerating();
+      stopGenerating?.();
       return;
     }
     handleSendPrompt(prompt);
