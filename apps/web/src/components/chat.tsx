@@ -12,6 +12,7 @@ import {
 } from '@/components/ai-elements/conversation';
 import { Loader } from '@/components/ai-elements/loader';
 import { ChatInput } from '@/components/chat-input';
+import { detectTextDirection } from '@/lib/utils';
 import type { MyUIMessage } from '@/server/utils/chat';
 import { client, orpc, queryClient } from '@/utils/orpc';
 import { Message, MessageContent } from './ai-elements/message';
@@ -131,37 +132,47 @@ export function AiChat({ threadId, initialPrompt }: AiChatProps) {
       <div className="flex-1 overflow-hidden">
         <Conversation className="h-full">
           <ConversationContent>
-            {messages.map((message) => (
-              <div key={message.id}>
-                <Message from={message.role} key={message.id}>
-                  <MessageContent>
-                    {message.parts.map((part, i) => {
-                      switch (part.type) {
-                        case 'text':
-                          return (
-                            <Response key={`${message.id}-${i}`}>
-                              {part.text}
-                            </Response>
-                          );
-                        case 'reasoning':
-                          return (
-                            <Reasoning
-                              className="w-full"
-                              isStreaming={status === 'streaming'}
-                              key={`${message.id}-${i}`}
-                            >
-                              <ReasoningTrigger />
-                              <ReasoningContent>{part.text}</ReasoningContent>
-                            </Reasoning>
-                          );
-                        default:
-                          return null;
-                      }
-                    })}
-                  </MessageContent>
-                </Message>
-              </div>
-            ))}
+            {messages.map((message) => {
+              const messageText = message.parts
+                .filter(
+                  (part) => part.type === 'text' || part.type === 'reasoning'
+                )
+                .map((part) => part.text)
+                .join(' ');
+              const textDirection = detectTextDirection(messageText);
+
+              return (
+                <div key={message.id}>
+                  <Message from={message.role} key={message.id}>
+                    <MessageContent style={{ direction: textDirection }}>
+                      {message.parts.map((part, i) => {
+                        switch (part.type) {
+                          case 'text':
+                            return (
+                              <Response key={`${message.id}-${i}`}>
+                                {part.text}
+                              </Response>
+                            );
+                          case 'reasoning':
+                            return (
+                              <Reasoning
+                                className="w-full"
+                                isStreaming={status === 'streaming'}
+                                key={`${message.id}-${i}`}
+                              >
+                                <ReasoningTrigger />
+                                <ReasoningContent>{part.text}</ReasoningContent>
+                              </Reasoning>
+                            );
+                          default:
+                            return null;
+                        }
+                      })}
+                    </MessageContent>
+                  </Message>
+                </div>
+              );
+            })}
             {status === 'submitted' && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />
