@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useParams } from '@tanstack/react-router';
 import { DefaultChatTransport } from 'ai';
 import { useAtomValue } from 'jotai';
+import { MessageCircleIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { modelAtom } from '@/atoms/model';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/components/ai-elements/conversation';
 import { Loader } from '@/components/ai-elements/loader';
 import { ChatInput, Message } from '@/components/chat';
+import { fa } from '@/lib/persian-texts';
 import type { MyUIMessage } from '@/server/utils/chat';
 import { client, orpc, queryClient } from '@/utils/orpc';
 
@@ -85,15 +87,25 @@ function ChatThreadRouteComponent() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
-        <Conversation className="h-full">
-          <ConversationContent>
-            {messages.map((m) => (
-              <Message key={m.id} message={m} />
-            ))}
-            {status === 'submitted' && <Loader />}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+        {messages.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+            <MessageCircleIcon className="size-10" />
+            <div className="space-y-1" dir="rtl">
+              <div className="font-medium">{fa.chat.askQuestion}</div>
+              <div className="text-xs">{fa.chat.askQuestionDescription}</div>
+            </div>
+          </div>
+        ) : (
+          <Conversation className="h-full">
+            <ConversationContent>
+              {messages.map((m) => (
+                <Message key={m.id} message={m} />
+              ))}
+              {status === 'submitted' && <Loader />}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+        )}
       </div>
 
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
