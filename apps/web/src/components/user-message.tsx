@@ -1,13 +1,13 @@
 import { Check, Copy } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui';
+} from '@/components/ui/tooltip';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 
@@ -22,10 +22,7 @@ export interface UserMessageProps {
 export const UserMessage = memo(({ message }: UserMessageProps) => {
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const textDirection = useMemo(
-    () => detectTextDirection(message.content || ''),
-    [message.content]
-  );
+  const textDirection = detectTextDirection(message.content || '');
 
   const formattedTime = useMemo(() => {
     if (!message.created) {
@@ -48,7 +45,7 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
   }, []);
 
   return (
-    <div className="group fade-in-50 slide-in-from-left-2 flex w-full animate-in justify-end duration-300">
+    <div className="group fade-in-50 mt-8 flex w-full animate-in justify-start duration-300">
       <div className="max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]">
         <div className="relative">
           <div

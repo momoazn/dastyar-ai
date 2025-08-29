@@ -13,7 +13,7 @@ export function Header({
   const activeItem = useActiveNavItem();
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background p-4">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-secondary p-4">
       <div className="flex items-center gap-2">
         {location.pathname !== '/' && SideBarTrigger}
 

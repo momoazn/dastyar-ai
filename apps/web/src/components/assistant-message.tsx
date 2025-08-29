@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui';
+} from '@/components/ui/tooltip';
 import { fa } from '@/lib/persian-texts';
 import { cn, detectTextDirection } from '@/lib/utils';
 
@@ -35,26 +35,20 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const hasThinking = useMemo(() => {
-    return message?.role === 'assistant' && Boolean(message?.reasoning?.trim());
-  }, [message?.role, message?.reasoning]);
+  const hasThinking =
+    message.role === 'assistant' && Boolean((message.reasoning || '').trim());
 
-  const messageStatus = useMemo(() => {
-    const stopped = message.status === 'stopped';
-    const errored = message.status === 'errored';
-    const generating =
+  const messageStatus = {
+    isStopped: message.status === 'stopped',
+    isErrored: message.status === 'errored',
+    isGenerating:
       message.status === 'idle' ||
       message.status === 'streaming' ||
       message.status === 'reasoning' ||
-      message.status === 'submitted';
+      message.status === 'submitted',
+  };
 
-    return { isStopped: stopped, isErrored: errored, isGenerating: generating };
-  }, [message.status]);
-
-  const textDirection = useMemo(
-    () => detectTextDirection(message.content || ''),
-    [message.content]
-  );
+  const textDirection = detectTextDirection(message.content || '');
 
   const formattedTime = useMemo(() => {
     if (!message.sent_at) {

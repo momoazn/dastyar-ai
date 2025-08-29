@@ -125,17 +125,9 @@ export function AiChat({ threadId, initialPrompt }: AiChatProps) {
       <div className="flex-1 overflow-hidden">
         <Conversation className="h-full">
           <ConversationContent>
-            {messages.map((m, idx) => {
-              const isUser = m.role === 'user';
-              const isLast = idx === messages.length - 1;
-              const msgStatus = isLast ? status : undefined;
-
-              return (
-                <div className={isUser ? 'flex justify-end' : ''} key={m.id}>
-                  <Message message={m} status={msgStatus} />
-                </div>
-              );
-            })}
+            {messages.map((m) => (
+              <Message key={m.id} message={m} />
+            ))}
             {status === 'submitted' && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />
