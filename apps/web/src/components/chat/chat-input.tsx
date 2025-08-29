@@ -24,7 +24,7 @@ import {
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
-import { modelAtom } from '../atoms/model';
+import { modelAtom } from '../../atoms/model';
 
 interface ChatInputProps {
   handleSendPrompt: (prompt: string) => void;

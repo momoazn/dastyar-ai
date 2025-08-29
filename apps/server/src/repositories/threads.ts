@@ -18,7 +18,7 @@ export async function createThread(
   params?: Partial<Pick<InsertThreadInput, 'title'>>
 ) {
   const id = generateId();
-  const title = (params?.title ?? 'New Chat').trim();
+  const title = (params?.title ?? 'گفتگوی جدید').trim();
   const row = insertThreadSchema.parse({ id, title, isArchived: false });
   await db.insert(threads).values(row);
   return { id };

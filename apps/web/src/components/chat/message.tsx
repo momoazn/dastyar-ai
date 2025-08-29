@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
-import { AssistantMessage } from '@/components/assistant-message';
-import { UserMessage } from '@/components/user-message';
+import { AssistantMessage } from '@/components/chat/assistant-message';
+import { UserMessage } from '@/components/chat/user-message';
 import type { MyUIMessage } from '@/server/utils/chat';
 
 export type MessageGenerationStatus =

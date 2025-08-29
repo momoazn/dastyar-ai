@@ -77,6 +77,12 @@ export const fa = {
     voiceTranscriptionErrorPrefix: 'خطا در تبدیل صدا به متن: ',
     retryVoiceTranscription: 'تلاش مجدد برای تبدیل صدا',
     responseError: 'مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.',
+    newChatTitle: 'آماده شروع گفتگو هستید؟',
+    newChatDescription:
+      'برای آغاز، روی «شروع گفتگوی جدید» کلیک کنید. پس از ارسال اولین پیام، عنوان گفتگو به‌صورت خودکار از ۱۰ کاراکتر نخست پیام شما تنظیم می‌شود.',
+    newChatHint: 'می‌توانید هر زمان خواستید عنوان گفتگو را تغییر دهید.',
+    newChatDefaultTitle: 'گفتگوی جدید',
+    newChatError: 'خطا در ساخت گفتگوی جدید',
   },
   translation: {
     sourceLanguage: 'زبان مبدا',

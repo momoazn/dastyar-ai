@@ -14,8 +14,8 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { useState } from 'react';
+import Loader from '@/components/chat/loader';
 import { Header } from '@/components/header';
-import Loader from '@/components/loader';
 import { AppSidebar } from '@/components/sidebar/app-sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import {
