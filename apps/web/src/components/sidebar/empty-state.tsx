@@ -23,35 +23,35 @@ export function EmptyState({ title, description, icon }: EmptyStateProps) {
 // Pre-configured empty states for different features
 export const ChatEmptyState = () => (
   <EmptyState
-    title={fa.navigation.noChatThreads}
     description="با کلیک روی دکمه + گفتگوی جدید ایجاد کنید"
+    title={fa.navigation.noChatThreads}
   />
 );
 
 export const TranslationEmptyState = () => (
   <EmptyState
-    title="هنوز ترجمه‌ای ایجاد نشده است"
     description="با استفاده از فرم سمت راست، ترجمه جدید ایجاد کنید"
+    title="هنوز ترجمه‌ای ایجاد نشده است"
   />
 );
 
 export const SummaryEmptyState = () => (
   <EmptyState
-    title="هنوز خلاصه‌ای ایجاد نشده است"
     description="با استفاده از فرم سمت راست، خلاصه جدید ایجاد کنید"
+    title="هنوز خلاصه‌ای ایجاد نشده است"
   />
 );
 
 export const ImageEmptyState = () => (
   <EmptyState
-    title="هنوز تصویری تولید نشده است"
     description="با استفاده از فرم سمت راست، تصویر جدید ایجاد کنید"
+    title="هنوز تصویری تولید نشده است"
   />
 );
 
 export const TranscribeEmptyState = () => (
   <EmptyState
-    title="هنوز فایل صوتی‌ای تبدیل نشده است"
     description="با استفاده از فرم سمت راست، فایل صوتی جدید آپلود کنید"
+    title="هنوز فایل صوتی‌ای تبدیل نشده است"
   />
 );

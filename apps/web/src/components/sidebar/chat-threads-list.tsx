@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { fa } from '@/lib/persian-texts';
 import { client, orpc, queryClient } from '@/utils/orpc';
-import { StandardizedSidebarItem } from './standardized-sidebar-item';
 import { ChatEmptyState } from './empty-state';
+import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function ChatThreadsList() {
   const location = useLocation();
@@ -69,12 +69,15 @@ export function ChatThreadsList() {
 
   const handleEditCommit = async (threadId: string) => {
     const newTitle = editingValue.trim();
-    if (!newTitle || newTitle === (listQuery.data?.find(t => t.id === threadId)?.title || '')) {
+    if (
+      !newTitle ||
+      newTitle === (listQuery.data?.find((t) => t.id === threadId)?.title || '')
+    ) {
       setEditingThreadId(null);
       setEditingValue('');
       return;
     }
-    
+
     await renameMutation.mutateAsync({ id: threadId, title: newTitle });
     setEditingThreadId(null);
     setEditingValue('');
@@ -101,15 +104,15 @@ export function ChatThreadsList() {
       {listQuery.data?.length === 0 && <ChatEmptyState />}
       {listQuery.data?.map((thread) => (
         <StandardizedSidebarItem
-          key={thread.id}
-          isEditing={editingThreadId === thread.id}
           editingValue={editingValue}
-          onEditingChange={setEditingValue}
-          onEditingCommit={() => handleEditCommit(thread.id)}
-          onEditingCancel={handleEditCancel}
-          onEdit={() => handleEdit(thread.id, thread.title || '')}
+          isEditing={editingThreadId === thread.id}
+          key={thread.id}
           onArchive={() => handleArchive(thread.id)}
           onDelete={() => handleDelete(thread.id)}
+          onEdit={() => handleEdit(thread.id, thread.title || '')}
+          onEditingCancel={handleEditCancel}
+          onEditingChange={setEditingValue}
+          onEditingCommit={() => handleEditCommit(thread.id)}
           params={{ id: thread.id }}
           title={thread.title || 'بدون عنوان'}
           to="/chat/$id"

@@ -2,8 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import type { GeneratedImage } from '@/hooks/use-image-generation';
 import { client, orpc } from '@/utils/orpc';
-import { StandardizedSidebarItem } from './standardized-sidebar-item';
 import { ImageEmptyState } from './empty-state';
+import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function ImagesSidebar() {
   const location = useLocation();
@@ -40,7 +40,6 @@ export function ImagesSidebar() {
       console.error('Failed to download image:', error);
     }
   };
-
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('fa-IR', {
@@ -84,15 +83,21 @@ export function ImagesSidebar() {
     <div className="space-y-1">
       {images.map((image: GeneratedImage) => (
         <StandardizedSidebarItem
-          key={image.id}
-          iconText={image.prompt.substring(0, 2).toUpperCase()}
-          params={{ id: image.id }}
-          subtitle={image.prompt.slice(0, 10) + (image.prompt.length > 10 ? '...' : '')}
           date={formatDate(image.createdAt as string)}
-          title={image.prompt.slice(0, 30) + (image.prompt.length > 30 ? '...' : '')}
-          to="/image/$id"
-          onDownload={() => handleDownloadWrapper(image.id, `image-${image.id}.png`)}
+          iconText={image.prompt.substring(0, 2).toUpperCase()}
+          key={image.id}
           onDelete={() => handleDeleteWrapper(image.id)}
+          onDownload={() =>
+            handleDownloadWrapper(image.id, `image-${image.id}.png`)
+          }
+          params={{ id: image.id }}
+          subtitle={
+            image.prompt.slice(0, 10) + (image.prompt.length > 10 ? '...' : '')
+          }
+          title={
+            image.prompt.slice(0, 30) + (image.prompt.length > 30 ? '...' : '')
+          }
+          to="/image/$id"
         />
       ))}
     </div>

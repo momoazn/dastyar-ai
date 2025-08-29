@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { Archive, Download, Pencil, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Archive, Download, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +65,7 @@ export function StandardizedSidebarItem({
           {isActive && (
             <div className="absolute top-0 right-0 z-10 h-full w-1 bg-primary" />
           )}
-          
+
           {/* Left Content */}
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {/* Icon */}
@@ -120,7 +120,8 @@ export function StandardizedSidebarItem({
             <div
               className={cn(
                 'flex items-center gap-1',
-                showActionsOnHover && 'opacity-0 transition-opacity group-hover:opacity-100'
+                showActionsOnHover &&
+                  'opacity-0 transition-opacity group-hover:opacity-100'
               )}
             >
               {onDownload && (

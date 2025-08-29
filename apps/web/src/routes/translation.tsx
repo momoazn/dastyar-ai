@@ -11,6 +11,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { TranscribeButton } from '@/components/transcribe-button';
 import type { LanguageCode, ToneOption } from '@/components/translation/types';
 import { languages, tones } from '@/components/translation/types';
 import {
@@ -43,6 +44,10 @@ function TranslationPage() {
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('fa');
   const [tone, setTone] = useState<ToneOption>('formal');
   const [modelId, setModelId] = useState('');
+  const [transcribeModel, setTranscribeModel] = useState('');
+
+  // Infer transcribe language from source language
+  const transcribeLanguage = sourceLanguage === 'fa' ? 'fa' : 'en';
 
   const { data: modelList } = useQuery(
     orpc.models.list.queryOptions({ input: { isEnabled: true } })
@@ -262,12 +267,31 @@ function TranslationPage() {
           {/* Source Text Area */}
           <Card aria-live="polite" className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
-              {/* Header with counter and hint */}
+              {/* Header with counter, hint and transcribe button */}
               <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
                 <span>{charCount} کاراکتر</span>
-                <span>
-                  {sourceText.trim() ? '⌘/Ctrl+Enter برای ترجمه' : ''}
-                </span>
+                <div className="flex items-center gap-2">
+                  <TranscribeButton
+                    language={transcribeLanguage}
+                    model={transcribeModel}
+                    onError={(error) => {
+                      // Handle transcription error - could show toast or alert
+                      console.error('Transcription error:', error);
+                    }}
+                    onModelChange={setTranscribeModel}
+                    onTranscribed={(text) => setSourceText(text)}
+                    showControls={true}
+                    size="icon"
+                    variant="ghost"
+                  />
+                  {/* Language indicator */}
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {transcribeLanguage === 'fa' ? 'فارسی' : 'English'}
+                  </span>
+                  <span>
+                    {sourceText.trim() ? '⌘/Ctrl+Enter برای ترجمه' : ''}
+                  </span>
+                </div>
               </div>
 
               {/* Text area */}

@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
-import { Mic, RefreshCcw, Square } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   PromptInput,
@@ -15,12 +15,8 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
+import { TranscribeButton } from '@/components/transcribe-button';
 import { Alert, AlertDescription } from '@/components/ui';
-import {
-  formatElapsed,
-  type RecordingError,
-  useVoiceRecorder,
-} from '@/hooks/use-voice-recorder';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { client, orpc, queryClient } from '@/utils/orpc';
@@ -42,17 +38,6 @@ export const ChatInput = ({
   const [prompt, setPrompt] = useState('');
   const [modelId, setModelId] = useAtom(modelAtom);
 
-  // Voice recording hook
-  const {
-    isRecording,
-    elapsedMs,
-    startRecording,
-    stopRecording,
-    error: recordingError,
-    recordedFile,
-    clearRecordedFile,
-  } = useVoiceRecorder();
-
   const modelsQuery = useQuery(orpc.models.list.queryOptions());
 
   useEffect(() => {
@@ -63,74 +48,26 @@ export const ChatInput = ({
     }
   }, [modelsQuery.data, modelId, setModelId, lastUsedModelId]);
 
-  // Transcription mutation
-  const {
-    mutate: transcribe,
-    isPending: isTranscribing,
-    error: transcribeError,
-  } = useMutation(
-    orpc.transcribe.transcribe.mutationOptions({
-      onSuccess: (transcribedText) => {
-        // Append transcribed text to existing prompt
-        if (transcribedText.trim()) {
-          setPrompt((prev) => {
-            const separator = prev.trim() ? ' ' : '';
-            return prev + separator + transcribedText.trim();
-          });
-        }
-        // Clear the recorded file after successful transcription
-        clearRecordedFile();
-      },
-      onError: (error) => {
-        // Error will be handled by the error display logic below
-        console.error('Transcription failed:', error);
-      },
-    })
-  );
-
-  // Handle transcription when recordedFile becomes available
-  useEffect(() => {
-    if (recordedFile) {
-      // Detect language for transcription - default to Persian
-      const language =
-        prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
-      const model = language === 'fa' ? 'base' : 'tiny';
-      transcribe({
-        file: recordedFile,
-        language,
-        model,
+  // Handle transcription success
+  const handleTranscription = (transcribedText: string) => {
+    // Append transcribed text to existing prompt
+    if (transcribedText.trim()) {
+      setPrompt((prev) => {
+        const separator = prev.trim() ? ' ' : '';
+        return prev + separator + transcribedText.trim();
       });
-    }
-  }, [recordedFile, transcribe, prompt]);
-
-  // Map recording errors to user-friendly messages
-  const mapRecordingError = (error: RecordingError): string => {
-    switch (error) {
-      case 'micAccessDenied':
-        return fa.transcribe.errors.micAccess;
-      case 'noAudioCaptured':
-        return fa.transcribe.errors.noAudio;
-      case 'fileTooLarge':
-        return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
-      case 'initFailed':
-      case 'processingFailed':
-        return fa.transcribe.errors.processFailed;
-      default:
-        return fa.chat.voiceRecordingError;
     }
   };
 
-  // Get display error
-  let voiceError: string | null = null;
-  if (recordingError) {
-    voiceError = mapRecordingError(recordingError);
-  } else if (transcribeError) {
-    const errorMsg =
-      transcribeError instanceof Error
-        ? transcribeError.message
-        : 'خطای نامشخص';
-    voiceError = `خطا در تبدیل صدا به متن: ${errorMsg}`;
-  }
+  // Handle transcription error for display
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null
+  );
+
+  const handleTranscriptionError = (error: string) => {
+    console.error('Transcription failed:', error);
+    setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
+  };
 
   // models prop provided by parent
   // Memoize text direction calculation
@@ -148,14 +85,6 @@ export const ChatInput = ({
       } else {
         handleSendPrompt(prompt);
         setPrompt('');
-      }
-    }
-
-    // Keyboard shortcut for voice recording (Ctrl/Cmd + M)
-    if (e.key === 'm' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      if (!isMicDisabled) {
-        handleMicClick();
       }
     }
   };
@@ -207,34 +136,10 @@ export const ChatInput = ({
     });
   };
 
-  // Voice recording handlers
-  const handleMicClick = async () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      // Clear any previous errors before starting new recording
-      if (recordingError || transcribeError) {
-        // Reset errors by restarting the hook state
-      }
-      await startRecording();
-    }
+  // Get language for transcription based on text direction
+  const getTranscriptionLanguage = () => {
+    return prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
   };
-
-  // Get microphone button status
-  const getMicButtonText = () => {
-    if (isRecording) {
-      return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
-    }
-    if (isTranscribing) {
-      return fa.chat.transcribingVoice;
-    }
-    return `${fa.chat.micStart} (Ctrl+M)`;
-  };
-
-  const isMicDisabled = isGenerating || isTranscribing;
-
-  // Show retry option for failed transcriptions
-  const showRetryButton = recordedFile && transcribeError && !isTranscribing;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
@@ -280,46 +185,13 @@ export const ChatInput = ({
               </PromptInputButton>
             </PromptInputTools>
             <div className="flex items-center gap-2">
-              {showRetryButton && (
-                <PromptInputButton
-                  onClick={() => {
-                    const language =
-                      prompt && detectTextDirection(prompt) === 'rtl'
-                        ? 'fa'
-                        : 'en';
-                    const model = language === 'fa' ? 'base' : 'tiny';
-                    if (recordedFile) {
-                      transcribe({
-                        file: recordedFile,
-                        language,
-                        model,
-                      });
-                    }
-                  }}
-                  title={fa.chat.retryVoiceTranscription}
-                  variant="outline"
-                >
-                  <RefreshCcw className="size-4" />
-                </PromptInputButton>
-              )}
-              <PromptInputButton
-                className={isRecording ? 'animate-pulse' : ''}
-                disabled={isMicDisabled}
-                onClick={handleMicClick}
-                title={getMicButtonText()}
-                variant={isRecording ? 'destructive' : 'outline'}
-              >
-                {isRecording ? (
-                  <Square className="size-4" />
-                ) : (
-                  <Mic className="size-4" />
-                )}
-                {isRecording && (
-                  <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
-                    {formatElapsed(elapsedMs)}
-                  </span>
-                )}
-              </PromptInputButton>
+              <TranscribeButton
+                language={getTranscriptionLanguage()}
+                onError={handleTranscriptionError}
+                onTranscribed={handleTranscription}
+                size="icon"
+                variant="outline"
+              />
               <PromptInputSubmit
                 disabled={!(isGenerating || (prompt.trim() && modelId))}
                 status={isGenerating ? 'streaming' : undefined}
@@ -329,9 +201,9 @@ export const ChatInput = ({
           </PromptInputToolbar>
         </PromptInput>
       </div>
-      {voiceError && (
+      {transcriptionError && (
         <Alert className="mt-2" variant="destructive">
-          <AlertDescription dir="rtl">{voiceError}</AlertDescription>
+          <AlertDescription dir="rtl">{transcriptionError}</AlertDescription>
         </Alert>
       )}
     </div>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { TranscribeButton } from '@/components/transcribe-button';
 import {
   Alert,
   AlertDescription,
@@ -76,6 +77,7 @@ function ImageRouteComponent() {
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [lastGeneratedImage, setLastGeneratedImage] =
     useState<GeneratedImage | null>(null);
+  const [transcribeModel, setTranscribeModel] = useState('');
 
   const {
     images,
@@ -355,12 +357,26 @@ function ImageRouteComponent() {
                 {/* Prompt Section */}
                 <div className="space-y-3">
                   <div>
-                    <label
-                      className="mb-2 block font-medium text-sm"
-                      htmlFor="prompt-input"
-                    >
-                      {fa.imageGeneration.promptLabel}
-                    </label>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label
+                        className="font-medium text-sm"
+                        htmlFor="prompt-input"
+                      >
+                        {fa.imageGeneration.promptLabel}
+                      </label>
+                      <TranscribeButton
+                        language="en"
+                        model={transcribeModel}
+                        onError={(error) => {
+                          toast.error(`خطا در تبدیل صدا: ${error}`);
+                        }}
+                        onModelChange={setTranscribeModel}
+                        onTranscribed={(text) => setPrompt(text)}
+                        showControls={true}
+                        size="icon"
+                        variant="ghost"
+                      />
+                    </div>
                     <Textarea
                       className="min-h-[90px] resize-none"
                       dir={prompt ? detectTextDirection(prompt) : 'rtl'}
@@ -376,12 +392,26 @@ function ImageRouteComponent() {
                   </div>
 
                   <div>
-                    <label
-                      className="mb-2 block font-medium text-sm"
-                      htmlFor="negative-prompt-input"
-                    >
-                      {fa.imageGeneration.negativePromptLabel}
-                    </label>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label
+                        className="font-medium text-sm"
+                        htmlFor="negative-prompt-input"
+                      >
+                        {fa.imageGeneration.negativePromptLabel}
+                      </label>
+                      <TranscribeButton
+                        language="en"
+                        model={transcribeModel}
+                        onError={(error) => {
+                          toast.error(`خطا در تبدیل صدا: ${error}`);
+                        }}
+                        onModelChange={setTranscribeModel}
+                        onTranscribed={(text) => setNegativePrompt(text)}
+                        showControls={true}
+                        size="icon"
+                        variant="ghost"
+                      />
+                    </div>
                     <Textarea
                       className="min-h-[70px] resize-none"
                       dir={
