@@ -21,9 +21,9 @@ export const navMain: NavItem[] = [
     icon: MessageCircle,
   },
   {
-    title: fa.navigation.imageGeneration,
-    url: '/image',
-    icon: Image,
+    title: fa.navigation.summarize,
+    url: '/summarize',
+    icon: FileText,
   },
   {
     title: fa.navigation.transcribe,
@@ -31,9 +31,9 @@ export const navMain: NavItem[] = [
     icon: Mic,
   },
   {
-    title: fa.navigation.summarize,
-    url: '/summarize',
-    icon: FileText,
+    title: fa.navigation.imageGeneration,
+    url: '/image',
+    icon: Image,
   },
 ] as const satisfies NavItem[];
 
