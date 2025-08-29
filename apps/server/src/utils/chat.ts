@@ -2,7 +2,7 @@ import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from 'ai';
 import type { MessageRole, SelectMessageOutput } from '../database/schema';
 
 export type MyUIMessage = UIMessage<
-  { modelId: string | null; threadId: string },
+  { modelId: string | null; modelName?: string; threadId: string },
   UIDataTypes,
   UITools
 >;
@@ -17,7 +17,7 @@ export const findLastUserMessage = (messages: MyUIMessage[]) => {
 };
 
 export const convertDbMessagesToUiMessages = (
-  messages: SelectMessageOutput[]
+  messages: (SelectMessageOutput & { modelName?: string })[]
 ): MyUIMessage[] => {
   return messages.map((message) => ({
     id: message.id,
@@ -25,6 +25,7 @@ export const convertDbMessagesToUiMessages = (
     parts: message.parts as UIMessagePart<UIDataTypes, UITools>[],
     metadata: {
       modelId: message.modelId,
+      modelName: message.modelName,
       threadId: message.threadId,
     },
   }));

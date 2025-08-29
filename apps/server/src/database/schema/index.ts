@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   integer,
   sqliteTable,
@@ -121,6 +121,26 @@ export const selectMessageSchema = createSelectSchema(messagesTable);
 
 export type InsertMessageInput = z.infer<typeof insertMessageSchema>;
 export type SelectMessageOutput = z.infer<typeof selectMessageSchema>;
+
+// Relations
+export const messagesRelations = relations(messagesTable, ({ one }) => ({
+  model: one(models, {
+    fields: [messagesTable.modelId],
+    references: [models.id],
+  }),
+  thread: one(threads, {
+    fields: [messagesTable.threadId],
+    references: [threads.id],
+  }),
+}));
+
+export const modelsRelations = relations(models, ({ many }) => ({
+  messages: many(messagesTable),
+}));
+
+export const threadsRelations = relations(threads, ({ many }) => ({
+  messages: many(messagesTable),
+}));
 
 /*
   Translations table – stores translation jobs & results

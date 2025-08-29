@@ -77,19 +77,20 @@ export async function updateThreadOnNewMessage(
 
 export const loadThreadMessages = async (
   threadId: string
-): Promise<SelectMessageOutput[]> => {
+): Promise<(SelectMessageOutput & { modelName?: string })[]> => {
   try {
-    const result = await db
-      .select()
-      .from(messagesTable)
-      .where(eq(messagesTable.threadId, threadId))
-      .orderBy(asc(messagesTable.createdAt));
-
-    console.log('======> result', result);
+    const result = await db.query.messagesTable.findMany({
+      where: eq(messagesTable.threadId, threadId),
+      orderBy: asc(messagesTable.createdAt),
+      with: {
+        model: true,
+      },
+    });
 
     return result.map((message) => ({
       ...message,
       parts: message.parts as Json,
+      modelName: message.model?.name || undefined,
     }));
   } catch (error) {
     console.error('======> error in loadThreadMessages', error);
