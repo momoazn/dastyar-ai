@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { SidebarSeparator } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 import { client, orpc, queryClient } from '@/utils/orpc';
 import { ChatEmptyState } from './empty-state';
@@ -102,21 +103,24 @@ export function ChatThreadsList() {
         </div>
       )}
       {listQuery.data?.length === 0 && <ChatEmptyState />}
-      {listQuery.data?.map((thread) => (
-        <StandardizedSidebarItem
-          editingValue={editingValue}
-          isEditing={editingThreadId === thread.id}
-          key={thread.id}
-          onArchive={() => handleArchive(thread.id)}
-          onDelete={() => handleDelete(thread.id)}
-          onEdit={() => handleEdit(thread.id, thread.title || '')}
-          onEditingCancel={handleEditCancel}
-          onEditingChange={setEditingValue}
-          onEditingCommit={() => handleEditCommit(thread.id)}
-          params={{ id: thread.id }}
-          title={thread.title || 'بدون عنوان'}
-          to="/chat/$id"
-        />
+      {listQuery.data?.map((thread, index) => (
+        <>
+          <StandardizedSidebarItem
+            editingValue={editingValue}
+            isEditing={editingThreadId === thread.id}
+            key={thread.id}
+            onArchive={() => handleArchive(thread.id)}
+            onDelete={() => handleDelete(thread.id)}
+            onEdit={() => handleEdit(thread.id, thread.title || '')}
+            onEditingCancel={handleEditCancel}
+            onEditingChange={setEditingValue}
+            onEditingCommit={() => handleEditCommit(thread.id)}
+            params={{ id: thread.id }}
+            title={thread.title || 'بدون عنوان'}
+            to="/chat/$id"
+          />
+          {index < listQuery.data.length - 1 && <SidebarSeparator />}
+        </>
       ))}
     </>
   );

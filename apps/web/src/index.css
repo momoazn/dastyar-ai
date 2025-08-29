@@ -73,11 +73,11 @@
 :root {
   --radius: 0.375rem;
   /* Light theme — lively corporate (blue primary, teal accent, warm neutrals) */
-  --background: oklch(1 0 0);
+  --background: oklch(0.96 0 0);
   --foreground: oklch(0.2686 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.96 0 0);
   --card-foreground: oklch(0.2686 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.96 0 0);
   --popover-foreground: oklch(0.2686 0 0);
   /* Corporate dark blue primary */
   --primary: oklch(0.4 0.08 262);
@@ -95,8 +95,8 @@
   --destructive: oklch(0.6368 0.2078 25.3313);
   --destructive-foreground: oklch(1 0 0);
   /* Inputs, borders, and focus */
-  --border: oklch(0.92 0.01 262);
-  --input: oklch(0.92 0.01 262);
+  --border: oklch(0.85 0.01 262);
+  --input: oklch(0.85 0.01 262);
   --ring: oklch(0.4 0.08 262);
   /* Charts — friendly, corporate */
   --chart-1: oklch(0.4 0.08 262); /* dark blue */
@@ -105,13 +105,13 @@
   --chart-4: oklch(0.48 0.06 262); /* deep blue */
   --chart-5: oklch(0.7 0.04 262); /* pale blue */
   /* Sidebar */
-  --sidebar: oklch(0.9846 0.0017 247.8389);
+  --sidebar: oklch(0.922 0.002 247.8);
   --sidebar-foreground: oklch(0.2686 0 0);
   --sidebar-primary: oklch(0.4 0.08 262);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.85 0.07 262);
   --sidebar-accent-foreground: oklch(0.2 0 0);
-  --sidebar-border: oklch(0.92 0.01 262);
+  --sidebar-border: oklch(0.85 0.01 262);
   --sidebar-ring: oklch(0.4 0.08 262);
   --font-sans: Inter, sans-serif;
   --font-serif: Source Serif 4, serif;
