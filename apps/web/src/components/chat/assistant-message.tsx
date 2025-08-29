@@ -123,19 +123,19 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   return (
     <div className="group fade-in-50 slide-in-from-bottom-2 w-full animate-in duration-500">
       {hasThinking && (
-        <div className="mb-2 rounded-xl border border-amber-200/50 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 p-3 shadow-sm dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/20">
+        <div className="mb-2 rounded-xl border border-gray-200/40 bg-gray-50/40 p-3 shadow-sm dark:border-gray-700/30 dark:bg-gray-900/20">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200/60 dark:bg-gray-700/40">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500" />
               </div>
-              <span className="font-medium text-amber-700 text-sm dark:text-amber-300">
-                💭 فرآیند تفکر
+              <span className="font-medium text-gray-600 text-sm dark:text-gray-400">
+                🧠 فرآیند تفکر
               </span>
             </div>
 
             <Button
-              className="h-7 px-3 text-amber-600 text-xs hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/50"
+              className="h-7 px-3 text-gray-500 text-xs hover:bg-gray-100/60 dark:text-gray-500 dark:hover:bg-gray-800/40"
               onClick={toggleCollapsed}
               size="sm"
               variant="ghost"
@@ -155,9 +155,9 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
               collapsed ? 'max-h-0 opacity-0' : 'max-h-[400px] opacity-100'
             )}
           >
-            <div className="rounded-lg bg-white/50 p-3 dark:bg-black/20">
+            <div className="rounded-lg bg-gray-100/30 p-3 dark:bg-gray-800/20">
               <div
-                className="text-justify text-amber-800 text-sm leading-relaxed dark:text-amber-200"
+                className="text-justify text-gray-700 text-sm leading-relaxed dark:text-gray-300"
                 dir={detectTextDirection(message.reasoning || '')}
               >
                 <Streamdown>{message.reasoning || ''}</Streamdown>
