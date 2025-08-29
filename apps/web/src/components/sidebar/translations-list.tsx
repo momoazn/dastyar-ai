@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from '@tanstack/react-router';
-import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { useLocation } from '@tanstack/react-router';
 import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
+import { TranslationEmptyState } from './empty-state';
+import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function TranslationsList() {
   const location = useLocation();
@@ -28,36 +28,20 @@ export function TranslationsList() {
     return null;
   }
 
+  if (!listQuery.data?.length) {
+    return <TranslationEmptyState />;
+  }
+
   return (
     <>
       {listQuery.data?.map((t) => (
-        <Link
-          className="relative flex h-12 items-center justify-between border-b p-4 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        <StandardizedSidebarItem
           key={t.id}
+          onDelete={() => handleDelete(t.id)}
           search={{ id: t.id as string }}
+          title={t.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/translation"
-        >
-          {({ isActive }: { isActive: boolean }) => (
-            <>
-              {isActive && (
-                <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
-              )}
-              <span className="font-medium">
-                {t.sourceText?.slice(0, 30) || fa.general.untitled}
-              </span>
-              <div className="flex items-center gap-0">
-                <Button
-                  className="cursor-pointer hover:text-red-500"
-                  onClick={() => handleDelete(t.id)}
-                  size="icon"
-                  variant="ghost"
-                >
-                  <Trash2 />
-                </Button>
-              </div>
-            </>
-          )}
-        </Link>
+        />
       ))}
     </>
   );

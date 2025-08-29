@@ -48,6 +48,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [location.pathname, setOpen]);
 
+  // Hide sidebar completely on transcribe pages
+  if (location.pathname.startsWith('/transcribe')) {
+    return null;
+  }
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       {location.pathname !== '/' && (
@@ -75,6 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {activeItem?.title === fa.navigation.imageGeneration && (
                   <ImagesSidebar />
                 )}
+                {/* Transcribe doesn't have a sidebar list */}
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
