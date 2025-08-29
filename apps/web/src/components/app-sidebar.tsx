@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import {
   ContentSidebar,
-  NavigationSidebar,
   useActiveNavItem,
   useCreateThread,
   useTranslationActions,
@@ -37,12 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [location.pathname, setOpen]);
 
   return (
-    <Sidebar
-      className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
-      collapsible="icon"
-      {...props}
-    >
-      <NavigationSidebar />
+    <Sidebar collapsible="offcanvas" {...props}>
       {location.pathname !== '/' && (
         <ContentSidebar activeItem={activeItem} onNew={handleNew} />
       )}

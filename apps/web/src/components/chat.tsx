@@ -140,11 +140,20 @@ export function AiChat({ threadId, initialPrompt }: AiChatProps) {
                 .map((part) => part.text)
                 .join(' ');
               const textDirection = detectTextDirection(messageText);
+              const isUser = message.role === 'user';
 
               return (
-                <div key={message.id}>
+                <div
+                  key={message.id}
+                  className={isUser ? 'flex justify-end' : ''}
+                >
                   <Message from={message.role} key={message.id}>
-                    <MessageContent style={{ direction: textDirection }}>
+                    <MessageContent
+                      style={{
+                        direction: textDirection,
+                        textAlign: !isUser ? 'start' : undefined,
+                      }}
+                    >
                       {message.parts.map((part, i) => {
                         switch (part.type) {
                           case 'text':

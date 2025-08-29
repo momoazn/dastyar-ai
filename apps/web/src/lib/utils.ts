@@ -10,6 +10,7 @@ const textDirectionCache = new Map<string, 'rtl' | 'ltr'>();
 const maxCacheSize = 1000;
 const TOP_LEVEL_RTL_REGEX =
   /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+const WORD_SPLIT_REGEX = /\s+/;
 
 export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
   // Check cache first
@@ -20,7 +21,15 @@ export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
     }
   }
 
-  const direction = TOP_LEVEL_RTL_REGEX.test(text) ? 'rtl' : 'ltr';
+  // Extract the first word (sequence of non-whitespace characters)
+  const firstWord = text.trim().split(WORD_SPLIT_REGEX)[0];
+
+  // If no word found, default to LTR
+  if (!firstWord) {
+    return 'ltr';
+  }
+
+  const direction = TOP_LEVEL_RTL_REGEX.test(firstWord) ? 'rtl' : 'ltr';
 
   // Cache the result (with size limit)
   if (textDirectionCache.size >= maxCacheSize) {

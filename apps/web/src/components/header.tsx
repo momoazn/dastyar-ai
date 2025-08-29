@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { Status } from '@/components/status';
+import { navMain, useActiveNavItem } from '@/components/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Separator } from '@/components/ui';
+import { Button, Separator } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 
 export function Header({
@@ -10,6 +10,7 @@ export function Header({
   SideBarTrigger: React.ReactNode;
 }) {
   const location = useLocation();
+  const activeItem = useActiveNavItem();
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background p-4">
@@ -26,8 +27,25 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          {navMain
+            .filter((item) => item.url !== '/')
+            .map((item) => (
+              <Button
+                aria-pressed={activeItem?.url === item.url}
+                asChild
+                key={item.url}
+                title={item.title}
+                variant={activeItem?.url === item.url ? 'secondary' : 'ghost'}
+              >
+                <Link to={item.url}>
+                  <item.icon className="size-4" />
+                  <span>{item.title}</span>
+                </Link>
+              </Button>
+            ))}
+        </div>
         <ThemeToggle />
-        <Status />
       </div>
     </header>
   );
