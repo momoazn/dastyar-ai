@@ -89,9 +89,9 @@ function SidebarProvider({
       // This sets the cookie to keep the sidebar state.
       try {
         // Prefer Cookie Store API when available
-        // @ts-expect-error: cookieStore may not exist on older browsers
+        // @ts-expect-error cookieStore may not exist on older browsers
         if (window.cookieStore?.set) {
-          // @ts-expect-error: cookieStore may not exist on older browsers
+          // @ts-expect-error cookieStore may not exist on older browsers
           window.cookieStore.set({
             name: SIDEBAR_COOKIE_NAME,
             value: String(openState),

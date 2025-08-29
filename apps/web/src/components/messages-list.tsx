@@ -1,8 +1,6 @@
-import { Message, MessageContent } from '@/components/ai-elements/message';
-import { Response } from '@/components/ai-elements/response';
+import { Message } from '@/components/message';
 import { NoMessages } from '@/components/no-messages';
 import { Skeleton } from '@/components/ui';
-import { detectTextDirection } from '@/lib/utils';
 import type { MyUIMessage } from '@/server/utils/chat';
 
 type ParsedMessage = {
@@ -15,7 +13,7 @@ type ParsedMessage = {
 function parseMessage(message: MyUIMessage): ParsedMessage {
   let text = '';
   let reasoning = '';
-  for (const part of message.parts as { type: string; text?: string }[]) {
+  for (const part of message.parts) {
     if (part.type === 'text' && part.text) {
       text += part.text;
     }
@@ -47,32 +45,23 @@ export function MessagesList({
 
     return (
       <div className="space-y-4" dir="rtl">
-        {parsed.map((m) => {
-          const direction = m.text ? detectTextDirection(m.text) : 'rtl';
+        {messages.map((m, idx) => {
           return (
-            <Message from={m.role} key={m.id}>
-              {m.role === 'assistant' ? (
-                <MessageContent
-                  className="w-full"
-                  dir={direction}
-                  variant="plain"
-                >
-                  <Response>{m.text}</Response>
-                </MessageContent>
-              ) : (
-                <MessageContent dir={direction}>
-                  <Response>{m.text}</Response>
-                </MessageContent>
-              )}
-            </Message>
+            <div
+              className={m.role === 'user' ? 'flex justify-end' : ''}
+              key={m.id}
+            >
+              <Message
+                message={m}
+                status={idx === messages.length - 1 ? 'submitted' : undefined}
+              />
+            </div>
           );
         })}
         {showInlineSkeleton ? (
-          <Message from="assistant">
-            <MessageContent className="w-full" dir="rtl" variant="plain">
-              <Skeleton className="h-4 w-3/5" />
-            </MessageContent>
-          </Message>
+          <div>
+            <Skeleton className="h-4 w-3/5" />
+          </div>
         ) : null}
       </div>
     );
@@ -81,11 +70,7 @@ export function MessagesList({
   if (isLoadingAssistant) {
     return (
       <div className="space-y-4" dir="rtl">
-        <Message from="assistant">
-          <MessageContent className="w-full" dir="rtl" variant="plain">
-            <Skeleton className="h-4 w-3/5" />
-          </MessageContent>
-        </Message>
+        <Skeleton className="h-4 w-3/5" />
       </div>
     );
   }
