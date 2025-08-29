@@ -1,7 +1,6 @@
 import { useLocation } from '@tanstack/react-router';
 import {
   FileText,
-  HomeIcon,
   Image,
   MessageCircle,
   MessageSquare,
@@ -11,11 +10,6 @@ import { fa } from '@/lib/persian-texts';
 import type { NavItem } from './types';
 
 export const navMain: NavItem[] = [
-  {
-    title: fa.navigation.home,
-    url: '/',
-    icon: HomeIcon,
-  },
   {
     title: fa.navigation.chat,
     url: '/chat',

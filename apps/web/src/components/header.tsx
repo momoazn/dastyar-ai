@@ -13,7 +13,7 @@ export function Header({
   const activeItem = useActiveNavItem();
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-secondary p-4">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-sidebar p-4 text-sidebar-foreground">
       <div className="flex items-center gap-2">
         {location.pathname !== '/' && SideBarTrigger}
 
@@ -28,22 +28,20 @@ export function Header({
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          {navMain
-            .filter((item) => item.url !== '/')
-            .map((item) => (
-              <Button
-                aria-pressed={activeItem?.url === item.url}
-                asChild
-                key={item.url}
-                title={item.title}
-                variant={activeItem?.url === item.url ? 'secondary' : 'ghost'}
-              >
-                <Link to={item.url}>
-                  <item.icon className="size-4" />
-                  <span>{item.title}</span>
-                </Link>
-              </Button>
-            ))}
+          {navMain.map((item) => (
+            <Button
+              aria-pressed={activeItem?.url === item.url}
+              asChild
+              key={item.url}
+              title={item.title}
+              variant={activeItem?.url === item.url ? 'default' : 'ghost'}
+            >
+              <Link to={item.url}>
+                <item.icon className="size-4" />
+                <span>{item.title}</span>
+              </Link>
+            </Button>
+          ))}
         </div>
         <ThemeToggle />
       </div>

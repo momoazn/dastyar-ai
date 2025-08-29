@@ -19,7 +19,7 @@ export function SidebarItem({
       {({ isActive }) => (
         <>
           {isActive && (
-            <div className="absolute top-0 right-0 h-full w-1 bg-accent " />
+            <div className="absolute top-0 right-0 z-10 h-full w-1 bg-primary" />
           )}
           <span className="font-medium">{title ?? 'Untitled'}</span>
           <div className="flex items-center gap-0">
