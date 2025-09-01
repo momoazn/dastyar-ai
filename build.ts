@@ -18,20 +18,28 @@ const WEB_DIR = join(ROOT_DIR, 'apps', 'web');
 
 // Helper functions for offline preparation
 const mkdirp = (dirPath: string) => {
-  if (!existsSync(dirPath)) {
+  if (existsSync(dirPath)) {
+    console.log(`[mkdirp] Directory already exists: ${dirPath}`);
+  } else {
+    console.log(`[mkdirp] Creating directory: ${dirPath}`);
     mkdirSync(dirPath, { recursive: true });
   }
 };
 
 const writeFileAtomic = async (dest: string, data: Uint8Array) => {
   const tmp = `${dest}.tmp-${Date.now()}`;
+  console.log(`[writeFileAtomic] Writing temporary file: ${tmp}`);
   await fsPromises.writeFile(tmp, data);
   await fsPromises.rename(tmp, dest);
+  console.log(`[writeFileAtomic] Renamed ${tmp} to ${dest}`);
 };
 
 const copyFileIfExists = (src: string, dest: string) => {
   if (existsSync(src)) {
+    console.log(`[copyFileIfExists] Copying file from ${src} to ${dest}`);
     copyFileSync(src, dest);
+  } else {
+    console.log(`[copyFileIfExists] Source file does not exist: ${src}`);
   }
 };
 
@@ -39,12 +47,18 @@ const findTransformersWasmDir = (workspaceRoot: string): string | null => {
   // Bun vendors packages under node_modules/.bun/<name@version>/node_modules/<name>
   const bunNm = join(workspaceRoot, 'node_modules', '.bun');
   if (!existsSync(bunNm)) {
+    console.log(
+      `[findTransformersWasmDir] .bun directory not found at ${bunNm}`
+    );
     return null;
   }
   const entries = readdirSync(bunNm)
     .filter((n) => n.startsWith('@huggingface+transformers@'))
     .sort()
     .reverse();
+  console.log(
+    `[findTransformersWasmDir] Found transformer entries: ${entries.join(', ')}`
+  );
   for (const ent of entries) {
     const wasmDir = join(
       bunNm,
@@ -55,9 +69,11 @@ const findTransformersWasmDir = (workspaceRoot: string): string | null => {
       'dist'
     );
     if (existsSync(wasmDir)) {
+      console.log(`[findTransformersWasmDir] Found WASM directory: ${wasmDir}`);
       return wasmDir;
     }
   }
+  console.log('[findTransformersWasmDir] No WASM directory found');
   return null;
 };
 
@@ -66,6 +82,7 @@ const downloadModelRepo = async (
   outDir: string
 ): Promise<void> => {
   const apiUrl = `https://huggingface.co/api/models/${modelId}`;
+  console.log(`[downloadModelRepo] Querying model API: ${apiUrl}`);
   const res = await fetch(apiUrl);
   if (!res.ok) {
     throw new Error(`Failed to query hub for ${modelId}: ${res.status}`);
@@ -109,30 +126,41 @@ const downloadModelRepo = async (
     mkdirp(dirname(dest));
     tasks.push(
       (async () => {
-        console.log('Downloading', s.rfilename, 'from', url);
+        console.log(
+          `[downloadModelRepo] Downloading ${s.rfilename} from ${url}`
+        );
         const r = await fetch(url);
         if (!r.ok) {
           throw new Error(`GET ${url} -> ${r.status}`);
         }
         const buf = new Uint8Array(await r.arrayBuffer());
         await writeFileAtomic(dest, buf);
-        console.log('Downloaded', s.rfilename);
+        console.log(
+          `[downloadModelRepo] Downloaded and saved ${s.rfilename} to ${dest}`
+        );
       })()
     );
   }
   await Promise.all(tasks);
+  console.log(
+    `[downloadModelRepo] All required files for ${modelId} downloaded.`
+  );
 };
 
 const main = async () => {
   console.log('🚀 Starting Dastyar AI build process...');
 
   // Create root dist directory
-  if (!existsSync(DIST_DIR)) {
+  if (existsSync(DIST_DIR)) {
+    console.log(`[main] dist directory already exists at ${DIST_DIR}`);
+  } else {
+    console.log(`[main] Creating dist directory at ${DIST_DIR}`);
     mkdirSync(DIST_DIR, { recursive: true });
   }
 
   // Build server (outputs to apps/server/dist)
   console.log('📦 Building server...');
+  console.log(`[main] Running 'bun run build' in ${SERVER_DIR}`);
   execSync('bun run build', {
     cwd: SERVER_DIR,
     stdio: 'inherit',
@@ -140,6 +168,7 @@ const main = async () => {
 
   // Build web (outputs to apps/web/dist)
   console.log('🌐 Building web app...');
+  console.log(`[main] Running 'bun run build' in ${WEB_DIR}`);
   execSync('bun run build', {
     cwd: WEB_DIR,
     stdio: 'inherit',
@@ -149,18 +178,35 @@ const main = async () => {
   console.log('📋 Copying server to dist...');
   const serverDistDir = join(SERVER_DIR, 'dist');
   if (existsSync(serverDistDir)) {
+    console.log(
+      `[main] Copying server dist from ${serverDistDir} to ${DIST_DIR}`
+    );
     cpSync(serverDistDir, DIST_DIR, { recursive: true, force: true });
+  } else {
+    console.log(
+      `[main] Server dist directory does not exist: ${serverDistDir}`
+    );
   }
 
   // Copy web build to dist/web
   console.log('📋 Copying web app to dist/web...');
   const webDistDir = join(WEB_DIR, 'dist');
   const webTargetDir = join(DIST_DIR, 'web');
-  if (!existsSync(webTargetDir)) {
+  if (existsSync(webTargetDir)) {
+    console.log(
+      `[main] Web target directory already exists at ${webTargetDir}`
+    );
+  } else {
+    console.log(`[main] Creating web target directory at ${webTargetDir}`);
     mkdirSync(webTargetDir, { recursive: true });
   }
   if (existsSync(webDistDir)) {
+    console.log(
+      `[main] Copying web dist from ${webDistDir} to ${webTargetDir}`
+    );
     cpSync(webDistDir, webTargetDir, { recursive: true, force: true });
+  } else {
+    console.log(`[main] Web dist directory does not exist: ${webDistDir}`);
   }
 
   // Copy config file
@@ -168,7 +214,10 @@ const main = async () => {
   const configSrc = join(ROOT_DIR, 'config.prod.sample.json');
   const configDest = join(DIST_DIR, 'config.prod.json');
   if (existsSync(configSrc)) {
+    console.log(`[main] Copying config from ${configSrc} to ${configDest}`);
     copyFileSync(configSrc, configDest);
+  } else {
+    console.log(`[main] Config source file does not exist: ${configSrc}`);
   }
 
   // Prepare offline dependencies (whisper models and cache)
@@ -187,10 +236,15 @@ const main = async () => {
     throw new Error('Could not locate transformers wasm directory');
   }
   let wasmCopied = false;
-  for (const file of readdirSync(wasmSrcDir)) {
+  const wasmFiles = readdirSync(wasmSrcDir);
+  console.log(`[main] Found WASM source directory: ${wasmSrcDir}`);
+  for (const file of wasmFiles) {
     if (file.endsWith('.wasm')) {
       const destFile = join(wasmOut, file);
-      if (!existsSync(destFile)) {
+      if (existsSync(destFile)) {
+        console.log(`[main] WASM file already exists at ${destFile}, skipping`);
+      } else {
+        console.log(`[main] Copying WASM file ${file} to ${destFile}`);
         copyFileIfExists(join(wasmSrcDir, file), destFile);
         wasmCopied = true;
       }
@@ -212,28 +266,31 @@ const main = async () => {
   const fallback = (process.env.OFFLINE_MODEL || defaultWhisperModel).trim();
   const modelIds = cliArgs.length > 0 ? cliArgs : [fallback];
 
+  console.log(`[main] Model IDs to prepare: ${modelIds.join(', ')}`);
+
   await Promise.all(
     modelIds.map(async (modelId) => {
       const modelDir = join(modelsOut, modelId);
       if (existsSync(modelDir)) {
-        console.log('Model already exists, skipping:', modelId);
+        console.log(`[main] Model already exists, skipping: ${modelId}`);
       } else {
+        console.log(`[main] Downloading and preparing model: ${modelId}`);
         await downloadModelRepo(modelId, modelsOut);
-        console.log('Prepared model at', modelDir);
+        console.log(`[main] Prepared model at ${modelDir}`);
       }
     })
   );
+  console.log('[main] All models prepared.');
+
+  console.log('✅ Build complete! Files are in the "dist" directory:');
+  console.log('   - dist/dastyar-ai (server binary)');
+  console.log('   - dist/web/ (web app)');
+  console.log('   - dist/whisper-models/ (offline models)');
+  console.log('   - dist/.whisper-cache/ (model cache)');
+  console.log('   - dist/wasm/ (WASM files)');
 };
 
 main().catch((err) => {
-  console.error(err);
+  console.error('[main] Build process failed:', err);
   process.exit(1);
 });
-
-console.log('✅ Build complete! Files are in the "dist" directory:');
-console.log('   - dist/dastyar-ai (server binary)');
-console.log('   - dist/web/ (web app)');
-console.log('   - dist/whisper-models/ (offline models)');
-console.log('   - dist/.whisper-cache/ (model cache)');
-console.log('   - dist/wasm/ (WASM files)');
-console.log('   - dist/config.prod.json (config file)');
