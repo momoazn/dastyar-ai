@@ -136,12 +136,8 @@
           "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": [
-            "threadId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["threadId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

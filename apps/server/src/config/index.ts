@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { ModelProvider } from '@/utils/constants';
 
 export type AppConfig = {
@@ -8,14 +7,6 @@ export type AppConfig = {
     port: number;
     corsOrigin: string;
     host: string;
-  };
-  logging: {
-    level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
-    dir: string;
-    file: string; // resolved full path
-    pretty: boolean; // pretty print to console in development
-    redactPaths: string[]; // pino redact paths
-    enableHttpLogging: boolean; // hono/orpc request logs
   };
   web: {
     distDir: string;
@@ -72,7 +63,36 @@ export type AppConfig = {
     maxFileSize: number; // in bytes
     allowedFormats: string[];
   };
+  offline: {
+    enabled: boolean;
+    autoDetect: boolean;
+    services: {
+      ollama: {
+        required: boolean;
+        autoStart: boolean;
+      };
+      lmstudio: {
+        required: boolean;
+        autoStart: boolean;
+      };
+      stableDiffusion: {
+        required: boolean;
+        autoStart: boolean;
+      };
+    };
+    models: {
+      autoDownload: boolean;
+      preferredModel: string;
+      cacheStrategy: 'aggressive' | 'conservative' | 'disabled';
+    };
+    storage: {
+      validatePaths: boolean;
+      createDirectories: boolean;
+      cleanupOrphanedFiles: boolean;
+    };
+  };
   environment: 'development' | 'production';
+  mode: 'online' | 'offline' | 'hybrid';
 };
 
 // Environment detection
@@ -109,72 +129,28 @@ const detectEnvironment = (): 'development' | 'production' => {
 
 const environment = detectEnvironment();
 
-// Get workspace root directory
-const getWorkspaceRoot = (): string => {
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  // In dev: apps/server/src/config -> go up 4 levels to workspace root
-  // In binary: config is next to binary, so execPath is already at root level
-  return environment === 'development'
-    ? path.resolve(currentDir, '..', '..', '..', '..')
-    : path.dirname(process.execPath);
-};
-
-const workspaceRoot = getWorkspaceRoot();
-
-// Normalize paths: resolve relative paths against the workspace root
-const normalizePath = (p: string): string => {
-  let value = p;
-  if (!value) {
-    return value;
-  }
-  if (value.startsWith('file:')) {
-    // biome-ignore lint/performance/useTopLevelRegex: go
-    value = value.replace(/^file:/, '');
-  }
-  return path.isAbsolute(value) ? value : path.resolve(workspaceRoot, value);
-};
-
-// Development-specific defaults
-const getDevelopmentDefaults = (): AppConfig => ({
+const defaults: AppConfig = {
   server: {
     port: 3000,
-    corsOrigin: 'http://localhost:3001',
-    host: '127.0.0.1',
-  },
-  logging: {
-    level: 'debug',
-    dir: path.join(workspaceRoot, 'logs'),
-    file: '',
-    pretty: true,
-    redactPaths: [
-      'ai.providers.openai.apiKey',
-      'ai.providers.groq.apiKey',
-      'ai.providers.gemini.apiKey',
-      'ai.providers.openrouter.apiKey',
-    ],
-    enableHttpLogging: true,
+    corsOrigin: environment === 'development' ? 'http://localhost:3001' : '*',
+    host: environment === 'development' ? '127.0.0.1' : '0.0.0.0',
   },
   web: {
-    distDir: path.join(workspaceRoot, 'apps', 'web', 'dist'),
+    distDir: './apps/web/dist',
   },
   database: {
-    file: path.join(workspaceRoot, 'apps', 'server', 'data.db'),
+    file: './apps/server/data.db',
   },
   whisper: {
-    modelsDir: path.join(workspaceRoot, 'whisper-models'),
-    cacheDir: path.join(workspaceRoot, '.whisper-cache'),
-    wasmDir: path.join(
-      workspaceRoot,
-      'node_modules',
-      '.bun',
-      '@huggingface+transformers@*',
-      'node_modules',
-      '@huggingface',
-      'transformers',
-      'dist'
-    ),
-    allowRemoteModels: true,
-    allowedModels: ['Xenova/whisper-tiny', 'Xenova/whisper-base'],
+    modelsDir: './whisper-models',
+    cacheDir: './.whisper-cache',
+    wasmDir:
+      './node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist',
+    allowRemoteModels: environment === 'development',
+    allowedModels:
+      environment === 'development'
+        ? ['Xenova/whisper-tiny', 'Xenova/whisper-base']
+        : ['Xenova/whisper-tiny'],
   },
   ai: {
     providers: {
@@ -186,7 +162,7 @@ const getDevelopmentDefaults = (): AppConfig => ({
       lmstudio: {
         baseUrl: 'http://localhost:1234/v1',
         apiKey: 'lmstudio',
-        enabled: true,
+        enabled: environment === 'development',
       },
       openai: {
         apiKey: '',
@@ -214,48 +190,398 @@ const getDevelopmentDefaults = (): AppConfig => ({
     enabled: true,
   },
   images: {
-    dir: path.join(workspaceRoot, 'generated-images'),
-    maxFileSize: 50 * 1024 * 1024, // 50MB
+    dir: './generated-images',
+    maxFileSize: 50 * 1024 * 1024,
     allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
   },
-  environment: 'development',
-});
+  offline: {
+    enabled: false, // Auto-detected based on available services
+    autoDetect: true,
+    services: {
+      ollama: {
+        required: true,
+        autoStart: false,
+      },
+      lmstudio: {
+        required: false,
+        autoStart: false,
+      },
+      stableDiffusion: {
+        required: false,
+        autoStart: false,
+      },
+    },
+    models: {
+      autoDownload: environment === 'development',
+      preferredModel: 'Xenova/whisper-tiny',
+      cacheStrategy: 'conservative',
+    },
+    storage: {
+      validatePaths: true,
+      createDirectories: true,
+      cleanupOrphanedFiles: true,
+    },
+  },
+  environment,
+  mode: 'hybrid', // Will be auto-detected
+};
 
-// Production-specific defaults (for binary deployment)
-const getProductionDefaults = (): AppConfig => {
-  const execDir = path.dirname(process.execPath);
+let cachedConfig: AppConfig | null = null;
+
+const mergeConfig = <T extends Record<string, unknown>>(
+  base: T,
+  override: Partial<T>
+): T => {
+  const result = { ...base };
+  for (const [key, value] of Object.entries(override)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      (result as Record<string, unknown>)[key] = mergeConfig(
+        (base as Record<string, unknown>)[key] as Record<string, unknown>,
+        value as Record<string, unknown>
+      );
+    } else if (value !== undefined) {
+      (result as Record<string, unknown>)[key] = value;
+    }
+  }
+  return result as T;
+};
+
+export const getConfig = (): AppConfig => {
+  if (cachedConfig) {
+    return cachedConfig;
+  }
+
+  let config = { ...defaults };
+
+  // Load from config.json if exists
+  const configPath = './config.json';
+  if (fs.existsSync(configPath)) {
+    try {
+      const userConfig = JSON.parse(
+        fs.readFileSync(configPath, 'utf8')
+      ) as Partial<AppConfig>;
+      config = mergeConfig(config, userConfig);
+    } catch (error) {
+      console.warn('Failed to load config.json:', error);
+    }
+  }
+
+  // Ensure directories exist
+  for (const dir of [
+    config.database.file,
+    config.whisper.modelsDir,
+    config.whisper.cacheDir,
+    config.images.dir,
+  ]) {
+    const dirPath = path.dirname(dir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  }
+
+  cachedConfig = config;
+  return config;
+};
+
+export const isDevelopment = (): boolean => environment === 'development';
+export const isProduction = (): boolean => environment === 'production';
+
+export const getAiProviderConfig = (provider: ModelProvider) => {
+  const config = getConfig();
+  return config.ai.providers[provider];
+};
+
+export const isAiProviderEnabled = (provider: ModelProvider): boolean => {
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig?.enabled === true;
+};
+
+export const getAiProviderApiKey = (
+  provider: ModelProvider
+): string | undefined => {
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig?.apiKey;
+};
+
+export const getAiProviderBaseUrl = (
+  provider: ModelProvider
+): string | undefined => {
+  const providerConfig = getAiProviderConfig(provider);
+  if (providerConfig && 'baseUrl' in providerConfig) {
+    return providerConfig.baseUrl;
+  }
+  return;
+};
+
+/**
+ * Detects the current mode (online, offline, hybrid) based on configuration and available services
+ */
+export const detectMode = (): 'online' | 'offline' | 'hybrid' => {
+  const config = getConfig();
+
+  // If offline mode is explicitly enabled
+  if (config.offline.enabled) {
+    return 'offline';
+  }
+
+  // Check which providers are enabled
+  const enabledProviders = Object.entries(config.ai.providers)
+    .filter(([_, provider]) => provider?.enabled)
+    .map(([name]) => name);
+
+  const hasOnlineProviders = enabledProviders.some((provider) =>
+    ['openai', 'groq', 'gemini', 'openrouter'].includes(provider)
+  );
+
+  const hasOfflineProviders = enabledProviders.some((provider) =>
+    ['ollama', 'lmstudio'].includes(provider)
+  );
+
+  if (hasOnlineProviders && hasOfflineProviders) {
+    return 'hybrid';
+  }
+  if (hasOnlineProviders) {
+    return 'online';
+  }
+  if (hasOfflineProviders) {
+    return 'offline';
+  }
+
+  // Default fallback
+  return 'hybrid';
+};
+
+/**
+ * Checks if a local service is available
+ */
+export const checkServiceAvailability = async (
+  service: 'ollama' | 'lmstudio' | 'stableDiffusion'
+): Promise<boolean> => {
+  const config = getConfig();
+
+  try {
+    switch (service) {
+      case 'ollama': {
+        const ollamaConfig = config.ai.providers.ollama;
+        if (!ollamaConfig?.enabled) {
+          return false;
+        }
+
+        const response = await fetch(`${ollamaConfig.baseUrl}/api/tags`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        return response.ok;
+      }
+
+      case 'lmstudio': {
+        const lmstudioConfig = config.ai.providers.lmstudio;
+        if (!lmstudioConfig?.enabled) {
+          return false;
+        }
+
+        const response = await fetch(`${lmstudioConfig.baseUrl}/v1/models`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        return response.ok;
+      }
+
+      case 'stableDiffusion': {
+        if (!config.stableDiffusion.enabled) {
+          return false;
+        }
+
+        const response = await fetch(
+          `${config.stableDiffusion.url}/internal/ping`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        return response.ok;
+      }
+
+      default:
+        return false;
+    }
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Validates offline configuration requirements
+ */
+export const validateOfflineConfig = (): {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+} => {
+  const config = getConfig();
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Check if offline mode is enabled but no offline providers are configured
+  if (config.offline.enabled) {
+    const offlineProviders = ['ollama', 'lmstudio'].filter(
+      (provider) =>
+        config.ai.providers[provider as keyof typeof config.ai.providers]
+          ?.enabled
+    );
+
+    if (offlineProviders.length === 0) {
+      errors.push(
+        'Offline mode is enabled but no offline AI providers are configured'
+      );
+    }
+
+    // Check required services
+    if (
+      config.offline.services.ollama.required &&
+      !config.ai.providers.ollama?.enabled
+    ) {
+      errors.push('Ollama is required for offline mode but not enabled');
+    }
+
+    if (
+      config.offline.services.stableDiffusion.required &&
+      !config.stableDiffusion.enabled
+    ) {
+      errors.push(
+        'Stable Diffusion is required for offline mode but not enabled'
+      );
+    }
+  }
+
+  // Check file paths
+  if (config.offline.storage.validatePaths) {
+    const pathsToCheck = [
+      config.database.file,
+      config.whisper.modelsDir,
+      config.whisper.cacheDir,
+      config.images.dir,
+    ];
+
+    for (const filePath of pathsToCheck) {
+      try {
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+          if (config.offline.storage.createDirectories) {
+            fs.mkdirSync(dir, { recursive: true });
+          } else {
+            warnings.push(`Directory does not exist: ${dir}`);
+          }
+        }
+      } catch {
+        warnings.push(`Cannot validate path: ${filePath}`);
+      }
+    }
+  }
+
+  // Check for online providers when offline mode is preferred
+  if (config.offline.enabled) {
+    const onlineProviders = ['openai', 'groq', 'gemini', 'openrouter'];
+    const enabledOnlineProviders = onlineProviders.filter(
+      (provider) =>
+        config.ai.providers[provider as keyof typeof config.ai.providers]
+          ?.enabled
+    );
+
+    if (enabledOnlineProviders.length > 0) {
+      warnings.push(
+        `Online providers are enabled in offline mode: ${enabledOnlineProviders.join(', ')}`
+      );
+    }
+  }
 
   return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+};
+
+/**
+ * Gets offline configuration status
+ */
+export const getOfflineStatus = async (): Promise<{
+  mode: 'online' | 'offline' | 'hybrid';
+  services: Record<string, boolean>;
+  isReady: boolean;
+  issues: string[];
+}> => {
+  const config = getConfig();
+  const mode = detectMode();
+
+  const services = {
+    ollama: false,
+    lmstudio: false,
+    stableDiffusion: false,
+  };
+
+  // Check service availability
+  const serviceChecks = await Promise.allSettled([
+    checkServiceAvailability('ollama'),
+    checkServiceAvailability('lmstudio'),
+    checkServiceAvailability('stableDiffusion'),
+  ]);
+
+  services.ollama =
+    serviceChecks[0].status === 'fulfilled' ? serviceChecks[0].value : false;
+  services.lmstudio =
+    serviceChecks[1].status === 'fulfilled' ? serviceChecks[1].value : false;
+  services.stableDiffusion =
+    serviceChecks[2].status === 'fulfilled' ? serviceChecks[2].value : false;
+
+  // Validate configuration
+  const validation = validateOfflineConfig();
+
+  const issues = [...validation.errors, ...validation.warnings];
+
+  // Determine if ready for offline use
+  let isReady = true;
+  if (config.offline.enabled) {
+    if (config.offline.services.ollama.required && !services.ollama) {
+      isReady = false;
+      issues.push('Ollama is required but not available');
+    }
+    if (
+      config.offline.services.stableDiffusion.required &&
+      !services.stableDiffusion
+    ) {
+      isReady = false;
+      issues.push('Stable Diffusion is required but not available');
+    }
+  }
+
+  return {
+    mode,
+    services,
+    isReady,
+    issues,
+  };
+};
+
+/**
+ * Creates a sample configuration file with all available options
+ */
+export const createSampleConfig = (outputPath: string): void => {
+  const sampleConfig: Partial<AppConfig> = {
     server: {
       port: 3000,
       corsOrigin: '*',
       host: '0.0.0.0',
     },
-    logging: {
-      level: 'info',
-      dir: path.join(execDir, 'logs'),
-      file: '',
-      pretty: true,
-      redactPaths: [
-        'ai.providers.openai.apiKey',
-        'ai.providers.groq.apiKey',
-        'ai.providers.gemini.apiKey',
-        'ai.providers.openrouter.apiKey',
-      ],
-      enableHttpLogging: true,
-    },
     web: {
-      distDir: path.join(execDir, 'web'),
+      distDir: './web',
     },
     database: {
-      file: path.join(execDir, 'data.db'),
+      file: './data.db',
     },
     whisper: {
-      modelsDir: path.join(execDir, 'whisper-models'),
-      cacheDir: path.join(execDir, '.whisper-cache'),
-      wasmDir: path.join(execDir, 'wasm'),
-      allowRemoteModels: false, // Offline by default in production
-      allowedModels: ['Xenova/whisper-tiny'], // Conservative default for offline
+      modelsDir: './whisper-models',
+      cacheDir: './.whisper-cache',
+      wasmDir: './wasm',
+      allowRemoteModels: false,
+      allowedModels: ['Xenova/whisper-tiny'],
     },
     ai: {
       providers: {
@@ -295,294 +621,40 @@ const getProductionDefaults = (): AppConfig => {
       enabled: true,
     },
     images: {
-      dir: path.join(execDir, 'generated-images'),
-      maxFileSize: 50 * 1024 * 1024, // 50MB
+      dir: './generated-images',
+      maxFileSize: 52_428_800,
       allowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
     },
-    environment: 'production',
-  };
-};
-
-let cachedConfig: AppConfig | null = null;
-
-const validateConfig = (config: AppConfig): void => {
-  // Validate essential directories exist in production
-  if (config.environment === 'production') {
-    if (!fs.existsSync(config.database.file)) {
-      const dbDir = path.dirname(config.database.file);
-      if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
-      }
-    }
-
-    // Ensure whisper directories exist
-    if (!fs.existsSync(config.whisper.modelsDir)) {
-      fs.mkdirSync(config.whisper.modelsDir, { recursive: true });
-    }
-
-    if (!fs.existsSync(config.whisper.cacheDir)) {
-      fs.mkdirSync(config.whisper.cacheDir, { recursive: true });
-    }
-
-    // Ensure image directories exist
-    if (!fs.existsSync(config.images.dir)) {
-      fs.mkdirSync(config.images.dir, { recursive: true });
-    }
-
-    // thumbnailDir removed from type; ensure only base dir exists in prod
-  }
-
-  // Ensure logging directory exists and compute file path
-  if (!fs.existsSync(config.logging.dir)) {
-    fs.mkdirSync(config.logging.dir, { recursive: true });
-  }
-  // default logfile path
-  (config.logging as { file: string }).file = path.join(
-    config.logging.dir,
-    'server.log'
-  );
-
-  // Validate port
-  if (config.server.port < 1 || config.server.port > 65_535) {
-    throw new Error(
-      `Invalid port: ${config.server.port}. Must be between 1 and 65535.`
-    );
-  }
-};
-
-const readJsonConfig = (filePath: string): Partial<AppConfig> | null => {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-    const raw = fs.readFileSync(filePath, 'utf8');
-    const parsed = JSON.parse(raw) as Partial<AppConfig>;
-    console.log(`📄 Loaded config from: ${filePath}`);
-    return parsed;
-  } catch (error) {
-    console.warn(`⚠️  Failed to read config from ${filePath}:`, error);
-    return null;
-  }
-};
-
-const mergeDeep = <T extends Record<string, unknown>>(
-  base: T,
-  override: Partial<T>
-): T => {
-  const result: Record<string, unknown> = { ...base };
-  for (const [key, value] of Object.entries(override)) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = mergeDeep(
-        (base as Record<string, unknown>)[key] as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-    } else if (value !== undefined) {
-      result[key] = value;
-    }
-  }
-  return result as T;
-};
-
-export const getConfig = (): AppConfig => {
-  if (cachedConfig) {
-    return cachedConfig;
-  }
-
-  console.log(`🚀 Starting in ${environment} mode`);
-
-  // Start with environment-specific defaults
-  let config: AppConfig =
-    environment === 'development'
-      ? getDevelopmentDefaults()
-      : getProductionDefaults();
-
-  // Config resolution order (highest priority first)
-  const configCandidates: string[] = [];
-
-  // 1. Environment-specific config files (highest priority)
-  if (environment === 'development') {
-    configCandidates.push(path.join(workspaceRoot, 'config.dev.json'));
-  } else {
-    configCandidates.push(path.join(workspaceRoot, 'config.prod.json'));
-  }
-
-  // 2. Generic config file
-  configCandidates.push(path.join(workspaceRoot, 'config.json'));
-
-  // 3. Environment variable pointing to custom config file
-  if (process.env.APP_CONFIG) {
-    configCandidates.push(process.env.APP_CONFIG);
-  }
-
-  // 4. Config file next to binary (production) or in workspace root (development)
-  if (environment === 'production') {
-    configCandidates.push(
-      path.join(path.dirname(process.execPath), 'config.json')
-    );
-    // Also look for sample config next to binary
-    configCandidates.push(
-      path.join(path.dirname(process.execPath), 'config.prod.sample.json')
-    );
-  } else {
-    configCandidates.push(
-      path.join(workspaceRoot, 'apps', 'server', 'config.json')
-    );
-  }
-
-  // 5. Fallback to sample config files if no actual configs found
-  if (environment === 'development') {
-    configCandidates.push(path.join(workspaceRoot, 'config.dev.sample.json'));
-  } else {
-    configCandidates.push(path.join(workspaceRoot, 'config.prod.sample.json'));
-  }
-
-  // Load and merge config files
-  for (const configPath of configCandidates) {
-    const configData = readJsonConfig(configPath);
-    if (configData) {
-      console.log(`📄 Loading config from: ${configPath}`);
-      config = mergeDeep(config, configData);
-      break; // Use first found config file
-    }
-  }
-
-  // Normalize any user-provided relative paths to absolute paths based on workspace root
-  config = {
-    ...config,
-    logging: {
-      ...config.logging,
-      dir: normalizePath(config.logging.dir),
-    },
-    web: {
-      ...config.web,
-      distDir: normalizePath(config.web.distDir),
-    },
-    database: {
-      ...config.database,
-      file: normalizePath(config.database.file),
-    },
-    whisper: {
-      ...config.whisper,
-      modelsDir: normalizePath(config.whisper.modelsDir),
-      cacheDir: normalizePath(config.whisper.cacheDir),
-      wasmDir: normalizePath(config.whisper.wasmDir),
-    },
-    images: {
-      ...config.images,
-      dir: normalizePath(config.images.dir),
-    },
-  };
-
-  // Validate the final configuration
-  try {
-    validateConfig(config);
-  } catch (error) {
-    console.error('❌ Configuration validation failed:', error);
-    throw error;
-  }
-
-  // Log key configuration info
-  console.log(
-    `🔧 Server will run on ${config.server.host}:${config.server.port}`
-  );
-  console.log(`💾 Database: ${config.database.file}`);
-  console.log(`🌐 Web assets: ${config.web.distDir}`);
-  console.log(
-    `🪵 Logs: ${config.logging.file} (level: ${config.logging.level})`
-  );
-  console.log(
-    `🎙️  Whisper models: ${config.whisper.modelsDir} (remote: ${config.whisper.allowRemoteModels})`
-  );
-
-  // Cache and return
-  cachedConfig = config;
-  return config;
-};
-
-// Export helper functions
-export const isDevelopment = (): boolean => environment === 'development';
-export const isProduction = (): boolean => environment === 'production';
-
-// AI Provider configuration helpers
-export const getAiProviderConfig = (provider: ModelProvider) => {
-  const config = getConfig();
-  return config.ai.providers[provider];
-};
-
-export const isAiProviderEnabled = (provider: ModelProvider): boolean => {
-  const providerConfig = getAiProviderConfig(provider);
-  return providerConfig?.enabled === true;
-};
-
-export const getAiProviderApiKey = (
-  provider: ModelProvider
-): string | undefined => {
-  const providerConfig = getAiProviderConfig(provider);
-  return providerConfig?.apiKey;
-};
-
-export const getAiProviderBaseUrl = (
-  provider: ModelProvider
-): string | undefined => {
-  const providerConfig = getAiProviderConfig(provider);
-  if (providerConfig && 'baseUrl' in providerConfig) {
-    return providerConfig.baseUrl;
-  }
-  return;
-};
-
-// Create a sample config file for reference
-export const createSampleConfig = (outputPath: string): void => {
-  const sampleConfig = {
-    server: {
-      port: 8080,
-      corsOrigin: 'https://yourdomain.com',
-      host: '0.0.0.0',
-    },
-    database: {
-      file: './custom-data.db',
-    },
-    whisper: {
-      allowRemoteModels: false,
-      allowedModels: ['Xenova/whisper-base', 'Xenova/whisper-small'],
-    },
-    ai: {
-      providers: {
+    offline: {
+      enabled: false,
+      autoDetect: true,
+      services: {
         ollama: {
-          baseUrl: 'http://localhost:11434/v1',
-          apiKey: 'ollama',
-          enabled: true,
+          required: true,
+          autoStart: false,
         },
         lmstudio: {
-          baseUrl: 'http://localhost:1234/v1',
-          apiKey: 'lmstudio',
-          enabled: true,
+          required: false,
+          autoStart: false,
         },
-        openai: {
-          apiKey: 'your-openai-api-key-here',
-        },
-        groq: {
-          apiKey: 'your-groq-api-key-here',
-          enabled: true,
-        },
-        gemini: {
-          apiKey: 'your-google-api-key-here',
-          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-          enabled: true,
-        },
-        openrouter: {
-          apiKey: 'your-openrouter-api-key-here',
-          baseUrl: 'https://api.openrouter.ai/v1',
-          enabled: true,
+        stableDiffusion: {
+          required: false,
+          autoStart: false,
         },
       },
-    },
-    stableDiffusion: {
-      url: 'http://your-sd-server:7860',
-      enabled: true,
+      models: {
+        autoDownload: false,
+        preferredModel: 'Xenova/whisper-tiny',
+        cacheStrategy: 'conservative',
+      },
+      storage: {
+        validatePaths: true,
+        createDirectories: true,
+        cleanupOrphanedFiles: true,
+      },
     },
   };
 
-  fs.writeFileSync(outputPath, JSON.stringify(sampleConfig, null, 2), 'utf8');
-  console.log(`📝 Sample config written to: ${outputPath}`);
+  // Write the sample config to file
+  fs.writeFileSync(outputPath, JSON.stringify(sampleConfig, null, 2));
 };
