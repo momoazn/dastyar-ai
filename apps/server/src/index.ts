@@ -3,7 +3,6 @@ import 'dotenv/config';
 import { createApp } from './app';
 import { runMigrations } from './database/migrate';
 import { createLogger } from './lib/logger';
-import { syncModels } from './services/model-sync';
 
 const start = async () => {
   const log = createLogger();
@@ -12,14 +11,6 @@ const start = async () => {
     console.log('Migrations run successfully');
   } catch (error) {
     log.error({ error }, 'Failed to run migrations');
-    process.exit(1);
-  }
-
-  try {
-    await syncModels();
-    console.log('Models synced successfully');
-  } catch (error) {
-    log.error({ error }, 'Failed to sync models');
     process.exit(1);
   }
 

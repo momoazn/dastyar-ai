@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import { Hono } from 'hono';
 import { getGeneratedImage } from '../repositories/images';
 
-const app = new Hono();
+const imageRouter = new Hono();
 
 // Serve image file
-app.get('/:id/file', async (c) => {
+imageRouter.get('/:id/file', async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -14,11 +14,13 @@ app.get('/:id/file', async (c) => {
       return c.json({ error: 'Image not found' }, 404);
     }
 
-    if (!fs.existsSync(image.filePath)) {
+    try {
+      await fs.promises.access(image.filePath, fs.constants.F_OK);
+    } catch {
       return c.json({ error: 'Image file not found on disk' }, 404);
     }
 
-    const fileBuffer = fs.readFileSync(image.filePath);
+    const fileBuffer = await fs.promises.readFile(image.filePath);
 
     // Set appropriate headers
     c.header('Content-Type', 'image/png');
@@ -26,7 +28,11 @@ app.get('/:id/file', async (c) => {
     c.header('Content-Length', fileBuffer.length.toString());
     c.header('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
 
-    return c.body(fileBuffer);
+    // Convert Buffer to Uint8Array for Hono compatibility
+    return new Response(new Uint8Array(fileBuffer), {
+      status: 200,
+      headers: c.res.headers,
+    });
   } catch (error) {
     console.error('Error serving image file:', error);
     return c.json({ error: 'Internal server error' }, 500);
@@ -34,7 +40,7 @@ app.get('/:id/file', async (c) => {
 });
 
 // Download image with proper headers
-app.get('/:id/download', async (c) => {
+imageRouter.get('/:id/download', async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -43,22 +49,28 @@ app.get('/:id/download', async (c) => {
       return c.json({ error: 'Image not found' }, 404);
     }
 
-    if (!fs.existsSync(image.filePath)) {
+    try {
+      await fs.promises.access(image.filePath, fs.constants.F_OK);
+    } catch {
       return c.json({ error: 'Image file not found on disk' }, 404);
     }
 
-    const fileBuffer = fs.readFileSync(image.filePath);
+    const fileBuffer = await fs.promises.readFile(image.filePath);
 
     // Set download headers
     c.header('Content-Type', 'application/octet-stream');
     c.header('Content-Disposition', `attachment; filename="${image.fileName}"`);
     c.header('Content-Length', fileBuffer.length.toString());
 
-    return c.body(fileBuffer);
+    // Convert Buffer to Uint8Array for Hono compatibility
+    return new Response(new Uint8Array(fileBuffer), {
+      status: 200,
+      headers: c.res.headers,
+    });
   } catch (error) {
     console.error('Error downloading image:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
 
-export default app;
+export default imageRouter;

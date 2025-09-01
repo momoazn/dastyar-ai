@@ -24,7 +24,7 @@ export const Route = createFileRoute('/chat/$id')({
 function ChatThreadRouteComponent() {
   const { id: threadId } = useParams({ from: '/chat/$id' });
 
-  const modelId = useAtomValue(modelAtom);
+  const modelName = useAtomValue(modelAtom);
   const isInitialRender = useRef(true);
 
   const messagesQuery = useQuery(
@@ -37,7 +37,7 @@ function ChatThreadRouteComponent() {
     useChat<MyUIMessage>({
       id: threadId,
       transport: new DefaultChatTransport({
-        api: `${import.meta.env.VITE_SERVER_URL}/chat`,
+        api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
         prepareSendMessagesRequest: ({ messages: _messages, body }) => {
           const lastMessage = _messages.at(-1);
           if (!lastMessage) {
@@ -56,7 +56,7 @@ function ChatThreadRouteComponent() {
       },
     });
 
-  const lastUsedModelId = messagesQuery.data?.at(-1)?.metadata?.modelId;
+  const lastUsedModelName = messagesQuery.data?.at(-1)?.metadata?.modelName;
 
   const handleSendPrompt = async (prompt: string) => {
     if (messages.length === 0) {
@@ -74,7 +74,7 @@ function ChatThreadRouteComponent() {
       }
     }
 
-    sendMessage({ text: prompt }, { body: { modelId, threadId } });
+    sendMessage({ text: prompt }, { body: { modelName, threadId } });
   };
 
   useEffect(() => {
@@ -112,7 +112,7 @@ function ChatThreadRouteComponent() {
         <ChatInput
           handleSendPrompt={handleSendPrompt}
           isGenerating={status === 'streaming' || status === 'submitted'}
-          lastUsedModelId={lastUsedModelId ?? undefined}
+          lastUsedModelName={lastUsedModelName ?? undefined}
           stopGenerating={stop}
         />
       </div>

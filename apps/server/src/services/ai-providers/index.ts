@@ -1,34 +1,9 @@
-import type { ProviderFactoriesRegistry, ProviderListRegistry } from '@/config';
-import { ModelProviderEnum } from '@/config';
-import type { Model } from '@/database/schema';
-import { geminiFactories, geminiListFns, type geminiProvider } from './gemini';
-import { groqFactories, groqListFns, type groqProvider } from './groq';
-import {
-  type lmstudioProvider,
-  localFactories,
-  localListFns,
-  ollamaProvider,
-} from './local';
-import {
-  openrouterFactories,
-  openrouterListFns,
-  type openrouterProvider,
-} from './openrouter';
-
-// Merge registries
-export const providerFactories: ProviderFactoriesRegistry = {
-  ...localFactories,
-  ...openrouterFactories,
-  ...groqFactories,
-  ...geminiFactories,
-};
-
-export const providerListFns: ProviderListRegistry = {
-  ...localListFns,
-  ...openrouterListFns,
-  ...groqListFns,
-  ...geminiListFns,
-};
+import type { ModelProvider } from '@/utils/constants';
+import { geminiProvider, listGeminiModels } from './gemini';
+import { groqProvider, listGroqModels } from './groq';
+import { listLmstudioModels, lmstudioProvider } from './lmstudio';
+import { listOllamaModels, ollamaProvider } from './ollama';
+import { listOpenrouterModels, openrouterProvider } from './openrouter';
 
 export type AnyProviderModel =
   | ReturnType<typeof ollamaProvider>
@@ -37,33 +12,44 @@ export type AnyProviderModel =
   | ReturnType<typeof groqProvider>
   | ReturnType<typeof geminiProvider>;
 
-export const listAllModels = async () => {
-  // Only fetch local providers here; remote providers are seeded via script
-  const providers = Object.values(ModelProviderEnum).filter(
-    (p) =>
-      p !== ModelProviderEnum.GEMINI &&
-      p !== ModelProviderEnum.OPENROUTER &&
-      p !== ModelProviderEnum.GROQ
-  );
+export async function listAllModels(): Promise<
+  { name: string; provider: ModelProvider }[]
+> {
+  const ollamaModels = await listOllamaModels();
+  const lmstudioModels = await listLmstudioModels();
+  const openrouterModels = listOpenrouterModels();
+  const groqModels = listGroqModels();
+  const geminiModels = listGeminiModels();
 
-  const results = await Promise.all(
-    providers.map(async (provider) => {
-      const listFn = providerListFns[provider];
-      if (!listFn) {
-        return [] as { id: string; provider: string }[];
-      }
-      const models = await listFn();
-      return models.map((m: { id: string }) => ({ id: m.id, provider }));
-    })
-  );
-  return results.flat();
-};
+  return [
+    ...ollamaModels,
+    ...lmstudioModels,
+    ...openrouterModels,
+    ...groqModels,
+    ...geminiModels,
+  ];
+}
 
-export const getProviderForModel = (model: Model): AnyProviderModel => {
-  const factory =
-    providerFactories[model.provider as keyof typeof providerFactories];
-  if (factory) {
-    return factory(model.name) as AnyProviderModel;
+export const getProviderForModel = (
+  model: string,
+  modelProvider: ModelProvider = 'ollama'
+): AnyProviderModel => {
+  if (!modelProvider) {
+    return ollamaProvider(model);
   }
-  return ollamaProvider(model.name);
+
+  switch (modelProvider) {
+    case 'ollama':
+      return ollamaProvider(model);
+    case 'lmstudio':
+      return lmstudioProvider(model);
+    case 'openrouter':
+      return openrouterProvider(model);
+    case 'groq':
+      return groqProvider(model);
+    case 'gemini':
+      return geminiProvider(model);
+    default:
+      return ollamaProvider(model);
+  }
 };

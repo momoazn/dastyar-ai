@@ -59,7 +59,7 @@ export function createApp() {
 
   // API routes
   app.route('/rpc', orpcsHandler);
-  app.route('/chat', chatHandler);
+  app.route('/api/chat', chatHandler);
   app.route('/api/images', imagesHandler);
 
   // Static file serving

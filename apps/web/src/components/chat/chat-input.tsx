@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import { RefreshCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { modelAtom } from '@/atoms/model';
 import {
   PromptInput,
   PromptInputButton,
@@ -19,34 +20,36 @@ import { TranscribeButton } from '@/components/transcribe-button';
 import { Alert, AlertDescription } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
-import { client, orpc, queryClient } from '@/utils/orpc';
-import { modelAtom } from '../../atoms/model';
+import { orpc } from '@/utils/orpc';
 
 interface ChatInputProps {
   handleSendPrompt: (prompt: string) => void;
   isGenerating?: boolean;
   stopGenerating?: () => void;
-  lastUsedModelId?: string;
+  lastUsedModelName?: string;
 }
 
 export const ChatInput = ({
   handleSendPrompt,
   isGenerating,
   stopGenerating,
-  lastUsedModelId,
+  lastUsedModelName,
 }: ChatInputProps) => {
   const [prompt, setPrompt] = useState('');
-  const [modelId, setModelId] = useAtom(modelAtom);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null
+  );
+  const [modelId, setModelName] = useAtom(modelAtom);
 
   const modelsQuery = useQuery(orpc.models.list.queryOptions());
 
   useEffect(() => {
-    if (!(modelId || lastUsedModelId) && modelsQuery.data?.[0]?.id) {
-      setModelId(modelsQuery.data[0].id);
-    } else if (lastUsedModelId) {
-      setModelId(lastUsedModelId);
+    if (!(modelId || lastUsedModelName) && modelsQuery.data?.[0]?.name) {
+      setModelName(modelsQuery.data[0].name);
+    } else if (lastUsedModelName) {
+      setModelName(lastUsedModelName);
     }
-  }, [modelsQuery.data, modelId, setModelId, lastUsedModelId]);
+  }, [modelsQuery.data, modelId, setModelName, lastUsedModelName]);
 
   // Handle transcription success
   const handleTranscription = (transcribedText: string) => {
@@ -59,17 +62,11 @@ export const ChatInput = ({
     }
   };
 
-  // Handle transcription error for display
-  const [transcriptionError, setTranscriptionError] = useState<string | null>(
-    null
-  );
-
   const handleTranscriptionError = (error: string) => {
     console.error('Transcription failed:', error);
     setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
   };
 
-  // models prop provided by parent
   // Memoize text direction calculation
   const textDirection = useMemo(
     () => (prompt ? detectTextDirection(prompt) : 'rtl'),
@@ -111,8 +108,8 @@ export const ChatInput = ({
     }
 
     return modelsQuery.data.map((model) => ({
-      key: model.id,
-      value: model.id,
+      key: model.name,
+      value: model.name,
       content: (
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-green-500" />
@@ -126,15 +123,6 @@ export const ChatInput = ({
       ),
     }));
   }, [modelsQuery?.data, modelsQuery?.isPending]);
-
-  const handleSyncModels = async () => {
-    await client.models.sync();
-    await queryClient.invalidateQueries({
-      queryKey: orpc.models.list.queryKey({
-        input: {},
-      }),
-    });
-  };
 
   // Get language for transcription based on text direction
   const getTranscriptionLanguage = () => {
@@ -161,7 +149,7 @@ export const ChatInput = ({
             <PromptInputTools>
               <PromptInputModelSelect
                 defaultValue={modelId as string}
-                onValueChange={setModelId}
+                onValueChange={setModelName}
                 value={modelId as string}
               >
                 <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
@@ -180,7 +168,10 @@ export const ChatInput = ({
                   ))}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
-              <PromptInputButton onClick={handleSyncModels} variant="outline">
+              <PromptInputButton
+                onClick={() => modelsQuery.refetch()}
+                variant="outline"
+              >
                 <RefreshCcw className="size-4" />
               </PromptInputButton>
             </PromptInputTools>

@@ -1,18 +1,18 @@
 import { asc, desc, eq } from 'drizzle-orm';
 import type { Json } from 'drizzle-zod';
-import { db } from '../database';
+import { db } from '@/database';
 import type {
   InsertThreadInput,
   SelectMessageOutput,
   SelectThreadOutput,
-} from '../database/schema';
+} from '@/database/schema';
 import {
   insertThreadSchema,
   messagesTable,
   selectThreadSchema,
   threads,
-} from '../database/schema';
-import { generateId } from '../utils/id-generator';
+} from '@/database/schema';
+import { generateId } from '@/utils/id-generator';
 
 export async function createThread(
   params?: Partial<Pick<InsertThreadInput, 'title'>>
@@ -77,23 +77,19 @@ export async function updateThreadOnNewMessage(
 
 export const loadThreadMessages = async (
   threadId: string
-): Promise<(SelectMessageOutput & { modelName?: string })[]> => {
+): Promise<SelectMessageOutput[]> => {
   try {
-    const result = await db.query.messagesTable.findMany({
-      where: eq(messagesTable.threadId, threadId),
-      orderBy: asc(messagesTable.createdAt),
-      with: {
-        model: true,
-      },
-    });
+    const result = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.threadId, threadId))
+      .orderBy(asc(messagesTable.createdAt));
 
     return result.map((message) => ({
       ...message,
       parts: message.parts as Json,
-      modelName: message.model?.name || undefined,
     }));
-  } catch (error) {
-    console.error('======> error in loadThreadMessages', error);
-    return [];
+  } catch {
+    return [] as SelectMessageOutput[];
   }
 };

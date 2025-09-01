@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { z } from 'zod';
-import { getConfig } from '../../config/index';
+import { publicProcedure } from '@/api/index';
+import { getConfig } from '@/config';
 import {
   cleanupOrphanedFiles,
   clearGeneratedImages,
@@ -8,13 +9,12 @@ import {
   deleteGeneratedImage,
   getGeneratedImage,
   listGeneratedImages,
-} from '../../repositories/images';
-import { imageStorageService } from '../../services/image-storage';
+} from '@/repositories/images';
+import { imageStorageService } from '@/services/image-storage';
 import {
   type ImageGenerationParams,
   stableDiffusionService,
-} from '../../services/stable-diffusion';
-import { publicProcedure } from '../index';
+} from '@/services/stable-diffusion';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),

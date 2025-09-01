@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getConfig, isDevelopment } from '../config/index';
+import { getConfig, isDevelopment } from '@/config/index';
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;

@@ -10,37 +10,17 @@ import type { Context } from 'hono';
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
-import { MessageRoleEnum, MessageStatusEnum } from '../database/schema';
-import { saveMessage } from '../repositories/messages';
-import { getModelById } from '../repositories/models';
+import { saveMessage } from '@/repositories/messages';
 import {
   getThread,
   loadThreadMessages,
   updateThreadOnNewMessage,
-} from '../repositories/threads';
-import { getProviderForModel } from '../services/ai-providers';
-import { convertDbMessagesToUiMessages } from '../utils/chat';
+} from '@/repositories/threads';
+import { getProviderForModel } from '@/services/ai-providers';
+import { convertDbMessagesToUiMessages } from '@/utils/chat';
+import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
 
-const SYSTEM_PROMPT = `
-شما «دستیار حرفه‌ای فارسی‌زبان» هستید و به کاربران متخصص کمک می‌کنید.
-
-راهنما:
-- زبان و لحن: فارسی رسمی، دقیق، محترمانه و بی‌حاشیه. از واژگان استاندارد استفاده کنید؛ در صورت لزوم اصطلاح فنی انگلیسی را در پرانتز بیاورید.
-- ساختار پاسخ:
-  1) جمع‌بندی کوتاه ۱–۲ جمله‌ای از مسئله.
-  2) راه‌حل عملی و قابل اجرا با مراحل شماره‌دار یا فهرست بولت‌شده.
-  3) در صورت ابهام، حداکثر دو پرسش روشن‌ساز در انتها.
-- اختصار و کیفیت: پاسخ‌ها کوتاه اما کامل؛ از زیاده‌گویی، تکرار و تعارف پرهیز کنید. مثال‌های حداقلی و در صورت ارائه کد، کدِ قابل اجرا با توضیح مختصر بدهید.
-- قالب‌بندی: از مارک‌داون برای لیست‌ها، جدول‌ها و کدها استفاده کنید. برای کد از بلوک‌های سه‌تایی \`\`\`language استفاده کنید.
-- استدلال: استدلال درونی را فقط داخل تگ‌های <think> قرار دهید و در پاسخ نهایی نشان ندهید.
-- دقت و صحت: از جعل اطلاعات خودداری کنید. در صورت عدم قطعیت، آن را شفاف بگویید و بهترین حدس مستدل ارائه کنید. اعداد، واحدها و قیود را دقیق ذکر کنید.
-- حریم خصوصی و اخلاق: از تولید محتوای مضر یا نقض قوانین پرهیز کنید و داده‌های حساس کاربر را تکرار نکنید.
-- بومی‌سازی: در صورت مناسب بودن، مثال‌ها، واحدها و تاریخ‌ها را با زمینه ایران انطباق دهید.
-- منابع: بدون دسترسی به وب، از ارجاع به منابع تأییدنشده خودداری کنید؛ در صورت نیاز بگویید «نیاز به تأیید منبع است».
-- زبان: زبان ورودی کاربر را تشخیص دهید و به همان زبان پاسخ دهید؛ فارسی در برابر فارسی و انگلیسی در برابر انگلیسی. در صورت درخواست صریح کاربر، زبان پاسخ را تغییر دهید. در ورودی‌های دو‌زبانه، مطابق زبان غالب یا آخرین جمله کاربر پاسخ دهید.
-`;
-
-const app = new Hono();
+const chatRouter = new Hono();
 
 // Unified error response helper
 const sendError = (
@@ -64,11 +44,15 @@ const ChatRequestSchema = z.object({
     parts: z.array(z.unknown()).min(1),
     metadata: z.unknown().optional(),
   }),
-  modelId: z.string().min(1),
+  modelProvider: z
+    .enum(['ollama', 'lmstudio', 'openrouter', 'groq', 'gemini'])
+    .optional()
+    .default('ollama'),
+  modelName: z.string().min(1),
   threadId: z.string().min(1),
 });
 
-app.post('/', async (c) => {
+chatRouter.post('/', async (c) => {
   try {
     const raw = await c.req.json();
     const parsed = ChatRequestSchema.safeParse(raw);
@@ -77,10 +61,15 @@ app.post('/', async (c) => {
         status: 400,
         code: 'INVALID_REQUEST',
         message: 'Request body validation failed',
-        details: parsed.error.flatten(),
+        details: z.treeifyError(parsed.error),
       });
     }
-    const { message: inputMessage, modelId, threadId } = parsed.data;
+    const {
+      message: inputMessage,
+      modelName,
+      threadId,
+      modelProvider,
+    } = parsed.data;
     if (threadId) {
       const thread = await getThread(threadId);
       if (!thread) {
@@ -93,26 +82,16 @@ app.post('/', async (c) => {
       }
     }
 
-    // Resolve model by id
-    const model = await getModelById(modelId);
-    if (!model) {
-      return sendError(c, {
-        status: 400,
-        code: 'MODEL_NOT_FOUND',
-        message: 'The requested modelId is not available',
-        details: { modelId },
-      });
-    }
-    const providerModel = getProviderForModel(model);
+    const providerModel = getProviderForModel(modelName, modelProvider);
 
     try {
       await saveMessage({
         id: inputMessage.id as string,
         parts: inputMessage.parts,
-        modelId: model.id,
-        status: MessageStatusEnum.FINISHED,
+        status: 'finished',
+        role: 'user',
+        modelName,
         threadId,
-        role: MessageRoleEnum.USER,
       });
     } catch (err) {
       const log = c.get('log' as never) as
@@ -151,7 +130,7 @@ app.post('/', async (c) => {
         }),
       }),
       messages: convertToModelMessages(convertDbMessagesToUiMessages(messages)),
-      system: SYSTEM_PROMPT,
+      system: CHAT_SYSTEM_PROMPT,
       experimental_transform: smoothStream({
         delayInMs: 10,
         chunking: 'word',
@@ -171,9 +150,9 @@ app.post('/', async (c) => {
             id: responseMessage.id,
             threadId,
             parts: responseMessage.parts,
-            modelId: model.id,
-            status: MessageStatusEnum.FINISHED,
-            role: MessageRoleEnum.ASSISTANT,
+            modelName,
+            status: 'finished',
+            role: 'assistant',
           });
           await updateThreadOnNewMessage(threadId, new Date());
         } catch (error) {
@@ -202,4 +181,4 @@ app.post('/', async (c) => {
   }
 });
 
-export default app;
+export default chatRouter;

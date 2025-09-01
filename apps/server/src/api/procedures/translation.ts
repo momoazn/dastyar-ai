@@ -1,24 +1,23 @@
 import { generateObject, generateText } from 'ai';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, translationsTable } from '../../database/schema';
+import { translationsTable } from '@/database/schema';
 import {
   deleteTranslation,
   getTranslation,
   listTranslations,
-} from '../../repositories/translations';
+} from '@/repositories/translations';
 import {
   type AnyProviderModel,
   getProviderForModel,
-} from '../../services/ai-providers';
+} from '@/services/ai-providers';
 import {
-  codeToLanguage,
-  codeToLanguageMap,
   type LanguageCode,
+  languageCodes,
+  ModelProviderEnum,
   type Tone,
-  toneToLabelMap,
-} from '../../utils/constants';
-import { generateId } from '../../utils/id-generator';
+  tones,
+} from '@/utils/constants';
+import { generateId } from '@/utils/id-generator';
 import { publicProcedure } from '../index';
 
 // Regex constants declared at top-level per performance best practices
@@ -115,35 +114,24 @@ export const translationProcedures = {
     .input(
       z.object({
         text: z.string().min(1),
-        sourceLanguage: z.enum(Object.keys(codeToLanguageMap)),
-        targetLanguage: z.enum(Object.keys(codeToLanguageMap)),
-        tone: z.enum(Object.keys(toneToLabelMap)).optional(),
-        modelId: z.string().optional(),
+        sourceLanguage: z.enum(languageCodes),
+        targetLanguage: z.enum(languageCodes),
+        tone: z.enum(tones),
+        modelName: z.string(),
+        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
       })
     )
     .handler(async ({ input, context }) => {
-      const selectedModelId = input.modelId ?? '';
-      const model = await context.db
-        .select()
-        .from(models)
-        .where(eq(models.id, selectedModelId))
-        .limit(1);
-
-      if (!model?.[0]) {
-        throw new Error('Model not found');
-      }
-
-      const providerModel = getProviderForModel(model?.[0]);
-      const sourceLanguage = codeToLanguage(
-        input.sourceLanguage as LanguageCode
+      const providerModel = getProviderForModel(
+        input.modelName,
+        input.modelProvider
       );
-      const targetLanguage = codeToLanguage(
-        input.targetLanguage as LanguageCode
-      );
+      const sourceLanguage = input.sourceLanguage as LanguageCode;
+      const targetLanguage = input.targetLanguage as LanguageCode;
 
       const systemPrompt = [
         `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-        input.tone ? `Use a ${input.tone} tone.` : undefined,
+        `Use a ${input.tone} tone.`,
         'Preserve meaning and formatting. Return only the translated text without extra commentary.',
         'Always return a json object with the translated text.',
         'Please generate only the JSON output. DO NOT provide any preamble.',
@@ -170,7 +158,7 @@ export const translationProcedures = {
           providerModel,
           [
             `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-            input.tone ? `Use a ${input.tone} tone.` : undefined,
+            `Use a ${input.tone} tone.`,
             'Preserve meaning and formatting.',
             'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
           ]
@@ -187,7 +175,7 @@ export const translationProcedures = {
           id,
           sourceText: input.text,
           translatedText,
-          modelId: model?.[0].id,
+          modelName: input.modelName,
           sourceLanguage: input.sourceLanguage,
           targetLanguage: input.targetLanguage,
           tone: (input.tone as Tone) ?? null,

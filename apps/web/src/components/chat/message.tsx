@@ -44,8 +44,7 @@ export const toMessageViewModel = (message: MyUIMessage): MessageViewModel => {
     role: message.role,
     content,
     reasoning,
-    model:
-      message.metadata?.modelName ?? message.metadata?.modelId ?? undefined,
+    model: message.metadata?.modelName ?? undefined,
   };
 };
 

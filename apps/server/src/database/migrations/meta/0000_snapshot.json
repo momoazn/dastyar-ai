@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "57765b11-f5db-4970-84b2-a74b8f9148a7",
+  "id": "b1375928-a22b-441a-8d14-fb9889466ddd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -49,21 +49,19 @@
           "notNull": true,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -93,21 +91,21 @@
           "name": "status",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "role": {
           "name": "role",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "threadId": {
@@ -117,105 +115,37 @@
           "notNull": true,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "messages_modelId_models_id_fk": {
-          "name": "messages_modelId_models_id_fk",
-          "tableFrom": "messages",
-          "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "messages_threadId_threads_id_fk": {
           "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": ["threadId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "threadId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "models": {
-      "name": "models",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text(15)",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "isEnabled": {
-          "name": "isEnabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "created": {
-          "name": "created",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        },
-        "updated": {
-          "name": "updated",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        }
-      },
-      "indexes": {
-        "models_provider_name_uq": {
-          "name": "models_provider_name_uq",
-          "columns": ["provider", "name"],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -244,11 +174,11 @@
           "notNull": false,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "mode": {
@@ -265,35 +195,23 @@
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "summaries_modelId_models_id_fk": {
-          "name": "summaries_modelId_models_id_fk",
-          "tableFrom": "summaries",
-          "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -330,21 +248,19 @@
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -377,11 +293,11 @@
           "notNull": false,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "sourceLanguage": {
@@ -405,35 +321,23 @@
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "translations_modelId_models_id_fk": {
-          "name": "translations_modelId_models_id_fk",
-          "tableFrom": "translations",
-          "tableTo": "models",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

@@ -1,30 +1,29 @@
 import { asc, desc, eq } from 'drizzle-orm';
 import type { Json } from 'drizzle-zod';
-import { db } from '../database';
+import { db } from '@/database';
 import type {
   InsertMessageInput,
   SelectMessageOutput,
-} from '../database/schema';
+} from '@/database/schema';
 import {
   insertMessageSchema,
-  insertModelSchema,
   messagesTable,
   selectMessageSchema,
-} from '../database/schema';
-import { generateId } from '../utils/id-generator';
+} from '@/database/schema';
+import type { MessageStatus } from '@/utils/constants';
+import { generateId } from '@/utils/id-generator';
 
 export async function saveMessage(
   params: Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
 ) {
   const id = params.id ?? generateId();
-  console.log('======> params', params);
   const row = insertMessageSchema.parse({
     id,
     threadId: params.threadId,
     role: params.role,
     parts: params.parts,
-    status: params.status ?? null,
-    modelId: params.modelId ?? null,
+    status: params.status,
+    modelName: params.modelName,
   });
   await db.insert(messagesTable).values(row);
   return { id };
@@ -32,25 +31,26 @@ export async function saveMessage(
 
 export async function updateMessage(
   params: Pick<InsertMessageInput, 'id'> &
-    Partial<Pick<InsertMessageInput, 'parts' | 'status' | 'modelId'>>
+    Partial<Pick<InsertMessageInput, 'parts' | 'status' | 'modelName'>>
 ) {
   selectMessageSchema.shape.id.parse(params.id);
   const update: Partial<{
     parts: Json;
-    status: string | null;
-    modelId: string | null;
+    status: MessageStatus;
+    modelName: string;
   }> = {};
+
   if (params.parts !== undefined) {
     insertMessageSchema.shape.parts.parse(params.parts);
     update.parts = params.parts;
   }
   if (params.status !== undefined) {
     insertMessageSchema.shape.status.parse(params.status);
-    update.status = params.status;
+    update.status = params.status as MessageStatus;
   }
-  if (params.modelId !== undefined) {
-    insertModelSchema.shape.id.parse(params.modelId);
-    update.modelId = params.modelId;
+  if (params.modelName !== undefined) {
+    insertMessageSchema.shape.modelName.parse(params.modelName);
+    update.modelName = params.modelName;
   }
   if (Object.keys(update).length === 0) {
     return;
@@ -73,8 +73,8 @@ export async function saveMessages(
       threadId: p.threadId,
       role: p.role,
       parts: p.parts,
-      status: p.status ?? null,
-      modelId: p.modelId ?? null,
+      status: p.status,
+      modelName: p.modelName,
     });
     return row;
   });

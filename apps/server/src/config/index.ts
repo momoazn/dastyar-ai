@@ -1,33 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-// AI Provider Configuration
-export const ModelProviderEnum = {
-  OLLAMA: 'ollama',
-  LMSTUDIO: 'lmstudio',
-  GEMINI: 'gemini',
-  OPENROUTER: 'openrouter',
-  GROQ: 'groq',
-} as const;
-
-export type ModelProvider =
-  (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum];
-
-export type MinimalModel = { id: string };
-
-export type ProviderId =
-  (typeof ModelProviderEnum)[keyof typeof ModelProviderEnum];
-
-export type ProviderFactory = (name: string) => unknown;
-
-export type ProviderListFn = () => Promise<MinimalModel[]>;
-
-export type ProviderFactoriesRegistry = Partial<
-  Record<ProviderId, ProviderFactory>
->;
-
-export type ProviderListRegistry = Partial<Record<ProviderId, ProviderListFn>>;
+import type { ModelProvider } from '@/utils/constants';
 
 export type AppConfig = {
   server: {

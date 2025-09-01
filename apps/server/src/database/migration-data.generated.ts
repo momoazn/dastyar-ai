@@ -9,8 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1756069026793,
-      "tag": "0000_curly_boom_boom",
+      "when": 1756727678481,
+      "tag": "0000_military_beast",
       "breakpoints": true
     }
   ]
@@ -18,7 +18,7 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "57765b11-f5db-4970-84b2-a74b8f9148a7",
+  "id": "b1375928-a22b-441a-8d14-fb9889466ddd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -66,21 +66,19 @@ export const migrationData: { [key: string]: string } = {
           "notNull": true,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -110,21 +108,21 @@ export const migrationData: { [key: string]: string } = {
           "name": "status",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "role": {
           "name": "role",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "threadId": {
@@ -134,38 +132,23 @@ export const migrationData: { [key: string]: string } = {
           "notNull": true,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "messages_modelId_models_id_fk": {
-          "name": "messages_modelId_models_id_fk",
-          "tableFrom": "messages",
-          "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "messages_threadId_threads_id_fk": {
           "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
@@ -180,70 +163,6 @@ export const migrationData: { [key: string]: string } = {
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "models": {
-      "name": "models",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text(15)",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "isEnabled": {
-          "name": "isEnabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "created": {
-          "name": "created",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        },
-        "updated": {
-          "name": "updated",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        }
-      },
-      "indexes": {
-        "models_provider_name_uq": {
-          "name": "models_provider_name_uq",
-          "columns": [
-            "provider",
-            "name"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -272,11 +191,11 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "mode": {
@@ -293,39 +212,23 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "summaries_modelId_models_id_fk": {
-          "name": "summaries_modelId_models_id_fk",
-          "tableFrom": "summaries",
-          "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -362,21 +265,19 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -409,11 +310,11 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "modelId": {
-          "name": "modelId",
+        "modelName": {
+          "name": "modelName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "sourceLanguage": {
@@ -437,39 +338,23 @@ export const migrationData: { [key: string]: string } = {
           "notNull": false,
           "autoincrement": false
         },
-        "created": {
-          "name": "created",
+        "createdAt": {
+          "name": "createdAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
-        "updated": {
-          "name": "updated",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "translations_modelId_models_id_fk": {
-          "name": "translations_modelId_models_id_fk",
-          "tableFrom": "translations",
-          "tableTo": "models",
-          "columnsFrom": [
-            "modelId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -486,50 +371,38 @@ export const migrationData: { [key: string]: string } = {
     "indexes": {}
   }
 }`,
-  '0000_curly_boom_boom.sql': `CREATE TABLE \`generated_images\` (
+  '0000_military_beast.sql': `CREATE TABLE \`generated_images\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`prompt\` text NOT NULL,
 	\`negativePrompt\` text,
 	\`filePath\` text NOT NULL,
 	\`fileName\` text NOT NULL,
 	\`settings\` text NOT NULL,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch())
+	\`createdAt\` integer,
+	\`updatedAt\` integer
 );
 --> statement-breakpoint
 CREATE TABLE \`messages\` (
 	\`id\` text(20) PRIMARY KEY NOT NULL,
 	\`parts\` text NOT NULL,
-	\`status\` text,
-	\`role\` text,
-	\`modelId\` text,
+	\`status\` text NOT NULL,
+	\`role\` text NOT NULL,
+	\`modelName\` text NOT NULL,
 	\`threadId\` text NOT NULL,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade,
+	\`createdAt\` integer,
+	\`updatedAt\` integer,
 	FOREIGN KEY (\`threadId\`) REFERENCES \`threads\`(\`id\`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE \`models\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
-	\`name\` text NOT NULL,
-	\`provider\` text NOT NULL,
-	\`isEnabled\` integer DEFAULT true NOT NULL,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch())
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX \`models_provider_name_uq\` ON \`models\` (\`provider\`,\`name\`);--> statement-breakpoint
 CREATE TABLE \`summaries\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`sourceText\` text NOT NULL,
 	\`summaryText\` text,
-	\`modelId\` text,
+	\`modelName\` text NOT NULL,
 	\`mode\` text NOT NULL,
 	\`tone\` text,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
+	\`createdAt\` integer,
+	\`updatedAt\` integer
 );
 --> statement-breakpoint
 CREATE TABLE \`threads\` (
@@ -537,23 +410,22 @@ CREATE TABLE \`threads\` (
 	\`title\` text NOT NULL,
 	\`isArchived\` integer DEFAULT false NOT NULL,
 	\`lastMessageAt\` integer,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch())
+	\`createdAt\` integer,
+	\`updatedAt\` integer
 );
 --> statement-breakpoint
 CREATE TABLE \`translations\` (
 	\`id\` text(15) PRIMARY KEY NOT NULL,
 	\`sourceText\` text NOT NULL,
 	\`translatedText\` text,
-	\`modelId\` text,
+	\`modelName\` text NOT NULL,
 	\`sourceLanguage\` text NOT NULL,
 	\`targetLanguage\` text NOT NULL,
 	\`tone\` text,
-	\`created\` integer DEFAULT (unixepoch()),
-	\`updated\` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (\`modelId\`) REFERENCES \`models\`(\`id\`) ON UPDATE no action ON DELETE cascade
+	\`createdAt\` integer,
+	\`updatedAt\` integer
 );
-`,
+`
 };
 
 export default migrationData;

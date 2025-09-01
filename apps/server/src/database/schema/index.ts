@@ -1,72 +1,14 @@
-import { relations, sql } from 'drizzle-orm';
-import {
-  integer,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import type { z } from 'zod';
-import { ModelProviderEnum } from '@/config';
-import { codeToLanguageMap, toneToLabelMap } from '@/utils/constants';
-
-// Status enums for messages
-export const MessageStatusEnum = {
-  IDLE: 'idle',
-  REASONING: 'reasoning',
-  STREAMING: 'streaming',
-  FINISHED: 'finished',
-  ERRORED: 'errored',
-  STOPPED: 'stopped',
-} as const;
-
-export type MessageStatus =
-  (typeof MessageStatusEnum)[keyof typeof MessageStatusEnum];
-
-// Role enums for messages
-export const MessageRoleEnum = {
-  USER: 'user',
-  ASSISTANT: 'assistant',
-} as const;
-
-export type MessageRole =
-  (typeof MessageRoleEnum)[keyof typeof MessageRoleEnum];
-
-/*
-  Models table – stores metadata about available AI models
-*/
-export const models = sqliteTable(
-  'models',
-  {
-    id: text('id', { length: 15 }).primaryKey().notNull(),
-    name: text('name').notNull(),
-    provider: text('provider', {
-      enum: Object.values(ModelProviderEnum) as [string, ...string[]],
-    }).notNull(),
-    isEnabled: integer('isEnabled', { mode: 'boolean' })
-      .notNull()
-      .default(true),
-    createdAt: integer('created', { mode: 'timestamp' }).default(
-      sql`(unixepoch())`
-    ),
-    updatedAt: integer('updated', { mode: 'timestamp' }).default(
-      sql`(unixepoch())`
-    ),
-  },
-  (table) => [
-    // Ensure (provider, name) is unique to allow ON CONFLICT upserts
-    uniqueIndex('models_provider_name_uq').on(table.provider, table.name),
-  ]
-);
-
-export type Model = typeof models.$inferSelect;
-export type NewModel = typeof models.$inferInsert;
-
-export const insertModelSchema = createInsertSchema(models);
-export const selectModelSchema = createSelectSchema(models);
-
-export type InsertModelInput = z.infer<typeof insertModelSchema>;
-export type SelectModelOutput = z.infer<typeof selectModelSchema>;
+import {
+  languageCodes,
+  messageRoles,
+  messageStatuses,
+  summaryModes,
+  tones,
+} from '@/utils/constants';
 
 /*
   Threads table – represents a chat thread 
@@ -78,11 +20,11 @@ export const threads = sqliteTable('threads', {
     .notNull()
     .default(false),
   lastMessageAt: integer('lastMessageAt', { mode: 'timestamp' }),
-  createdAt: integer('created', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  createdAt: integer('createdAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
-  updatedAt: integer('updated', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
 });
 
@@ -98,21 +40,17 @@ export type SelectThreadOutput = z.infer<typeof selectThreadSchema>;
 export const messagesTable = sqliteTable('messages', {
   id: text('id', { length: 20 }).primaryKey().notNull(),
   parts: text('parts', { mode: 'json' }).notNull(),
-  status: text('status', {
-    enum: Object.values(MessageStatusEnum) as [string, ...string[]],
-  }),
-  role: text('role', {
-    enum: Object.values(MessageRoleEnum) as [string, ...string[]],
-  }),
-  modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: messageStatuses }).notNull(),
+  role: text('role', { enum: messageRoles }).notNull(),
+  modelName: text('modelName').notNull(),
   threadId: text('threadId')
     .notNull()
     .references(() => threads.id, { onDelete: 'cascade' }),
-  createdAt: integer('created', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  createdAt: integer('createdAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
-  updatedAt: integer('updated', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
 });
 
@@ -124,18 +62,10 @@ export type SelectMessageOutput = z.infer<typeof selectMessageSchema>;
 
 // Relations
 export const messagesRelations = relations(messagesTable, ({ one }) => ({
-  model: one(models, {
-    fields: [messagesTable.modelId],
-    references: [models.id],
-  }),
   thread: one(threads, {
     fields: [messagesTable.threadId],
     references: [threads.id],
   }),
-}));
-
-export const modelsRelations = relations(models, ({ many }) => ({
-  messages: many(messagesTable),
 }));
 
 export const threadsRelations = relations(threads, ({ many }) => ({
@@ -149,21 +79,15 @@ export const translationsTable = sqliteTable('translations', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   translatedText: text('translatedText'),
-  modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
-  sourceLanguage: text('sourceLanguage', {
-    enum: Object.keys(codeToLanguageMap) as [string, ...string[]],
-  }).notNull(),
-  targetLanguage: text('targetLanguage', {
-    enum: Object.keys(codeToLanguageMap) as [string, ...string[]],
-  }).notNull(),
-  tone: text('tone', {
-    enum: Object.keys(toneToLabelMap) as [string, ...string[]],
-  }),
-  createdAt: integer('created', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  modelName: text('modelName').notNull(),
+  sourceLanguage: text('sourceLanguage', { enum: languageCodes }).notNull(),
+  targetLanguage: text('targetLanguage', { enum: languageCodes }).notNull(),
+  tone: text('tone', { enum: tones }),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
-  updatedAt: integer('updated', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
 });
 
@@ -180,18 +104,14 @@ export const summariesTable = sqliteTable('summaries', {
   id: text('id', { length: 15 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   summaryText: text('summaryText'),
-  modelId: text('modelId').references(() => models.id, { onDelete: 'cascade' }),
-  mode: text('mode', {
-    enum: ['concise', 'standard', 'detailed'] as const,
-  }).notNull(),
-  tone: text('tone', {
-    enum: Object.keys(toneToLabelMap) as [string, ...string[]],
-  }),
-  createdAt: integer('created', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  modelName: text('modelName').notNull(),
+  mode: text('mode', { enum: summaryModes }).notNull(),
+  tone: text('tone', { enum: tones }),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
-  updatedAt: integer('updated', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
 });
 
@@ -211,11 +131,11 @@ export const generatedImagesTable = sqliteTable('generated_images', {
   filePath: text('filePath').notNull(), // File system path to the image
   fileName: text('fileName').notNull(), // Original filename for downloads
   settings: text('settings').notNull(), // JSON string of generation settings
-  createdAt: integer('created', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  createdAt: integer('createdAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
-  updatedAt: integer('updated', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).$defaultFn(
+    () => new Date()
   ),
 });
 

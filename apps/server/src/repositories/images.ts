@@ -1,16 +1,16 @@
 import { desc, eq } from 'drizzle-orm';
-import { db } from '../database';
+import { db } from '@/database';
 import type {
   InsertGeneratedImageInput,
   SelectGeneratedImageOutput,
-} from '../database/schema';
+} from '@/database/schema';
 import {
   generatedImagesTable,
   insertGeneratedImageSchema,
   selectGeneratedImageSchema,
-} from '../database/schema';
-import { imageStorageService } from '../services/image-storage';
-import { generateId } from '../utils/id-generator';
+} from '@/database/schema';
+import { imageStorageService } from '@/services/image-storage';
+import { generateId } from '@/utils/id-generator';
 
 export async function createGeneratedImage(
   params: Omit<InsertGeneratedImageInput, 'id'> | InsertGeneratedImageInput

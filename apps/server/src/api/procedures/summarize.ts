@@ -1,7 +1,13 @@
 import { generateObject, generateText } from 'ai';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { models, summariesTable } from '../../database/schema';
+import {
+  type SummaryMode,
+  summaryModePrompts,
+  summaryModes,
+  type Tone,
+  tones,
+} from '@/utils/constants';
+import { summariesTable } from '../../database/schema';
 import {
   deleteSummary,
   getSummary,
@@ -110,38 +116,19 @@ export const summarizeProcedures = {
     .input(
       z.object({
         text: z.string().min(1),
-        mode: z.enum(['concise', 'standard', 'detailed']),
-        tone: z.enum(['neutral', 'formal', 'casual']).optional(),
-        modelId: z.string(),
+        mode: z.enum(summaryModes).default('standard'),
+        tone: z.enum(tones).default('professional'),
+        modelName: z.string(),
       })
     )
     .handler(async ({ input, context }) => {
-      const model = await context.db
-        .select()
-        .from(models)
-        .where(eq(models.id, input.modelId))
-        .limit(1);
-
-      if (!model?.[0]) {
-        throw new Error('Model not found');
-      }
-
-      const providerModel = getProviderForModel(model[0]);
-
-      const modePrompts = {
-        concise:
-          "Summarize the user's text in 1-2 sentences. Preserve key meaning.",
-        standard:
-          "Summarize the user's text in a single concise paragraph. Include the main points and key details.",
-        detailed:
-          'Summarize with multiple paragraphs. Include key points, important details, and main takeaways where appropriate.',
-      };
+      const providerModel = getProviderForModel(input.modelName);
 
       const systemPrompt = [
         'You are a professional summarizer. Create clear, accurate summaries.',
         'IMPORTANT: Always summarize in the same language as the source text.',
-        modePrompts[input.mode],
-        input.tone ? `Use a ${input.tone} tone.` : undefined,
+        summaryModePrompts[input.mode],
+        `Use a ${input.tone} tone.`,
         'Preserve meaning and important details.',
         'Always return a json object with the summary text.',
         'Please generate only the JSON output. DO NOT provide any preamble.',
@@ -181,9 +168,9 @@ export const summarizeProcedures = {
         id,
         sourceText: input.text,
         summaryText: summaryText || '',
-        modelId: input.modelId,
-        mode: input.mode,
-        tone: input.tone || null,
+        modelName: input.modelName,
+        mode: input.mode as SummaryMode,
+        tone: input.tone as Tone,
         createdAt: now,
         updatedAt: now,
       };

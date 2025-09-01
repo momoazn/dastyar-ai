@@ -1,7 +1,10 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../database';
-import type { SelectTranslationOutput } from '../database/schema';
-import { selectTranslationSchema, translationsTable } from '../database/schema';
+import { db } from '@/database';
+import {
+  type SelectTranslationOutput,
+  selectTranslationSchema,
+  translationsTable,
+} from '@/database/schema';
 
 export function listTranslations() {
   return db.select().from(translationsTable);
