@@ -1,15 +1,9 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import {
-  getAiProviderApiKey,
-  getAiProviderBaseUrl,
-  isAiProviderEnabled,
-} from '@/config';
+import { env } from '../../env';
 
-const GEMINI_API_KEY = getAiProviderApiKey('gemini') ?? '';
-const GEMINI_BASE_URL =
-  getAiProviderBaseUrl('gemini') ??
-  'https://generativelanguage.googleapis.com/v1beta/openai/';
-const ENABLE_GEMINI = isAiProviderEnabled('gemini');
+const GEMINI_API_KEY = env.GEMINI_API_KEY ?? '';
+const GEMINI_BASE_URL = env.GEMINI_BASE_URL;
+const ENABLE_GEMINI = env.GEMINI_ENABLED;
 
 export const geminiModels = [
   'gemini-2.0-flash',

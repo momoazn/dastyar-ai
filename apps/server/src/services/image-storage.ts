@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getConfig, isDevelopment } from '@/config/index';
+import { env, isDevelopment } from '../env';
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
@@ -18,7 +18,17 @@ export interface SaveImageResult {
 }
 
 export class ImageStorageService {
-  private config = getConfig();
+  private get imagesDir() {
+    return env.IMAGES_DIR;
+  }
+
+  private get maxFileSize() {
+    return env.IMAGES_MAX_FILE_SIZE;
+  }
+
+  private get allowedFormats() {
+    return env.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
+  }
 
   private generateFileName(id: string): string {
     const timestamp = Date.now();
@@ -29,7 +39,7 @@ export class ImageStorageService {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    return path.join(this.config.images.dir, String(year), month);
+    return path.join(this.imagesDir, String(year), month);
   }
 
   saveImage(base64Data: string, metadata: ImageMetadata): SaveImageResult {
@@ -72,7 +82,7 @@ export class ImageStorageService {
     // In development, the web app runs on a different port than the server,
     // so we must return an absolute URL to avoid broken links.
     if (isDevelopment()) {
-      const baseUrl = `http://${this.config.server.host}:${this.config.server.port}`;
+      const baseUrl = `http://${env.HOST}:${env.PORT}`;
       return `${baseUrl}/api/images/${id}/file`;
     }
 
@@ -89,13 +99,13 @@ export class ImageStorageService {
       const stats = fs.statSync(filePath);
 
       // Check file size
-      if (stats.size > this.config.images.maxFileSize) {
+      if (stats.size > this.maxFileSize) {
         return false;
       }
 
       // Check file extension
       const ext = path.extname(filePath).toLowerCase().replace('.', '');
-      return this.config.images.allowedFormats.includes(ext);
+      return this.allowedFormats.includes(ext);
     } catch {
       return false;
     }
@@ -135,7 +145,7 @@ export class ImageStorageService {
     };
 
     // Clean main images directory
-    walkDir(this.config.images.dir);
+    walkDir(this.imagesDir);
 
     return deletedCount;
   }
@@ -166,7 +176,7 @@ export class ImageStorageService {
       }
     };
 
-    walkDir(this.config.images.dir);
+    walkDir(this.imagesDir);
 
     return {
       totalFiles,

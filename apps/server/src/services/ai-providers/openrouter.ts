@@ -1,8 +1,8 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { getAiProviderApiKey, isAiProviderEnabled } from '@/config';
+import { env } from '../../env';
 
-const OPENROUTER_API_KEY = getAiProviderApiKey('openrouter') ?? '';
-const ENABLE_OPENROUTER = isAiProviderEnabled('openrouter');
+const OPENROUTER_API_KEY = env.OPENROUTER_API_KEY ?? '';
+const ENABLE_OPENROUTER = env.OPENROUTER_ENABLED;
 
 export const openrouterModels = [
   'openai/gpt-oss-20b:free',

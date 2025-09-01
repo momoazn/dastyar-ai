@@ -263,7 +263,11 @@ const main = async () => {
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
   const defaultWhisperModel = 'Xenova/whisper-tiny';
-  const fallback = (process.env.OFFLINE_MODEL || defaultWhisperModel).trim();
+  const fallback = (
+    process.env.OFFLINE_MODEL ||
+    process.env.WHISPER_ALLOWED_MODELS?.split(',')[0]?.trim() ||
+    defaultWhisperModel
+  ).trim();
   const modelIds = cliArgs.length > 0 ? cliArgs : [fallback];
 
   console.log(`[main] Model IDs to prepare: ${modelIds.join(', ')}`);

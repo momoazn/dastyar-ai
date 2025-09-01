@@ -2,9 +2,16 @@
  * Service for interacting with the Stable Diffusion A1111 API
  */
 
-import { getConfig } from '../config/index.js';
+import { env } from '../env';
 
-const STABLE_DIFFUSION_BASE_URL = getConfig().stableDiffusion.url;
+let stableDiffusionBaseUrl: string | null = null;
+
+const getStableDiffusionBaseUrl = (): string => {
+  if (!stableDiffusionBaseUrl) {
+    stableDiffusionBaseUrl = env.STABLE_DIFFUSION_URL;
+  }
+  return stableDiffusionBaseUrl;
+};
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 
@@ -50,7 +57,7 @@ export class StableDiffusionService {
   async checkAvailability(): Promise<boolean> {
     try {
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/internal/ping`,
+        `${getStableDiffusionBaseUrl()}/internal/ping`,
         {
           method: 'GET',
           signal: AbortSignal.timeout(5000), // 5 second timeout
@@ -69,7 +76,7 @@ export class StableDiffusionService {
   async getSamplers(): Promise<string[]> {
     try {
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/samplers`,
+        `${getStableDiffusionBaseUrl()}/sdapi/v1/samplers`,
         {
           signal: AbortSignal.timeout(10_000),
         }
@@ -126,7 +133,7 @@ export class StableDiffusionService {
       });
 
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/txt2img`,
+        `${getStableDiffusionBaseUrl()}/sdapi/v1/txt2img`,
         {
           method: 'POST',
           headers: {
@@ -177,7 +184,7 @@ export class StableDiffusionService {
   async getProgress(): Promise<GenerationProgress | null> {
     try {
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/progress`,
+        `${getStableDiffusionBaseUrl()}/sdapi/v1/progress`,
         {
           signal: AbortSignal.timeout(5000),
         }
@@ -199,7 +206,7 @@ export class StableDiffusionService {
   async interrupt(): Promise<boolean> {
     try {
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/interrupt`,
+        `${getStableDiffusionBaseUrl()}/sdapi/v1/interrupt`,
         {
           method: 'POST',
           signal: AbortSignal.timeout(5000),
@@ -218,7 +225,7 @@ export class StableDiffusionService {
   async getSystemInfo(): Promise<Record<string, unknown> | null> {
     try {
       const response = await fetch(
-        `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/memory`,
+        `${getStableDiffusionBaseUrl()}/sdapi/v1/memory`,
         {
           signal: AbortSignal.timeout(5000),
         }

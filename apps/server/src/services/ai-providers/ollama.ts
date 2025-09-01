@@ -1,9 +1,8 @@
 import { Ollama } from 'ollama';
 import { createOllama } from 'ollama-ai-provider-v2';
-import { getAiProviderBaseUrl } from '@/config';
+import { env } from '../../env';
 
-const OLLAMA_BASE_URL =
-  getAiProviderBaseUrl('ollama') ?? 'http://localhost:11434';
+const OLLAMA_BASE_URL = env.OLLAMA_BASE_URL;
 
 export const ollamaClient = new Ollama({
   host: OLLAMA_BASE_URL,

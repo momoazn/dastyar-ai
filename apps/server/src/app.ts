@@ -2,16 +2,36 @@ import path from 'node:path';
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
-import { getConfig } from './config';
+import { requestId } from 'hono/request-id';
+import type { Env as HonoPinoEnv } from 'hono-pino';
+import { pinoLogger } from 'hono-pino';
+import pino from 'pino';
+import { ensureDirectoriesExist, env } from './env';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
 import orpcsHandler from './routes/rpc';
 
 export function createApp() {
-  const config = getConfig();
-  const app = new Hono();
+  ensureDirectoriesExist();
+  const app = new Hono<
+    HonoPinoEnv & {
+      Variables: {
+        requestId: string;
+      };
+    }
+  >();
 
   // Middleware
+  app.use(requestId());
+  app.use(
+    pinoLogger({
+      pino: pino({ level: 'info', base: null }),
+      http: {
+        referRequestIdKey: 'requestId',
+      },
+    })
+  );
+
   app.use(async (_c, next) => {
     await next();
   });
@@ -19,7 +39,7 @@ export function createApp() {
   app.use(
     '/*',
     cors({
-      origin: config.server.corsOrigin,
+      origin: env.CORS_ORIGIN,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
     })
   );
@@ -30,10 +50,10 @@ export function createApp() {
   app.route('/api/images', imagesHandler);
 
   // Static file serving
-  const resolvedDistDir = path.resolve(config.web.distDir);
+  const resolvedDistDir = path.resolve(env.WEB_DIST_DIR);
 
   app.use('/*', serveStatic({ root: resolvedDistDir }));
   app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
 
-  return { app, config };
+  return { app, env };
 }
