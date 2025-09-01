@@ -51,12 +51,7 @@ export function StandardizedSidebarItem({
   const hasContent = subtitle || date;
 
   return (
-    <div
-      className={cn(
-        'group/sidebar-item relative',
-        className
-      )}
-    >
+    <div className={cn('group/sidebar-item relative', className)}>
       <Link
         className="flex min-h-9 items-center justify-between p-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         params={params}

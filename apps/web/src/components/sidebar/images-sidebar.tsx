@@ -94,10 +94,12 @@ export function ImagesSidebar() {
             }
             params={{ id: image.id }}
             subtitle={
-              image.prompt.slice(0, 10) + (image.prompt.length > 10 ? '...' : '')
+              image.prompt.slice(0, 10) +
+              (image.prompt.length > 10 ? '...' : '')
             }
             title={
-              image.prompt.slice(0, 30) + (image.prompt.length > 30 ? '...' : '')
+              image.prompt.slice(0, 30) +
+              (image.prompt.length > 30 ? '...' : '')
             }
             to="/image/$id"
           />

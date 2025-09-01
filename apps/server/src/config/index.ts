@@ -36,13 +36,11 @@ export type AppConfig = {
         baseUrl: string;
         apiKey: string;
         enabled: boolean;
-        models: readonly string[];
       };
       lmstudio?: {
         baseUrl: string;
         apiKey: string;
         enabled: boolean;
-        models: readonly string[];
       };
       openai?: {
         apiKey?: string;
@@ -52,19 +50,16 @@ export type AppConfig = {
       groq?: {
         apiKey?: string;
         enabled: boolean;
-        models: readonly string[];
       };
       gemini?: {
         apiKey?: string;
         baseUrl: string;
         enabled: boolean;
-        models: readonly string[];
       };
       openrouter?: {
         apiKey?: string;
         baseUrl: string;
         enabled: boolean;
-        models: readonly string[];
       };
     };
   };
@@ -187,13 +182,11 @@ const getDevelopmentDefaults = (): AppConfig => ({
         baseUrl: 'http://localhost:11434/v1',
         apiKey: 'ollama',
         enabled: true,
-        models: [],
       },
       lmstudio: {
         baseUrl: 'http://localhost:1234/v1',
         apiKey: 'lmstudio',
         enabled: true,
-        models: [],
       },
       openai: {
         apiKey: '',
@@ -203,69 +196,16 @@ const getDevelopmentDefaults = (): AppConfig => ({
       groq: {
         apiKey: '',
         enabled: false,
-        models: [
-          'gemma2-9b-it',
-          'llama-3.1-8b-instant',
-          'llama-3.3-70b-versatile',
-          'meta-llama/llama-guard-4-12b',
-          'openai/gpt-oss-120b',
-          'openai/gpt-oss-20b',
-          'deepseek-r1-distill-llama-70b',
-          'meta-llama/llama-4-maverick-17b-128e-instruct',
-          'meta-llama/llama-4-scout-17b-16e-instruct',
-          'meta-llama/llama-prompt-guard-2-22m',
-          'meta-llama/llama-prompt-guard-2-86m',
-          'mistral-saba-24b',
-          'moonshotai/kimi-k2-instruct',
-          'qwen/qwen3-32b',
-          'llama-guard-3-8b',
-          'llama3-70b-8192',
-          'llama3-8b-8192',
-          'mixtral-8x7b-32768',
-          'qwen-qwq-32b',
-          'qwen-2.5-32b',
-          'deepseek-r1-distill-qwen-32b',
-        ],
       },
       gemini: {
         apiKey: '',
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
         enabled: false,
-        models: [
-          'gemini-2.0-flash',
-          'gemini-2.0-flash-001',
-          'gemini-2.0-flash-lite',
-          'gemini-2.0-pro-exp-02-05',
-          'gemini-2.0-flash-thinking-exp-01-21',
-          'gemini-2.0-flash-exp',
-          'gemini-2.5-flash',
-          'gemini-2.5-flash-lite',
-          'gemini-2.0-pro-exp-03-25',
-          'gemini-2.5-flash-preview-04-17',
-          'gemma-3-12b-it',
-          'gemma-3-27b-it',
-        ],
       },
       openrouter: {
         apiKey: '',
         baseUrl: 'https://api.openrouter.ai/v1',
         enabled: false,
-        models: [
-          'openai/gpt-oss-20b:free',
-          'z-ai/glm-4.5-air:free',
-          'qwen/qwen3-coder:free',
-          'moonshotai/kimi-k2:free',
-          'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-          'google/gemma-3n-e2b-it:free',
-          'tencent/hunyuan-a13b-instruct:free',
-          'tngtech/deepseek-r1t2-chimera:free',
-          'mistralai/mistral-small-3.2-24b-instruct:free',
-          'moonshotai/kimi-dev-72b:free',
-          'deepseek/deepseek-r1-0528-qwen3-8b:free',
-          'deepseek/deepseek-r1-0528:free',
-          'microsoft/mai-ds-r1:free',
-          'qwen/qwen2.5-vl-32b-instruct:free',
-        ],
       },
     },
   },
@@ -323,13 +263,11 @@ const getProductionDefaults = (): AppConfig => {
           baseUrl: 'http://localhost:11434/v1',
           apiKey: 'ollama',
           enabled: true,
-          models: [],
         },
         lmstudio: {
           baseUrl: 'http://localhost:1234/v1',
           apiKey: 'lmstudio',
           enabled: false,
-          models: [],
         },
         openai: {
           apiKey: '',
@@ -339,19 +277,16 @@ const getProductionDefaults = (): AppConfig => {
         groq: {
           apiKey: '',
           enabled: false,
-          models: [],
         },
         gemini: {
           apiKey: '',
           baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
           enabled: false,
-          models: [],
         },
         openrouter: {
           apiKey: '',
           baseUrl: 'https://api.openrouter.ai/v1',
           enabled: false,
-          models: [],
         },
       },
     },
@@ -596,13 +531,6 @@ export const getAiProviderBaseUrl = (
   return;
 };
 
-export const getAiProviderModels = (
-  provider: ModelProvider
-): readonly string[] => {
-  const providerConfig = getAiProviderConfig(provider);
-  return providerConfig?.models || [];
-};
-
 // Create a sample config file for reference
 export const createSampleConfig = (outputPath: string): void => {
   const sampleConfig = {
@@ -624,13 +552,11 @@ export const createSampleConfig = (outputPath: string): void => {
           baseUrl: 'http://localhost:11434/v1',
           apiKey: 'ollama',
           enabled: true,
-          models: [],
         },
         lmstudio: {
           baseUrl: 'http://localhost:1234/v1',
           apiKey: 'lmstudio',
           enabled: true,
-          models: [],
         },
         openai: {
           apiKey: 'your-openai-api-key-here',
@@ -638,19 +564,16 @@ export const createSampleConfig = (outputPath: string): void => {
         groq: {
           apiKey: 'your-groq-api-key-here',
           enabled: true,
-          models: ['gemma2-9b-it', 'llama-3.1-8b-instant'],
         },
         gemini: {
           apiKey: 'your-google-api-key-here',
           baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
           enabled: true,
-          models: ['gemini-2.0-flash', 'gemini-2.5-flash'],
         },
         openrouter: {
           apiKey: 'your-openrouter-api-key-here',
           baseUrl: 'https://api.openrouter.ai/v1',
           enabled: true,
-          models: ['openai/gpt-oss-20b:free', 'z-ai/glm-4.5-air:free'],
         },
       },
     },
