@@ -109,6 +109,7 @@ const downloadModelRepo = async (
     mkdirp(dirname(dest));
     tasks.push(
       (async () => {
+        console.log('Downloading', s.rfilename, 'from', url);
         const r = await fetch(url);
         if (!r.ok) {
           throw new Error(`GET ${url} -> ${r.status}`);
