@@ -13,16 +13,7 @@
   "scripts": {
     "check": "biome check --write .",
     "dev": "turbo dev",
-    "build": "turbo build",
-    "build:web": "turbo -F web build",
-    "build:server": "turbo -F server build",
-    "build:server:win": "turbo -F server build:win",
-    "build:all": "bun run build:web && bun run build:server && bun run copy-config:sample",
-    "build:all:win": "bun run build:web && bun run build:server:win && bun run copy-config:sample:win",
-    "compile": "turbo -F server compile",
-    "check-types": "turbo check-types",
-    "compile:server": "turbo -F server build",
-    "dev:native": "turbo -F native dev",
+    "build": "bun run build.ts",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
     "config:generate": "turbo -F server config:generate",
@@ -31,9 +22,7 @@
     "db:push": "turbo -F server db:push",
     "db:studio": "turbo -F server db:studio",
     "db:generate": "turbo -F server db:generate",
-    "db:migrate": "turbo -F server db:migrate",
-    "copy-config:sample": "cp config.prod.sample.json dist/config.prod.json",
-    "copy-config:sample:win": "copy config.prod.sample.json dist\\config.prod.json"
+    "db:migrate": "turbo -F server db:migrate"
   },
   "workspaces": [
     "apps/*",
