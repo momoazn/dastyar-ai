@@ -10,7 +10,6 @@ import {
   readdirSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { getConfig } from './apps/server/src/config/index.js';
 
 const ROOT_DIR = process.cwd();
 const DIST_DIR = join(ROOT_DIR, 'dist');
@@ -208,9 +207,7 @@ const main = async () => {
     .flatMap((arg) => arg.split(','))
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
-  const cfg = getConfig();
-  const defaultWhisperModel =
-    cfg.whisper.allowedModels?.[0] || 'Xenova/whisper-tiny';
+  const defaultWhisperModel = 'Xenova/whisper-tiny';
   const fallback = (process.env.OFFLINE_MODEL || defaultWhisperModel).trim();
   const modelIds = cliArgs.length > 0 ? cliArgs : [fallback];
 
