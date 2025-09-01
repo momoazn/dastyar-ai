@@ -9,7 +9,6 @@ import {
   mkdirSync,
   readdirSync,
 } from 'node:fs';
-import { platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { getConfig } from './apps/server/src/config/index.js';
 
@@ -17,7 +16,6 @@ const ROOT_DIR = process.cwd();
 const DIST_DIR = join(ROOT_DIR, 'dist');
 const SERVER_DIR = join(ROOT_DIR, 'apps', 'server');
 const WEB_DIR = join(ROOT_DIR, 'apps', 'web');
-const isWindows = platform() === 'win32';
 
 // Helper functions for offline preparation
 const mkdirp = (dirPath: string) => {
@@ -135,8 +133,7 @@ const main = async () => {
 
   // Build server (outputs to apps/server/dist)
   console.log('📦 Building server...');
-  const serverBuildCmd = isWindows ? 'bun run build:win' : 'bun run build';
-  execSync(serverBuildCmd, {
+  execSync('bun run build', {
     cwd: SERVER_DIR,
     stdio: 'inherit',
   });
