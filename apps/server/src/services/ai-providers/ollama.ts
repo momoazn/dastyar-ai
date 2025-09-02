@@ -1,13 +1,13 @@
 import { createOllama } from 'ollama-ai-provider-v2';
 import OpenAI from 'openai';
-import { env } from '../../env';
+import { config } from '@/config';
 
-const OLLAMA_BASE_URL = env.OLLAMA_BASE_URL;
-const OLLAMA_ENABLED = env.OLLAMA_ENABLED;
+const OLLAMA_BASE_URL = config.OLLAMA_BASE_URL;
+const OLLAMA_ENABLED = config.OLLAMA_ENABLED;
 
 export const ollamaClient = new OpenAI({
   baseURL: OLLAMA_BASE_URL,
-  apiKey: env.OLLAMA_API_KEY,
+  apiKey: '',
 });
 
 export const ollamaProvider = createOllama({

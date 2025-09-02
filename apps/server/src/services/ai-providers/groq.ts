@@ -1,8 +1,8 @@
 import { createGroq } from '@ai-sdk/groq';
-import { env } from '../../env';
+import { config } from '@/config';
 
-const GROQ_API_KEY = env.GROQ_API_KEY || '';
-const ENABLE_GROQ = env.GROQ_ENABLED;
+const GROQ_API_KEY = config.GROQ_API_KEY;
+const ENABLE_GROQ = config.GROQ_ENABLED;
 
 export const groqModels = [
   'gemma2-9b-it',

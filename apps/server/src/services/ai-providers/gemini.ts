@@ -1,9 +1,9 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { env } from '../../env';
+import { config } from '@/config';
 
-const GEMINI_API_KEY = env.GEMINI_API_KEY ?? '';
-const GEMINI_BASE_URL = env.GEMINI_BASE_URL;
-const ENABLE_GEMINI = env.GEMINI_ENABLED;
+const GEMINI_API_KEY = config.GEMINI_API_KEY;
+const GEMINI_BASE_URL = config.GEMINI_BASE_URL;
+const ENABLE_GEMINI = config.GEMINI_ENABLED;
 
 export const geminiModels = [
   'gemini-2.0-flash',

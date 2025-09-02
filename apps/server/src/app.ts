@@ -6,7 +6,7 @@ import { requestId } from 'hono/request-id';
 import type { Env as HonoPinoEnv } from 'hono-pino';
 import { pinoLogger } from 'hono-pino';
 import pino from 'pino';
-import { ensureDirectoriesExist, env } from './env';
+import { config, ensureDirectoriesExist } from './config';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
 import orpcsHandler from './routes/rpc';
@@ -39,7 +39,7 @@ export function createApp() {
   app.use(
     '/*',
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: config.CORS_ORIGIN,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
     })
   );
@@ -50,10 +50,10 @@ export function createApp() {
   app.route('/api/images', imagesHandler);
 
   // Static file serving
-  const resolvedDistDir = path.resolve(env.WEB_DIST_DIR);
+  const resolvedDistDir = path.resolve(config.WEB_DIST_DIR);
 
   app.use('/*', serveStatic({ root: resolvedDistDir }));
   app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
 
-  return { app, env };
+  return { app, env: config };
 }

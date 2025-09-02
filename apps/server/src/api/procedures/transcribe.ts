@@ -2,7 +2,7 @@ import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
 import { publicProcedure } from '@/api/index';
-import { env } from '../../env';
+import { config } from '@/config';
 
 type ASRPipeline = (
   input: Float32Array,
@@ -18,15 +18,15 @@ const getTransformers = async () => {
   const mod = await import(libName as string);
   // Resolve paths next to the compiled binary for offline execution
   const execDir = path.dirname(process.execPath);
-  const localWasmDir = env.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
+  const localWasmDir = config.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
   const localModelsDir =
-    env.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
 
   // Enforce offline mode and local assets
-  mod.env.allowRemoteModels = env.WHISPER_ALLOW_REMOTE_MODELS;
+  mod.env.allowRemoteModels = config.WHISPER_ALLOW_REMOTE_MODELS;
   mod.env.localModelPath = localModelsDir;
   mod.env.cacheDir =
-    env.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
+    config.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
 
   const onnxBackend = mod.env.backends?.onnx;
   if (onnxBackend) {

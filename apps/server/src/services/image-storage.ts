@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { env, isDevelopment } from '../env';
+import { config, isDevelopment } from '@/config';
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
@@ -19,15 +19,15 @@ export interface SaveImageResult {
 
 export class ImageStorageService {
   private get imagesDir() {
-    return env.IMAGES_DIR;
+    return config.IMAGES_DIR;
   }
 
   private get maxFileSize() {
-    return env.IMAGES_MAX_FILE_SIZE;
+    return config.IMAGES_MAX_FILE_SIZE;
   }
 
   private get allowedFormats() {
-    return env.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
+    return config.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
   }
 
   private generateFileName(id: string): string {
@@ -82,7 +82,7 @@ export class ImageStorageService {
     // In development, the web app runs on a different port than the server,
     // so we must return an absolute URL to avoid broken links.
     if (isDevelopment()) {
-      const baseUrl = `http://${env.HOST}:${env.PORT}`;
+      const baseUrl = `http://${config.HOST}:${config.PORT}`;
       return `${baseUrl}/api/images/${id}/file`;
     }
 

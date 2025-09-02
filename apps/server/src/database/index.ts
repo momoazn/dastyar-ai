@@ -1,12 +1,12 @@
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { env } from '../env';
+import { config } from '../config';
 import type * as schema from './schema';
 
 const FILE_PROTOCOL_RE = /^file:/;
 
 function resolveDatabasePath(): string {
-  const dbUrl = env.DATABASE_FILE?.trim();
+  const dbUrl = config.DATABASE_FILE?.trim();
   if (dbUrl && dbUrl.length > 0) {
     return dbUrl.startsWith('file:')
       ? dbUrl.replace(FILE_PROTOCOL_RE, '')

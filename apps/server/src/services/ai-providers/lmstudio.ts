@@ -1,19 +1,18 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
-import { env } from '../../env';
+import { config } from '@/config';
 
-const LMSTUDIO_OPENAI_BASE_URL = env.LMSTUDIO_BASE_URL;
-const LMSTUDIO_ENABLED = env.LMSTUDIO_ENABLED;
+const LMSTUDIO_OPENAI_BASE_URL = config.LMSTUDIO_BASE_URL;
+const LMSTUDIO_ENABLED = config.LMSTUDIO_ENABLED;
 
 export const lmstudioClient = new OpenAI({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
-  apiKey: env.LMSTUDIO_API_KEY,
+  apiKey: '',
 });
 
 export const lmstudioProvider = createOpenAICompatible({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
   name: 'lmstudio',
-  apiKey: env.LMSTUDIO_API_KEY,
 });
 
 export async function listLmstudioModels() {

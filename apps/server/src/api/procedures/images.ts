@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { z } from 'zod';
 import { publicProcedure } from '@/api/index';
+import { config } from '@/config';
 import {
   cleanupOrphanedFiles,
   clearGeneratedImages,
@@ -14,7 +15,6 @@ import {
   type ImageGenerationParams,
   stableDiffusionService,
 } from '@/services/stable-diffusion';
-import { env } from '../../env';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
@@ -240,9 +240,9 @@ export const imageProcedures = {
     return {
       totalFiles: stats.totalFiles,
       totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
-      storageDir: env.IMAGES_DIR,
-      maxFileSizeMB: Math.round(env.IMAGES_MAX_FILE_SIZE / 1024 / 1024),
-      allowedFormats: env.IMAGES_ALLOWED_FORMATS.split(',').map((s) =>
+      storageDir: config.IMAGES_DIR,
+      maxFileSizeMB: Math.round(config.IMAGES_MAX_FILE_SIZE / 1024 / 1024),
+      allowedFormats: config.IMAGES_ALLOWED_FORMATS.split(',').map((s) =>
         s.trim()
       ),
     };

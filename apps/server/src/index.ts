@@ -1,8 +1,8 @@
 import 'dotenv/config';
 
 import { createApp } from './app';
+import { config } from './config';
 import { runMigrations } from './database/migrate';
-import { env } from './env';
 
 const start = async () => {
   try {
@@ -15,12 +15,12 @@ const start = async () => {
 
   const { app } = createApp();
 
-  console.log(`Server starting on ${env.HOST}:${env.PORT}`);
+  console.log(`Server starting on ${config.HOST}:${config.PORT}`);
   // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
   Bun.serve({
     fetch: app.fetch,
-    port: env.PORT,
-    hostname: env.HOST,
+    port: config.PORT,
+    hostname: config.HOST,
   });
   console.log('Server started');
 };

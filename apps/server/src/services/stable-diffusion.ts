@@ -2,13 +2,13 @@
  * Service for interacting with the Stable Diffusion A1111 API
  */
 
-import { env } from '../env';
+import { config } from '@/config';
 
 let stableDiffusionBaseUrl: string | null = null;
 
 const getStableDiffusionBaseUrl = (): string => {
   if (!stableDiffusionBaseUrl) {
-    stableDiffusionBaseUrl = env.STABLE_DIFFUSION_URL;
+    stableDiffusionBaseUrl = config.STABLE_DIFFUSION_URL;
   }
   return stableDiffusionBaseUrl;
 };

@@ -66,7 +66,7 @@ const defaultConfig = {
 };
 
 // Configuration schema with validation
-const envSchema = z.object({
+const configSchema = z.object({
   // Server configuration
   PORT: z.coerce.number().default(defaultConfig.PORT),
   HOST: z.string().default(defaultConfig.HOST),
@@ -88,16 +88,10 @@ const envSchema = z.object({
 
   // AI Providers
   OLLAMA_BASE_URL: z.string().default(defaultConfig.OLLAMA_BASE_URL),
-  OLLAMA_API_KEY: z.string().default(defaultConfig.OLLAMA_API_KEY),
   OLLAMA_ENABLED: z.coerce.boolean().default(defaultConfig.OLLAMA_ENABLED),
 
   LMSTUDIO_BASE_URL: z.string().default(defaultConfig.LMSTUDIO_BASE_URL),
-  LMSTUDIO_API_KEY: z.string().default(defaultConfig.LMSTUDIO_API_KEY),
   LMSTUDIO_ENABLED: z.coerce.boolean().default(defaultConfig.LMSTUDIO_ENABLED),
-
-  OPENAI_API_KEY: z.string().default(defaultConfig.OPENAI_API_KEY),
-  OPENAI_BASE_URL: z.string().default(defaultConfig.OPENAI_BASE_URL),
-  OPENAI_ENABLED: z.coerce.boolean().default(defaultConfig.OPENAI_ENABLED),
 
   GROQ_API_KEY: z.string().default(defaultConfig.GROQ_API_KEY),
   GROQ_ENABLED: z.coerce.boolean().default(defaultConfig.GROQ_ENABLED),
@@ -176,15 +170,15 @@ function loadConfig(): Record<string, unknown> {
 
 // Parse and validate configuration
 const configData = loadConfig();
-const parsedEnv = envSchema.safeParse(configData);
+const parsedConfig = configSchema.safeParse(configData);
 
-if (!parsedEnv.success) {
+if (!parsedConfig.success) {
   console.error('❌ Invalid config:');
-  console.error(parsedEnv.error.format());
+  console.error(parsedConfig.error.format());
   process.exit(1);
 }
 
-export const env = parsedEnv.data;
+export const config = parsedConfig.data;
 
 // ============================================================================
 // ENVIRONMENT HELPERS
@@ -203,11 +197,11 @@ export const isProduction = (): boolean => {
 // ============================================================================
 
 export const getWhisperAllowedModels = (): string[] => {
-  return env.WHISPER_ALLOWED_MODELS.split(',').map((s) => s.trim());
+  return config.WHISPER_ALLOWED_MODELS.split(',').map((s) => s.trim());
 };
 
 export const getImagesAllowedFormats = (): string[] => {
-  return env.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
+  return config.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
 };
 
 // ============================================================================
@@ -215,43 +209,35 @@ export const getImagesAllowedFormats = (): string[] => {
 // ============================================================================
 
 export const getAiProviderConfig = (
-  provider: 'ollama' | 'lmstudio' | 'openai' | 'groq' | 'gemini' | 'openrouter'
+  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
 ) => {
   switch (provider) {
     case 'ollama':
       return {
-        baseUrl: env.OLLAMA_BASE_URL,
-        apiKey: env.OLLAMA_API_KEY,
-        enabled: env.OLLAMA_ENABLED,
+        baseUrl: config.OLLAMA_BASE_URL,
+        enabled: config.OLLAMA_ENABLED,
       };
     case 'lmstudio':
       return {
-        baseUrl: env.LMSTUDIO_BASE_URL,
-        apiKey: env.LMSTUDIO_API_KEY,
-        enabled: env.LMSTUDIO_ENABLED,
-      };
-    case 'openai':
-      return {
-        apiKey: env.OPENAI_API_KEY,
-        baseUrl: env.OPENAI_BASE_URL,
-        enabled: env.OPENAI_ENABLED,
+        baseUrl: config.LMSTUDIO_BASE_URL,
+        enabled: config.LMSTUDIO_ENABLED,
       };
     case 'groq':
       return {
-        apiKey: env.GROQ_API_KEY,
-        enabled: env.GROQ_ENABLED,
+        apiKey: config.GROQ_API_KEY,
+        enabled: config.GROQ_ENABLED,
       };
     case 'gemini':
       return {
-        apiKey: env.GEMINI_API_KEY,
-        baseUrl: env.GEMINI_BASE_URL,
-        enabled: env.GEMINI_ENABLED,
+        apiKey: config.GEMINI_API_KEY,
+        baseUrl: config.GEMINI_BASE_URL,
+        enabled: config.GEMINI_ENABLED,
       };
     case 'openrouter':
       return {
-        apiKey: env.OPENROUTER_API_KEY,
-        baseUrl: env.OPENROUTER_BASE_URL,
-        enabled: env.OPENROUTER_ENABLED,
+        apiKey: config.OPENROUTER_API_KEY,
+        baseUrl: config.OPENROUTER_BASE_URL,
+        enabled: config.OPENROUTER_ENABLED,
       };
     default:
       throw new Error(`Unknown AI provider: ${provider}`);
@@ -259,24 +245,24 @@ export const getAiProviderConfig = (
 };
 
 export const isAiProviderEnabled = (
-  provider: 'ollama' | 'lmstudio' | 'openai' | 'groq' | 'gemini' | 'openrouter'
+  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
 ): boolean => {
-  const config = getAiProviderConfig(provider);
-  return config.enabled;
+  const providerConfig = getAiProviderConfig(provider);
+  return providerConfig.enabled;
 };
 
 export const getAiProviderApiKey = (
-  provider: 'ollama' | 'lmstudio' | 'openai' | 'groq' | 'gemini' | 'openrouter'
+  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
 ): string | undefined => {
-  const config = getAiProviderConfig(provider);
-  return 'apiKey' in config ? config.apiKey : undefined;
+  const providerConfig = getAiProviderConfig(provider);
+  return 'apiKey' in providerConfig ? providerConfig.apiKey : undefined;
 };
 
 export const getAiProviderBaseUrl = (
-  provider: 'ollama' | 'lmstudio' | 'openai' | 'groq' | 'gemini' | 'openrouter'
+  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
 ): string | undefined => {
-  const config = getAiProviderConfig(provider);
-  return 'baseUrl' in config ? config.baseUrl : undefined;
+  const providerConfig = getAiProviderConfig(provider);
+  return 'baseUrl' in providerConfig ? providerConfig.baseUrl : undefined;
 };
 
 // ============================================================================
@@ -285,10 +271,10 @@ export const getAiProviderBaseUrl = (
 
 export const ensureDirectoriesExist = (): void => {
   const directories = [
-    dirname(env.DATABASE_FILE),
-    env.WHISPER_MODELS_DIR,
-    env.WHISPER_CACHE_DIR,
-    env.IMAGES_DIR,
+    dirname(config.DATABASE_FILE),
+    config.WHISPER_MODELS_DIR,
+    config.WHISPER_CACHE_DIR,
+    config.IMAGES_DIR,
   ];
 
   for (const dir of directories) {
