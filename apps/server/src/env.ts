@@ -79,8 +79,12 @@ const envSchema = z.object({
   WHISPER_MODELS_DIR: z.string().default(defaultConfig.WHISPER_MODELS_DIR),
   WHISPER_CACHE_DIR: z.string().default(defaultConfig.WHISPER_CACHE_DIR),
   WHISPER_WASM_DIR: z.string().default(defaultConfig.WHISPER_WASM_DIR),
-  WHISPER_ALLOW_REMOTE_MODELS: z.coerce.boolean().default(defaultConfig.WHISPER_ALLOW_REMOTE_MODELS),
-  WHISPER_ALLOWED_MODELS: z.string().default(defaultConfig.WHISPER_ALLOWED_MODELS),
+  WHISPER_ALLOW_REMOTE_MODELS: z.coerce
+    .boolean()
+    .default(defaultConfig.WHISPER_ALLOW_REMOTE_MODELS),
+  WHISPER_ALLOWED_MODELS: z
+    .string()
+    .default(defaultConfig.WHISPER_ALLOWED_MODELS),
 
   // AI Providers
   OLLAMA_BASE_URL: z.string().default(defaultConfig.OLLAMA_BASE_URL),
@@ -104,23 +108,33 @@ const envSchema = z.object({
 
   OPENROUTER_API_KEY: z.string().default(defaultConfig.OPENROUTER_API_KEY),
   OPENROUTER_BASE_URL: z.string().default(defaultConfig.OPENROUTER_BASE_URL),
-  OPENROUTER_ENABLED: z.coerce.boolean().default(defaultConfig.OPENROUTER_ENABLED),
+  OPENROUTER_ENABLED: z.coerce
+    .boolean()
+    .default(defaultConfig.OPENROUTER_ENABLED),
 
   // Stable Diffusion
   STABLE_DIFFUSION_URL: z.string().default(defaultConfig.STABLE_DIFFUSION_URL),
-  STABLE_DIFFUSION_ENABLED: z.coerce.boolean().default(defaultConfig.STABLE_DIFFUSION_ENABLED),
+  STABLE_DIFFUSION_ENABLED: z.coerce
+    .boolean()
+    .default(defaultConfig.STABLE_DIFFUSION_ENABLED),
 
   // Images
   IMAGES_DIR: z.string().default(defaultConfig.IMAGES_DIR),
-  IMAGES_MAX_FILE_SIZE: z.coerce.number().default(defaultConfig.IMAGES_MAX_FILE_SIZE),
-  IMAGES_ALLOWED_FORMATS: z.string().default(defaultConfig.IMAGES_ALLOWED_FORMATS),
+  IMAGES_MAX_FILE_SIZE: z.coerce
+    .number()
+    .default(defaultConfig.IMAGES_MAX_FILE_SIZE),
+  IMAGES_ALLOWED_FORMATS: z
+    .string()
+    .default(defaultConfig.IMAGES_ALLOWED_FORMATS),
 
   // Web
   WEB_DIST_DIR: z.string().default(defaultConfig.WEB_DIST_DIR),
 
   // Offline mode
   OFFLINE_ENABLED: z.coerce.boolean().default(defaultConfig.OFFLINE_ENABLED),
-  OFFLINE_AUTO_DETECT: z.coerce.boolean().default(defaultConfig.OFFLINE_AUTO_DETECT),
+  OFFLINE_AUTO_DETECT: z.coerce
+    .boolean()
+    .default(defaultConfig.OFFLINE_AUTO_DETECT),
 
   // Custom model for offline preparation
   OFFLINE_MODEL: z.string().default(defaultConfig.OFFLINE_MODEL),

@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { env } from '../../env';
 
 const LMSTUDIO_OPENAI_BASE_URL = env.LMSTUDIO_BASE_URL;
+const LMSTUDIO_ENABLED = env.LMSTUDIO_ENABLED;
 
 export const lmstudioClient = new OpenAI({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,
@@ -16,9 +17,21 @@ export const lmstudioProvider = createOpenAICompatible({
 });
 
 export async function listLmstudioModels() {
-  const response = await lmstudioClient.models.list();
-  return response.data.map((model) => ({
-    name: model.id,
-    provider: 'lmstudio' as const,
-  }));
+  if (!LMSTUDIO_ENABLED) {
+    return [];
+  }
+
+  try {
+    const response = await lmstudioClient.models.list();
+    return response.data.map((model) => ({
+      name: model.id,
+      provider: 'lmstudio' as const,
+    }));
+  } catch (error) {
+    console.warn(
+      'LMStudio server not available, skipping LMStudio models:',
+      error
+    );
+    return [];
+  }
 }
