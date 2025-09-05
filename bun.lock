@@ -29,6 +29,7 @@
         "@orpc/client": "^1.5.0",
         "@orpc/server": "^1.5.0",
         "ai": "^5.0.7",
+        "automatic1111-provider": "^0.1.1",
         "better-sqlite3": "^12.2.0",
         "dotenv": "^17.2.1",
         "drizzle-orm": "^0.44.2",
@@ -732,6 +733,8 @@
     "asynckit": ["asynckit@0.4.0", "", {}, "sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q=="],
 
     "atomic-sleep": ["atomic-sleep@1.0.0", "", {}, "sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ=="],
+
+    "automatic1111-provider": ["automatic1111-provider@0.1.1", "", { "dependencies": { "@ai-sdk/provider": "^2.0.0", "@ai-sdk/provider-utils": "^3.0.1", "zod": "^4.0.0" }, "peerDependencies": { "ai": "^5.0.0" } }, "sha512-oOm7/UFsGpOJ3NYl36o7ZLXUb7YoC2tt3UrENyz9uMTL78TPrLzV5RLjejz6rumBZOr7YVmYchAQB5CwBWVJ3w=="],
 
     "babel-dead-code-elimination": ["babel-dead-code-elimination@1.0.10", "", { "dependencies": { "@babel/core": "^7.23.7", "@babel/parser": "^7.23.6", "@babel/traverse": "^7.23.7", "@babel/types": "^7.23.6" } }, "sha512-DV5bdJZTzZ0zn0DC24v3jD7Mnidh6xhKa4GfKCbq3sfW8kaWhDdZjP3i81geA8T33tdYqWKw4D3fVv0CwEgKVA=="],
 

@@ -30,6 +30,7 @@
     "@orpc/client": "^1.5.0",
     "@orpc/server": "^1.5.0",
     "ai": "^5.0.7",
+    "automatic1111-provider": "^0.1.1",
     "better-sqlite3": "^12.2.0",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.2",

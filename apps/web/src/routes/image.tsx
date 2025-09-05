@@ -46,7 +46,7 @@ import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 
 const DEFAULT_SETTINGS: Omit<ImageGenerationParams, 'prompt'> = {
-  steps: 5,
+  steps: 10,
   cfg_scale: 7.5,
   negative_prompt: '',
   sampler_name: 'Euler a',

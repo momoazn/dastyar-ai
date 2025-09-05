@@ -2,17 +2,23 @@
  * Service for interacting with the Stable Diffusion A1111 API
  */
 
+import { experimental_generateImage as generateImage } from 'ai';
+import {
+  type Automatic1111Provider,
+  createAutomatic1111,
+} from 'automatic1111-provider';
 import { config } from '@/config';
 
-let stableDiffusionBaseUrl: string | null = null;
+let automatic1111Provider: Automatic1111Provider | null = null;
 
-const getStableDiffusionBaseUrl = (): string => {
-  if (!stableDiffusionBaseUrl) {
-    stableDiffusionBaseUrl = config.STABLE_DIFFUSION_URL;
+const getAutomatic1111Provider = (): Automatic1111Provider => {
+  if (!automatic1111Provider) {
+    automatic1111Provider = createAutomatic1111({
+      baseURL: config.STABLE_DIFFUSION_URL,
+    });
   }
-  return stableDiffusionBaseUrl;
+  return automatic1111Provider;
 };
-const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 
 export interface ImageGenerationParams {
@@ -23,12 +29,6 @@ export interface ImageGenerationParams {
   sampler_name: string;
   width: number;
   height: number;
-}
-
-export interface StableDiffusionResponse {
-  images: string[];
-  parameters: Record<string, unknown>;
-  info: string;
 }
 
 export interface GenerationProgress {
@@ -48,198 +48,177 @@ export interface GenerationProgress {
   textinfo?: string;
 }
 
-export class StableDiffusionService {
-  private retryCount = 0;
-
-  /**
-   * Checks if the A1111 service is available
-   */
-  async checkAvailability(): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/internal/ping`,
-        {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000), // 5 second timeout
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error('SD service availability check failed:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Gets available samplers from A1111
-   */
-  async getSamplers(): Promise<string[]> {
-    try {
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/sdapi/v1/samplers`,
-        {
-          signal: AbortSignal.timeout(10_000),
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+const checkAvailability = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/internal/ping`,
+      {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000),
       }
-
-      const samplers = await response.json();
-      return samplers.map((s: { name: string }) => s.name);
-    } catch (error) {
-      console.error('Failed to fetch samplers:', error);
-      // Return fallback samplers if API call fails
-      return [
-        'Euler',
-        'Euler a',
-        'LMS',
-        'Heun',
-        'DPM2',
-        'DPM2 a',
-        'DPM++ 2S a',
-        'DPM++ 2M',
-        'DPM++ SDE',
-        'DPM++ 2M Karras',
-        'DPM++ SDE Karras',
-        'LMS Karras',
-      ];
-    }
+    );
+    return response.ok;
+  } catch (error) {
+    console.error('SD service availability check failed:', error);
+    return false;
   }
+};
 
-  /**
-   * Generates an image using Stable Diffusion A1111
-   */
-  async generateImage(params: ImageGenerationParams): Promise<string> {
-    try {
-      const requestBody = {
-        ...params,
-        negative_prompt: params.negative_prompt || '',
-        n_iter: 1, // Generate only 1 iteration
-        batch_size: 1, // Generate only 1 image per batch
-        restore_faces: false,
-        tiling: false,
-        do_not_save_samples: true,
-        do_not_save_grid: true,
-        enable_hr: false, // Disable highres fix to avoid extra images
+const getSamplers = async (): Promise<string[]> => {
+  try {
+    const response = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
+      {
+        signal: AbortSignal.timeout(10_000),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const samplers = await response.json();
+    return samplers.map((s: { name: string }) => s.name);
+  } catch (error) {
+    console.error('Failed to fetch samplers:', error);
+    return [
+      'Euler',
+      'Euler a',
+      'LMS',
+      'Heun',
+      'DPM2',
+      'DPM2 a',
+      'DPM++ 2S a',
+      'DPM++ 2M',
+      'DPM++ SDE',
+      'DPM++ 2M Karras',
+      'DPM++ SDE Karras',
+      'LMS Karras',
+    ];
+  }
+};
+
+const resolveModelId = async (): Promise<string> => {
+  try {
+    const optionsRes = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/options`,
+      {
+        signal: AbortSignal.timeout(10_000),
+      }
+    );
+    if (optionsRes.ok) {
+      const options = (await optionsRes.json()) as {
+        sd_model_checkpoint?: unknown;
       };
-
-      console.log('Generating image with params:', {
-        prompt: `${params.prompt.substring(0, 100)}...`,
-        steps: params.steps,
-        cfg_scale: params.cfg_scale,
-        sampler_name: params.sampler_name,
-        size: `${params.width}x${params.height}`,
-      });
-
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/sdapi/v1/txt2img`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(300_000), // 5 minute timeout
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      const current = options.sd_model_checkpoint;
+      if (typeof current === 'string' && current.length > 0) {
+        return current;
       }
-
-      const data: StableDiffusionResponse = await response.json();
-
-      if (!data.images || data.images.length === 0) {
-        throw new Error('No images generated by A1111');
-      }
-
-      // Log for debugging - ensure we're only getting one image
-      console.log(
-        `SD API returned ${data.images.length} images, using the first one`
-      );
-
-      return data.images[0]; // Return raw base64 without data URL prefix
-    } catch (error) {
-      console.error('SD generation error:', error);
-
-      if (this.retryCount < MAX_RETRIES) {
-        this.retryCount++;
-        console.log(
-          `Retrying generation (attempt ${this.retryCount}/${MAX_RETRIES})`
-        );
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-        return this.generateImage(params);
-      }
-
-      this.retryCount = 0;
-      throw error;
     }
+  } catch (error) {
+    console.warn('Failed to list A1111 models, using default:', error);
   }
+  return 'v1-5-pruned-emaonly';
+};
 
-  /**
-   * Gets current progress of generation
-   */
-  async getProgress(): Promise<GenerationProgress | null> {
-    try {
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/sdapi/v1/progress`,
-        {
-          signal: AbortSignal.timeout(5000),
-        }
-      );
-      if (!response.ok) {
-        return null;
+const generateImageFn = async (
+  params: ImageGenerationParams
+): Promise<string> => {
+  try {
+    console.log('Generating image with params:', {
+      prompt: `${params.prompt.substring(0, 100)}...`,
+      steps: params.steps,
+      cfg_scale: params.cfg_scale,
+      sampler_name: params.sampler_name,
+      size: `${params.width}x${params.height}`,
+    });
+
+    const modelId = await resolveModelId();
+    const provider = getAutomatic1111Provider();
+
+    const { images } = await generateImage({
+      model: provider.image(modelId),
+      prompt: params.prompt,
+      size: `${params.width}x${params.height}`,
+      n: 1,
+      maxRetries: MAX_RETRIES,
+      abortSignal: AbortSignal.timeout(300_000),
+      providerOptions: {
+        automatic1111: {
+          negative_prompt: params.negative_prompt || '',
+          steps: params.steps,
+          cfg_scale: params.cfg_scale,
+          sampler_name: params.sampler_name,
+        },
+      },
+    });
+
+    if (!images || images.length === 0) {
+      throw new Error('No images generated by A1111');
+    }
+
+    return images[0].base64;
+  } catch (error) {
+    console.error('SD generation error:', error);
+    throw error;
+  }
+};
+
+const getProgress = async (): Promise<GenerationProgress | null> => {
+  try {
+    const response = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/progress`,
+      {
+        signal: AbortSignal.timeout(5000),
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Failed to get progress:', error);
+    );
+    if (!response.ok) {
       return null;
     }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to get progress:', error);
+    return null;
   }
+};
 
-  /**
-   * Interrupts current generation
-   */
-  async interrupt(): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/sdapi/v1/interrupt`,
-        {
-          method: 'POST',
-          signal: AbortSignal.timeout(5000),
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error('Failed to interrupt generation:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Gets system info from A1111
-   */
-  async getSystemInfo(): Promise<Record<string, unknown> | null> {
-    try {
-      const response = await fetch(
-        `${getStableDiffusionBaseUrl()}/sdapi/v1/memory`,
-        {
-          signal: AbortSignal.timeout(5000),
-        }
-      );
-      if (!response.ok) {
-        return null;
+const interrupt = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/interrupt`,
+      {
+        method: 'POST',
+        signal: AbortSignal.timeout(5000),
       }
+    );
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to interrupt generation:', error);
+    return false;
+  }
+};
 
-      return await response.json();
-    } catch (error) {
-      console.error('Failed to get system info:', error);
+const getSystemInfo = async (): Promise<Record<string, unknown> | null> => {
+  try {
+    const response = await fetch(
+      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/memory`,
+      {
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!response.ok) {
       return null;
     }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to get system info:', error);
+    return null;
   }
-}
+};
 
-export const stableDiffusionService = new StableDiffusionService();
+export const stableDiffusionService = {
+  checkAvailability,
+  getSamplers,
+  generateImage: generateImageFn,
+  getProgress,
+  interrupt,
+  getSystemInfo,
+};
