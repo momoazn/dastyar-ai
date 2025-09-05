@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
@@ -61,9 +62,24 @@ export function createApp() {
 
   // Static file serving
   const resolvedDistDir = path.resolve(config.WEB_DIST_DIR);
+  const hasWebAssets =
+    existsSync(resolvedDistDir) &&
+    existsSync(path.join(resolvedDistDir, 'index.html'));
 
-  app.use('/*', serveStatic({ root: resolvedDistDir }));
-  app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
+  if (hasWebAssets) {
+    app.use('/*', serveStatic({ root: resolvedDistDir }));
+    app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
+  } else {
+    console.warn(
+      `Web assets not found. Expected at ${resolvedDistDir}. Set WEB_DIST_DIR in config.json or place the 'web' folder next to the binary.`
+    );
+    app.get('/', (c) =>
+      c.text(
+        'Web assets not found. Please build the web app and set WEB_DIST_DIR in config.json or place the web folder next to the binary.',
+        200
+      )
+    );
+  }
 
   return { app, env: config };
 }
