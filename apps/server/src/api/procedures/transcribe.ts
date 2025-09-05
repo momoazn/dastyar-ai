@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { publicProcedure } from '@/api/index';
 import { config, getWhisperAllowedModels } from '@/config';
 
+// Type for the ASR pipeline
 type ASRPipeline = (
   input: Float32Array,
   options: { language?: string; task: 'transcribe' }
@@ -16,6 +17,7 @@ type OnnxBackendConfig = {
   wasm?: { wasmPaths?: string };
 };
 
+// Type for the transformers environment
 type TransformersEnv = {
   allowRemoteModels: boolean;
   localModelPath?: string;
@@ -23,67 +25,13 @@ type TransformersEnv = {
   backends?: { onnx?: OnnxBackendConfig };
 };
 
+// Type for the transformers module
 type TransformersModule = {
   env: TransformersEnv;
   pipeline: (task: string, modelId: string) => Promise<ASRPipeline>;
 };
 
-// Cache transcribers by model id to avoid reloading per request
-const transcriberCache = new Map<string, Promise<ASRPipeline>>();
-
-const tryImportModule = async (
-  id: string
-): Promise<TransformersModule | null> => {
-  try {
-    const m = (await import(id)) as unknown;
-    return m as TransformersModule;
-  } catch {
-    return null;
-  }
-};
-
-const getTransformers = async (): Promise<TransformersModule> => {
-  // Prefer the web/browser build explicitly to avoid loading onnxruntime-node in Bun
-  // Preload the web ONNX runtime to bias the environment toward WASM
-  try {
-    await import('onnxruntime-web');
-  } catch {
-    // ignore if not available; the transformers web build will still work
-  }
-
-  const mod =
-    (await tryImportModule(
-      '@huggingface/transformers/dist/transformers.min.js'
-    )) ||
-    (await tryImportModule('@huggingface/transformers/dist/transformers.js')) ||
-    (await tryImportModule('@huggingface/transformers'));
-
-  if (!mod) {
-    throw new Error('Failed to load @huggingface/transformers');
-  }
-  // Resolve paths next to the compiled binary for offline execution
-  const execDir = path.dirname(process.execPath);
-  const localWasmDir = config.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
-  const localModelsDir =
-    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
-
-  // Enforce offline mode and local assets
-  mod.env.allowRemoteModels = config.WHISPER_ALLOW_REMOTE_MODELS;
-  mod.env.localModelPath = localModelsDir;
-  mod.env.cacheDir =
-    config.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
-
-  const onnxBackend = mod.env.backends?.onnx;
-  if (onnxBackend) {
-    onnxBackend.backend = 'wasm';
-    if (onnxBackend.wasm) {
-      // Point to local WASM folder next to the binary
-      onnxBackend.wasm.wasmPaths = localWasmDir + path.sep;
-    }
-  }
-  return mod;
-};
-
+// Type for model information
 type ModelInfo = { id: string; name: string };
 
 // Hoisted regex patterns and sort order constants
@@ -100,83 +48,8 @@ const SIZE_ORDER = [
   'large v3',
 ] as const;
 
-const toTitleCase = (s: string): string => {
-  return s
-    .split(RE_SPLIT_DELIMS)
-    .map((w) => (RE_DIGIT.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(' ');
-};
-
-const prettyWhisperName = (modelId: string): string => {
-  const [vendor, model] = modelId.split('/');
-  const vendorPretty = vendor?.charAt(0).toUpperCase() + vendor?.slice(1);
-  const modelPretty = toTitleCase(
-    model?.replace(RE_WHISPER_PREFIX, 'Whisper ') ?? ''
-  );
-  return `${vendorPretty} ${modelPretty}`.trim();
-};
-
-const discoverInstalledWhisperModels = (): ModelInfo[] => {
-  const execDir = path.dirname(process.execPath);
-  const modelsRoot =
-    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
-  if (!existsSync(modelsRoot)) {
-    return [];
-  }
-  const result: ModelInfo[] = [];
-  // Expect layout: <modelsRoot>/<vendor>/<model>/*
-  for (const vendor of readdirSync(modelsRoot)) {
-    const vendorPath = path.join(modelsRoot, vendor);
-    if (!statSync(vendorPath).isDirectory()) {
-      continue;
-    }
-    for (const model of readdirSync(vendorPath)) {
-      const modelPath = path.join(vendorPath, model);
-      if (!statSync(modelPath).isDirectory()) {
-        continue;
-      }
-      // Heuristic: consider it installed if it has config.json or onnx dir
-      const hasConfig = existsSync(path.join(modelPath, 'config.json'));
-      const hasOnnx = existsSync(path.join(modelPath, 'onnx'));
-      if (hasConfig || hasOnnx) {
-        const id = `${vendor}/${model}`;
-        result.push({ id, name: prettyWhisperName(id) });
-      }
-    }
-  }
-  // Sort by model size order if recognizable; otherwise alphabetical
-  result.sort((a, b) => {
-    const ai = SIZE_ORDER.findIndex(
-      (k) =>
-        a.id.includes(k.replace(' ', '-')) || a.id.includes(k.replace(' ', ''))
-    );
-    const bi = SIZE_ORDER.findIndex(
-      (k) =>
-        b.id.includes(k.replace(' ', '-')) || b.id.includes(k.replace(' ', ''))
-    );
-    if (ai !== -1 && bi !== -1 && ai !== bi) {
-      return ai - bi;
-    }
-    return a.id.localeCompare(b.id);
-  });
-  return result;
-};
-
-const getTranscriber = (modelId: string): Promise<ASRPipeline> => {
-  if (!transcriberCache.has(modelId)) {
-    const create = (async () => {
-      const { pipeline } = await getTransformers();
-      const p = await pipeline('automatic-speech-recognition', modelId);
-      return p;
-    })();
-    transcriberCache.set(modelId, create);
-  }
-  const instance = transcriberCache.get(modelId);
-  if (!instance) {
-    throw new Error('Failed to initialize ASR transcriber');
-  }
-  return instance;
-};
+// Cache transcribers by model id to avoid reloading per request
+const transcriberCache = new Map<string, Promise<ASRPipeline>>();
 
 export const transcribeProcedures = {
   models: publicProcedure.handler(() => {
@@ -299,3 +172,132 @@ export const transcribeProcedures = {
       }
     }),
 };
+
+async function tryImportModule(id: string): Promise<TransformersModule | null> {
+  try {
+    const m = (await import(id)) as unknown;
+    return m as TransformersModule;
+  } catch {
+    return null;
+  }
+}
+
+async function getTransformers(): Promise<TransformersModule> {
+  // Prefer the web/browser build explicitly to avoid loading onnxruntime-node in Bun
+  // Preload the web ONNX runtime to bias the environment toward WASM
+  try {
+    await import('onnxruntime-web');
+  } catch {
+    // ignore if not available; the transformers web build will still work
+  }
+
+  const mod =
+    (await tryImportModule(
+      '@huggingface/transformers/dist/transformers.min.js'
+    )) ||
+    (await tryImportModule('@huggingface/transformers/dist/transformers.js')) ||
+    (await tryImportModule('@huggingface/transformers'));
+
+  if (!mod) {
+    throw new Error('Failed to load @huggingface/transformers');
+  }
+  // Resolve paths next to the compiled binary for offline execution
+  const execDir = path.dirname(process.execPath);
+  const localWasmDir = config.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
+  const localModelsDir =
+    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+
+  // Enforce offline mode and local assets
+  mod.env.allowRemoteModels = config.WHISPER_ALLOW_REMOTE_MODELS;
+  mod.env.localModelPath = localModelsDir;
+  mod.env.cacheDir =
+    config.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
+
+  const onnxBackend = mod.env.backends?.onnx;
+  if (onnxBackend) {
+    onnxBackend.backend = 'wasm';
+    if (onnxBackend.wasm) {
+      // Point to local WASM folder next to the binary
+      onnxBackend.wasm.wasmPaths = localWasmDir + path.sep;
+    }
+  }
+  return mod;
+}
+
+function toTitleCase(s: string): string {
+  return s
+    .split(RE_SPLIT_DELIMS)
+    .map((w) => (RE_DIGIT.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
+function prettyWhisperName(modelId: string): string {
+  const [vendor, model] = modelId.split('/');
+  const vendorPretty = vendor?.charAt(0).toUpperCase() + vendor?.slice(1);
+  const modelPretty = toTitleCase(
+    model?.replace(RE_WHISPER_PREFIX, 'Whisper ') ?? ''
+  );
+  return `${vendorPretty} ${modelPretty}`.trim();
+}
+
+function discoverInstalledWhisperModels(): ModelInfo[] {
+  const execDir = path.dirname(process.execPath);
+  const modelsRoot =
+    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+  if (!existsSync(modelsRoot)) {
+    return [];
+  }
+  const result: ModelInfo[] = [];
+  // Expect layout: <modelsRoot>/<vendor>/<model>/*
+  for (const vendor of readdirSync(modelsRoot)) {
+    const vendorPath = path.join(modelsRoot, vendor);
+    if (!statSync(vendorPath).isDirectory()) {
+      continue;
+    }
+    for (const model of readdirSync(vendorPath)) {
+      const modelPath = path.join(vendorPath, model);
+      if (!statSync(modelPath).isDirectory()) {
+        continue;
+      }
+      // Heuristic: consider it installed if it has config.json or onnx dir
+      const hasConfig = existsSync(path.join(modelPath, 'config.json'));
+      const hasOnnx = existsSync(path.join(modelPath, 'onnx'));
+      if (hasConfig || hasOnnx) {
+        const id = `${vendor}/${model}`;
+        result.push({ id, name: prettyWhisperName(id) });
+      }
+    }
+  }
+  // Sort by model size order if recognizable; otherwise alphabetical
+  result.sort((a, b) => {
+    const ai = SIZE_ORDER.findIndex(
+      (k) =>
+        a.id.includes(k.replace(' ', '-')) || a.id.includes(k.replace(' ', ''))
+    );
+    const bi = SIZE_ORDER.findIndex(
+      (k) =>
+        b.id.includes(k.replace(' ', '-')) || b.id.includes(k.replace(' ', ''))
+    );
+    if (ai !== -1 && bi !== -1 && ai !== bi) {
+      return ai - bi;
+    }
+    return a.id.localeCompare(b.id);
+  });
+  return result;
+}
+
+function getTranscriber(modelId: string): Promise<ASRPipeline> {
+  if (!transcriberCache.has(modelId)) {
+    const create = (async () => {
+      const { pipeline } = await getTransformers();
+      const p = await pipeline('automatic-speech-recognition', modelId);
+      return p;
+    })();
+    transcriberCache.set(modelId, create);
+  }
+  const instance = transcriberCache.get(modelId);
+  if (!instance) {
+    throw new Error('Failed to initialize ASR transcriber');
+  }
+  return instance;
+}
