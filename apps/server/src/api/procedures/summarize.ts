@@ -7,10 +7,7 @@ import {
   getSummary,
   listSummaries,
 } from '@/repositories/summaries';
-import {
-  type AnyProviderModel,
-  getProviderForModel,
-} from '@/services/ai-providers';
+import { type AnyProviderModel, getProviderForModel } from '@/services';
 import {
   type SummaryMode,
   summaryModePrompts,

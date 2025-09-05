@@ -5,6 +5,9 @@ import { config, isDevelopment } from '@/config';
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 
+const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB;
+
 export interface ImageMetadata {
   id: string;
   prompt: string;
@@ -20,14 +23,6 @@ export interface SaveImageResult {
 export class ImageStorageService {
   private get imagesDir() {
     return config.IMAGES_DIR;
-  }
-
-  private get maxFileSize() {
-    return config.IMAGES_MAX_FILE_SIZE;
-  }
-
-  private get allowedFormats() {
-    return config.IMAGES_ALLOWED_FORMATS.split(',').map((s) => s.trim());
   }
 
   private generateFileName(id: string): string {
@@ -99,13 +94,13 @@ export class ImageStorageService {
       const stats = fs.statSync(filePath);
 
       // Check file size
-      if (stats.size > this.maxFileSize) {
+      if (stats.size > MAX_FILE_SIZE) {
         return false;
       }
 
       // Check file extension
       const ext = path.extname(filePath).toLowerCase().replace('.', '');
-      return this.allowedFormats.includes(ext);
+      return ALLOWED_FORMATS.includes(ext);
     } catch {
       return false;
     }

@@ -6,10 +6,7 @@ import {
   getTranslation,
   listTranslations,
 } from '@/repositories/translations';
-import {
-  type AnyProviderModel,
-  getProviderForModel,
-} from '@/services/ai-providers';
+import { type AnyProviderModel, getProviderForModel } from '@/services';
 import {
   type LanguageCode,
   languageCodes,

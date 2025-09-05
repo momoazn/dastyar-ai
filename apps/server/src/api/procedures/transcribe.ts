@@ -3,7 +3,7 @@ import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
 import { publicProcedure } from '@/api/index';
-import { config, getWhisperAllowedModels } from '@/config';
+import { config, getWhisperModels } from '@/config';
 
 // Type for the ASR pipeline
 type ASRPipeline = (
@@ -58,7 +58,7 @@ export const transcribeProcedures = {
       return models;
     }
     // Fallback to allowed remote models only if none installed
-    const allowed = getWhisperAllowedModels().map((id) => ({
+    const allowed = getWhisperModels().map((id) => ({
       id,
       name: prettyWhisperName(id),
     }));
@@ -78,9 +78,7 @@ export const transcribeProcedures = {
       const language = input.language ?? 'fa';
       const discovered = discoverInstalledWhisperModels();
       const defaultModel =
-        discovered[0]?.id ??
-        getWhisperAllowedModels()[0] ??
-        'Xenova/whisper-tiny';
+        discovered[0]?.id ?? getWhisperModels()[0] ?? 'Xenova/whisper-tiny';
       const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,
@@ -208,7 +206,7 @@ async function getTransformers(): Promise<TransformersModule> {
     config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
 
   // Enforce offline mode and local assets
-  mod.env.allowRemoteModels = config.WHISPER_ALLOW_REMOTE_MODELS;
+  mod.env.allowRemoteModels = false;
   mod.env.localModelPath = localModelsDir;
   mod.env.cacheDir =
     config.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');

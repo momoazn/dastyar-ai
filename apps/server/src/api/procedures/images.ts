@@ -16,6 +16,8 @@ import {
   stableDiffusionService,
 } from '@/services/stable-diffusion';
 
+const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
   steps: z.number().int().min(1).max(150).default(20),
@@ -242,9 +244,7 @@ export const imageProcedures = {
       totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
       storageDir: config.IMAGES_DIR,
       maxFileSizeMB: Math.round(config.IMAGES_MAX_FILE_SIZE / 1024 / 1024),
-      allowedFormats: config.IMAGES_ALLOWED_FORMATS.split(',').map((s) =>
-        s.trim()
-      ),
+      allowedFormats: ALLOWED_FORMATS,
     };
   }),
 };

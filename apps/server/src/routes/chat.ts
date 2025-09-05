@@ -16,7 +16,7 @@ import {
   loadThreadMessages,
   updateThreadOnNewMessage,
 } from '@/repositories/threads';
-import { getProviderForModel } from '@/services/ai-providers';
+import { getProviderForModel } from '@/services';
 import { convertDbMessagesToUiMessages } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
 
