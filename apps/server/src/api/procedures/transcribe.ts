@@ -13,9 +13,53 @@ type ASRPipeline = (
 const transcriberCache = new Map<string, Promise<ASRPipeline>>();
 
 // Lazy import transformers to avoid initializing native providers at startup
-const getTransformers = async () => {
-  const libName = ['@huggingface', '/', 'transformers'].join('');
-  const mod = await import(libName as string);
+type OnnxBackendConfig = {
+  backend?: 'wasm' | 'webgpu' | 'cpu';
+  wasm?: { wasmPaths?: string };
+};
+
+type TransformersEnv = {
+  allowRemoteModels: boolean;
+  localModelPath?: string;
+  cacheDir?: string;
+  backends?: { onnx?: OnnxBackendConfig };
+};
+
+type TransformersModule = {
+  env: TransformersEnv;
+  pipeline: (task: string, modelId: string) => Promise<ASRPipeline>;
+};
+
+const tryImportModule = async (
+  id: string
+): Promise<TransformersModule | null> => {
+  try {
+    const m = (await import(id)) as unknown;
+    return m as TransformersModule;
+  } catch {
+    return null;
+  }
+};
+
+const getTransformers = async (): Promise<TransformersModule> => {
+  // Prefer the web/browser build explicitly to avoid loading onnxruntime-node in Bun
+  // Preload the web ONNX runtime to bias the environment toward WASM
+  try {
+    await import('onnxruntime-web');
+  } catch {
+    // ignore if not available; the transformers web build will still work
+  }
+
+  const mod =
+    (await tryImportModule(
+      '@huggingface/transformers/dist/transformers.min.js'
+    )) ||
+    (await tryImportModule('@huggingface/transformers/dist/transformers.js')) ||
+    (await tryImportModule('@huggingface/transformers'));
+
+  if (!mod) {
+    throw new Error('Failed to load @huggingface/transformers');
+  }
   // Resolve paths next to the compiled binary for offline execution
   const execDir = path.dirname(process.execPath);
   const localWasmDir = config.WHISPER_WASM_DIR || path.join(execDir, 'wasm');

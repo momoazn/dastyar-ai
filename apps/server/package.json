@@ -38,6 +38,7 @@
     "hono": "^4.8.2",
     "hono-pino": "^0.10.2",
     "ollama-ai-provider-v2": "^1.2.1",
+    "onnxruntime-web": "^1.22.0",
     "openai": "^5.12.1",
     "pino": "^9.9.0",
     "pino-http": "^10.5.0",
