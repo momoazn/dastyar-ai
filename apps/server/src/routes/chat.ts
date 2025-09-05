@@ -132,7 +132,7 @@ chatRouter.post('/', async (c) => {
       messages: convertToModelMessages(convertDbMessagesToUiMessages(messages)),
       system: CHAT_SYSTEM_PROMPT,
       providerOptions: {
-        ollama: { think: true },
+        // ollama: { think: true },
       },
       experimental_transform: smoothStream({
         delayInMs: 10,

@@ -6,12 +6,12 @@ const OLLAMA_BASE_URL = config.OLLAMA_BASE_URL;
 const OLLAMA_ENABLED = config.OLLAMA_ENABLED;
 
 export const ollamaClient = new OpenAI({
-  baseURL: OLLAMA_BASE_URL,
+  baseURL: `${OLLAMA_BASE_URL}/v1`,
   apiKey: '',
 });
 
 export const ollamaProvider = createOllama({
-  baseURL: OLLAMA_BASE_URL,
+  baseURL: `${OLLAMA_BASE_URL}/api/`,
 });
 
 export async function listOllamaModels() {

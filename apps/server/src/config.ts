@@ -22,7 +22,7 @@ const defaultConfig = {
   WHISPER_ALLOWED_MODELS: 'Xenova/whisper-tiny',
 
   // AI Providers
-  OLLAMA_BASE_URL: 'http://localhost:11434/v1',
+  OLLAMA_BASE_URL: 'http://localhost:11434',
   OLLAMA_API_KEY: 'ollama',
   OLLAMA_ENABLED: true,
 
