@@ -158,7 +158,7 @@ export const summarizeProcedures = {
         );
       }
 
-      const id = generateId(15);
+      const id = generateId();
       const now = new Date();
 
       const summary = {

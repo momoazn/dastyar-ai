@@ -14,7 +14,7 @@ import {
   Threads table – represents a chat thread 
 */
 export const threads = sqliteTable('threads', {
-  id: text('id', { length: 15 }).primaryKey().notNull(),
+  id: text('id', { length: 36 }).primaryKey().notNull(),
   title: text('title').notNull(),
   isArchived: integer('isArchived', { mode: 'boolean' })
     .notNull()
@@ -38,7 +38,7 @@ export type SelectThreadOutput = z.infer<typeof selectThreadSchema>;
   Messages table – individual messages inside a thread
 */
 export const messagesTable = sqliteTable('messages', {
-  id: text('id', { length: 20 }).primaryKey().notNull(),
+  id: text('id', { length: 36 }).primaryKey().notNull(),
   parts: text('parts', { mode: 'json' }).notNull(),
   status: text('status', { enum: messageStatuses }).notNull(),
   role: text('role', { enum: messageRoles }).notNull(),
@@ -76,7 +76,7 @@ export const threadsRelations = relations(threads, ({ many }) => ({
   Translations table – stores translation jobs & results
 */
 export const translationsTable = sqliteTable('translations', {
-  id: text('id', { length: 15 }).primaryKey().notNull(),
+  id: text('id', { length: 36 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   translatedText: text('translatedText'),
   modelName: text('modelName').notNull(),
@@ -101,7 +101,7 @@ export type SelectTranslationOutput = z.infer<typeof selectTranslationSchema>;
   Summaries table – stores summary jobs & results
 */
 export const summariesTable = sqliteTable('summaries', {
-  id: text('id', { length: 15 }).primaryKey().notNull(),
+  id: text('id', { length: 36 }).primaryKey().notNull(),
   sourceText: text('sourceText').notNull(),
   summaryText: text('summaryText'),
   modelName: text('modelName').notNull(),
@@ -125,7 +125,7 @@ export type SelectSummaryOutput = z.infer<typeof selectSummarySchema>;
   Generated Images table – stores AI-generated images metadata
 */
 export const generatedImagesTable = sqliteTable('generated_images', {
-  id: text('id', { length: 15 }).primaryKey().notNull(),
+  id: text('id', { length: 36 }).primaryKey().notNull(),
   prompt: text('prompt').notNull(),
   negativePrompt: text('negativePrompt'),
   filePath: text('filePath').notNull(), // File system path to the image

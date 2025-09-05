@@ -9,8 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1756727678481,
-      "tag": "0000_military_beast",
+      "when": 1757092900165,
+      "tag": "0000_flawless_pete_wisdom",
       "breakpoints": true
     }
   ]
@@ -18,7 +18,7 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "b1375928-a22b-441a-8d14-fb9889466ddd",
+  "id": "f13d6e3c-9dd7-43c7-8ba5-973b5a911197",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -26,7 +26,7 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -92,7 +92,7 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(20)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -172,7 +172,7 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -238,7 +238,7 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -291,7 +291,7 @@ export const migrationData: { [key: string]: string } = {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -371,8 +371,8 @@ export const migrationData: { [key: string]: string } = {
     "indexes": {}
   }
 }`,
-  '0000_military_beast.sql': `CREATE TABLE \`generated_images\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
+  '0000_flawless_pete_wisdom.sql': `CREATE TABLE \`generated_images\` (
+	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`prompt\` text NOT NULL,
 	\`negativePrompt\` text,
 	\`filePath\` text NOT NULL,
@@ -383,7 +383,7 @@ export const migrationData: { [key: string]: string } = {
 );
 --> statement-breakpoint
 CREATE TABLE \`messages\` (
-	\`id\` text(20) PRIMARY KEY NOT NULL,
+	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`parts\` text NOT NULL,
 	\`status\` text NOT NULL,
 	\`role\` text NOT NULL,
@@ -395,7 +395,7 @@ CREATE TABLE \`messages\` (
 );
 --> statement-breakpoint
 CREATE TABLE \`summaries\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`sourceText\` text NOT NULL,
 	\`summaryText\` text,
 	\`modelName\` text NOT NULL,
@@ -406,7 +406,7 @@ CREATE TABLE \`summaries\` (
 );
 --> statement-breakpoint
 CREATE TABLE \`threads\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`title\` text NOT NULL,
 	\`isArchived\` integer DEFAULT false NOT NULL,
 	\`lastMessageAt\` integer,
@@ -415,7 +415,7 @@ CREATE TABLE \`threads\` (
 );
 --> statement-breakpoint
 CREATE TABLE \`translations\` (
-	\`id\` text(15) PRIMARY KEY NOT NULL,
+	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`sourceText\` text NOT NULL,
 	\`translatedText\` text,
 	\`modelName\` text NOT NULL,
@@ -425,7 +425,7 @@ CREATE TABLE \`translations\` (
 	\`createdAt\` integer,
 	\`updatedAt\` integer
 );
-`,
+`
 };
 
 export default migrationData;

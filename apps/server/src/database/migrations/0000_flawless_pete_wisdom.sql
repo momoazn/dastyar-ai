@@ -1,5 +1,5 @@
 CREATE TABLE `generated_images` (
-	`id` text(15) PRIMARY KEY NOT NULL,
+	`id` text(36) PRIMARY KEY NOT NULL,
 	`prompt` text NOT NULL,
 	`negativePrompt` text,
 	`filePath` text NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE `generated_images` (
 );
 --> statement-breakpoint
 CREATE TABLE `messages` (
-	`id` text(20) PRIMARY KEY NOT NULL,
+	`id` text(36) PRIMARY KEY NOT NULL,
 	`parts` text NOT NULL,
 	`status` text NOT NULL,
 	`role` text NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE `messages` (
 );
 --> statement-breakpoint
 CREATE TABLE `summaries` (
-	`id` text(15) PRIMARY KEY NOT NULL,
+	`id` text(36) PRIMARY KEY NOT NULL,
 	`sourceText` text NOT NULL,
 	`summaryText` text,
 	`modelName` text NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE `summaries` (
 );
 --> statement-breakpoint
 CREATE TABLE `threads` (
-	`id` text(15) PRIMARY KEY NOT NULL,
+	`id` text(36) PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
 	`isArchived` integer DEFAULT false NOT NULL,
 	`lastMessageAt` integer,
@@ -42,7 +42,7 @@ CREATE TABLE `threads` (
 );
 --> statement-breakpoint
 CREATE TABLE `translations` (
-	`id` text(15) PRIMARY KEY NOT NULL,
+	`id` text(36) PRIMARY KEY NOT NULL,
 	`sourceText` text NOT NULL,
 	`translatedText` text,
 	`modelName` text NOT NULL,

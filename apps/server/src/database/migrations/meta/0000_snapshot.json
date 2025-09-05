@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b1375928-a22b-441a-8d14-fb9889466ddd",
+  "id": "f13d6e3c-9dd7-43c7-8ba5-973b5a911197",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -9,7 +9,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -75,7 +75,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(20)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -136,8 +136,12 @@
           "name": "messages_threadId_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "threads",
-          "columnsFrom": ["threadId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "threadId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -151,7 +155,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -217,7 +221,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -270,7 +274,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text(15)",
+          "type": "text(36)",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false

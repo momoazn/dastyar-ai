@@ -165,7 +165,7 @@ export const translationProcedures = {
         );
       }
 
-      const id = generateId(15);
+      const id = generateId();
       const created = await context.db
         .insert(translationsTable)
         .values({
