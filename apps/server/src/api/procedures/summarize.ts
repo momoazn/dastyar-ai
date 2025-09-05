@@ -1,5 +1,16 @@
 import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
+import { publicProcedure } from '@/api/index';
+import { summariesTable } from '@/database/schema';
+import {
+  deleteSummary,
+  getSummary,
+  listSummaries,
+} from '@/repositories/summaries';
+import {
+  type AnyProviderModel,
+  getProviderForModel,
+} from '@/services/ai-providers';
 import {
   type SummaryMode,
   summaryModePrompts,
@@ -7,18 +18,7 @@ import {
   type Tone,
   tones,
 } from '@/utils/constants';
-import { summariesTable } from '../../database/schema';
-import {
-  deleteSummary,
-  getSummary,
-  listSummaries,
-} from '../../repositories/summaries';
-import {
-  type AnyProviderModel,
-  getProviderForModel,
-} from '../../services/ai-providers';
-import { generateId } from '../../utils/id-generator';
-import { publicProcedure } from '../index';
+import { generateId } from '@/utils/id-generator';
 
 // Regex constants declared at top-level per performance best practices
 const FENCED_JSON_OPEN = /^```json\s*/i;
