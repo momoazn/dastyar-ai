@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   AlertDescription,
@@ -24,13 +24,13 @@ import {
   Textarea,
 } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useTranscription } from '@/hooks/use-transcription';
 import {
   formatElapsed,
   type RecordingError,
   useVoiceRecorder,
 } from '@/hooks/use-voice-recorder';
 import { fa } from '@/lib/persian-texts';
-import { fileToWav16kMono } from '@/utils/audio';
 import { orpc } from '@/utils/orpc';
 
 const MAX_DURATION_MS = 60_000; // 60s visual progress
@@ -84,23 +84,18 @@ function RouteComponent() {
 
   const { data: models } = useQuery(orpc.transcribe.models.queryOptions());
 
-  const { mutate: transcribe, isPending: isTranscribing } = useMutation(
-    orpc.transcribe.transcribe.mutationOptions({
-      onSuccess: (data) => {
-        setResult(data);
-        // Only clear recorded file after successful transcription
-        clearRecordedFile();
-      },
-      onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : fa.transcribe.errors.transcribeFailed;
-        setTranscribeError(errorMessage);
-        // Don't clear recorded file on error, allow retry
-      },
-    })
-  );
+  const { transcribe, isPending: isTranscribing } = useTranscription({
+    onSuccess: (data) => {
+      setResult(data);
+      clearRecordedFile();
+    },
+    onError: (message) => {
+      setTranscribeError(message || fa.transcribe.errors.transcribeFailed);
+    },
+  });
+
+  // Prevent duplicate transcriptions per recorded file (e.g., Strict Mode double-effects)
+  const processedFileRef = useRef<File | null>(null);
 
   // Map recording errors to localized messages
   const mapRecordingError = (error: RecordingError): string => {
@@ -110,10 +105,7 @@ function RouteComponent() {
       case 'noAudioCaptured':
         return fa.transcribe.errors.noAudio;
       case 'fileTooLarge':
-        return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
-      case 'initFailed':
-      case 'processingFailed':
-        return fa.transcribe.errors.processFailed;
+        return fa.transcribe.errors.fileTooLarge;
       default:
         return fa.transcribe.errors.processFailed;
     }
@@ -121,21 +113,15 @@ function RouteComponent() {
 
   // Effect to transcribe when recordedFile becomes available
   useEffect(() => {
-    if (recordedFile) {
+    if (recordedFile && recordedFile !== processedFileRef.current) {
+      processedFileRef.current = recordedFile;
       setTranscribeError(null);
       setResult('');
-      // Convert to WAV 16k mono for server compatibility
-      fileToWav16kMono(recordedFile)
-        .then((wav) =>
-          transcribe({
-            file: wav,
-            language,
-            model,
-          })
-        )
-        .catch(() => {
-          setTranscribeError(fa.transcribe.errors.processFailed);
-        });
+      transcribe({ file: recordedFile, language, model }).catch(() => {
+        // Keep processed ref pointing to the same file to avoid auto-retry loops
+        processedFileRef.current = recordedFile;
+        setTranscribeError(fa.transcribe.errors.processFailed);
+      });
     }
   }, [recordedFile, transcribe, language, model]);
 
@@ -281,8 +267,7 @@ function RouteComponent() {
                   className="gap-2"
                   onClick={async () => {
                     try {
-                      const wav = await fileToWav16kMono(recordedFile);
-                      transcribe({ file: wav, language, model });
+                      await transcribe({ file: recordedFile, language, model });
                     } catch {
                       setTranscribeError(fa.transcribe.errors.processFailed);
                     }

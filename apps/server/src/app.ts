@@ -2,10 +2,8 @@ import path from 'node:path';
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
-import { requestId } from 'hono/request-id';
+import { logger } from 'hono/logger';
 import type { Env as HonoPinoEnv } from 'hono-pino';
-import { pinoLogger } from 'hono-pino';
-import pino from 'pino';
 import { config, ensureDirectoriesExist } from './config';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
@@ -22,33 +20,31 @@ export function createApp() {
   >();
 
   // Middleware
-  app.use(requestId());
-  app.use(
-    pinoLogger({
-      pino: pino({
-        level: 'info',
-        base: null,
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? {
-                target: 'pino-pretty',
-                options: {
-                  colorize: true,
-                  translateTime: 'HH:MM:ss.l',
-                  singleLine: false,
-                },
-              }
-            : undefined,
-      }),
-      http: {
-        referRequestIdKey: 'requestId',
-      },
-    })
-  );
+  // app.use(requestId());
+  // app.use(
+  //   pinoLogger({
+  //     pino: pino({
+  //       level: 'info',
+  //       base: null,
+  //       transport:
+  //         process.env.NODE_ENV !== 'production'
+  //           ? {
+  //               target: 'pino-pretty',
+  //               options: {
+  //                 colorize: true,
+  //                 translateTime: 'HH:MM:ss.l',
+  //                 singleLine: false,
+  //               },
+  //             }
+  //           : undefined,
+  //     }),
+  //     http: {
+  //       referRequestIdKey: 'requestId',
+  //     },
+  //   })
+  // );
 
-  app.use(async (_c, next) => {
-    await next();
-  });
+  app.use(logger());
 
   app.use(
     '/*',

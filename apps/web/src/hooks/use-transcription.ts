@@ -1,0 +1,51 @@
+import { useMutation } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef } from 'react';
+import { fileToWav16kMono } from '@/utils/audio';
+import { orpc } from '@/utils/orpc';
+
+export interface TranscriptionArgs {
+  file: File;
+  language?: 'fa' | 'en';
+  model?: string;
+}
+
+export interface UseTranscriptionHandlers {
+  onSuccess?: (text: string) => void;
+  onError?: (message: string) => void;
+}
+
+export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
+  const handlersRef = useRef<UseTranscriptionHandlers | undefined>(handlers);
+  useEffect(() => {
+    handlersRef.current = handlers;
+  }, [handlers]);
+
+  const { mutate, isPending } = useMutation(
+    orpc.transcribe.transcribe.mutationOptions({
+      onSuccess: (text) => {
+        handlersRef.current?.onSuccess?.(text);
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error ? error.message : 'خطا در تبدیل صدا به متن';
+        handlersRef.current?.onError?.(message);
+      },
+    })
+  );
+
+  const transcribe = useCallback(
+    async ({ file, language, model }: TranscriptionArgs) => {
+      try {
+        const wav = await fileToWav16kMono(file);
+        mutate({ file: wav, language, model });
+      } catch {
+        handlersRef.current?.onError?.(
+          'خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.'
+        );
+      }
+    },
+    [mutate]
+  );
+
+  return { transcribe, isPending };
+};

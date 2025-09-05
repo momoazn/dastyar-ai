@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Mic, Square } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Button,
   Select,
@@ -10,6 +10,7 @@ import {
   SelectValue,
   Switch,
 } from '@/components/ui';
+import { useTranscription } from '@/hooks/use-transcription';
 import {
   formatElapsed,
   type RecordingError,
@@ -37,7 +38,7 @@ export function TranscribeButton({
   onTranscribed,
   onError,
   language = 'fa',
-  model = 'base',
+  model = '',
   variant = 'outline',
   size = 'default',
   className,
@@ -47,7 +48,7 @@ export function TranscribeButton({
   onModelChange,
   availableModels = [],
 }: TranscribeButtonProps) {
-  const [isTranscribing, setIsTranscribing] = useState(false);
+  // Use mutation pending state instead of separate local state for transcribing
 
   const {
     isRecording,
@@ -74,37 +75,38 @@ export function TranscribeButton({
   // Track if we've already processed the current recorded file
   const processedFileRef = useRef<File | null>(null);
 
-  // Transcription mutation
-  const transcribeMutation = useMutation(
-    orpc.transcribe.transcribe.mutationOptions({
-      onSuccess: (transcribedText) => {
-        onTranscribed(transcribedText);
-        clearRecordedFile();
-        setIsTranscribing(false);
-        processedFileRef.current = null;
-      },
-      onError: (error) => {
-        const errorMessage =
-          error instanceof Error ? error.message : 'خطا در تبدیل صدا به متن';
-        onError?.(errorMessage);
-        setIsTranscribing(false);
-        processedFileRef.current = null;
-      },
-    })
-  );
+  // Unified transcription logic
+  const { transcribe, isPending } = useTranscription({
+    onSuccess: (text) => {
+      onTranscribed(text);
+      clearRecordedFile();
+      processedFileRef.current = null;
+    },
+    onError: (message) => {
+      onError?.(message);
+      // Keep processedFileRef pointing to the same file to prevent auto-retry loops
+    },
+  });
 
   // Handle transcription when recordedFile becomes available
   useEffect(() => {
     if (recordedFile && recordedFile !== processedFileRef.current) {
       processedFileRef.current = recordedFile;
-      setIsTranscribing(true);
-      transcribeMutation.mutate({
-        file: recordedFile,
-        language,
-        model,
-      });
+      (async () => {
+        try {
+          await transcribe({
+            file: recordedFile,
+            language,
+            model: model || undefined,
+          });
+        } catch {
+          // Prevent auto-retry loop by keeping reference to the same file
+          processedFileRef.current = recordedFile;
+          onError?.('خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.');
+        }
+      })();
     }
-  }, [recordedFile, language, model, transcribeMutation.mutate]);
+  }, [recordedFile, language, model, onError, transcribe]);
 
   // Map recording errors to user-friendly messages
   const mapRecordingError = useCallback((error: RecordingError): string => {
@@ -143,13 +145,13 @@ export function TranscribeButton({
     if (isRecording) {
       return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
     }
-    if (isTranscribing) {
+    if (isPending) {
       return fa.chat.transcribingVoice;
     }
     return fa.chat.micStart;
   };
 
-  const isButtonDisabled = disabled || isTranscribing;
+  const isButtonDisabled = disabled || isPending;
 
   if (showControls) {
     return (

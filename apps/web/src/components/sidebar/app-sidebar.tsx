@@ -56,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       {location.pathname !== '/' && (
-        <Sidebar className="hidden flex-1 md:flex" collapsible="none">
+        <Sidebar className="hidden flex-1 border-l md:flex" collapsible="none">
           <SidebarHeader className="h-14 flex-row items-center justify-between gap-3.5 border-b">
             <h3 className="ms-2 font-medium text-foreground text-lg">
               {activeItem?.title}
