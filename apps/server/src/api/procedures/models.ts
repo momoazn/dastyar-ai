@@ -3,7 +3,6 @@ import { listAllModels } from '@/services/ai-providers';
 
 export const modelProcedures = {
   list: publicProcedure.handler(async () => {
-    console.log('listing models');
     try {
       return await listAllModels();
     } catch (error) {

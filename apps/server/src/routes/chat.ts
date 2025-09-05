@@ -121,6 +121,31 @@ chatRouter.post('/', async (c) => {
       });
     }
 
+    // // Prepare messages. Ollama's /api/chat expects string content per message.
+    // const uiMessages = convertDbMessagesToUiMessages(messages);
+    // let preparedMessages: unknown;
+    // if (modelProvider === 'ollama') {
+    //   preparedMessages = uiMessages.map((m) => ({
+    //     role: m.role,
+    //     content:
+    //       m.parts
+    //         .map((part) => {
+    //           if (typeof part === 'string') {
+    //             return part;
+    //           }
+    //           if (part && typeof part === 'object' && 'text' in part) {
+    //             const maybeText = (part as { text?: unknown }).text;
+    //             return typeof maybeText === 'string' ? maybeText : '';
+    //           }
+    //           return '';
+    //         })
+    //         .filter(Boolean)
+    //         .join('\n') || ' ',
+    //   }));
+    // } else {
+    //   preparedMessages = convertToModelMessages(uiMessages);
+    // }
+
     const result = streamText({
       model: wrapLanguageModel({
         model: providerModel,
