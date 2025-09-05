@@ -79,8 +79,11 @@ export const ChatInput = ({
       e.preventDefault();
       if (isGenerating) {
         stopGenerating?.();
-      } else {
-        handleSendPrompt(prompt);
+        return;
+      }
+      const trimmed = prompt.trim();
+      if (trimmed) {
+        handleSendPrompt(trimmed);
         setPrompt('');
       }
     }
@@ -92,8 +95,11 @@ export const ChatInput = ({
       stopGenerating?.();
       return;
     }
-    handleSendPrompt(prompt);
-    setPrompt('');
+    const trimmed = prompt.trim();
+    if (trimmed) {
+      handleSendPrompt(trimmed);
+      setPrompt('');
+    }
   };
 
   // Memoize prompt change handler

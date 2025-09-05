@@ -59,11 +59,16 @@ function ChatThreadRouteComponent() {
   const lastUsedModelName = messagesQuery.data?.at(-1)?.metadata?.modelName;
 
   const handleSendPrompt = async (prompt: string) => {
+    const trimmed = prompt.trim();
+    if (!trimmed) {
+      return;
+    }
+
     if (messages.length === 0) {
       try {
         await client.threads.rename({
           id: threadId,
-          title: prompt.slice(0, 10),
+          title: trimmed.slice(0, 10),
         });
         await queryClient.invalidateQueries({
           queryKey: orpc.threads.list.queryKey(),
@@ -74,7 +79,7 @@ function ChatThreadRouteComponent() {
       }
     }
 
-    sendMessage({ text: prompt }, { body: { modelName, threadId } });
+    sendMessage({ text: trimmed }, { body: { modelName, threadId } });
   };
 
   useEffect(() => {
