@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
@@ -136,8 +136,29 @@ const configSchema = z.object({
 
 // Load configuration from file or create default
 function loadConfig(): Record<string, unknown> {
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  const configPath = join(__dirname, '../config.json');
+  const modulePath = fileURLToPath(import.meta.url);
+  const isCompiled = modulePath.includes('$bunfs');
+  const execDir = dirname(process.execPath);
+
+  // Determine where to read/write config.json
+  const envConfigPath = process.env.APP_CONFIG
+    ? resolve(process.env.APP_CONFIG)
+    : undefined;
+  const defaultConfigPath = isCompiled
+    ? join(execDir, 'config.json')
+    : resolve('./config.json');
+  const configPath = envConfigPath ?? defaultConfigPath;
+
+  // Prepare runtime-aware defaults (compiled binary should use co-located absolute paths)
+  const runtimeDefaults = { ...defaultConfig } as Record<string, unknown>;
+  if (isCompiled) {
+    runtimeDefaults.DATABASE_FILE = join(execDir, 'data.db');
+    runtimeDefaults.WHISPER_MODELS_DIR = join(execDir, 'whisper-models');
+    runtimeDefaults.WHISPER_CACHE_DIR = join(execDir, '.whisper-cache');
+    runtimeDefaults.WHISPER_WASM_DIR = join(execDir, 'wasm');
+    runtimeDefaults.IMAGES_DIR = join(execDir, 'generated-images');
+    runtimeDefaults.WEB_DIST_DIR = join(execDir, 'web');
+  }
 
   let existingConfig: Record<string, unknown> = {};
 
@@ -150,10 +171,14 @@ function loadConfig(): Record<string, unknown> {
   }
 
   // Merge existing config with defaults (existing values take precedence)
-  const mergedConfig = { ...defaultConfig, ...existingConfig };
+  const mergedConfig = { ...runtimeDefaults, ...existingConfig };
 
   // Always write the complete merged config back to disk
   try {
+    const dir = dirname(configPath);
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
     writeFileSync(configPath, JSON.stringify(mergedConfig, null, 2));
     if (Object.keys(existingConfig).length === 0) {
       console.log('Created default config.json');
