@@ -1,16 +1,14 @@
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
 import { publicProcedure } from '@/api/index';
-import { config } from '@/config';
+import { config, getWhisperAllowedModels } from '@/config';
 
 type ASRPipeline = (
   input: Float32Array,
   options: { language?: string; task: 'transcribe' }
 ) => Promise<{ text: string } | Array<{ text: string }>>;
-
-// Cache transcribers by model id to avoid reloading per request
-const transcriberCache = new Map<string, Promise<ASRPipeline>>();
 
 // Lazy import transformers to avoid initializing native providers at startup
 type OnnxBackendConfig = {
@@ -29,6 +27,9 @@ type TransformersModule = {
   env: TransformersEnv;
   pipeline: (task: string, modelId: string) => Promise<ASRPipeline>;
 };
+
+// Cache transcribers by model id to avoid reloading per request
+const transcriberCache = new Map<string, Promise<ASRPipeline>>();
 
 const tryImportModule = async (
   id: string
@@ -83,13 +84,83 @@ const getTransformers = async (): Promise<TransformersModule> => {
   return mod;
 };
 
-const MODELS_LIST = [
-  { id: 'Xenova/whisper-tiny', name: 'Xenova Tiny' },
-  { id: 'Xenova/whisper-base', name: 'Xenova Base' },
-  { id: 'Xenova/whisper-small', name: 'Xenova Small' },
-  { id: 'Xenova/whisper-medium', name: 'Xenova Medium' },
-  { id: 'Xenova/whisper-large-v3', name: 'Xenova Large v3' },
-];
+type ModelInfo = { id: string; name: string };
+
+// Hoisted regex patterns and sort order constants
+const RE_SPLIT_DELIMS = /[-_\s]+/;
+const RE_DIGIT = /[0-9]/;
+const RE_WHISPER_PREFIX = /^whisper-/i;
+const SIZE_ORDER = [
+  'tiny',
+  'base',
+  'small',
+  'medium',
+  'large',
+  'large v2',
+  'large v3',
+] as const;
+
+const toTitleCase = (s: string): string => {
+  return s
+    .split(RE_SPLIT_DELIMS)
+    .map((w) => (RE_DIGIT.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+};
+
+const prettyWhisperName = (modelId: string): string => {
+  const [vendor, model] = modelId.split('/');
+  const vendorPretty = vendor?.charAt(0).toUpperCase() + vendor?.slice(1);
+  const modelPretty = toTitleCase(
+    model?.replace(RE_WHISPER_PREFIX, 'Whisper ') ?? ''
+  );
+  return `${vendorPretty} ${modelPretty}`.trim();
+};
+
+const discoverInstalledWhisperModels = (): ModelInfo[] => {
+  const execDir = path.dirname(process.execPath);
+  const modelsRoot =
+    config.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+  if (!existsSync(modelsRoot)) {
+    return [];
+  }
+  const result: ModelInfo[] = [];
+  // Expect layout: <modelsRoot>/<vendor>/<model>/*
+  for (const vendor of readdirSync(modelsRoot)) {
+    const vendorPath = path.join(modelsRoot, vendor);
+    if (!statSync(vendorPath).isDirectory()) {
+      continue;
+    }
+    for (const model of readdirSync(vendorPath)) {
+      const modelPath = path.join(vendorPath, model);
+      if (!statSync(modelPath).isDirectory()) {
+        continue;
+      }
+      // Heuristic: consider it installed if it has config.json or onnx dir
+      const hasConfig = existsSync(path.join(modelPath, 'config.json'));
+      const hasOnnx = existsSync(path.join(modelPath, 'onnx'));
+      if (hasConfig || hasOnnx) {
+        const id = `${vendor}/${model}`;
+        result.push({ id, name: prettyWhisperName(id) });
+      }
+    }
+  }
+  // Sort by model size order if recognizable; otherwise alphabetical
+  result.sort((a, b) => {
+    const ai = SIZE_ORDER.findIndex(
+      (k) =>
+        a.id.includes(k.replace(' ', '-')) || a.id.includes(k.replace(' ', ''))
+    );
+    const bi = SIZE_ORDER.findIndex(
+      (k) =>
+        b.id.includes(k.replace(' ', '-')) || b.id.includes(k.replace(' ', ''))
+    );
+    if (ai !== -1 && bi !== -1 && ai !== bi) {
+      return ai - bi;
+    }
+    return a.id.localeCompare(b.id);
+  });
+  return result;
+};
 
 const getTranscriber = (modelId: string): Promise<ASRPipeline> => {
   if (!transcriberCache.has(modelId)) {
@@ -109,21 +180,35 @@ const getTranscriber = (modelId: string): Promise<ASRPipeline> => {
 
 export const transcribeProcedures = {
   models: publicProcedure.handler(() => {
-    return MODELS_LIST;
+    const models = discoverInstalledWhisperModels();
+    if (models.length > 0) {
+      return models;
+    }
+    // Fallback to allowed remote models only if none installed
+    const allowed = getWhisperAllowedModels().map((id) => ({
+      id,
+      name: prettyWhisperName(id),
+    }));
+    return allowed;
   }),
   transcribe: publicProcedure
     .input(
       z.object({
         file: z.instanceof(File),
         language: z.string().length(2).optional(),
-        model: z.string().optional().default(MODELS_LIST[0].id),
+        model: z.string().optional(),
       })
     )
     .output(z.string())
     .handler(async ({ input }) => {
       const startedAt = Date.now();
       const language = input.language ?? 'fa';
-      const modelId = input.model ?? MODELS_LIST[0].id;
+      const discovered = discoverInstalledWhisperModels();
+      const defaultModel =
+        discovered[0]?.id ??
+        getWhisperAllowedModels()[0] ??
+        'Xenova/whisper-tiny';
+      const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,
         type: input.file.type,

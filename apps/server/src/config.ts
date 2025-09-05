@@ -233,9 +233,9 @@ export const getImagesAllowedFormats = (): string[] => {
 // AI PROVIDER HELPERS
 // ============================================================================
 
-export const getAiProviderConfig = (
-  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
-) => {
+type Provider = 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter';
+
+export const getAiProviderConfig = (provider: Provider) => {
   switch (provider) {
     case 'ollama':
       return {
@@ -269,22 +269,18 @@ export const getAiProviderConfig = (
   }
 };
 
-export const isAiProviderEnabled = (
-  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
-): boolean => {
+export const isAiProviderEnabled = (provider: Provider): boolean => {
   const providerConfig = getAiProviderConfig(provider);
   return providerConfig.enabled;
 };
 
-export const getAiProviderApiKey = (
-  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
-): string | undefined => {
+export const getAiProviderApiKey = (provider: Provider): string | undefined => {
   const providerConfig = getAiProviderConfig(provider);
   return 'apiKey' in providerConfig ? providerConfig.apiKey : undefined;
 };
 
 export const getAiProviderBaseUrl = (
-  provider: 'ollama' | 'lmstudio' | 'groq' | 'gemini' | 'openrouter'
+  provider: Provider
 ): string | undefined => {
   const providerConfig = getAiProviderConfig(provider);
   return 'baseUrl' in providerConfig ? providerConfig.baseUrl : undefined;
