@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Mic, Square } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button,
   Select,
@@ -71,6 +71,9 @@ export function TranscribeButton({
     }
   }, [models, model, onModelChange]);
 
+  // Track if we've already processed the current recorded file
+  const processedFileRef = useRef<File | null>(null);
+
   // Transcription mutation
   const transcribeMutation = useMutation(
     orpc.transcribe.transcribe.mutationOptions({
@@ -78,19 +81,22 @@ export function TranscribeButton({
         onTranscribed(transcribedText);
         clearRecordedFile();
         setIsTranscribing(false);
+        processedFileRef.current = null;
       },
       onError: (error) => {
         const errorMessage =
           error instanceof Error ? error.message : 'خطا در تبدیل صدا به متن';
         onError?.(errorMessage);
         setIsTranscribing(false);
+        processedFileRef.current = null;
       },
     })
   );
 
   // Handle transcription when recordedFile becomes available
   useEffect(() => {
-    if (recordedFile) {
+    if (recordedFile && recordedFile !== processedFileRef.current) {
+      processedFileRef.current = recordedFile;
       setIsTranscribing(true);
       transcribeMutation.mutate({
         file: recordedFile,
@@ -98,7 +104,7 @@ export function TranscribeButton({
         model,
       });
     }
-  }, [recordedFile, transcribeMutation, language, model]);
+  }, [recordedFile, language, model, transcribeMutation.mutate]);
 
   // Map recording errors to user-friendly messages
   const mapRecordingError = useCallback((error: RecordingError): string => {

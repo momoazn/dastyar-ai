@@ -125,9 +125,9 @@ export const ChatInput = ({
   }, [modelsQuery?.data, modelsQuery?.isPending]);
 
   // Get language for transcription based on text direction
-  const getTranscriptionLanguage = () => {
+  const transcriptionLanguage = useMemo(() => {
     return prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
-  };
+  }, [prompt]);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
@@ -177,7 +177,7 @@ export const ChatInput = ({
             </PromptInputTools>
             <div className="flex items-center gap-2">
               <TranscribeButton
-                language={getTranscriptionLanguage()}
+                language={transcriptionLanguage}
                 onError={handleTranscriptionError}
                 onTranscribed={handleTranscription}
                 size="icon"
