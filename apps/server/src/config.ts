@@ -82,6 +82,11 @@ function loadConfig(): Record<string, unknown> {
   const isCompiled = modulePath.includes('$bunfs');
   const execDir = dirname(process.execPath);
 
+  // Ensure production environment when running compiled binary
+  if (isCompiled && process.env.NODE_ENV !== 'production') {
+    process.env.NODE_ENV = 'production';
+  }
+
   // Determine where to read/write config.json
   const envConfigPath = process.env.APP_CONFIG
     ? resolve(process.env.APP_CONFIG)
