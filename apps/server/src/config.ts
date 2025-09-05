@@ -145,7 +145,33 @@ if (!parsedConfig.success) {
   process.exit(1);
 }
 
-export const config = parsedConfig.data;
+// Normalize and resolve file system paths for cross-platform compatibility (Windows, Linux, macOS)
+function normalizeFsPath(p: string): string {
+  // Treat empty strings as current working directory
+  if (!p || p.trim().length === 0) {
+    return resolve('.');
+  }
+  // If it looks like a file URL, let URL utilities handle Windows drive letters
+  if (p.startsWith('file:')) {
+    try {
+      return fileURLToPath(new URL(p));
+    } catch {
+      // fall through to resolve
+    }
+  }
+  // Otherwise resolve relative paths against the current working directory
+  return resolve(p);
+}
+
+export const config = {
+  ...parsedConfig.data,
+  // Normalize key file system paths
+  DATABASE_FILE: normalizeFsPath(parsedConfig.data.DATABASE_FILE),
+  WHISPER_MODELS_DIR: normalizeFsPath(parsedConfig.data.WHISPER_MODELS_DIR),
+  WHISPER_CACHE_DIR: normalizeFsPath(parsedConfig.data.WHISPER_CACHE_DIR),
+  IMAGES_DIR: normalizeFsPath(parsedConfig.data.IMAGES_DIR),
+  WEB_DIST_DIR: normalizeFsPath(parsedConfig.data.WEB_DIST_DIR),
+} as typeof parsedConfig.data;
 
 // ============================================================================
 // ENVIRONMENT HELPERS
