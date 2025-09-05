@@ -10,13 +10,16 @@ import {
   getGeneratedImage,
   listGeneratedImages,
 } from '@/repositories/images';
-import { imageStorageService } from '@/services/image-storage';
+import {
+  ALLOWED_FORMATS,
+  imageStorageService,
+  MAX_FILE_SIZE,
+} from '@/services/image-storage';
 import {
   type ImageGenerationParams,
   stableDiffusionService,
 } from '@/services/stable-diffusion';
-
-const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+import { generateId } from '@/utils/id-generator';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
@@ -65,7 +68,7 @@ export const imageProcedures = {
         );
 
         // Generate ID first for storage service
-        const id = require('../../utils/id-generator').generateId();
+        const id = generateId();
 
         // Save image to file system
         const storageResult = imageStorageService.saveImage(base64Image, {
@@ -243,7 +246,7 @@ export const imageProcedures = {
       totalFiles: stats.totalFiles,
       totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
       storageDir: config.IMAGES_DIR,
-      maxFileSizeMB: Math.round(config.IMAGES_MAX_FILE_SIZE / 1024 / 1024),
+      maxFileSizeMB: Math.round(MAX_FILE_SIZE / 1024 / 1024),
       allowedFormats: ALLOWED_FORMATS,
     };
   }),

@@ -35,10 +35,9 @@ const defaultConfig = {
 
   // Images
   IMAGES_DIR: './generated-images',
-  IMAGES_MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
 
   // Web
-  WEB_DIST_DIR: './apps/web/dist',
+  WEB_DIST_DIR: './web',
 };
 
 // Configuration schema with validation
@@ -72,9 +71,6 @@ const configSchema = z.object({
 
   // Images
   IMAGES_DIR: z.string().default(defaultConfig.IMAGES_DIR),
-  IMAGES_MAX_FILE_SIZE: z.coerce
-    .number()
-    .default(defaultConfig.IMAGES_MAX_FILE_SIZE),
 
   // Web
   WEB_DIST_DIR: z.string().default(defaultConfig.WEB_DIST_DIR),

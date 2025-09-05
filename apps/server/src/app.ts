@@ -5,48 +5,24 @@ import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import type { Env as HonoPinoEnv } from 'hono-pino';
-import { config, ensureDirectoriesExist } from './config';
+import { config, isProduction } from './config';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
-import orpcsHandler from './routes/rpc';
+import orpcHandler from './routes/rpc';
+
+type Env = HonoPinoEnv & {
+  Variables: {
+    requestId: string;
+  };
+};
 
 export function createApp() {
-  ensureDirectoriesExist();
-  const app = new Hono<
-    HonoPinoEnv & {
-      Variables: {
-        requestId: string;
-      };
-    }
-  >();
+  const app = new Hono<Env>();
 
-  // Middleware
-  // app.use(requestId());
-  // app.use(
-  //   pinoLogger({
-  //     pino: pino({
-  //       level: 'info',
-  //       base: null,
-  //       transport:
-  //         process.env.NODE_ENV !== 'production'
-  //           ? {
-  //               target: 'pino-pretty',
-  //               options: {
-  //                 colorize: true,
-  //                 translateTime: 'HH:MM:ss.l',
-  //                 singleLine: false,
-  //               },
-  //             }
-  //           : undefined,
-  //     }),
-  //     http: {
-  //       referRequestIdKey: 'requestId',
-  //     },
-  //   })
-  // );
-
+  // Logger middleware
   app.use(logger());
 
+  // CORS middleware
   app.use(
     '/*',
     cors({
@@ -56,7 +32,7 @@ export function createApp() {
   );
 
   // API routes
-  app.route('/rpc', orpcsHandler);
+  app.route('/rpc', orpcHandler);
   app.route('/api/chat', chatHandler);
   app.route('/api/images', imagesHandler);
 
@@ -66,7 +42,7 @@ export function createApp() {
     existsSync(resolvedDistDir) &&
     existsSync(path.join(resolvedDistDir, 'index.html'));
 
-  if (hasWebAssets) {
+  if (hasWebAssets && isProduction()) {
     app.use('/*', serveStatic({ root: resolvedDistDir }));
     app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
   } else {
@@ -81,5 +57,5 @@ export function createApp() {
     );
   }
 
-  return { app, env: config };
+  return app;
 }

@@ -5,8 +5,8 @@ import { config, isDevelopment } from '@/config';
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 
-const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB;
+export const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB;
 
 export interface ImageMetadata {
   id: string;

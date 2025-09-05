@@ -1,10 +1,12 @@
 import 'dotenv/config';
 
 import { createApp } from './app';
-import { config } from './config';
+import { config, ensureDirectoriesExist, isProduction } from './config';
 import { runMigrations } from './database/migrate';
 
 const start = async () => {
+  console.log('Running app in', isProduction() ? 'production' : 'development');
+
   try {
     await runMigrations();
     console.log('Migrations run successfully');
@@ -13,7 +15,14 @@ const start = async () => {
     process.exit(1);
   }
 
-  const { app } = createApp();
+  try {
+    ensureDirectoriesExist();
+  } catch (error) {
+    console.error('Failed to ensure directories exist:', error);
+    process.exit(1);
+  }
+
+  const app = createApp();
 
   console.log(`Server starting on ${config.HOST}:${config.PORT}`);
   // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared

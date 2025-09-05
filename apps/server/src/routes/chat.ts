@@ -64,12 +64,14 @@ chatRouter.post('/', async (c) => {
         details: z.treeifyError(parsed.error),
       });
     }
+
     const {
       message: inputMessage,
       modelName,
       threadId,
       modelProvider,
     } = parsed.data;
+
     if (threadId) {
       const thread = await getThread(threadId);
       if (!thread) {
@@ -94,10 +96,7 @@ chatRouter.post('/', async (c) => {
         threadId,
       });
     } catch (err) {
-      const log = c.get('log' as never) as
-        | { error: (o?: unknown, m?: string) => void }
-        | undefined;
-      log?.error({ err }, 'failed to persist user message');
+      console.error('failed to persist user message', err);
       return sendError(c, {
         status: 500,
         code: 'PERSIST_USER_MESSAGE_FAILED',
@@ -110,41 +109,13 @@ chatRouter.post('/', async (c) => {
     try {
       messages = await loadThreadMessages(threadId);
     } catch (err) {
-      const log = c.get('log' as never) as
-        | { error: (o?: unknown, m?: string) => void }
-        | undefined;
-      log?.error({ err }, 'failed to load thread messages');
+      console.error('failed to load thread messages', err);
       return sendError(c, {
         status: 500,
         code: 'LOAD_MESSAGES_FAILED',
         message: 'Failed to load thread messages',
       });
     }
-
-    // // Prepare messages. Ollama's /api/chat expects string content per message.
-    // const uiMessages = convertDbMessagesToUiMessages(messages);
-    // let preparedMessages: unknown;
-    // if (modelProvider === 'ollama') {
-    //   preparedMessages = uiMessages.map((m) => ({
-    //     role: m.role,
-    //     content:
-    //       m.parts
-    //         .map((part) => {
-    //           if (typeof part === 'string') {
-    //             return part;
-    //           }
-    //           if (part && typeof part === 'object' && 'text' in part) {
-    //             const maybeText = (part as { text?: unknown }).text;
-    //             return typeof maybeText === 'string' ? maybeText : '';
-    //           }
-    //           return '';
-    //         })
-    //         .filter(Boolean)
-    //         .join('\n') || ' ',
-    //   }));
-    // } else {
-    //   preparedMessages = convertToModelMessages(uiMessages);
-    // }
 
     const result = streamText({
       model: wrapLanguageModel({
@@ -184,10 +155,7 @@ chatRouter.post('/', async (c) => {
           });
           await updateThreadOnNewMessage(threadId, new Date());
         } catch (error) {
-          const log = c.get('log' as never) as
-            | { error: (o?: unknown, m?: string) => void }
-            | undefined;
-          log?.error({ err: error }, 'failed to persist assistant message');
+          console.error('failed to persist assistant message', error);
           return;
         }
       },
@@ -197,10 +165,7 @@ chatRouter.post('/', async (c) => {
       error && typeof error === 'object' && 'message' in error
         ? String((error as { message?: unknown }).message)
         : 'An unexpected error occurred';
-    const log = c.get('log' as never) as
-      | { error: (o?: unknown, m?: string) => void }
-      | undefined;
-    log?.error({ err: error }, 'chat route error');
+    console.error('chat route error', error);
     return sendError(c, {
       status: 500,
       code: 'INTERNAL_SERVER_ERROR',
