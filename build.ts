@@ -256,19 +256,30 @@ const main = async () => {
     console.log('WASM assets already exist, skipping copy');
   }
 
-  // Determine model ids from CLI args (supports comma-separated) or OFFLINE_MODEL env
-  const cliArgs = process.argv
-    .slice(2)
-    .flatMap((arg) => arg.split(','))
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  // Determine model ids from environment variables only
+  const parseList = (value?: string): string[] =>
+    value
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+      : [];
+
+  // Environment variables
+  const envOfflineModels = parseList(process.env.OFFLINE_MODELS);
+  const envAllowedModels = parseList(process.env.WHISPER_ALLOWED_MODELS);
+  const envSingleOfflineModel = (process.env.OFFLINE_MODEL ?? '').trim();
+
+  const combined = [
+    ...envOfflineModels,
+    ...envAllowedModels,
+    ...(envSingleOfflineModel ? [envSingleOfflineModel] : []),
+  ];
+
   const defaultWhisperModel = 'Xenova/whisper-tiny';
-  const fallback = (
-    process.env.OFFLINE_MODEL ||
-    process.env.WHISPER_ALLOWED_MODELS?.split(',')[0]?.trim() ||
-    defaultWhisperModel
-  ).trim();
-  const modelIds = cliArgs.length > 0 ? cliArgs : [fallback];
+  const modelIds = Array.from(
+    new Set(combined.length > 0 ? combined : [defaultWhisperModel])
+  );
 
   console.log(`[main] Model IDs to prepare: ${modelIds.join(', ')}`);
 
