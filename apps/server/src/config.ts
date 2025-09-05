@@ -291,14 +291,19 @@ export const getAiProviderBaseUrl = (
 // ============================================================================
 
 export const ensureDirectoriesExist = (): void => {
-  const directories = [
+  const directories: string[] = [
     dirname(config.DATABASE_FILE),
     config.WHISPER_MODELS_DIR,
     config.WHISPER_CACHE_DIR,
     config.IMAGES_DIR,
   ];
 
-  for (const dir of directories) {
+  // Deduplicate and skip current directory references ('.' or './')
+  const uniqueDirectories = Array.from(new Set(directories)).filter(
+    (dir) => dir !== '.' && dir !== './'
+  );
+
+  for (const dir of uniqueDirectories) {
     try {
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
