@@ -245,7 +245,7 @@ export const imageProcedures = {
     return {
       totalFiles: stats.totalFiles,
       totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
-      storageDir: config.IMAGES_DIR,
+      storageDir: config.images_dir,
       maxFileSizeMB: Math.round(MAX_FILE_SIZE / 1024 / 1024),
       allowedFormats: ALLOWED_FORMATS,
     };

@@ -24,12 +24,12 @@ const start = async () => {
 
   const app = createApp();
 
-  console.log(`Server starting on ${config.HOST}:${config.PORT}`);
+  console.log(`Server starting on ${config.host}:${config.port}`);
   // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
   Bun.serve({
     fetch: app.fetch,
-    port: config.PORT,
-    hostname: config.HOST,
+    port: config.port,
+    hostname: config.host,
   });
   console.log('Server started');
 };

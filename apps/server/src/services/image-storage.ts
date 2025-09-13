@@ -22,7 +22,7 @@ export interface SaveImageResult {
 
 export class ImageStorageService {
   private get imagesDir() {
-    return config.IMAGES_DIR;
+    return config.images_dir;
   }
 
   private generateFileName(id: string): string {
@@ -77,7 +77,7 @@ export class ImageStorageService {
     // In development, the web app runs on a different port than the server,
     // so we must return an absolute URL to avoid broken links.
     if (!isProduction()) {
-      const baseUrl = `http://${config.HOST}:${config.PORT}`;
+      const baseUrl = `http://${config.host}:${config.port}`;
       return `${baseUrl}/api/images/${id}/file`;
     }
 

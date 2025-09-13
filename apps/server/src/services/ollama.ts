@@ -2,8 +2,8 @@ import { createOllama } from 'ollama-ai-provider-v2';
 import OpenAI from 'openai';
 import { config } from '@/config';
 
-const OLLAMA_BASE_URL = config.OLLAMA_BASE_URL;
-const OLLAMA_ENABLED = config.OLLAMA_ENABLED;
+const OLLAMA_BASE_URL = config.ollama_base_url;
+const OLLAMA_ENABLED = config.ollama_enabled;
 
 export const ollamaClient = new OpenAI({
   baseURL: `${OLLAMA_BASE_URL}/v1`,

@@ -26,7 +26,7 @@ export function createApp() {
   app.use(
     '/*',
     cors({
-      origin: config.CORS_ORIGIN,
+      origin: config.cors_origin,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
     })
   );
@@ -37,7 +37,7 @@ export function createApp() {
   app.route('/api/images', imagesHandler);
 
   // Static file serving
-  const primaryDistDir = path.resolve(config.WEB_DIST_DIR);
+  const primaryDistDir = path.resolve(config.web_dist_dir);
   const execDir = path.dirname(process.execPath);
   const candidateDirs = Array.from(
     new Set([
@@ -64,11 +64,11 @@ export function createApp() {
     console.warn(
       `Web assets not found. Checked: ${candidateDirs.join(
         ', '
-      )}. Set WEB_DIST_DIR in config.json or place a 'web' folder next to the binary.`
+      )}. Set web_dist_dir in config.json or place a 'web' folder next to the binary.`
     );
     app.get('/', (c) =>
       c.text(
-        'Web assets not found. Please build the web app and set WEB_DIST_DIR in config.json or place the web folder next to the binary.',
+        'Web assets not found. Please build the web app and set web_dist_dir in config.json or place the web folder next to the binary.',
         200
       )
     );

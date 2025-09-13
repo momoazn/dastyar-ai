@@ -2,8 +2,8 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import OpenAI from 'openai';
 import { config } from '@/config';
 
-const LMSTUDIO_OPENAI_BASE_URL = config.LMSTUDIO_BASE_URL;
-const LMSTUDIO_ENABLED = config.LMSTUDIO_ENABLED;
+const LMSTUDIO_OPENAI_BASE_URL = config.lmstudio_base_url;
+const LMSTUDIO_ENABLED = config.lmstudio_enabled;
 
 export const lmstudioClient = new OpenAI({
   baseURL: LMSTUDIO_OPENAI_BASE_URL,

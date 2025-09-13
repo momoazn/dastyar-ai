@@ -8,7 +8,7 @@ import type * as schema from './schema';
 const FILE_PROTOCOL_RE = /^file:/;
 
 function resolveDatabasePath(): string {
-  const p = config.DATABASE_FILE?.trim();
+  const p = config.database_file?.trim();
   if (p && p.length > 0) {
     if (p.startsWith('file:')) {
       try {

@@ -14,7 +14,7 @@ let automatic1111Provider: Automatic1111Provider | null = null;
 const getAutomatic1111Provider = (): Automatic1111Provider => {
   if (!automatic1111Provider) {
     automatic1111Provider = createAutomatic1111({
-      baseURL: config.STABLE_DIFFUSION_URL,
+      baseURL: config.stable_diffusion_url,
     });
   }
   return automatic1111Provider;
@@ -51,7 +51,7 @@ export interface GenerationProgress {
 const checkAvailability = async (): Promise<boolean> => {
   try {
     const response = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/internal/ping`,
+      `${config.stable_diffusion_url}/internal/ping`,
       {
         method: 'GET',
         signal: AbortSignal.timeout(5000),
@@ -67,7 +67,7 @@ const checkAvailability = async (): Promise<boolean> => {
 const getSamplers = async (): Promise<string[]> => {
   try {
     const response = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
+      `${config.stable_diffusion_url}/sdapi/v1/samplers`,
       {
         signal: AbortSignal.timeout(10_000),
       }
@@ -99,7 +99,7 @@ const getSamplers = async (): Promise<string[]> => {
 const resolveModelId = async (): Promise<string> => {
   try {
     const optionsRes = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/options`,
+      `${config.stable_diffusion_url}/sdapi/v1/options`,
       {
         signal: AbortSignal.timeout(10_000),
       }
@@ -165,7 +165,7 @@ const generateImageFn = async (
 const getProgress = async (): Promise<GenerationProgress | null> => {
   try {
     const response = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/progress`,
+      `${config.stable_diffusion_url}/sdapi/v1/progress`,
       {
         signal: AbortSignal.timeout(5000),
       }
@@ -183,7 +183,7 @@ const getProgress = async (): Promise<GenerationProgress | null> => {
 const interrupt = async (): Promise<boolean> => {
   try {
     const response = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/interrupt`,
+      `${config.stable_diffusion_url}/sdapi/v1/interrupt`,
       {
         method: 'POST',
         signal: AbortSignal.timeout(5000),
@@ -199,7 +199,7 @@ const interrupt = async (): Promise<boolean> => {
 const getSystemInfo = async (): Promise<Record<string, unknown> | null> => {
   try {
     const response = await fetch(
-      `${config.STABLE_DIFFUSION_URL}/sdapi/v1/memory`,
+      `${config.stable_diffusion_url}/sdapi/v1/memory`,
       {
         signal: AbortSignal.timeout(5000),
       }
