@@ -37,17 +37,34 @@ export function createApp() {
   app.route('/api/images', imagesHandler);
 
   // Static file serving
-  const resolvedDistDir = path.resolve(config.WEB_DIST_DIR);
-  const hasWebAssets =
-    existsSync(resolvedDistDir) &&
-    existsSync(path.join(resolvedDistDir, 'index.html'));
+  const primaryDistDir = path.resolve(config.WEB_DIST_DIR);
+  const execDir = path.dirname(process.execPath);
+  const candidateDirs = Array.from(
+    new Set([
+      primaryDistDir,
+      path.join(execDir, 'web'),
+      path.join(execDir, 'dist', 'web'),
+      path.join(execDir, '..', 'web'),
+    ])
+  );
 
-  if (hasWebAssets && isProduction()) {
-    app.use('/*', serveStatic({ root: resolvedDistDir }));
-    app.get('*', serveStatic({ root: resolvedDistDir, path: 'index.html' }));
+  const staticRoot = candidateDirs.find((dir) => {
+    try {
+      return existsSync(dir) && existsSync(path.join(dir, 'index.html'));
+    } catch {
+      return false;
+    }
+  });
+
+  if (staticRoot && isProduction()) {
+    console.log(`Serving web assets from: ${staticRoot}`);
+    app.use('/*', serveStatic({ root: staticRoot }));
+    app.get('*', serveStatic({ root: staticRoot, path: 'index.html' }));
   } else {
     console.warn(
-      `Web assets not found. Expected at ${resolvedDistDir}. Set WEB_DIST_DIR in config.json or place the 'web' folder next to the binary.`
+      `Web assets not found. Checked: ${candidateDirs.join(
+        ', '
+      )}. Set WEB_DIST_DIR in config.json or place a 'web' folder next to the binary.`
     );
     app.get('/', (c) =>
       c.text(

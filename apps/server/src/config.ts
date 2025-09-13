@@ -152,9 +152,15 @@ if (!parsedConfig.success) {
 
 // Normalize and resolve file system paths for cross-platform compatibility (Windows, Linux, macOS)
 function normalizeFsPath(p: string): string {
-  // Treat empty strings as current working directory
+  // Resolve relative paths against the binary directory in production,
+  // and against the current working directory in development.
+  const modulePath = fileURLToPath(import.meta.url);
+  const isProd = modulePath.includes('$bunfs');
+  const baseDir = isProd ? dirname(process.execPath) : process.cwd();
+
+  // Treat empty strings as base directory
   if (!p || p.trim().length === 0) {
-    return resolve('.');
+    return resolve(baseDir);
   }
   // If it looks like a file URL, let URL utilities handle Windows drive letters
   if (p.startsWith('file:')) {
@@ -164,8 +170,8 @@ function normalizeFsPath(p: string): string {
       // fall through to resolve
     }
   }
-  // Otherwise resolve relative paths against the current working directory
-  return resolve(p);
+  // Otherwise resolve relative paths against the chosen base directory
+  return resolve(baseDir, p);
 }
 
 export const config = {
