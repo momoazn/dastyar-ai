@@ -101,20 +101,27 @@ function load(): Record<string, unknown> {
     fileConfig = JSON.parse(content);
     console.log('Loaded existing config.json');
   } catch {
-    console.warn('Config file not found, will create default config.json');
+    console.warn(
+      'Config file not found. You can create config.json; generating config.default.json with defaults (if missing).'
+    );
   }
 
   const merged = { ...base, ...fileConfig };
 
+  // Create a config.default.json alongside config.json if it doesn't exist,
+  // but do not overwrite the user's config.json
   try {
     const dir = dirname(configPath);
+    const defaultTemplatePath = join(dir, 'config.default.json');
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    writeFileSync(configPath, JSON.stringify(merged, null, 2));
+    if (!existsSync(defaultTemplatePath)) {
+      writeFileSync(defaultTemplatePath, JSON.stringify(defaults, null, 2));
+      console.log('Created config.default.json with default values');
+    }
   } catch (err) {
-    console.error('Failed to write config.json:', err);
-    process.exit(1);
+    console.warn('Failed to create config.default.json:', err);
   }
 
   return merged;
