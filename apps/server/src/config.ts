@@ -79,11 +79,11 @@ const configSchema = z.object({
 // Load configuration from file or create default
 function loadConfig(): Record<string, unknown> {
   const modulePath = fileURLToPath(import.meta.url);
-  const isCompiled = modulePath.includes('$bunfs');
+  const isProduction = modulePath.includes('$bunfs');
   const execDir = dirname(process.execPath);
 
   // Ensure production environment when running compiled binary
-  if (isCompiled && process.env.NODE_ENV !== 'production') {
+  if (isProduction) {
     process.env.NODE_ENV = 'production';
   }
 
@@ -91,14 +91,14 @@ function loadConfig(): Record<string, unknown> {
   const envConfigPath = process.env.APP_CONFIG
     ? resolve(process.env.APP_CONFIG)
     : undefined;
-  const defaultConfigPath = isCompiled
+  const defaultConfigPath = isProduction
     ? join(execDir, 'config.json')
     : resolve('./config.json');
   const configPath = envConfigPath ?? defaultConfigPath;
 
   // Prepare runtime-aware defaults (compiled binary should use co-located absolute paths)
   const runtimeDefaults = { ...defaultConfig } as Record<string, unknown>;
-  if (isCompiled) {
+  if (isProduction) {
     runtimeDefaults.DATABASE_FILE = join(execDir, 'data.db');
     runtimeDefaults.WHISPER_MODELS_DIR = join(execDir, 'whisper-models');
     runtimeDefaults.WHISPER_CACHE_DIR = join(execDir, '.whisper-cache');
@@ -179,23 +179,20 @@ export const config = {
 } as typeof parsedConfig.data;
 
 // ============================================================================
-// ENVIRONMENT HELPERS
-// ============================================================================
-
-export const isDevelopment = (): boolean => {
-  return process.env.NODE_ENV !== 'production';
-};
-
-export const isProduction = (): boolean => {
-  return process.env.NODE_ENV === 'production';
-};
-
-// ============================================================================
 // CONFIGURATION PARSING HELPERS
 // ============================================================================
 
 export const getWhisperModels = (): string[] => {
   return config.WHISPER_MODELS;
+};
+
+// ============================================================================
+// ENVIRONMENT HELPERS
+// ============================================================================
+
+export const isProduction = (): boolean => {
+  const modulePath = fileURLToPath(import.meta.url);
+  return modulePath.includes('$bunfs');
 };
 
 // ============================================================================
