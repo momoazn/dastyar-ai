@@ -40,12 +40,7 @@ export function createApp() {
   const primaryDistDir = path.resolve(config.web_dist_dir);
   const execDir = path.dirname(process.execPath);
   const candidateDirs = Array.from(
-    new Set([
-      primaryDistDir,
-      path.join(execDir, 'web'),
-      path.join(execDir, 'dist', 'web'),
-      path.join(execDir, '..', 'web'),
-    ])
+    new Set([primaryDistDir, path.join(execDir, 'web')])
   );
 
   const staticRoot = candidateDirs.find((dir) => {
