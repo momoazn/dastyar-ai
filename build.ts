@@ -209,10 +209,10 @@ const main = async () => {
     console.log(`[main] Web dist directory does not exist: ${webDistDir}`);
   }
 
-  // Copy config file
+  // Copy config file as config.json so the binary picks it up by default
   console.log('📋 Copying config file...');
   const configSrc = join(ROOT_DIR, 'config.prod.sample.json');
-  const configDest = join(DIST_DIR, 'config.prod.json');
+  const configDest = join(DIST_DIR, 'config.json');
   if (existsSync(configSrc)) {
     console.log(`[main] Copying config from ${configSrc} to ${configDest}`);
     copyFileSync(configSrc, configDest);
