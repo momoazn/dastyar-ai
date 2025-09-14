@@ -16,49 +16,73 @@ const DIST_DIR = join(ROOT_DIR, 'dist');
 const SERVER_DIR = join(ROOT_DIR, 'apps', 'server');
 const WEB_DIR = join(ROOT_DIR, 'apps', 'web');
 
-// Helper functions for offline preparation
-const mkdirp = (dirPath: string) => {
-  if (existsSync(dirPath)) {
-    console.log(`[mkdirp] Directory already exists: ${dirPath}`);
-  } else {
-    console.log(`[mkdirp] Creating directory: ${dirPath}`);
+const ensureDir = (dirPath: string): void => {
+  if (!existsSync(dirPath)) {
     mkdirSync(dirPath, { recursive: true });
   }
 };
 
-const writeFileAtomic = async (dest: string, data: Uint8Array) => {
-  const tmp = `${dest}.tmp-${Date.now()}`;
-  console.log(`[writeFileAtomic] Writing temporary file: ${tmp}`);
-  await fsPromises.writeFile(tmp, data);
-  await fsPromises.rename(tmp, dest);
-  console.log(`[writeFileAtomic] Renamed ${tmp} to ${dest}`);
+const safeCopyDir = (srcDir: string, destDir: string): void => {
+  if (!existsSync(srcDir)) {
+    return;
+  }
+  ensureDir(destDir);
+  cpSync(srcDir, destDir, { recursive: true, force: true });
 };
 
-const copyFileIfExists = (src: string, dest: string) => {
-  if (existsSync(src)) {
-    console.log(`[copyFileIfExists] Copying file from ${src} to ${dest}`);
-    copyFileSync(src, dest);
-  } else {
-    console.log(`[copyFileIfExists] Source file does not exist: ${src}`);
+const safeCopyFile = (srcFile: string, destFile: string): void => {
+  if (!existsSync(srcFile)) {
+    return;
+  }
+  // Do not overwrite existing destination
+  if (existsSync(destFile)) {
+    return;
+  }
+  ensureDir(dirname(destFile));
+  copyFileSync(srcFile, destFile);
+};
+
+const mkdirp = (dirPath: string): void => {
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
   }
 };
 
+const writeFileAtomic = async (
+  dest: string,
+  data: Uint8Array
+): Promise<void> => {
+  const tmp = `${dest}.tmp-${Date.now()}`;
+  await fsPromises.writeFile(tmp, data);
+  await fsPromises.rename(tmp, dest);
+};
+
+const copyFileIfExists = (src: string, dest: string): void => {
+  if (!existsSync(src)) {
+    return;
+  }
+  copyFileSync(src, dest);
+};
+
+const parseList = (value?: string): string[] => {
+  if (!value) {
+    return [];
+  }
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+};
+
 const findTransformersWasmDir = (workspaceRoot: string): string | null => {
-  // Bun vendors packages under node_modules/.bun/<name@version>/node_modules/<name>
   const bunNm = join(workspaceRoot, 'node_modules', '.bun');
   if (!existsSync(bunNm)) {
-    console.log(
-      `[findTransformersWasmDir] .bun directory not found at ${bunNm}`
-    );
     return null;
   }
   const entries = readdirSync(bunNm)
     .filter((n) => n.startsWith('@huggingface+transformers@'))
     .sort()
     .reverse();
-  console.log(
-    `[findTransformersWasmDir] Found transformer entries: ${entries.join(', ')}`
-  );
   for (const ent of entries) {
     const wasmDir = join(
       bunNm,
@@ -69,11 +93,9 @@ const findTransformersWasmDir = (workspaceRoot: string): string | null => {
       'dist'
     );
     if (existsSync(wasmDir)) {
-      console.log(`[findTransformersWasmDir] Found WASM directory: ${wasmDir}`);
       return wasmDir;
     }
   }
-  console.log('[findTransformersWasmDir] No WASM directory found');
   return null;
 };
 
@@ -82,7 +104,6 @@ const downloadModelRepo = async (
   outDir: string
 ): Promise<void> => {
   const apiUrl = `https://huggingface.co/api/models/${modelId}`;
-  console.log(`[downloadModelRepo] Querying model API: ${apiUrl}`);
   const res = await fetch(apiUrl);
   if (!res.ok) {
     throw new Error(`Failed to query hub for ${modelId}: ${res.status}`);
@@ -94,7 +115,6 @@ const downloadModelRepo = async (
   if (siblings.length === 0) {
     throw new Error(`No files listed for ${modelId}`);
   }
-  // Core configs/tokenizer
   const wanted = new Set<string>([
     'config.json',
     'tokenizer.json',
@@ -104,18 +124,14 @@ const downloadModelRepo = async (
     'vocab.json',
     'merges.txt',
   ]);
-
-  // ONNX weights (any .onnx under onnx/)
   for (const s of siblings) {
     if (s.rfilename.startsWith('onnx/') && s.rfilename.endsWith('.onnx')) {
       wanted.add(s.rfilename);
     }
   }
-  // If we didn't find any onnx files, try common names
   if (!Array.from(wanted).some((f) => f.endsWith('.onnx'))) {
     wanted.add('onnx/model.onnx');
   }
-
   const tasks: Promise<void>[] = [];
   for (const s of siblings) {
     if (!wanted.has(s.rfilename)) {
@@ -126,103 +142,54 @@ const downloadModelRepo = async (
     mkdirp(dirname(dest));
     tasks.push(
       (async () => {
-        console.log(
-          `[downloadModelRepo] Downloading ${s.rfilename} from ${url}`
-        );
         const r = await fetch(url);
         if (!r.ok) {
           throw new Error(`GET ${url} -> ${r.status}`);
         }
         const buf = new Uint8Array(await r.arrayBuffer());
         await writeFileAtomic(dest, buf);
-        console.log(
-          `[downloadModelRepo] Downloaded and saved ${s.rfilename} to ${dest}`
-        );
       })()
     );
   }
   await Promise.all(tasks);
-  console.log(
-    `[downloadModelRepo] All required files for ${modelId} downloaded.`
-  );
 };
 
-const main = async () => {
-  console.log('🚀 Starting Dastyar AI build process...');
+const main = async (): Promise<void> => {
+  console.log('🚀 Building Dastyar AI...');
 
   // Create root dist directory
-  if (existsSync(DIST_DIR)) {
-    console.log(`[main] dist directory already exists at ${DIST_DIR}`);
-  } else {
-    console.log(`[main] Creating dist directory at ${DIST_DIR}`);
-    mkdirSync(DIST_DIR, { recursive: true });
-  }
+  ensureDir(DIST_DIR);
 
-  // Build server (outputs to apps/server/dist)
+  // Build server
   console.log('📦 Building server...');
-  console.log(`[main] Running 'bun run build' in ${SERVER_DIR}`);
-  execSync('bun run build', {
-    cwd: SERVER_DIR,
-    stdio: 'inherit',
-  });
+  execSync('bun run build', { cwd: SERVER_DIR, stdio: 'inherit' });
 
-  // Build web (outputs to apps/web/dist)
-  console.log('🌐 Building web app...');
-  console.log(`[main] Running 'bun run build' in ${WEB_DIR}`);
-  execSync('bun run build', {
-    cwd: WEB_DIR,
-    stdio: 'inherit',
-  });
+  // Build web
+  console.log('🌐 Building web...');
+  execSync('bun run build', { cwd: WEB_DIR, stdio: 'inherit' });
 
-  // Copy server binary and assets to root dist
-  console.log('📋 Copying server to dist...');
-  const serverDistDir = join(SERVER_DIR, 'dist');
-  if (existsSync(serverDistDir)) {
-    console.log(
-      `[main] Copying server dist from ${serverDistDir} to ${DIST_DIR}`
-    );
-    cpSync(serverDistDir, DIST_DIR, { recursive: true, force: true });
-  } else {
-    console.log(
-      `[main] Server dist directory does not exist: ${serverDistDir}`
-    );
-  }
+  // Copy server output into dist/
+  const serverOut = join(SERVER_DIR, 'dist');
+  console.log('📋 Copying server artifacts...');
+  safeCopyDir(serverOut, DIST_DIR);
 
-  // Copy web build to dist/web
-  console.log('📋 Copying web app to dist/web...');
-  const webDistDir = join(WEB_DIR, 'dist');
-  const webTargetDir = join(DIST_DIR, 'web');
-  if (existsSync(webTargetDir)) {
-    console.log(
-      `[main] Web target directory already exists at ${webTargetDir}`
-    );
-  } else {
-    console.log(`[main] Creating web target directory at ${webTargetDir}`);
-    mkdirSync(webTargetDir, { recursive: true });
-  }
-  if (existsSync(webDistDir)) {
-    console.log(
-      `[main] Copying web dist from ${webDistDir} to ${webTargetDir}`
-    );
-    cpSync(webDistDir, webTargetDir, { recursive: true, force: true });
-  } else {
-    console.log(`[main] Web dist directory does not exist: ${webDistDir}`);
-  }
+  // Copy web output into dist/web
+  const webOut = join(WEB_DIR, 'dist');
+  const webTarget = join(DIST_DIR, 'web');
+  console.log('📋 Copying web artifacts...');
+  safeCopyDir(webOut, webTarget);
 
-  // Copy config file as config.json so the binary picks it up by default
-  console.log('📋 Copying config file...');
-  const configSrc = join(ROOT_DIR, 'config.prod.sample.json');
-  const configDest = join(DIST_DIR, 'config.json');
-  if (existsSync(configSrc)) {
-    console.log(`[main] Copying config from ${configSrc} to ${configDest}`);
-    copyFileSync(configSrc, configDest);
-  } else {
-    console.log(`[main] Config source file does not exist: ${configSrc}`);
-  }
+  // Optional convenience copies if present in workspace
+  // - Root config.json -> dist/config.json (server reads from exec dir)
+  safeCopyFile(join(ROOT_DIR, 'config.json'), join(DIST_DIR, 'config.json'));
+  // - apps/server/whisper-models -> dist/whisper-models (if user pre-fetched)
+  safeCopyDir(
+    join(SERVER_DIR, 'whisper-models'),
+    join(DIST_DIR, 'whisper-models')
+  );
 
-  // Prepare offline dependencies (whisper models and cache)
-  console.log('🤖 Preparing offline dependencies...');
-
+  // Prepare minimal offline assets
+  console.log('🤖 Preparing offline assets...');
   const wasmOut = join(DIST_DIR, 'wasm');
   const modelsOut = join(DIST_DIR, 'whisper-models');
   const cacheOut = join(DIST_DIR, '.whisper-cache');
@@ -230,82 +197,45 @@ const main = async () => {
   mkdirp(modelsOut);
   mkdirp(cacheOut);
 
-  // Copy WASM assets (only if they don't exist)
   const wasmSrcDir = findTransformersWasmDir(ROOT_DIR);
-  if (!wasmSrcDir) {
-    throw new Error('Could not locate transformers wasm directory');
-  }
-  let wasmCopied = false;
-  const wasmFiles = readdirSync(wasmSrcDir);
-  console.log(`[main] Found WASM source directory: ${wasmSrcDir}`);
-  for (const file of wasmFiles) {
-    if (file.endsWith('.wasm')) {
-      const destFile = join(wasmOut, file);
-      if (existsSync(destFile)) {
-        console.log(`[main] WASM file already exists at ${destFile}, skipping`);
-      } else {
-        console.log(`[main] Copying WASM file ${file} to ${destFile}`);
-        copyFileIfExists(join(wasmSrcDir, file), destFile);
-        wasmCopied = true;
+  if (wasmSrcDir) {
+    const files = readdirSync(wasmSrcDir);
+    for (const file of files) {
+      if (file.endsWith('.wasm')) {
+        const destFile = join(wasmOut, file);
+        if (!existsSync(destFile)) {
+          copyFileIfExists(join(wasmSrcDir, file), destFile);
+        }
       }
     }
   }
-  if (wasmCopied) {
-    console.log('Copied WASM assets to', wasmOut);
-  } else {
-    console.log('WASM assets already exist, skipping copy');
-  }
 
-  // Determine model ids from environment variables only
-  const parseList = (value?: string): string[] =>
-    value
-      ? value
-          .split(',')
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0)
-      : [];
-
-  // Environment variables
   const envOfflineModels = parseList(process.env.OFFLINE_MODELS);
   const envAllowedModels = parseList(process.env.WHISPER_ALLOWED_MODELS);
   const envSingleOfflineModel = (process.env.OFFLINE_MODEL ?? '').trim();
-
   const combined = [
     ...envOfflineModels,
     ...envAllowedModels,
     ...(envSingleOfflineModel ? [envSingleOfflineModel] : []),
   ];
-
-  const defaultWhisperModel = 'Xenova/whisper-tiny';
   const modelIds = Array.from(
-    new Set(combined.length > 0 ? combined : [defaultWhisperModel])
+    new Set(combined.length > 0 ? combined : ['Xenova/whisper-tiny'])
   );
-
-  console.log(`[main] Model IDs to prepare: ${modelIds.join(', ')}`);
 
   await Promise.all(
     modelIds.map(async (modelId) => {
       const modelDir = join(modelsOut, modelId);
       if (existsSync(modelDir)) {
-        console.log(`[main] Model already exists, skipping: ${modelId}`);
-      } else {
-        console.log(`[main] Downloading and preparing model: ${modelId}`);
-        await downloadModelRepo(modelId, modelsOut);
-        console.log(`[main] Prepared model at ${modelDir}`);
+        return;
       }
+      await downloadModelRepo(modelId, modelsOut);
     })
   );
-  console.log('[main] All models prepared.');
 
-  console.log('✅ Build complete! Files are in the "dist" directory:');
-  console.log('   - dist/dastyar-ai (server binary)');
-  console.log('   - dist/web/ (web app)');
-  console.log('   - dist/whisper-models/ (offline models)');
-  console.log('   - dist/.whisper-cache/ (model cache)');
-  console.log('   - dist/wasm/ (WASM files)');
+  console.log('✅ Done. Artifacts available in ./dist');
 };
 
 main().catch((err) => {
-  console.error('[main] Build process failed:', err);
+  console.error('Build failed:', err);
   process.exit(1);
 });

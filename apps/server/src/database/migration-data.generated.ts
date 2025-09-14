@@ -9,8 +9,8 @@ export const migrationData: { [key: string]: string } = {
     {
       "idx": 0,
       "version": "6",
-      "when": 1757092900165,
-      "tag": "0000_flawless_pete_wisdom",
+      "when": 1757821217981,
+      "tag": "0000_perfect_mastermind",
       "breakpoints": true
     }
   ]
@@ -18,7 +18,7 @@ export const migrationData: { [key: string]: string } = {
   'meta/0000_snapshot.json': `{
   "version": "6",
   "dialect": "sqlite",
-  "id": "f13d6e3c-9dd7-43c7-8ba5-973b5a911197",
+  "id": "5137bbbc-6fc8-434a-b456-f7c2cec94e3c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "generated_images": {
@@ -371,7 +371,7 @@ export const migrationData: { [key: string]: string } = {
     "indexes": {}
   }
 }`,
-  '0000_flawless_pete_wisdom.sql': `CREATE TABLE \`generated_images\` (
+  '0000_perfect_mastermind.sql': `CREATE TABLE \`generated_images\` (
 	\`id\` text(36) PRIMARY KEY NOT NULL,
 	\`prompt\` text NOT NULL,
 	\`negativePrompt\` text,
@@ -425,7 +425,7 @@ CREATE TABLE \`translations\` (
 	\`createdAt\` integer,
 	\`updatedAt\` integer
 );
-`,
+`
 };
 
 export default migrationData;
