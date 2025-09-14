@@ -425,7 +425,7 @@ CREATE TABLE \`translations\` (
 	\`createdAt\` integer,
 	\`updatedAt\` integer
 );
-`
+`,
 };
 
 export default migrationData;
