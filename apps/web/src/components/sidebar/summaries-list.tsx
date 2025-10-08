@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
-import { SidebarSeparator } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
 import { SummaryEmptyState } from './empty-state';
@@ -35,17 +34,14 @@ export function SummariesList() {
 
   return (
     <>
-      {listQuery.data?.map((s, index) => (
-        <>
-          <StandardizedSidebarItem
-            key={s.id}
-            onDelete={() => handleDelete(s.id)}
-            search={{ id: s.id }}
-            title={s.sourceText?.slice(0, 30) || fa.general.untitled}
-            to="/summarize"
-          />
-          {index < listQuery.data.length - 1 && <SidebarSeparator />}
-        </>
+      {listQuery.data?.map((s) => (
+        <StandardizedSidebarItem
+          key={s.id}
+          onDelete={() => handleDelete(s.id)}
+          search={{ id: s.id }}
+          title={s.sourceText?.slice(0, 30) || fa.general.untitled}
+          to="/summarize"
+        />
       ))}
     </>
   );

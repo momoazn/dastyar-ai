@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { useState } from 'react';
+
 import Loader from '@/components/chat/loader';
 import { Header } from '@/components/header';
 import { AppSidebar } from '@/components/sidebar/app-sidebar';
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { fa } from '@/lib/persian-texts';
-import type { appRouter } from '@/server/api/procedures';
+import type { appRouter } from '@/server/procedures';
 import { link, type orpc } from '@/utils/orpc';
 
 export interface RouterAppContext {

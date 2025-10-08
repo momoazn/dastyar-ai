@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
-import { SidebarSeparator } from '@/components/ui';
 import type { GeneratedImage } from '@/hooks/use-image-generation';
 import { client, orpc } from '@/utils/orpc';
 import { ImageEmptyState } from './empty-state';
@@ -58,10 +57,10 @@ export function ImagesSidebar() {
 
   if (listQuery.isLoading) {
     return (
-      <div className="space-y-2 p-4">
+      <div className="space-y-0.5">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
-            className="h-20 animate-pulse rounded bg-sidebar-accent/50"
+            className="h-12 animate-pulse rounded-md bg-sidebar-accent/50"
             key={`image-sidebar-loading-${
               // biome-ignore lint/suspicious/noArrayIndexKey: go
               i
@@ -81,31 +80,26 @@ export function ImagesSidebar() {
   }
 
   return (
-    <div className="space-y-1">
-      {images.map((image: GeneratedImage, index) => (
-        <>
-          <StandardizedSidebarItem
-            date={formatDate(image.createdAt as string)}
-            iconText={image.prompt.substring(0, 2).toUpperCase()}
-            key={image.id}
-            onDelete={() => handleDeleteWrapper(image.id)}
-            onDownload={() =>
-              handleDownloadWrapper(image.id, `image-${image.id}.png`)
-            }
-            params={{ id: image.id }}
-            subtitle={
-              image.prompt.slice(0, 10) +
-              (image.prompt.length > 10 ? '...' : '')
-            }
-            title={
-              image.prompt.slice(0, 30) +
-              (image.prompt.length > 30 ? '...' : '')
-            }
-            to="/image/$id"
-          />
-          {index < images.length - 1 && <SidebarSeparator />}
-        </>
+    <>
+      {images.map((image: GeneratedImage) => (
+        <StandardizedSidebarItem
+          date={formatDate(image.createdAt as string)}
+          iconText={image.prompt.substring(0, 2).toUpperCase()}
+          key={image.id}
+          onDelete={() => handleDeleteWrapper(image.id)}
+          onDownload={() =>
+            handleDownloadWrapper(image.id, `image-${image.id}.png`)
+          }
+          params={{ id: image.id }}
+          subtitle={
+            image.prompt.slice(0, 10) + (image.prompt.length > 10 ? '...' : '')
+          }
+          title={
+            image.prompt.slice(0, 30) + (image.prompt.length > 30 ? '...' : '')
+          }
+          to="/image/$id"
+        />
       ))}
-    </div>
+    </>
   );
 }

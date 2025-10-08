@@ -10,14 +10,15 @@ export function ThemeToggle() {
   return (
     <Button
       aria-label={fa.ui.themeToggle}
+      className="size-9 rounded-md transition-all duration-200 hover:scale-105 hover:bg-sidebar-accent hover:shadow-sm"
       onClick={() => setTheme(effective === 'light' ? 'dark' : 'light')}
       size="icon"
       variant="ghost"
     >
       {effective === 'light' ? (
-        <Moon className="h-5 w-5" />
+        <Moon className="size-4 transition-transform duration-200" />
       ) : (
-        <Sun className="h-5 w-5" />
+        <Sun className="size-4 transition-transform duration-200" />
       )}
     </Button>
   );

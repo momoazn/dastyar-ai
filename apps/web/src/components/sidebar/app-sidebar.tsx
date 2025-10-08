@@ -44,12 +44,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="border-b">
+      <SidebarHeader className="flex h-14 flex-row items-center bg-sidebar backdrop-blur-md">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
+            <SidebarMenuButton
+              asChild
+              className="h-10 hover:bg-sidebar-accent/50"
+              size="default"
+            >
               <Link to="/">
-                <h1 className="font-semibold text-primary text-xl">
+                <h1 className="bg-gradient-to-l from-primary to-primary/70 bg-clip-text font-bold text-lg text-transparent tracking-tight">
                   {fa.navigation.appTitle}
                 </h1>
               </Link>
@@ -58,21 +62,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-2 px-2 py-2">
         {/* Navigation Items */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
+                    className="h-9 rounded-md transition-all duration-200 hover:scale-[1.01] hover:shadow-sm"
                     isActive={activeItem?.url === item.url}
                     onClick={() => setOpen(true)}
                   >
                     <Link to={item.url}>
                       <item.icon className="size-4" />
-                      <span>{item.title}</span>
+                      <span className="font-medium text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -83,14 +88,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Feature Lists */}
         {location.pathname !== '/' && activeItem && (
-          <SidebarGroup>
+          <SidebarGroup className="pt-1">
             <SidebarGroupContent>
-              <div className="flex items-center justify-between px-2 py-1">
-                <h3 className="font-medium text-muted-foreground text-sm">
+              <div className="mb-2 flex items-center justify-between rounded-md bg-sidebar-accent/40 px-2.5 py-1.5">
+                <h3 className="font-semibold text-sidebar-foreground text-xs">
                   {activeItem.title}
                 </h3>
                 <Button
-                  className="h-6 w-6"
+                  className="h-6 w-6 rounded-md bg-primary/10 transition-all duration-200 hover:scale-105 hover:bg-primary hover:text-primary-foreground"
                   onClick={handleNew}
                   size="icon"
                   variant="ghost"
@@ -98,7 +103,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Plus className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="px-0">
+              <div className="space-y-0.5 px-0">
                 {activeItem.title === fa.navigation.chat && <ChatThreadsList />}
                 {activeItem.title === fa.navigation.translation && (
                   <TranslationsList />

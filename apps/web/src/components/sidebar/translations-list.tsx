@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
-import { SidebarSeparator } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 import { client, orpc } from '@/utils/orpc';
 import { TranslationEmptyState } from './empty-state';
@@ -35,17 +34,14 @@ export function TranslationsList() {
 
   return (
     <>
-      {listQuery.data?.map((t, index) => (
-        <>
-          <StandardizedSidebarItem
-            key={t.id}
-            onDelete={() => handleDelete(t.id)}
-            search={{ id: t.id as string }}
-            title={t.sourceText?.slice(0, 30) || fa.general.untitled}
-            to="/translation"
-          />
-          {index < listQuery.data.length - 1 && <SidebarSeparator />}
-        </>
+      {listQuery.data?.map((t) => (
+        <StandardizedSidebarItem
+          key={t.id}
+          onDelete={() => handleDelete(t.id)}
+          search={{ id: t.id as string }}
+          title={t.sourceText?.slice(0, 30) || fa.general.untitled}
+          to="/translation"
+        />
       ))}
     </>
   );
