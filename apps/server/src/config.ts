@@ -1,166 +1,70 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { config as loadEnv } from 'dotenv';
 import { z } from 'zod';
 
-// ----------------------------------------------------------------------------
-// Minimal, practical config with lower snake_case keys
-// ----------------------------------------------------------------------------
-
-const defaults = {
-  // server
-  port: 3000,
-  host: '127.0.0.1',
-  cors_origin: '*',
-
-  // database
-  database_file: './data.db',
-
-  // whisper
-  whisper_models_dir: './whisper-models',
-  whisper_cache_dir: './.whisper-cache',
-  whisper_wasm_dir:
-    './node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist',
-  whisper_models: ['Xenova/whisper-tiny'] as string[],
-
-  // ai providers
-  ollama_base_url: 'http://localhost:11434',
-  ollama_enabled: true,
-
-  lmstudio_base_url: 'http://localhost:1234/v1',
-  lmstudio_enabled: false,
-
-  // image generation
-  stable_diffusion_url: 'http://localhost:7860',
-  stable_diffusion_enabled: true,
-
-  // assets
-  images_dir: './generated-images',
-  web_dist_dir: './web',
-} as const;
+// Load environment variables from .env file
+loadEnv();
 
 const schema = z.object({
-  port: z.coerce.number().default(defaults.port),
-  host: z.string().default(defaults.host),
-  cors_origin: z.string().default(defaults.cors_origin),
+  PORT: z.coerce.number().default(3000),
+  HOST: z.string().default('127.0.0.1'),
+  CORS_ORIGIN: z.string().default('*'),
 
-  database_file: z.string().default(defaults.database_file),
+  DATABASE_FILE: z.string().default('./data.db'),
 
-  whisper_models_dir: z.string().default(defaults.whisper_models_dir),
-  whisper_cache_dir: z.string().default(defaults.whisper_cache_dir),
-  whisper_wasm_dir: z.string().default(defaults.whisper_wasm_dir),
-  whisper_models: z.array(z.string()).default(defaults.whisper_models),
+  WHISPER_MODELS_DIR: z.string().default('./whisper-models'),
+  WHISPER_CACHE_DIR: z.string().default('./.whisper-cache'),
+  WHISPER_WASM_DIR: z
+    .string()
+    .default(
+      './node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist'
+    ),
+  WHISPER_MODELS: z.string().default('Xenova/whisper-tiny'),
 
-  ollama_base_url: z.string().default(defaults.ollama_base_url),
-  ollama_enabled: z.coerce.boolean().default(defaults.ollama_enabled),
+  OLLAMA_BASE_URL: z.string().default('http://localhost:11434'),
+  OLLAMA_ENABLED: z.coerce.boolean().default(true),
 
-  lmstudio_base_url: z.string().default(defaults.lmstudio_base_url),
-  lmstudio_enabled: z.coerce.boolean().default(defaults.lmstudio_enabled),
+  LMSTUDIO_BASE_URL: z.string().default('http://localhost:1234/v1'),
+  LMSTUDIO_ENABLED: z.coerce.boolean().default(false),
 
-  stable_diffusion_url: z.string().default(defaults.stable_diffusion_url),
-  stable_diffusion_enabled: z.coerce
-    .boolean()
-    .default(defaults.stable_diffusion_enabled),
+  STABLE_DIFFUSION_URL: z.string().default('http://localhost:7860'),
+  STABLE_DIFFUSION_ENABLED: z.coerce.boolean().default(true),
 
-  images_dir: z.string().default(defaults.images_dir),
-  web_dist_dir: z.string().default(defaults.web_dist_dir),
+  IMAGES_DIR: z.string().default('./generated-images'),
+  WEB_DIST_DIR: z.string().default('./web'),
 });
 
-function runningInProduction(): boolean {
-  const modulePath = fileURLToPath(import.meta.url);
-  return modulePath.includes('$bunfs');
-}
-
-function load(): Record<string, unknown> {
-  const execDir = dirname(process.execPath);
-  if (runningInProduction()) {
-    process.env.NODE_ENV = 'production';
-  }
-
-  const explicitPath = process.env.APP_CONFIG
-    ? resolve(process.env.APP_CONFIG)
-    : undefined;
-  const defaultPath = runningInProduction()
-    ? join(execDir, 'config.json')
-    : resolve('./config.json');
-  const configPath = explicitPath ?? defaultPath;
-
-  const base: Record<string, unknown> = { ...defaults };
-  if (runningInProduction()) {
-    base.database_file = join(execDir, 'data.db');
-    base.whisper_models_dir = join(execDir, 'whisper-models');
-    base.whisper_cache_dir = join(execDir, '.whisper-cache');
-    base.whisper_wasm_dir = join(execDir, 'wasm');
-    base.images_dir = join(execDir, 'generated-images');
-    base.web_dist_dir = join(execDir, 'web');
-  }
-
-  let fileConfig: Record<string, unknown> = {};
-  try {
-    const content = readFileSync(configPath, 'utf-8');
-    fileConfig = JSON.parse(content);
-    console.log('Loaded existing config.json');
-  } catch {
-    console.warn(
-      'Config file not found. You can create config.json; generating config.default.json with defaults (if missing).'
-    );
-  }
-
-  const merged = { ...base, ...fileConfig };
-
-  // Create a config.default.json alongside config.json if it doesn't exist,
-  // but do not overwrite the user's config.json
-  try {
-    const dir = dirname(configPath);
-    const defaultTemplatePath = join(dir, 'config.default.json');
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-    if (!existsSync(defaultTemplatePath)) {
-      writeFileSync(defaultTemplatePath, JSON.stringify(defaults, null, 2));
-      console.log('Created config.default.json with default values');
-    }
-  } catch (err) {
-    console.warn('Failed to create config.default.json:', err);
-  }
-
-  return merged;
-}
-
-function normalizeFsPath(p: string): string {
-  const baseDir = runningInProduction()
-    ? dirname(process.execPath)
-    : process.cwd();
-  if (!p || p.trim().length === 0) {
-    return resolve(baseDir);
-  }
-  if (p.startsWith('file:')) {
-    try {
-      return fileURLToPath(new URL(p));
-    } catch {
-      // Ignore
-    }
-  }
-  return resolve(baseDir, p);
-}
-
-const raw = load();
-const parsed = schema.safeParse(raw);
+const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
   console.error('Invalid config:', parsed.error.format());
   process.exit(1);
 }
 
 export const config = {
-  ...parsed.data,
-  database_file: normalizeFsPath(parsed.data.database_file),
-  whisper_models_dir: normalizeFsPath(parsed.data.whisper_models_dir),
-  whisper_cache_dir: normalizeFsPath(parsed.data.whisper_cache_dir),
-  images_dir: normalizeFsPath(parsed.data.images_dir),
-  web_dist_dir: normalizeFsPath(parsed.data.web_dist_dir),
-} as typeof parsed.data;
+  port: parsed.data.PORT,
+  host: parsed.data.HOST,
+  cors_origin: parsed.data.CORS_ORIGIN,
+  database_file: parsed.data.DATABASE_FILE,
+  whisper_models_dir: parsed.data.WHISPER_MODELS_DIR,
+  whisper_cache_dir: parsed.data.WHISPER_CACHE_DIR,
+  whisper_wasm_dir: parsed.data.WHISPER_WASM_DIR,
+  whisper_models: parsed.data.WHISPER_MODELS.split(',').map((s) => s.trim()),
+  ollama_base_url: parsed.data.OLLAMA_BASE_URL,
+  ollama_enabled: parsed.data.OLLAMA_ENABLED,
+  lmstudio_base_url: parsed.data.LMSTUDIO_BASE_URL,
+  lmstudio_enabled: parsed.data.LMSTUDIO_ENABLED,
+  stable_diffusion_url: parsed.data.STABLE_DIFFUSION_URL,
+  stable_diffusion_enabled: parsed.data.STABLE_DIFFUSION_ENABLED,
+  images_dir: parsed.data.IMAGES_DIR,
+  web_dist_dir: parsed.data.WEB_DIST_DIR,
+};
 
-export const isProduction = (): boolean => runningInProduction();
+export const isProduction = (): boolean => {
+  const modulePath = fileURLToPath(import.meta.url);
+  return modulePath.includes('$bunfs');
+};
 
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
