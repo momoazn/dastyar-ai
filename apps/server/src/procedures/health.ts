@@ -1,4 +1,4 @@
-import { publicProcedure } from '../index';
+import { publicProcedure } from './index';
 
 export const healthProcedures = {
   healthCheck: publicProcedure.handler(() => {

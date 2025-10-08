@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import { z } from 'zod';
-import { publicProcedure } from '@/api/index';
 import { config } from '@/config';
 import {
   cleanupOrphanedFiles,
@@ -20,6 +19,7 @@ import {
   stableDiffusionService,
 } from '@/services/stable-diffusion';
 import { generateId } from '@/utils/id-generator';
+import { publicProcedure } from './index';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),

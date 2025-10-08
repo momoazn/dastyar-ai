@@ -2,8 +2,8 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
-import { publicProcedure } from '@/api/index';
 import { config } from '@/config';
+import { publicProcedure } from './index';
 
 // Type for the ASR pipeline
 type ASRPipeline = (

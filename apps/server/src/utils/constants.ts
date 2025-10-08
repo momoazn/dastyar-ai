@@ -1,11 +1,5 @@
 // AI Provider Configuration
-export const ModelProviderEnum = [
-  'ollama',
-  'lmstudio',
-  'gemini',
-  'openrouter',
-  'groq',
-] as const;
+export const ModelProviderEnum = ['ollama', 'lmstudio'] as const;
 export type ModelProvider = (typeof ModelProviderEnum)[number];
 
 // Status enums for messages

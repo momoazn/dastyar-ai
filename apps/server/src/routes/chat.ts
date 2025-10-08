@@ -1,3 +1,4 @@
+import { zValidator } from '@hono/zod-validator';
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
@@ -6,8 +7,7 @@ import {
   streamText,
   wrapLanguageModel,
 } from 'ai';
-import type { Context } from 'hono';
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import { saveMessage } from '@/repositories/messages';
@@ -20,10 +20,7 @@ import { getProviderForModel } from '@/services';
 import { convertDbMessagesToUiMessages } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
 
-const chatRouter = new Hono();
-
-// Unified error response helper
-const sendError = (
+export function sendError(
   c: Context,
   params: {
     status: ContentfulStatusCode;
@@ -31,10 +28,10 @@ const sendError = (
     message: string;
     details?: unknown;
   }
-) => {
+) {
   const { status, code, message, details } = params;
   return c.json({ error: { code, message, details } }, status);
-};
+}
 
 // Request validation
 const ChatRequestSchema = z.object({
@@ -44,134 +41,126 @@ const ChatRequestSchema = z.object({
     parts: z.array(z.unknown()).min(1),
     metadata: z.unknown().optional(),
   }),
-  modelProvider: z
-    .enum(['ollama', 'lmstudio', 'openrouter', 'groq', 'gemini'])
-    .optional()
-    .default('ollama'),
+  modelProvider: z.enum(['ollama', 'lmstudio']).optional().default('ollama'),
   modelName: z.string().min(1),
   threadId: z.string().min(1),
 });
 
-chatRouter.post('/', async (c) => {
-  try {
-    const raw = await c.req.json();
-    const parsed = ChatRequestSchema.safeParse(raw);
-    if (!parsed.success) {
-      return sendError(c, {
-        status: 400,
-        code: 'INVALID_REQUEST',
-        message: 'Request body validation failed',
-        details: z.treeifyError(parsed.error),
-      });
-    }
-
-    const {
-      message: inputMessage,
-      modelName,
-      threadId,
-      modelProvider,
-    } = parsed.data;
-
-    if (threadId) {
-      const thread = await getThread(threadId);
-      if (!thread) {
-        return sendError(c, {
-          status: 404,
-          code: 'THREAD_NOT_FOUND',
-          message: 'No thread exists with the provided id',
-          details: { threadId },
-        });
-      }
-    }
-
-    const providerModel = getProviderForModel(modelName, modelProvider);
-
+const app = new Hono().post(
+  '/',
+  zValidator('json', ChatRequestSchema),
+  async (c) => {
     try {
-      await saveMessage({
-        id: inputMessage.id as string,
-        parts: inputMessage.parts,
-        status: 'finished',
-        role: 'user',
+      const {
+        message: inputMessage,
         modelName,
         threadId,
-      });
-    } catch (err) {
-      console.error('failed to persist user message', err);
-      return sendError(c, {
-        status: 500,
-        code: 'PERSIST_USER_MESSAGE_FAILED',
-        message: 'Could not save the user message',
-        details: undefined,
-      });
-    }
+        modelProvider,
+      } = c.req.valid('json');
 
-    let messages: Awaited<ReturnType<typeof loadThreadMessages>>;
-    try {
-      messages = await loadThreadMessages(threadId);
-    } catch (err) {
-      console.error('failed to load thread messages', err);
-      return sendError(c, {
-        status: 500,
-        code: 'LOAD_MESSAGES_FAILED',
-        message: 'Failed to load thread messages',
-      });
-    }
-
-    const result = streamText({
-      model: wrapLanguageModel({
-        model: providerModel,
-        middleware: extractReasoningMiddleware({
-          tagName: 'think',
-          separator: '\n',
-        }),
-      }),
-      messages: convertToModelMessages(convertDbMessagesToUiMessages(messages)),
-      system: CHAT_SYSTEM_PROMPT,
-      providerOptions: {
-        // ollama: { think: true },
-      },
-      experimental_transform: smoothStream({
-        delayInMs: 10,
-        chunking: 'word',
-      }),
-    });
-
-    return result.toUIMessageStreamResponse({
-      originalMessages: convertDbMessagesToUiMessages(messages),
-      generateMessageId: () => generateId(),
-      sendReasoning: true,
-      onFinish: async ({ responseMessage }) => {
-        if (!threadId) {
-          return;
-        }
-        try {
-          await saveMessage({
-            id: responseMessage.id,
-            threadId,
-            parts: responseMessage.parts,
-            modelName,
-            status: 'finished',
-            role: 'assistant',
+      if (threadId) {
+        const thread = await getThread(threadId);
+        if (!thread) {
+          return sendError(c, {
+            status: 404,
+            code: 'THREAD_NOT_FOUND',
+            message: 'No thread exists with the provided id',
+            details: { threadId },
           });
-          await updateThreadOnNewMessage(threadId, new Date());
-        } catch (error) {
-          console.error('failed to persist assistant message', error);
-          return;
         }
-      },
-    });
-  } catch (error) {
-    const message =
-      error && typeof error === 'object' && 'message' in error
-        ? String((error as { message?: unknown }).message)
-        : 'An unexpected error occurred';
-    console.error('chat route error', error);
-    return sendError(c, {
-      status: 500,
-      code: 'INTERNAL_SERVER_ERROR',
-      message,
-    });
-  }
-});
+      }
 
-export default chatRouter;
+      const providerModel = getProviderForModel(modelName, modelProvider);
+
+      try {
+        await saveMessage({
+          id: inputMessage.id as string,
+          parts: inputMessage.parts,
+          status: 'finished',
+          role: 'user',
+          modelName,
+          threadId,
+        });
+      } catch (err) {
+        console.error('failed to persist user message', err);
+        return sendError(c, {
+          status: 500,
+          code: 'PERSIST_USER_MESSAGE_FAILED',
+          message: 'Could not save the user message',
+          details: undefined,
+        });
+      }
+
+      let messages: Awaited<ReturnType<typeof loadThreadMessages>>;
+      try {
+        messages = await loadThreadMessages(threadId);
+      } catch (err) {
+        console.error('failed to load thread messages', err);
+        return sendError(c, {
+          status: 500,
+          code: 'LOAD_MESSAGES_FAILED',
+          message: 'Failed to load thread messages',
+        });
+      }
+
+      const result = streamText({
+        model: wrapLanguageModel({
+          model: providerModel,
+          middleware: extractReasoningMiddleware({
+            tagName: 'think',
+            separator: '\n',
+          }),
+        }),
+        messages: convertToModelMessages(
+          convertDbMessagesToUiMessages(messages)
+        ),
+        system: CHAT_SYSTEM_PROMPT,
+        providerOptions: {
+          // ollama: { think: true },
+        },
+        experimental_transform: smoothStream({
+          delayInMs: 10,
+          chunking: 'word',
+        }),
+      });
+
+      return result.toUIMessageStreamResponse({
+        originalMessages: convertDbMessagesToUiMessages(messages),
+        generateMessageId: () => generateId(),
+        sendReasoning: true,
+        onFinish: async ({ responseMessage }) => {
+          if (!threadId) {
+            return;
+          }
+          try {
+            await saveMessage({
+              id: responseMessage.id,
+              threadId,
+              parts: responseMessage.parts,
+              modelName,
+              status: 'finished',
+              role: 'assistant',
+            });
+            await updateThreadOnNewMessage(threadId, new Date());
+          } catch (error) {
+            console.error('failed to persist assistant message', error);
+            return;
+          }
+        },
+      });
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : 'An unexpected error occurred';
+      console.error('chat route error', error);
+      return sendError(c, {
+        status: 500,
+        code: 'INTERNAL_SERVER_ERROR',
+        message,
+      });
+    }
+  }
+);
+
+export default app;

@@ -1,4 +1,4 @@
-import { generateObject, generateText } from 'ai';
+import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
 import { translationsTable } from '@/database/schema';
 import {
@@ -6,7 +6,7 @@ import {
   getTranslation,
   listTranslations,
 } from '@/repositories/translations';
-import { type AnyProviderModel, getProviderForModel } from '@/services';
+import { getProviderForModel } from '@/services';
 import {
   type LanguageCode,
   languageCodes,
@@ -15,44 +15,11 @@ import {
   tones,
 } from '@/utils/constants';
 import { generateId } from '@/utils/id-generator';
-import { publicProcedure } from '../index';
-
-// Regex constants declared at top-level per performance best practices
-const FENCED_JSON_OPEN = /^```json\s*/i;
-const FENCED_OPEN = /^```\s*/i;
-const FENCED_CLOSE = /```\s*$/i;
-const THINK_BLOCK = /<think>[\s\S]*?<\/think>/gi;
-const JSON_OBJECT_REGEX = /\{[\s\S]*?\}/g;
-
-const extractTranslatedTextFromRaw = (rawOutput: string): string | null => {
-  // Remove DeepSeek-style reasoning blocks first
-  const cleaned = rawOutput
-    .trim()
-    .replace(THINK_BLOCK, '')
-    .replace(FENCED_JSON_OPEN, '')
-    .replace(FENCED_OPEN, '')
-    .replace(FENCED_CLOSE, '');
-  const candidates = cleaned.match(JSON_OBJECT_REGEX) ?? [];
-  for (let i = candidates.length - 1; i >= 0; i -= 1) {
-    const candidate = candidates[i];
-    try {
-      const parsed = JSON.parse(candidate) as { translatedText?: unknown };
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        Object.hasOwn(parsed, 'translatedText')
-      ) {
-        return String(parsed.translatedText ?? '');
-      }
-    } catch {
-      // ignore and continue
-    }
-  }
-  return null;
-};
+import { extractJsonField } from '@/utils/llm-json';
+import { publicProcedure } from './index';
 
 const translateWithStructuredOutput = async (
-  model: AnyProviderModel,
+  model: LanguageModel,
   systemPrompt: string,
   inputText: string
 ): Promise<string | null> => {
@@ -78,7 +45,7 @@ const translateWithStructuredOutput = async (
 };
 
 const translateWithPlainJson = async (
-  model: AnyProviderModel,
+  model: LanguageModel,
   systemPrompt: string,
   inputText: string
 ): Promise<string> => {
@@ -87,7 +54,7 @@ const translateWithPlainJson = async (
     system: systemPrompt,
     prompt: inputText,
   });
-  return extractTranslatedTextFromRaw(rawOutput) ?? rawOutput.trim();
+  return extractJsonField(rawOutput, 'translatedText') ?? rawOutput.trim();
 };
 
 export const translationProcedures = {

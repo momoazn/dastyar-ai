@@ -8,15 +8,6 @@ export type MyUIMessage = UIMessage<
   UITools
 >;
 
-export const findLastUserMessage = (messages: MyUIMessage[]) => {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'user') {
-      return messages[i];
-    }
-  }
-  return null;
-};
-
 export const convertDbMessagesToUiMessages = (
   messages: SelectMessageOutput[]
 ): MyUIMessage[] => {

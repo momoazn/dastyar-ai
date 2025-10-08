@@ -1,7 +1,7 @@
 import { RPCHandler } from '@orpc/server/fetch';
 import { Hono } from 'hono';
-import { appRouter } from '@/api/procedures';
 import { createContext } from '@/lib/context';
+import { appRouter } from '@/procedures';
 
 const handler = new RPCHandler(appRouter);
 

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { publicProcedure } from '@/api/index';
 import { clearThread, deleteMessage } from '@/repositories/messages';
 import {
   createThread,
@@ -11,6 +10,7 @@ import {
   setArchived,
 } from '@/repositories/threads';
 import { convertDbMessagesToUiMessages } from '@/utils/chat';
+import { publicProcedure } from './index';
 
 export const threadProcedures = {
   create: publicProcedure

@@ -1,5 +1,5 @@
-import { publicProcedure } from '@/api/index';
 import { listAllModels } from '@/services';
+import { publicProcedure } from './index';
 
 export const modelProcedures = {
   list: publicProcedure.handler(async () => {

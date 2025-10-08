@@ -1,13 +1,12 @@
-import { generateObject, generateText } from 'ai';
+import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
-import { publicProcedure } from '@/api/index';
 import { summariesTable } from '@/database/schema';
 import {
   deleteSummary,
   getSummary,
   listSummaries,
 } from '@/repositories/summaries';
-import { type AnyProviderModel, getProviderForModel } from '@/services';
+import { getProviderForModel } from '@/services';
 import {
   type SummaryMode,
   summaryModePrompts,
@@ -16,43 +15,11 @@ import {
   tones,
 } from '@/utils/constants';
 import { generateId } from '@/utils/id-generator';
-
-// Regex constants declared at top-level per performance best practices
-const FENCED_JSON_OPEN = /^```json\s*/i;
-const FENCED_OPEN = /^```\s*/i;
-const FENCED_CLOSE = /```\s*$/i;
-const THINK_BLOCK = /<think>[\s\S]*?<\/think>/gi;
-const JSON_OBJECT_REGEX = /\{[\s\S]*?\}/g;
-
-const extractSummaryTextFromRaw = (rawOutput: string): string | null => {
-  // Remove DeepSeek-style reasoning blocks first
-  const cleaned = rawOutput
-    .trim()
-    .replace(THINK_BLOCK, '')
-    .replace(FENCED_JSON_OPEN, '')
-    .replace(FENCED_OPEN, '')
-    .replace(FENCED_CLOSE, '');
-  const candidates = cleaned.match(JSON_OBJECT_REGEX) ?? [];
-  for (let i = candidates.length - 1; i >= 0; i -= 1) {
-    const candidate = candidates[i];
-    try {
-      const parsed = JSON.parse(candidate) as { summaryText?: unknown };
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        Object.hasOwn(parsed, 'summaryText')
-      ) {
-        return String(parsed.summaryText ?? '');
-      }
-    } catch {
-      // ignore and continue
-    }
-  }
-  return null;
-};
+import { extractJsonField } from '@/utils/llm-json';
+import { publicProcedure } from './index';
 
 const summarizeWithStructuredOutput = async (
-  model: AnyProviderModel,
+  model: LanguageModel,
   systemPrompt: string,
   inputText: string
 ) => {
@@ -79,7 +46,7 @@ const summarizeWithStructuredOutput = async (
 };
 
 const summarizeWithPlainJson = async (
-  model: AnyProviderModel,
+  model: LanguageModel,
   systemPrompt: string,
   inputText: string
 ) => {
@@ -89,7 +56,7 @@ const summarizeWithPlainJson = async (
     prompt: inputText,
     temperature: 0.1,
   });
-  return extractSummaryTextFromRaw(rawOutput) ?? rawOutput.trim();
+  return extractJsonField(rawOutput, 'summaryText') ?? rawOutput.trim();
 };
 
 export const summarizeProcedures = {

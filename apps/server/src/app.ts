@@ -4,13 +4,12 @@ import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import type { Env as HonoPinoEnv } from 'hono-pino';
 import { config, isProduction } from './config';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
 import orpcHandler from './routes/rpc';
 
-type Env = HonoPinoEnv & {
+type Env = {
   Variables: {
     requestId: string;
   };
