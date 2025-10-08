@@ -85,13 +85,13 @@ function TranslationPage() {
       setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
       setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
       setTone((selectedTranslation.tone as ToneOption) || 'formal');
-      setModelId(selectedTranslation.modelId || '');
+      setModelId(selectedTranslation.modelName || '');
     }
   }, [selectedTranslation]);
 
   useEffect(() => {
     if (modelList && modelList.length > 0 && !modelId) {
-      setModelId(modelList[0].id);
+      setModelId(modelList[0].name);
     }
   }, [modelList, modelId]);
 
@@ -118,7 +118,7 @@ function TranslationPage() {
         sourceLanguage,
         targetLanguage,
         tone,
-        modelId,
+        modelName: modelId,
       });
     }
   };
@@ -226,8 +226,12 @@ function TranslationPage() {
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((m) => (
-                  <SelectItem className="text-right" key={m.id} value={m.id}>
-                    {m.name || m.id}
+                  <SelectItem
+                    className="text-right"
+                    key={m.name}
+                    value={m.name}
+                  >
+                    {m.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -365,7 +369,7 @@ function TranslationPage() {
                 sourceLanguage,
                 targetLanguage,
                 tone,
-                modelId,
+                modelName: modelId,
               })
             }
             size="lg"

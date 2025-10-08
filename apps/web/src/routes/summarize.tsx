@@ -26,7 +26,7 @@ export const Route = createFileRoute('/summarize')({
 });
 
 type SummarizeMode = 'concise' | 'standard' | 'detailed';
-type ToneOption = 'neutral' | 'formal' | 'casual';
+type ToneOption = 'formal' | 'casual';
 
 const modes: Array<{ value: SummarizeMode; label: string }> = [
   { value: 'concise', label: fa.summarize.modes.concise },
@@ -35,7 +35,6 @@ const modes: Array<{ value: SummarizeMode; label: string }> = [
 ];
 
 const tones: Array<{ value: ToneOption; label: string }> = [
-  { value: 'neutral', label: fa.tones.neutral },
   { value: 'formal', label: fa.tones.formal },
   { value: 'casual', label: fa.tones.casual },
 ];
@@ -46,7 +45,7 @@ function SummarizePage() {
   const [sourceText, setSourceText] = useState('');
   const [summaryText, setSummaryText] = useState('');
   const [mode, setMode] = useState<SummarizeMode>('standard');
-  const [tone, setTone] = useState<ToneOption>('neutral');
+  const [tone, setTone] = useState<ToneOption>('formal');
   const [modelId, setModelId] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -84,14 +83,14 @@ function SummarizePage() {
       setSourceText(selectedSummary.sourceText || '');
       setSummaryText(selectedSummary.summaryText || '');
       setMode(selectedSummary.mode as SummarizeMode);
-      setTone((selectedSummary.tone as ToneOption) || 'neutral');
-      setModelId(selectedSummary.modelId || '');
+      setTone((selectedSummary.tone as ToneOption) || 'formal');
+      setModelId(selectedSummary.modelName || '');
     }
   }, [selectedSummary]);
 
   useEffect(() => {
     if (modelList && modelList.length > 0 && !modelId) {
-      setModelId(modelList[0].id);
+      setModelId(modelList[0].name);
     }
   }, [modelList, modelId]);
 
@@ -121,7 +120,7 @@ function SummarizePage() {
         text: sourceText,
         mode,
         tone,
-        modelId,
+        modelName: modelId,
       });
     }
   };
@@ -202,8 +201,8 @@ function SummarizePage() {
                 {modelList?.map((model) => (
                   <SelectItem
                     className="text-right"
-                    key={model.id}
-                    value={model.id}
+                    key={model.name}
+                    value={model.name}
                   >
                     {model.name}
                   </SelectItem>
@@ -289,7 +288,7 @@ function SummarizePage() {
                 text: sourceText,
                 mode,
                 tone,
-                modelId,
+                modelName: modelId,
               })
             }
           >
