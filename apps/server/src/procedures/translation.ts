@@ -16,7 +16,7 @@ import {
 } from '@/utils/constants';
 import { generateId } from '@/utils/id-generator';
 import { extractJsonField } from '@/utils/llm-json';
-import { publicProcedure } from './index';
+import { publicProcedure } from './base';
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,

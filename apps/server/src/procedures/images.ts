@@ -19,7 +19,7 @@ import {
   stableDiffusionService,
 } from '@/services/stable-diffusion';
 import { generateId } from '@/utils/id-generator';
-import { publicProcedure } from './index';
+import { publicProcedure } from './base';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),

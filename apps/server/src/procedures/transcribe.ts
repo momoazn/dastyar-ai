@@ -3,7 +3,7 @@ import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
 import { config } from '@/config';
-import { publicProcedure } from './index';
+import { publicProcedure } from './base';
 
 // Type for the ASR pipeline
 type ASRPipeline = (

@@ -10,7 +10,7 @@ import {
   setArchived,
 } from '@/repositories/threads';
 import { convertDbMessagesToUiMessages } from '@/utils/chat';
-import { publicProcedure } from './index';
+import { publicProcedure } from './base';
 
 export const threadProcedures = {
   create: publicProcedure
