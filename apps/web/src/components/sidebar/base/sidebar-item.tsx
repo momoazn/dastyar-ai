@@ -4,7 +4,15 @@ import { Archive, Download, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
-export interface StandardizedSidebarItemProps {
+export interface SidebarItemAction {
+  type: 'edit' | 'archive' | 'delete' | 'download';
+  onClick: () => void;
+  title: string;
+  icon: LucideIcon;
+  className?: string;
+}
+
+export interface SidebarItemProps {
   title: string;
   to: string;
   params?: Record<string, string>;
@@ -13,10 +21,7 @@ export interface StandardizedSidebarItemProps {
   iconText?: string;
   subtitle?: string;
   date?: string;
-  onEdit?: () => void;
-  onArchive?: () => void;
-  onDelete?: () => void;
-  onDownload?: () => void;
+  actions?: SidebarItemAction[];
   isEditing?: boolean;
   editingValue?: string;
   onEditingChange?: (value: string) => void;
@@ -26,7 +31,21 @@ export interface StandardizedSidebarItemProps {
   showActionsOnHover?: boolean;
 }
 
-export function StandardizedSidebarItem({
+const actionIcons = {
+  edit: Pencil,
+  archive: Archive,
+  delete: Trash2,
+  download: Download,
+};
+
+const actionColors = {
+  edit: 'hover:bg-amber-500/10 hover:text-amber-500',
+  archive: 'hover:bg-blue-500/10 hover:text-blue-500',
+  delete: 'hover:bg-red-500/10 hover:text-red-500',
+  download: 'hover:bg-blue-500/10 hover:text-blue-500',
+};
+
+export function SidebarItem({
   title,
   to,
   params,
@@ -35,10 +54,7 @@ export function StandardizedSidebarItem({
   iconText,
   subtitle,
   date,
-  onEdit,
-  onArchive,
-  onDelete,
-  onDownload,
+  actions = [],
   isEditing = false,
   editingValue,
   onEditingChange,
@@ -46,8 +62,8 @@ export function StandardizedSidebarItem({
   onEditingCancel,
   className,
   showActionsOnHover = true,
-}: StandardizedSidebarItemProps) {
-  const hasActions = onEdit || onArchive || onDelete || onDownload;
+}: SidebarItemProps) {
+  const hasActions = actions.length > 0;
   const hasContent = subtitle || date;
 
   return (
@@ -138,66 +154,31 @@ export function StandardizedSidebarItem({
                     'opacity-0 transition-all duration-200 group-hover/sidebar-item:opacity-100'
                 )}
               >
-                {onDownload && (
-                  <Button
-                    className="h-6 w-6 cursor-pointer rounded-md transition-all duration-200 hover:scale-105 hover:bg-blue-500/10 hover:text-blue-500"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDownload();
-                    }}
-                    size="icon"
-                    title="دانلود"
-                    variant="ghost"
-                  >
-                    <Download className="h-3 w-3" />
-                  </Button>
-                )}
-                {onEdit && (
-                  <Button
-                    className="h-6 w-6 cursor-pointer rounded-md transition-all duration-200 hover:scale-105 hover:bg-amber-500/10 hover:text-amber-500"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onEdit();
-                    }}
-                    size="icon"
-                    title="ویرایش"
-                    variant="ghost"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                )}
-                {onArchive && (
-                  <Button
-                    className="h-6 w-6 cursor-pointer rounded-md transition-all duration-200 hover:scale-105 hover:bg-blue-500/10 hover:text-blue-500"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onArchive();
-                    }}
-                    size="icon"
-                    title="بایگانی"
-                    variant="ghost"
-                  >
-                    <Archive className="h-3 w-3" />
-                  </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    className="h-6 w-6 cursor-pointer rounded-md transition-all duration-200 hover:scale-105 hover:bg-red-500/10 hover:text-red-500"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDelete();
-                    }}
-                    size="icon"
-                    title="حذف"
-                    variant="ghost"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
+                {actions.map((action) => {
+                  const ActionIcon = actionIcons[action.type];
+                  const colorClass = actionColors[action.type];
+
+                  return (
+                    <Button
+                      className={cn(
+                        'h-6 w-6 cursor-pointer rounded-md transition-all duration-200 hover:scale-105',
+                        colorClass,
+                        action.className
+                      )}
+                      key={action.type}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action.onClick();
+                      }}
+                      size="icon"
+                      title={action.title}
+                      variant="ghost"
+                    >
+                      <ActionIcon className="h-3 w-3" />
+                    </Button>
+                  );
+                })}
               </div>
             )}
           </>

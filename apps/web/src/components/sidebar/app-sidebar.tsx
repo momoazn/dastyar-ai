@@ -1,7 +1,6 @@
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import {
-  navMain,
   useActiveNavItem,
   useCreateThread,
   useTranslationActions,
@@ -12,20 +11,15 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 import { ChatThreadsList } from './chat-threads-list';
 import { ImagesSidebar } from './images-sidebar';
+import { AppSidebarHeader, NavigationMenu } from './navigation';
 import { SummariesList } from './summaries-list';
 import { TranslationsList } from './translations-list';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { setOpen } = useSidebar();
   const activeItem = useActiveNavItem();
   const { createChatThread } = useCreateThread(activeItem?.url === '/chat');
   const { handleNewTranslation } = useTranslationActions();
@@ -42,47 +36,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
+  const renderFeatureList = () => {
+    if (!activeItem || location.pathname === '/') {
+      return null;
+    }
+
+    switch (activeItem.title) {
+      case fa.navigation.chat:
+        return <ChatThreadsList />;
+      case fa.navigation.translation:
+        return <TranslationsList />;
+      case fa.navigation.summarize:
+        return <SummariesList />;
+      case fa.navigation.imageGeneration:
+        return <ImagesSidebar />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="flex h-14 flex-row items-center bg-sidebar backdrop-blur-md">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="h-10 hover:bg-sidebar-accent/50"
-              size="default"
-            >
-              <Link to="/">
-                <h1 className="bg-gradient-to-l from-primary to-primary/70 bg-clip-text font-bold text-lg text-transparent tracking-tight">
-                  {fa.navigation.appTitle}
-                </h1>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      <AppSidebarHeader variant="full" />
 
       <SidebarContent className="gap-2 px-2 py-2">
         {/* Navigation Items */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {navMain.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-9 rounded-md transition-all duration-200 hover:scale-[1.01] hover:shadow-sm"
-                    isActive={activeItem?.url === item.url}
-                    onClick={() => setOpen(true)}
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="size-4" />
-                      <span className="font-medium text-sm">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <NavigationMenu className="gap-0.5" variant="full" />
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -103,19 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Plus className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="space-y-0.5 px-0">
-                {activeItem.title === fa.navigation.chat && <ChatThreadsList />}
-                {activeItem.title === fa.navigation.translation && (
-                  <TranslationsList />
-                )}
-                {activeItem.title === fa.navigation.summarize && (
-                  <SummariesList />
-                )}
-                {activeItem.title === fa.navigation.imageGeneration && (
-                  <ImagesSidebar />
-                )}
-                {/* Transcribe doesn't have a sidebar list */}
-              </div>
+              <div className="space-y-0.5 px-0">{renderFeatureList()}</div>
             </SidebarGroupContent>
           </SidebarGroup>
         )}

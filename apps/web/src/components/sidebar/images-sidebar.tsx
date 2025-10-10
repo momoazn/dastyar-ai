@@ -1,32 +1,22 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import type { GeneratedImage } from '@/hooks/use-image-generation';
-import { client, orpc } from '@/utils/orpc';
+import { orpc } from '@/utils/orpc';
+import { SidebarItem, useImageMutations } from './base';
 import { ImageEmptyState } from './empty-state';
-import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function ImagesSidebar() {
   const location = useLocation();
   const isImagePage = location.pathname.startsWith('/image');
 
-  const listQuery = useQuery(
-    orpc.images.list.queryOptions({ enabled: isImagePage })
-  );
+  const mutations = useImageMutations();
 
-  const deleteMutation = useMutation({
-    mutationFn: ({ id }: { id: string }) => client.images.delete({ id }),
-    onSuccess: async () => {
-      await listQuery.refetch();
-    },
-  });
-
-  const handleDeleteWrapper = (id: string) => {
-    deleteMutation.mutate({ id });
+  const handleDelete = (id: string) => {
+    mutations.delete.mutate(id);
   };
 
-  const handleDownloadWrapper = (id: string, fileName: string) => {
+  const handleDownload = (id: string, fileName: string) => {
     try {
-      // Create download link for the file endpoint
       const baseUrl =
         import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
       const downloadUrl = `${baseUrl}/api/images/${id}/download`;
@@ -40,6 +30,11 @@ export function ImagesSidebar() {
       console.error('Failed to download image:', error);
     }
   };
+
+  const listQuery = useQuery({
+    ...orpc.images.list.queryOptions(),
+    enabled: isImagePage,
+  });
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('fa-IR', {
@@ -58,7 +53,7 @@ export function ImagesSidebar() {
   if (listQuery.isLoading) {
     return (
       <div className="space-y-0.5">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 6 }, (_, i) => (
           <div
             className="h-12 animate-pulse rounded-md bg-sidebar-accent/50"
             key={`image-sidebar-loading-${
@@ -82,14 +77,24 @@ export function ImagesSidebar() {
   return (
     <>
       {images.map((image: GeneratedImage) => (
-        <StandardizedSidebarItem
+        <SidebarItem
+          actions={[
+            {
+              type: 'download',
+              onClick: () => handleDownload(image.id, `image-${image.id}.png`),
+              title: 'دانلود',
+              icon: null as never,
+            },
+            {
+              type: 'delete',
+              onClick: () => handleDelete(image.id),
+              title: 'حذف',
+              icon: null as never,
+            },
+          ]}
           date={formatDate(image.createdAt as string)}
           iconText={image.prompt.substring(0, 2).toUpperCase()}
           key={image.id}
-          onDelete={() => handleDeleteWrapper(image.id)}
-          onDownload={() =>
-            handleDownloadWrapper(image.id, `image-${image.id}.png`)
-          }
           params={{ id: image.id }}
           subtitle={
             image.prompt.slice(0, 10) + (image.prompt.length > 10 ? '...' : '')

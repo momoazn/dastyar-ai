@@ -1,27 +1,23 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { fa } from '@/lib/persian-texts';
-import { client, orpc } from '@/utils/orpc';
+import { orpc } from '@/utils/orpc';
+import { SidebarItem, useSummaryMutations } from './base';
 import { SummaryEmptyState } from './empty-state';
-import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function SummariesList() {
   const location = useLocation();
   const isSummarizePage = location.pathname.startsWith('/summarize');
 
-  const listQuery = useQuery(
-    orpc.summarize.list.queryOptions({ enabled: isSummarizePage })
-  );
+  const mutations = useSummaryMutations();
 
-  const deleteMutation = useMutation({
-    mutationFn: ({ id }: { id: string }) => client.summarize.delete({ id }),
-    onSuccess: async () => {
-      await listQuery.refetch();
-    },
+  const listQuery = useQuery({
+    ...orpc.summarize.list.queryOptions(),
+    enabled: isSummarizePage,
   });
 
   const handleDelete = (id: string) => {
-    deleteMutation.mutate({ id });
+    mutations.delete.mutate(id);
   };
 
   if (!isSummarizePage) {
@@ -34,12 +30,19 @@ export function SummariesList() {
 
   return (
     <>
-      {listQuery.data?.map((s) => (
-        <StandardizedSidebarItem
-          key={s.id}
-          onDelete={() => handleDelete(s.id)}
-          search={{ id: s.id }}
-          title={s.sourceText?.slice(0, 30) || fa.general.untitled}
+      {listQuery.data.map((summary) => (
+        <SidebarItem
+          actions={[
+            {
+              type: 'delete',
+              onClick: () => handleDelete(summary.id),
+              title: 'حذف',
+              icon: null as never,
+            },
+          ]}
+          key={summary.id}
+          search={{ id: summary.id }}
+          title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/summarize"
         />
       ))}

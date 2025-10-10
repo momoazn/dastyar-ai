@@ -1,27 +1,23 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { fa } from '@/lib/persian-texts';
-import { client, orpc } from '@/utils/orpc';
+import { orpc } from '@/utils/orpc';
+import { SidebarItem, useTranslationMutations } from './base';
 import { TranslationEmptyState } from './empty-state';
-import { StandardizedSidebarItem } from './standardized-sidebar-item';
 
 export function TranslationsList() {
   const location = useLocation();
   const isTranslationPage = location.pathname.startsWith('/translation');
 
-  const listQuery = useQuery(
-    orpc.translations.list.queryOptions({ enabled: isTranslationPage })
-  );
+  const mutations = useTranslationMutations();
 
-  const deleteMutation = useMutation({
-    mutationFn: ({ id }: { id: string }) => client.translations.delete({ id }),
-    onSuccess: async () => {
-      await listQuery.refetch();
-    },
+  const listQuery = useQuery({
+    ...orpc.translations.list.queryOptions(),
+    enabled: isTranslationPage,
   });
 
   const handleDelete = (id: string) => {
-    deleteMutation.mutate({ id });
+    mutations.delete.mutate(id);
   };
 
   if (!isTranslationPage) {
@@ -34,12 +30,19 @@ export function TranslationsList() {
 
   return (
     <>
-      {listQuery.data?.map((t) => (
-        <StandardizedSidebarItem
-          key={t.id}
-          onDelete={() => handleDelete(t.id)}
-          search={{ id: t.id as string }}
-          title={t.sourceText?.slice(0, 30) || fa.general.untitled}
+      {listQuery.data.map((translation) => (
+        <SidebarItem
+          actions={[
+            {
+              type: 'delete',
+              onClick: () => handleDelete(translation.id),
+              title: 'حذف',
+              icon: null as never,
+            },
+          ]}
+          key={translation.id}
+          search={{ id: translation.id as string }}
+          title={translation.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/translation"
         />
       ))}
