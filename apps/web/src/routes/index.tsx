@@ -1,5 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Image, Languages, MessageSquare } from 'lucide-react';
+import {
+  FileText,
+  Image,
+  MessageCircle,
+  MessageSquare,
+  Mic,
+} from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { fa } from '@/lib/persian-texts';
 
@@ -16,18 +22,32 @@ const features = [
     color: 'text-primary',
   },
   {
+    icon: <MessageCircle className="h-12 w-12" />,
+    title: fa.index.translationTitle,
+    description: fa.index.translationDescription,
+    link: '/translation',
+    color: 'text-primary',
+  },
+  {
+    icon: <FileText className="h-12 w-12" />,
+    title: fa.summarize.title,
+    description: fa.summarize.description,
+    link: '/summarize',
+    color: 'text-blue-600',
+  },
+  {
+    icon: <Mic className="h-12 w-12" />,
+    title: fa.transcribe.title,
+    description: fa.transcribe.description,
+    link: '/transcribe',
+    color: 'text-green-600',
+  },
+  {
     icon: <Image className="h-12 w-12" />,
     title: fa.index.imageTitle,
     description: fa.index.imageDescription,
     link: '/image',
     color: 'text-accent-foreground',
-  },
-  {
-    icon: <Languages className="h-12 w-12" />,
-    title: fa.index.translationTitle,
-    description: fa.index.translationDescription,
-    link: '/translation',
-    color: 'text-primary',
   },
 ];
 
@@ -42,7 +62,7 @@ function HomeComponent() {
           </p>
         </header>
 
-        <main className="grid gap-6 md:grid-cols-3">
+        <main className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <Card
               className="p-6 transition-all hover:scale-105"
@@ -50,7 +70,7 @@ function HomeComponent() {
             >
               <div className={feature.color}>{feature.icon}</div>
               <h2 className="mt-4 font-semibold text-xl">{feature.title}</h2>
-              <p className="mt-4 h-10 text-muted-foreground text-sm">
+              <p className="mt-4 min-h-[2.5rem] text-muted-foreground text-sm">
                 {feature.description}
               </p>
               <Button asChild className="mt-4 w-full">
