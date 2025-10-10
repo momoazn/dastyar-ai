@@ -135,3 +135,50 @@ enum SummaryMode {
   standard
   detailed
 }
+
+// Code Assistant Sessions table – represents a code assistant session
+model CodeAssistSession {
+  id        Int      @id @default(autoincrement())
+  title     String
+  language  String // Programming language (e.g., "javascript", "python", "typescript")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  codeGenerations CodeGeneration[]
+  codeReviews     CodeReview[]
+
+  @@map("code_assist_sessions")
+}
+
+// Code Generations table – stores code generation history
+model CodeGeneration {
+  id            Int      @id @default(autoincrement())
+  sessionId     Int
+  prompt        String
+  generatedCode String
+  language      String
+  modelUsed     String
+  createdAt     DateTime @default(now())
+
+  // Relations
+  session CodeAssistSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("code_generations")
+}
+
+// Code Reviews table – stores code review results
+model CodeReview {
+  id             Int      @id @default(autoincrement())
+  sessionId      Int
+  codeInput      String
+  reviewFeedback String
+  suggestions    String // JSON string of suggestions
+  severityLevels String // JSON string of severity levels
+  createdAt      DateTime @default(now())
+
+  // Relations
+  session CodeAssistSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("code_reviews")
+}

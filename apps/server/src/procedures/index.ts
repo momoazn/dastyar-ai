@@ -1,3 +1,4 @@
+import { codeProcedures } from './code';
 import { healthProcedures } from './health';
 import { imageProcedures } from './images';
 import { modelProcedures } from './models';
@@ -15,6 +16,7 @@ export const appRouter = {
   transcribe: transcribeProcedures,
   summarize: summarizeProcedures,
   images: imageProcedures,
+  code: codeProcedures,
 };
 
 export type AppRouter = typeof appRouter;

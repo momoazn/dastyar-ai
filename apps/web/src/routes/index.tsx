@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
+  Code,
   FileText,
   Image,
   MessageCircle,
@@ -48,6 +49,13 @@ const features = [
     description: fa.index.imageDescription,
     link: '/image',
     color: 'text-accent-foreground',
+  },
+  {
+    icon: <Code className="h-12 w-12" />,
+    title: fa.index.codeTitle,
+    description: fa.index.codeDescription,
+    link: '/code',
+    color: 'text-purple-600',
   },
 ];
 

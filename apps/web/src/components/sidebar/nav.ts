@@ -1,5 +1,6 @@
 import { useLocation } from '@tanstack/react-router';
 import {
+  Code,
   FileText,
   Image,
   MessageCircle,
@@ -34,6 +35,11 @@ export const navMain: NavItem[] = [
     title: fa.navigation.imageGeneration,
     url: '/image',
     icon: Image,
+  },
+  {
+    title: fa.navigation.codeAssistant,
+    url: '/code',
+    icon: Code,
   },
 ] as const satisfies NavItem[];
 
