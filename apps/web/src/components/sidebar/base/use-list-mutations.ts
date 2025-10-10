@@ -2,20 +2,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { client, orpc } from '@/utils/orpc';
 
 export interface ListMutationsConfig {
-  listQueryKey: string[];
+  listQueryKey: readonly unknown[];
   refetchOnSuccess?: boolean;
 }
 
 export interface DeleteMutationConfig extends ListMutationsConfig {
-  deleteFn: (id: string) => Promise<void>;
+  deleteFn: (id: number) => Promise<unknown>;
 }
 
 export interface ArchiveMutationConfig extends ListMutationsConfig {
-  archiveFn: (id: string) => Promise<void>;
+  archiveFn: (id: number) => Promise<unknown>;
 }
 
 export interface RenameMutationConfig extends ListMutationsConfig {
-  renameFn: (id: string, title: string) => Promise<void>;
+  renameFn: (id: number, title: string) => Promise<unknown>;
 }
 
 export function useDeleteMutation({
@@ -64,7 +64,7 @@ export function useRenameMutation({
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, title }: { id: string; title: string }) =>
+    mutationFn: ({ id, title }: { id: number; title: string }) =>
       renameFn(id, title),
     onSuccess: async () => {
       if (refetchOnSuccess) {
@@ -81,15 +81,15 @@ export function useThreadMutations() {
   return {
     delete: useDeleteMutation({
       listQueryKey: orpc.threads.list.queryKey(),
-      deleteFn: (id: string) => client.threads.delete({ id }),
+      deleteFn: (id: number) => client.threads.delete({ id }),
     }),
     archive: useArchiveMutation({
       listQueryKey: orpc.threads.list.queryKey(),
-      archiveFn: (id: string) => client.threads.archive({ id }),
+      archiveFn: (id: number) => client.threads.archive({ id }),
     }),
     rename: useRenameMutation({
       listQueryKey: orpc.threads.list.queryKey(),
-      renameFn: (id: string, title: string) =>
+      renameFn: (id: number, title: string) =>
         client.threads.rename({ id, title }),
     }),
   };
@@ -99,7 +99,7 @@ export function useSummaryMutations() {
   return {
     delete: useDeleteMutation({
       listQueryKey: orpc.summarize.list.queryKey(),
-      deleteFn: (id: string) => client.summarize.delete({ id }),
+      deleteFn: (id: number) => client.summarize.delete({ id }),
     }),
   };
 }
@@ -108,16 +108,25 @@ export function useTranslationMutations() {
   return {
     delete: useDeleteMutation({
       listQueryKey: orpc.translations.list.queryKey(),
-      deleteFn: (id: string) => client.translations.delete({ id }),
+      deleteFn: (id: number) => client.translations.delete({ id }),
     }),
   };
 }
 
-export function useImageMutations() {
+export function useImageThreadMutations() {
   return {
     delete: useDeleteMutation({
-      listQueryKey: orpc.images.list.queryKey(),
-      deleteFn: (id: string) => client.images.delete({ id }),
+      listQueryKey: orpc.imageThreads.list.queryKey(),
+      deleteFn: (id: number) => client.imageThreads.delete({ id }),
+    }),
+    archive: useArchiveMutation({
+      listQueryKey: orpc.imageThreads.list.queryKey(),
+      archiveFn: (id: number) => client.imageThreads.archive({ id }),
+    }),
+    rename: useRenameMutation({
+      listQueryKey: orpc.imageThreads.list.queryKey(),
+      renameFn: (id: number, title: string) =>
+        client.imageThreads.rename({ id, title }),
     }),
   };
 }

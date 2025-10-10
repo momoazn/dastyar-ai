@@ -16,7 +16,7 @@ export function TranslationsList() {
     enabled: isTranslationPage,
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     mutations.delete.mutate(id);
   };
 
@@ -37,11 +37,10 @@ export function TranslationsList() {
               type: 'delete',
               onClick: () => handleDelete(translation.id),
               title: 'حذف',
-              icon: null as never,
             },
           ]}
           key={translation.id}
-          search={{ id: translation.id as string }}
+          search={{ id: translation.id.toString() }}
           title={translation.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/translation"
         />

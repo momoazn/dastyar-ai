@@ -8,7 +8,6 @@ export interface SidebarItemAction {
   type: 'edit' | 'archive' | 'delete' | 'download';
   onClick: () => void;
   title: string;
-  icon: LucideIcon;
   className?: string;
 }
 

@@ -7,8 +7,14 @@ import {
   MessageSquare,
   Mic,
 } from 'lucide-react';
+import type React from 'react';
 import { fa } from '@/lib/persian-texts';
-import type { NavItem } from './types';
+
+export interface NavItem {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+}
 
 export const navMain: NavItem[] = [
   {
@@ -32,7 +38,7 @@ export const navMain: NavItem[] = [
     icon: Mic,
   },
   {
-    title: fa.navigation.imageGeneration,
+    title: fa.navigation.imageChats,
     url: '/image',
     icon: Image,
   },

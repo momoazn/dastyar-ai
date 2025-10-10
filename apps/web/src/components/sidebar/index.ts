@@ -10,7 +10,7 @@ export { type EditingState, useEditingState } from './base/use-editing-state';
 export {
   useArchiveMutation,
   useDeleteMutation,
-  useImageMutations,
+  useImageThreadMutations,
   useRenameMutation,
   useSummaryMutations,
   useThreadMutations,
@@ -27,7 +27,7 @@ export * from './nav';
 
 // Navigation components
 export * from './navigation';
-export * from './navigation-sidebar';
+// navigation-sidebar removed as unused to simplify structure
 export * from './summaries-list';
 export * from './translations-list';
-export * from './types';
+// types.ts removed; types are colocated with modules

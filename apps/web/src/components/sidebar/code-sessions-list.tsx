@@ -10,8 +10,9 @@ export function CodeSessionsList() {
     orpc.code.listSessions.queryOptions()
   );
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fa-IR', {
+  const formatDate = (date: string | Date) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('fa-IR', {
       month: 'short',
       day: 'numeric',
     });

@@ -3,24 +3,26 @@ import { useState } from 'react';
 export interface EditingState {
   editingId: string | null;
   editingValue: string;
-  isEditing: (id: string) => boolean;
-  startEditing: (id: string, currentValue: string) => void;
+  isEditing: (id: number | string) => boolean;
+  startEditing: (id: number | string, currentValue: string) => void;
   cancelEditing: () => void;
-  commitEditing: (id: string, newValue: string) => Promise<boolean>;
+  commitEditing: (id: number | string, newValue: string) => Promise<boolean>;
   setEditingValue: (value: string) => void;
 }
 
-export function useEditingState<T extends { id: string; title?: string }>(
+export function useEditingState<
+  T extends { id: number | string; title?: string },
+>(
   items: T[],
-  onRename: (id: string, title: string) => Promise<void>
+  onRename: (id: number | string, title: string) => Promise<void>
 ): EditingState {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
 
-  const isEditing = (id: string) => editingId === id;
+  const isEditing = (id: number | string) => editingId === String(id);
 
-  const startEditing = (id: string, currentValue: string) => {
-    setEditingId(id);
+  const startEditing = (id: number | string, currentValue: string) => {
+    setEditingId(String(id));
     setEditingValue(currentValue || '');
   };
 
@@ -30,11 +32,11 @@ export function useEditingState<T extends { id: string; title?: string }>(
   };
 
   const commitEditing = async (
-    id: string,
+    id: number | string,
     newValue: string
   ): Promise<boolean> => {
     const trimmedValue = newValue.trim();
-    const currentItem = items.find((item) => item.id === id);
+    const currentItem = items.find((item) => String(item.id) === String(id));
     const currentTitle = currentItem?.title || '';
 
     if (!trimmedValue || trimmedValue === currentTitle) {

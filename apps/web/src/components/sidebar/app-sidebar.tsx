@@ -48,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return <TranslationsList />;
       case fa.navigation.summarize:
         return <SummariesList />;
-      case fa.navigation.imageGeneration:
+      case fa.navigation.imageChats:
         return <ImagesSidebar />;
       default:
         return null;

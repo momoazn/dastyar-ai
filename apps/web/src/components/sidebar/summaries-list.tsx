@@ -16,7 +16,7 @@ export function SummariesList() {
     enabled: isSummarizePage,
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     mutations.delete.mutate(id);
   };
 
@@ -37,11 +37,10 @@ export function SummariesList() {
               type: 'delete',
               onClick: () => handleDelete(summary.id),
               title: 'حذف',
-              icon: null as never,
             },
           ]}
           key={summary.id}
-          search={{ id: summary.id }}
+          search={{ id: summary.id.toString() }}
           title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/summarize"
         />
