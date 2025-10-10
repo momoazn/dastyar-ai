@@ -1,7 +1,7 @@
 import { codeProcedures } from './code';
 import { healthProcedures } from './health';
-import { imageProcedures } from './images';
 import { imageThreadProcedures } from './image-threads';
+import { imageProcedures } from './images';
 import { modelProcedures } from './models';
 import { summarizeProcedures } from './summarize';
 import { messageProcedures, threadProcedures } from './threads';
