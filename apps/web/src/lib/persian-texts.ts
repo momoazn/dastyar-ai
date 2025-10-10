@@ -35,7 +35,6 @@ export const fa = {
     home: 'خانه',
     chat: 'گفتگو',
     imageGeneration: 'تولید تصویر',
-    imageChats: 'گفتگوهای تصویری',
     translation: 'ترجمه',
     transcribe: 'تبدیل صوت به متن',
     summarize: 'خلاصه‌سازی',

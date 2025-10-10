@@ -38,7 +38,7 @@ export const navMain: NavItem[] = [
     icon: Mic,
   },
   {
-    title: fa.navigation.imageChats,
+    title: fa.navigation.imageGeneration,
     url: '/image',
     icon: Image,
   },
