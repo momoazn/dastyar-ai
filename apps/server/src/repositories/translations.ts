@@ -1,25 +1,19 @@
-import { eq } from 'drizzle-orm';
-import { db } from '@/database';
-import {
-  type SelectTranslationOutput,
-  selectTranslationSchema,
-  translationsTable,
-} from '@/database/schema';
+import { prisma } from '@/database';
 
 export function listTranslations() {
-  return db.select().from(translationsTable);
+  return prisma.translation.findMany();
 }
 
-export async function getTranslation(id: SelectTranslationOutput['id']) {
-  selectTranslationSchema.shape.id.parse(id);
-  const rows = await db
-    .select()
-    .from(translationsTable)
-    .where(eq(translationsTable.id, id))
-    .limit(1);
-  return rows[0] || null;
+export async function getTranslation(id: number) {
+  const translation = await prisma.translation.findUnique({
+    where: { id },
+  });
+
+  return translation;
 }
 
-export async function deleteTranslation(id: SelectTranslationOutput['id']) {
-  await db.delete(translationsTable).where(eq(translationsTable.id, id));
+export async function deleteTranslation(id: number) {
+  await prisma.translation.delete({
+    where: { id },
+  });
 }

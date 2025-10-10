@@ -18,7 +18,6 @@ import {
   type ImageGenerationParams,
   stableDiffusionService,
 } from '@/services/stable-diffusion';
-import { generateId } from '@/utils/id-generator';
 import { publicProcedure } from './base';
 
 const imageGenerationParamsSchema = z.object({
@@ -67,12 +66,9 @@ export const imageProcedures = {
           input as ImageGenerationParams
         );
 
-        // Generate ID first for storage service
-        const id = generateId();
-
-        // Save image to file system
+        // Save image to file system first
         const storageResult = imageStorageService.saveImage(base64Image, {
-          id,
+          id: 'temp', // Temporary ID, will be updated after database creation
           prompt: input.prompt,
           negativePrompt: input.negative_prompt,
           settings: {
@@ -84,9 +80,8 @@ export const imageProcedures = {
           },
         });
 
-        // Save metadata to database with the same ID used for storage
+        // Save metadata to database
         const savedImage = await createGeneratedImage({
-          id,
           prompt: input.prompt,
           negativePrompt: input.negative_prompt || null,
           filePath: storageResult.filePath,
@@ -153,7 +148,7 @@ export const imageProcedures = {
 
   // Get a specific image by ID
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       const image = await getGeneratedImage(input.id);
       if (!image) {
@@ -172,7 +167,7 @@ export const imageProcedures = {
 
   // Delete a specific image
   delete: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       await deleteGeneratedImage(input.id);
       return { success: true };
@@ -194,7 +189,7 @@ export const imageProcedures = {
   serve: publicProcedure
     .input(
       z.object({
-        id: z.string(),
+        id: z.number(),
       })
     )
     .handler(async ({ input }) => {

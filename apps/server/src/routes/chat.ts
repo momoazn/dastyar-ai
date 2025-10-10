@@ -1,8 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
+import type { Prisma } from '@prisma/client';
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
-  generateId,
   smoothStream,
   streamText,
   wrapLanguageModel,
@@ -36,14 +36,14 @@ export function sendError(
 // Request validation
 const ChatRequestSchema = z.object({
   message: z.object({
-    id: z.string().min(1),
+    id: z.number(),
     role: z.literal('user'),
     parts: z.array(z.unknown()).min(1),
     metadata: z.unknown().optional(),
   }),
   modelProvider: z.enum(['ollama', 'lmstudio']).optional().default('ollama'),
   modelName: z.string().min(1),
-  threadId: z.string().min(1),
+  threadId: z.number(),
 });
 
 const app = new Hono().post(
@@ -74,8 +74,7 @@ const app = new Hono().post(
 
       try {
         await saveMessage({
-          id: inputMessage.id as string,
-          parts: inputMessage.parts,
+          parts: inputMessage.parts as Prisma.InputJsonValue,
           status: 'finished',
           role: 'user',
           modelName,
@@ -126,7 +125,7 @@ const app = new Hono().post(
 
       return result.toUIMessageStreamResponse({
         originalMessages: convertDbMessagesToUiMessages(messages),
-        generateMessageId: () => generateId(),
+        generateMessageId: () => Math.random().toString(36).substring(2, 15),
         sendReasoning: true,
         onFinish: async ({ responseMessage }) => {
           if (!threadId) {
@@ -134,9 +133,8 @@ const app = new Hono().post(
           }
           try {
             await saveMessage({
-              id: responseMessage.id,
               threadId,
-              parts: responseMessage.parts,
+              parts: responseMessage.parts as Prisma.InputJsonValue,
               modelName,
               status: 'finished',
               role: 'assistant',

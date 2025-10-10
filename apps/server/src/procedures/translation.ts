@@ -1,6 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
-import { translationsTable } from '@/database/schema';
+import { prisma } from '@/database';
 import {
   deleteTranslation,
   getTranslation,
@@ -14,7 +14,6 @@ import {
   type Tone,
   tones,
 } from '@/utils/constants';
-import { generateId } from '@/utils/id-generator';
 import { extractJsonField } from '@/utils/llm-json';
 import { publicProcedure } from './base';
 
@@ -63,13 +62,13 @@ export const translationProcedures = {
     return rows;
   }),
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       const row = await getTranslation(input.id);
       return row;
     }),
   delete: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       await deleteTranslation(input.id);
       return { ok: true } as const;
@@ -85,7 +84,7 @@ export const translationProcedures = {
         modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
       })
     )
-    .handler(async ({ input, context }) => {
+    .handler(async ({ input }) => {
       const providerModel = getProviderForModel(
         input.modelName,
         input.modelProvider
@@ -132,19 +131,16 @@ export const translationProcedures = {
         );
       }
 
-      const id = generateId();
-      const created = await context.db
-        .insert(translationsTable)
-        .values({
-          id,
+      const created = await prisma.translation.create({
+        data: {
           sourceText: input.text,
           translatedText,
           modelName: input.modelName,
           sourceLanguage: input.sourceLanguage,
           targetLanguage: input.targetLanguage,
           tone: (input.tone as Tone) ?? null,
-        })
-        .returning();
-      return created[0];
+        },
+      });
+      return created;
     }),
 };

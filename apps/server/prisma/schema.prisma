@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data.db"
+}
+
+// Threads table – represents a chat thread
+model Thread {
+  id            Int       @id @default(autoincrement())
+  title         String
+  isArchived    Boolean   @default(false)
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  messages Message[]
+
+  @@map("threads")
+}
+
+// Messages table – individual messages inside a thread
+model Message {
+  id        Int           @id @default(autoincrement())
+  parts     Json
+  status    MessageStatus
+  role      MessageRole
+  modelName String
+  threadId  Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// Translations table – stores translation jobs & results
+model Translation {
+  id             Int          @id @default(autoincrement())
+  sourceText     String
+  translatedText String?
+  modelName      String
+  sourceLanguage LanguageCode
+  targetLanguage LanguageCode
+  tone           Tone?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("translations")
+}
+
+// Summaries table – stores summary jobs & results
+model Summary {
+  id          Int         @id @default(autoincrement())
+  sourceText  String
+  summaryText String?
+  modelName   String
+  mode        SummaryMode
+  tone        Tone?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("summaries")
+}
+
+// Generated Images table – stores AI-generated images metadata
+model GeneratedImage {
+  id             Int      @id @default(autoincrement())
+  prompt         String
+  negativePrompt String?
+  filePath       String
+  fileName       String
+  settings       String // JSON string of generation settings
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("generated_images")
+}
+
+// Enums
+enum MessageStatus {
+  reasoning
+  generating
+  finished
+  errored
+  stopped
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+enum LanguageCode {
+  en
+  fa
+  ar
+  fr
+  de
+  es
+  it
+  pt
+  ru
+  zh
+  ja
+  ko
+  tr
+  hi
+  ur
+}
+
+enum Tone {
+  formal
+  informal
+  business
+  casual
+  academic
+  technical
+  creative
+  friendly
+  professional
+}
+
+enum SummaryMode {
+  concise
+  standard
+  detailed
+}

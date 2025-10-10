@@ -1,116 +1,107 @@
-import { asc, desc, eq } from 'drizzle-orm';
-import type { Json } from 'drizzle-zod';
-import { db } from '@/database';
-import type {
-  InsertMessageInput,
-  SelectMessageOutput,
-} from '@/database/schema';
-import {
-  insertMessageSchema,
-  messagesTable,
-  selectMessageSchema,
-} from '@/database/schema';
+import prisma from '@/database';
 import type { MessageStatus } from '@/utils/constants';
-import { generateId } from '@/utils/id-generator';
+import type { Message, Prisma } from '../../generated/prisma';
 
 export async function saveMessage(
-  params: Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
+  params: Omit<Message, 'id' | 'createdAt' | 'updatedAt' | 'parts'> & {
+    parts: Prisma.InputJsonValue;
+  }
 ) {
-  const id = params.id ?? generateId();
-  const row = insertMessageSchema.parse({
-    id,
-    threadId: params.threadId,
-    role: params.role,
-    parts: params.parts,
-    status: params.status,
-    modelName: params.modelName,
+  const message = await prisma.message.create({
+    data: {
+      threadId: params.threadId,
+      role: params.role,
+      parts: params.parts,
+      status: params.status,
+      modelName: params.modelName,
+    },
   });
-  await db.insert(messagesTable).values(row);
-  return { id };
+
+  return { id: message.id };
 }
 
 export async function updateMessage(
-  params: Pick<InsertMessageInput, 'id'> &
-    Partial<Pick<InsertMessageInput, 'parts' | 'status' | 'modelName'>>
+  params: { id: number } & Partial<
+    Pick<Message, 'parts' | 'status' | 'modelName'>
+  >
 ) {
-  selectMessageSchema.shape.id.parse(params.id);
-  const update: Partial<{
-    parts: Json;
+  const updateData: Partial<{
+    parts: Prisma.InputJsonValue;
     status: MessageStatus;
     modelName: string;
   }> = {};
 
   if (params.parts !== undefined) {
-    insertMessageSchema.shape.parts.parse(params.parts);
-    update.parts = params.parts;
+    updateData.parts = params.parts as Prisma.InputJsonValue;
   }
   if (params.status !== undefined) {
-    insertMessageSchema.shape.status.parse(params.status);
-    update.status = params.status as MessageStatus;
+    updateData.status = params.status as MessageStatus;
   }
   if (params.modelName !== undefined) {
-    insertMessageSchema.shape.modelName.parse(params.modelName);
-    update.modelName = params.modelName;
+    updateData.modelName = params.modelName;
   }
-  if (Object.keys(update).length === 0) {
+
+  if (Object.keys(updateData).length === 0) {
     return;
   }
-  await db
-    .update(messagesTable)
-    .set(update)
-    .where(eq(messagesTable.id, params.id));
+
+  await prisma.message.update({
+    where: { id: params.id },
+    data: updateData,
+  });
 }
 
 export async function saveMessages(
   params: Array<
-    Omit<InsertMessageInput, 'id'> & { id?: InsertMessageInput['id'] }
+    Omit<Message, 'id' | 'createdAt' | 'updatedAt' | 'parts'> & {
+      parts: Prisma.InputJsonValue;
+    }
   >
 ) {
-  const prepared = params.map((p) => {
-    const id = p.id ?? generateId();
-    const row = insertMessageSchema.parse({
-      id,
+  if (params.length === 0) {
+    return { ids: [] };
+  }
+
+  await prisma.message.createMany({
+    data: params.map((p) => ({
       threadId: p.threadId,
       role: p.role,
       parts: p.parts,
       status: p.status,
       modelName: p.modelName,
-    });
-    return row;
+    })),
   });
-  if (prepared.length === 0) {
-    return { ids: [] };
-  }
-  await db.insert(messagesTable).values(prepared);
-  return { ids: prepared.map((r) => r.id) };
+
+  return { ids: [] };
 }
 
 export async function getMessagesByThread(
-  params: Pick<InsertMessageInput, 'threadId'> & {
+  params: { threadId: number } & {
     limit?: number;
     cursor?: string | null;
     order?: 'asc' | 'desc';
   }
 ) {
-  insertMessageSchema.shape.threadId.parse(params.threadId);
   const limit = params.limit ?? 50;
   const order = params.order ?? 'desc';
-  const query = db
-    .select()
-    .from(messagesTable)
-    .where(eq(messagesTable.threadId, params.threadId));
-  const ordered =
-    order === 'asc'
-      ? query.orderBy(asc(messagesTable.createdAt))
-      : query.orderBy(desc(messagesTable.createdAt));
-  const rows = await ordered.limit(limit);
-  return rows;
+
+  const messages = await prisma.message.findMany({
+    where: { threadId: params.threadId },
+    orderBy: { createdAt: order },
+    take: limit,
+  });
+
+  return messages;
 }
 
-export async function deleteMessage(id: SelectMessageOutput['id']) {
-  await db.delete(messagesTable).where(eq(messagesTable.id, id));
+export async function deleteMessage(id: number) {
+  await prisma.message.delete({
+    where: { id },
+  });
 }
 
-export async function clearThread(threadId: InsertMessageInput['threadId']) {
-  await db.delete(messagesTable).where(eq(messagesTable.threadId, threadId));
+export async function clearThread(threadId: number) {
+  await prisma.message.deleteMany({
+    where: { threadId },
+  });
 }

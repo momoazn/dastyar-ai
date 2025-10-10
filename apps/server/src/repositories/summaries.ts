@@ -1,25 +1,38 @@
-import { desc, eq } from 'drizzle-orm';
-import { db } from '@/database';
-import type { SelectSummaryOutput } from '@/database/schema';
-import { selectSummarySchema, summariesTable } from '@/database/schema';
+import type { Summary } from '@prisma/client';
+import { prisma } from '@/database';
 
 export function listSummaries() {
-  return db
-    .select()
-    .from(summariesTable)
-    .orderBy(desc(summariesTable.createdAt));
+  return prisma.summary.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
-export async function getSummary(id: SelectSummaryOutput['id']) {
-  selectSummarySchema.shape.id.parse(id);
-  const rows = await db
-    .select()
-    .from(summariesTable)
-    .where(eq(summariesTable.id, id))
-    .limit(1);
-  return rows[0] || null;
+export async function createSummary(
+  params: Omit<Summary, 'id' | 'createdAt' | 'updatedAt'>
+) {
+  const summary = await prisma.summary.create({
+    data: {
+      sourceText: params.sourceText,
+      summaryText: params.summaryText,
+      modelName: params.modelName,
+      mode: params.mode,
+      tone: params.tone,
+    },
+  });
+
+  return summary;
 }
 
-export async function deleteSummary(id: SelectSummaryOutput['id']) {
-  await db.delete(summariesTable).where(eq(summariesTable.id, id));
+export async function getSummary(id: number) {
+  const summary = await prisma.summary.findUnique({
+    where: { id },
+  });
+
+  return summary;
+}
+
+export async function deleteSummary(id: number) {
+  await prisma.summary.delete({
+    where: { id },
+  });
 }

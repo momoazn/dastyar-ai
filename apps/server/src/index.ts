@@ -2,18 +2,11 @@ import 'dotenv/config';
 
 import { createApp } from './app';
 import { config, ensureDirectoriesExist, isProduction } from './config';
-import { runMigrations } from './database/migrate';
 
 const start = async () => {
   console.log('Running app in', isProduction() ? 'production' : 'development');
 
-  try {
-    await runMigrations();
-    console.log('Migrations run successfully');
-  } catch (error) {
-    console.error('Failed to run migrations:', error);
-    process.exit(1);
-  }
+  // Database is managed by Prisma db push
 
   try {
     ensureDirectoriesExist();

@@ -73,7 +73,7 @@ export class ImageStorageService {
     }
   }
 
-  getImageUrl(id: string): string {
+  getImageUrl(id: number): string {
     // In development, the web app runs on a different port than the server,
     // so we must return an absolute URL to avoid broken links.
     if (!isProduction()) {

@@ -1,5 +1,5 @@
+import type { Message } from '@prisma/client';
 import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from 'ai';
-import type { SelectMessageOutput } from '@/database/schema';
 import type { MessageRole } from './constants';
 
 export type MyUIMessage = UIMessage<
@@ -9,7 +9,7 @@ export type MyUIMessage = UIMessage<
 >;
 
 export const convertDbMessagesToUiMessages = (
-  messages: SelectMessageOutput[]
+  messages: Message[]
 ): MyUIMessage[] => {
   return messages.map((message) => ({
     id: message.id,

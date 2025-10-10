@@ -1,46 +1,38 @@
-import { desc, eq } from 'drizzle-orm';
-import { db } from '@/database';
-import type {
-  InsertGeneratedImageInput,
-  SelectGeneratedImageOutput,
-} from '@/database/schema';
-import {
-  generatedImagesTable,
-  insertGeneratedImageSchema,
-  selectGeneratedImageSchema,
-} from '@/database/schema';
+import type { GeneratedImage } from '@prisma/client';
+import prisma from '@/database';
 import { imageStorageService } from '@/services/image-storage';
-import { generateId } from '@/utils/id-generator';
 
 export async function createGeneratedImage(
-  params: Omit<InsertGeneratedImageInput, 'id'> | InsertGeneratedImageInput
+  params: Omit<GeneratedImage, 'id' | 'createdAt' | 'updatedAt'>
 ) {
-  const id = 'id' in params ? params.id : generateId();
-  const row = insertGeneratedImageSchema.parse({ ...params, id });
-  const created = await db.insert(generatedImagesTable).values(row).returning();
-  return created[0];
+  const image = await prisma.generatedImage.create({
+    data: {
+      prompt: params.prompt,
+      negativePrompt: params.negativePrompt,
+      filePath: params.filePath,
+      fileName: params.fileName,
+      settings: params.settings,
+    },
+  });
+
+  return image;
 }
 
 export function listGeneratedImages() {
-  return db
-    .select()
-    .from(generatedImagesTable)
-    .orderBy(desc(generatedImagesTable.createdAt));
+  return prisma.generatedImage.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
-export async function getGeneratedImage(id: SelectGeneratedImageOutput['id']) {
-  selectGeneratedImageSchema.shape.id.parse(id);
-  const rows = await db
-    .select()
-    .from(generatedImagesTable)
-    .where(eq(generatedImagesTable.id, id))
-    .limit(1);
-  return rows[0] || null;
+export async function getGeneratedImage(id: number) {
+  const image = await prisma.generatedImage.findUnique({
+    where: { id },
+  });
+
+  return image;
 }
 
-export async function deleteGeneratedImage(
-  id: SelectGeneratedImageOutput['id']
-) {
+export async function deleteGeneratedImage(id: number) {
   // First get the image to access file paths
   const image = await getGeneratedImage(id);
   if (image) {
@@ -49,7 +41,9 @@ export async function deleteGeneratedImage(
   }
 
   // Delete from database
-  await db.delete(generatedImagesTable).where(eq(generatedImagesTable.id, id));
+  await prisma.generatedImage.delete({
+    where: { id },
+  });
 }
 
 export async function clearGeneratedImages() {
@@ -66,7 +60,7 @@ export async function clearGeneratedImages() {
   }
 
   // Delete all records from database
-  await db.delete(generatedImagesTable);
+  await prisma.generatedImage.deleteMany();
 }
 
 export async function getAllImageFilePaths(): Promise<string[]> {

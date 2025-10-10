@@ -1,5 +1,5 @@
 import type { Context as HonoContext } from 'hono';
-import { db } from '../database';
+import prisma from '../database';
 
 export type CreateContextOptions = {
   context: HonoContext;
@@ -10,7 +10,7 @@ export function createContext({ context }: CreateContextOptions) {
   return {
     honoContext: context,
     session: null,
-    db, // Attach the database instance to the context
+    db: prisma, // Attach the database instance to the context
   };
 }
 

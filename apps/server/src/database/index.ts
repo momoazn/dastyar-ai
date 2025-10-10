@@ -1,33 +1,20 @@
-import { Database } from 'bun:sqlite';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { config } from '../config';
-import type * as schema from './schema';
+import { PrismaClient } from '../../generated/prisma';
 
-const FILE_PROTOCOL_RE = /^file:/;
+// Create a singleton instance of PrismaClient
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
 
-function resolveDatabasePath(): string {
-  const p = config.database_file?.trim();
-  if (p && p.length > 0) {
-    if (p.startsWith('file:')) {
-      try {
-        return fileURLToPath(new URL(p));
-      } catch {
-        // Fall back to raw path if URL parsing fails
-        return p.replace(FILE_PROTOCOL_RE, '');
-      }
-    }
-    // Ensure relative paths are resolved consistently
-    return resolve(p);
-  }
-  console.log('No database URL found, using default database file');
-  return resolve('./data.db');
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ['query'],
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
 
-const sqlite = new Database(resolveDatabasePath(), {
-  create: true,
-  strict: true,
-});
-export const db = drizzle<typeof schema>(sqlite);
-export { sqlite };
+// Export the prisma client as db for compatibility with existing code
+export const db = prisma;
+export default prisma;

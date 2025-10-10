@@ -1,7 +1,7 @@
 import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
-import { summariesTable } from '@/database/schema';
 import {
+  createSummary,
   deleteSummary,
   getSummary,
   listSummaries,
@@ -14,7 +14,6 @@ import {
   type Tone,
   tones,
 } from '@/utils/constants';
-import { generateId } from '@/utils/id-generator';
 import { extractJsonField } from '@/utils/llm-json';
 import { publicProcedure } from './base';
 
@@ -65,13 +64,13 @@ export const summarizeProcedures = {
     return rows;
   }),
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       const row = await getSummary(input.id);
       return row;
     }),
   delete: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       await deleteSummary(input.id);
       return { ok: true } as const;
@@ -85,7 +84,7 @@ export const summarizeProcedures = {
         modelName: z.string(),
       })
     )
-    .handler(async ({ input, context }) => {
+    .handler(async ({ input }) => {
       const providerModel = getProviderForModel(input.modelName);
 
       const systemPrompt = [
@@ -125,21 +124,13 @@ export const summarizeProcedures = {
         );
       }
 
-      const id = generateId();
-      const now = new Date();
-
-      const summary = {
-        id,
+      const summary = await createSummary({
         sourceText: input.text,
         summaryText: summaryText || '',
         modelName: input.modelName,
         mode: input.mode as SummaryMode,
         tone: input.tone as Tone,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      await context.db.insert(summariesTable).values(summary);
+      });
 
       return summary;
     }),
