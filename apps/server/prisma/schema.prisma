@@ -11,8 +11,8 @@ datasource db {
   url      = "file:./data.db"
 }
 
-// Threads table – represents a chat thread
-model Thread {
+// Chat Threads table – represents a chat thread
+model ChatThread {
   id            Int       @id @default(autoincrement())
   title         String
   isArchived    Boolean   @default(false)
@@ -23,7 +23,7 @@ model Thread {
   // Relations
   messages Message[]
 
-  @@map("threads")
+  @@map("chat_threads")
 }
 
 // Messages table – individual messages inside a thread
@@ -38,7 +38,7 @@ model Message {
   updatedAt DateTime      @updatedAt
 
   // Relations
-  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
@@ -74,15 +74,15 @@ model Summary {
 
 // Image Threads table – represents image conversation threads
 model ImageThread {
-  id            Int              @id @default(autoincrement())
-  title         String
-  isArchived    Boolean          @default(false)
-  lastImageAt   DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          Int       @id @default(autoincrement())
+  title       String
+  isArchived  Boolean   @default(false)
+  lastImageAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations
-  images        GeneratedImage[]
+  images GeneratedImage[]
 
   @@map("image_threads")
 }
@@ -98,8 +98,8 @@ model GeneratedImage {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  imageThreadId  Int
-  thread         ImageThread  @relation(fields: [imageThreadId], references: [id], onDelete: Cascade)
+  imageThreadId Int
+  thread        ImageThread @relation(fields: [imageThreadId], references: [id], onDelete: Cascade)
 
   @@index([imageThreadId], name: "idx_generated_images_thread")
   @@map("generated_images")

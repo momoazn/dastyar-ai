@@ -1,4 +1,4 @@
-import { type Message, prisma, type Thread } from '@/database';
+import { type ChatThread, type Message, prisma } from '@/database';
 
 /**
  * Creates a new thread with an optional title.
@@ -6,12 +6,12 @@ import { type Message, prisma, type Thread } from '@/database';
  * @returns The ID of the created thread.
  */
 export async function createThread(
-  params?: Partial<Pick<Thread, 'title'>>
+  params?: Partial<Pick<ChatThread, 'title'>>
 ): Promise<{ id: number }> {
   try {
     const title = (params?.title ?? 'گفتگوی جدید').trim();
 
-    const thread = await prisma.thread.create({
+    const thread = await prisma.chatThread.create({
       data: {
         title,
         isArchived: false,
@@ -30,9 +30,9 @@ export async function createThread(
  * @param id - The thread ID.
  * @returns The thread record or null if not found.
  */
-export async function getThread(id: number): Promise<Thread | null> {
+export async function getThread(id: number): Promise<ChatThread | null> {
   try {
-    const thread = await prisma.thread.findUnique({
+    const thread = await prisma.chatThread.findUnique({
       where: { id },
     });
 
@@ -50,10 +50,10 @@ export async function getThread(id: number): Promise<Thread | null> {
  */
 export function listThreads(options?: {
   includeArchived?: boolean;
-}): Promise<Thread[]> {
+}): Promise<ChatThread[]> {
   const includeArchived = options?.includeArchived ?? false;
 
-  return prisma.thread.findMany({
+  return prisma.chatThread.findMany({
     where: includeArchived ? {} : { isArchived: false },
     orderBy: [{ lastMessageAt: 'desc' }, { updatedAt: 'desc' }],
   });
@@ -66,7 +66,7 @@ export function listThreads(options?: {
  */
 export async function renameThread(id: number, title: string): Promise<void> {
   try {
-    await prisma.thread.update({
+    await prisma.chatThread.update({
       where: { id },
       data: { title },
     });
@@ -86,7 +86,7 @@ export async function setArchived(
   isArchived: boolean
 ): Promise<void> {
   try {
-    await prisma.thread.update({
+    await prisma.chatThread.update({
       where: { id },
       data: { isArchived },
     });
@@ -102,7 +102,7 @@ export async function setArchived(
  */
 export async function deleteThread(id: number): Promise<void> {
   try {
-    await prisma.thread.delete({
+    await prisma.chatThread.delete({
       where: { id },
     });
   } catch (error) {
@@ -121,7 +121,7 @@ export async function updateThreadOnNewMessage(
   date: Date = new Date()
 ): Promise<void> {
   try {
-    await prisma.thread.update({
+    await prisma.chatThread.update({
       where: { id: threadId },
       data: { lastMessageAt: date },
     });
