@@ -12,15 +12,22 @@ export const Route = createFileRoute('/image/$id')({
 
 function RouteComponent() {
   const { id } = useParams({ from: '/image/$id' });
-  const { data: image, isLoading: isLoadingImage } = useQuery(
-    orpc.images.get.queryOptions({ input: { id } })
-  );
+  const numericId = Number(id);
 
-  // simplified view: fetch only the selected image
+  const {
+    data: image,
+    isLoading: isLoadingImage,
+    error,
+  } = useQuery(
+    orpc.images.get.queryOptions({
+      input: { id: numericId },
+      enabled: !Number.isNaN(numericId) && numericId > 0,
+    })
+  );
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) {
-      return 'نامشخص';
+      return fa.general.unknown;
     }
     return new Date(dateStr).toLocaleDateString('fa-IR', {
       year: 'numeric',
@@ -37,6 +44,32 @@ function RouteComponent() {
         {/* Image Preview Section */}
         <div className="flex flex-1 flex-col">
           {(() => {
+            // Check for invalid ID
+            if (Number.isNaN(numericId) || numericId <= 0) {
+              return (
+                <div className="flex flex-1 items-center justify-center">
+                  <Alert>
+                    <AlertDescription>
+                      {fa.imageGeneration.invalidImageId}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              );
+            }
+
+            // Check for error
+            if (error) {
+              return (
+                <div className="flex flex-1 items-center justify-center">
+                  <Alert>
+                    <AlertDescription>
+                      {fa.imageGeneration.loadingImageError} {error.message}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              );
+            }
+
             if (image) {
               return (
                 <>
@@ -75,7 +108,9 @@ function RouteComponent() {
             return (
               <div className="flex flex-1 items-center justify-center">
                 <Alert>
-                  <AlertDescription>تصویر مورد نظر یافت نشد.</AlertDescription>
+                  <AlertDescription>
+                    {fa.imageGeneration.imageNotFound}
+                  </AlertDescription>
                 </Alert>
               </div>
             );

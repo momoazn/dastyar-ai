@@ -256,6 +256,9 @@ export const fa = {
     resetSettingsTooltip: 'بازنشانی',
     downloadImageTooltip: 'دانلود',
     viewDetailsTooltip: 'مشاهده جزئیات',
+    invalidImageId: 'شناسه تصویر نامعتبر است.',
+    loadingImageError: 'خطا در بارگذاری تصویر:',
+    voiceTranscriptionError: 'خطا در تبدیل صدا:',
   },
   codeAssistant: {
     modes: {

@@ -1,9 +1,11 @@
 import type { Experimental_GeneratedImage } from 'ai';
+import type { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 export type ImageProps = Experimental_GeneratedImage & {
   className?: string;
   alt?: string;
+  style?: CSSProperties;
 };
 
 export const Image = ({
@@ -20,5 +22,6 @@ export const Image = ({
       props.className
     )}
     src={`data:${mediaType};base64,${base64}`}
+    style={props.style}
   />
 );
