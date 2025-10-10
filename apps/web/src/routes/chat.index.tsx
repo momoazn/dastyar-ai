@@ -22,7 +22,7 @@ function ChatRouteComponent() {
       await queryClient.invalidateQueries({
         queryKey: orpc.threads.list.queryKey(),
       });
-      navigate({ to: '/chat/$id', params: { id: created.id } });
+      navigate({ to: '/chat/$id', params: { id: created.id.toString() } });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to create a new chat thread', error);

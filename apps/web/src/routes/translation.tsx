@@ -56,7 +56,7 @@ function TranslationPage() {
   // Load translation if ID is provided in URL
   const { data: selectedTranslation } = useQuery(
     orpc.translations.get.queryOptions({
-      input: { id: search.id || '' },
+      input: { id: search.id ? Number(search.id) : 0 },
       enabled: !!search.id,
     })
   );

@@ -29,7 +29,7 @@ function ChatThreadRouteComponent() {
 
   const messagesQuery = useQuery(
     orpc.messages.listByThread.queryOptions({
-      input: { threadId },
+      input: { threadId: Number(threadId) },
     })
   );
 
@@ -67,7 +67,7 @@ function ChatThreadRouteComponent() {
     if (messages.length === 0) {
       try {
         await client.threads.rename({
-          id: threadId,
+          id: Number(threadId),
           title: trimmed.slice(0, 10),
         });
         await queryClient.invalidateQueries({

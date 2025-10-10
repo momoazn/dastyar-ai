@@ -35,12 +35,14 @@ export const fa = {
     home: 'خانه',
     chat: 'گفتگو',
     imageGeneration: 'تولید تصویر',
+    imageChats: 'گفتگوهای تصویری',
     translation: 'ترجمه',
     transcribe: 'تبدیل صوت به متن',
     summarize: 'خلاصه‌سازی',
     codeAssistant: 'دستیار کد',
     appTitle: 'دستیار هوشمند',
     newChat: 'گفتگوی جدید',
+    newImageChat: 'گفتگوی تصویری جدید',
     newTranslation: 'ترجمه جدید',
     new: 'جدید',
     noChatThreads: 'هیچ گفتگویی وجود ندارد',
@@ -259,6 +261,11 @@ export const fa = {
     invalidImageId: 'شناسه تصویر نامعتبر است.',
     loadingImageError: 'خطا در بارگذاری تصویر:',
     voiceTranscriptionError: 'خطا در تبدیل صدا:',
+  },
+  imageChat: {
+    newChatDefaultTitle: 'گفتگوی تصویری جدید',
+    newChatTitle: 'گفتگوی تصویری جدید',
+    newChatDescription: 'برای شروع، یک گفتگو ایجاد کنید.',
   },
   codeAssistant: {
     modes: {

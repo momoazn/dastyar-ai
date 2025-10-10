@@ -56,7 +56,7 @@ function SummarizePage() {
   // Load summary if ID is provided in URL
   const { data: selectedSummary } = useQuery(
     orpc.summarize.get.queryOptions({
-      input: { id: search.id || '' },
+      input: { id: search.id ? Number(search.id) : 0 },
       enabled: !!search.id,
     })
   );
