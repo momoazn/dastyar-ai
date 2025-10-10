@@ -11,6 +11,12 @@ export const fa = {
     appTitle: 'دستیار هوشمند فارسی',
     description: 'با استفاده از هوش مصنوعی، تجربه‌ای متفاوت را تجربه کنید',
     htmlTitle: 'دستیار هوش مصنوعی فارسی',
+    smartToolsTitle: 'ابزارهای هوشمند',
+    smartToolsSubtitle: 'انتخاب کنید و شروع کنید',
+    readyToStartTitle: 'آماده شروع هستید؟',
+    readyToStartDescription:
+      'با دستیار هوشمند فارسی، تجربه‌ای جدید از هوش مصنوعی را کشف کنید',
+    startChat: 'شروع گفتگو',
   },
   general: {
     loading: 'در حال بارگذاری',
