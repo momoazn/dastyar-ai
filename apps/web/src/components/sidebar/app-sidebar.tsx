@@ -59,9 +59,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="offcanvas" {...props}>
       <AppSidebarHeader variant="full" />
 
-      <SidebarContent className="gap-2 px-2 py-2">
+      <SidebarContent className="gap-2 px-2 py-2 pr-0">
         {/* Navigation Items */}
-        <SidebarGroup>
+        <SidebarGroup className="pr-1">
           <SidebarGroupContent>
             <NavigationMenu className="gap-0.5" variant="full" />
           </SidebarGroupContent>
@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Feature Lists */}
         {location.pathname !== '/' && activeItem && (
-          <SidebarGroup className="pt-1">
+          <SidebarGroup className="pt-1 pr-1">
             <SidebarGroupContent>
               <div className="mb-2 flex items-center justify-between rounded-md bg-sidebar-accent/40 px-2.5 py-1.5">
                 <h3 className="font-semibold text-sidebar-foreground text-xs">

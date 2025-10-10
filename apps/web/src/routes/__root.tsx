@@ -75,7 +75,7 @@ function RootComponent() {
         <SidebarProvider
           style={
             {
-              '--sidebar-width': '350px',
+              '--sidebar-width': '300px',
             } as React.CSSProperties
           }
         >
