@@ -80,9 +80,9 @@ function RootComponent() {
           }
         >
           <AppSidebar side="right" />
-          <SidebarInset>
-            <div className="grid h-svh grid-rows-[auto_1fr]">
-              <Header SideBarTrigger={<SidebarTrigger />} />
+          <SidebarInset className="bg-sidebar pe-2 pb-2">
+            <Header SideBarTrigger={<SidebarTrigger />} />
+            <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
               {isFetching ? <Loader /> : <Outlet />}
             </div>
           </SidebarInset>
