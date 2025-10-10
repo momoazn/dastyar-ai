@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@source "../node_modules/streamdown/dist/index.js";
 
 /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS custom variant */
 @custom-variant dark (&:is(.dark *));
