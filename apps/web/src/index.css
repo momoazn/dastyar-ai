@@ -206,6 +206,8 @@
 @layer utilities {
   html {
     direction: rtl;
+    /* Reserve space for vertical scrollbar to prevent layout shift */
+    scrollbar-gutter: stable both-edges;
   }
 
   body {
@@ -214,6 +216,8 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     direction: rtl;
+    /* In case body is the scroll container, reserve gutter as well */
+    scrollbar-gutter: stable both-edges;
   }
 
   .rtl {
