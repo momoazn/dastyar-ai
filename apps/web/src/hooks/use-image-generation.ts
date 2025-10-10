@@ -15,7 +15,7 @@ export interface ImageGenerationParams {
 }
 
 export interface GeneratedImage {
-  id: string;
+  id: number;
   imageUrl: string;
   prompt: string;
   negativePrompt?: string | null;
@@ -29,18 +29,43 @@ export interface GeneratedImage {
   };
 }
 
-export function useImageGeneration() {
+export function useImageGeneration(threadId?: number) {
+  // Centralized validation used by both sync/async generate
+  const validateRequest = useCallback(
+    (
+      settings: ImageGenerationParams & { threadId: number },
+      opts: { isPending: boolean; isServiceAvailable?: boolean }
+    ): string | null => {
+      if (!settings.prompt.trim()) {
+        return 'لطفاً توضیحات تصویر را وارد کنید';
+      }
+      if (!settings.threadId) {
+        return 'شناسه گفتگو الزامی است';
+      }
+      if (opts.isPending) {
+        return 'در حال تولید تصویر قبلی';
+      }
+      if (!opts.isServiceAvailable) {
+        return 'سرویس Stable Diffusion در دسترس نیست';
+      }
+      return null;
+    },
+    []
+  );
   // Query for service availability
   const { data: serviceStatus, refetch: checkAvailability } = useQuery(
     orpc.images.checkService.queryOptions()
   );
 
-  // Query for generated images list
+  // Query for generated images list by thread
+  const listOptions = orpc.images.listByThread.queryOptions({
+    input: { threadId: threadId ?? 0 },
+  });
   const {
     data: images = [],
     refetch: refetchImages,
     isLoading: isLoadingImages,
-  } = useQuery(orpc.images.list.queryOptions());
+  } = useQuery({ ...listOptions, enabled: !!threadId });
 
   // Query for available samplers
   const { data: samplersData } = useQuery(
@@ -63,73 +88,31 @@ export function useImageGeneration() {
     })
   );
 
-  // Mutation for deleting images
-  const deleteMutation = useMutation(
-    orpc.images.delete.mutationOptions({
-      onSuccess: () => {
-        toast.success('تصویر حذف شد');
-        refetchImages();
-      },
-      onError: (error) => {
-        console.error('Image deletion failed:', error);
-        toast.error('خطا در حذف تصویر');
-      },
-    })
-  );
-
-  // Mutation for clearing all images
-  const clearMutation = useMutation(
-    orpc.images.clear.mutationOptions({
-      onSuccess: () => {
-        toast.success('تاریخچه تصاویر پاک شد');
-        refetchImages();
-      },
-      onError: (error) => {
-        console.error('Clear images failed:', error);
-        toast.error('خطا در پاک کردن تصاویر');
-      },
-    })
-  );
-
   const generateImage = useCallback(
-    (settings: ImageGenerationParams) => {
-      if (!settings.prompt.trim()) {
-        toast.error('لطفاً توضیحات تصویر را وارد کنید');
+    (settings: ImageGenerationParams & { threadId: number }) => {
+      const validationError = validateRequest(settings, {
+        isPending: generateMutation.isPending,
+        isServiceAvailable: serviceStatus?.available,
+      });
+      if (validationError) {
+        toast.error(validationError);
         return;
       }
-
-      if (generateMutation.isPending) {
-        toast.error('در حال تولید تصویر قبلی');
-        return;
-      }
-
-      if (!serviceStatus?.available) {
-        toast.error('سرویس Stable Diffusion در دسترس نیست');
-        return;
-      }
-
       generateMutation.mutate(settings);
     },
-    [generateMutation, serviceStatus?.available]
+    [generateMutation, serviceStatus?.available, validateRequest]
   );
 
   const generateImageAsync = useCallback(
-    async (settings: ImageGenerationParams) => {
-      if (!settings.prompt.trim()) {
-        toast.error('لطفاً توضیحات تصویر را وارد کنید');
+    async (settings: ImageGenerationParams & { threadId: number }) => {
+      const validationError = validateRequest(settings, {
+        isPending: generateMutation.isPending,
+        isServiceAvailable: serviceStatus?.available,
+      });
+      if (validationError) {
+        toast.error(validationError);
         return null;
       }
-
-      if (generateMutation.isPending) {
-        toast.error('در حال تولید تصویر قبلی');
-        return null;
-      }
-
-      if (!serviceStatus?.available) {
-        toast.error('سرویس Stable Diffusion در دسترس نیست');
-        return null;
-      }
-
       try {
         const result = await generateMutation.mutateAsync(settings);
         return result as unknown as GeneratedImage;
@@ -138,19 +121,8 @@ export function useImageGeneration() {
         return null;
       }
     },
-    [generateMutation, serviceStatus?.available]
+    [generateMutation, serviceStatus?.available, validateRequest]
   );
-
-  const deleteImage = useCallback(
-    (imageId: string) => {
-      deleteMutation.mutate({ id: imageId });
-    },
-    [deleteMutation]
-  );
-
-  const clearHistory = useCallback(() => {
-    clearMutation.mutate({});
-  }, [clearMutation]);
 
   const downloadImage = useCallback((image: GeneratedImage) => {
     try {
@@ -169,14 +141,13 @@ export function useImageGeneration() {
 
   return {
     images,
+    refetchImages,
     samplers: samplersData?.samplers || [],
     isGenerating: generateMutation.isPending,
     isServiceAvailable: serviceStatus?.available,
     isLoadingImages,
     generateImage,
     generateImageAsync,
-    clearHistory,
-    deleteImage,
     downloadImage,
     checkAvailability,
   };
