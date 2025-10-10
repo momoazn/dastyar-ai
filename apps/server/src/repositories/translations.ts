@@ -1,19 +1,42 @@
-import { prisma } from '@/database';
+import { prisma, type Translation } from '@/database';
 
-export function listTranslations() {
+/**
+ * Retrieves all translations.
+ * @returns Array of translations.
+ */
+export function listTranslations(): Promise<Translation[]> {
   return prisma.translation.findMany();
 }
 
-export async function getTranslation(id: number) {
-  const translation = await prisma.translation.findUnique({
-    where: { id },
-  });
+/**
+ * Retrieves a specific translation by ID.
+ * @param id - The translation ID.
+ * @returns The translation record or null if not found.
+ */
+export async function getTranslation(id: number): Promise<Translation | null> {
+  try {
+    const translation = await prisma.translation.findUnique({
+      where: { id },
+    });
 
-  return translation;
+    return translation;
+  } catch (error) {
+    console.error(`Failed to get translation ${id}:`, error);
+    throw new Error('Unable to retrieve translation');
+  }
 }
 
-export async function deleteTranslation(id: number) {
-  await prisma.translation.delete({
-    where: { id },
-  });
+/**
+ * Deletes a specific translation by ID.
+ * @param id - The translation ID.
+ */
+export async function deleteTranslation(id: number): Promise<void> {
+  try {
+    await prisma.translation.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(`Failed to delete translation ${id}:`, error);
+    throw new Error('Unable to delete translation');
+  }
 }

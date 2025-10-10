@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { Hono } from 'hono';
-import { getGeneratedImage } from '../repositories/images';
+import { getGeneratedImage } from '@/repositories/images';
 
 const imageRouter = new Hono();
 
@@ -9,7 +9,7 @@ imageRouter.get('/:id/file', async (c) => {
   const { id } = c.req.param();
 
   try {
-    const image = await getGeneratedImage(id);
+    const image = await getGeneratedImage(Number.parseInt(id, 10));
     if (!image) {
       return c.json({ error: 'Image not found' }, 404);
     }
@@ -44,7 +44,7 @@ imageRouter.get('/:id/download', async (c) => {
   const { id } = c.req.param();
 
   try {
-    const image = await getGeneratedImage(id);
+    const image = await getGeneratedImage(Number.parseInt(id, 10));
     if (!image) {
       return c.json({ error: 'Image not found' }, 404);
     }

@@ -1,5 +1,4 @@
 import { zValidator } from '@hono/zod-validator';
-import type { Prisma } from '@prisma/client';
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
@@ -10,6 +9,7 @@ import {
 import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
+import type { Prisma } from '@/database';
 import { saveMessage } from '@/repositories/messages';
 import {
   getThread,

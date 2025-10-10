@@ -15,6 +15,7 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
-// Export the prisma client as db for compatibility with existing code
-export const db = prisma;
 export default prisma;
+
+// Export generated types
+export * from '../../generated/prisma';

@@ -1,28 +1,56 @@
-import type { Message, Thread } from '@prisma/client';
-import { prisma } from '@/database';
+import { type Message, prisma, type Thread } from '@/database';
 
-export async function createThread(params?: Partial<Pick<Thread, 'title'>>) {
-  const title = (params?.title ?? 'گفتگوی جدید').trim();
+/**
+ * Creates a new thread with an optional title.
+ * @param params - Optional parameters including title.
+ * @returns The ID of the created thread.
+ */
+export async function createThread(
+  params?: Partial<Pick<Thread, 'title'>>
+): Promise<{ id: number }> {
+  try {
+    const title = (params?.title ?? 'گفتگوی جدید').trim();
 
-  const thread = await prisma.thread.create({
-    data: {
-      title,
-      isArchived: false,
-    },
-  });
+    const thread = await prisma.thread.create({
+      data: {
+        title,
+        isArchived: false,
+      },
+    });
 
-  return { id: thread.id };
+    return { id: thread.id };
+  } catch (error) {
+    console.error('Failed to create thread:', error);
+    throw new Error('Unable to create thread');
+  }
 }
 
-export async function getThread(id: number) {
-  const thread = await prisma.thread.findUnique({
-    where: { id },
-  });
+/**
+ * Retrieves a specific thread by ID.
+ * @param id - The thread ID.
+ * @returns The thread record or null if not found.
+ */
+export async function getThread(id: number): Promise<Thread | null> {
+  try {
+    const thread = await prisma.thread.findUnique({
+      where: { id },
+    });
 
-  return thread;
+    return thread;
+  } catch (error) {
+    console.error(`Failed to get thread ${id}:`, error);
+    throw new Error('Unable to retrieve thread');
+  }
 }
 
-export function listThreads(options?: { includeArchived?: boolean }) {
+/**
+ * Retrieves all threads, optionally including archived ones.
+ * @param options - Options for filtering threads.
+ * @returns Array of threads.
+ */
+export function listThreads(options?: {
+  includeArchived?: boolean;
+}): Promise<Thread[]> {
   const includeArchived = options?.includeArchived ?? false;
 
   return prisma.thread.findMany({
@@ -31,42 +59,84 @@ export function listThreads(options?: { includeArchived?: boolean }) {
   });
 }
 
-export async function renameThread(id: number, title: string) {
-  await prisma.thread.update({
-    where: { id },
-    data: { title },
-  });
+/**
+ * Renames a thread.
+ * @param id - The thread ID.
+ * @param title - The new title.
+ */
+export async function renameThread(id: number, title: string): Promise<void> {
+  try {
+    await prisma.thread.update({
+      where: { id },
+      data: { title },
+    });
+  } catch (error) {
+    console.error(`Failed to rename thread ${id}:`, error);
+    throw new Error('Unable to rename thread');
+  }
 }
 
+/**
+ * Sets the archived status of a thread.
+ * @param id - The thread ID.
+ * @param isArchived - Whether the thread should be archived.
+ */
 export async function setArchived(
   id: number,
   isArchived: boolean
-) {
-  await prisma.thread.update({
-    where: { id },
-    data: { isArchived },
-  });
+): Promise<void> {
+  try {
+    await prisma.thread.update({
+      where: { id },
+      data: { isArchived },
+    });
+  } catch (error) {
+    console.error(`Failed to set archived status for thread ${id}:`, error);
+    throw new Error('Unable to update thread archived status');
+  }
 }
 
-export async function deleteThread(id: number) {
-  await prisma.thread.delete({
-    where: { id },
-  });
+/**
+ * Deletes a thread by ID.
+ * @param id - The thread ID.
+ */
+export async function deleteThread(id: number): Promise<void> {
+  try {
+    await prisma.thread.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error(`Failed to delete thread ${id}:`, error);
+    throw new Error('Unable to delete thread');
+  }
 }
 
+/**
+ * Updates the last message timestamp for a thread.
+ * @param threadId - The thread ID.
+ * @param date - The timestamp (defaults to current time).
+ */
 export async function updateThreadOnNewMessage(
   threadId: number,
   date: Date = new Date()
-) {
-  await prisma.thread.update({
-    where: { id: threadId },
-    data: { lastMessageAt: date },
-  });
+): Promise<void> {
+  try {
+    await prisma.thread.update({
+      where: { id: threadId },
+      data: { lastMessageAt: date },
+    });
+  } catch (error) {
+    console.error(`Failed to update thread ${threadId} on new message:`, error);
+    throw new Error('Unable to update thread timestamp');
+  }
 }
 
-export const loadThreadMessages = async (
-  threadId: number
-): Promise<Message[]> => {
+/**
+ * Loads all messages for a specific thread.
+ * @param threadId - The thread ID.
+ * @returns Array of messages.
+ */
+export async function loadThreadMessages(threadId: number): Promise<Message[]> {
   try {
     const messages = await prisma.message.findMany({
       where: { threadId },
@@ -74,7 +144,8 @@ export const loadThreadMessages = async (
     });
 
     return messages;
-  } catch {
-    return [];
+  } catch (error) {
+    console.error(`Failed to load messages for thread ${threadId}:`, error);
+    throw new Error('Unable to load thread messages');
   }
-};
+}
