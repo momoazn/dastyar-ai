@@ -72,6 +72,21 @@ model Summary {
   @@map("summaries")
 }
 
+// Image Threads table – represents image conversation threads
+model ImageThread {
+  id            Int              @id @default(autoincrement())
+  title         String
+  isArchived    Boolean          @default(false)
+  lastImageAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  images        GeneratedImage[]
+
+  @@map("image_threads")
+}
+
 // Generated Images table – stores AI-generated images metadata
 model GeneratedImage {
   id             Int      @id @default(autoincrement())
@@ -83,6 +98,10 @@ model GeneratedImage {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  imageThreadId  Int
+  thread         ImageThread  @relation(fields: [imageThreadId], references: [id], onDelete: Cascade)
+
+  @@index([imageThreadId], name: "idx_generated_images_thread")
   @@map("generated_images")
 }
 
