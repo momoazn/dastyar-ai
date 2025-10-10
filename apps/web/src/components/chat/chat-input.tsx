@@ -137,7 +137,7 @@ export const ChatInput = ({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
-      <div className="rounded-2xl border bg-muted/30 shadow-sm transition-all focus-within:shadow-md hover:shadow-md">
+      <div>
         <PromptInput
           onSubmit={(e) => {
             e.preventDefault();
