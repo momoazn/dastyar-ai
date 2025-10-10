@@ -17,6 +17,7 @@ export async function createGeneratedImage(
         filePath: params.filePath,
         fileName: params.fileName,
         settings: params.settings,
+        imageThreadId: params.imageThreadId,
       },
     });
 
@@ -135,5 +136,47 @@ export async function cleanupOrphanedFiles(): Promise<number> {
   } catch (error) {
     console.error('Failed to cleanup orphaned files:', error);
     throw new Error('Unable to cleanup orphaned files');
+  }
+}
+
+/**
+ * Retrieves all generated images for a specific thread ordered by creation date (newest first).
+ * @param threadId - The thread ID.
+ * @returns Array of generated images.
+ */
+export function listGeneratedImagesByThread(threadId: number): Promise<GeneratedImage[]> {
+  return prisma.generatedImage.findMany({
+    where: { imageThreadId: threadId },
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
+/**
+ * Deletes all generated images for a specific thread and their associated files.
+ * @param threadId - The thread ID.
+ */
+export async function clearGeneratedImagesByThread(threadId: number): Promise<void> {
+  try {
+    // First get all images for this thread to delete their files
+    const threadImages = await listGeneratedImagesByThread(threadId);
+
+    // Delete all files from storage
+    const deletePromises = threadImages.map(async (image) => {
+      try {
+        await imageStorageService.deleteImage(image.filePath);
+      } catch (error) {
+        console.error(`Failed to delete files for image ${image.id}:`, error);
+      }
+    });
+
+    await Promise.all(deletePromises);
+
+    // Delete all records from database
+    await prisma.generatedImage.deleteMany({
+      where: { imageThreadId: threadId },
+    });
+  } catch (error) {
+    console.error(`Failed to clear generated images for thread ${threadId}:`, error);
+    throw new Error('Unable to clear generated images for thread');
   }
 }

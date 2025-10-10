@@ -1,6 +1,7 @@
 import { codeProcedures } from './code';
 import { healthProcedures } from './health';
 import { imageProcedures } from './images';
+import { imageThreadProcedures } from './image-threads';
 import { modelProcedures } from './models';
 import { summarizeProcedures } from './summarize';
 import { messageProcedures, threadProcedures } from './threads';
@@ -16,6 +17,7 @@ export const appRouter = {
   transcribe: transcribeProcedures,
   summarize: summarizeProcedures,
   images: imageProcedures,
+  imageThreads: imageThreadProcedures,
   code: codeProcedures,
 };
 

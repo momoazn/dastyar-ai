@@ -1,19 +1,11 @@
-import fs from 'node:fs';
 import { z } from 'zod';
-import { config } from '@/config';
+import { touchLastImageAt } from '@/repositories/image-threads';
 import {
-  cleanupOrphanedFiles,
-  clearGeneratedImages,
+  clearGeneratedImagesByThread,
   createGeneratedImage,
-  deleteGeneratedImage,
-  getGeneratedImage,
-  listGeneratedImages,
+  listGeneratedImagesByThread,
 } from '@/repositories/images';
-import {
-  ALLOWED_FORMATS,
-  imageStorageService,
-  MAX_FILE_SIZE,
-} from '@/services/image-storage';
+import { imageStorageService } from '@/services/image-storage';
 import {
   type ImageGenerationParams,
   stableDiffusionService,
@@ -28,6 +20,7 @@ const imageGenerationParamsSchema = z.object({
   sampler_name: z.string().default('Euler a'),
   width: z.number().int().min(64).max(2048).default(512),
   height: z.number().int().min(64).max(2048).default(512),
+  threadId: z.number().int().positive('Thread ID is required'),
 });
 
 export const imageProcedures = {
@@ -93,7 +86,11 @@ export const imageProcedures = {
             width: input.width,
             height: input.height,
           }),
+          imageThreadId: input.threadId,
         });
+
+        // Update thread's last image timestamp
+        await touchLastImageAt(input.threadId);
 
         console.log('Image generated and saved with ID:', savedImage.id);
 
@@ -132,117 +129,35 @@ export const imageProcedures = {
     return { success };
   }),
 
-  // List all generated images
-  list: publicProcedure.handler(async () => {
-    const images = await listGeneratedImages();
-    console.log('Listing all generated images');
-
-    return images.map((img) => ({
-      id: img.id,
-      prompt: img.prompt,
-      imageUrl: imageStorageService.getImageUrl(img.id),
-      createdAt: img.createdAt,
-      settings: img.settings ? JSON.parse(img.settings) : null,
-    }));
-  }),
-
-  // Get a specific image by ID
-  get: publicProcedure
-    .input(z.object({ id: z.number() }))
+  // List images by thread
+  listByThread: publicProcedure
+    .input(z.object({ threadId: z.number() }))
     .handler(async ({ input }) => {
-      const image = await getGeneratedImage(input.id);
-      if (!image) {
-        throw new Error('Image not found');
-      }
+      const images = await listGeneratedImagesByThread(input.threadId);
+      console.log(`Listing images for thread ${input.threadId}`);
 
-      return {
-        id: image.id,
-        prompt: image.prompt,
-        negativePrompt: image.negativePrompt,
-        imageUrl: imageStorageService.getImageUrl(image.id),
-        createdAt: image.createdAt,
-        settings: image.settings ? JSON.parse(image.settings) : null,
-      };
+      return images.map((img) => ({
+        id: img.id,
+        threadId: img.imageThreadId,
+        prompt: img.prompt,
+        negativePrompt: img.negativePrompt,
+        imageUrl: imageStorageService.getImageUrl(img.id),
+        createdAt: img.createdAt,
+        settings: img.settings ? JSON.parse(img.settings) : null,
+      }));
     }),
 
-  // Delete a specific image
-  delete: publicProcedure
-    .input(z.object({ id: z.number() }))
+  // Clear images by thread
+  clearByThread: publicProcedure
+    .input(z.object({ threadId: z.number() }))
     .handler(async ({ input }) => {
-      await deleteGeneratedImage(input.id);
+      await clearGeneratedImagesByThread(input.threadId);
       return { success: true };
     }),
-
-  // Clear all generated images
-  clear: publicProcedure.handler(async () => {
-    await clearGeneratedImages();
-    return { success: true };
-  }),
 
   // Get system info from A1111
   getSystemInfo: publicProcedure.handler(async () => {
     const info = await stableDiffusionService.getSystemInfo();
     return info;
-  }),
-
-  // Serve image file
-  serve: publicProcedure
-    .input(
-      z.object({
-        id: z.number(),
-      })
-    )
-    .handler(async ({ input }) => {
-      const image = await getGeneratedImage(input.id);
-      if (!image) {
-        throw new Error('Image not found');
-      }
-
-      if (!fs.existsSync(image.filePath)) {
-        throw new Error('Image file not found on disk');
-      }
-
-      // Return file buffer and metadata
-      const fileBuffer = fs.readFileSync(image.filePath);
-
-      return {
-        buffer: fileBuffer,
-        fileName: image.fileName,
-        mimeType: 'image/png',
-        size: fileBuffer.length,
-      };
-    }),
-
-  // Cleanup orphaned files
-  cleanup: publicProcedure.handler(async () => {
-    console.log('Starting cleanup of orphaned image files...');
-    const deletedCount = await cleanupOrphanedFiles();
-
-    // Get storage stats
-    const stats = imageStorageService.getFileStats();
-
-    console.log(`Cleanup completed. Deleted ${deletedCount} orphaned files.`);
-
-    return {
-      deletedFiles: deletedCount,
-      stats: {
-        totalFiles: stats.totalFiles,
-        totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
-      },
-    };
-  }),
-
-  // Get storage statistics
-  getStorageStats: publicProcedure.handler(() => {
-    const stats = imageStorageService.getFileStats();
-    // Use environment variables directly
-
-    return {
-      totalFiles: stats.totalFiles,
-      totalSizeMB: Math.round((stats.totalSize / 1024 / 1024) * 100) / 100,
-      storageDir: config.images_dir,
-      maxFileSizeMB: Math.round(MAX_FILE_SIZE / 1024 / 1024),
-      allowedFormats: ALLOWED_FORMATS,
-    };
   }),
 };
