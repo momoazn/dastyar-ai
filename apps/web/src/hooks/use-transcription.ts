@@ -1,18 +1,18 @@
-import { useMutation } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
-import { fileToWav16kMono } from '@/utils/audio';
-import { orpc } from '@/utils/orpc';
+import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
+import { fileToWav16kMono } from "@/utils/audio";
+import { orpc } from "@/utils/orpc";
 
-export interface TranscriptionArgs {
+export type TranscriptionArgs = {
   file: File;
-  language?: 'fa' | 'en';
+  language?: "fa" | "en";
   model?: string;
-}
+};
 
-export interface UseTranscriptionHandlers {
+export type UseTranscriptionHandlers = {
   onSuccess?: (text: string) => void;
   onError?: (message: string) => void;
-}
+};
 
 export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
   const handlersRef = useRef<UseTranscriptionHandlers | undefined>(handlers);
@@ -27,7 +27,7 @@ export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
       },
       onError: (error) => {
         const message =
-          error instanceof Error ? error.message : 'خطا در تبدیل صدا به متن';
+          error instanceof Error ? error.message : "خطا در تبدیل صدا به متن";
         handlersRef.current?.onError?.(message);
       },
     })
@@ -40,7 +40,7 @@ export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
         mutate({ file: wav, language, model });
       } catch {
         handlersRef.current?.onError?.(
-          'خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.'
+          "خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید."
         );
       }
     },

@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, Code, Shield } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft, Code, Shield } from "lucide-react";
+import { Button, Card } from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute('/code/$id')({
+export const Route = createFileRoute("/code/$id")({
   component: CodeSessionPage,
 });
 
@@ -63,13 +63,13 @@ function CodeSessionPage() {
   }
 
   const formatDate = (date: string | Date) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('fa-IR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    return dateObj.toLocaleDateString("fa-IR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -88,8 +88,8 @@ function CodeSessionPage() {
             <div>
               <h1 className="font-semibold text-xl">{session.title}</h1>
               <p className="text-muted-foreground text-sm">
-                {fa.codeAssistant.session.language}: {session.language} •{' '}
-                {fa.codeAssistant.session.createdAt}:{' '}
+                {fa.codeAssistant.session.language}: {session.language} •{" "}
+                {fa.codeAssistant.session.createdAt}:{" "}
                 {formatDate(session.createdAt)}
               </p>
             </div>
@@ -155,7 +155,7 @@ function CodeSessionPage() {
             <div className="space-y-3">
               {reviews.map((review) => {
                 const suggestions = JSON.parse(
-                  review.suggestions || '[]'
+                  review.suggestions || "[]"
                 ) as Array<{
                   severity: string;
                   type: string;
@@ -196,16 +196,16 @@ function CodeSessionPage() {
                           {suggestions.map((suggestion, index) => {
                             const getSeverityClass = (severity: string) => {
                               switch (severity) {
-                                case 'critical':
-                                  return 'bg-red-100 text-red-800';
-                                case 'high':
-                                  return 'bg-orange-100 text-orange-800';
-                                case 'medium':
-                                  return 'bg-yellow-100 text-yellow-800';
-                                case 'low':
-                                  return 'bg-blue-100 text-blue-800';
+                                case "critical":
+                                  return "bg-red-100 text-red-800";
+                                case "high":
+                                  return "bg-orange-100 text-orange-800";
+                                case "medium":
+                                  return "bg-yellow-100 text-yellow-800";
+                                case "low":
+                                  return "bg-blue-100 text-blue-800";
                                 default:
-                                  return 'bg-gray-100 text-gray-800';
+                                  return "bg-gray-100 text-gray-800";
                               }
                             };
 
@@ -225,7 +225,7 @@ function CodeSessionPage() {
                                   </span>
                                   {suggestion.line && (
                                     <span className="text-muted-foreground text-xs">
-                                      {fa.codeAssistant.session.line}{' '}
+                                      {fa.codeAssistant.session.line}{" "}
                                       {suggestion.line}
                                     </span>
                                   )}

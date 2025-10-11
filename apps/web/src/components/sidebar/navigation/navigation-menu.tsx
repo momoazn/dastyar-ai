@@ -1,21 +1,21 @@
-import { Link } from '@tanstack/react-router';
-import { useSidebar } from '@/components/ui';
-import { cn } from '@/lib/utils';
-import { navMain, useActiveNavItem } from '../nav';
+import { Link } from "@tanstack/react-router";
+import { useSidebar } from "@/components/ui";
+import { cn } from "@/lib/utils";
+import { navMain, useActiveNavItem } from "../nav";
 
-export interface NavigationMenuProps {
-  variant?: 'icon' | 'full';
+export type NavigationMenuProps = {
+  variant?: "icon" | "full";
   className?: string;
-}
+};
 
 export function NavigationMenu({
-  variant = 'full',
+  variant = "full",
   className,
 }: NavigationMenuProps) {
   const { setOpen } = useSidebar();
   const activeItem = useActiveNavItem();
 
-  if (variant === 'icon') {
+  if (variant === "icon") {
     return (
       <div className={className}>
         {navMain.map((item) => (
@@ -37,10 +37,10 @@ export function NavigationMenu({
       {navMain.map((item) => (
         <Link
           className={cn(
-            'flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-sm',
+            "flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-sm",
             activeItem?.url === item.url
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-              : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
           key={item.title}
           onClick={() => setOpen(true)}

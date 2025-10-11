@@ -1,27 +1,27 @@
-import { useChat } from '@ai-sdk/react';
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useParams } from '@tanstack/react-router';
-import { DefaultChatTransport } from 'ai';
-import { MessageCircleIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useChat } from "@ai-sdk/react";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useParams } from "@tanstack/react-router";
+import { DefaultChatTransport } from "ai";
+import { MessageCircleIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from '@/components/ai-elements/conversation';
-import { Loader } from '@/components/ai-elements/loader';
-import { ChatInput, Message } from '@/components/chat';
-import { useChatModelSelection } from '@/hooks/use-feature-model-selection';
-import { fa } from '@/lib/persian-texts';
-import type { MyUIMessage } from '@/server/utils/chat';
-import { client, orpc, queryClient } from '@/utils/orpc';
+} from "@/components/ai-elements/conversation";
+import { Loader } from "@/components/ai-elements/loader";
+import { ChatInput, Message } from "@/components/chat";
+import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
+import { fa } from "@/lib/persian-texts";
+import type { MyUIMessage } from "@/server/utils/chat";
+import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute('/chat/$id')({
+export const Route = createFileRoute("/chat/$id")({
   component: ChatThreadRouteComponent,
 });
 
 function ChatThreadRouteComponent() {
-  const { id: threadId } = useParams({ from: '/chat/$id' });
+  const { id: threadId } = useParams({ from: "/chat/$id" });
 
   const { modelId } = useChatModelSelection({ threadId: Number(threadId) });
   const isInitialRender = useRef(true);
@@ -60,7 +60,7 @@ function ChatThreadRouteComponent() {
         });
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error('Failed to rename thread on first message', error);
+        console.error("Failed to rename thread on first message", error);
       }
     }
 
@@ -97,7 +97,7 @@ function ChatThreadRouteComponent() {
               {messages.map((m) => (
                 <Message key={m.id} message={m} />
               ))}
-              {status === 'submitted' && <Loader />}
+              {status === "submitted" && <Loader />}
             </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
@@ -107,7 +107,7 @@ function ChatThreadRouteComponent() {
       <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <ChatInput
           handleSendPrompt={handleSendPrompt}
-          isGenerating={status === 'streaming' || status === 'submitted'}
+          isGenerating={status === "streaming" || status === "submitted"}
           stopGenerating={stop}
           threadId={Number(threadId)}
         />

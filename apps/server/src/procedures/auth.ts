@@ -1,11 +1,11 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { z } from 'zod';
-import { env } from '../config';
-import { publicProcedure } from './base';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { z } from "zod";
+import { env } from "../config";
+import { publicProcedure } from "./base";
 
 const JWT_SECRET = env.JWT_SECRET;
-const JWT_EXPIRES_IN = '24h';
+const JWT_EXPIRES_IN = "24h";
 
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
@@ -29,7 +29,7 @@ export const authProcedures = {
       });
 
       if (existingUser) {
-        throw new Error('Username already exists');
+        throw new Error("Username already exists");
       }
 
       // Hash password
@@ -71,13 +71,13 @@ export const authProcedures = {
       });
 
       if (!user) {
-        throw new Error('Invalid credentials');
+        throw new Error("Invalid credentials");
       }
 
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
-        throw new Error('Invalid credentials');
+        throw new Error("Invalid credentials");
       }
 
       // Generate JWT
@@ -99,7 +99,7 @@ export const authProcedures = {
 
   me: publicProcedure.handler(({ context }) => {
     if (!context.user) {
-      throw new Error('Not authenticated');
+      throw new Error("Not authenticated");
     }
 
     return {

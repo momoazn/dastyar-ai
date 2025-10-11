@@ -1,6 +1,6 @@
-import type { Context } from 'hono';
-import { prisma, type User } from '@/database';
-import { validateAuthHeader } from '@/services/auth';
+import type { Context } from "hono";
+import { prisma, type User } from "@/database";
+import { validateAuthHeader } from "@/services/auth";
 
 // Define the environment type for Hono
 export type AuthEnv = {
@@ -17,7 +17,7 @@ export const authMiddleware = async (
   c: Context<AuthEnv>,
   next: () => Promise<void>
 ) => {
-  const authHeader = c.req.header('Authorization');
+  const authHeader = c.req.header("Authorization");
 
   const authResult = await validateAuthHeader(authHeader, prisma);
 
@@ -25,8 +25,8 @@ export const authMiddleware = async (
     return c.json(
       {
         error: {
-          code: authResult.error?.code ?? 'UNAUTHORIZED',
-          message: authResult.error?.message ?? 'Authentication failed',
+          code: authResult.error?.code ?? "UNAUTHORIZED",
+          message: authResult.error?.message ?? "Authentication failed",
         },
       },
       401
@@ -37,8 +37,8 @@ export const authMiddleware = async (
     return c.json(
       {
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not found',
+          code: "UNAUTHORIZED",
+          message: "User not found",
         },
       },
       401
@@ -46,6 +46,6 @@ export const authMiddleware = async (
   }
 
   // Add user to context
-  c.set('user', authResult.user);
+  c.set("user", authResult.user);
   await next();
 };

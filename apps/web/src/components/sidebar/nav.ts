@@ -1,4 +1,4 @@
-import { useLocation } from '@tanstack/react-router';
+import { useLocation } from "@tanstack/react-router";
 import {
   Code,
   FileText,
@@ -6,45 +6,45 @@ import {
   MessageCircle,
   MessageSquare,
   Mic,
-} from 'lucide-react';
-import type React from 'react';
-import { fa } from '@/lib/persian-texts';
+} from "lucide-react";
+import type React from "react";
+import { fa } from "@/lib/persian-texts";
 
-export interface NavItem {
+export type NavItem = {
   title: string;
   url: string;
   icon: React.ElementType;
-}
+};
 
 export const navMain: NavItem[] = [
   {
     title: fa.navigation.chat,
-    url: '/chat',
+    url: "/chat",
     icon: MessageSquare,
   },
   {
     title: fa.navigation.translation,
-    url: '/translation',
+    url: "/translation",
     icon: MessageCircle,
   },
   {
     title: fa.navigation.summarize,
-    url: '/summarize',
+    url: "/summarize",
     icon: FileText,
   },
   {
     title: fa.navigation.transcribe,
-    url: '/transcribe',
+    url: "/transcribe",
     icon: Mic,
   },
   {
     title: fa.navigation.imageGeneration,
-    url: '/image',
+    url: "/image",
     icon: Image,
   },
   {
     title: fa.navigation.codeAssistant,
-    url: '/code',
+    url: "/code",
     icon: Code,
   },
 ] as const satisfies NavItem[];

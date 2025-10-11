@@ -1,5 +1,5 @@
-import { RefreshCcw } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { RefreshCcw } from "lucide-react";
+import { useMemo, useState } from "react";
 import {
   PromptInput,
   PromptInputButton,
@@ -12,19 +12,19 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-} from '@/components/ai-elements/prompt-input';
-import { TranscribeButton } from '@/components/transcribe-button';
-import { Alert, AlertDescription } from '@/components/ui';
-import { useChatModelSelection } from '@/hooks/use-feature-model-selection';
-import { fa } from '@/lib/persian-texts';
-import { detectTextDirection } from '@/lib/utils';
+} from "@/components/ai-elements/prompt-input";
+import { TranscribeButton } from "@/components/transcribe-button";
+import { Alert, AlertDescription } from "@/components/ui";
+import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
+import { fa } from "@/lib/persian-texts";
+import { detectTextDirection } from "@/lib/utils";
 
-interface ChatInputProps {
+type ChatInputProps = {
   handleSendPrompt: (prompt: string) => void;
   isGenerating?: boolean;
   stopGenerating?: () => void;
   threadId?: number;
-}
+};
 
 export const ChatInput = ({
   handleSendPrompt,
@@ -32,7 +32,7 @@ export const ChatInput = ({
   stopGenerating,
   threadId,
 }: ChatInputProps) => {
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
   const [transcriptionError, setTranscriptionError] = useState<string | null>(
     null
   );
@@ -46,26 +46,26 @@ export const ChatInput = ({
     // Append transcribed text to existing prompt
     if (transcribedText.trim()) {
       setPrompt((prev) => {
-        const separator = prev.trim() ? ' ' : '';
+        const separator = prev.trim() ? " " : "";
         return prev + separator + transcribedText.trim();
       });
     }
   };
 
   const handleTranscriptionError = (error: string) => {
-    console.error('Transcription failed:', error);
+    console.error("Transcription failed:", error);
     setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
   };
 
   // Memoize text direction calculation
   const textDirection = useMemo(
-    () => (prompt ? detectTextDirection(prompt) : 'rtl'),
+    () => (prompt ? detectTextDirection(prompt) : "rtl"),
     [prompt]
   );
 
   // Handle key presses in the textarea
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (isGenerating) {
         stopGenerating?.();
@@ -74,7 +74,7 @@ export const ChatInput = ({
       const trimmed = prompt.trim();
       if (trimmed) {
         handleSendPrompt(trimmed);
-        setPrompt('');
+        setPrompt("");
       }
     }
   };
@@ -88,7 +88,7 @@ export const ChatInput = ({
     const trimmed = prompt.trim();
     if (trimmed) {
       handleSendPrompt(trimmed);
-      setPrompt('');
+      setPrompt("");
     }
   };
 
@@ -121,9 +121,10 @@ export const ChatInput = ({
   }, [models]);
 
   // Get language for transcription based on text direction
-  const transcriptionLanguage = useMemo(() => {
-    return prompt && detectTextDirection(prompt) === 'rtl' ? 'fa' : 'en';
-  }, [prompt]);
+  const transcriptionLanguage = useMemo(
+    () => (prompt && detectTextDirection(prompt) === "rtl" ? "fa" : "en"),
+    [prompt]
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
@@ -178,8 +179,8 @@ export const ChatInput = ({
               />
               <PromptInputSubmit
                 disabled={!(isGenerating || (prompt.trim() && modelId))}
-                status={isGenerating ? 'streaming' : undefined}
-                variant={isGenerating ? 'destructive' : 'default'}
+                status={isGenerating ? "streaming" : undefined}
+                variant={isGenerating ? "destructive" : "default"}
               />
             </div>
           </PromptInputToolbar>

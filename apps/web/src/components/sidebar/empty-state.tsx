@@ -1,10 +1,10 @@
-import { fa } from '@/lib/persian-texts';
+import { fa } from "@/lib/persian-texts";
 
-interface EmptyStateProps {
+type EmptyStateProps = {
   title: string;
   description?: string;
   icon?: React.ReactNode;
-}
+};
 
 export function EmptyState({ title, description, icon }: EmptyStateProps) {
   return (

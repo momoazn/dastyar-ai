@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { client, orpc, queryClient } from '@/utils/orpc';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { client, orpc, queryClient } from "@/utils/orpc";
 
 export function useCreateThread(isActive: boolean) {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export function useCreateThread(isActive: boolean) {
     mutationFn: (title?: string) => client.threads.create({ title }),
     onSuccess: (res) => {
       queryClient.invalidateQueries();
-      navigate({ to: '/chat/$id', params: { id: res.id.toString() } });
+      navigate({ to: "/chat/$id", params: { id: res.id.toString() } });
     },
   });
 
@@ -27,6 +27,6 @@ export function useCreateThread(isActive: boolean) {
 export function useTranslationActions() {
   const navigate = useNavigate();
   return {
-    handleNewTranslation: () => navigate({ to: '/translation' }),
+    handleNewTranslation: () => navigate({ to: "/translation" }),
   } as const;
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { execSync } from 'node:child_process';
+import { execSync } from "node:child_process";
 import {
   copyFileSync,
   cpSync,
@@ -8,13 +8,13 @@ import {
   promises as fsPromises,
   mkdirSync,
   readdirSync,
-} from 'node:fs';
-import { dirname, join } from 'node:path';
+} from "node:fs";
+import { dirname, join } from "node:path";
 
 const ROOT_DIR = process.cwd();
-const DIST_DIR = join(ROOT_DIR, 'dist');
-const SERVER_DIR = join(ROOT_DIR, 'apps', 'server');
-const WEB_DIR = join(ROOT_DIR, 'apps', 'web');
+const DIST_DIR = join(ROOT_DIR, "dist");
+const SERVER_DIR = join(ROOT_DIR, "apps", "server");
+const WEB_DIR = join(ROOT_DIR, "apps", "web");
 
 const ensureDir = (dirPath: string): void => {
   if (!existsSync(dirPath)) {
@@ -69,28 +69,28 @@ const parseList = (value?: string): string[] => {
     return [];
   }
   return value
-    .split(',')
+    .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 };
 
 const findTransformersWasmDir = (workspaceRoot: string): string | null => {
-  const bunNm = join(workspaceRoot, 'node_modules', '.bun');
+  const bunNm = join(workspaceRoot, "node_modules", ".bun");
   if (!existsSync(bunNm)) {
     return null;
   }
   const entries = readdirSync(bunNm)
-    .filter((n) => n.startsWith('@huggingface+transformers@'))
+    .filter((n) => n.startsWith("@huggingface+transformers@"))
     .sort()
     .reverse();
   for (const ent of entries) {
     const wasmDir = join(
       bunNm,
       ent,
-      'node_modules',
-      '@huggingface',
-      'transformers',
-      'dist'
+      "node_modules",
+      "@huggingface",
+      "transformers",
+      "dist"
     );
     if (existsSync(wasmDir)) {
       return wasmDir;
@@ -116,21 +116,21 @@ const downloadModelRepo = async (
     throw new Error(`No files listed for ${modelId}`);
   }
   const wanted = new Set<string>([
-    'config.json',
-    'tokenizer.json',
-    'tokenizer_config.json',
-    'preprocessor_config.json',
-    'special_tokens_map.json',
-    'vocab.json',
-    'merges.txt',
+    "config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "preprocessor_config.json",
+    "special_tokens_map.json",
+    "vocab.json",
+    "merges.txt",
   ]);
   for (const s of siblings) {
-    if (s.rfilename.startsWith('onnx/') && s.rfilename.endsWith('.onnx')) {
+    if (s.rfilename.startsWith("onnx/") && s.rfilename.endsWith(".onnx")) {
       wanted.add(s.rfilename);
     }
   }
-  if (!Array.from(wanted).some((f) => f.endsWith('.onnx'))) {
-    wanted.add('onnx/model.onnx');
+  if (!Array.from(wanted).some((f) => f.endsWith(".onnx"))) {
+    wanted.add("onnx/model.onnx");
   }
   const tasks: Promise<void>[] = [];
   for (const s of siblings) {
@@ -155,44 +155,44 @@ const downloadModelRepo = async (
 };
 
 const main = async (): Promise<void> => {
-  console.log('🚀 Building Dastyar AI...');
+  console.log("🚀 Building Dastyar AI...");
 
   // Create root dist directory
   ensureDir(DIST_DIR);
 
   // Build server
-  console.log('📦 Building server...');
-  execSync('bun run build', { cwd: SERVER_DIR, stdio: 'inherit' });
+  console.log("📦 Building server...");
+  execSync("bun run build", { cwd: SERVER_DIR, stdio: "inherit" });
 
   // Build web
-  console.log('🌐 Building web...');
-  execSync('bun run build', { cwd: WEB_DIR, stdio: 'inherit' });
+  console.log("🌐 Building web...");
+  execSync("bun run build", { cwd: WEB_DIR, stdio: "inherit" });
 
   // Copy server output into dist/
-  const serverOut = join(SERVER_DIR, 'dist');
-  console.log('📋 Copying server artifacts...');
+  const serverOut = join(SERVER_DIR, "dist");
+  console.log("📋 Copying server artifacts...");
   safeCopyDir(serverOut, DIST_DIR);
 
   // Copy web output into dist/web
-  const webOut = join(WEB_DIR, 'dist');
-  const webTarget = join(DIST_DIR, 'web');
-  console.log('📋 Copying web artifacts...');
+  const webOut = join(WEB_DIR, "dist");
+  const webTarget = join(DIST_DIR, "web");
+  console.log("📋 Copying web artifacts...");
   safeCopyDir(webOut, webTarget);
 
   // Optional convenience copies if present in workspace
   // - Root config.json -> dist/config.json (server reads from exec dir)
-  safeCopyFile(join(ROOT_DIR, 'config.json'), join(DIST_DIR, 'config.json'));
+  safeCopyFile(join(ROOT_DIR, "config.json"), join(DIST_DIR, "config.json"));
   // - apps/server/whisper-models -> dist/whisper-models (if user pre-fetched)
   safeCopyDir(
-    join(SERVER_DIR, 'whisper-models'),
-    join(DIST_DIR, 'whisper-models')
+    join(SERVER_DIR, "whisper-models"),
+    join(DIST_DIR, "whisper-models")
   );
 
   // Prepare minimal offline assets
-  console.log('🤖 Preparing offline assets...');
-  const wasmOut = join(DIST_DIR, 'wasm');
-  const modelsOut = join(DIST_DIR, 'whisper-models');
-  const cacheOut = join(DIST_DIR, '.whisper-cache');
+  console.log("🤖 Preparing offline assets...");
+  const wasmOut = join(DIST_DIR, "wasm");
+  const modelsOut = join(DIST_DIR, "whisper-models");
+  const cacheOut = join(DIST_DIR, ".whisper-cache");
   mkdirp(wasmOut);
   mkdirp(modelsOut);
   mkdirp(cacheOut);
@@ -201,7 +201,7 @@ const main = async (): Promise<void> => {
   if (wasmSrcDir) {
     const files = readdirSync(wasmSrcDir);
     for (const file of files) {
-      if (file.endsWith('.wasm')) {
+      if (file.endsWith(".wasm")) {
         const destFile = join(wasmOut, file);
         if (!existsSync(destFile)) {
           copyFileIfExists(join(wasmSrcDir, file), destFile);
@@ -212,14 +212,14 @@ const main = async (): Promise<void> => {
 
   const envOfflineModels = parseList(process.env.OFFLINE_MODELS);
   const envAllowedModels = parseList(process.env.WHISPER_ALLOWED_MODELS);
-  const envSingleOfflineModel = (process.env.OFFLINE_MODEL ?? '').trim();
+  const envSingleOfflineModel = (process.env.OFFLINE_MODEL ?? "").trim();
   const combined = [
     ...envOfflineModels,
     ...envAllowedModels,
     ...(envSingleOfflineModel ? [envSingleOfflineModel] : []),
   ];
   const modelIds = Array.from(
-    new Set(combined.length > 0 ? combined : ['Xenova/whisper-tiny'])
+    new Set(combined.length > 0 ? combined : ["Xenova/whisper-tiny"])
   );
 
   await Promise.all(
@@ -232,10 +232,10 @@ const main = async (): Promise<void> => {
     })
   );
 
-  console.log('✅ Done. Artifacts available in ./dist');
+  console.log("✅ Done. Artifacts available in ./dist");
 };
 
 main().catch((err) => {
-  console.error('Build failed:', err);
+  console.error("Build failed:", err);
   process.exit(1);
 });

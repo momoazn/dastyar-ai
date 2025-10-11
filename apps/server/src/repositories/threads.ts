@@ -3,7 +3,7 @@ import {
   type LLMModel,
   type Message,
   prisma,
-} from '@/database';
+} from "@/database";
 
 /**
  * Creates a new thread with an optional title.
@@ -11,23 +11,23 @@ import {
  * @returns The ID of the created thread.
  */
 export async function createThread(
-  params?: Partial<Pick<ChatThread, 'title'>> & { userId: number }
+  params?: Partial<Pick<ChatThread, "title">> & { userId: number }
 ): Promise<{ id: number }> {
   try {
-    const title = (params?.title ?? 'گفتگوی جدید').trim();
+    const title = (params?.title ?? "گفتگوی جدید").trim();
 
     const thread = await prisma.chatThread.create({
       data: {
         title,
         isArchived: false,
-        userId: params!.userId,
+        userId: params?.userId,
       },
     });
 
     return { id: thread.id };
   } catch (error) {
-    console.error('Failed to create thread:', error);
-    throw new Error('Unable to create thread');
+    console.error("Failed to create thread:", error);
+    throw new Error("Unable to create thread");
   }
 }
 
@@ -49,7 +49,7 @@ export async function getThread(
     return thread;
   } catch (error) {
     console.error(`Failed to get thread ${id}:`, error);
-    throw new Error('Unable to retrieve thread');
+    throw new Error("Unable to retrieve thread");
   }
 }
 
@@ -66,10 +66,10 @@ export function listThreads(options?: {
 
   return prisma.chatThread.findMany({
     where: {
-      userId: options!.userId,
+      userId: options?.userId,
       ...(includeArchived ? {} : { isArchived: false }),
     },
-    orderBy: [{ lastMessageAt: 'desc' }, { updatedAt: 'desc' }],
+    orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
   });
 }
 
@@ -91,7 +91,7 @@ export async function renameThread(
     });
   } catch (error) {
     console.error(`Failed to rename thread ${id}:`, error);
-    throw new Error('Unable to rename thread');
+    throw new Error("Unable to rename thread");
   }
 }
 
@@ -113,7 +113,7 @@ export async function setArchived(
     });
   } catch (error) {
     console.error(`Failed to set archived status for thread ${id}:`, error);
-    throw new Error('Unable to update thread archived status');
+    throw new Error("Unable to update thread archived status");
   }
 }
 
@@ -129,7 +129,7 @@ export async function deleteThread(id: number, userId: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete thread ${id}:`, error);
-    throw new Error('Unable to delete thread');
+    throw new Error("Unable to delete thread");
   }
 }
 
@@ -151,12 +151,12 @@ export async function updateThreadOnNewMessage(
     });
   } catch (error) {
     console.error(`Failed to update thread ${threadId} on new message:`, error);
-    throw new Error('Unable to update thread timestamp');
+    throw new Error("Unable to update thread timestamp");
   }
 }
 
 export type MessageWithModel = Message & {
-  model: Pick<LLMModel, 'name' | 'provider'>;
+  model: Pick<LLMModel, "name" | "provider">;
 };
 
 /**
@@ -172,7 +172,7 @@ export async function loadThreadMessages(
   try {
     const messages = await prisma.message.findMany({
       where: { threadId, userId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: "asc" },
       include: {
         model: {
           select: {
@@ -186,6 +186,6 @@ export async function loadThreadMessages(
     return messages;
   } catch (error) {
     console.error(`Failed to load messages for thread ${threadId}:`, error);
-    throw new Error('Unable to load thread messages');
+    throw new Error("Unable to load thread messages");
   }
 }

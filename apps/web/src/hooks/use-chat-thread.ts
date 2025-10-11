@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import type { MyUIMessage } from '@/server/utils/chat';
+import { useEffect, useRef } from "react";
+import type { MyUIMessage } from "@/server/utils/chat";
 
 export function useHydrateInitialMessages(params: {
   threadMessages?: MyUIMessage[];
@@ -16,7 +16,7 @@ export function useHydrateInitialMessages(params: {
       !hasHydratedFromThreadRef.current &&
       threadMessages &&
       messages.length === 0 &&
-      status === 'ready' &&
+      status === "ready" &&
       threadId
     ) {
       setMessages(threadMessages);

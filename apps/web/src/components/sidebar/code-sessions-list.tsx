@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { Code } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { Code } from "lucide-react";
+import { Button } from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
 export function CodeSessionsList() {
   const { data: sessions, isLoading } = useQuery(
@@ -11,10 +11,10 @@ export function CodeSessionsList() {
   );
 
   const formatDate = (date: string | Date) => {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('fa-IR', {
-      month: 'short',
-      day: 'numeric',
+    const d = typeof date === "string" ? new Date(date) : date;
+    return d.toLocaleDateString("fa-IR", {
+      month: "short",
+      day: "numeric",
     });
   };
 

@@ -1,23 +1,23 @@
-import { Link } from '@tanstack/react-router';
-import { Command } from 'lucide-react';
+import { Link } from "@tanstack/react-router";
+import { Command } from "lucide-react";
 import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
+} from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
 
-export interface SidebarHeaderProps {
-  variant?: 'icon' | 'full';
+export type SidebarHeaderProps = {
+  variant?: "icon" | "full";
   className?: string;
-}
+};
 
 export function AppSidebarHeader({
-  variant = 'full',
+  variant = "full",
   className,
 }: SidebarHeaderProps) {
-  if (variant === 'icon') {
+  if (variant === "icon") {
     return (
       <SidebarHeader className={className}>
         <SidebarMenu>

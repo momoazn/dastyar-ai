@@ -1,5 +1,5 @@
-import type { Context as HonoContext } from 'hono';
-import { prisma, type User } from '../database';
+import type { Context as HonoContext } from "hono";
+import { prisma, type User } from "../database";
 
 export type CreateContextOptions = {
   context: HonoContext;

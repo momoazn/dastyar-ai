@@ -1,24 +1,24 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { env, isProduction } from '@/config';
+import fs from "node:fs";
+import path from "node:path";
+import { env, isProduction } from "@/config";
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 
-export const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+export const ALLOWED_FORMATS = ["png", "jpg", "jpeg", "webp"];
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB;
 
-export interface ImageMetadata {
+export type ImageMetadata = {
   id: string;
   prompt: string;
   negativePrompt?: string;
   settings: Record<string, unknown>;
-}
+};
 
-export interface SaveImageResult {
+export type SaveImageResult = {
   filePath: string;
   fileName: string;
-}
+};
 
 export class ImageStorageService {
   private get imagesDir() {
@@ -33,13 +33,13 @@ export class ImageStorageService {
   private getDateBasedDir(): string {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
     return path.join(this.imagesDir, String(year), month);
   }
 
   saveImage(base64Data: string, metadata: ImageMetadata): SaveImageResult {
     // Remove data URL prefix if present
-    const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, '');
+    const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, "");
 
     // Create date-based directory structure
     const dateDir = this.getDateBasedDir();
@@ -52,7 +52,7 @@ export class ImageStorageService {
     const filePath = path.join(dateDir, fileName);
 
     // Save the main image
-    const imageBuffer = Buffer.from(cleanBase64, 'base64');
+    const imageBuffer = Buffer.from(cleanBase64, "base64");
     fs.writeFileSync(filePath, imageBuffer);
 
     return {
@@ -68,8 +68,8 @@ export class ImageStorageService {
         fs.unlinkSync(filePath);
       }
     } catch (error) {
-      console.error('Error deleting image file:', error);
-      throw new Error('Failed to delete image file');
+      console.error("Error deleting image file:", error);
+      throw new Error("Failed to delete image file");
     }
   }
 
@@ -99,7 +99,7 @@ export class ImageStorageService {
       }
 
       // Check file extension
-      const ext = path.extname(filePath).toLowerCase().replace('.', '');
+      const ext = path.extname(filePath).toLowerCase().replace(".", "");
       return ALLOWED_FORMATS.includes(ext);
     } catch {
       return false;

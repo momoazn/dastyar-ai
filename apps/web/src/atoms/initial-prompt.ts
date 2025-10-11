@@ -1,13 +1,13 @@
-import { atom } from 'jotai';
+import { atom } from "jotai";
 
-interface InitialPrompt {
+type InitialPrompt = {
   prompt: string;
   isUsed: boolean;
   threadId: string;
-}
+};
 
 export const initialPromptAtom = atom<InitialPrompt>({
-  prompt: '',
+  prompt: "",
   isUsed: false,
-  threadId: '',
+  threadId: "",
 });

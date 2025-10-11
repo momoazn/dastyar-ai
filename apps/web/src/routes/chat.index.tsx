@@ -1,11 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
-import { client, orpc, queryClient } from '@/utils/orpc';
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
+import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute('/chat/')({
+export const Route = createFileRoute("/chat/")({
   component: ChatRouteComponent,
 });
 
@@ -22,10 +22,10 @@ function ChatRouteComponent() {
       await queryClient.invalidateQueries({
         queryKey: orpc.threads.list.queryKey(),
       });
-      navigate({ to: '/chat/$id', params: { id: created.id.toString() } });
+      navigate({ to: "/chat/$id", params: { id: created.id.toString() } });
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Failed to create a new chat thread', error);
+      console.error("Failed to create a new chat thread", error);
       toast.error(fa.chat.newChatError);
     } finally {
       setIsCreating(false);

@@ -1,43 +1,43 @@
-import { useLocation, useNavigate } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import {
   useActiveNavItem,
   useCreateThread,
   useTranslationActions,
-} from '@/components/sidebar';
+} from "@/components/sidebar";
 import {
   Button,
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-} from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
-import { ChatThreadsList } from './chat-threads-list';
-import { ImagesSidebar } from './images-sidebar';
-import { AppSidebarHeader, NavigationMenu } from './navigation';
-import { SummariesList } from './summaries-list';
-import { TranslationsList } from './translations-list';
+} from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
+import { ChatThreadsList } from "./chat-threads-list";
+import { ImagesSidebar } from "./images-sidebar";
+import { AppSidebarHeader, NavigationMenu } from "./navigation";
+import { SummariesList } from "./summaries-list";
+import { TranslationsList } from "./translations-list";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeItem = useActiveNavItem();
-  const { createChatThread } = useCreateThread(activeItem?.url === '/chat');
+  const { createChatThread } = useCreateThread(activeItem?.url === "/chat");
   const { handleNewTranslation } = useTranslationActions();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleNew = () => {
-    if (activeItem?.url === '/chat') {
+    if (activeItem?.url === "/chat") {
       createChatThread();
-    } else if (activeItem?.url === '/translation') {
+    } else if (activeItem?.url === "/translation") {
       handleNewTranslation();
-    } else if (location.pathname.startsWith('/image')) {
-      navigate({ to: '/image' });
+    } else if (location.pathname.startsWith("/image")) {
+      navigate({ to: "/image" });
     }
   };
 
   const renderFeatureList = () => {
-    if (!activeItem || location.pathname === '/') {
+    if (!activeItem || location.pathname === "/") {
       return null;
     }
 
@@ -68,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         {/* Feature Lists */}
-        {location.pathname !== '/' && activeItem && (
+        {location.pathname !== "/" && activeItem && (
           <SidebarGroup className="pt-1 pr-1">
             <SidebarGroupContent>
               <div className="mb-2 flex items-center justify-between rounded-md bg-sidebar-accent/40 px-2.5 py-1.5">

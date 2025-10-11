@@ -1,21 +1,21 @@
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/use-auth";
 
 export function LoginForm() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const { login, loginState } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,7 +60,7 @@ export function LoginForm() {
               <AlertDescription>
                 {loginState.error instanceof Error
                   ? loginState.error.message
-                  : 'Login failed'}
+                  : "Login failed"}
               </AlertDescription>
             </Alert>
           )}

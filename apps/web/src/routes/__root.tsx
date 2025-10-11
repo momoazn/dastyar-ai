@@ -1,38 +1,38 @@
-import '@fontsource-variable/vazirmatn';
-import '../index.css';
+import "@fontsource-variable/vazirmatn";
+import "../index.css";
 
-import { createORPCClient } from '@orpc/client';
-import type { RouterClient } from '@orpc/server';
-import { createTanstackQueryUtils } from '@orpc/tanstack-query';
-import type { QueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { createORPCClient } from "@orpc/client";
+import type { RouterClient } from "@orpc/server";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   useRouterState,
-} from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-import { useState } from 'react';
-import { AuthLayout } from '@/components/auth/auth-layout';
-import Loader from '@/components/chat/loader';
-import { Header } from '@/components/header';
-import { AppSidebar } from '@/components/sidebar/app-sidebar';
-import { ThemeProvider } from '@/components/theme-provider';
+} from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { useState } from "react";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import Loader from "@/components/chat/loader";
+import { Header } from "@/components/header";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { ThemeProvider } from "@/components/theme-provider";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/sonner';
-import { fa } from '@/lib/persian-texts';
-import type { appRouter } from '@/server/procedures';
-import { link, type orpc } from '@/utils/orpc';
+} from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { fa } from "@/lib/persian-texts";
+import type { appRouter } from "@/server/procedures";
+import { link, type orpc } from "@/utils/orpc";
 
-export interface RouterAppContext {
+export type RouterAppContext = {
   orpc: typeof orpc;
   queryClient: QueryClient;
-}
+};
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
@@ -40,14 +40,14 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     title: fa.navigation.appTitle,
     meta: [
       {
-        name: 'description',
+        name: "description",
         content: fa.navigation.appTitle,
       },
     ],
     links: [
       {
-        rel: 'icon',
-        href: '/favicon.ico',
+        rel: "icon",
+        href: "/favicon.ico",
       },
     ],
   }),
@@ -76,7 +76,7 @@ function RootComponent() {
           <SidebarProvider
             style={
               {
-                '--sidebar-width': '300px',
+                "--sidebar-width": "300px",
               } as React.CSSProperties
             }
           >

@@ -1,15 +1,15 @@
-import { type LLMModel, type Message, type Prisma, prisma } from '@/database';
-import type { MessageStatus } from '@/utils/constants';
+import { type LLMModel, type Message, type Prisma, prisma } from "@/database";
+import type { MessageStatus } from "@/utils/constants";
 
 export type CreateMessageParams = Omit<
   Message,
-  'id' | 'createdAt' | 'updatedAt' | 'parts' | 'userId'
+  "id" | "createdAt" | "updatedAt" | "parts" | "userId"
 > & {
   parts: Prisma.InputJsonValue;
   userId: number;
 };
 
-export type UpdateMessageParams = CreateMessageParams & Pick<Message, 'id'>;
+export type UpdateMessageParams = CreateMessageParams & Pick<Message, "id">;
 
 /**
  * Saves a single message to the database.
@@ -33,8 +33,8 @@ export async function saveMessage(
 
     return { id: message.id };
   } catch (error) {
-    console.error('Failed to save message:', error);
-    throw new Error('Unable to save message');
+    console.error("Failed to save message:", error);
+    throw new Error("Unable to save message");
   }
 }
 
@@ -72,7 +72,7 @@ export async function updateMessage(
     });
   } catch (error) {
     console.error(`Failed to update message ${params.id}:`, error);
-    throw new Error('Unable to update message');
+    throw new Error("Unable to update message");
   }
 }
 
@@ -102,8 +102,8 @@ export async function saveMessages(
 
     return { count: result.count };
   } catch (error) {
-    console.error('Failed to save messages:', error);
-    throw new Error('Unable to save messages');
+    console.error("Failed to save messages:", error);
+    throw new Error("Unable to save messages");
   }
 }
 
@@ -116,12 +116,12 @@ export async function getMessagesByThread(
   params: { threadId: number } & {
     limit?: number;
     cursor?: string | null;
-    order?: 'asc' | 'desc';
+    order?: "asc" | "desc";
   }
 ): Promise<Message[]> {
   try {
     const limit = params.limit ?? 50;
-    const order = params.order ?? 'desc';
+    const order = params.order ?? "desc";
 
     const messages = await prisma.message.findMany({
       where: { threadId: params.threadId },
@@ -143,7 +143,7 @@ export async function getMessagesByThread(
       `Failed to get messages for thread ${params.threadId}:`,
       error
     );
-    throw new Error('Unable to retrieve messages');
+    throw new Error("Unable to retrieve messages");
   }
 }
 
@@ -159,7 +159,7 @@ export async function deleteMessage(id: number, userId: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete message ${id}:`, error);
-    throw new Error('Unable to delete message');
+    throw new Error("Unable to delete message");
   }
 }
 
@@ -178,7 +178,7 @@ export async function clearThread(
     });
   } catch (error) {
     console.error(`Failed to clear thread ${threadId}:`, error);
-    throw new Error('Unable to clear thread');
+    throw new Error("Unable to clear thread");
   }
 }
 
@@ -195,7 +195,7 @@ export async function getLastUsedModelInThread(
   try {
     const lastMessage = await prisma.message.findFirst({
       where: { threadId, userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: {
         model: true,
       },
@@ -207,7 +207,7 @@ export async function getLastUsedModelInThread(
       `Failed to get last used model for thread ${threadId}:`,
       error
     );
-    throw new Error('Unable to retrieve last used model');
+    throw new Error("Unable to retrieve last used model");
   }
 }
 
@@ -222,7 +222,7 @@ export async function getLastUsedModelGlobal(
   try {
     const lastMessage = await prisma.message.findFirst({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: {
         model: true,
       },
@@ -230,7 +230,7 @@ export async function getLastUsedModelGlobal(
 
     return lastMessage?.model || null;
   } catch (error) {
-    console.error('Failed to get last used model globally:', error);
-    throw new Error('Unable to retrieve last used model');
+    console.error("Failed to get last used model globally:", error);
+    throw new Error("Unable to retrieve last used model");
   }
 }

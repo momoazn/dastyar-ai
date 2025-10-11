@@ -1,5 +1,5 @@
-import { generateObject, generateText, type LanguageModel } from 'ai';
-import { z } from 'zod';
+import { generateObject, generateText, type LanguageModel } from "ai";
+import { z } from "zod";
 import {
   createCodeAssistSession,
   createCodeGeneration,
@@ -12,48 +12,48 @@ import {
   getCodeReviews,
   listCodeAssistSessions,
   updateCodeAssistSession,
-} from '@/repositories/code';
-import { getModelById } from '@/repositories/llm-models';
-import { getProviderForModel } from '@/services';
+} from "@/repositories/code";
+import { getModelById } from "@/repositories/llm-models";
+import { getProviderForModel } from "@/services";
 import {
   extractJsonField,
   extractJsonObject,
   getFirstFieldName,
-} from '@/utils/llm-json';
-import { protectedProcedure, publicProcedure } from './base';
+} from "@/utils/llm-json";
+import { protectedProcedure, publicProcedure } from "./base";
 
 // Code generation schemas
 const CodeGenerationSchema = z.object({
   generatedCode: z
     .string()
     .describe(
-      'The generated code without any markdown formatting or code blocks'
+      "The generated code without any markdown formatting or code blocks"
     ),
   explanation: z
     .string()
     .optional()
-    .describe('Brief explanation of the generated code'),
+    .describe("Brief explanation of the generated code"),
 });
 
 const CodeExplanationSchema = z.object({
-  explanation: z.string().describe('Detailed explanation of the code'),
+  explanation: z.string().describe("Detailed explanation of the code"),
   breakdown: z
     .array(
       z.object({
-        line: z.number().describe('Line number'),
-        description: z.string().describe('Description of what this line does'),
+        line: z.number().describe("Line number"),
+        description: z.string().describe("Description of what this line does"),
       })
     )
     .optional()
-    .describe('Line-by-line breakdown'),
+    .describe("Line-by-line breakdown"),
   concepts: z
     .array(z.string())
     .optional()
-    .describe('Key programming concepts used'),
+    .describe("Key programming concepts used"),
   improvements: z
     .array(z.string())
     .optional()
-    .describe('Potential improvements or best practices'),
+    .describe("Potential improvements or best practices"),
 });
 
 const CodeReviewSchema = z.object({
@@ -61,35 +61,35 @@ const CodeReviewSchema = z.object({
     .number()
     .min(1)
     .max(10)
-    .describe('Overall code quality score from 1-10'),
-  feedback: z.string().describe('Overall feedback about the code'),
+    .describe("Overall code quality score from 1-10"),
+  feedback: z.string().describe("Overall feedback about the code"),
   suggestions: z
     .array(
       z.object({
         type: z.enum([
-          'security',
-          'performance',
-          'style',
-          'maintainability',
-          'bug',
+          "security",
+          "performance",
+          "style",
+          "maintainability",
+          "bug",
         ]),
-        severity: z.enum(['critical', 'high', 'medium', 'low', 'info']),
-        message: z.string().describe('Description of the issue or suggestion'),
-        line: z.number().optional().describe('Line number if applicable'),
-        fix: z.string().optional().describe('Suggested fix or improvement'),
+        severity: z.enum(["critical", "high", "medium", "low", "info"]),
+        message: z.string().describe("Description of the issue or suggestion"),
+        line: z.number().optional().describe("Line number if applicable"),
+        fix: z.string().optional().describe("Suggested fix or improvement"),
       })
     )
-    .describe('List of suggestions and issues found'),
+    .describe("List of suggestions and issues found"),
 });
 
 const CodeDebugSchema = z.object({
-  rootCause: z.string().describe('Analysis of the root cause of the error'),
-  solution: z.string().describe('Step-by-step solution to fix the error'),
-  codeFix: z.string().optional().describe('Corrected code if applicable'),
+  rootCause: z.string().describe("Analysis of the root cause of the error"),
+  solution: z.string().describe("Step-by-step solution to fix the error"),
+  codeFix: z.string().optional().describe("Corrected code if applicable"),
   prevention: z
     .array(z.string())
     .optional()
-    .describe('Tips to prevent similar errors in the future'),
+    .describe("Tips to prevent similar errors in the future"),
 });
 
 // Helper functions for structured output
@@ -107,7 +107,7 @@ const generateWithStructuredOutput = async <T>(
       ollama: { structuredOutputs: false },
       openrouter: { structuredOutputs: false },
     },
-    mode: 'tool',
+    mode: "tool",
     system: systemPrompt,
     schema,
     prompt,
@@ -166,7 +166,7 @@ export const codeProcedures = {
   getSession: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const session = await getCodeAssistSession(input.id, context.user!.id);
+      const session = await getCodeAssistSession(input.id, context.user.id);
       return session;
     }),
 
@@ -185,7 +185,7 @@ export const codeProcedures = {
           title: input.title,
           language: input.language,
         },
-        context.user!.id
+        context.user.id
       );
       return { ok: true } as const;
     }),
@@ -193,7 +193,7 @@ export const codeProcedures = {
   deleteSession: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteCodeAssistSession(input.id, context.user!.id);
+      await deleteCodeAssistSession(input.id, context.user.id);
       return { ok: true } as const;
     }),
 
@@ -207,7 +207,7 @@ export const codeProcedures = {
     .handler(async ({ input, context }) => {
       const session = await createCodeAssistSession({
         ...input,
-        userId: context.user!.id,
+        userId: context.user.id,
       });
       return session;
     }),
@@ -226,25 +226,25 @@ export const codeProcedures = {
     .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} developer. Generate clean, efficient, and well-structured code.`,
-        'IMPORTANT: Return ONLY the code without any markdown formatting, code blocks, or explanations.',
-        'The code should be production-ready and follow best practices.',
-        'Always return a JSON object with the generated code.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
-      ].join('\n');
+        "IMPORTANT: Return ONLY the code without any markdown formatting, code blocks, or explanations.",
+        "The code should be production-ready and follow best practices.",
+        "Always return a JSON object with the generated code.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
+      ].join("\n");
 
       const userPrompt = [
-        input.context ? `Context: ${input.context}` : '',
+        input.context ? `Context: ${input.context}` : "",
         `Task: ${input.prompt}`,
         `Language: ${input.language}`,
       ]
         .filter(Boolean)
-        .join('\n');
+        .join("\n");
 
       let result: z.infer<typeof CodeGenerationSchema> | null = null;
       try {
@@ -256,7 +256,7 @@ export const codeProcedures = {
         );
       } catch {
         console.error(
-          'Could not generate code with structured output, falling back to plain json'
+          "Could not generate code with structured output, falling back to plain json"
         );
       }
 
@@ -264,14 +264,14 @@ export const codeProcedures = {
         const fallbackResult = await generateWithPlainJson(
           providerModel,
           systemPrompt.replace(
-            'Always return a JSON object with the generated code.\nPlease generate only the JSON output. DO NOT provide any preamble.',
+            "Always return a JSON object with the generated code.\nPlease generate only the JSON output. DO NOT provide any preamble.",
             'Respond ONLY with a compact JSON object: {"generatedCode": "..."}.'
           ),
           userPrompt,
           CodeGenerationSchema
         );
         result = {
-          generatedCode: fallbackResult.generatedCode || '',
+          generatedCode: fallbackResult.generatedCode || "",
           explanation: fallbackResult.explanation,
         };
       }
@@ -279,10 +279,10 @@ export const codeProcedures = {
       const generation = await createCodeGeneration({
         sessionId: input.sessionId,
         prompt: input.prompt,
-        generatedCode: (result?.generatedCode as string) || '',
+        generatedCode: (result?.generatedCode as string) || "",
         language: input.language,
         modelId: input.modelId,
-        userId: context.user!.id,
+        userId: context.user.id,
       });
 
       return {
@@ -305,24 +305,24 @@ export const codeProcedures = {
     .handler(async ({ input }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} developer and educator. Provide clear, detailed explanations of code.`,
-        'Explain what the code does, how it works, and any important concepts.',
-        'Always return a JSON object with the explanation.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
-      ].join('\n');
+        "Explain what the code does, how it works, and any important concepts.",
+        "Always return a JSON object with the explanation.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
+      ].join("\n");
 
       const userPrompt = [
         `Language: ${input.language}`,
-        'Code to explain:',
-        '```',
+        "Code to explain:",
+        "```",
         input.code,
-        '```',
-      ].join('\n');
+        "```",
+      ].join("\n");
 
       let result: z.infer<typeof CodeExplanationSchema> | null = null;
       try {
@@ -334,7 +334,7 @@ export const codeProcedures = {
         );
       } catch {
         console.error(
-          'Could not explain code with structured output, falling back to plain json'
+          "Could not explain code with structured output, falling back to plain json"
         );
       }
 
@@ -342,14 +342,14 @@ export const codeProcedures = {
         const fallbackResult = await generateWithPlainJson(
           providerModel,
           systemPrompt.replace(
-            'Always return a JSON object with the explanation.\nPlease generate only the JSON output. DO NOT provide any preamble.',
+            "Always return a JSON object with the explanation.\nPlease generate only the JSON output. DO NOT provide any preamble.",
             'Respond ONLY with a compact JSON object: {"explanation": "..."}.'
           ),
           userPrompt,
           CodeExplanationSchema
         );
         result = {
-          explanation: fallbackResult.explanation || '',
+          explanation: fallbackResult.explanation || "",
           breakdown: fallbackResult.breakdown,
           concepts: fallbackResult.concepts,
           improvements: fallbackResult.improvements,
@@ -372,24 +372,24 @@ export const codeProcedures = {
     .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} code reviewer. Analyze code for security, performance, style, and maintainability issues.`,
-        'Provide constructive feedback and actionable suggestions.',
-        'Always return a JSON object with the review results.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
-      ].join('\n');
+        "Provide constructive feedback and actionable suggestions.",
+        "Always return a JSON object with the review results.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
+      ].join("\n");
 
       const userPrompt = [
         `Language: ${input.language}`,
-        'Code to review:',
-        '```',
+        "Code to review:",
+        "```",
         input.code,
-        '```',
-      ].join('\n');
+        "```",
+      ].join("\n");
 
       let result: z.infer<typeof CodeReviewSchema> | null = null;
       try {
@@ -401,7 +401,7 @@ export const codeProcedures = {
         );
       } catch {
         console.error(
-          'Could not review code with structured output, falling back to plain json'
+          "Could not review code with structured output, falling back to plain json"
         );
       }
 
@@ -409,7 +409,7 @@ export const codeProcedures = {
         const fallbackResult = await generateWithPlainJson(
           providerModel,
           systemPrompt.replace(
-            'Always return a JSON object with the review results.\nPlease generate only the JSON output. DO NOT provide any preamble.',
+            "Always return a JSON object with the review results.\nPlease generate only the JSON output. DO NOT provide any preamble.",
             'Respond ONLY with a compact JSON object: {"feedback": "..."}.'
           ),
           userPrompt,
@@ -417,7 +417,7 @@ export const codeProcedures = {
         );
         result = {
           overallScore: fallbackResult.overallScore || 5,
-          feedback: fallbackResult.feedback || '',
+          feedback: fallbackResult.feedback || "",
           suggestions: fallbackResult.suggestions || [],
         };
       }
@@ -425,7 +425,7 @@ export const codeProcedures = {
       const review = await createCodeReview({
         sessionId: input.sessionId,
         codeInput: input.code,
-        reviewFeedback: (result?.feedback as string) || '',
+        reviewFeedback: (result?.feedback as string) || "",
         suggestions: JSON.stringify(result?.suggestions || []),
         severityLevels: JSON.stringify(
           (result?.suggestions as Array<{ severity: string }>)?.map(
@@ -433,7 +433,7 @@ export const codeProcedures = {
           ) || []
         ),
         modelId: input.modelId,
-        userId: context.user!.id,
+        userId: context.user.id,
       });
 
       return {
@@ -458,25 +458,25 @@ export const codeProcedures = {
     .handler(async ({ input }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} debugger. Analyze errors and provide clear solutions.`,
-        'Identify the root cause and provide step-by-step fixes.',
-        'Always return a JSON object with the debugging analysis.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
-      ].join('\n');
+        "Identify the root cause and provide step-by-step fixes.",
+        "Always return a JSON object with the debugging analysis.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
+      ].join("\n");
 
       const userPrompt = [
         `Language: ${input.language}`,
-        'Code:',
-        '```',
+        "Code:",
+        "```",
         input.code,
-        '```',
+        "```",
         `Error: ${input.error}`,
-      ].join('\n');
+      ].join("\n");
 
       let result: z.infer<typeof CodeDebugSchema> | null = null;
       try {
@@ -488,7 +488,7 @@ export const codeProcedures = {
         );
       } catch {
         console.error(
-          'Could not debug code with structured output, falling back to plain json'
+          "Could not debug code with structured output, falling back to plain json"
         );
       }
 
@@ -496,15 +496,15 @@ export const codeProcedures = {
         const fallbackResult = await generateWithPlainJson(
           providerModel,
           systemPrompt.replace(
-            'Always return a JSON object with the debugging analysis.\nPlease generate only the JSON output. DO NOT provide any preamble.',
+            "Always return a JSON object with the debugging analysis.\nPlease generate only the JSON output. DO NOT provide any preamble.",
             'Respond ONLY with a compact JSON object: {"rootCause": "..."}.'
           ),
           userPrompt,
           CodeDebugSchema
         );
         result = {
-          rootCause: fallbackResult.rootCause || '',
-          solution: fallbackResult.solution || '',
+          rootCause: fallbackResult.rootCause || "",
+          solution: fallbackResult.solution || "",
           codeFix: fallbackResult.codeFix,
           prevention: fallbackResult.prevention,
         };

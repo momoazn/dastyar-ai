@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom } from "jotai";
 
 // Global model atom (for backward compatibility)
 export const modelIdAtom = atom<number | null>(null);

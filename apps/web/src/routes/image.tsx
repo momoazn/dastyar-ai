@@ -1,13 +1,13 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ImagePlus } from 'lucide-react';
-import { useCallback } from 'react';
-import { Button } from '@/components/ui';
-import { useImageThreads } from '@/hooks/use-image-threads';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ImagePlus } from "lucide-react";
+import { useCallback } from "react";
+import { Button } from "@/components/ui";
+import { useImageThreads } from "@/hooks/use-image-threads";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute('/image')({
+export const Route = createFileRoute("/image")({
   component: () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/image')({
       await queryClient.invalidateQueries({
         queryKey: orpc.imageThreads.list.queryKey(),
       });
-      navigate({ to: '/image/$id', params: { id: created.id.toString() } });
+      navigate({ to: "/image/$id", params: { id: created.id.toString() } });
     }, [create, navigate, queryClient]);
 
     return (

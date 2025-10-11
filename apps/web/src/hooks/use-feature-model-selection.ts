@@ -1,18 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { useAtom } from "jotai";
+import { useEffect } from "react";
 import {
   chatModelIdAtom,
   codeModelIdAtom,
   summarizeModelIdAtom,
   translationModelIdAtom,
-} from '@/atoms/model';
-import { orpc } from '@/utils/orpc';
+} from "@/atoms/model";
+import { orpc } from "@/utils/orpc";
 
-interface UseFeatureModelSelectionOptions {
+type UseFeatureModelSelectionOptions = {
   threadId?: number;
   enabled?: boolean;
-}
+};
 
 // Chat model selection hook
 export function useChatModelSelection({

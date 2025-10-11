@@ -1,26 +1,26 @@
-import { z } from 'zod';
-import { touchLastImageAt } from '@/repositories/image-threads';
+import { z } from "zod";
+import { touchLastImageAt } from "@/repositories/image-threads";
 import {
   clearGeneratedImagesByThread,
   createGeneratedImage,
   listGeneratedImagesByThread,
-} from '@/repositories/images';
-import { imageStorageService } from '@/services/image-storage';
+} from "@/repositories/images";
+import { imageStorageService } from "@/services/image-storage";
 import {
   type ImageGenerationParams,
   stableDiffusionService,
-} from '@/services/stable-diffusion';
-import { protectedProcedure, publicProcedure } from './base';
+} from "@/services/stable-diffusion";
+import { protectedProcedure, publicProcedure } from "./base";
 
 const imageGenerationParamsSchema = z.object({
-  prompt: z.string().min(1, 'Prompt is required'),
+  prompt: z.string().min(1, "Prompt is required"),
   steps: z.number().int().min(1).max(150).default(20),
   cfg_scale: z.number().min(1).max(30).default(7.5),
   negative_prompt: z.string().optional(),
-  sampler_name: z.string().default('Euler a'),
+  sampler_name: z.string().default("Euler a"),
   width: z.number().int().min(64).max(2048).default(512),
   height: z.number().int().min(64).max(2048).default(512),
-  threadId: z.number().int().positive('Thread ID is required'),
+  threadId: z.number().int().positive("Thread ID is required"),
 });
 
 export const imageProcedures = {
@@ -41,7 +41,7 @@ export const imageProcedures = {
     .input(imageGenerationParamsSchema)
     .handler(async ({ input, context }) => {
       console.log(
-        'Starting image generation with prompt:',
+        "Starting image generation with prompt:",
         input.prompt.substring(0, 100)
       );
 
@@ -49,7 +49,7 @@ export const imageProcedures = {
       const isAvailable = await stableDiffusionService.checkAvailability();
       if (!isAvailable) {
         throw new Error(
-          'Stable Diffusion service is not available. Please ensure A1111 is running on port 7860.'
+          "Stable Diffusion service is not available. Please ensure A1111 is running on port 7860."
         );
       }
 
@@ -61,7 +61,7 @@ export const imageProcedures = {
 
         // Save image to file system first
         const storageResult = imageStorageService.saveImage(base64Image, {
-          id: 'temp', // Temporary ID, will be updated after database creation
+          id: "temp", // Temporary ID, will be updated after database creation
           prompt: input.prompt,
           negativePrompt: input.negative_prompt,
           settings: {
@@ -87,13 +87,13 @@ export const imageProcedures = {
             height: input.height,
           }),
           threadId: input.threadId,
-          userId: context.user!.id,
+          userId: context.user?.id,
         });
 
         // Update thread's last image timestamp
         await touchLastImageAt(input.threadId);
 
-        console.log('Image generated and saved with ID:', savedImage.id);
+        console.log("Image generated and saved with ID:", savedImage.id);
 
         return {
           id: savedImage.id,
@@ -102,11 +102,11 @@ export const imageProcedures = {
           createdAt: savedImage.createdAt,
         };
       } catch (error) {
-        console.error('Image generation failed:', error);
+        console.error("Image generation failed:", error);
         const errorMessage =
           error instanceof Error
             ? error.message
-            : 'Unknown error during image generation';
+            : "Unknown error during image generation";
         throw new Error(`Image generation failed: ${errorMessage}`);
       }
     }),
@@ -136,7 +136,7 @@ export const imageProcedures = {
     .handler(async ({ input, context }) => {
       const images = await listGeneratedImagesByThread(
         input.threadId,
-        context.user!.id
+        context.user?.id
       );
       console.log(`Listing images for thread ${input.threadId}`);
 
@@ -155,7 +155,7 @@ export const imageProcedures = {
   clearByThread: protectedProcedure
     .input(z.object({ threadId: z.number() }))
     .handler(async ({ input, context }) => {
-      await clearGeneratedImagesByThread(input.threadId, context.user!.id);
+      await clearGeneratedImagesByThread(input.threadId, context.user?.id);
       return { success: true };
     }),
 

@@ -1,15 +1,15 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import OpenAI from 'openai';
-import { env } from '@/config';
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import OpenAI from "openai";
+import { env } from "@/config";
 
 export const lmstudioClient = new OpenAI({
   baseURL: env.LMSTUDIO_BASE_URL,
-  apiKey: '',
+  apiKey: "",
 });
 
 export const lmstudioProvider = createOpenAICompatible({
   baseURL: env.LMSTUDIO_BASE_URL,
-  name: 'lmstudio',
+  name: "lmstudio",
 });
 
 export async function listLmstudioModels() {
@@ -21,11 +21,11 @@ export async function listLmstudioModels() {
     const response = await lmstudioClient.models.list();
     return response.data.map((model) => ({
       name: model.id,
-      provider: 'lmstudio' as const,
+      provider: "lmstudio" as const,
     }));
   } catch (error) {
     console.warn(
-      'LMStudio server not available, skipping LMStudio models:',
+      "LMStudio server not available, skipping LMStudio models:",
       error
     );
     return [];

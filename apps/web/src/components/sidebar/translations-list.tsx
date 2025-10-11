@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useLocation } from '@tanstack/react-router';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
-import { SidebarItem, useTranslationMutations } from './base';
-import { TranslationEmptyState } from './empty-state';
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "@tanstack/react-router";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
+import { SidebarItem, useTranslationMutations } from "./base";
+import { TranslationEmptyState } from "./empty-state";
 
 export function TranslationsList() {
   const location = useLocation();
-  const isTranslationPage = location.pathname.startsWith('/translation');
+  const isTranslationPage = location.pathname.startsWith("/translation");
 
   const mutations = useTranslationMutations();
 
@@ -34,9 +34,9 @@ export function TranslationsList() {
         <SidebarItem
           actions={[
             {
-              type: 'delete',
+              type: "delete",
               onClick: () => handleDelete(translation.id),
-              title: 'حذف',
+              title: "حذف",
             },
           ]}
           key={translation.id}

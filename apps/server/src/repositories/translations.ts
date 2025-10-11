@@ -1,4 +1,4 @@
-import { prisma, type Translation } from '@/database';
+import { prisma, type Translation } from "@/database";
 
 /**
  * Retrieves all translations for a user.
@@ -17,7 +17,7 @@ export function listTranslations(userId: number): Promise<Translation[]> {
  * @returns The created translation record.
  */
 export async function createTranslation(
-  params: Omit<Translation, 'id' | 'createdAt' | 'updatedAt' | 'userId'> & {
+  params: Omit<Translation, "id" | "createdAt" | "updatedAt" | "userId"> & {
     userId: number;
   }
 ): Promise<Translation> {
@@ -36,8 +36,8 @@ export async function createTranslation(
 
     return translation;
   } catch (error) {
-    console.error('Failed to create translation:', error);
-    throw new Error('Unable to create translation');
+    console.error("Failed to create translation:", error);
+    throw new Error("Unable to create translation");
   }
 }
 
@@ -59,7 +59,7 @@ export async function getTranslation(
     return translation;
   } catch (error) {
     console.error(`Failed to get translation ${id}:`, error);
-    throw new Error('Unable to retrieve translation');
+    throw new Error("Unable to retrieve translation");
   }
 }
 
@@ -78,6 +78,6 @@ export async function deleteTranslation(
     });
   } catch (error) {
     console.error(`Failed to delete translation ${id}:`, error);
-    throw new Error('Unable to delete translation');
+    throw new Error("Unable to delete translation");
   }
 }

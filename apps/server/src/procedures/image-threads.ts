@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   createImageThread,
   deleteImageThread,
@@ -6,14 +6,14 @@ import {
   listImageThreads,
   renameImageThread,
   setImageThreadArchived,
-} from '@/repositories/image-threads';
-import { protectedProcedure, publicProcedure } from './base';
+} from "@/repositories/image-threads";
+import { protectedProcedure, publicProcedure } from "./base";
 
 export const imageThreadProcedures = {
   create: protectedProcedure
     .input(z.object({ title: z.string().optional() }).optional())
     .handler(async ({ input, context }) =>
-      createImageThread({ title: input?.title, userId: context.user!.id })
+      createImageThread({ title: input?.title, userId: context.user.id })
     ),
 
   list: publicProcedure.handler(async () =>

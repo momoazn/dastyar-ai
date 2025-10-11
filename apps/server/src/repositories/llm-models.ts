@@ -3,7 +3,7 @@ import {
   type LLMModelProvider,
   type Prisma,
   prisma,
-} from '@/database';
+} from "@/database";
 
 export async function getModelById(id: number): Promise<LLMModel | null> {
   return await prisma.lLMModel.findUnique({

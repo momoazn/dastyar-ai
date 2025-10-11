@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-export interface EditingState {
+export type EditingState = {
   editingId: string | null;
   editingValue: string;
   isEditing: (id: number | string) => boolean;
@@ -8,7 +8,7 @@ export interface EditingState {
   cancelEditing: () => void;
   commitEditing: (id: number | string, newValue: string) => Promise<boolean>;
   setEditingValue: (value: string) => void;
-}
+};
 
 export function useEditingState<
   T extends { id: number | string; title?: string },
@@ -17,18 +17,18 @@ export function useEditingState<
   onRename: (id: number | string, title: string) => Promise<void>
 ): EditingState {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
+  const [editingValue, setEditingValue] = useState("");
 
   const isEditing = (id: number | string) => editingId === String(id);
 
   const startEditing = (id: number | string, currentValue: string) => {
     setEditingId(String(id));
-    setEditingValue(currentValue || '');
+    setEditingValue(currentValue || "");
   };
 
   const cancelEditing = () => {
     setEditingId(null);
-    setEditingValue('');
+    setEditingValue("");
   };
 
   const commitEditing = async (
@@ -37,7 +37,7 @@ export function useEditingState<
   ): Promise<boolean> => {
     const trimmedValue = newValue.trim();
     const currentItem = items.find((item) => String(item.id) === String(id));
-    const currentTitle = currentItem?.title || '';
+    const currentTitle = currentItem?.title || "";
 
     if (!trimmedValue || trimmedValue === currentTitle) {
       cancelEditing();
@@ -49,7 +49,7 @@ export function useEditingState<
       cancelEditing();
       return true;
     } catch (error) {
-      console.error('Failed to rename item:', error);
+      console.error("Failed to rename item:", error);
       return false;
     }
   };

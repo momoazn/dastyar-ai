@@ -1,17 +1,17 @@
-import { createORPCClient } from '@orpc/client';
-import { RPCLink } from '@orpc/client/fetch';
-import type { RouterClient } from '@orpc/server';
-import { createTanstackQueryUtils } from '@orpc/tanstack-query';
-import { QueryCache, QueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import type { appRouter } from '@/server/procedures';
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { RouterClient } from "@orpc/server";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { appRouter } from "@/server/procedures";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       toast.error(`Error: ${error.message}`, {
         action: {
-          label: 'retry',
+          label: "retry",
           onClick: () => {
             queryClient.invalidateQueries();
           },
@@ -24,7 +24,7 @@ export const queryClient = new QueryClient({
 export const link = new RPCLink({
   url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
   headers: () => {
-    const token = localStorage.getItem('auth-token');
+    const token = localStorage.getItem("auth-token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 });

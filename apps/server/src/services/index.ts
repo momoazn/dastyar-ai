@@ -1,7 +1,7 @@
-import type { LanguageModelV2 } from '@ai-sdk/provider';
-import type { ModelProvider } from '@/utils/constants';
-import { listLmstudioModels, lmstudioProvider } from './lmstudio';
-import { listOllamaModels, ollamaProvider } from './ollama';
+import type { LanguageModelV2 } from "@ai-sdk/provider";
+import type { ModelProvider } from "@/utils/constants";
+import { listLmstudioModels, lmstudioProvider } from "./lmstudio";
+import { listOllamaModels, ollamaProvider } from "./ollama";
 
 export async function listAllModels(): Promise<
   { name: string; provider: ModelProvider }[]
@@ -14,16 +14,16 @@ export async function listAllModels(): Promise<
 
 export const getProviderForModel = (
   model: string,
-  modelProvider: ModelProvider = 'ollama'
+  modelProvider: ModelProvider = "ollama"
 ): LanguageModelV2 => {
   if (!modelProvider) {
     return ollamaProvider(model);
   }
 
   switch (modelProvider) {
-    case 'ollama':
+    case "ollama":
       return ollamaProvider(model);
-    case 'lmstudio':
+    case "lmstudio":
       return lmstudioProvider(model);
     default:
       return ollamaProvider(model);
@@ -31,4 +31,4 @@ export const getProviderForModel = (
 };
 
 // Re-export auth functions
-export { validateAuthHeader } from './auth';
+export { validateAuthHeader } from "./auth";

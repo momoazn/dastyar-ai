@@ -1,36 +1,36 @@
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/use-auth";
 
 export function RegisterForm() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [localError, setLocalError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [localError, setLocalError] = useState("");
   const { register, registerState } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError('');
+    setLocalError("");
 
     if (password !== confirmPassword) {
-      setLocalError('رمز عبور و تکرار آن مطابقت ندارند');
+      setLocalError("رمز عبور و تکرار آن مطابقت ندارند");
       return;
     }
 
     if (password.length < 6) {
-      setLocalError('رمز عبور باید حداقل ۶ کاراکتر باشد');
+      setLocalError("رمز عبور باید حداقل ۶ کاراکتر باشد");
       return;
     }
 
@@ -86,7 +86,7 @@ export function RegisterForm() {
                 {localError ||
                   (registerState.error instanceof Error
                     ? registerState.error.message
-                    : 'Registration failed')}
+                    : "Registration failed")}
               </AlertDescription>
             </Alert>
           )}

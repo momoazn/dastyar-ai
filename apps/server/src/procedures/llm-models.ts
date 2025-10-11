@@ -1,12 +1,12 @@
-import z from 'zod';
+import z from "zod";
 import {
   getModelById,
   getModels,
   syncModels,
   updateModel,
-} from '@/repositories/llm-models';
-import { listAllModels } from '@/services';
-import { publicProcedure } from './base';
+} from "@/repositories/llm-models";
+import { listAllModels } from "@/services";
+import { publicProcedure } from "./base";
 
 export const llmModelProcedures = {
   list: publicProcedure
@@ -35,7 +35,7 @@ export const llmModelProcedures = {
         // Return models without syncing
         return await getModels({ isEnabled });
       } catch (error) {
-        console.error('Error listing models:', error);
+        console.error("Error listing models:", error);
         throw error;
       }
     }),
@@ -52,7 +52,7 @@ export const llmModelProcedures = {
         await updateModel(input.id, { isEnabled: true });
         return await getModels({ isEnabled: true });
       } catch (error) {
-        console.error('Error enabling model:', error);
+        console.error("Error enabling model:", error);
         throw error;
       }
     }),
@@ -69,7 +69,7 @@ export const llmModelProcedures = {
         await updateModel(input.id, { isEnabled: false });
         return await getModels({ isEnabled: true });
       } catch (error) {
-        console.error('Error disabling model:', error);
+        console.error("Error disabling model:", error);
         throw error;
       }
     }),

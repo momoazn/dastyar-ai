@@ -1,15 +1,15 @@
-import jwt from 'jsonwebtoken';
-import { env } from '@/config';
-import type { PrismaClient, User } from '@/database';
+import jwt from "jsonwebtoken";
+import { env } from "@/config";
+import type { PrismaClient, User } from "@/database";
 
-export interface AuthResult {
+export type AuthResult = {
   success: boolean;
   user?: User;
   error?: {
     code: string;
     message: string;
   };
-}
+};
 
 /**
  * Internal helper function to validate JWT token and fetch user from database
@@ -37,8 +37,8 @@ async function validateJwtToken(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not found',
+          code: "UNAUTHORIZED",
+          message: "User not found",
         },
       };
     }
@@ -51,8 +51,8 @@ async function validateJwtToken(
     return {
       success: false,
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Invalid token',
+        code: "UNAUTHORIZED",
+        message: "Invalid token",
       },
     };
   }
@@ -69,12 +69,12 @@ export async function validateAuthHeader(
   authHeader: string | undefined,
   prisma: PrismaClient
 ): Promise<AuthResult> {
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return {
       success: false,
       error: {
-        code: 'UNAUTHORIZED',
-        message: 'Missing or invalid authorization header',
+        code: "UNAUTHORIZED",
+        message: "Missing or invalid authorization header",
       },
     };
   }
@@ -95,7 +95,7 @@ export async function validateOptionalAuthHeader(
   authHeader: string | undefined,
   prisma: PrismaClient
 ): Promise<AuthResult> {
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return { success: true }; // No token provided, but that's okay for optional auth
   }
 

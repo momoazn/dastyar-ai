@@ -1,15 +1,15 @@
-import 'dotenv/config';
+import "dotenv/config";
 
-import { createApp } from './app';
-import { ensureDirectoriesExist, env, isProduction } from './config';
+import { createApp } from "./app";
+import { ensureDirectoriesExist, env, isProduction } from "./config";
 
 function start() {
-  console.log('Running app in', isProduction() ? 'production' : 'development');
+  console.log("Running app in", isProduction() ? "production" : "development");
 
   try {
     ensureDirectoriesExist();
   } catch (error) {
-    console.error('Failed to ensure directories exist:', error);
+    console.error("Failed to ensure directories exist:", error);
     process.exit(1);
   }
 
@@ -22,7 +22,7 @@ function start() {
     port: env.PORT,
     hostname: env.HOST,
   });
-  console.log('Server started');
+  console.log("Server started");
 }
 
 start();

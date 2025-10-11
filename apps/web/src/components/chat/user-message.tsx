@@ -1,36 +1,36 @@
-import { Check, Copy } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Streamdown } from 'streamdown';
-import { Button } from '@/components/ui/button';
+import { Check, Copy } from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Streamdown } from "streamdown";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { fa } from '@/lib/persian-texts';
-import { detectTextDirection } from '@/lib/utils';
+} from "@/components/ui/tooltip";
+import { fa } from "@/lib/persian-texts";
+import { detectTextDirection } from "@/lib/utils";
 
-export interface UserMessageProps {
+export type UserMessageProps = {
   message: {
     role: string;
     content?: string;
     created?: string;
   };
-}
+};
 
 export const UserMessage = memo(({ message }: UserMessageProps) => {
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const textDirection = detectTextDirection(message.content || '');
+  const textDirection = detectTextDirection(message.content || "");
 
   const formattedTime = useMemo(() => {
     if (!message.created) {
       return null;
     }
-    return new Date(message.created).toLocaleTimeString('fa-IR', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(message.created).toLocaleTimeString("fa-IR", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }, [message.created]);
 
@@ -55,7 +55,7 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
             <div className="pointer-events-none absolute inset-0 rounded-lg rounded-br-sm bg-gradient-to-br from-white/8 to-black/5" />
 
             <div className="relative z-10 whitespace-pre-wrap break-words">
-              <Streamdown>{message.content || ''}</Streamdown>
+              <Streamdown>{message.content || ""}</Streamdown>
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
                 <TooltipTrigger asChild>
                   <Button
                     className="h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105 hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => handleCopy(message.content || '')}
+                    onClick={() => handleCopy(message.content || "")}
                     size="sm"
                     variant="ghost"
                   >

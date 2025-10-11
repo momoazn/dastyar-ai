@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { Mic, Square } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { Mic, Square } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Button,
   Select,
@@ -9,38 +9,38 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
-} from '@/components/ui';
-import { useTranscription } from '@/hooks/use-transcription';
+} from "@/components/ui";
+import { useTranscription } from "@/hooks/use-transcription";
 import {
   formatElapsed,
   type RecordingError,
   useVoiceRecorder,
-} from '@/hooks/use-voice-recorder';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+} from "@/hooks/use-voice-recorder";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
-interface TranscribeButtonProps {
+type TranscribeButtonProps = {
   onTranscribed: (text: string) => void;
   onError?: (error: string) => void;
-  language?: 'fa' | 'en';
+  language?: "fa" | "en";
   model?: string;
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: "default" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   disabled?: boolean;
   showControls?: boolean;
-  onLanguageChange?: (language: 'fa' | 'en') => void;
+  onLanguageChange?: (language: "fa" | "en") => void;
   onModelChange?: (model: string) => void;
   availableModels?: Array<{ id: string; name: string }>;
-}
+};
 
 export function TranscribeButton({
   onTranscribed,
   onError,
-  language = 'fa',
-  model = '',
-  variant = 'outline',
-  size = 'default',
+  language = "fa",
+  model = "",
+  variant = "outline",
+  size = "default",
   className,
   disabled = false,
   showControls = false,
@@ -102,7 +102,7 @@ export function TranscribeButton({
         } catch {
           // Prevent auto-retry loop by keeping reference to the same file
           processedFileRef.current = recordedFile;
-          onError?.('خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.');
+          onError?.("خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.");
         }
       })();
     }
@@ -111,14 +111,14 @@ export function TranscribeButton({
   // Map recording errors to user-friendly messages
   const mapRecordingError = useCallback((error: RecordingError): string => {
     switch (error) {
-      case 'micAccessDenied':
+      case "micAccessDenied":
         return fa.transcribe.errors.micAccess;
-      case 'noAudioCaptured':
+      case "noAudioCaptured":
         return fa.transcribe.errors.noAudio;
-      case 'fileTooLarge':
-        return 'فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.';
-      case 'initFailed':
-      case 'processingFailed':
+      case "fileTooLarge":
+        return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
+      case "initFailed":
+      case "processingFailed":
         return fa.transcribe.errors.processFailed;
       default:
         return fa.transcribe.errors.processFailed;
@@ -160,13 +160,13 @@ export function TranscribeButton({
         {onLanguageChange && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">
-              {language === 'fa' ? fa.languages.persian : fa.languages.english}
+              {language === "fa" ? fa.languages.persian : fa.languages.english}
             </span>
             <Switch
               aria-label="toggle input audio language"
-              checked={language === 'fa'}
+              checked={language === "fa"}
               onCheckedChange={(checked) =>
-                onLanguageChange?.(checked ? 'fa' : 'en')
+                onLanguageChange?.(checked ? "fa" : "en")
               }
             />
           </div>
@@ -188,19 +188,19 @@ export function TranscribeButton({
 
         {/* Transcribe Button */}
         <Button
-          className={`${className} ${isRecording ? 'animate-pulse' : ''}`}
+          className={`${className} ${isRecording ? "animate-pulse" : ""}`}
           disabled={isButtonDisabled}
           onClick={handleClick}
           size={size}
           title={getButtonText()}
-          variant={isRecording ? 'destructive' : variant}
+          variant={isRecording ? "destructive" : variant}
         >
           {isRecording ? (
             <Square className="size-4" />
           ) : (
             <Mic className="size-4" />
           )}
-          {isRecording && size !== 'icon' && (
+          {isRecording && size !== "icon" && (
             <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
               {formatElapsed(elapsedMs)}
             </span>
@@ -212,15 +212,15 @@ export function TranscribeButton({
 
   return (
     <Button
-      className={`${className} ${isRecording ? 'animate-pulse' : ''}`}
+      className={`${className} ${isRecording ? "animate-pulse" : ""}`}
       disabled={isButtonDisabled}
       onClick={handleClick}
       size={size}
       title={getButtonText()}
-      variant={isRecording ? 'destructive' : variant}
+      variant={isRecording ? "destructive" : variant}
     >
       {isRecording ? <Square className="size-4" /> : <Mic className="size-4" />}
-      {isRecording && size !== 'icon' && (
+      {isRecording && size !== "icon" && (
         <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
           {formatElapsed(elapsedMs)}
         </span>

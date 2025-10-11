@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   clearThread,
   deleteMessage,
   getLastUsedModelGlobal,
   getLastUsedModelInThread,
-} from '@/repositories/messages';
+} from "@/repositories/messages";
 import {
   createThread,
   deleteThread,
@@ -13,9 +13,9 @@ import {
   loadThreadMessages,
   renameThread,
   setArchived,
-} from '@/repositories/threads';
-import { convertDbMessagesToUiMessages } from '@/utils/chat';
-import { protectedProcedure } from './base';
+} from "@/repositories/threads";
+import { convertDbMessagesToUiMessages } from "@/utils/chat";
+import { protectedProcedure } from "./base";
 
 export const threadProcedures = {
   create: protectedProcedure
@@ -23,7 +23,7 @@ export const threadProcedures = {
     .handler(async ({ input, context }) => {
       const created = await createThread({
         title: input?.title,
-        userId: context.user!.id,
+        userId: context.user?.id,
       });
       return created;
     }),
@@ -31,7 +31,7 @@ export const threadProcedures = {
     try {
       const rows = await listThreads({
         includeArchived: false,
-        userId: context.user!.id,
+        userId: context.user?.id,
       });
       return rows;
     } catch {
@@ -41,25 +41,25 @@ export const threadProcedures = {
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const row = await getThread(input.id, context.user!.id);
+      const row = await getThread(input.id, context.user?.id);
       return row;
     }),
   rename: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().min(1) }))
     .handler(async ({ input, context }) => {
-      await renameThread(input.id, input.title, context.user!.id);
+      await renameThread(input.id, input.title, context.user?.id);
       return { ok: true } as const;
     }),
   archive: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await setArchived(input.id, true, context.user!.id);
+      await setArchived(input.id, true, context.user?.id);
       return { ok: true } as const;
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteThread(input.id, context.user!.id);
+      await deleteThread(input.id, context.user?.id);
       return { ok: true } as const;
     }),
 };
@@ -71,13 +71,13 @@ export const messageProcedures = {
         threadId: z.number(),
         limit: z.number().optional(),
         cursor: z.string().optional(),
-        order: z.enum(['asc', 'desc']).optional(),
+        order: z.enum(["asc", "desc"]).optional(),
       })
     )
     .handler(async ({ input, context }) => {
       const messages = await loadThreadMessages(
         input.threadId,
-        context.user!.id
+        context.user?.id
       );
       return convertDbMessagesToUiMessages(messages);
     }),
@@ -86,24 +86,24 @@ export const messageProcedures = {
     .handler(async ({ input, context }) => {
       const lastUsedModel = await getLastUsedModelInThread(
         input.threadId,
-        context.user!.id
+        context.user?.id
       );
       return lastUsedModel;
     }),
   getLastUsedModelGlobal: protectedProcedure.handler(async ({ context }) => {
-    const lastUsedModel = await getLastUsedModelGlobal(context.user!.id);
+    const lastUsedModel = await getLastUsedModelGlobal(context.user?.id);
     return lastUsedModel;
   }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteMessage(input.id, context.user!.id);
+      await deleteMessage(input.id, context.user?.id);
       return { ok: true } as const;
     }),
   clearThread: protectedProcedure
     .input(z.object({ threadId: z.number() }))
     .handler(async ({ input, context }) => {
-      await clearThread(input.threadId, context.user!.id);
+      await clearThread(input.threadId, context.user?.id);
       return { ok: true } as const;
     }),
 };

@@ -1,12 +1,12 @@
 // Main sidebar components
-export * from './app-sidebar';
+export * from "./app-sidebar";
 // Base components and utilities
 export {
   SidebarItem,
   type SidebarItemAction,
   type SidebarItemProps,
-} from './base/sidebar-item';
-export { type EditingState, useEditingState } from './base/use-editing-state';
+} from "./base/sidebar-item";
+export { type EditingState, useEditingState } from "./base/use-editing-state";
 export {
   useArchiveMutation,
   useDeleteMutation,
@@ -15,19 +15,19 @@ export {
   useSummaryMutations,
   useThreadMutations,
   useTranslationMutations,
-} from './base/use-list-mutations';
+} from "./base/use-list-mutations";
 // List components
-export * from './chat-threads-list';
+export * from "./chat-threads-list";
 // Empty states
-export * from './empty-state';
+export * from "./empty-state";
 // Hooks and utilities
-export * from './hooks';
-export * from './images-sidebar';
-export * from './nav';
+export * from "./hooks";
+export * from "./images-sidebar";
+export * from "./nav";
 
 // Navigation components
-export * from './navigation';
+export * from "./navigation";
 // navigation-sidebar removed as unused to simplify structure
-export * from './summaries-list';
-export * from './translations-list';
+export * from "./summaries-list";
+export * from "./translations-list";
 // types.ts removed; types are colocated with modules

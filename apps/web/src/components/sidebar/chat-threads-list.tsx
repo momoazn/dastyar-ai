@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
-import { useLocation, useNavigate } from '@tanstack/react-router';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
-import { SidebarItem, useEditingState, useThreadMutations } from './base';
-import { ChatEmptyState } from './empty-state';
+import { useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
+import { SidebarItem, useEditingState, useThreadMutations } from "./base";
+import { ChatEmptyState } from "./empty-state";
 
 export function ChatThreadsList() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isChatPage = location.pathname.startsWith('/chat');
+  const isChatPage = location.pathname.startsWith("/chat");
 
   const mutations = useThreadMutations();
 
   const redirectToChat = (id: number) => {
     if (location.pathname === `/chat/${id}`) {
-      navigate({ to: '/chat' });
+      navigate({ to: "/chat" });
     }
   };
 
@@ -66,20 +66,20 @@ export function ChatThreadsList() {
         <SidebarItem
           actions={[
             {
-              type: 'edit',
+              type: "edit",
               onClick: () =>
-                editingState.startEditing(thread.id, thread.title || ''),
-              title: 'ویرایش',
+                editingState.startEditing(thread.id, thread.title || ""),
+              title: "ویرایش",
             },
             {
-              type: 'archive',
+              type: "archive",
               onClick: () => handleArchive(thread.id),
-              title: 'بایگانی',
+              title: "بایگانی",
             },
             {
-              type: 'delete',
+              type: "delete",
               onClick: () => handleDelete(thread.id),
-              title: 'حذف',
+              title: "حذف",
             },
           ]}
           editingValue={editingState.editingValue}
@@ -91,7 +91,7 @@ export function ChatThreadsList() {
             editingState.commitEditing(thread.id, editingState.editingValue)
           }
           params={{ id: thread.id.toString() }}
-          title={thread.title || 'بدون عنوان'}
+          title={thread.title || "بدون عنوان"}
           to="/chat/$id"
         />
       ))}

@@ -2,7 +2,7 @@ import {
   CollapsibleContent as RadixCollapsibleContent,
   Root as RadixCollapsibleRoot,
   CollapsibleTrigger as RadixCollapsibleTrigger,
-} from '@radix-ui/react-collapsible';
+} from "@radix-ui/react-collapsible";
 
 function Collapsible({
   ...props

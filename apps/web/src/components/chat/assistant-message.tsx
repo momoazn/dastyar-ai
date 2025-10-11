@@ -7,20 +7,20 @@ import {
   EyeOff,
   Loader2,
   StopCircle,
-} from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Streamdown } from 'streamdown';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Streamdown } from "streamdown";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { fa } from '@/lib/persian-texts';
-import { cn, detectTextDirection } from '@/lib/utils';
+} from "@/components/ui/tooltip";
+import { fa } from "@/lib/persian-texts";
+import { cn, detectTextDirection } from "@/lib/utils";
 
-export interface AssistantMessageProps {
+export type AssistantMessageProps = {
   message: {
     role: string;
     content?: string;
@@ -29,34 +29,34 @@ export interface AssistantMessageProps {
     sent_at?: string;
     reasoning?: string;
   };
-}
+};
 
 export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
   const hasThinking =
-    message.role === 'assistant' && Boolean((message.reasoning || '').trim());
+    message.role === "assistant" && Boolean((message.reasoning || "").trim());
 
   const messageStatus = {
-    isStopped: message.status === 'stopped',
-    isErrored: message.status === 'errored',
+    isStopped: message.status === "stopped",
+    isErrored: message.status === "errored",
     isGenerating:
-      message.status === 'idle' ||
-      message.status === 'streaming' ||
-      message.status === 'reasoning' ||
-      message.status === 'submitted',
+      message.status === "idle" ||
+      message.status === "streaming" ||
+      message.status === "reasoning" ||
+      message.status === "submitted",
   };
 
-  const textDirection = detectTextDirection(message.content || '');
+  const textDirection = detectTextDirection(message.content || "");
 
   const formattedTime = useMemo(() => {
     if (!message.sent_at) {
       return null;
     }
-    return new Date(message.sent_at).toLocaleTimeString('fa-IR', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(message.sent_at).toLocaleTimeString("fa-IR", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }, [message.sent_at]);
 
@@ -82,7 +82,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
             <TooltipTrigger asChild>
               <Button
                 className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
-                onClick={() => handleCopy(message.content || '')}
+                onClick={() => handleCopy(message.content || "")}
                 size="sm"
                 variant="ghost"
               >
@@ -109,7 +109,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{message.model || 'Unknown Model'}</p>
+              <p>{message.model || "Unknown Model"}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -144,23 +144,23 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
                 <Eye className="ml-1 h-3 w-3" />
               ) : (
                 <EyeOff className="ml-1 h-3 w-3" />
-              )}{' '}
-              {collapsed ? 'نمایش' : 'پنهان'}
+              )}{" "}
+              {collapsed ? "نمایش" : "پنهان"}
             </Button>
           </div>
 
           <div
             className={cn(
-              'overflow-hidden transition-all duration-300 ease-in-out',
-              collapsed ? 'max-h-0 opacity-0' : 'max-h-[400px] opacity-100'
+              "overflow-hidden transition-all duration-300 ease-in-out",
+              collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100"
             )}
           >
             <div className="rounded-lg bg-gray-100/30 p-3 dark:bg-gray-800/20">
               <div
                 className="text-justify text-gray-700 text-sm leading-relaxed dark:text-gray-300"
-                dir={detectTextDirection(message.reasoning || '')}
+                dir={detectTextDirection(message.reasoning || "")}
               >
-                <Streamdown>{message.reasoning || ''}</Streamdown>
+                <Streamdown>{message.reasoning || ""}</Streamdown>
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
           <div className="w-full" dir={textDirection}>
             <div className="prose prose-sm max-w-none text-foreground">
               <div className="text-justify leading-relaxed">
-                <Streamdown>{message.content || ''}</Streamdown>
+                <Streamdown>{message.content || ""}</Streamdown>
               </div>
             </div>
 

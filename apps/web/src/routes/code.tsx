@@ -1,11 +1,11 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useSearch,
-} from '@tanstack/react-router';
-import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "@tanstack/react-router";
+import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -16,55 +16,55 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from '@/components/ui';
-import { useCodeModelSelection } from '@/hooks/use-feature-model-selection';
-import { fa } from '@/lib/persian-texts';
-import { orpc, queryClient } from '@/utils/orpc';
+} from "@/components/ui";
+import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
+import { fa } from "@/lib/persian-texts";
+import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute('/code')({
+export const Route = createFileRoute("/code")({
   component: CodeAssistantPage,
 });
 
-type CodeMode = 'generate' | 'explain' | 'review' | 'debug';
+type CodeMode = "generate" | "explain" | "review" | "debug";
 type ProgrammingLanguage =
-  | 'javascript'
-  | 'typescript'
-  | 'python'
-  | 'java'
-  | 'cpp'
-  | 'go'
-  | 'rust';
+  | "javascript"
+  | "typescript"
+  | "python"
+  | "java"
+  | "cpp"
+  | "go"
+  | "rust";
 
 const modes: Array<{
   value: CodeMode;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
-  { value: 'generate', label: fa.codeAssistant.modes.generate, icon: Code },
-  { value: 'explain', label: fa.codeAssistant.modes.explain, icon: FileText },
-  { value: 'review', label: fa.codeAssistant.modes.review, icon: Shield },
-  { value: 'debug', label: fa.codeAssistant.modes.debug, icon: Bug },
+  { value: "generate", label: fa.codeAssistant.modes.generate, icon: Code },
+  { value: "explain", label: fa.codeAssistant.modes.explain, icon: FileText },
+  { value: "review", label: fa.codeAssistant.modes.review, icon: Shield },
+  { value: "debug", label: fa.codeAssistant.modes.debug, icon: Bug },
 ];
 
 const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'go', label: 'Go' },
-  { value: 'rust', label: 'Rust' },
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "python", label: "Python" },
+  { value: "java", label: "Java" },
+  { value: "cpp", label: "C++" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
 ];
 
 function CodeAssistantPage() {
-  const search = useSearch({ from: '/code' }) as { id?: string };
+  const search = useSearch({ from: "/code" }) as { id?: string };
   const navigate = useNavigate();
-  const [mode, setMode] = useState<CodeMode>('generate');
-  const [language, setLanguage] = useState<ProgrammingLanguage>('javascript');
-  const [inputCode, setInputCode] = useState('');
-  const [context, setContext] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [output, setOutput] = useState('');
+  const [mode, setMode] = useState<CodeMode>("generate");
+  const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
+  const [inputCode, setInputCode] = useState("");
+  const [context, setContext] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [output, setOutput] = useState("");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -79,7 +79,7 @@ function CodeAssistantPage() {
   // Load session if ID is provided in URL
   const { data: selectedSession } = useQuery(
     orpc.code.getSession.queryOptions({
-      input: { id: Number.parseInt(search.id || '0', 10) },
+      input: { id: Number.parseInt(search.id || "0", 10) },
       enabled: !!search.id,
     })
   );
@@ -89,7 +89,7 @@ function CodeAssistantPage() {
       onSuccess: (data) => {
         setSessionId(data.id);
         navigate({
-          to: '/code',
+          to: "/code",
           search: { id: data.id },
         });
       },
@@ -99,7 +99,7 @@ function CodeAssistantPage() {
   const generateCodeMutation = useMutation(
     orpc.code.generateCode.mutationOptions({
       onSuccess: (data) => {
-        setOutput(data.generatedCode || '');
+        setOutput(data.generatedCode || "");
         queryClient.invalidateQueries({
           queryKey: orpc.code.getSession.queryKey({
             input: { id: sessionId || 0 },
@@ -112,7 +112,7 @@ function CodeAssistantPage() {
   const explainCodeMutation = useMutation(
     orpc.code.explainCode.mutationOptions({
       onSuccess: (data) => {
-        setOutput(data.explanation || '');
+        setOutput(data.explanation || "");
         queryClient.invalidateQueries({
           queryKey: orpc.code.getSession.queryKey({
             input: { id: sessionId || 0 },
@@ -125,7 +125,7 @@ function CodeAssistantPage() {
   const reviewCodeMutation = useMutation(
     orpc.code.reviewCode.mutationOptions({
       onSuccess: (data) => {
-        const reviewText = `${fa.codeAssistant.review.overallScore}: ${data.overallScore}/10\n\n${data.feedback}\n\n${fa.codeAssistant.review.suggestions}:\n${data.suggestions?.map((s) => `- ${s.message}`).join('\n') || fa.codeAssistant.review.noSuggestions}`;
+        const reviewText = `${fa.codeAssistant.review.overallScore}: ${data.overallScore}/10\n\n${data.feedback}\n\n${fa.codeAssistant.review.suggestions}:\n${data.suggestions?.map((s) => `- ${s.message}`).join("\n") || fa.codeAssistant.review.noSuggestions}`;
         setOutput(reviewText);
         queryClient.invalidateQueries({
           queryKey: orpc.code.getSession.queryKey({
@@ -139,7 +139,7 @@ function CodeAssistantPage() {
   const debugCodeMutation = useMutation(
     orpc.code.debugCode.mutationOptions({
       onSuccess: (data) => {
-        const debugText = `${fa.codeAssistant.debug.rootCause}: ${data.rootCause}\n\n${fa.codeAssistant.debug.solution}: ${data.solution}${data.codeFix ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${data.codeFix}` : ''}${data.prevention ? `\n\n${fa.codeAssistant.debug.prevention}:\n${data.prevention.map((p) => `- ${p}`).join('\n')}` : ''}`;
+        const debugText = `${fa.codeAssistant.debug.rootCause}: ${data.rootCause}\n\n${fa.codeAssistant.debug.solution}: ${data.solution}${data.codeFix ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${data.codeFix}` : ""}${data.prevention ? `\n\n${fa.codeAssistant.debug.prevention}:\n${data.prevention.map((p) => `- ${p}`).join("\n")}` : ""}`;
         setOutput(debugText);
         queryClient.invalidateQueries({
           queryKey: orpc.code.getSession.queryKey({
@@ -166,7 +166,7 @@ function CodeAssistantPage() {
         setTimeout(() => setCopySuccess(false), 2000);
       })
       .catch(() => {
-        console.error('Failed to copy to clipboard');
+        console.error("Failed to copy to clipboard");
       });
   };
 
@@ -192,20 +192,20 @@ function CodeAssistantPage() {
     };
 
     switch (mode) {
-      case 'generate':
+      case "generate":
         generateCodeMutation.mutate({
           ...commonParams,
           prompt: inputCode,
           context: context.trim() || undefined,
         });
         break;
-      case 'explain':
+      case "explain":
         explainCodeMutation.mutate(commonParams);
         break;
-      case 'review':
+      case "review":
         reviewCodeMutation.mutate(commonParams);
         break;
-      case 'debug':
+      case "debug":
         if (!errorMessage.trim()) {
           alert(fa.codeAssistant.messages.errorRequired);
           return;
@@ -234,7 +234,7 @@ function CodeAssistantPage() {
     inputCode.trim() &&
       modelId &&
       !modelsLoading &&
-      (mode !== 'debug' || errorMessage.trim()) &&
+      (mode !== "debug" || errorMessage.trim()) &&
       !currentMutation.isPending &&
       !createSessionMutation.isPending
   );
@@ -314,7 +314,7 @@ function CodeAssistantPage() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? 'Loading models...' : 'Select model'
+                    modelsLoading ? "Loading models..." : "Select model"
                   }
                 />
               </SelectTrigger>
@@ -361,7 +361,7 @@ function CodeAssistantPage() {
       {/* Main Content */}
       <div className="flex-1 space-y-4 p-4">
         {/* Context Input (for generate mode) */}
-        {mode === 'generate' && (
+        {mode === "generate" && (
           <Card className="p-4">
             <div className="mb-2">
               <h3 className="font-medium">{fa.codeAssistant.labels.context}</h3>
@@ -377,7 +377,7 @@ function CodeAssistantPage() {
         )}
 
         {/* Error Input (for debug mode) */}
-        {mode === 'debug' && (
+        {mode === "debug" && (
           <Card className="p-4">
             <div className="mb-2">
               <h3 className="font-medium">
@@ -398,7 +398,7 @@ function CodeAssistantPage() {
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-medium">
-              {mode === 'generate'
+              {mode === "generate"
                 ? fa.codeAssistant.labels.codeRequest
                 : fa.codeAssistant.labels.inputCode}
             </h3>
@@ -413,7 +413,7 @@ function CodeAssistantPage() {
             disabled={currentMutation.isPending}
             onChange={(e) => setInputCode(e.target.value)}
             placeholder={
-              mode === 'generate'
+              mode === "generate"
                 ? fa.codeAssistant.placeholders.codeRequest
                 : fa.codeAssistant.placeholders.inputCode
             }
@@ -427,10 +427,10 @@ function CodeAssistantPage() {
             <h3 className="font-medium">{fa.codeAssistant.labels.result}</h3>
             {output && (
               <Button
-                className={copySuccess ? 'bg-green-600 hover:bg-green-700' : ''}
+                className={copySuccess ? "bg-green-600 hover:bg-green-700" : ""}
                 onClick={handleCopy}
                 size="sm"
-                variant={copySuccess ? 'default' : 'ghost'}
+                variant={copySuccess ? "default" : "ghost"}
               >
                 <Copy className="h-4 w-4" />
                 {copySuccess
@@ -455,7 +455,7 @@ function CodeAssistantPage() {
             <div className="flex items-center gap-2">
               <span>
                 {modelsError
-                  ? 'Failed to load models. Please refresh the page.'
+                  ? "Failed to load models. Please refresh the page."
                   : fa.codeAssistant.messages.processingError}
               </span>
               <span>{fa.codeAssistant.messages.tryAgain}</span>

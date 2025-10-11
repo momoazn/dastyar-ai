@@ -1,22 +1,22 @@
-import { generateObject, generateText, type LanguageModel } from 'ai';
-import { z } from 'zod';
-import { getModelById } from '@/repositories/llm-models';
+import { generateObject, generateText, type LanguageModel } from "ai";
+import { z } from "zod";
+import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
   deleteSummary,
   getSummary,
   listSummaries,
-} from '@/repositories/summaries';
-import { getProviderForModel } from '@/services';
+} from "@/repositories/summaries";
+import { getProviderForModel } from "@/services";
 import {
   type SummaryMode,
   summaryModePrompts,
   summaryModes,
   type Tone,
   tones,
-} from '@/utils/constants';
-import { extractJsonField } from '@/utils/llm-json';
-import { protectedProcedure } from './base';
+} from "@/utils/constants";
+import { extractJsonField } from "@/utils/llm-json";
+import { protectedProcedure } from "./base";
 
 const summarizeWithStructuredOutput = async (
   model: LanguageModel,
@@ -31,13 +31,13 @@ const summarizeWithStructuredOutput = async (
       ollama: { structuredOutputs: false },
       openrouter: { structuredOutputs: false },
     },
-    mode: 'tool',
+    mode: "tool",
     system: systemPrompt,
     schema: z.object({
       summaryText: z
         .string()
         .optional()
-        .describe('Only the summary text. No extra commentary.'),
+        .describe("Only the summary text. No extra commentary."),
     }),
     prompt: inputText,
     temperature: 0.1,
@@ -56,53 +56,53 @@ const summarizeWithPlainJson = async (
     prompt: inputText,
     temperature: 0.1,
   });
-  return extractJsonField(rawOutput, 'summaryText') ?? rawOutput.trim();
+  return extractJsonField(rawOutput, "summaryText") ?? rawOutput.trim();
 };
 
 export const summarizeProcedures = {
   list: protectedProcedure.handler(async ({ context }) => {
-    const rows = await listSummaries(context.user!.id);
+    const rows = await listSummaries(context.user?.id);
     return rows;
   }),
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const row = await getSummary(input.id, context.user!.id);
+      const row = await getSummary(input.id, context.user?.id);
       return row;
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteSummary(input.id, context.user!.id);
+      await deleteSummary(input.id, context.user?.id);
       return { ok: true } as const;
     }),
   create: protectedProcedure
     .input(
       z.object({
         text: z.string().min(1),
-        mode: z.enum(summaryModes).default('standard'),
-        tone: z.enum(tones).default('professional'),
+        mode: z.enum(summaryModes).default("standard"),
+        tone: z.enum(tones).default("professional"),
         modelId: z.number(),
       })
     )
     .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
-        'You are a professional summarizer. Create clear, accurate summaries.',
-        'IMPORTANT: Always summarize in the same language as the source text.',
+        "You are a professional summarizer. Create clear, accurate summaries.",
+        "IMPORTANT: Always summarize in the same language as the source text.",
         summaryModePrompts[input.mode],
         `Use a ${input.tone} tone.`,
-        'Preserve meaning and important details.',
-        'Always return a json object with the summary text.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
+        "Preserve meaning and important details.",
+        "Always return a json object with the summary text.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
       ]
         .filter(Boolean)
-        .join('\n');
+        .join("\n");
 
       let summaryText: string | null = null;
       try {
@@ -114,7 +114,7 @@ export const summarizeProcedures = {
       } catch {
         // ignore and fallback
         console.error(
-          '--- could not summarize with structured output, falling back to plain json'
+          "--- could not summarize with structured output, falling back to plain json"
         );
       }
 
@@ -122,7 +122,7 @@ export const summarizeProcedures = {
         summaryText = await summarizeWithPlainJson(
           providerModel,
           systemPrompt.replace(
-            'Always return a json object with the summary text.\nPlease generate only the JSON output. DO NOT provide any preamble.',
+            "Always return a json object with the summary text.\nPlease generate only the JSON output. DO NOT provide any preamble.",
             'Respond ONLY with a compact JSON object: {"summaryText": "..."}.'
           ),
           input.text
@@ -131,11 +131,11 @@ export const summarizeProcedures = {
 
       const summary = await createSummary({
         sourceText: input.text,
-        summaryText: summaryText || '',
+        summaryText: summaryText || "",
         modelId: input.modelId,
         mode: input.mode as SummaryMode,
         tone: input.tone as Tone,
-        userId: context.user!.id,
+        userId: context.user?.id,
       });
 
       return summary;

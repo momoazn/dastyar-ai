@@ -1,19 +1,19 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import path from 'node:path';
-import { WaveFile } from 'wavefile';
-import { z } from 'zod';
-import { env } from '@/config';
-import { publicProcedure } from './base';
+import { existsSync, readdirSync, statSync } from "node:fs";
+import path from "node:path";
+import { WaveFile } from "wavefile";
+import { z } from "zod";
+import { env } from "@/config";
+import { publicProcedure } from "./base";
 
 // Type for the ASR pipeline
 type ASRPipeline = (
   input: Float32Array,
-  options: { language?: string; task: 'transcribe' }
+  options: { language?: string; task: "transcribe" }
 ) => Promise<{ text: string } | Array<{ text: string }>>;
 
 // Lazy import transformers to avoid initializing native providers at startup
 type OnnxBackendConfig = {
-  backend?: 'wasm' | 'webgpu' | 'cpu';
+  backend?: "wasm" | "webgpu" | "cpu";
   wasm?: { wasmPaths?: string };
 };
 
@@ -39,13 +39,13 @@ const RE_SPLIT_DELIMS = /[-_\s]+/;
 const RE_DIGIT = /[0-9]/;
 const RE_WHISPER_PREFIX = /^whisper-/i;
 const SIZE_ORDER = [
-  'tiny',
-  'base',
-  'small',
-  'medium',
-  'large',
-  'large v2',
-  'large v3',
+  "tiny",
+  "base",
+  "small",
+  "medium",
+  "large",
+  "large v2",
+  "large v3",
 ] as const;
 
 // Cache transcribers by model id to avoid reloading per request
@@ -58,7 +58,7 @@ export const transcribeProcedures = {
       return models;
     }
     // Fallback to allowed remote models only if none installed
-    const allowed = env.WHISPER_MODELS.split(',').map((id) => ({
+    const allowed = env.WHISPER_MODELS.split(",").map((id) => ({
       id,
       name: prettyWhisperName(id),
     }));
@@ -75,12 +75,12 @@ export const transcribeProcedures = {
     .output(z.string())
     .handler(async ({ input }) => {
       const startedAt = Date.now();
-      const language = input.language ?? 'fa';
+      const language = input.language ?? "fa";
       const discovered = discoverInstalledWhisperModels();
       const defaultModel =
         discovered[0]?.id ??
-        env.WHISPER_MODELS.split(',')[0] ??
-        'Xenova/whisper-tiny';
+        env.WHISPER_MODELS.split(",")[0] ??
+        "Xenova/whisper-tiny";
       const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,
@@ -100,11 +100,11 @@ export const transcribeProcedures = {
         try {
           wav = new WaveFile(buffer);
         } catch {
-          throw new Error('فرمت صوت نامعتبر است. لطفاً فایل WAV ارسال کنید.');
+          throw new Error("فرمت صوت نامعتبر است. لطفاً فایل WAV ارسال کنید.");
         }
 
         // Ensure correct format for Whisper
-        wav.toBitDepth('32f');
+        wav.toBitDepth("32f");
         wav.toSampleRate(16_000);
 
         let audioData = wav.getSamples();
@@ -131,7 +131,7 @@ export const transcribeProcedures = {
 
         const result = await transcriber(float32Audio, {
           language: input.language ?? undefined,
-          task: 'transcribe',
+          task: "transcribe",
         });
         const output = Array.isArray(result) ? result[0].text : result.text;
 
@@ -139,7 +139,7 @@ export const transcribeProcedures = {
         console.log(
           `[transcribe] success model=${modelId} lang=${language} took=${tookMs}ms chars=${output?.length ?? 0}`
         );
-        return (output ?? '').trim();
+        return (output ?? "").trim();
       } catch (err) {
         const tookMs = Date.now() - startedAt;
         const message = err instanceof Error ? err.message : String(err);
@@ -149,26 +149,26 @@ export const transcribeProcedures = {
         );
 
         // Map common errors to user-friendly messages
-        if (message.includes('WAV') || message.includes('نامعتبر')) {
+        if (message.includes("WAV") || message.includes("نامعتبر")) {
           throw new Error(
-            'فایل صوتی پشتیبانی نمی‌شود. لطفاً فایل WAV ارسال کنید.'
+            "فایل صوتی پشتیبانی نمی‌شود. لطفاً فایل WAV ارسال کنید."
           );
         }
-        if (message.includes('onnx') || message.includes('NAPI')) {
+        if (message.includes("onnx") || message.includes("NAPI")) {
           throw new Error(
-            'راه‌اندازی موتور تشخیص گفتار با مشکل مواجه شد. سرور را ری‌استارت کنید یا در حالت توسعه از Node استفاده کنید.'
+            "راه‌اندازی موتور تشخیص گفتار با مشکل مواجه شد. سرور را ری‌استارت کنید یا در حالت توسعه از Node استفاده کنید."
           );
         }
         if (
-          message.includes('Failed to fetch') ||
-          message.includes('network')
+          message.includes("Failed to fetch") ||
+          message.includes("network")
         ) {
           throw new Error(
-            'دانلود مدل ناموفق بود. اتصال اینترنت را بررسی کنید.'
+            "دانلود مدل ناموفق بود. اتصال اینترنت را بررسی کنید."
           );
         }
 
-        throw new Error('تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.');
+        throw new Error("تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.");
       }
     }),
 };
@@ -186,36 +186,36 @@ async function getTransformers(): Promise<TransformersModule> {
   // Prefer the web/browser build explicitly to avoid loading onnxruntime-node in Bun
   // Preload the web ONNX runtime to bias the environment toward WASM
   try {
-    await import('onnxruntime-web');
+    await import("onnxruntime-web");
   } catch {
     // ignore if not available; the transformers web build will still work
   }
 
   const mod =
     (await tryImportModule(
-      '@huggingface/transformers/dist/transformers.min.js'
+      "@huggingface/transformers/dist/transformers.min.js"
     )) ||
-    (await tryImportModule('@huggingface/transformers/dist/transformers.js')) ||
-    (await tryImportModule('@huggingface/transformers'));
+    (await tryImportModule("@huggingface/transformers/dist/transformers.js")) ||
+    (await tryImportModule("@huggingface/transformers"));
 
   if (!mod) {
-    throw new Error('Failed to load @huggingface/transformers');
+    throw new Error("Failed to load @huggingface/transformers");
   }
   // Resolve paths next to the compiled binary for offline execution
   const execDir = path.dirname(process.execPath);
-  const localWasmDir = env.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
+  const localWasmDir = env.WHISPER_WASM_DIR || path.join(execDir, "wasm");
   const localModelsDir =
-    env.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+    env.WHISPER_MODELS_DIR || path.join(execDir, "whisper-models");
 
   // Enforce offline mode and local assets
   mod.env.allowRemoteModels = false;
   mod.env.localModelPath = localModelsDir;
   mod.env.cacheDir =
-    env.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
+    env.WHISPER_CACHE_DIR || path.join(execDir, ".whisper-cache");
 
   const onnxBackend = mod.env.backends?.onnx;
   if (onnxBackend) {
-    onnxBackend.backend = 'wasm';
+    onnxBackend.backend = "wasm";
     if (onnxBackend.wasm) {
       // Point to local WASM folder next to the binary
       onnxBackend.wasm.wasmPaths = localWasmDir + path.sep;
@@ -228,14 +228,14 @@ function toTitleCase(s: string): string {
   return s
     .split(RE_SPLIT_DELIMS)
     .map((w) => (RE_DIGIT.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(' ');
+    .join(" ");
 }
 
 function prettyWhisperName(modelId: string): string {
-  const [vendor, model] = modelId.split('/');
+  const [vendor, model] = modelId.split("/");
   const vendorPretty = vendor?.charAt(0).toUpperCase() + vendor?.slice(1);
   const modelPretty = toTitleCase(
-    model?.replace(RE_WHISPER_PREFIX, 'Whisper ') ?? ''
+    model?.replace(RE_WHISPER_PREFIX, "Whisper ") ?? ""
   );
   return `${vendorPretty} ${modelPretty}`.trim();
 }
@@ -243,7 +243,7 @@ function prettyWhisperName(modelId: string): string {
 function discoverInstalledWhisperModels(): ModelInfo[] {
   const execDir = path.dirname(process.execPath);
   const modelsRoot =
-    env.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
+    env.WHISPER_MODELS_DIR || path.join(execDir, "whisper-models");
   if (!existsSync(modelsRoot)) {
     return [];
   }
@@ -260,8 +260,8 @@ function discoverInstalledWhisperModels(): ModelInfo[] {
         continue;
       }
       // Heuristic: consider it installed if it has config.json or onnx dir
-      const hasConfig = existsSync(path.join(modelPath, 'config.json'));
-      const hasOnnx = existsSync(path.join(modelPath, 'onnx'));
+      const hasConfig = existsSync(path.join(modelPath, "config.json"));
+      const hasOnnx = existsSync(path.join(modelPath, "onnx"));
       if (hasConfig || hasOnnx) {
         const id = `${vendor}/${model}`;
         result.push({ id, name: prettyWhisperName(id) });
@@ -272,11 +272,11 @@ function discoverInstalledWhisperModels(): ModelInfo[] {
   result.sort((a, b) => {
     const ai = SIZE_ORDER.findIndex(
       (k) =>
-        a.id.includes(k.replace(' ', '-')) || a.id.includes(k.replace(' ', ''))
+        a.id.includes(k.replace(" ", "-")) || a.id.includes(k.replace(" ", ""))
     );
     const bi = SIZE_ORDER.findIndex(
       (k) =>
-        b.id.includes(k.replace(' ', '-')) || b.id.includes(k.replace(' ', ''))
+        b.id.includes(k.replace(" ", "-")) || b.id.includes(k.replace(" ", ""))
     );
     if (ai !== -1 && bi !== -1 && ai !== bi) {
       return ai - bi;
@@ -290,14 +290,14 @@ function getTranscriber(modelId: string): Promise<ASRPipeline> {
   if (!transcriberCache.has(modelId)) {
     const create = (async () => {
       const { pipeline } = await getTransformers();
-      const p = await pipeline('automatic-speech-recognition', modelId);
+      const p = await pipeline("automatic-speech-recognition", modelId);
       return p;
     })();
     transcriberCache.set(modelId, create);
   }
   const instance = transcriberCache.get(modelId);
   if (!instance) {
-    throw new Error('Failed to initialize ASR transcriber');
+    throw new Error("Failed to initialize ASR transcriber");
   }
   return instance;
 }

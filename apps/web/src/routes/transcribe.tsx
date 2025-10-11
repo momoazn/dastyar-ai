@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   AlertDescription,
@@ -22,30 +22,30 @@ import {
   SelectValue,
   Switch,
   Textarea,
-} from '@/components/ui';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useTranscription } from '@/hooks/use-transcription';
+} from "@/components/ui";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useTranscription } from "@/hooks/use-transcription";
 import {
   formatElapsed,
   type RecordingError,
   useVoiceRecorder,
-} from '@/hooks/use-voice-recorder';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+} from "@/hooks/use-voice-recorder";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
 const MAX_DURATION_MS = 60_000; // 60s visual progress
 
 const getBadgeVariant = (
   isRecording: boolean,
   isTranscribing: boolean
-): 'default' | 'secondary' | 'destructive' | 'outline' => {
+): "default" | "secondary" | "destructive" | "outline" => {
   if (isRecording) {
-    return 'destructive';
+    return "destructive";
   }
   if (isTranscribing) {
-    return 'secondary';
+    return "secondary";
   }
-  return 'outline';
+  return "outline";
 };
 
 const getStatusText = (
@@ -62,15 +62,15 @@ const getStatusText = (
   return fa.transcribe.idle;
 };
 
-export const Route = createFileRoute('/transcribe')({
+export const Route = createFileRoute("/transcribe")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
-  const [result, setResult] = useState('');
-  const [language, setLanguage] = useState<'fa' | 'en'>('fa');
-  const [model, setModel] = useState<string>('Xenova/whisper-tiny');
+  const [result, setResult] = useState("");
+  const [language, setLanguage] = useState<"fa" | "en">("fa");
+  const [model, setModel] = useState<string>("Xenova/whisper-tiny");
 
   const {
     isRecording,
@@ -100,11 +100,11 @@ function RouteComponent() {
   // Map recording errors to localized messages
   const mapRecordingError = (error: RecordingError): string => {
     switch (error) {
-      case 'micAccessDenied':
+      case "micAccessDenied":
         return fa.transcribe.errors.micAccess;
-      case 'noAudioCaptured':
+      case "noAudioCaptured":
         return fa.transcribe.errors.noAudio;
-      case 'fileTooLarge':
+      case "fileTooLarge":
         return fa.transcribe.errors.fileTooLarge;
       default:
         return fa.transcribe.errors.processFailed;
@@ -116,7 +116,7 @@ function RouteComponent() {
     if (recordedFile && recordedFile !== processedFileRef.current) {
       processedFileRef.current = recordedFile;
       setTranscribeError(null);
-      setResult('');
+      setResult("");
       transcribe({ file: recordedFile, language, model }).catch(() => {
         // Keep processed ref pointing to the same file to avoid auto-retry loops
         processedFileRef.current = recordedFile;
@@ -127,7 +127,7 @@ function RouteComponent() {
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
-    setResult('');
+    setResult("");
     await startRecording();
   };
 
@@ -140,7 +140,7 @@ function RouteComponent() {
   };
 
   const handleClear = () => {
-    setResult('');
+    setResult("");
     setTranscribeError(null);
   };
 
@@ -167,15 +167,15 @@ function RouteComponent() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <span>
-                  {language === 'fa'
+                  {language === "fa"
                     ? fa.languages.persian
                     : fa.languages.english}
                 </span>
                 <Switch
                   aria-label="toggle input audio language"
-                  checked={language === 'fa'}
+                  checked={language === "fa"}
                   onCheckedChange={(checked) =>
-                    setLanguage(checked ? 'fa' : 'en')
+                    setLanguage(checked ? "fa" : "en")
                   }
                 />
               </div>
@@ -209,7 +209,7 @@ function RouteComponent() {
                   <LoadingSpinner className="size-4" />
                 ) : (
                   <span
-                    className={`inline-block size-2 rounded-full ${isRecording ? 'bg-red-500' : 'bg-muted-foreground/40'}`}
+                    className={`inline-block size-2 rounded-full ${isRecording ? "bg-red-500" : "bg-muted-foreground/40"}`}
                   />
                 )}
                 <Badge variant={badgeVariant}>{statusText}</Badge>
@@ -226,7 +226,7 @@ function RouteComponent() {
                   disabled={isTranscribing}
                   onClick={isRecording ? stopRecording : handleStartRecording}
                   type="button"
-                  variant={isRecording ? 'destructive' : 'default'}
+                  variant={isRecording ? "destructive" : "default"}
                 >
                   {isRecording ? (
                     <>
@@ -248,8 +248,8 @@ function RouteComponent() {
         <CardFooter className="flex-col gap-3">
           <Textarea
             aria-label={fa.transcribe.title}
-            className={language === 'fa' ? 'rtl text-right' : 'ltr text-left'}
-            dir={language === 'fa' ? 'rtl' : 'ltr'}
+            className={language === "fa" ? "rtl text-right" : "ltr text-left"}
+            dir={language === "fa" ? "rtl" : "ltr"}
             placeholder={fa.transcribe.resultPlaceholder}
             readOnly
             rows={8}
@@ -259,7 +259,7 @@ function RouteComponent() {
             <div className="text-muted-foreground text-xs">
               {isRecording
                 ? `${fa.transcribe.elapsedLabel}: ${formatElapsed(elapsedMs)}`
-                : ''}
+                : ""}
             </div>
             <div className="flex items-center gap-2">
               {recordedFile && !isTranscribing && (

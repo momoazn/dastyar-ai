@@ -1,4 +1,4 @@
-import { type ImageThread, prisma } from '@/database';
+import { type ImageThread, prisma } from "@/database";
 
 /**
  * Creates a new image thread with an optional title.
@@ -6,23 +6,23 @@ import { type ImageThread, prisma } from '@/database';
  * @returns The ID of the created thread.
  */
 export async function createImageThread(
-  params?: Partial<Pick<ImageThread, 'title'>> & { userId: number }
+  params?: Partial<Pick<ImageThread, "title">> & { userId: number }
 ): Promise<{ id: number }> {
   try {
-    const title = (params?.title ?? 'گفتگوی تصویری جدید').trim();
+    const title = (params?.title ?? "گفتگوی تصویری جدید").trim();
 
     const thread = await prisma.imageThread.create({
       data: {
         title,
         isArchived: false,
-        userId: params!.userId,
+        userId: params?.userId,
       },
     });
 
     return { id: thread.id };
   } catch (error) {
-    console.error('Failed to create image thread:', error);
-    throw new Error('Unable to create image thread');
+    console.error("Failed to create image thread:", error);
+    throw new Error("Unable to create image thread");
   }
 }
 
@@ -40,7 +40,7 @@ export async function getImageThread(id: number): Promise<ImageThread | null> {
     return thread;
   } catch (error) {
     console.error(`Failed to get image thread ${id}:`, error);
-    throw new Error('Unable to retrieve image thread');
+    throw new Error("Unable to retrieve image thread");
   }
 }
 
@@ -56,7 +56,7 @@ export function listImageThreads(options?: {
 
   return prisma.imageThread.findMany({
     where: includeArchived ? {} : { isArchived: false },
-    orderBy: [{ lastImageAt: 'desc' }, { updatedAt: 'desc' }],
+    orderBy: [{ lastImageAt: "desc" }, { updatedAt: "desc" }],
   });
 }
 
@@ -76,7 +76,7 @@ export async function renameImageThread(
     });
   } catch (error) {
     console.error(`Failed to rename image thread ${id}:`, error);
-    throw new Error('Unable to rename image thread');
+    throw new Error("Unable to rename image thread");
   }
 }
 
@@ -99,7 +99,7 @@ export async function setImageThreadArchived(
       `Failed to set archived status for image thread ${id}:`,
       error
     );
-    throw new Error('Unable to update image thread archived status');
+    throw new Error("Unable to update image thread archived status");
   }
 }
 
@@ -114,7 +114,7 @@ export async function deleteImageThread(id: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete image thread ${id}:`, error);
-    throw new Error('Unable to delete image thread');
+    throw new Error("Unable to delete image thread");
   }
 }
 
@@ -137,6 +137,6 @@ export async function touchLastImageAt(
       `Failed to update image thread ${threadId} on new image:`,
       error
     );
-    throw new Error('Unable to update image thread timestamp');
+    throw new Error("Unable to update image thread timestamp");
   }
 }

@@ -1,10 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { client, orpc } from '@/utils/orpc';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { client, orpc } from "@/utils/orpc";
 
-export interface ListMutationsConfig {
+export type ListMutationsConfig = {
   listQueryKey: readonly unknown[];
   refetchOnSuccess?: boolean;
-}
+};
 
 export interface DeleteMutationConfig extends ListMutationsConfig {
   deleteFn: (id: number) => Promise<unknown>;

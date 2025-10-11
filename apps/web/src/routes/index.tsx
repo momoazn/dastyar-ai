@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Code,
   FileText,
@@ -6,11 +6,11 @@ import {
   MessageCircle,
   MessageSquare,
   Mic,
-} from 'lucide-react';
-import { Button, Card } from '@/components/ui';
-import { fa } from '@/lib/persian-texts';
+} from "lucide-react";
+import { Button, Card } from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: HomeComponent,
 });
 
@@ -19,43 +19,43 @@ const features = [
     icon: <MessageSquare className="h-12 w-12" />,
     title: fa.index.chatTitle,
     description: fa.index.chatDescription,
-    link: '/chat',
-    color: 'text-primary',
+    link: "/chat",
+    color: "text-primary",
   },
   {
     icon: <MessageCircle className="h-12 w-12" />,
     title: fa.index.translationTitle,
     description: fa.index.translationDescription,
-    link: '/translation',
-    color: 'text-primary',
+    link: "/translation",
+    color: "text-primary",
   },
   {
     icon: <FileText className="h-12 w-12" />,
     title: fa.summarize.title,
     description: fa.summarize.description,
-    link: '/summarize',
-    color: 'text-blue-600',
+    link: "/summarize",
+    color: "text-blue-600",
   },
   {
     icon: <Mic className="h-12 w-12" />,
     title: fa.transcribe.title,
     description: fa.transcribe.description,
-    link: '/transcribe',
-    color: 'text-green-600',
+    link: "/transcribe",
+    color: "text-green-600",
   },
   {
     icon: <Image className="h-12 w-12" />,
     title: fa.index.imageTitle,
     description: fa.index.imageDescription,
-    link: '/image',
-    color: 'text-accent-foreground',
+    link: "/image",
+    color: "text-accent-foreground",
   },
   {
     icon: <Code className="h-12 w-12" />,
     title: fa.index.codeTitle,
     description: fa.index.codeDescription,
-    link: '/code',
-    color: 'text-purple-600',
+    link: "/code",
+    color: "text-purple-600",
   },
 ] as const;
 
@@ -97,7 +97,7 @@ function HomeComponent() {
                   key={feature.link}
                   style={{
                     animationDelay: `${index * 150}ms`,
-                    animationFillMode: 'both',
+                    animationFillMode: "both",
                   }}
                 >
                   {/* Animated gradient overlay */}

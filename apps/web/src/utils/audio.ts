@@ -33,13 +33,13 @@ const encodeWAV = (
   const view = new DataView(buffer);
 
   // RIFF identifier
-  writeString(view, 0, 'RIFF');
+  writeString(view, 0, "RIFF");
   // file length - 8
   view.setUint32(4, 36 + dataSize, true);
   // RIFF type
-  writeString(view, 8, 'WAVE');
+  writeString(view, 8, "WAVE");
   // format chunk identifier
-  writeString(view, 12, 'fmt ');
+  writeString(view, 12, "fmt ");
   // format chunk length
   view.setUint32(16, 16, true); // PCM
   // sample format (raw)
@@ -55,7 +55,7 @@ const encodeWAV = (
   // bits per sample
   view.setUint16(34, bytesPerSample * 8, true);
   // data chunk identifier
-  writeString(view, 36, 'data');
+  writeString(view, 36, "data");
   // data chunk length
   view.setUint32(40, dataSize, true);
 
@@ -76,7 +76,7 @@ export const fileToWav16kMono = async (file: File): Promise<File> => {
     (window as unknown as { webkitAudioContext?: typeof AudioContext })
       .webkitAudioContext;
   if (!AudioCtxCtor) {
-    throw new Error('AudioContext is not supported in this browser');
+    throw new Error("AudioContext is not supported in this browser");
   }
   const audioCtx = new AudioCtxCtor();
   const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
@@ -117,9 +117,9 @@ export const fileToWav16kMono = async (file: File): Promise<File> => {
   const pcm16 = floatTo16BitPCM(samples);
   const wavBuffer = encodeWAV(pcm16, targetSampleRate, 1);
 
-  const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+  const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
   const wavFile = new File([wavBlob], `recording-${Date.now()}.wav`, {
-    type: 'audio/wav',
+    type: "audio/wav",
   });
 
   return wavFile;

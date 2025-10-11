@@ -1,19 +1,19 @@
-import { memo, useMemo } from 'react';
-import { AssistantMessage } from '@/components/chat/assistant-message';
-import { UserMessage } from '@/components/chat/user-message';
-import type { MyUIMessage } from '@/server/utils/chat';
+import { memo, useMemo } from "react";
+import { AssistantMessage } from "@/components/chat/assistant-message";
+import { UserMessage } from "@/components/chat/user-message";
+import type { MyUIMessage } from "@/server/utils/chat";
 
 export type MessageGenerationStatus =
-  | 'idle'
-  | 'streaming'
-  | 'reasoning'
-  | 'submitted'
-  | 'stopped'
-  | 'errored'
+  | "idle"
+  | "streaming"
+  | "reasoning"
+  | "submitted"
+  | "stopped"
+  | "errored"
   | undefined;
 
 export type MessageViewModel = {
-  role: MyUIMessage['role'];
+  role: MyUIMessage["role"];
   content?: string;
   reasoning?: string;
   model?: string;
@@ -22,21 +22,21 @@ export type MessageViewModel = {
   created?: string;
 };
 
-export interface MessageProps {
+export type MessageProps = {
   message: MyUIMessage;
-}
+};
 
 export const toMessageViewModel = (message: MyUIMessage): MessageViewModel => {
-  let content = '';
-  let reasoning = '';
+  let content = "";
+  let reasoning = "";
   for (const part of (message.parts ?? []) as {
     type: string;
     text?: string;
   }[]) {
-    if (part.type === 'text' && part.text) {
+    if (part.type === "text" && part.text) {
       content += part.text;
     }
-    if (part.type === 'reasoning' && part.text) {
+    if (part.type === "reasoning" && part.text) {
       reasoning += part.text;
     }
   }
@@ -51,7 +51,7 @@ export const toMessageViewModel = (message: MyUIMessage): MessageViewModel => {
 export const Message = memo(({ message }: MessageProps) => {
   const normalized = useMemo(() => toMessageViewModel(message), [message]);
 
-  const isUser = normalized.role === 'user';
+  const isUser = normalized.role === "user";
   return isUser ? (
     <UserMessage message={normalized} />
   ) : (

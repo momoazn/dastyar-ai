@@ -1,21 +1,21 @@
-import { generateObject, generateText, type LanguageModel } from 'ai';
-import { z } from 'zod';
-import { getModelById } from '@/repositories/llm-models';
+import { generateObject, generateText, type LanguageModel } from "ai";
+import { z } from "zod";
+import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
   deleteTranslation,
   getTranslation,
   listTranslations,
-} from '@/repositories/translations';
-import { getProviderForModel } from '@/services';
+} from "@/repositories/translations";
+import { getProviderForModel } from "@/services";
 import {
   type LanguageCode,
   languageCodes,
   type Tone,
   tones,
-} from '@/utils/constants';
-import { extractJsonField } from '@/utils/llm-json';
-import { protectedProcedure } from './base';
+} from "@/utils/constants";
+import { extractJsonField } from "@/utils/llm-json";
+import { protectedProcedure } from "./base";
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,
@@ -30,13 +30,13 @@ const translateWithStructuredOutput = async (
       ollama: { structuredOutputs: false },
       openrouter: { structuredOutputs: false },
     },
-    mode: 'tool',
+    mode: "tool",
     system: systemPrompt,
     schema: z.object({
       translatedText: z
         .string()
         .optional()
-        .describe('Only the translated text. No extra commentary.'),
+        .describe("Only the translated text. No extra commentary."),
     }),
     prompt: inputText,
   });
@@ -53,24 +53,24 @@ const translateWithPlainJson = async (
     system: systemPrompt,
     prompt: inputText,
   });
-  return extractJsonField(rawOutput, 'translatedText') ?? rawOutput.trim();
+  return extractJsonField(rawOutput, "translatedText") ?? rawOutput.trim();
 };
 
 export const translationProcedures = {
   list: protectedProcedure.handler(async ({ context }) => {
-    const rows = await listTranslations(context.user!.id);
+    const rows = await listTranslations(context.user?.id);
     return rows;
   }),
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const row = await getTranslation(input.id, context.user!.id);
+      const row = await getTranslation(input.id, context.user?.id);
       return row;
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteTranslation(input.id, context.user!.id);
+      await deleteTranslation(input.id, context.user?.id);
       return { ok: true } as const;
     }),
   translate: protectedProcedure
@@ -86,7 +86,7 @@ export const translationProcedures = {
     .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error('Model not found');
+        throw new Error("Model not found");
       }
       const providerModel = getProviderForModel(model.name, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
@@ -95,12 +95,12 @@ export const translationProcedures = {
       const systemPrompt = [
         `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
         `Use a ${input.tone} tone.`,
-        'Preserve meaning and formatting. Return only the translated text without extra commentary.',
-        'Always return a json object with the translated text.',
-        'Please generate only the JSON output. DO NOT provide any preamble.',
+        "Preserve meaning and formatting. Return only the translated text without extra commentary.",
+        "Always return a json object with the translated text.",
+        "Please generate only the JSON output. DO NOT provide any preamble.",
       ]
         .filter(Boolean)
-        .join('\n');
+        .join("\n");
 
       let translatedText: string | null = null;
       try {
@@ -112,7 +112,7 @@ export const translationProcedures = {
       } catch {
         // ignore and fallback
         console.error(
-          '--- could not translate with structured output, falling back to plain json'
+          "--- could not translate with structured output, falling back to plain json"
         );
       }
 
@@ -122,11 +122,11 @@ export const translationProcedures = {
           [
             `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
             `Use a ${input.tone} tone.`,
-            'Preserve meaning and formatting.',
+            "Preserve meaning and formatting.",
             'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
           ]
             .filter(Boolean)
-            .join('\n'),
+            .join("\n"),
           input.text
         );
       }
@@ -138,7 +138,7 @@ export const translationProcedures = {
         sourceLanguage: input.sourceLanguage,
         targetLanguage: input.targetLanguage,
         tone: (input.tone as Tone) ?? null,
-        userId: context.user!.id,
+        userId: context.user?.id,
       });
       return created;
     }),

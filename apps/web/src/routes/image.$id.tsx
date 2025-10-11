@@ -1,17 +1,17 @@
-import { createFileRoute, useParams } from '@tanstack/react-router';
-import { Download, ImagePlus, RotateCcw, Settings2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { createFileRoute, useParams } from "@tanstack/react-router";
+import { Download, ImagePlus, RotateCcw, Settings2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from '@/components/ai-elements/conversation';
-import { Loader } from '@/components/ai-elements/loader';
+} from "@/components/ai-elements/conversation";
+import { Loader } from "@/components/ai-elements/loader";
 import {
   Message as AIMsg,
   MessageContent as AIMsgContent,
-} from '@/components/ai-elements/message';
+} from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputButton,
@@ -19,8 +19,8 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-} from '@/components/ai-elements/prompt-input';
-import { TranscribeButton } from '@/components/transcribe-button';
+} from "@/components/ai-elements/prompt-input";
+import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
   AlertDescription,
@@ -36,46 +36,46 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui';
-import type { ImageGenerationParams } from '@/hooks/use-image-generation';
-import { useImageGeneration } from '@/hooks/use-image-generation';
-import { useImageThreads } from '@/hooks/use-image-threads';
-import { detectTextDirection } from '@/lib/utils';
+} from "@/components/ui";
+import type { ImageGenerationParams } from "@/hooks/use-image-generation";
+import { useImageGeneration } from "@/hooks/use-image-generation";
+import { useImageThreads } from "@/hooks/use-image-threads";
+import { detectTextDirection } from "@/lib/utils";
 
 const DEFAULT_NEGATIVE_PROMPT =
-  'blurry, low quality, distorted, deformed, extra limbs, bad anatomy, text, watermark, logo, grainy, out of frame, ugly, poorly drawn, unnatural lighting';
+  "blurry, low quality, distorted, deformed, extra limbs, bad anatomy, text, watermark, logo, grainy, out of frame, ugly, poorly drawn, unnatural lighting";
 
-const DEFAULT_SETTINGS: Omit<ImageGenerationParams, 'prompt'> = {
+const DEFAULT_SETTINGS: Omit<ImageGenerationParams, "prompt"> = {
   steps: 20,
   cfg_scale: 7.5,
   negative_prompt: DEFAULT_NEGATIVE_PROMPT,
-  sampler_name: 'Euler a',
+  sampler_name: "Euler a",
   width: 512,
   height: 512,
 };
 
 const IMAGE_SIZES = [
-  { label: '512x512', value: 512 },
-  { label: '768x768', value: 768 },
-  { label: '1024x1024', value: 1024 },
-  { label: '512x768', value: '512x768' },
-  { label: '768x512', value: '768x512' },
+  { label: "512x512", value: 512 },
+  { label: "768x768", value: 768 },
+  { label: "1024x1024", value: 1024 },
+  { label: "512x768", value: "512x768" },
+  { label: "768x512", value: "768x512" },
 ] as const;
 
-export const Route = createFileRoute('/image/$id')({
+export const Route = createFileRoute("/image/$id")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { id: threadId } = useParams({ from: '/image/$id' });
+  const { id: threadId } = useParams({ from: "/image/$id" });
   const numericThreadId = Number(threadId);
 
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
   const [settings, setSettings] =
-    useState<Omit<ImageGenerationParams, 'prompt'>>(DEFAULT_SETTINGS);
+    useState<Omit<ImageGenerationParams, "prompt">>(DEFAULT_SETTINGS);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
-  const [transcribeModel, setTranscribeModel] = useState('');
+  const [transcribeModel, setTranscribeModel] = useState("");
 
   const { rename } = useImageThreads();
 
@@ -92,12 +92,12 @@ function RouteComponent() {
   const handleSubmit = useCallback(
     async (promptText: string, generationSettings: ImageGenerationParams) => {
       if (!promptText.trim()) {
-        toast.error('لطفاً توضیحات تصویر را وارد کنید');
+        toast.error("لطفاً توضیحات تصویر را وارد کنید");
         return;
       }
 
       if (!isServiceAvailable) {
-        toast.error('سرویس Stable Diffusion در دسترس نیست');
+        toast.error("سرویس Stable Diffusion در دسترس نیست");
         return;
       }
 
@@ -128,8 +128,8 @@ function RouteComponent() {
   );
 
   const handleSizeChange = (value: string) => {
-    if (value.includes('x')) {
-      const [width, height] = value.split('x').map(Number);
+    if (value.includes("x")) {
+      const [width, height] = value.split("x").map(Number);
       setSettings((prev) => ({ ...prev, width, height }));
     } else {
       const size = Number(value);
@@ -148,13 +148,15 @@ function RouteComponent() {
     setSettings(DEFAULT_SETTINGS);
   };
 
-  const orderedImages = useMemo(() => {
-    return [...images].sort((a, b) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
-      return aTime - bTime;
-    });
-  }, [images]);
+  const orderedImages = useMemo(
+    () =>
+      [...images].sort((a, b) => {
+        const aTime = new Date(a.createdAt).getTime();
+        const bTime = new Date(b.createdAt).getTime();
+        return aTime - bTime;
+      }),
+    [images]
+  );
 
   if (Number.isNaN(numericThreadId) || numericThreadId <= 0) {
     return (
@@ -285,7 +287,7 @@ function RouteComponent() {
             }}
           >
             <PromptInputTextarea
-              dir={prompt ? detectTextDirection(prompt) : 'rtl'}
+              dir={prompt ? detectTextDirection(prompt) : "rtl"}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="توضیحات تصویر خود را وارد کنید..."
               value={prompt}
@@ -337,8 +339,8 @@ function RouteComponent() {
                   disabled={
                     isGenerating || !prompt.trim() || !isServiceAvailable
                   }
-                  status={isGenerating ? 'submitted' : undefined}
-                  variant={isGenerating ? 'destructive' : 'default'}
+                  status={isGenerating ? "submitted" : undefined}
+                  variant={isGenerating ? "destructive" : "default"}
                 />
               </div>
             </PromptInputToolbar>
@@ -369,7 +371,7 @@ function RouteComponent() {
                     dir={
                       negativePrompt
                         ? detectTextDirection(negativePrompt)
-                        : 'rtl'
+                        : "rtl"
                     }
                     id="negative-prompt-input"
                     onChange={(e) => setNegativePrompt(e.target.value)}

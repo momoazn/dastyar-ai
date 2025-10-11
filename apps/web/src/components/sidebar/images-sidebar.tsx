@@ -1,12 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { useLocation } from '@tanstack/react-router';
-import { orpc } from '@/utils/orpc';
-import { SidebarItem, useImageThreadMutations } from './base';
-import { ImageEmptyState } from './empty-state';
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "@tanstack/react-router";
+import { orpc } from "@/utils/orpc";
+import { SidebarItem, useImageThreadMutations } from "./base";
+import { ImageEmptyState } from "./empty-state";
 
 export function ImagesSidebar() {
   const location = useLocation();
-  const isImagePage = location.pathname.startsWith('/image');
+  const isImagePage = location.pathname.startsWith("/image");
 
   const mutations = useImageThreadMutations();
 
@@ -21,15 +21,15 @@ export function ImagesSidebar() {
 
   const formatDate = (dateOrStr: string | Date | null) => {
     if (!dateOrStr) {
-      return '';
+      return "";
     }
-    const d = typeof dateOrStr === 'string' ? new Date(dateOrStr) : dateOrStr;
-    return d.toLocaleDateString('fa-IR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const d = typeof dateOrStr === "string" ? new Date(dateOrStr) : dateOrStr;
+    return d.toLocaleDateString("fa-IR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -57,9 +57,9 @@ export function ImagesSidebar() {
         <SidebarItem
           actions={[
             {
-              type: 'delete',
+              type: "delete",
               onClick: () => handleDelete(thread.id),
-              title: 'حذف',
+              title: "حذف",
             },
           ]}
           date={formatDate(thread.lastImageAt ?? thread.updatedAt)}

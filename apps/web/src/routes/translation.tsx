@@ -1,19 +1,19 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useSearch,
-} from '@tanstack/react-router';
+} from "@tanstack/react-router";
 import {
   ArrowLeftRightIcon,
   ClipboardIcon,
   SendIcon,
   TriangleAlert,
-} from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { TranscribeButton } from '@/components/transcribe-button';
-import type { LanguageCode, ToneOption } from '@/components/translation/types';
-import { languages, tones } from '@/components/translation/types';
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { TranscribeButton } from "@/components/transcribe-button";
+import type { LanguageCode, ToneOption } from "@/components/translation/types";
+import { languages, tones } from "@/components/translation/types";
 import {
   Alert,
   AlertDescription,
@@ -26,28 +26,28 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from '@/components/ui';
-import { useTranslationModelSelection } from '@/hooks/use-feature-model-selection';
-import { fa } from '@/lib/persian-texts';
-import { detectTextDirection } from '@/lib/utils';
-import { orpc, queryClient } from '@/utils/orpc';
+} from "@/components/ui";
+import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
+import { fa } from "@/lib/persian-texts";
+import { detectTextDirection } from "@/lib/utils";
+import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute('/translation')({
+export const Route = createFileRoute("/translation")({
   component: TranslationPage,
 });
 
 function TranslationPage() {
-  const search = useSearch({ from: '/translation' }) as { id?: string };
+  const search = useSearch({ from: "/translation" }) as { id?: string };
   const navigate = useNavigate();
-  const [sourceText, setSourceText] = useState('');
-  const [translatedText, setTranslatedText] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
-  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('fa');
-  const [tone, setTone] = useState<ToneOption>('formal');
-  const [transcribeModel, setTranscribeModel] = useState('');
+  const [sourceText, setSourceText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
+  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>("en");
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("fa");
+  const [tone, setTone] = useState<ToneOption>("formal");
+  const [transcribeModel, setTranscribeModel] = useState("");
 
   // Infer transcribe language from source language
-  const transcribeLanguage = sourceLanguage === 'fa' ? 'fa' : 'en';
+  const transcribeLanguage = sourceLanguage === "fa" ? "fa" : "en";
 
   const {
     modelId,
@@ -71,10 +71,10 @@ function TranslationPage() {
         queryClient.invalidateQueries({
           queryKey: orpc.translations.list.queryKey(),
         });
-        setTranslatedText(data.translatedText ?? '');
+        setTranslatedText(data.translatedText ?? "");
         // Update URL to reflect the new translation
         navigate({
-          to: '/translation',
+          to: "/translation",
           search: { id: data.id },
         });
       },
@@ -84,11 +84,11 @@ function TranslationPage() {
   // Load translation data when selectedTranslation changes
   useEffect(() => {
     if (selectedTranslation) {
-      setSourceText(selectedTranslation.sourceText || '');
-      setTranslatedText(selectedTranslation.translatedText || '');
+      setSourceText(selectedTranslation.sourceText || "");
+      setTranslatedText(selectedTranslation.translatedText || "");
       setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
       setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
-      setTone((selectedTranslation.tone as ToneOption) || 'formal');
+      setTone((selectedTranslation.tone as ToneOption) || "formal");
       // Model selection is now handled by useModelSelection hook
     }
   }, [selectedTranslation]);
@@ -97,7 +97,7 @@ function TranslationPage() {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
     setSourceText(translatedText);
-    setTranslatedText('');
+    setTranslatedText("");
   }, [sourceLanguage, targetLanguage, translatedText]);
 
   const handleCopy = async () => {
@@ -109,7 +109,7 @@ function TranslationPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       translateMutation.mutate({
         text: sourceText,
@@ -223,7 +223,7 @@ function TranslationPage() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? 'Loading models...' : 'Select model'
+                    modelsLoading ? "Loading models..." : "Select model"
                   }
                 />
               </SelectTrigger>
@@ -265,7 +265,7 @@ function TranslationPage() {
             <AlertTitle>خطا</AlertTitle>
             <AlertDescription>
               {modelsError
-                ? 'Failed to load models. Please refresh the page.'
+                ? "Failed to load models. Please refresh the page."
                 : translateMutation.error?.message}
             </AlertDescription>
           </Alert>
@@ -285,7 +285,7 @@ function TranslationPage() {
                     model={transcribeModel}
                     onError={(error) => {
                       // Handle transcription error - could show toast or alert
-                      console.error('Transcription error:', error);
+                      console.error("Transcription error:", error);
                     }}
                     onModelChange={setTranscribeModel}
                     onTranscribed={(text) => setSourceText(text)}
@@ -295,10 +295,10 @@ function TranslationPage() {
                   />
                   {/* Language indicator */}
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {transcribeLanguage === 'fa' ? 'فارسی' : 'English'}
+                    {transcribeLanguage === "fa" ? "فارسی" : "English"}
                   </span>
                   <span>
-                    {sourceText.trim() ? '⌘/Ctrl+Enter برای ترجمه' : ''}
+                    {sourceText.trim() ? "⌘/Ctrl+Enter برای ترجمه" : ""}
                   </span>
                 </div>
               </div>
@@ -307,7 +307,7 @@ function TranslationPage() {
               <Textarea
                 aria-label={fa.translation.enterText}
                 className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-                dir={sourceText ? detectTextDirection(sourceText) : 'rtl'}
+                dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
                 onChange={(e) => setSourceText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={fa.translation.enterText}
@@ -351,7 +351,7 @@ function TranslationPage() {
                     dir={
                       translatedText
                         ? detectTextDirection(translatedText)
-                        : 'rtl'
+                        : "rtl"
                     }
                     placeholder={fa.translation.translatedText}
                     readOnly

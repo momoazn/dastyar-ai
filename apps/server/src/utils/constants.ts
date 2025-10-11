@@ -1,89 +1,89 @@
 // AI Provider Configuration
-export const ModelProviderEnum = ['ollama', 'lmstudio'] as const;
+export const ModelProviderEnum = ["ollama", "lmstudio"] as const;
 export type ModelProvider = (typeof ModelProviderEnum)[number];
 
 // Status enums for messages
 export const messageStatuses = [
-  'reasoning',
-  'generating',
-  'finished',
-  'errored',
-  'stopped',
+  "reasoning",
+  "generating",
+  "finished",
+  "errored",
+  "stopped",
 ] as const;
 export type MessageStatus = (typeof messageStatuses)[number];
 
 // Role enums for messages
-export const messageRoles = ['user', 'assistant'] as const;
+export const messageRoles = ["user", "assistant"] as const;
 export type MessageRole = (typeof messageRoles)[number];
 
 // Language enums for translations
 export const languageCodes = [
-  'en',
-  'fa',
-  'ar',
-  'fr',
-  'de',
-  'es',
-  'it',
-  'pt',
-  'ru',
-  'zh',
-  'ja',
-  'ko',
-  'tr',
-  'hi',
-  'ur',
+  "en",
+  "fa",
+  "ar",
+  "fr",
+  "de",
+  "es",
+  "it",
+  "pt",
+  "ru",
+  "zh",
+  "ja",
+  "ko",
+  "tr",
+  "hi",
+  "ur",
 ] as const;
 export type LanguageCode = (typeof languageCodes)[number];
 
 // Code to language map for translations
 export const codeToLanguageMap: Record<LanguageCode, string> = {
-  en: 'English',
-  fa: 'Farsi',
-  ar: 'Arabic',
-  fr: 'French',
-  de: 'German',
-  es: 'Spanish',
-  it: 'Italian',
-  pt: 'Portuguese',
-  ru: 'Russian',
-  zh: 'Chinese',
-  ja: 'Japanese',
-  ko: 'Korean',
-  tr: 'Turkish',
-  hi: 'Hindi',
-  ur: 'Urdu',
+  en: "English",
+  fa: "Farsi",
+  ar: "Arabic",
+  fr: "French",
+  de: "German",
+  es: "Spanish",
+  it: "Italian",
+  pt: "Portuguese",
+  ru: "Russian",
+  zh: "Chinese",
+  ja: "Japanese",
+  ko: "Korean",
+  tr: "Turkish",
+  hi: "Hindi",
+  ur: "Urdu",
 } as const;
 
 // Tone enums for translations and summaries
 export const tones = [
-  'formal',
-  'informal',
-  'business',
-  'casual',
-  'academic',
-  'technical',
-  'creative',
-  'friendly',
-  'professional',
+  "formal",
+  "informal",
+  "business",
+  "casual",
+  "academic",
+  "technical",
+  "creative",
+  "friendly",
+  "professional",
 ] as const;
 export type Tone = (typeof tones)[number];
 
 // Tone to label map for translations and summaries
 export const toneToLabelMap: Record<Tone, string> = {
-  formal: 'Formal',
-  informal: 'Informal',
-  business: 'Business',
-  casual: 'Casual',
-  academic: 'Academic',
-  technical: 'Technical',
-  creative: 'Creative',
-  friendly: 'Friendly',
-  professional: 'Professional',
+  formal: "Formal",
+  informal: "Informal",
+  business: "Business",
+  casual: "Casual",
+  academic: "Academic",
+  technical: "Technical",
+  creative: "Creative",
+  friendly: "Friendly",
+  professional: "Professional",
 } as const;
 
 // Mode enums for summaries
-export const summaryModes = ['concise', 'standard', 'detailed'] as const;
+export const summaryModes = ["concise", "standard", "detailed"] as const;
 export type SummaryMode = (typeof summaryModes)[number];
 
 export const summaryModePrompts: Record<SummaryMode, string> = {
@@ -91,7 +91,7 @@ export const summaryModePrompts: Record<SummaryMode, string> = {
   standard:
     "Summarize the user's text in a single concise paragraph. Include the main points and key details.",
   detailed:
-    'Summarize with multiple paragraphs. Include key points, important details, and main takeaways where appropriate.',
+    "Summarize with multiple paragraphs. Include key points, important details, and main takeaways where appropriate.",
 };
 
 export const CHAT_SYSTEM_PROMPT = `

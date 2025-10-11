@@ -3,7 +3,7 @@ import {
   type CodeGeneration,
   type CodeReview,
   prisma,
-} from '@/database';
+} from "@/database";
 
 /**
  * Creates a new code assistant session.
@@ -11,7 +11,7 @@ import {
  * @returns The ID of the created session.
  */
 export async function createCodeAssistSession(
-  params: Pick<CodeAssistSession, 'title' | 'language'> & { userId: number }
+  params: Pick<CodeAssistSession, "title" | "language"> & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const session = await prisma.codeAssistSession.create({
@@ -24,8 +24,8 @@ export async function createCodeAssistSession(
 
     return { id: session.id };
   } catch (error) {
-    console.error('Failed to create code assistant session:', error);
-    throw new Error('Unable to create code assistant session');
+    console.error("Failed to create code assistant session:", error);
+    throw new Error("Unable to create code assistant session");
   }
 }
 
@@ -44,10 +44,10 @@ export async function getCodeAssistSession(
       where: { id, userId },
       include: {
         codeGenerations: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
         codeReviews: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -55,7 +55,7 @@ export async function getCodeAssistSession(
     return session;
   } catch (error) {
     console.error(`Failed to get code assistant session ${id}:`, error);
-    throw new Error('Unable to retrieve code assistant session');
+    throw new Error("Unable to retrieve code assistant session");
   }
 }
 
@@ -69,7 +69,7 @@ export function listCodeAssistSessions(
 ): Promise<CodeAssistSession[]> {
   return prisma.codeAssistSession.findMany({
     where: { userId },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: { updatedAt: "desc" },
   });
 }
 
@@ -81,7 +81,7 @@ export function listCodeAssistSessions(
  */
 export async function updateCodeAssistSession(
   id: number,
-  data: Partial<Pick<CodeAssistSession, 'title' | 'language'>>,
+  data: Partial<Pick<CodeAssistSession, "title" | "language">>,
   userId: number
 ): Promise<void> {
   try {
@@ -91,7 +91,7 @@ export async function updateCodeAssistSession(
     });
   } catch (error) {
     console.error(`Failed to update code assistant session ${id}:`, error);
-    throw new Error('Unable to update code assistant session');
+    throw new Error("Unable to update code assistant session");
   }
 }
 
@@ -110,7 +110,7 @@ export async function deleteCodeAssistSession(
     });
   } catch (error) {
     console.error(`Failed to delete code assistant session ${id}:`, error);
-    throw new Error('Unable to delete code assistant session');
+    throw new Error("Unable to delete code assistant session");
   }
 }
 
@@ -122,7 +122,7 @@ export async function deleteCodeAssistSession(
 export async function createCodeGeneration(
   params: Pick<
     CodeGeneration,
-    'sessionId' | 'prompt' | 'generatedCode' | 'language' | 'modelId'
+    "sessionId" | "prompt" | "generatedCode" | "language" | "modelId"
   > & { userId: number }
 ): Promise<{ id: number }> {
   try {
@@ -139,8 +139,8 @@ export async function createCodeGeneration(
 
     return { id: generation.id };
   } catch (error) {
-    console.error('Failed to create code generation:', error);
-    throw new Error('Unable to create code generation');
+    console.error("Failed to create code generation:", error);
+    throw new Error("Unable to create code generation");
   }
 }
 
@@ -155,7 +155,7 @@ export async function getCodeGenerations(
   try {
     const generations = await prisma.codeGeneration.findMany({
       where: { sessionId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return generations;
@@ -164,7 +164,7 @@ export async function getCodeGenerations(
       `Failed to get code generations for session ${sessionId}:`,
       error
     );
-    throw new Error('Unable to retrieve code generations');
+    throw new Error("Unable to retrieve code generations");
   }
 }
 
@@ -176,12 +176,12 @@ export async function getCodeGenerations(
 export async function createCodeReview(
   params: Pick<
     CodeReview,
-    | 'sessionId'
-    | 'codeInput'
-    | 'reviewFeedback'
-    | 'suggestions'
-    | 'severityLevels'
-    | 'modelId'
+    | "sessionId"
+    | "codeInput"
+    | "reviewFeedback"
+    | "suggestions"
+    | "severityLevels"
+    | "modelId"
   > & { userId: number }
 ): Promise<{ id: number }> {
   try {
@@ -199,8 +199,8 @@ export async function createCodeReview(
 
     return { id: review.id };
   } catch (error) {
-    console.error('Failed to create code review:', error);
-    throw new Error('Unable to create code review');
+    console.error("Failed to create code review:", error);
+    throw new Error("Unable to create code review");
   }
 }
 
@@ -213,7 +213,7 @@ export async function getCodeReviews(sessionId: number): Promise<CodeReview[]> {
   try {
     const reviews = await prisma.codeReview.findMany({
       where: { sessionId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return reviews;
@@ -222,7 +222,7 @@ export async function getCodeReviews(sessionId: number): Promise<CodeReview[]> {
       `Failed to get code reviews for session ${sessionId}:`,
       error
     );
-    throw new Error('Unable to retrieve code reviews');
+    throw new Error("Unable to retrieve code reviews");
   }
 }
 
@@ -237,7 +237,7 @@ export async function deleteCodeGeneration(id: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete code generation ${id}:`, error);
-    throw new Error('Unable to delete code generation');
+    throw new Error("Unable to delete code generation");
   }
 }
 
@@ -252,6 +252,6 @@ export async function deleteCodeReview(id: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete code review ${id}:`, error);
-    throw new Error('Unable to delete code review');
+    throw new Error("Unable to delete code review");
   }
 }

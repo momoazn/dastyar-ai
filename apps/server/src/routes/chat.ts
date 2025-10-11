@@ -1,21 +1,21 @@
-import { zValidator } from '@hono/zod-validator';
+import { zValidator } from "@hono/zod-validator";
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
   streamText,
   wrapLanguageModel,
-} from 'ai';
-import { type Context, Hono } from 'hono';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import { z } from 'zod';
-import type { Prisma } from '@/database';
-import { type AuthEnv, authMiddleware } from '@/middlewares';
-import { getModelById } from '@/repositories/llm-models';
-import { saveMessage } from '@/repositories/messages';
-import { updateThreadOnNewMessage } from '@/repositories/threads';
-import { getProviderForModel } from '@/services';
-import type { MyUIMessage } from '@/utils/chat';
-import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
+} from "ai";
+import { type Context, Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { z } from "zod";
+import type { Prisma } from "@/database";
+import { type AuthEnv, authMiddleware } from "@/middlewares";
+import { getModelById } from "@/repositories/llm-models";
+import { saveMessage } from "@/repositories/messages";
+import { updateThreadOnNewMessage } from "@/repositories/threads";
+import { getProviderForModel } from "@/services";
+import type { MyUIMessage } from "@/utils/chat";
+import { CHAT_SYSTEM_PROMPT } from "@/utils/constants";
 
 export function sendError(
   c: Context<AuthEnv>,
@@ -35,7 +35,7 @@ const ChatRequestSchema = z.object({
     .array(
       z.object({
         id: z.string(),
-        role: z.enum(['user', 'assistant', 'system']),
+        role: z.enum(["user", "assistant", "system"]),
         parts: z.array(z.unknown()).min(1),
         metadata: z.unknown().optional(),
       })
@@ -47,18 +47,18 @@ const ChatRequestSchema = z.object({
 
 const app = new Hono<AuthEnv>()
   .use(authMiddleware)
-  .post('/', zValidator('json', ChatRequestSchema), async (c) => {
+  .post("/", zValidator("json", ChatRequestSchema), async (c) => {
     try {
-      const { messages, modelId, threadId } = c.req.valid('json');
+      const { messages, modelId, threadId } = c.req.valid("json");
       const uiMessages = messages as unknown as MyUIMessage[];
-      const user = c.get('user');
+      const user = c.get("user");
 
       const last = uiMessages.at(-1);
-      if (!last || last.role !== 'user') {
+      if (!last || last.role !== "user") {
         return sendError(c, {
           status: 400,
-          code: 'INVALID_REQUEST',
-          message: 'Last message must be from user',
+          code: "INVALID_REQUEST",
+          message: "Last message must be from user",
         });
       }
 
@@ -66,8 +66,8 @@ const app = new Hono<AuthEnv>()
       if (!llmModel) {
         return sendError(c, {
           status: 404,
-          code: 'MODEL_NOT_FOUND',
-          message: 'No model exists with the provided id',
+          code: "MODEL_NOT_FOUND",
+          message: "No model exists with the provided id",
           details: { modelId },
         });
       }
@@ -83,16 +83,16 @@ const app = new Hono<AuthEnv>()
           threadId,
           parts: last.parts as Prisma.InputJsonValue,
           modelId,
-          status: 'finished',
-          role: 'user',
+          status: "finished",
+          role: "user",
           userId: user.id,
         });
         await updateThreadOnNewMessage(threadId, user.id, new Date());
       } catch {
         return sendError(c, {
           status: 500,
-          code: 'PERSIST_USER_MESSAGE_FAILED',
-          message: 'Could not save the user message',
+          code: "PERSIST_USER_MESSAGE_FAILED",
+          message: "Could not save the user message",
         });
       }
 
@@ -102,8 +102,8 @@ const app = new Hono<AuthEnv>()
         model: wrapLanguageModel({
           model: providerModel,
           middleware: extractReasoningMiddleware({
-            tagName: 'think',
-            separator: '\n',
+            tagName: "think",
+            separator: "\n",
           }),
         }),
         messages: modelMessages,
@@ -120,8 +120,8 @@ const app = new Hono<AuthEnv>()
               threadId,
               parts: responseMessage.parts as Prisma.InputJsonValue,
               modelId,
-              status: 'finished',
-              role: 'assistant',
+              status: "finished",
+              role: "assistant",
               userId: user.id,
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());
@@ -132,12 +132,12 @@ const app = new Hono<AuthEnv>()
       });
     } catch (error) {
       const message =
-        error && typeof error === 'object' && 'message' in error
+        error && typeof error === "object" && "message" in error
           ? String((error as { message?: unknown }).message)
-          : 'An unexpected error occurred';
+          : "An unexpected error occurred";
       return sendError(c, {
         status: 500,
-        code: 'INTERNAL_SERVER_ERROR',
+        code: "INTERNAL_SERVER_ERROR",
         message,
       });
     }

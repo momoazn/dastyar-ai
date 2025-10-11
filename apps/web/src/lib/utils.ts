@@ -1,18 +1,18 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // Cache for text direction detection to avoid repeated calculations
-const textDirectionCache = new Map<string, 'rtl' | 'ltr'>();
+const textDirectionCache = new Map<string, "rtl" | "ltr">();
 const maxCacheSize = 1000;
 const TOP_LEVEL_RTL_REGEX =
   /[\u0591-\u07FF\u200F\u202B\u202E\uFB1D-\uFDFD\uFE70-\uFEFC]/;
 const WORD_SPLIT_REGEX = /\s+/;
 
-export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
+export const detectTextDirection = (text: string): "rtl" | "ltr" => {
   // Check cache first
   if (textDirectionCache.has(text)) {
     const cached = textDirectionCache.get(text);
@@ -26,10 +26,10 @@ export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
 
   // If no word found, default to LTR
   if (!firstWord) {
-    return 'ltr';
+    return "ltr";
   }
 
-  const direction = TOP_LEVEL_RTL_REGEX.test(firstWord) ? 'rtl' : 'ltr';
+  const direction = TOP_LEVEL_RTL_REGEX.test(firstWord) ? "rtl" : "ltr";
 
   // Cache the result (with size limit)
   if (textDirectionCache.size >= maxCacheSize) {

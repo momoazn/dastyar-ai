@@ -1,11 +1,11 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   useNavigate,
   useSearch,
-} from '@tanstack/react-router';
-import { Clipboard, Copy, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "@tanstack/react-router";
+import { Clipboard, Copy, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -16,37 +16,37 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from '@/components/ui';
-import { useSummarizeModelSelection } from '@/hooks/use-feature-model-selection';
-import { fa } from '@/lib/persian-texts';
-import { detectTextDirection } from '@/lib/utils';
-import { orpc, queryClient } from '@/utils/orpc';
+} from "@/components/ui";
+import { useSummarizeModelSelection } from "@/hooks/use-feature-model-selection";
+import { fa } from "@/lib/persian-texts";
+import { detectTextDirection } from "@/lib/utils";
+import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute('/summarize')({
+export const Route = createFileRoute("/summarize")({
   component: SummarizePage,
 });
 
-type SummarizeMode = 'concise' | 'standard' | 'detailed';
-type ToneOption = 'formal' | 'casual';
+type SummarizeMode = "concise" | "standard" | "detailed";
+type ToneOption = "formal" | "casual";
 
 const modes: Array<{ value: SummarizeMode; label: string }> = [
-  { value: 'concise', label: fa.summarize.modes.concise },
-  { value: 'standard', label: fa.summarize.modes.standard },
-  { value: 'detailed', label: fa.summarize.modes.detailed },
+  { value: "concise", label: fa.summarize.modes.concise },
+  { value: "standard", label: fa.summarize.modes.standard },
+  { value: "detailed", label: fa.summarize.modes.detailed },
 ];
 
 const tones: Array<{ value: ToneOption; label: string }> = [
-  { value: 'formal', label: fa.tones.formal },
-  { value: 'casual', label: fa.tones.casual },
+  { value: "formal", label: fa.tones.formal },
+  { value: "casual", label: fa.tones.casual },
 ];
 
 function SummarizePage() {
-  const search = useSearch({ from: '/summarize' }) as { id?: string };
+  const search = useSearch({ from: "/summarize" }) as { id?: string };
   const navigate = useNavigate();
-  const [sourceText, setSourceText] = useState('');
-  const [summaryText, setSummaryText] = useState('');
-  const [mode, setMode] = useState<SummarizeMode>('standard');
-  const [tone, setTone] = useState<ToneOption>('formal');
+  const [sourceText, setSourceText] = useState("");
+  const [summaryText, setSummaryText] = useState("");
+  const [mode, setMode] = useState<SummarizeMode>("standard");
+  const [tone, setTone] = useState<ToneOption>("formal");
   const [copySuccess, setCopySuccess] = useState(false);
 
   const {
@@ -71,10 +71,10 @@ function SummarizePage() {
         queryClient.invalidateQueries({
           queryKey: orpc.summarize.list.queryKey(),
         });
-        setSummaryText(data.summaryText ?? '');
+        setSummaryText(data.summaryText ?? "");
         // Update URL to reflect the new summary
         navigate({
-          to: '/summarize',
+          to: "/summarize",
           search: { id: data.id },
         });
       },
@@ -84,10 +84,10 @@ function SummarizePage() {
   // Load summary data when selectedSummary changes
   useEffect(() => {
     if (selectedSummary) {
-      setSourceText(selectedSummary.sourceText || '');
-      setSummaryText(selectedSummary.summaryText || '');
+      setSourceText(selectedSummary.sourceText || "");
+      setSummaryText(selectedSummary.summaryText || "");
       setMode(selectedSummary.mode as SummarizeMode);
-      setTone((selectedSummary.tone as ToneOption) || 'formal');
+      setTone((selectedSummary.tone as ToneOption) || "formal");
       // Model selection is now handled by useModelSelection hook
     }
   }, [selectedSummary]);
@@ -98,7 +98,7 @@ function SummarizePage() {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
     } catch {
-      console.error('Failed to copy to clipboard');
+      console.error("Failed to copy to clipboard");
     }
   };
 
@@ -107,12 +107,12 @@ function SummarizePage() {
       const text = await navigator.clipboard.readText();
       setSourceText(text);
     } catch {
-      console.error('Failed to paste from clipboard');
+      console.error("Failed to paste from clipboard");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       summarizeMutation.mutate({
         text: sourceText,
@@ -196,7 +196,7 @@ function SummarizePage() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? 'Loading models...' : 'Select model'
+                    modelsLoading ? "Loading models..." : "Select model"
                   }
                 />
               </SelectTrigger>
@@ -234,7 +234,7 @@ function SummarizePage() {
           </div>
           <Textarea
             className="min-h-[200px] resize-none"
-            dir={sourceText ? detectTextDirection(sourceText) : 'rtl'}
+            dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
             disabled={summarizeMutation.isPending}
             onChange={(e) => setSourceText(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -252,10 +252,10 @@ function SummarizePage() {
             <h3 className="font-medium">{fa.summarize.generatedText}</h3>
             {summaryText && (
               <Button
-                className={copySuccess ? 'bg-green-600 hover:bg-green-700' : ''}
+                className={copySuccess ? "bg-green-600 hover:bg-green-700" : ""}
                 onClick={handleCopy}
                 size="sm"
-                variant={copySuccess ? 'default' : 'ghost'}
+                variant={copySuccess ? "default" : "ghost"}
               >
                 <Copy className="h-4 w-4" />
                 {copySuccess ? fa.summarize.copied : fa.summarize.copy}
@@ -264,7 +264,7 @@ function SummarizePage() {
           </div>
           <Textarea
             className="min-h-[200px] resize-none"
-            dir={summaryText ? detectTextDirection(summaryText) : 'rtl'}
+            dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
             placeholder={fa.summarize.summaryPlaceholder}
             readOnly
             value={summaryText}
@@ -277,7 +277,7 @@ function SummarizePage() {
             <div className="flex items-center gap-2">
               <span>
                 {modelsError
-                  ? 'Failed to load models. Please refresh the page.'
+                  ? "Failed to load models. Please refresh the page."
                   : fa.summarize.errors.requestFailed}
               </span>
               <span>{fa.translation.tryAgain}</span>

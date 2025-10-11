@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type RecordingError =
-  | 'micAccessDenied'
-  | 'noAudioCaptured'
-  | 'initFailed'
-  | 'processingFailed'
-  | 'fileTooLarge';
+  | "micAccessDenied"
+  | "noAudioCaptured"
+  | "initFailed"
+  | "processingFailed"
+  | "fileTooLarge";
 
-export interface UseVoiceRecorderReturn {
+export type UseVoiceRecorderReturn = {
   isRecording: boolean;
   elapsedMs: number;
   startRecording: () => Promise<void>;
@@ -15,14 +15,14 @@ export interface UseVoiceRecorderReturn {
   error: RecordingError | null;
   recordedFile: File | null;
   clearRecordedFile: () => void;
-}
+};
 
 const getPreferredMimeType = (): string | null => {
   if (
-    typeof MediaRecorder !== 'undefined' &&
-    MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    typeof MediaRecorder !== "undefined" &&
+    MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
   ) {
-    return 'audio/webm;codecs=opus';
+    return "audio/webm;codecs=opus";
   }
   return null;
 };
@@ -31,9 +31,9 @@ const buildFileFromChunks = (
   recorder: MediaRecorder,
   chunks: BlobPart[]
 ): File => {
-  const mimeType = recorder.mimeType || 'audio/webm';
+  const mimeType = recorder.mimeType || "audio/webm";
   const audioBlob = new Blob(chunks, { type: mimeType });
-  const fileExtension = mimeType.includes('webm') ? 'webm' : 'mp4';
+  const fileExtension = mimeType.includes("webm") ? "webm" : "mp4";
   return new File([audioBlob], `recording-${Date.now()}.${fileExtension}`, {
     type: mimeType,
   });
@@ -53,8 +53,8 @@ export const formatElapsed = (ms: number): string => {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60)
     .toString()
-    .padStart(2, '0');
-  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
 };
 
@@ -94,7 +94,7 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
       recorder.onstop = () => {
         try {
           if (chunksRef.current.length === 0) {
-            setError('noAudioCaptured');
+            setError("noAudioCaptured");
             setRecordedFile(null);
             return;
           }
@@ -103,7 +103,7 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
           // Validate file size (50MB limit)
           const maxFileSize = 50 * 1024 * 1024;
           if (file.size > maxFileSize) {
-            setError('fileTooLarge');
+            setError("fileTooLarge");
             setRecordedFile(null);
             return;
           }
@@ -111,7 +111,7 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
           setRecordedFile(file);
           setError(null);
         } catch {
-          setError('processingFailed');
+          setError("processingFailed");
           setRecordedFile(null);
         } finally {
           cleanup();
@@ -136,7 +136,7 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
           ? new MediaRecorder(stream, { mimeType: preferred })
           : new MediaRecorder(stream);
       } catch {
-        setError('initFailed');
+        setError("initFailed");
         // Release stream if recorder creation failed
         for (const track of stream.getTracks()) {
           track.stop();
@@ -154,14 +154,14 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
         setElapsedMs((ms) => ms + 250);
       }, 250);
     } catch {
-      setError('micAccessDenied');
+      setError("micAccessDenied");
     }
   }, [attachRecorderHandlers]);
 
   const stopRecording = useCallback(() => {
     if (
       mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === 'recording'
+      mediaRecorderRef.current.state === "recording"
     ) {
       mediaRecorderRef.current.stop();
     }
@@ -174,9 +174,7 @@ export const useVoiceRecorder = (): UseVoiceRecorderReturn => {
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+  useEffect(() => cleanup, [cleanup]);
 
   return {
     isRecording,

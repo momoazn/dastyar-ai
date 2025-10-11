@@ -1,20 +1,20 @@
-import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 
-export interface User {
+export type User = {
   id: number;
   username: string;
-  role: 'admin' | 'user';
-}
+  role: "admin" | "user";
+};
 
-export interface AuthState {
+export type AuthState = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-}
+};
 
 // Persist token in localStorage
-export const tokenAtom = atomWithStorage<string | null>('auth-token', null);
+export const tokenAtom = atomWithStorage<string | null>("auth-token", null);
 
 // Auth state atom
 export const authAtom = atom<AuthState>({

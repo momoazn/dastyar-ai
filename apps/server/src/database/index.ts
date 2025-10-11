@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from "../../generated/prisma";
 
 // Create a singleton instance of PrismaClient
 const globalForPrisma = globalThis as unknown as {
@@ -8,14 +8,14 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ['query'],
+    log: ["query"],
   });
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
 export default prisma;
 
 // Export generated types
-export * from '../../generated/prisma';
+export * from "../../generated/prisma";

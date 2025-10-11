@@ -1,5 +1,5 @@
-import { useLocation } from '@tanstack/react-router';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { useLocation } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header({
   SideBarTrigger,
@@ -11,7 +11,7 @@ export function Header({
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center justify-between bg-sidebar px-4 backdrop-blur-md">
       <div className="flex items-center gap-2">
-        {location.pathname !== '/' && SideBarTrigger}
+        {location.pathname !== "/" && SideBarTrigger}
       </div>
 
       <div className="flex items-center gap-2">

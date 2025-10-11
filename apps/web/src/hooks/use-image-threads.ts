@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { orpc } from '@/utils/orpc';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { orpc } from "@/utils/orpc";
 
 export function useImageThreads() {
   const queryClient = useQueryClient();
@@ -13,11 +13,11 @@ export function useImageThreads() {
         queryClient.invalidateQueries({
           queryKey: orpc.imageThreads.list.queryKey(),
         });
-        toast.success('گفتگوی تصویری جدید ایجاد شد');
+        toast.success("گفتگوی تصویری جدید ایجاد شد");
       },
       onError: (error) => {
-        console.error('Failed to create image thread:', error);
-        toast.error('خطا در ایجاد گفتگوی تصویری');
+        console.error("Failed to create image thread:", error);
+        toast.error("خطا در ایجاد گفتگوی تصویری");
       },
     }),
   });
@@ -28,11 +28,11 @@ export function useImageThreads() {
         queryClient.invalidateQueries({
           queryKey: orpc.imageThreads.list.queryKey(),
         });
-        toast.success('عنوان گفتگو تغییر کرد');
+        toast.success("عنوان گفتگو تغییر کرد");
       },
       onError: (error) => {
-        console.error('Failed to rename image thread:', error);
-        toast.error('خطا در تغییر عنوان گفتگو');
+        console.error("Failed to rename image thread:", error);
+        toast.error("خطا در تغییر عنوان گفتگو");
       },
     }),
   });
@@ -43,11 +43,11 @@ export function useImageThreads() {
         queryClient.invalidateQueries({
           queryKey: orpc.imageThreads.list.queryKey(),
         });
-        toast.success('گفتگو بایگانی شد');
+        toast.success("گفتگو بایگانی شد");
       },
       onError: (error) => {
-        console.error('Failed to archive image thread:', error);
-        toast.error('خطا در بایگانی گفتگو');
+        console.error("Failed to archive image thread:", error);
+        toast.error("خطا در بایگانی گفتگو");
       },
     }),
   });
@@ -58,11 +58,11 @@ export function useImageThreads() {
         queryClient.invalidateQueries({
           queryKey: orpc.imageThreads.list.queryKey(),
         });
-        toast.success('گفتگو حذف شد');
+        toast.success("گفتگو حذف شد");
       },
       onError: (error) => {
-        console.error('Failed to delete image thread:', error);
-        toast.error('خطا در حذف گفتگو');
+        console.error("Failed to delete image thread:", error);
+        toast.error("خطا در حذف گفتگو");
       },
     }),
   });

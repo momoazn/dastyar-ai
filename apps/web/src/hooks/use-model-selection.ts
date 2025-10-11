@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
-import { useEffect } from 'react';
-import { modelIdAtom } from '@/atoms/model';
-import { orpc } from '@/utils/orpc';
+import { useQuery } from "@tanstack/react-query";
+import { useAtom } from "jotai";
+import { useEffect } from "react";
+import { modelIdAtom } from "@/atoms/model";
+import { orpc } from "@/utils/orpc";
 
-interface UseModelSelectionOptions {
+type UseModelSelectionOptions = {
   threadId?: number;
   enabled?: boolean;
-}
+};
 
 export function useModelSelection({
   threadId,

@@ -1,4 +1,4 @@
-import { prisma, type Summary } from '@/database';
+import { prisma, type Summary } from "@/database";
 
 /**
  * Retrieves all summaries for a user ordered by creation date (newest first).
@@ -8,7 +8,7 @@ import { prisma, type Summary } from '@/database';
 export function listSummaries(userId: number): Promise<Summary[]> {
   return prisma.summary.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 }
 
@@ -18,7 +18,7 @@ export function listSummaries(userId: number): Promise<Summary[]> {
  * @returns The created summary record.
  */
 export async function createSummary(
-  params: Omit<Summary, 'id' | 'createdAt' | 'updatedAt' | 'userId'> & {
+  params: Omit<Summary, "id" | "createdAt" | "updatedAt" | "userId"> & {
     userId: number;
   }
 ): Promise<Summary> {
@@ -36,8 +36,8 @@ export async function createSummary(
 
     return summary;
   } catch (error) {
-    console.error('Failed to create summary:', error);
-    throw new Error('Unable to create summary');
+    console.error("Failed to create summary:", error);
+    throw new Error("Unable to create summary");
   }
 }
 
@@ -59,7 +59,7 @@ export async function getSummary(
     return summary;
   } catch (error) {
     console.error(`Failed to get summary ${id}:`, error);
-    throw new Error('Unable to retrieve summary');
+    throw new Error("Unable to retrieve summary");
   }
 }
 
@@ -75,6 +75,6 @@ export async function deleteSummary(id: number, userId: number): Promise<void> {
     });
   } catch (error) {
     console.error(`Failed to delete summary ${id}:`, error);
-    throw new Error('Unable to delete summary');
+    throw new Error("Unable to delete summary");
   }
 }

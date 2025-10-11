@@ -1,10 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useCallback } from 'react';
-import { toast } from 'sonner';
-import { fa } from '@/lib/persian-texts';
-import { orpc } from '@/utils/orpc';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { toast } from "sonner";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
-export interface ImageGenerationParams {
+export type ImageGenerationParams = {
   prompt: string;
   steps: number;
   cfg_scale: number;
@@ -12,9 +12,9 @@ export interface ImageGenerationParams {
   sampler_name: string;
   width: number;
   height: number;
-}
+};
 
-export interface GeneratedImage {
+export type GeneratedImage = {
   id: number;
   imageUrl: string;
   prompt: string;
@@ -27,7 +27,7 @@ export interface GeneratedImage {
     width: number;
     height: number;
   };
-}
+};
 
 export function useImageGeneration(threadId?: number) {
   // Centralized validation used by both sync/async generate
@@ -37,16 +37,16 @@ export function useImageGeneration(threadId?: number) {
       opts: { isPending: boolean; isServiceAvailable?: boolean }
     ): string | null => {
       if (!settings.prompt.trim()) {
-        return 'لطفاً توضیحات تصویر را وارد کنید';
+        return "لطفاً توضیحات تصویر را وارد کنید";
       }
       if (!settings.threadId) {
-        return 'شناسه گفتگو الزامی است';
+        return "شناسه گفتگو الزامی است";
       }
       if (opts.isPending) {
-        return 'در حال تولید تصویر قبلی';
+        return "در حال تولید تصویر قبلی";
       }
       if (!opts.isServiceAvailable) {
-        return 'سرویس Stable Diffusion در دسترس نیست';
+        return "سرویس Stable Diffusion در دسترس نیست";
       }
       return null;
     },
@@ -76,13 +76,13 @@ export function useImageGeneration(threadId?: number) {
   const generateMutation = useMutation(
     orpc.images.generate.mutationOptions({
       onSuccess: () => {
-        toast.success('تصویر با موفقیت تولید شد');
+        toast.success("تصویر با موفقیت تولید شد");
         refetchImages();
       },
       onError: (error) => {
-        console.error('Image generation failed:', error);
+        console.error("Image generation failed:", error);
         const errorMessage =
-          error instanceof Error ? error.message : 'خطای ناشناخته';
+          error instanceof Error ? error.message : "خطای ناشناخته";
         toast.error(`خطا در تولید تصویر: ${errorMessage}`);
       },
     })
@@ -126,7 +126,7 @@ export function useImageGeneration(threadId?: number) {
 
   const downloadImage = useCallback((image: GeneratedImage) => {
     try {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = image.imageUrl;
       link.download = `generated_${image.id}.png`;
       document.body.appendChild(link);
@@ -134,7 +134,7 @@ export function useImageGeneration(threadId?: number) {
       document.body.removeChild(link);
       toast.success(fa.imageGeneration.downloadSuccess);
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error("Download failed:", error);
       toast.error(fa.imageGeneration.downloadError);
     }
   }, []);
