@@ -4,10 +4,12 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+const WEB_PORT = 3001;
+
 export default defineConfig({
-  plugins: [tailwindcss(), tanstackRouter({}), react()],
+  plugins: [tailwindcss(), tanstackRouter(), react()],
   server: {
-    port: Number(process.env.WEB_PORT) || 3001,
+    port: Number(process.env.WEB_PORT) || WEB_PORT,
   },
   resolve: {
     alias: {
