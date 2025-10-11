@@ -1,11 +1,7 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { env } from "../config";
+import { generateJwtToken } from "@/services/auth";
 import { publicProcedure } from "./base";
-
-const JWT_SECRET = env.JWT_SECRET;
-const JWT_EXPIRES_IN = "24h";
 
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
@@ -44,11 +40,11 @@ export const authProcedures = {
       });
 
       // Generate JWT
-      const token = jwt.sign(
-        { userId: user.id, username: user.username, role: user.role },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
+      const token = generateJwtToken({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      });
 
       return {
         token,
@@ -81,11 +77,11 @@ export const authProcedures = {
       }
 
       // Generate JWT
-      const token = jwt.sign(
-        { userId: user.id, username: user.username, role: user.role },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
+      const token = generateJwtToken({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      });
 
       return {
         token,

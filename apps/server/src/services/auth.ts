@@ -11,22 +11,54 @@ export type AuthResult = {
   };
 };
 
+export type JwtPayload = {
+  userId: number;
+  username: string;
+  role: string;
+};
+
+// JWT configuration constants
+export const JWT_SECRET = env.JWT_SECRET;
+export const JWT_EXPIRES_IN = "24h";
+
+/**
+ * Generates a JWT token for a user
+ * @param user - The user object containing id, username, and role
+ * @returns The signed JWT token
+ */
+export function generateJwtToken(user: {
+  id: number;
+  username: string;
+  role: string;
+}): string {
+  return jwt.sign(
+    { userId: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+/**
+ * Verifies and decodes a JWT token
+ * @param token - The JWT token to verify
+ * @returns The decoded payload or throws an error
+ */
+export function verifyJwtToken(token: string): JwtPayload {
+  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+}
+
 /**
  * Internal helper function to validate JWT token and fetch user from database
  * @param token - The JWT token to validate
  * @param prisma - Database instance to verify user exists
  * @returns AuthResult with success status and user/error information
  */
-async function validateJwtToken(
+export async function validateJwtToken(
   token: string,
   prisma: PrismaClient
 ): Promise<AuthResult> {
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as {
-      userId: number;
-      username: string;
-      role: string;
-    };
+    const decoded = verifyJwtToken(token);
 
     // Fetch user from database to ensure they still exist
     const user = await prisma.user.findUnique({
