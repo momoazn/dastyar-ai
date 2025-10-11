@@ -1,12 +1,10 @@
 import 'dotenv/config';
 
 import { createApp } from './app';
-import { config, ensureDirectoriesExist, isProduction } from './config';
+import { ensureDirectoriesExist, env, isProduction } from './config';
 
-const start = async () => {
+function start() {
   console.log('Running app in', isProduction() ? 'production' : 'development');
-
-  // Database is managed by Prisma db push
 
   try {
     ensureDirectoriesExist();
@@ -17,20 +15,14 @@ const start = async () => {
 
   const app = createApp();
 
-  console.log(`Server starting on ${config.host}:${config.port}`);
+  console.log(`Server starting on ${env.HOST}:${env.PORT}`);
   // biome-ignore lint/correctness/noUndeclaredVariables: Bun is declared
   Bun.serve({
     fetch: app.fetch,
-    port: config.port,
-    hostname: config.host,
+    port: env.PORT,
+    hostname: env.HOST,
   });
   console.log('Server started');
-};
-
-if (import.meta.main) {
-  console.log('Starting server');
-  start().catch((err) => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  });
 }
+
+start();

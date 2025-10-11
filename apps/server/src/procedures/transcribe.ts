@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { WaveFile } from 'wavefile';
 import { z } from 'zod';
-import { config } from '@/config';
+import { env } from '@/config';
 import { publicProcedure } from './base';
 
 // Type for the ASR pipeline
@@ -58,7 +58,7 @@ export const transcribeProcedures = {
       return models;
     }
     // Fallback to allowed remote models only if none installed
-    const allowed = config.whisper_models.map((id) => ({
+    const allowed = env.WHISPER_MODELS.split(',').map((id) => ({
       id,
       name: prettyWhisperName(id),
     }));
@@ -78,7 +78,9 @@ export const transcribeProcedures = {
       const language = input.language ?? 'fa';
       const discovered = discoverInstalledWhisperModels();
       const defaultModel =
-        discovered[0]?.id ?? config.whisper_models[0] ?? 'Xenova/whisper-tiny';
+        discovered[0]?.id ??
+        env.WHISPER_MODELS.split(',')[0] ??
+        'Xenova/whisper-tiny';
       const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,
@@ -201,15 +203,15 @@ async function getTransformers(): Promise<TransformersModule> {
   }
   // Resolve paths next to the compiled binary for offline execution
   const execDir = path.dirname(process.execPath);
-  const localWasmDir = config.whisper_wasm_dir || path.join(execDir, 'wasm');
+  const localWasmDir = env.WHISPER_WASM_DIR || path.join(execDir, 'wasm');
   const localModelsDir =
-    config.whisper_models_dir || path.join(execDir, 'whisper-models');
+    env.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
 
   // Enforce offline mode and local assets
   mod.env.allowRemoteModels = false;
   mod.env.localModelPath = localModelsDir;
   mod.env.cacheDir =
-    config.whisper_cache_dir || path.join(execDir, '.whisper-cache');
+    env.WHISPER_CACHE_DIR || path.join(execDir, '.whisper-cache');
 
   const onnxBackend = mod.env.backends?.onnx;
   if (onnxBackend) {
@@ -241,7 +243,7 @@ function prettyWhisperName(modelId: string): string {
 function discoverInstalledWhisperModels(): ModelInfo[] {
   const execDir = path.dirname(process.execPath);
   const modelsRoot =
-    config.whisper_models_dir || path.join(execDir, 'whisper-models');
+    env.WHISPER_MODELS_DIR || path.join(execDir, 'whisper-models');
   if (!existsSync(modelsRoot)) {
     return [];
   }

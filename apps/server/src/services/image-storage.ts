@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { config, isProduction } from '@/config';
+import { env, isProduction } from '@/config';
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
@@ -22,7 +22,7 @@ export interface SaveImageResult {
 
 export class ImageStorageService {
   private get imagesDir() {
-    return config.images_dir;
+    return env.IMAGES_DIR;
   }
 
   private generateFileName(id: string): string {
@@ -77,7 +77,7 @@ export class ImageStorageService {
     // In development, the web app runs on a different port than the server,
     // so we must return an absolute URL to avoid broken links.
     if (!isProduction()) {
-      const baseUrl = `http://${config.host}:${config.port}`;
+      const baseUrl = `http://${env.HOST}:${env.PORT}`;
       return `${baseUrl}/api/images/${id}/file`;
     }
 

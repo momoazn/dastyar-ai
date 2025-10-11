@@ -1,21 +1,18 @@
 import { createOllama } from 'ollama-ai-provider-v2';
 import OpenAI from 'openai';
-import { config } from '@/config';
-
-const OLLAMA_BASE_URL = config.ollama_base_url;
-const OLLAMA_ENABLED = config.ollama_enabled;
+import { env } from '@/config';
 
 export const ollamaClient = new OpenAI({
-  baseURL: `${OLLAMA_BASE_URL}/v1`,
+  baseURL: `${env.OLLAMA_BASE_URL}/v1`,
   apiKey: '',
 });
 
 export const ollamaProvider = createOllama({
-  baseURL: `${OLLAMA_BASE_URL}/api/`,
+  baseURL: `${env.OLLAMA_BASE_URL}/api/`,
 });
 
 export async function listOllamaModels() {
-  if (!OLLAMA_ENABLED) {
+  if (!env.OLLAMA_ENABLED) {
     return [];
   }
 

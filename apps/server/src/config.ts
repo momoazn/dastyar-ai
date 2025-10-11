@@ -42,24 +42,7 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-export const config = {
-  port: parsed.data.PORT,
-  host: parsed.data.HOST,
-  cors_origin: parsed.data.CORS_ORIGIN,
-  database_file: parsed.data.DATABASE_FILE,
-  whisper_models_dir: parsed.data.WHISPER_MODELS_DIR,
-  whisper_cache_dir: parsed.data.WHISPER_CACHE_DIR,
-  whisper_wasm_dir: parsed.data.WHISPER_WASM_DIR,
-  whisper_models: parsed.data.WHISPER_MODELS.split(',').map((s) => s.trim()),
-  ollama_base_url: parsed.data.OLLAMA_BASE_URL,
-  ollama_enabled: parsed.data.OLLAMA_ENABLED,
-  lmstudio_base_url: parsed.data.LMSTUDIO_BASE_URL,
-  lmstudio_enabled: parsed.data.LMSTUDIO_ENABLED,
-  stable_diffusion_url: parsed.data.STABLE_DIFFUSION_URL,
-  stable_diffusion_enabled: parsed.data.STABLE_DIFFUSION_ENABLED,
-  images_dir: parsed.data.IMAGES_DIR,
-  web_dist_dir: parsed.data.WEB_DIST_DIR,
-};
+export const env = parsed.data;
 
 export const isProduction = (): boolean => {
   const modulePath = fileURLToPath(import.meta.url);
@@ -68,10 +51,10 @@ export const isProduction = (): boolean => {
 
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
-    dirname(config.database_file),
-    config.whisper_models_dir,
-    config.whisper_cache_dir,
-    config.images_dir,
+    dirname(env.DATABASE_FILE),
+    env.WHISPER_MODELS_DIR,
+    env.WHISPER_CACHE_DIR,
+    env.IMAGES_DIR,
   ];
   const unique = Array.from(new Set(directories)).filter(
     (dir) => dir !== '.' && dir !== './'

@@ -33,7 +33,6 @@ export function sendError(
   return c.json({ error: { code, message, details } }, status);
 }
 
-// Request validation
 const ChatRequestSchema = z.object({
   message: z.object({
     id: z.number(),

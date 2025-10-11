@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { config } from './config';
+import { env } from './config';
 import chatHandler from './routes/chat';
 import imagesHandler from './routes/images';
 import orpcHandler from './routes/rpc';
@@ -16,7 +16,7 @@ export function createApp() {
   app.use(
     '/*',
     cors({
-      origin: config.cors_origin,
+      origin: env.CORS_ORIGIN,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
     })
   );
