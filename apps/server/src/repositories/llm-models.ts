@@ -11,23 +11,11 @@ export async function getModelById(id: number): Promise<LLMModel | null> {
   });
 }
 
-export async function getModelByName(name: string): Promise<LLMModel | null> {
-  return await prisma.lLMModel.findFirst({
-    where: { name },
-  });
-}
-
-export async function getModelsByProvider(
-  provider: LLMModelProvider
+export async function getModels(
+  where: Prisma.LLMModelWhereInput = {}
 ): Promise<LLMModel[]> {
   return await prisma.lLMModel.findMany({
-    where: { provider },
-  });
-}
-
-export async function createModel(model: LLMModel): Promise<LLMModel> {
-  return await prisma.lLMModel.create({
-    data: model,
+    where,
   });
 }
 
@@ -41,23 +29,10 @@ export async function updateModel(
   });
 }
 
-export async function deleteModel(id: number): Promise<void> {
-  await prisma.lLMModel.delete({
-    where: { id },
-  });
-}
-
-export async function getModels(
+export async function syncModels(
+  modelsList: { name: string; provider: LLMModelProvider }[],
   where: Prisma.LLMModelWhereInput = {}
 ): Promise<LLMModel[]> {
-  return await prisma.lLMModel.findMany({
-    where,
-  });
-}
-
-export async function syncModels(
-  modelsList: { name: string; provider: LLMModelProvider }[]
-): Promise<void> {
   const existingModels = await getModels();
   const modelsToCreate = modelsList.filter(
     (model) =>
@@ -76,4 +51,7 @@ export async function syncModels(
       })),
     });
   }
+
+  // Return all models after sync
+  return await getModels(where);
 }
