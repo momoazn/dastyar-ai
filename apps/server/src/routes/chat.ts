@@ -9,7 +9,8 @@ import {
 import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
-import type { Prisma } from '@/database';
+import type { Message, Prisma } from '@/database';
+import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
 import {
   getThread,
@@ -35,14 +36,14 @@ export function sendError(
 
 const ChatRequestSchema = z.object({
   message: z.object({
-    id: z.number(),
+    id: z.string(),
     role: z.literal('user'),
     parts: z.array(z.unknown()).min(1),
     metadata: z.unknown().optional(),
   }),
-  modelProvider: z.enum(['ollama', 'lmstudio']).optional().default('ollama'),
+  modelId: z.number(),
   modelName: z.string().min(1),
-  threadId: z.number(),
+  threadId: z.string(),
 });
 
 const app = new Hono().post(
@@ -50,15 +51,10 @@ const app = new Hono().post(
   zValidator('json', ChatRequestSchema),
   async (c) => {
     try {
-      const {
-        message: inputMessage,
-        modelName,
-        threadId,
-        modelProvider,
-      } = c.req.valid('json');
+      const { message: inputMessage, modelId, threadId } = c.req.valid('json');
 
       if (threadId) {
-        const thread = await getThread(threadId);
+        const thread = await getThread(Number(threadId));
         if (!thread) {
           return sendError(c, {
             status: 404,
@@ -69,18 +65,30 @@ const app = new Hono().post(
         }
       }
 
-      const providerModel = getProviderForModel(modelName, modelProvider);
+      const llmModel = await getModelById(modelId);
+      if (!llmModel) {
+        return sendError(c, {
+          status: 404,
+          code: 'MODEL_NOT_FOUND',
+          message: 'No model exists with the provided id',
+          details: { modelId },
+        });
+      }
+      const providerModel = getProviderForModel(
+        llmModel.name,
+        llmModel.provider
+      );
 
       try {
         await saveMessage({
           parts: inputMessage.parts as Prisma.InputJsonValue,
           status: 'finished',
           role: 'user',
-          modelName,
-          threadId,
+          modelId,
+          threadId: Number(threadId),
         });
       } catch (err) {
-        console.error('failed to persist user message', err);
+        console.error('[chat] Failed to persist user message', err);
         return sendError(c, {
           status: 500,
           code: 'PERSIST_USER_MESSAGE_FAILED',
@@ -89,17 +97,21 @@ const app = new Hono().post(
         });
       }
 
-      let messages: Awaited<ReturnType<typeof loadThreadMessages>>;
+      let messages: Message[];
       try {
-        messages = await loadThreadMessages(threadId);
+        messages = await loadThreadMessages(Number(threadId));
       } catch (err) {
-        console.error('failed to load thread messages', err);
+        console.error('[chat] Failed to load thread messages', err);
         return sendError(c, {
           status: 500,
           code: 'LOAD_MESSAGES_FAILED',
           message: 'Failed to load thread messages',
         });
       }
+
+      // Convert messages and log conversion
+      const uiMessages = convertDbMessagesToUiMessages(messages);
+      const modelMessages = convertToModelMessages(uiMessages);
 
       const result = streamText({
         model: wrapLanguageModel({
@@ -109,9 +121,7 @@ const app = new Hono().post(
             separator: '\n',
           }),
         }),
-        messages: convertToModelMessages(
-          convertDbMessagesToUiMessages(messages)
-        ),
+        messages: modelMessages,
         system: CHAT_SYSTEM_PROMPT,
         providerOptions: {
           // ollama: { think: true },
@@ -123,8 +133,11 @@ const app = new Hono().post(
       });
 
       return result.toUIMessageStreamResponse({
-        originalMessages: convertDbMessagesToUiMessages(messages),
-        generateMessageId: () => Math.random().toString(36).substring(2, 15),
+        originalMessages: uiMessages,
+        generateMessageId: () => {
+          const id = Math.random().toString(36).substring(2, 15);
+          return id;
+        },
         sendReasoning: true,
         onFinish: async ({ responseMessage }) => {
           if (!threadId) {
@@ -132,15 +145,15 @@ const app = new Hono().post(
           }
           try {
             await saveMessage({
-              threadId,
+              threadId: Number(threadId),
               parts: responseMessage.parts as Prisma.InputJsonValue,
-              modelName,
+              modelId,
               status: 'finished',
               role: 'assistant',
             });
-            await updateThreadOnNewMessage(threadId, new Date());
+            await updateThreadOnNewMessage(Number(threadId), new Date());
           } catch (error) {
-            console.error('failed to persist assistant message', error);
+            console.error('[chat] Failed to persist assistant message', error);
             return;
           }
         },
@@ -150,7 +163,7 @@ const app = new Hono().post(
         error && typeof error === 'object' && 'message' in error
           ? String((error as { message?: unknown }).message)
           : 'An unexpected error occurred';
-      console.error('chat route error', error);
+      console.error('[chat] Route error', error);
       return sendError(c, {
         status: 500,
         code: 'INTERNAL_SERVER_ERROR',

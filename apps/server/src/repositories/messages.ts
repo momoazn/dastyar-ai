@@ -1,15 +1,22 @@
 import { type Message, type Prisma, prisma } from '@/database';
 import type { MessageStatus } from '@/utils/constants';
 
+export type CreateMessageParams = Omit<
+  Message,
+  'id' | 'createdAt' | 'updatedAt' | 'parts'
+> & {
+  parts: Prisma.InputJsonValue;
+};
+
+export type UpdateMessageParams = CreateMessageParams & Pick<Message, 'id'>;
+
 /**
  * Saves a single message to the database.
  * @param params - The message parameters excluding auto-generated fields.
  * @returns The ID of the created message.
  */
 export async function saveMessage(
-  params: Omit<Message, 'id' | 'createdAt' | 'updatedAt' | 'parts'> & {
-    parts: Prisma.InputJsonValue;
-  }
+  params: CreateMessageParams
 ): Promise<{ id: number }> {
   try {
     const message = await prisma.message.create({
@@ -18,7 +25,7 @@ export async function saveMessage(
         role: params.role,
         parts: params.parts,
         status: params.status,
-        modelName: params.modelName,
+        modelId: params.modelId,
       },
     });
 
@@ -34,15 +41,13 @@ export async function saveMessage(
  * @param params - The message ID and fields to update.
  */
 export async function updateMessage(
-  params: { id: number } & Partial<
-    Pick<Message, 'parts' | 'status' | 'modelName'>
-  >
+  params: UpdateMessageParams
 ): Promise<void> {
   try {
     const updateData: Partial<{
       parts: Prisma.InputJsonValue;
       status: MessageStatus;
-      modelName: string;
+      modelId: number;
     }> = {};
 
     if (params.parts !== undefined) {
@@ -51,8 +56,8 @@ export async function updateMessage(
     if (params.status !== undefined) {
       updateData.status = params.status as MessageStatus;
     }
-    if (params.modelName !== undefined) {
-      updateData.modelName = params.modelName;
+    if (params.modelId !== undefined) {
+      updateData.modelId = params.modelId;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -75,11 +80,7 @@ export async function updateMessage(
  * @returns The number of messages created.
  */
 export async function saveMessages(
-  params: Array<
-    Omit<Message, 'id' | 'createdAt' | 'updatedAt' | 'parts'> & {
-      parts: Prisma.InputJsonValue;
-    }
-  >
+  params: CreateMessageParams[]
 ): Promise<{ count: number }> {
   try {
     if (params.length === 0) {
@@ -92,7 +93,7 @@ export async function saveMessages(
         role: p.role,
         parts: p.parts,
         status: p.status,
-        modelName: p.modelName,
+        modelId: p.modelId,
       })),
     });
 

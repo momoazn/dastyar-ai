@@ -11,14 +11,37 @@ datasource db {
   url      = "file:./data.db"
 }
 
+model LLMModel {
+  id        Int              @id @default(autoincrement())
+  name      String
+  provider  LLMModelProvider
+  isEnabled Boolean          @default(true) @map("is_enabled")
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  messages        Message[]
+  translations    Translation[]
+  summaries       Summary[]
+  codeGenerations CodeGeneration[]
+  codeReviews     CodeReview[]
+
+  @@map("llm_models")
+}
+
+enum LLMModelProvider {
+  ollama
+  lmstudio
+}
+
 // Chat Threads table – represents a chat thread
 model ChatThread {
   id            Int       @id @default(autoincrement())
   title         String
-  isArchived    Boolean   @default(false)
-  lastMessageAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isArchived    Boolean   @default(false) @map("is_archived")
+  lastMessageAt DateTime? @map("last_message_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   // Relations
   messages Message[]
@@ -32,13 +55,14 @@ model Message {
   parts     Json
   status    MessageStatus
   role      MessageRole
-  modelName String
-  threadId  Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  modelId   Int           @map("model_id")
+  threadId  Int           @map("thread_id")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   // Relations
   thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  model  LLMModel   @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
@@ -48,12 +72,15 @@ model Translation {
   id             Int          @id @default(autoincrement())
   sourceText     String
   translatedText String?
-  modelName      String
+  modelId        Int          @map("model_id")
   sourceLanguage LanguageCode
   targetLanguage LanguageCode
   tone           Tone?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  model LLMModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("translations")
 }
@@ -63,11 +90,14 @@ model Summary {
   id          Int         @id @default(autoincrement())
   sourceText  String
   summaryText String?
-  modelName   String
+  modelId     Int         @map("model_id")
   mode        SummaryMode
   tone        Tone?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  model LLMModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("summaries")
 }
@@ -76,10 +106,10 @@ model Summary {
 model ImageThread {
   id          Int       @id @default(autoincrement())
   title       String
-  isArchived  Boolean   @default(false)
-  lastImageAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isArchived  Boolean   @default(false) @map("is_archived")
+  lastImageAt DateTime? @map("last_image_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
   images GeneratedImage[]
@@ -95,13 +125,13 @@ model GeneratedImage {
   filePath       String
   fileName       String
   settings       String // JSON string of generation settings
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  imageThreadId Int
-  thread        ImageThread @relation(fields: [imageThreadId], references: [id], onDelete: Cascade)
+  threadId Int         @map("thread_id")
+  thread   ImageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  @@index([imageThreadId], name: "idx_generated_images_thread")
+  @@index([threadId], name: "idx_generated_images_thread")
   @@map("generated_images")
 }
 
@@ -160,8 +190,8 @@ model CodeAssistSession {
   id        Int      @id @default(autoincrement())
   title     String
   language  String // Programming language (e.g., "javascript", "python", "typescript")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   codeGenerations CodeGeneration[]
@@ -173,15 +203,16 @@ model CodeAssistSession {
 // Code Generations table – stores code generation history
 model CodeGeneration {
   id            Int      @id @default(autoincrement())
-  sessionId     Int
+  sessionId     Int      @map("session_id")
   prompt        String
   generatedCode String
   language      String
-  modelUsed     String
-  createdAt     DateTime @default(now())
+  modelId       Int      @map("model_id")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   // Relations
   session CodeAssistSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  model   LLMModel          @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("code_generations")
 }
@@ -189,15 +220,17 @@ model CodeGeneration {
 // Code Reviews table – stores code review results
 model CodeReview {
   id             Int      @id @default(autoincrement())
-  sessionId      Int
+  sessionId      Int      @map("session_id")
   codeInput      String
   reviewFeedback String
   suggestions    String // JSON string of suggestions
   severityLevels String // JSON string of severity levels
-  createdAt      DateTime @default(now())
+  modelId        Int      @map("model_id")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
   session CodeAssistSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  model   LLMModel          @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("code_reviews")
 }
