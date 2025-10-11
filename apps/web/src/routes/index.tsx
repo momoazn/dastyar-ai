@@ -57,7 +57,7 @@ const features = [
     link: '/code',
     color: 'text-purple-600',
   },
-];
+] as const;
 
 function HomeComponent() {
   return (
