@@ -8,24 +8,17 @@ import {
 import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
-import type { Prisma, User } from '@/database';
+import type { Prisma } from '@/database';
+import { type AuthEnv, authMiddleware } from '@/middlewares';
 import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
 import { updateThreadOnNewMessage } from '@/repositories/threads';
 import { getProviderForModel } from '@/services';
-import { validateAuthHeader } from '@/services/auth';
 import type { MyUIMessage } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
 
-// Extend Hono context to include user
-declare module 'hono' {
-  interface ContextVariableMap {
-    user: User;
-  }
-}
-
 export function sendError(
-  c: Context,
+  c: Context<AuthEnv>,
   params: {
     status: ContentfulStatusCode;
     code: string;
@@ -52,44 +45,8 @@ const ChatRequestSchema = z.object({
   threadId: z.coerce.number(),
 });
 
-// Authentication middleware
-const authMiddleware = async (c: Context, next: () => Promise<void>) => {
-  const authHeader = c.req.header('Authorization');
-  const { prisma } = await import('../database');
-
-  const authResult = await validateAuthHeader(authHeader, prisma);
-
-  if (!authResult.success) {
-    return c.json(
-      {
-        error: {
-          code: authResult.error?.code ?? 'UNAUTHORIZED',
-          message: authResult.error?.message ?? 'Authentication failed',
-        },
-      },
-      401
-    );
-  }
-
-  if (!authResult.user) {
-    return c.json(
-      {
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not found',
-        },
-      },
-      401
-    );
-  }
-
-  // Add user to context
-  c.set('user', authResult.user);
-  await next();
-};
-
-const app = new Hono()
-  .use('*', authMiddleware)
+const app = new Hono<AuthEnv>()
+  .use(authMiddleware)
   .post('/', zValidator('json', ChatRequestSchema), async (c) => {
     try {
       const { messages, modelId, threadId } = c.req.valid('json');

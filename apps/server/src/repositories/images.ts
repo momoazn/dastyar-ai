@@ -62,6 +62,34 @@ export async function getGeneratedImage(
 }
 
 /**
+ * Gets a generated image by ID with user ownership verification
+ * @param id - The image ID
+ * @param userId - The user ID to verify ownership
+ * @returns The image if found and owned by the user, null otherwise
+ */
+export async function getGeneratedImageByUser(
+  id: number,
+  userId: number
+): Promise<GeneratedImage | null> {
+  try {
+    const image = await prisma.generatedImage.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    return image;
+  } catch (error) {
+    console.error(
+      `Failed to get generated image ${id} for user ${userId}:`,
+      error
+    );
+    return null;
+  }
+}
+
+/**
  * Deletes a generated image and its associated files.
  * @param id - The image ID.
  * @throws Error if the image is not found or deletion fails.
