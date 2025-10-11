@@ -4,7 +4,6 @@ import { createFileRoute, useParams } from '@tanstack/react-router';
 import { DefaultChatTransport } from 'ai';
 import { MessageCircleIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { useChatModelSelection } from '@/hooks/use-feature-model-selection';
 import {
   Conversation,
   ConversationContent,
@@ -12,6 +11,7 @@ import {
 } from '@/components/ai-elements/conversation';
 import { Loader } from '@/components/ai-elements/loader';
 import { ChatInput, Message } from '@/components/chat';
+import { useChatModelSelection } from '@/hooks/use-feature-model-selection';
 import { fa } from '@/lib/persian-texts';
 import type { MyUIMessage } from '@/server/utils/chat';
 import { client, orpc, queryClient } from '@/utils/orpc';
@@ -37,18 +37,6 @@ function ChatThreadRouteComponent() {
       id: threadId,
       transport: new DefaultChatTransport({
         api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
-        prepareSendMessagesRequest: ({ messages: _messages, body }) => {
-          const lastMessage = _messages.at(-1);
-          if (!lastMessage) {
-            throw new Error('No last message');
-          }
-          return {
-            body: {
-              ...body,
-              message: lastMessage,
-            },
-          };
-        },
       }),
       onFinish: () => {
         messagesQuery.refetch();
@@ -76,7 +64,13 @@ function ChatThreadRouteComponent() {
       }
     }
 
-    sendMessage({ text: trimmed }, { body: { modelId, threadId } });
+    if (!modelId) {
+      return;
+    }
+    sendMessage(
+      { text: trimmed },
+      { body: { modelId, threadId: Number(threadId) } }
+    );
   };
 
   useEffect(() => {
