@@ -49,7 +49,13 @@ function SummarizePage() {
   const [tone, setTone] = useState<ToneOption>('formal');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const { modelId, setModelId, models: modelList, isLoading: modelsLoading, error: modelsError } = useSummarizeModelSelection();
+  const {
+    modelId,
+    setModelId,
+    models: modelList,
+    isLoading: modelsLoading,
+    error: modelsError,
+  } = useSummarizeModelSelection();
 
   // Load summary if ID is provided in URL
   const { data: selectedSummary } = useQuery(
@@ -118,7 +124,8 @@ function SummarizePage() {
   };
 
   const canSummarize =
-    Boolean(sourceText.trim() && modelId && !modelsLoading) && !summarizeMutation.isPending;
+    Boolean(sourceText.trim() && modelId && !modelsLoading) &&
+    !summarizeMutation.isPending;
   const charCount = sourceText.length;
 
   return (
@@ -187,7 +194,11 @@ function SummarizePage() {
               value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select model"} />
+                <SelectValue
+                  placeholder={
+                    modelsLoading ? 'Loading models...' : 'Select model'
+                  }
+                />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((model) => (
@@ -265,10 +276,9 @@ function SummarizePage() {
           <Alert variant="destructive">
             <div className="flex items-center gap-2">
               <span>
-                {modelsError 
-                  ? "Failed to load models. Please refresh the page."
-                  : fa.summarize.errors.requestFailed
-                }
+                {modelsError
+                  ? 'Failed to load models. Please refresh the page.'
+                  : fa.summarize.errors.requestFailed}
               </span>
               <span>{fa.translation.tryAgain}</span>
             </div>

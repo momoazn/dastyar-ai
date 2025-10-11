@@ -7,11 +7,11 @@ import {
 
 /**
  * Creates a new thread with an optional title.
- * @param params - Optional parameters including title.
+ * @param params - Optional parameters including title and userId.
  * @returns The ID of the created thread.
  */
 export async function createThread(
-  params?: Partial<Pick<ChatThread, 'title'>>
+  params?: Partial<Pick<ChatThread, 'title'>> & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const title = (params?.title ?? 'گفتگوی جدید').trim();
@@ -20,6 +20,7 @@ export async function createThread(
       data: {
         title,
         isArchived: false,
+        userId: params!.userId,
       },
     });
 
@@ -33,12 +34,16 @@ export async function createThread(
 /**
  * Retrieves a specific thread by ID.
  * @param id - The thread ID.
+ * @param userId - The user ID.
  * @returns The thread record or null if not found.
  */
-export async function getThread(id: number): Promise<ChatThread | null> {
+export async function getThread(
+  id: number,
+  userId: number
+): Promise<ChatThread | null> {
   try {
-    const thread = await prisma.chatThread.findUnique({
-      where: { id },
+    const thread = await prisma.chatThread.findFirst({
+      where: { id, userId },
     });
 
     return thread;
@@ -55,11 +60,15 @@ export async function getThread(id: number): Promise<ChatThread | null> {
  */
 export function listThreads(options?: {
   includeArchived?: boolean;
+  userId: number;
 }): Promise<ChatThread[]> {
   const includeArchived = options?.includeArchived ?? false;
 
   return prisma.chatThread.findMany({
-    where: includeArchived ? {} : { isArchived: false },
+    where: {
+      userId: options!.userId,
+      ...(includeArchived ? {} : { isArchived: false }),
+    },
     orderBy: [{ lastMessageAt: 'desc' }, { updatedAt: 'desc' }],
   });
 }
@@ -68,11 +77,16 @@ export function listThreads(options?: {
  * Renames a thread.
  * @param id - The thread ID.
  * @param title - The new title.
+ * @param userId - The user ID.
  */
-export async function renameThread(id: number, title: string): Promise<void> {
+export async function renameThread(
+  id: number,
+  title: string,
+  userId: number
+): Promise<void> {
   try {
-    await prisma.chatThread.update({
-      where: { id },
+    await prisma.chatThread.updateMany({
+      where: { id, userId },
       data: { title },
     });
   } catch (error) {
@@ -85,14 +99,16 @@ export async function renameThread(id: number, title: string): Promise<void> {
  * Sets the archived status of a thread.
  * @param id - The thread ID.
  * @param isArchived - Whether the thread should be archived.
+ * @param userId - The user ID.
  */
 export async function setArchived(
   id: number,
-  isArchived: boolean
+  isArchived: boolean,
+  userId: number
 ): Promise<void> {
   try {
-    await prisma.chatThread.update({
-      where: { id },
+    await prisma.chatThread.updateMany({
+      where: { id, userId },
       data: { isArchived },
     });
   } catch (error) {
@@ -104,11 +120,12 @@ export async function setArchived(
 /**
  * Deletes a thread by ID.
  * @param id - The thread ID.
+ * @param userId - The user ID.
  */
-export async function deleteThread(id: number): Promise<void> {
+export async function deleteThread(id: number, userId: number): Promise<void> {
   try {
-    await prisma.chatThread.delete({
-      where: { id },
+    await prisma.chatThread.deleteMany({
+      where: { id, userId },
     });
   } catch (error) {
     console.error(`Failed to delete thread ${id}:`, error);
@@ -119,15 +136,17 @@ export async function deleteThread(id: number): Promise<void> {
 /**
  * Updates the last message timestamp for a thread.
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  * @param date - The timestamp (defaults to current time).
  */
 export async function updateThreadOnNewMessage(
   threadId: number,
+  userId: number,
   date: Date = new Date()
 ): Promise<void> {
   try {
-    await prisma.chatThread.update({
-      where: { id: threadId },
+    await prisma.chatThread.updateMany({
+      where: { id: threadId, userId },
       data: { lastMessageAt: date },
     });
   } catch (error) {
@@ -143,14 +162,16 @@ export type MessageWithModel = Message & {
 /**
  * Loads all messages for a specific thread.
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  * @returns Array of messages with model relation.
  */
 export async function loadThreadMessages(
-  threadId: number
+  threadId: number,
+  userId: number
 ): Promise<MessageWithModel[]> {
   try {
     const messages = await prisma.message.findMany({
-      where: { threadId },
+      where: { threadId, userId },
       orderBy: { createdAt: 'asc' },
       include: {
         model: {

@@ -15,53 +15,57 @@ import {
   setArchived,
 } from '@/repositories/threads';
 import { convertDbMessagesToUiMessages } from '@/utils/chat';
-import { publicProcedure } from './base';
+import { protectedProcedure } from './base';
 
 export const threadProcedures = {
-  create: publicProcedure
+  create: protectedProcedure
     .input(z.object({ title: z.string().optional() }).optional())
-    .handler(async ({ input }) => {
-      const created = await createThread({ title: input?.title });
+    .handler(async ({ input, context }) => {
+      const created = await createThread({
+        title: input?.title,
+        userId: context.user!.id,
+      });
       return created;
     }),
-  list: publicProcedure.handler(async () => {
+  list: protectedProcedure.handler(async ({ context }) => {
     try {
       const rows = await listThreads({
         includeArchived: false,
+        userId: context.user!.id,
       });
       return rows;
     } catch {
       return [] as const;
     }
   }),
-  get: publicProcedure
+  get: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      const row = await getThread(input.id);
+    .handler(async ({ input, context }) => {
+      const row = await getThread(input.id, context.user!.id);
       return row;
     }),
-  rename: publicProcedure
+  rename: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().min(1) }))
-    .handler(async ({ input }) => {
-      await renameThread(input.id, input.title);
+    .handler(async ({ input, context }) => {
+      await renameThread(input.id, input.title, context.user!.id);
       return { ok: true } as const;
     }),
-  archive: publicProcedure
+  archive: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await setArchived(input.id, true);
+    .handler(async ({ input, context }) => {
+      await setArchived(input.id, true, context.user!.id);
       return { ok: true } as const;
     }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteThread(input.id);
+    .handler(async ({ input, context }) => {
+      await deleteThread(input.id, context.user!.id);
       return { ok: true } as const;
     }),
 };
 
 export const messageProcedures = {
-  listByThread: publicProcedure
+  listByThread: protectedProcedure
     .input(
       z.object({
         threadId: z.number(),
@@ -70,30 +74,36 @@ export const messageProcedures = {
         order: z.enum(['asc', 'desc']).optional(),
       })
     )
-    .handler(async ({ input }) => {
-      const messages = await loadThreadMessages(input.threadId);
+    .handler(async ({ input, context }) => {
+      const messages = await loadThreadMessages(
+        input.threadId,
+        context.user!.id
+      );
       return convertDbMessagesToUiMessages(messages);
     }),
-  getLastUsedModel: publicProcedure
+  getLastUsedModel: protectedProcedure
     .input(z.object({ threadId: z.number() }))
-    .handler(async ({ input }) => {
-      const lastUsedModel = await getLastUsedModelInThread(input.threadId);
+    .handler(async ({ input, context }) => {
+      const lastUsedModel = await getLastUsedModelInThread(
+        input.threadId,
+        context.user!.id
+      );
       return lastUsedModel;
     }),
-  getLastUsedModelGlobal: publicProcedure.handler(async () => {
-    const lastUsedModel = await getLastUsedModelGlobal();
+  getLastUsedModelGlobal: protectedProcedure.handler(async ({ context }) => {
+    const lastUsedModel = await getLastUsedModelGlobal(context.user!.id);
     return lastUsedModel;
   }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteMessage(input.id);
+    .handler(async ({ input, context }) => {
+      await deleteMessage(input.id, context.user!.id);
       return { ok: true } as const;
     }),
-  clearThread: publicProcedure
+  clearThread: protectedProcedure
     .input(z.object({ threadId: z.number() }))
-    .handler(async ({ input }) => {
-      await clearThread(input.threadId);
+    .handler(async ({ input, context }) => {
+      await clearThread(input.threadId, context.user!.id);
       return { ok: true } as const;
     }),
 };

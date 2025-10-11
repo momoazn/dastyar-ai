@@ -9,6 +9,7 @@ import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import type { Prisma } from '@/database';
+import { type AuthEnv, authMiddleware } from '@/middlewares';
 import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
 import { updateThreadOnNewMessage } from '@/repositories/threads';
@@ -17,7 +18,7 @@ import type { MyUIMessage } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
 
 export function sendError(
-  c: Context,
+  c: Context<AuthEnv>,
   params: {
     status: ContentfulStatusCode;
     code: string;
@@ -44,13 +45,13 @@ const ChatRequestSchema = z.object({
   threadId: z.coerce.number(),
 });
 
-const app = new Hono().post(
-  '/',
-  zValidator('json', ChatRequestSchema),
-  async (c) => {
+const app = new Hono<AuthEnv>()
+  .use(authMiddleware)
+  .post('/', zValidator('json', ChatRequestSchema), async (c) => {
     try {
       const { messages, modelId, threadId } = c.req.valid('json');
       const uiMessages = messages as unknown as MyUIMessage[];
+      const user = c.get('user');
 
       const last = uiMessages.at(-1);
       if (!last || last.role !== 'user') {
@@ -84,8 +85,9 @@ const app = new Hono().post(
           modelId,
           status: 'finished',
           role: 'user',
+          userId: user.id,
         });
-        await updateThreadOnNewMessage(threadId, new Date());
+        await updateThreadOnNewMessage(threadId, user.id, new Date());
       } catch {
         return sendError(c, {
           status: 500,
@@ -120,8 +122,9 @@ const app = new Hono().post(
               modelId,
               status: 'finished',
               role: 'assistant',
+              userId: user.id,
             });
-            await updateThreadOnNewMessage(threadId, new Date());
+            await updateThreadOnNewMessage(threadId, user.id, new Date());
           } catch {
             return;
           }
@@ -138,7 +141,6 @@ const app = new Hono().post(
         message,
       });
     }
-  }
-);
+  });
 
 export default app;

@@ -30,8 +30,10 @@
     "@prisma/client": "^6.17.0",
     "ai": "^5.0.61",
     "automatic1111-provider": "^0.1.1",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",
     "hono": "^4.9.10",
+    "jsonwebtoken": "^9.0.2",
     "ollama-ai-provider-v2": "^1.4.1",
     "onnxruntime-web": "^1.23.0",
     "openai": "^6.2.0",
@@ -39,7 +41,9 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/bun": "^1.2.23",
+    "@types/jsonwebtoken": "^9.0.10",
     "prisma": "^6.17.0",
     "typescript": "^5.9.3"
   },

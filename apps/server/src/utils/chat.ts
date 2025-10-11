@@ -1,15 +1,15 @@
 import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from 'ai';
-import type { Message } from '@/database';
+import type { MessageWithModel } from '@/repositories/threads';
 import type { MessageRole } from './constants';
 
 export type MyUIMessage = UIMessage<
-  { modelId: number; threadId: number },
+  { modelId: number; threadId: number; modelName?: string },
   UIDataTypes,
   UITools
 >;
 
 export const convertDbMessagesToUiMessages = (
-  messages: Message[]
+  messages: MessageWithModel[]
 ): MyUIMessage[] => {
   return messages.map((message) => ({
     id: message.id.toString(),
@@ -18,6 +18,7 @@ export const convertDbMessagesToUiMessages = (
     metadata: {
       modelId: message.modelId,
       threadId: message.threadId,
+      modelName: message.model?.name,
     },
   }));
 };

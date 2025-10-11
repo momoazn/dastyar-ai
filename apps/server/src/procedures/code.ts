@@ -20,7 +20,7 @@ import {
   extractJsonObject,
   getFirstFieldName,
 } from '@/utils/llm-json';
-import { publicProcedure } from './base';
+import { protectedProcedure, publicProcedure } from './base';
 
 // Code generation schemas
 const CodeGenerationSchema = z.object({
@@ -153,57 +153,67 @@ const generateWithPlainJson = async <T>(
 
 export const codeProcedures = {
   // Session management
-  listSessions: publicProcedure.handler(async () => {
+  listSessions: protectedProcedure.handler(async ({ context }) => {
     try {
-      const sessions = await listCodeAssistSessions();
+      // biome-ignore lint/style/noNonNullAssertion: User is guaranteed to exist in protected procedures
+      const sessions = await listCodeAssistSessions(context.user!.id);
       return sessions;
     } catch {
       return [] as const;
     }
   }),
 
-  getSession: publicProcedure
+  getSession: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      const session = await getCodeAssistSession(input.id);
+    .handler(async ({ input, context }) => {
+      const session = await getCodeAssistSession(input.id, context.user!.id);
       return session;
     }),
 
-  createSession: publicProcedure
+  updateSession: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string().min(1),
+        language: z.string().min(1),
+      })
+    )
+    .handler(async ({ input, context }) => {
+      await updateCodeAssistSession(
+        input.id,
+        {
+          title: input.title,
+          language: input.language,
+        },
+        context.user!.id
+      );
+      return { ok: true } as const;
+    }),
+
+  deleteSession: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .handler(async ({ input, context }) => {
+      await deleteCodeAssistSession(input.id, context.user!.id);
+      return { ok: true } as const;
+    }),
+
+  createSession: protectedProcedure
     .input(
       z.object({
         title: z.string().min(1),
         language: z.string().min(1),
       })
     )
-    .handler(async ({ input }) => {
-      const session = await createCodeAssistSession(input);
+    .handler(async ({ input, context }) => {
+      const session = await createCodeAssistSession({
+        ...input,
+        userId: context.user!.id,
+      });
       return session;
     }),
 
-  updateSession: publicProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        title: z.string().min(1).optional(),
-        language: z.string().min(1).optional(),
-      })
-    )
-    .handler(async ({ input }) => {
-      const { id, ...data } = input;
-      await updateCodeAssistSession(id, data);
-      return { ok: true } as const;
-    }),
-
-  deleteSession: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteCodeAssistSession(input.id);
-      return { ok: true } as const;
-    }),
-
   // Code generation
-  generateCode: publicProcedure
+  generateCode: protectedProcedure
     .input(
       z.object({
         sessionId: z.number(),
@@ -213,7 +223,7 @@ export const codeProcedures = {
         modelId: z.number(),
       })
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
         throw new Error('Model not found');
@@ -272,6 +282,7 @@ export const codeProcedures = {
         generatedCode: (result?.generatedCode as string) || '',
         language: input.language,
         modelId: input.modelId,
+        userId: context.user!.id,
       });
 
       return {
@@ -349,7 +360,7 @@ export const codeProcedures = {
     }),
 
   // Code review
-  reviewCode: publicProcedure
+  reviewCode: protectedProcedure
     .input(
       z.object({
         sessionId: z.number(),
@@ -358,7 +369,7 @@ export const codeProcedures = {
         modelId: z.number(),
       })
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
         throw new Error('Model not found');
@@ -422,6 +433,7 @@ export const codeProcedures = {
           ) || []
         ),
         modelId: input.modelId,
+        userId: context.user!.id,
       });
 
       return {
@@ -517,14 +529,14 @@ export const codeProcedures = {
     }),
 
   // Delete individual generations and reviews
-  deleteGeneration: publicProcedure
+  deleteGeneration: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       await deleteCodeGeneration(input.id);
       return { ok: true } as const;
     }),
 
-  deleteReview: publicProcedure
+  deleteReview: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {
       await deleteCodeReview(input.id);

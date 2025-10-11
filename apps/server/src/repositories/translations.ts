@@ -1,11 +1,14 @@
 import { prisma, type Translation } from '@/database';
 
 /**
- * Retrieves all translations.
+ * Retrieves all translations for a user.
+ * @param userId - The user ID.
  * @returns Array of translations.
  */
-export function listTranslations(): Promise<Translation[]> {
-  return prisma.translation.findMany();
+export function listTranslations(userId: number): Promise<Translation[]> {
+  return prisma.translation.findMany({
+    where: { userId },
+  });
 }
 
 /**
@@ -14,7 +17,9 @@ export function listTranslations(): Promise<Translation[]> {
  * @returns The created translation record.
  */
 export async function createTranslation(
-  params: Omit<Translation, 'id' | 'createdAt' | 'updatedAt'>
+  params: Omit<Translation, 'id' | 'createdAt' | 'updatedAt' | 'userId'> & {
+    userId: number;
+  }
 ): Promise<Translation> {
   try {
     const translation = await prisma.translation.create({
@@ -25,6 +30,7 @@ export async function createTranslation(
         sourceLanguage: params.sourceLanguage,
         targetLanguage: params.targetLanguage,
         tone: params.tone,
+        userId: params.userId,
       },
     });
 
@@ -38,12 +44,16 @@ export async function createTranslation(
 /**
  * Retrieves a specific translation by ID.
  * @param id - The translation ID.
+ * @param userId - The user ID.
  * @returns The translation record or null if not found.
  */
-export async function getTranslation(id: number): Promise<Translation | null> {
+export async function getTranslation(
+  id: number,
+  userId: number
+): Promise<Translation | null> {
   try {
-    const translation = await prisma.translation.findUnique({
-      where: { id },
+    const translation = await prisma.translation.findFirst({
+      where: { id, userId },
     });
 
     return translation;
@@ -56,11 +66,15 @@ export async function getTranslation(id: number): Promise<Translation | null> {
 /**
  * Deletes a specific translation by ID.
  * @param id - The translation ID.
+ * @param userId - The user ID.
  */
-export async function deleteTranslation(id: number): Promise<void> {
+export async function deleteTranslation(
+  id: number,
+  userId: number
+): Promise<void> {
   try {
-    await prisma.translation.delete({
-      where: { id },
+    await prisma.translation.deleteMany({
+      where: { id, userId },
     });
   } catch (error) {
     console.error(`Failed to delete translation ${id}:`, error);

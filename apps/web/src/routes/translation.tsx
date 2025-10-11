@@ -49,7 +49,13 @@ function TranslationPage() {
   // Infer transcribe language from source language
   const transcribeLanguage = sourceLanguage === 'fa' ? 'fa' : 'en';
 
-  const { modelId, setModelId, models: modelList, isLoading: modelsLoading, error: modelsError } = useTranslationModelSelection();
+  const {
+    modelId,
+    setModelId,
+    models: modelList,
+    isLoading: modelsLoading,
+    error: modelsError,
+  } = useTranslationModelSelection();
 
   // Load translation if ID is provided in URL
   const { data: selectedTranslation } = useQuery(
@@ -116,7 +122,8 @@ function TranslationPage() {
   };
 
   const canTranslate =
-    Boolean(sourceText.trim() && modelId && !modelsLoading) && !translateMutation.isPending;
+    Boolean(sourceText.trim() && modelId && !modelsLoading) &&
+    !translateMutation.isPending;
   const charCount = sourceText.length;
 
   return (
@@ -214,7 +221,11 @@ function TranslationPage() {
               value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select model"} />
+                <SelectValue
+                  placeholder={
+                    modelsLoading ? 'Loading models...' : 'Select model'
+                  }
+                />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((m) => (
@@ -253,10 +264,9 @@ function TranslationPage() {
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>خطا</AlertTitle>
             <AlertDescription>
-              {modelsError 
-                ? "Failed to load models. Please refresh the page."
-                : translateMutation.error?.message
-              }
+              {modelsError
+                ? 'Failed to load models. Please refresh the page.'
+                : translateMutation.error?.message}
             </AlertDescription>
           </Alert>
         )}

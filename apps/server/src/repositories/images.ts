@@ -7,7 +7,9 @@ import { imageStorageService } from '@/services/image-storage';
  * @returns The created image record.
  */
 export async function createGeneratedImage(
-  params: Omit<GeneratedImage, 'id' | 'createdAt' | 'updatedAt'>
+  params: Omit<GeneratedImage, 'id' | 'createdAt' | 'updatedAt' | 'userId'> & {
+    userId: number;
+  }
 ): Promise<GeneratedImage> {
   try {
     const image = await prisma.generatedImage.create({
@@ -17,7 +19,8 @@ export async function createGeneratedImage(
         filePath: params.filePath,
         fileName: params.fileName,
         settings: params.settings,
-        imageThreadId: params.imageThreadId,
+        threadId: params.threadId,
+        userId: params.userId,
       },
     });
 
@@ -55,6 +58,34 @@ export async function getGeneratedImage(
   } catch (error) {
     console.error(`Failed to get generated image ${id}:`, error);
     throw new Error('Unable to retrieve generated image');
+  }
+}
+
+/**
+ * Gets a generated image by ID with user ownership verification
+ * @param id - The image ID
+ * @param userId - The user ID to verify ownership
+ * @returns The image if found and owned by the user, null otherwise
+ */
+export async function getGeneratedImageByUser(
+  id: number,
+  userId: number
+): Promise<GeneratedImage | null> {
+  try {
+    const image = await prisma.generatedImage.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    return image;
+  } catch (error) {
+    console.error(
+      `Failed to get generated image ${id} for user ${userId}:`,
+      error
+    );
+    return null;
   }
 }
 
@@ -142,13 +173,15 @@ export async function cleanupOrphanedFiles(): Promise<number> {
 /**
  * Retrieves all generated images for a specific thread ordered by creation date (newest first).
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  * @returns Array of generated images.
  */
 export function listGeneratedImagesByThread(
-  threadId: number
+  threadId: number,
+  userId: number
 ): Promise<GeneratedImage[]> {
   return prisma.generatedImage.findMany({
-    where: { imageThreadId: threadId },
+    where: { threadId, userId },
     orderBy: { createdAt: 'asc' },
   });
 }
@@ -156,13 +189,15 @@ export function listGeneratedImagesByThread(
 /**
  * Deletes all generated images for a specific thread and their associated files.
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  */
 export async function clearGeneratedImagesByThread(
-  threadId: number
+  threadId: number,
+  userId: number
 ): Promise<void> {
   try {
     // First get all images for this thread to delete their files
-    const threadImages = await listGeneratedImagesByThread(threadId);
+    const threadImages = await listGeneratedImagesByThread(threadId, userId);
 
     // Delete all files from storage
     const deletePromises = threadImages.map(async (image) => {
@@ -177,13 +212,13 @@ export async function clearGeneratedImagesByThread(
 
     // Delete all records from database
     await prisma.generatedImage.deleteMany({
-      where: { imageThreadId: threadId },
+      where: { threadId, userId },
     });
   } catch (error) {
     console.error(
       `Failed to clear generated images for thread ${threadId}:`,
       error
     );
-    throw new Error('Unable to clear generated images for thread');
+    throw new Error('Unable to clear generated images');
   }
 }

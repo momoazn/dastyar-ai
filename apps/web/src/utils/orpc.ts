@@ -23,6 +23,10 @@ export const queryClient = new QueryClient({
 
 export const link = new RPCLink({
   url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
+  headers: () => {
+    const token = localStorage.getItem('auth-token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
 });
 
 export const client: RouterClient<typeof appRouter> = createORPCClient(link);
