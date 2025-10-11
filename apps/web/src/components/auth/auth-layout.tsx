@@ -1,8 +1,10 @@
+import { useAtomValue } from "jotai";
 import { useState } from "react";
+import { isAuthenticatedAtom, isLoadingAtom } from "@/atoms/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useAuth } from "@/hooks/use-auth";
+import { fa } from "@/lib/persian-texts";
 import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 
@@ -14,7 +16,8 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   const [mode, setMode] = useState<AuthMode>("login");
-  const { isAuthenticated, isLoading } = useAuth();
+  const isAuthenticated = useAtomValue(isAuthenticatedAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
 
   if (isLoading) {
     return (
@@ -35,8 +38,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               <div className="text-center">
                 <p className="text-gray-600 text-sm dark:text-gray-400">
                   {mode === "login"
-                    ? "حساب کاربری ندارید؟"
-                    : "قبلاً ثبت نام کرده‌اید؟"}
+                    ? fa.auth.loginForm.noAccount
+                    : fa.auth.registerForm.alreadyRegistered}
                 </p>
                 <Button
                   className="mt-2"
@@ -45,7 +48,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                   }
                   variant="link"
                 >
-                  {mode === "login" ? "ثبت نام" : "ورود"}
+                  {mode === "login"
+                    ? fa.auth.registerForm.register
+                    : fa.auth.loginForm.login}
                 </Button>
               </div>
             </CardContent>

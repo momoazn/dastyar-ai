@@ -7,37 +7,14 @@ export type User = {
   role: "admin" | "user";
 };
 
-export type AuthState = {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-};
-
 // Persist token in localStorage
 export const tokenAtom = atomWithStorage<string | null>("auth-token", null);
 
-// Auth state atom
-export const authAtom = atom<AuthState>({
-  user: null,
-  token: null,
-  isLoading: true,
-});
+// User atom
+export const userAtom = atom<User | null>(null);
+
+// Loading state atom
+export const isLoadingAtom = atom<boolean>(false);
 
 // Derived atoms
-export const userAtom = atom(
-  (get) => get(authAtom).user,
-  (get, set, user: User | null) => {
-    const current = get(authAtom);
-    set(authAtom, { ...current, user });
-  }
-);
-
-export const isAuthenticatedAtom = atom((get) => !!get(authAtom).user);
-
-export const isLoadingAtom = atom(
-  (get) => get(authAtom).isLoading,
-  (get, set, isLoading: boolean) => {
-    const current = get(authAtom);
-    set(authAtom, { ...current, isLoading });
-  }
-);
+export const isAuthenticatedAtom = atom((get) => !!get(userAtom));

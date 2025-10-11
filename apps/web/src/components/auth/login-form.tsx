@@ -1,5 +1,8 @@
+import { useMutation } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { isLoadingAtom, tokenAtom, userAtom } from "@/atoms/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,32 +14,46 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
+import { fa } from "@/lib/persian-texts";
+import { orpc } from "@/utils/orpc";
 
 export function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, loginState } = useAuth();
+  const setToken = useSetAtom(tokenAtom);
+  const setUser = useSetAtom(userAtom);
+  const setIsLoading = useSetAtom(isLoadingAtom);
+
+  const loginMutation = useMutation(
+    orpc.auth.login.mutationOptions({
+      onSuccess: (result) => {
+        setToken(result.token);
+        setUser(result.user);
+        setIsLoading(false);
+      },
+      onError: () => {
+        setIsLoading(false);
+      },
+    })
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({ username, password });
+    loginMutation.mutate({ username, password });
   };
 
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>ورود به سیستم</CardTitle>
-        <CardDescription>
-          نام کاربری و رمز عبور خود را وارد کنید
-        </CardDescription>
+        <CardTitle>{fa.auth.loginForm.title}</CardTitle>
+        <CardDescription>{fa.auth.loginForm.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="username">نام کاربری</Label>
+            <Label htmlFor="username">{fa.auth.loginForm.usernameLabel}</Label>
             <Input
-              disabled={loginState.isLoading}
+              disabled={loginMutation.isPending}
               id="username"
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -45,9 +62,9 @@ export function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">رمز عبور</Label>
+            <Label htmlFor="password">{fa.auth.loginForm.passwordLabel}</Label>
             <Input
-              disabled={loginState.isLoading}
+              disabled={loginMutation.isPending}
               id="password"
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -55,24 +72,24 @@ export function LoginForm() {
               value={password}
             />
           </div>
-          {loginState.error && (
+          {loginMutation.error && (
             <Alert variant="destructive">
               <AlertDescription>
-                {loginState.error instanceof Error
-                  ? loginState.error.message
-                  : "Login failed"}
+                {loginMutation.error instanceof Error
+                  ? loginMutation.error.message
+                  : fa.auth.loginForm.unknownError}
               </AlertDescription>
             </Alert>
           )}
           <Button
             className="w-full"
-            disabled={loginState.isLoading}
+            disabled={loginMutation.isPending}
             type="submit"
           >
-            {loginState.isLoading && (
+            {loginMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            ورود
+            {fa.auth.loginForm.login}
           </Button>
         </form>
       </CardContent>
