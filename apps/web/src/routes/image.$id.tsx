@@ -221,8 +221,10 @@ function RouteComponent() {
                           <img
                             alt={img.prompt}
                             className="h-auto max-w-full bg-muted object-contain"
+                            height={s.height}
                             src={img.imageUrl}
                             style={{ aspectRatio: aspect }}
+                            width={s.width}
                           />
                           <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
                             <Badge variant="secondary">

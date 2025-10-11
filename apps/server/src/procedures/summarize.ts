@@ -1,5 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
+import { SummaryMode, Tone } from "@/database";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
@@ -8,13 +9,7 @@ import {
   listSummaries,
 } from "@/repositories/summaries";
 import { getProviderForModel } from "@/services";
-import {
-  type SummaryMode,
-  summaryModePrompts,
-  summaryModes,
-  type Tone,
-  tones,
-} from "@/utils/constants";
+import { summaryModePrompts } from "@/utils/constants";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -80,12 +75,18 @@ export const summarizeProcedures = {
     .input(
       z.object({
         text: z.string().min(1),
-        mode: z.enum(summaryModes).default("standard"),
-        tone: z.enum(tones).default("professional"),
+        mode: z
+          .enum(Object.values(SummaryMode) as [string, ...string[]])
+          .default("standard"),
+        tone: z
+          .enum(Object.values(Tone) as [string, ...string[]])
+          .default("professional"),
         modelId: z.number(),
       })
     )
     .handler(async ({ input, context }) => {
+      const mode = input.mode as SummaryMode;
+      const tone = input.tone as Tone;
       const model = await getModelById(input.modelId);
       if (!model) {
         throw new Error("Model not found");
@@ -95,8 +96,8 @@ export const summarizeProcedures = {
       const systemPrompt = [
         "You are a professional summarizer. Create clear, accurate summaries.",
         "IMPORTANT: Always summarize in the same language as the source text.",
-        summaryModePrompts[input.mode],
-        `Use a ${input.tone} tone.`,
+        summaryModePrompts[mode],
+        `Use a ${tone} tone.`,
         "Preserve meaning and important details.",
         "Always return a json object with the summary text.",
         "Please generate only the JSON output. DO NOT provide any preamble.",
@@ -119,6 +120,7 @@ export const summarizeProcedures = {
       }
 
       if (!summaryText) {
+        // fallback to plain json
         summaryText = await summarizeWithPlainJson(
           providerModel,
           systemPrompt.replace(
@@ -129,12 +131,16 @@ export const summarizeProcedures = {
         );
       }
 
+      if (!summaryText) {
+        throw new Error("Failed to summarize text");
+      }
+
       const summary = await createSummary({
         sourceText: input.text,
-        summaryText: summaryText || "",
+        summaryText,
+        mode,
+        tone,
         modelId: input.modelId,
-        mode: input.mode as SummaryMode,
-        tone: input.tone as Tone,
         userId: context.user?.id,
       });
 

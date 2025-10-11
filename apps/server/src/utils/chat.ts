@@ -1,6 +1,6 @@
 import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
+import type { MessageRole } from "@/database";
 import type { MessageWithModel } from "@/repositories/threads";
-import type { MessageRole } from "./constants";
 
 export type MyUIMessage = UIMessage<
   { modelId: number; threadId: number; modelName?: string },

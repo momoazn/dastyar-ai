@@ -18,35 +18,31 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useSummarizeModelSelection } from "@/hooks/use-feature-model-selection";
+import {
+  createSummaryModeOptions,
+  createToneOptions,
+} from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
+import type { SummaryMode, Tone } from "@/server/database";
 import { orpc, queryClient } from "@/utils/orpc";
+
+const COPY_SUCCESS_DURATION_MS = 2000;
+
+const modes = createSummaryModeOptions();
+const tones = createToneOptions();
 
 export const Route = createFileRoute("/summarize")({
   component: SummarizePage,
 });
-
-type SummarizeMode = "concise" | "standard" | "detailed";
-type ToneOption = "formal" | "casual";
-
-const modes: Array<{ value: SummarizeMode; label: string }> = [
-  { value: "concise", label: fa.summarize.modes.concise },
-  { value: "standard", label: fa.summarize.modes.standard },
-  { value: "detailed", label: fa.summarize.modes.detailed },
-];
-
-const tones: Array<{ value: ToneOption; label: string }> = [
-  { value: "formal", label: fa.tones.formal },
-  { value: "casual", label: fa.tones.casual },
-];
 
 function SummarizePage() {
   const search = useSearch({ from: "/summarize" }) as { id?: string };
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [summaryText, setSummaryText] = useState("");
-  const [mode, setMode] = useState<SummarizeMode>("standard");
-  const [tone, setTone] = useState<ToneOption>("formal");
+  const [mode, setMode] = useState<SummaryMode>("standard");
+  const [tone, setTone] = useState<Tone>("formal");
   const [copySuccess, setCopySuccess] = useState(false);
 
   const {
@@ -86,9 +82,8 @@ function SummarizePage() {
     if (selectedSummary) {
       setSourceText(selectedSummary.sourceText || "");
       setSummaryText(selectedSummary.summaryText || "");
-      setMode(selectedSummary.mode as SummarizeMode);
-      setTone((selectedSummary.tone as ToneOption) || "formal");
-      // Model selection is now handled by useModelSelection hook
+      setMode(selectedSummary.mode as SummaryMode);
+      setTone((selectedSummary.tone as Tone) || "formal");
     }
   }, [selectedSummary]);
 
@@ -96,7 +91,7 @@ function SummarizePage() {
     try {
       await navigator.clipboard.writeText(summaryText);
       setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+      setTimeout(() => setCopySuccess(false), COPY_SUCCESS_DURATION_MS);
     } catch {
       console.error("Failed to copy to clipboard");
     }
@@ -138,7 +133,7 @@ function SummarizePage() {
             <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
             <Select
               disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setMode(v as SummarizeMode)}
+              onValueChange={(v) => setMode(v as SummaryMode)}
               value={mode}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
@@ -165,7 +160,7 @@ function SummarizePage() {
             </div>
             <Select
               disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setTone(v as ToneOption)}
+              onValueChange={(v) => setTone(v as Tone)}
               value={tone}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">

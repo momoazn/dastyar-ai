@@ -1,5 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
+import { LanguageCode, Tone } from "@/database";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
@@ -8,12 +9,6 @@ import {
   listTranslations,
 } from "@/repositories/translations";
 import { getProviderForModel } from "@/services";
-import {
-  type LanguageCode,
-  languageCodes,
-  type Tone,
-  tones,
-} from "@/utils/constants";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -58,28 +53,32 @@ const translateWithPlainJson = async (
 
 export const translationProcedures = {
   list: protectedProcedure.handler(async ({ context }) => {
-    const rows = await listTranslations(context.user?.id);
+    const rows = await listTranslations(context.user.id);
     return rows;
   }),
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const row = await getTranslation(input.id, context.user?.id);
+      const row = await getTranslation(input.id, context.user.id);
       return row;
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteTranslation(input.id, context.user?.id);
+      await deleteTranslation(input.id, context.user.id);
       return { ok: true } as const;
     }),
   translate: protectedProcedure
     .input(
       z.object({
         text: z.string().min(1),
-        sourceLanguage: z.enum(languageCodes),
-        targetLanguage: z.enum(languageCodes),
-        tone: z.enum(tones),
+        sourceLanguage: z.enum(
+          Object.values(LanguageCode) as [string, ...string[]]
+        ),
+        targetLanguage: z.enum(
+          Object.values(LanguageCode) as [string, ...string[]]
+        ),
+        tone: z.enum(Object.values(Tone) as [string, ...string[]]),
         modelId: z.number(),
       })
     )
@@ -91,10 +90,11 @@ export const translationProcedures = {
       const providerModel = getProviderForModel(model.name, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
+      const tone = input.tone as Tone;
 
       const systemPrompt = [
         `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-        `Use a ${input.tone} tone.`,
+        `Use a ${tone} tone.`,
         "Preserve meaning and formatting. Return only the translated text without extra commentary.",
         "Always return a json object with the translated text.",
         "Please generate only the JSON output. DO NOT provide any preamble.",
@@ -121,7 +121,7 @@ export const translationProcedures = {
           providerModel,
           [
             `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-            `Use a ${input.tone} tone.`,
+            `Use a ${tone} tone.`,
             "Preserve meaning and formatting.",
             'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
           ]
@@ -134,10 +134,10 @@ export const translationProcedures = {
       const created = await createTranslation({
         sourceText: input.text,
         translatedText,
+        sourceLanguage,
+        targetLanguage,
+        tone,
         modelId: input.modelId,
-        sourceLanguage: input.sourceLanguage,
-        targetLanguage: input.targetLanguage,
-        tone: (input.tone as Tone) ?? null,
         userId: context.user?.id,
       });
       return created;

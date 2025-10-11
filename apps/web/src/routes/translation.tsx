@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { TranscribeButton } from "@/components/transcribe-button";
-import type { LanguageCode, ToneOption } from "@/components/translation/types";
-import { languages, tones } from "@/components/translation/types";
 import {
   Alert,
   AlertDescription,
@@ -28,22 +26,27 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
+import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
+import type { LanguageCode, Tone } from "@/server/database";
 import { orpc, queryClient } from "@/utils/orpc";
 
+const languages = createLanguageOptions();
+const tones = createToneOptions();
+
 export const Route = createFileRoute("/translation")({
-  component: TranslationPage,
+  component: RouteComponent,
 });
 
-function TranslationPage() {
+function RouteComponent() {
   const search = useSearch({ from: "/translation" }) as { id?: string };
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>("en");
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("fa");
-  const [tone, setTone] = useState<ToneOption>("formal");
+  const [tone, setTone] = useState<Tone>("formal");
   const [transcribeModel, setTranscribeModel] = useState("");
 
   // Infer transcribe language from source language
@@ -88,8 +91,7 @@ function TranslationPage() {
       setTranslatedText(selectedTranslation.translatedText || "");
       setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
       setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
-      setTone((selectedTranslation.tone as ToneOption) || "formal");
-      // Model selection is now handled by useModelSelection hook
+      setTone((selectedTranslation.tone as Tone) || "formal");
     }
   }, [selectedTranslation]);
 
@@ -192,7 +194,7 @@ function TranslationPage() {
             </div>
             <Select
               disabled={translateMutation.isPending}
-              onValueChange={(v) => setTone(v as ToneOption)}
+              onValueChange={(v) => setTone(v as Tone)}
               value={tone}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">

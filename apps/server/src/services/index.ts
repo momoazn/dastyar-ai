@@ -1,10 +1,10 @@
 import type { LanguageModelV2 } from "@ai-sdk/provider";
-import type { ModelProvider } from "@/utils/constants";
+import type { LLMModelProvider } from "@/database";
 import { listLmstudioModels, lmstudioProvider } from "./lmstudio";
 import { listOllamaModels, ollamaProvider } from "./ollama";
 
 export async function listAllModels(): Promise<
-  { name: string; provider: ModelProvider }[]
+  { name: string; provider: LLMModelProvider }[]
 > {
   const ollamaModels = await listOllamaModels();
   const lmstudioModels = await listLmstudioModels();
@@ -14,7 +14,7 @@ export async function listAllModels(): Promise<
 
 export const getProviderForModel = (
   model: string,
-  modelProvider: ModelProvider = "ollama"
+  modelProvider: LLMModelProvider = "ollama"
 ): LanguageModelV2 => {
   if (!modelProvider) {
     return ollamaProvider(model);

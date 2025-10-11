@@ -1,5 +1,10 @@
-import { type LLMModel, type Message, type Prisma, prisma } from "@/database";
-import type { MessageStatus } from "@/utils/constants";
+import {
+  type LLMModel,
+  type Message,
+  type MessageStatus,
+  type Prisma,
+  prisma,
+} from "@/database";
 
 export type CreateMessageParams = Omit<
   Message,
@@ -120,7 +125,8 @@ export async function getMessagesByThread(
   }
 ): Promise<Message[]> {
   try {
-    const limit = params.limit ?? 50;
+    const DEFAULT_MESSAGE_LIMIT = 50;
+    const limit = params.limit ?? DEFAULT_MESSAGE_LIMIT;
     const order = params.order ?? "desc";
 
     const messages = await prisma.message.findMany({
