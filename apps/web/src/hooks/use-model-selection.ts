@@ -16,7 +16,9 @@ export function useModelSelection({
   const [modelId, setModelId] = useAtom(modelIdAtom);
 
   const modelsQuery = useQuery({
-    ...orpc.models.list.queryOptions(),
+    ...orpc.models.list.queryOptions({
+      input: { isEnabled: true, sync: true },
+    }),
     enabled,
   });
 
