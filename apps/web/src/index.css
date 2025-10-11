@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* biome-ignore lint/nursery/noUnknownAtRule: Streamdown CSS */
 @source "../node_modules/streamdown/dist/index.js";
 
 /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS custom variant */
