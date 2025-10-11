@@ -1,8 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
 import { RefreshCcw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { modelAtom } from '@/atoms/model';
+import { useMemo, useState } from 'react';
 import {
   PromptInput,
   PromptInputButton,
@@ -18,38 +15,31 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { TranscribeButton } from '@/components/transcribe-button';
 import { Alert, AlertDescription } from '@/components/ui';
+import { useModelSelection } from '@/hooks/use-model-selection';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
-import { orpc } from '@/utils/orpc';
 
 interface ChatInputProps {
   handleSendPrompt: (prompt: string) => void;
   isGenerating?: boolean;
   stopGenerating?: () => void;
-  lastUsedModelName?: string;
+  threadId?: number;
 }
 
 export const ChatInput = ({
   handleSendPrompt,
   isGenerating,
   stopGenerating,
-  lastUsedModelName,
+  threadId,
 }: ChatInputProps) => {
   const [prompt, setPrompt] = useState('');
   const [transcriptionError, setTranscriptionError] = useState<string | null>(
     null
   );
-  const [modelId, setModelName] = useAtom(modelAtom);
 
-  const modelsQuery = useQuery(orpc.models.list.queryOptions());
-
-  useEffect(() => {
-    if (!(modelId || lastUsedModelName) && modelsQuery.data?.[0]?.name) {
-      setModelName(modelsQuery.data[0].name);
-    } else if (lastUsedModelName) {
-      setModelName(lastUsedModelName);
-    }
-  }, [modelsQuery.data, modelId, setModelName, lastUsedModelName]);
+  const { modelId, setModelId, models, refetch } = useModelSelection({
+    threadId,
+  });
 
   // Handle transcription success
   const handleTranscription = (transcribedText: string) => {
@@ -109,13 +99,13 @@ export const ChatInput = ({
 
   // Memoize models list rendering
   const modelItems = useMemo(() => {
-    if (modelsQuery?.isPending || !modelsQuery?.data) {
+    if (!models) {
       return [];
     }
 
-    return modelsQuery.data.map((model) => ({
-      key: model.name,
-      value: model.name,
+    return models.map((model) => ({
+      key: model.id.toString(),
+      value: model.id.toString(),
       content: (
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-green-500" />
@@ -128,7 +118,7 @@ export const ChatInput = ({
         </div>
       ),
     }));
-  }, [modelsQuery?.data, modelsQuery?.isPending]);
+  }, [models]);
 
   // Get language for transcription based on text direction
   const transcriptionLanguage = useMemo(() => {
@@ -154,9 +144,9 @@ export const ChatInput = ({
           <PromptInputToolbar>
             <PromptInputTools>
               <PromptInputModelSelect
-                defaultValue={modelId as string}
-                onValueChange={setModelName}
-                value={modelId as string}
+                defaultValue={modelId?.toString()}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
               >
                 <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
                   <PromptInputModelSelectValue
@@ -174,10 +164,7 @@ export const ChatInput = ({
                   ))}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
-              <PromptInputButton
-                onClick={() => modelsQuery.refetch()}
-                variant="outline"
-              >
+              <PromptInputButton onClick={() => refetch()} variant="outline">
                 <RefreshCcw className="size-4" />
               </PromptInputButton>
             </PromptInputTools>

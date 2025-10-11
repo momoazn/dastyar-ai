@@ -1,4 +1,4 @@
-import { type Message, type Prisma, prisma } from '@/database';
+import { type LLMModel, type Message, type Prisma, prisma } from '@/database';
 import type { MessageStatus } from '@/utils/constants';
 
 export type CreateMessageParams = Omit<
@@ -107,7 +107,7 @@ export async function saveMessages(
 /**
  * Retrieves messages for a specific thread with optional pagination.
  * @param params - Thread ID and pagination options.
- * @returns Array of messages.
+ * @returns Array of messages with model relation.
  */
 export async function getMessagesByThread(
   params: { threadId: number } & {
@@ -124,6 +124,14 @@ export async function getMessagesByThread(
       where: { threadId: params.threadId },
       orderBy: { createdAt: order },
       take: limit,
+      include: {
+        model: {
+          select: {
+            name: true,
+            provider: true,
+          },
+        },
+      },
     });
 
     return messages;
@@ -163,5 +171,52 @@ export async function clearThread(threadId: number): Promise<void> {
   } catch (error) {
     console.error(`Failed to clear thread ${threadId}:`, error);
     throw new Error('Unable to clear thread');
+  }
+}
+
+/**
+ * Gets the last used model in a thread.
+ * @param threadId - The thread ID.
+ * @returns The last used model or null if no messages exist.
+ */
+export async function getLastUsedModelInThread(
+  threadId: number
+): Promise<LLMModel | null> {
+  try {
+    const lastMessage = await prisma.message.findFirst({
+      where: { threadId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        model: true,
+      },
+    });
+
+    return lastMessage?.model || null;
+  } catch (error) {
+    console.error(
+      `Failed to get last used model for thread ${threadId}:`,
+      error
+    );
+    throw new Error('Unable to retrieve last used model');
+  }
+}
+
+/**
+ * Gets the last used model across all messages.
+ * @returns The last used model or null if no messages exist.
+ */
+export async function getLastUsedModelGlobal(): Promise<LLMModel | null> {
+  try {
+    const lastMessage = await prisma.message.findFirst({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        model: true,
+      },
+    });
+
+    return lastMessage?.model || null;
+  } catch (error) {
+    console.error('Failed to get last used model globally:', error);
+    throw new Error('Unable to retrieve last used model');
   }
 }

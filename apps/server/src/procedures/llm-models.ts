@@ -9,17 +9,25 @@ import { listAllModels } from '@/services';
 import { publicProcedure } from './base';
 
 export const llmModelProcedures = {
-  list: publicProcedure.handler(async () => {
-    try {
-      const models = await listAllModels();
-      await syncModels(models);
-      const syncedModels = await getModels({ isEnabled: true });
-      return syncedModels;
-    } catch (error) {
-      console.error('Error listing models:', error);
-      throw error;
-    }
-  }),
+  list: publicProcedure
+    .input(
+      z
+        .object({
+          isEnabled: z.boolean().optional().default(true),
+        })
+        .optional()
+    )
+    .handler(async ({ input }) => {
+      try {
+        const models = await listAllModels();
+        await syncModels(models);
+        const syncedModels = await getModels(input ?? {});
+        return syncedModels;
+      } catch (error) {
+        console.error('Error listing models:', error);
+        throw error;
+      }
+    }),
   sync: publicProcedure.handler(async () => {
     const models = await listAllModels();
     await syncModels(models);

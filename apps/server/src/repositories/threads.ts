@@ -1,4 +1,9 @@
-import { type ChatThread, type Message, prisma } from '@/database';
+import {
+  type ChatThread,
+  type LLMModel,
+  type Message,
+  prisma,
+} from '@/database';
 
 /**
  * Creates a new thread with an optional title.
@@ -131,16 +136,30 @@ export async function updateThreadOnNewMessage(
   }
 }
 
+export type MessageWithModel = Message & {
+  model: Pick<LLMModel, 'name' | 'provider'>;
+};
+
 /**
  * Loads all messages for a specific thread.
  * @param threadId - The thread ID.
- * @returns Array of messages.
+ * @returns Array of messages with model relation.
  */
-export async function loadThreadMessages(threadId: number): Promise<Message[]> {
+export async function loadThreadMessages(
+  threadId: number
+): Promise<MessageWithModel[]> {
   try {
     const messages = await prisma.message.findMany({
       where: { threadId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        model: {
+          select: {
+            name: true,
+            provider: true,
+          },
+        },
+      },
     });
 
     return messages;

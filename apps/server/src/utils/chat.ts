@@ -3,7 +3,7 @@ import type { Message } from '@/database';
 import type { MessageRole } from './constants';
 
 export type MyUIMessage = UIMessage<
-  { modelName: string; threadId: number },
+  { modelId: number; threadId: number },
   UIDataTypes,
   UITools
 >;
@@ -16,7 +16,7 @@ export const convertDbMessagesToUiMessages = (
     role: message.role as MessageRole,
     parts: message.parts as UIMessagePart<UIDataTypes, UITools>[],
     metadata: {
-      modelName: message.modelName,
+      modelId: message.modelId,
       threadId: message.threadId,
     },
   }));

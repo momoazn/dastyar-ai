@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { clearThread, deleteMessage } from '@/repositories/messages';
+import {
+  clearThread,
+  deleteMessage,
+  getLastUsedModelGlobal,
+  getLastUsedModelInThread,
+} from '@/repositories/messages';
 import {
   createThread,
   deleteThread,
@@ -69,6 +74,16 @@ export const messageProcedures = {
       const messages = await loadThreadMessages(input.threadId);
       return convertDbMessagesToUiMessages(messages);
     }),
+  getLastUsedModel: publicProcedure
+    .input(z.object({ threadId: z.number() }))
+    .handler(async ({ input }) => {
+      const lastUsedModel = await getLastUsedModelInThread(input.threadId);
+      return lastUsedModel;
+    }),
+  getLastUsedModelGlobal: publicProcedure.handler(async () => {
+    const lastUsedModel = await getLastUsedModelGlobal();
+    return lastUsedModel;
+  }),
   delete: publicProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input }) => {

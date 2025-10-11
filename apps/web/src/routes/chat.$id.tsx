@@ -5,7 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { useAtomValue } from 'jotai';
 import { MessageCircleIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { modelAtom } from '@/atoms/model';
+import { modelIdAtom } from '@/atoms/model';
 import {
   Conversation,
   ConversationContent,
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/chat/$id')({
 function ChatThreadRouteComponent() {
   const { id: threadId } = useParams({ from: '/chat/$id' });
 
-  const modelName = useAtomValue(modelAtom);
+  const modelId = useAtomValue(modelIdAtom);
   const isInitialRender = useRef(true);
 
   const messagesQuery = useQuery(
@@ -56,8 +56,6 @@ function ChatThreadRouteComponent() {
       },
     });
 
-  const lastUsedModelName = messagesQuery.data?.at(-1)?.metadata?.modelName;
-
   const handleSendPrompt = async (prompt: string) => {
     const trimmed = prompt.trim();
     if (!trimmed) {
@@ -79,7 +77,7 @@ function ChatThreadRouteComponent() {
       }
     }
 
-    sendMessage({ text: trimmed }, { body: { modelName, threadId } });
+    sendMessage({ text: trimmed }, { body: { modelId, threadId } });
   };
 
   useEffect(() => {
@@ -117,8 +115,8 @@ function ChatThreadRouteComponent() {
         <ChatInput
           handleSendPrompt={handleSendPrompt}
           isGenerating={status === 'streaming' || status === 'submitted'}
-          lastUsedModelName={lastUsedModelName ?? undefined}
           stopGenerating={stop}
+          threadId={Number(threadId)}
         />
       </div>
     </div>

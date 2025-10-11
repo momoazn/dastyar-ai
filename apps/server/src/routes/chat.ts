@@ -42,7 +42,6 @@ const ChatRequestSchema = z.object({
     metadata: z.unknown().optional(),
   }),
   modelId: z.number(),
-  modelName: z.string().min(1),
   threadId: z.string(),
 });
 
