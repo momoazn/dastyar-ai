@@ -7,21 +7,20 @@ import {
 } from 'ai';
 import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import type { Prisma } from '@/database';
+import type { Prisma, User } from '@/database';
 import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
 import { updateThreadOnNewMessage } from '@/repositories/threads';
 import { getProviderForModel } from '@/services';
+import { validateAuthHeader } from '@/services/auth';
 import type { MyUIMessage } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
-import { env } from '../config';
 
 // Extend Hono context to include user
 declare module 'hono' {
   interface ContextVariableMap {
-    user: { id: number; username: string; role: string };
+    user: User;
   }
 }
 
@@ -37,8 +36,6 @@ export function sendError(
   const { status, code, message, details } = params;
   return c.json({ error: { code, message, details } }, status);
 }
-
-const JWT_SECRET = env.JWT_SECRET;
 
 const ChatRequestSchema = z.object({
   messages: z
@@ -58,55 +55,37 @@ const ChatRequestSchema = z.object({
 // Authentication middleware
 const authMiddleware = async (c: Context, next: () => Promise<void>) => {
   const authHeader = c.req.header('Authorization');
+  const { prisma } = await import('../database');
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  const authResult = await validateAuthHeader(authHeader, prisma);
+
+  if (!authResult.success) {
     return c.json(
       {
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'Missing or invalid authorization header',
+          code: authResult.error?.code ?? 'UNAUTHORIZED',
+          message: authResult.error?.message ?? 'Authentication failed',
         },
       },
       401
     );
   }
 
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: number;
-      username: string;
-      role: string;
-    };
-
-    // Fetch user from database to ensure they still exist
-    const { prisma } = await import('../database');
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
-
-    if (!user) {
-      return c.json(
-        { error: { code: 'UNAUTHORIZED', message: 'User not found' } },
-        401
-      );
-    }
-
-    // Add user to context
-    c.set('user', {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    });
-
-    await next();
-  } catch {
+  if (!authResult.user) {
     return c.json(
-      { error: { code: 'UNAUTHORIZED', message: 'Invalid token' } },
+      {
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'User not found',
+        },
+      },
       401
     );
   }
+
+  // Add user to context
+  c.set('user', authResult.user);
+  await next();
 };
 
 const app = new Hono()

@@ -29,3 +29,6 @@ export const getProviderForModel = (
       return ollamaProvider(model);
   }
 };
+
+// Re-export auth functions
+export { validateAuthHeader } from './auth';

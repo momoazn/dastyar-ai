@@ -1,9 +1,6 @@
 import { os } from '@orpc/server';
-import jwt from 'jsonwebtoken';
-import { env } from '../config';
 import type { Context } from '../lib/context';
-
-const JWT_SECRET = env.JWT_SECRET;
+import { validateAuthHeader } from '../services/auth';
 
 // Create the base context with database support
 export const o = os.$context<Context>();
@@ -17,42 +14,24 @@ export const dbProvider = o.middleware(({ context, next }) => {
 export const authMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header('Authorization');
 
-  if (!(authHeader && authHeader.startsWith('Bearer '))) {
-    return next();
+  const authResult = await validateAuthHeader(authHeader, context.db);
+
+  if (!authResult.success) {
+    throw new Error(
+      `Authentication failed: ${authResult.error?.message ?? 'Unknown error'}`
+    );
   }
 
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: number;
-      username: string;
-      role: string;
-    };
-
-    // Fetch user from database to ensure they still exist
-    const user = await context.db.user.findUnique({
-      where: { id: decoded.userId },
-    });
-
-    if (!user) {
-      return next();
-    }
-
-    return next({
-      context: {
-        ...context,
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-        },
-      },
-    });
-  } catch (error) {
-    // Invalid token
-    return next();
+  if (!authResult.user) {
+    throw new Error('Authentication failed: User not found');
   }
+
+  return next({
+    context: {
+      ...context,
+      user: authResult.user,
+    },
+  });
 });
 
 // Export the public procedure with database context
