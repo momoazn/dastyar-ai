@@ -5,6 +5,12 @@
     "rules": {
       "suspicious": {
         "noConsole": "off"
+      },
+      "performance": {
+        "noImgElement": "off"
+      },
+      "style": {
+        "noMagicNumbers": "info"
       }
     }
   }
