@@ -9,7 +9,6 @@ import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { env } from '@/config';
 import type { Prisma } from '@/database';
 import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
@@ -17,6 +16,7 @@ import { updateThreadOnNewMessage } from '@/repositories/threads';
 import { getProviderForModel } from '@/services';
 import type { MyUIMessage } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
+import { env } from '../config';
 
 // Extend Hono context to include user
 declare module 'hono' {

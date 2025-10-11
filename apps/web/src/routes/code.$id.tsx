@@ -120,7 +120,7 @@ function CodeSessionPage() {
                       {formatDate(generation.createdAt)}
                     </div>
                     <div className="text-muted-foreground text-sm">
-                      {fa.codeAssistant.session.model}: {generation.modelUsed}
+                      {fa.codeAssistant.session.model}: {generation.modelId}
                     </div>
                   </div>
                   <div className="mb-3">

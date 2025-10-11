@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAtom } from "jotai";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAtom } from 'jotai';
 import {
   authAtom,
   isLoadingAtom,
   tokenAtom,
   type User,
   userAtom,
-} from "@/atoms/auth";
-import { client, orpc } from "@/utils/orpc";
+} from '@/atoms/auth';
+import { client, orpc } from '@/utils/orpc';
 
 export function useAuth() {
   const [authState, setAuthState] = useAtom(authAtom);
@@ -63,22 +63,22 @@ export function useAuth() {
   });
 
   const authQuery = useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: async (): Promise<User> => {
-      const token = localStorage.getItem("auth-token");
+    queryKey: ['auth', 'me'],
+    queryFn: (): Promise<User> => {
+      const token = localStorage.getItem('auth-token');
       if (!token) {
-        throw new Error("No token found");
+        throw new Error('No token found');
       }
       return client.auth.me();
     },
-    enabled: !!localStorage.getItem("auth-token") && !authState.user,
+    enabled: !!localStorage.getItem('auth-token') && !authState.user,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Handle successful auth query
   if (authQuery.data && !authState.user) {
-    const token = localStorage.getItem("auth-token");
+    const token = localStorage.getItem('auth-token');
     if (token) {
       setUser(authQuery.data);
       setToken(token);

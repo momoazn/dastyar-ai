@@ -155,6 +155,7 @@ export const codeProcedures = {
   // Session management
   listSessions: protectedProcedure.handler(async ({ context }) => {
     try {
+      // biome-ignore lint/style/noNonNullAssertion: User is guaranteed to exist in protected procedures
       const sessions = await listCodeAssistSessions(context.user!.id);
       return sessions;
     } catch {
