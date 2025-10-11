@@ -27,6 +27,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
+import { useTranslationModelSelection } from '@/hooks/use-feature-model-selection';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { orpc, queryClient } from '@/utils/orpc';
@@ -43,15 +44,12 @@ function TranslationPage() {
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('fa');
   const [tone, setTone] = useState<ToneOption>('formal');
-  const [modelId, setModelId] = useState('');
   const [transcribeModel, setTranscribeModel] = useState('');
 
   // Infer transcribe language from source language
   const transcribeLanguage = sourceLanguage === 'fa' ? 'fa' : 'en';
 
-  const { data: modelList } = useQuery(
-    orpc.models.list.queryOptions({ input: { isEnabled: true } })
-  );
+  const { modelId, setModelId, models: modelList, isLoading: modelsLoading, error: modelsError } = useTranslationModelSelection();
 
   // Load translation if ID is provided in URL
   const { data: selectedTranslation } = useQuery(
@@ -85,15 +83,9 @@ function TranslationPage() {
       setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
       setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
       setTone((selectedTranslation.tone as ToneOption) || 'formal');
-      setModelId(selectedTranslation.modelName || '');
+      // Model selection is now handled by useModelSelection hook
     }
   }, [selectedTranslation]);
-
-  useEffect(() => {
-    if (modelList && modelList.length > 0 && !modelId) {
-      setModelId(modelList[0].name);
-    }
-  }, [modelList, modelId]);
 
   const swapLanguages = useCallback(() => {
     setSourceLanguage(targetLanguage);
@@ -118,13 +110,13 @@ function TranslationPage() {
         sourceLanguage,
         targetLanguage,
         tone,
-        modelName: modelId,
+        modelId: modelId || 0,
       });
     }
   };
 
   const canTranslate =
-    Boolean(sourceText.trim() && modelId) && !translateMutation.isPending;
+    Boolean(sourceText.trim() && modelId && !modelsLoading) && !translateMutation.isPending;
   const charCount = sourceText.length;
 
   return (
@@ -217,19 +209,19 @@ function TranslationPage() {
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.translation.model}</div>
             <Select
-              disabled={translateMutation.isPending}
-              onValueChange={setModelId}
-              value={modelId}
+              disabled={translateMutation.isPending || modelsLoading}
+              onValueChange={(value) => setModelId(Number(value))}
+              value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
+                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select model"} />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((m) => (
                   <SelectItem
                     className="text-right"
-                    key={m.name}
-                    value={m.name}
+                    key={m.id}
+                    value={m.id.toString()}
                   >
                     {m.name}
                   </SelectItem>
@@ -256,12 +248,15 @@ function TranslationPage() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col p-4">
         {/* Error Alert */}
-        {translateMutation.error && (
+        {(translateMutation.error || modelsError) && (
           <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>خطا</AlertTitle>
             <AlertDescription>
-              {translateMutation.error.message}
+              {modelsError 
+                ? "Failed to load models. Please refresh the page."
+                : translateMutation.error?.message
+              }
             </AlertDescription>
           </Alert>
         )}
@@ -369,7 +364,7 @@ function TranslationPage() {
                 sourceLanguage,
                 targetLanguage,
                 tone,
-                modelName: modelId,
+                modelId: modelId || 0,
               })
             }
             size="lg"

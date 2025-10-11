@@ -109,7 +109,7 @@ export async function deleteCodeAssistSession(id: number): Promise<void> {
 export async function createCodeGeneration(
   params: Pick<
     CodeGeneration,
-    'sessionId' | 'prompt' | 'generatedCode' | 'language' | 'modelUsed'
+    'sessionId' | 'prompt' | 'generatedCode' | 'language' | 'modelId'
   >
 ): Promise<{ id: number }> {
   try {
@@ -119,7 +119,7 @@ export async function createCodeGeneration(
         prompt: params.prompt,
         generatedCode: params.generatedCode,
         language: params.language,
-        modelUsed: params.modelUsed,
+        modelId: params.modelId,
       },
     });
 
@@ -167,6 +167,7 @@ export async function createCodeReview(
     | 'reviewFeedback'
     | 'suggestions'
     | 'severityLevels'
+    | 'modelId'
   >
 ): Promise<{ id: number }> {
   try {
@@ -177,6 +178,7 @@ export async function createCodeReview(
         reviewFeedback: params.reviewFeedback,
         suggestions: params.suggestions,
         severityLevels: params.severityLevels,
+        modelId: params.modelId,
       },
     });
 

@@ -1,7 +1,8 @@
 import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
-import { prisma } from '@/database';
+import { getModelById } from '@/repositories/llm-models';
 import {
+  createTranslation,
   deleteTranslation,
   getTranslation,
   listTranslations,
@@ -10,7 +11,6 @@ import { getProviderForModel } from '@/services';
 import {
   type LanguageCode,
   languageCodes,
-  ModelProviderEnum,
   type Tone,
   tones,
 } from '@/utils/constants';
@@ -80,15 +80,15 @@ export const translationProcedures = {
         sourceLanguage: z.enum(languageCodes),
         targetLanguage: z.enum(languageCodes),
         tone: z.enum(tones),
-        modelName: z.string(),
-        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(
-        input.modelName,
-        input.modelProvider
-      );
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
 
@@ -131,15 +131,13 @@ export const translationProcedures = {
         );
       }
 
-      const created = await prisma.translation.create({
-        data: {
-          sourceText: input.text,
-          translatedText,
-          modelName: input.modelName,
-          sourceLanguage: input.sourceLanguage,
-          targetLanguage: input.targetLanguage,
-          tone: (input.tone as Tone) ?? null,
-        },
+      const created = await createTranslation({
+        sourceText: input.text,
+        translatedText,
+        modelId: input.modelId,
+        sourceLanguage: input.sourceLanguage,
+        targetLanguage: input.targetLanguage,
+        tone: (input.tone as Tone) ?? null,
       });
       return created;
     }),

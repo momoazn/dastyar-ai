@@ -9,6 +9,33 @@ export function listTranslations(): Promise<Translation[]> {
 }
 
 /**
+ * Creates a new translation record in the database.
+ * @param params - The translation parameters excluding auto-generated fields.
+ * @returns The created translation record.
+ */
+export async function createTranslation(
+  params: Omit<Translation, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<Translation> {
+  try {
+    const translation = await prisma.translation.create({
+      data: {
+        sourceText: params.sourceText,
+        translatedText: params.translatedText,
+        modelId: params.modelId,
+        sourceLanguage: params.sourceLanguage,
+        targetLanguage: params.targetLanguage,
+        tone: params.tone,
+      },
+    });
+
+    return translation;
+  } catch (error) {
+    console.error('Failed to create translation:', error);
+    throw new Error('Unable to create translation');
+  }
+}
+
+/**
  * Retrieves a specific translation by ID.
  * @param id - The translation ID.
  * @returns The translation record or null if not found.

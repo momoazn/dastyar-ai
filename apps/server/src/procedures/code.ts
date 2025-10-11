@@ -13,8 +13,8 @@ import {
   listCodeAssistSessions,
   updateCodeAssistSession,
 } from '@/repositories/code';
+import { getModelById } from '@/repositories/llm-models';
 import { getProviderForModel } from '@/services';
-import { ModelProviderEnum } from '@/utils/constants';
 import {
   extractJsonField,
   extractJsonObject,
@@ -210,15 +210,15 @@ export const codeProcedures = {
         prompt: z.string().min(1),
         language: z.string().min(1),
         context: z.string().optional(),
-        modelName: z.string(),
-        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(
-        input.modelName,
-        input.modelProvider
-      );
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} developer. Generate clean, efficient, and well-structured code.`,
@@ -271,7 +271,7 @@ export const codeProcedures = {
         prompt: input.prompt,
         generatedCode: (result?.generatedCode as string) || '',
         language: input.language,
-        modelUsed: input.modelName,
+        modelId: input.modelId,
       });
 
       return {
@@ -288,15 +288,15 @@ export const codeProcedures = {
         sessionId: z.number(),
         code: z.string().min(1),
         language: z.string().min(1),
-        modelName: z.string(),
-        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(
-        input.modelName,
-        input.modelProvider
-      );
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} developer and educator. Provide clear, detailed explanations of code.`,
@@ -355,15 +355,15 @@ export const codeProcedures = {
         sessionId: z.number(),
         code: z.string().min(1),
         language: z.string().min(1),
-        modelName: z.string(),
-        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(
-        input.modelName,
-        input.modelProvider
-      );
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} code reviewer. Analyze code for security, performance, style, and maintainability issues.`,
@@ -421,6 +421,7 @@ export const codeProcedures = {
             (s) => s.severity
           ) || []
         ),
+        modelId: input.modelId,
       });
 
       return {
@@ -439,15 +440,15 @@ export const codeProcedures = {
         code: z.string().min(1),
         error: z.string().min(1),
         language: z.string().min(1),
-        modelName: z.string(),
-        modelProvider: z.enum(ModelProviderEnum).optional().default('ollama'),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(
-        input.modelName,
-        input.modelProvider
-      );
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         `You are an expert ${input.language} debugger. Analyze errors and provide clear solutions.`,

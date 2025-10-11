@@ -23,7 +23,7 @@ export async function createSummary(
       data: {
         sourceText: params.sourceText,
         summaryText: params.summaryText,
-        modelName: params.modelName,
+        modelId: params.modelId,
         mode: params.mode,
         tone: params.tone,
       },

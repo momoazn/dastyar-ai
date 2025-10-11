@@ -17,6 +17,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
+import { useCodeModelSelection } from '@/hooks/use-feature-model-selection';
 import { fa } from '@/lib/persian-texts';
 import { orpc, queryClient } from '@/utils/orpc';
 
@@ -60,7 +61,6 @@ function CodeAssistantPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>('generate');
   const [language, setLanguage] = useState<ProgrammingLanguage>('javascript');
-  const [modelId, setModelId] = useState('');
   const [inputCode, setInputCode] = useState('');
   const [context, setContext] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -68,9 +68,13 @@ function CodeAssistantPage() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const { data: modelList } = useQuery(
-    orpc.models.list.queryOptions({ input: { isEnabled: true } })
-  );
+  const {
+    modelId,
+    setModelId,
+    models: modelList,
+    isLoading: modelsLoading,
+    error: modelsError,
+  } = useCodeModelSelection();
 
   // Load session if ID is provided in URL
   const { data: selectedSession } = useQuery(
@@ -154,12 +158,6 @@ function CodeAssistantPage() {
     }
   }, [selectedSession]);
 
-  useEffect(() => {
-    if (modelList && modelList.length > 0 && !modelId) {
-      setModelId(modelList[0].name);
-    }
-  }, [modelList, modelId]);
-
   const handleCopy = () => {
     navigator.clipboard
       .writeText(output)
@@ -190,7 +188,7 @@ function CodeAssistantPage() {
       sessionId,
       code: inputCode,
       language,
-      modelName: modelId,
+      modelId: modelId || 0,
     };
 
     switch (mode) {
@@ -213,8 +211,11 @@ function CodeAssistantPage() {
           return;
         }
         debugCodeMutation.mutate({
-          ...commonParams,
+          sessionId,
+          code: inputCode,
+          language,
           error: errorMessage,
+          modelId: modelId || 0,
         });
         break;
       default:
@@ -232,6 +233,7 @@ function CodeAssistantPage() {
   const canExecute = Boolean(
     inputCode.trim() &&
       modelId &&
+      !modelsLoading &&
       (mode !== 'debug' || errorMessage.trim()) &&
       !currentMutation.isPending &&
       !createSessionMutation.isPending
@@ -305,19 +307,23 @@ function CodeAssistantPage() {
               {fa.codeAssistant.labels.model}
             </div>
             <Select
-              disabled={currentMutation.isPending}
-              onValueChange={setModelId}
-              value={modelId}
+              disabled={currentMutation.isPending || modelsLoading}
+              onValueChange={(value) => setModelId(Number(value))}
+              value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
+                <SelectValue
+                  placeholder={
+                    modelsLoading ? 'Loading models...' : 'Select model'
+                  }
+                />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((model) => (
                   <SelectItem
                     className="text-right"
-                    key={model.name}
-                    value={model.name}
+                    key={model.id}
+                    value={model.id.toString()}
                   >
                     {model.name}
                   </SelectItem>
@@ -442,10 +448,16 @@ function CodeAssistantPage() {
         </Card>
 
         {/* Error Display */}
-        {(currentMutation.isError || createSessionMutation.isError) && (
+        {(currentMutation.isError ||
+          createSessionMutation.isError ||
+          modelsError) && (
           <Alert variant="destructive">
             <div className="flex items-center gap-2">
-              <span>{fa.codeAssistant.messages.processingError}</span>
+              <span>
+                {modelsError
+                  ? 'Failed to load models. Please refresh the page.'
+                  : fa.codeAssistant.messages.processingError}
+              </span>
               <span>{fa.codeAssistant.messages.tryAgain}</span>
             </div>
           </Alert>

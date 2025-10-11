@@ -15,7 +15,7 @@ import {
 } from '@/components/ai-elements/prompt-input';
 import { TranscribeButton } from '@/components/transcribe-button';
 import { Alert, AlertDescription } from '@/components/ui';
-import { useModelSelection } from '@/hooks/use-model-selection';
+import { useChatModelSelection } from '@/hooks/use-feature-model-selection';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export const ChatInput = ({
     null
   );
 
-  const { modelId, setModelId, models, refetch } = useModelSelection({
+  const { modelId, setModelId, models, refetch } = useChatModelSelection({
     threadId,
   });
 

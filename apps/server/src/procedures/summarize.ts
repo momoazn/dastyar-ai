@@ -1,5 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from 'ai';
 import { z } from 'zod';
+import { getModelById } from '@/repositories/llm-models';
 import {
   createSummary,
   deleteSummary,
@@ -81,11 +82,15 @@ export const summarizeProcedures = {
         text: z.string().min(1),
         mode: z.enum(summaryModes).default('standard'),
         tone: z.enum(tones).default('professional'),
-        modelName: z.string(),
+        modelId: z.number(),
       })
     )
     .handler(async ({ input }) => {
-      const providerModel = getProviderForModel(input.modelName);
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new Error('Model not found');
+      }
+      const providerModel = getProviderForModel(model.name, model.provider);
 
       const systemPrompt = [
         'You are a professional summarizer. Create clear, accurate summaries.',
@@ -127,7 +132,7 @@ export const summarizeProcedures = {
       const summary = await createSummary({
         sourceText: input.text,
         summaryText: summaryText || '',
-        modelName: input.modelName,
+        modelId: input.modelId,
         mode: input.mode as SummaryMode,
         tone: input.tone as Tone,
       });

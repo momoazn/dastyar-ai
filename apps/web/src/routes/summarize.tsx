@@ -17,6 +17,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
+import { useSummarizeModelSelection } from '@/hooks/use-feature-model-selection';
 import { fa } from '@/lib/persian-texts';
 import { detectTextDirection } from '@/lib/utils';
 import { orpc, queryClient } from '@/utils/orpc';
@@ -46,12 +47,9 @@ function SummarizePage() {
   const [summaryText, setSummaryText] = useState('');
   const [mode, setMode] = useState<SummarizeMode>('standard');
   const [tone, setTone] = useState<ToneOption>('formal');
-  const [modelId, setModelId] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const { data: modelList } = useQuery(
-    orpc.models.list.queryOptions({ input: { isEnabled: true } })
-  );
+  const { modelId, setModelId, models: modelList, isLoading: modelsLoading, error: modelsError } = useSummarizeModelSelection();
 
   // Load summary if ID is provided in URL
   const { data: selectedSummary } = useQuery(
@@ -84,15 +82,9 @@ function SummarizePage() {
       setSummaryText(selectedSummary.summaryText || '');
       setMode(selectedSummary.mode as SummarizeMode);
       setTone((selectedSummary.tone as ToneOption) || 'formal');
-      setModelId(selectedSummary.modelName || '');
+      // Model selection is now handled by useModelSelection hook
     }
   }, [selectedSummary]);
-
-  useEffect(() => {
-    if (modelList && modelList.length > 0 && !modelId) {
-      setModelId(modelList[0].name);
-    }
-  }, [modelList, modelId]);
 
   const handleCopy = async () => {
     try {
@@ -120,13 +112,13 @@ function SummarizePage() {
         text: sourceText,
         mode,
         tone,
-        modelName: modelId,
+        modelId: modelId || 0,
       });
     }
   };
 
   const canSummarize =
-    Boolean(sourceText.trim() && modelId) && !summarizeMutation.isPending;
+    Boolean(sourceText.trim() && modelId && !modelsLoading) && !summarizeMutation.isPending;
   const charCount = sourceText.length;
 
   return (
@@ -190,19 +182,19 @@ function SummarizePage() {
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.summarize.model}</div>
             <Select
-              disabled={summarizeMutation.isPending}
-              onValueChange={(value) => setModelId(value)}
-              value={modelId}
+              disabled={summarizeMutation.isPending || modelsLoading}
+              onValueChange={(value) => setModelId(Number(value))}
+              value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
+                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select model"} />
               </SelectTrigger>
               <SelectContent dir="rtl">
                 {modelList?.map((model) => (
                   <SelectItem
                     className="text-right"
-                    key={model.name}
-                    value={model.name}
+                    key={model.id}
+                    value={model.id.toString()}
                   >
                     {model.name}
                   </SelectItem>
@@ -269,10 +261,15 @@ function SummarizePage() {
         </Card>
 
         {/* Error Display */}
-        {summarizeMutation.isError && (
+        {(summarizeMutation.isError || modelsError) && (
           <Alert variant="destructive">
             <div className="flex items-center gap-2">
-              <span>{fa.summarize.errors.requestFailed}</span>
+              <span>
+                {modelsError 
+                  ? "Failed to load models. Please refresh the page."
+                  : fa.summarize.errors.requestFailed
+                }
+              </span>
               <span>{fa.translation.tryAgain}</span>
             </div>
           </Alert>
@@ -288,7 +285,7 @@ function SummarizePage() {
                 text: sourceText,
                 mode,
                 tone,
-                modelName: modelId,
+                modelId: modelId || 0,
               })
             }
           >
