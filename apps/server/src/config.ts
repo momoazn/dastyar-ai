@@ -12,6 +12,10 @@ const schema = z.object({
   HOST: z.string().default('127.0.0.1'),
   CORS_ORIGIN: z.string().default('*'),
 
+  JWT_SECRET: z
+    .string()
+    .default('your-super-secret-jwt-key-change-this-in-production'),
+
   DATABASE_FILE: z.string().default('./data.db'),
 
   WHISPER_MODELS_DIR: z.string().default('./whisper-models'),

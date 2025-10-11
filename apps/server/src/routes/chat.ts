@@ -7,7 +7,9 @@ import {
 } from 'ai';
 import { type Context, Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { env } from '@/config';
 import type { Prisma } from '@/database';
 import { getModelById } from '@/repositories/llm-models';
 import { saveMessage } from '@/repositories/messages';
@@ -15,6 +17,13 @@ import { updateThreadOnNewMessage } from '@/repositories/threads';
 import { getProviderForModel } from '@/services';
 import type { MyUIMessage } from '@/utils/chat';
 import { CHAT_SYSTEM_PROMPT } from '@/utils/constants';
+
+// Extend Hono context to include user
+declare module 'hono' {
+  interface ContextVariableMap {
+    user: { id: number; username: string; role: string };
+  }
+}
 
 export function sendError(
   c: Context,
@@ -28,6 +37,8 @@ export function sendError(
   const { status, code, message, details } = params;
   return c.json({ error: { code, message, details } }, status);
 }
+
+const JWT_SECRET = env.JWT_SECRET;
 
 const ChatRequestSchema = z.object({
   messages: z
@@ -44,13 +55,67 @@ const ChatRequestSchema = z.object({
   threadId: z.coerce.number(),
 });
 
-const app = new Hono().post(
-  '/',
-  zValidator('json', ChatRequestSchema),
-  async (c) => {
+// Authentication middleware
+const authMiddleware = async (c: Context, next: () => Promise<void>) => {
+  const authHeader = c.req.header('Authorization');
+
+  if (!(authHeader && authHeader.startsWith('Bearer '))) {
+    return c.json(
+      {
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Missing or invalid authorization header',
+        },
+      },
+      401
+    );
+  }
+
+  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: number;
+      username: string;
+      role: string;
+    };
+
+    // Fetch user from database to ensure they still exist
+    const { prisma } = await import('../database');
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      return c.json(
+        { error: { code: 'UNAUTHORIZED', message: 'User not found' } },
+        401
+      );
+    }
+
+    // Add user to context
+    c.set('user', {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    });
+
+    await next();
+  } catch (error) {
+    return c.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Invalid token' } },
+      401
+    );
+  }
+};
+
+const app = new Hono()
+  .use('*', authMiddleware)
+  .post('/', zValidator('json', ChatRequestSchema), async (c) => {
     try {
       const { messages, modelId, threadId } = c.req.valid('json');
       const uiMessages = messages as unknown as MyUIMessage[];
+      const user = c.get('user');
 
       const last = uiMessages.at(-1);
       if (!last || last.role !== 'user') {
@@ -84,8 +149,9 @@ const app = new Hono().post(
           modelId,
           status: 'finished',
           role: 'user',
+          userId: user.id,
         });
-        await updateThreadOnNewMessage(threadId, new Date());
+        await updateThreadOnNewMessage(threadId, user.id, new Date());
       } catch {
         return sendError(c, {
           status: 500,
@@ -120,8 +186,9 @@ const app = new Hono().post(
               modelId,
               status: 'finished',
               role: 'assistant',
+              userId: user.id,
             });
-            await updateThreadOnNewMessage(threadId, new Date());
+            await updateThreadOnNewMessage(threadId, user.id, new Date());
           } catch {
             return;
           }
@@ -138,7 +205,6 @@ const app = new Hono().post(
         message,
       });
     }
-  }
-);
+  });
 
 export default app;

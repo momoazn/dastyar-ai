@@ -1,3 +1,4 @@
+import { authProcedures } from './auth';
 import { codeProcedures } from './code';
 import { healthProcedures } from './health';
 import { imageThreadProcedures } from './image-threads';
@@ -10,6 +11,7 @@ import { translationProcedures } from './translation';
 
 export const appRouter = {
   ...healthProcedures,
+  auth: authProcedures,
   models: llmModelProcedures,
   threads: threadProcedures,
   messages: messageProcedures,

@@ -7,17 +7,18 @@ import {
 
 /**
  * Creates a new code assistant session.
- * @param params - Parameters including title and language.
+ * @param params - Parameters including title, language, and userId.
  * @returns The ID of the created session.
  */
 export async function createCodeAssistSession(
-  params: Pick<CodeAssistSession, 'title' | 'language'>
+  params: Pick<CodeAssistSession, 'title' | 'language'> & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const session = await prisma.codeAssistSession.create({
       data: {
         title: params.title.trim(),
         language: params.language,
+        userId: params.userId,
       },
     });
 
@@ -31,14 +32,16 @@ export async function createCodeAssistSession(
 /**
  * Retrieves a specific code assistant session by ID.
  * @param id - The session ID.
+ * @param userId - The user ID.
  * @returns The session record or null if not found.
  */
 export async function getCodeAssistSession(
-  id: number
+  id: number,
+  userId: number
 ): Promise<CodeAssistSession | null> {
   try {
-    const session = await prisma.codeAssistSession.findUnique({
-      where: { id },
+    const session = await prisma.codeAssistSession.findFirst({
+      where: { id, userId },
       include: {
         codeGenerations: {
           orderBy: { createdAt: 'desc' },
@@ -57,11 +60,15 @@ export async function getCodeAssistSession(
 }
 
 /**
- * Retrieves all code assistant sessions.
+ * Retrieves all code assistant sessions for a user.
+ * @param userId - The user ID.
  * @returns Array of sessions.
  */
-export function listCodeAssistSessions(): Promise<CodeAssistSession[]> {
+export function listCodeAssistSessions(
+  userId: number
+): Promise<CodeAssistSession[]> {
   return prisma.codeAssistSession.findMany({
+    where: { userId },
     orderBy: { updatedAt: 'desc' },
   });
 }
@@ -70,14 +77,16 @@ export function listCodeAssistSessions(): Promise<CodeAssistSession[]> {
  * Updates a code assistant session.
  * @param id - The session ID.
  * @param data - The data to update.
+ * @param userId - The user ID.
  */
 export async function updateCodeAssistSession(
   id: number,
-  data: Partial<Pick<CodeAssistSession, 'title' | 'language'>>
+  data: Partial<Pick<CodeAssistSession, 'title' | 'language'>>,
+  userId: number
 ): Promise<void> {
   try {
-    await prisma.codeAssistSession.update({
-      where: { id },
+    await prisma.codeAssistSession.updateMany({
+      where: { id, userId },
       data,
     });
   } catch (error) {
@@ -89,11 +98,15 @@ export async function updateCodeAssistSession(
 /**
  * Deletes a code assistant session by ID.
  * @param id - The session ID.
+ * @param userId - The user ID.
  */
-export async function deleteCodeAssistSession(id: number): Promise<void> {
+export async function deleteCodeAssistSession(
+  id: number,
+  userId: number
+): Promise<void> {
   try {
-    await prisma.codeAssistSession.delete({
-      where: { id },
+    await prisma.codeAssistSession.deleteMany({
+      where: { id, userId },
     });
   } catch (error) {
     console.error(`Failed to delete code assistant session ${id}:`, error);
@@ -110,7 +123,7 @@ export async function createCodeGeneration(
   params: Pick<
     CodeGeneration,
     'sessionId' | 'prompt' | 'generatedCode' | 'language' | 'modelId'
-  >
+  > & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const generation = await prisma.codeGeneration.create({
@@ -120,6 +133,7 @@ export async function createCodeGeneration(
         generatedCode: params.generatedCode,
         language: params.language,
         modelId: params.modelId,
+        userId: params.userId,
       },
     });
 
@@ -168,7 +182,7 @@ export async function createCodeReview(
     | 'suggestions'
     | 'severityLevels'
     | 'modelId'
-  >
+  > & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const review = await prisma.codeReview.create({
@@ -179,6 +193,7 @@ export async function createCodeReview(
         suggestions: params.suggestions,
         severityLevels: params.severityLevels,
         modelId: params.modelId,
+        userId: params.userId,
       },
     });
 

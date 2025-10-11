@@ -1,16 +1,16 @@
 import type { Context as HonoContext } from 'hono';
-import prisma from '../database';
+import { prisma, type User } from '../database';
 
 export type CreateContextOptions = {
   context: HonoContext;
 };
 
 export function createContext({ context }: CreateContextOptions) {
-  // No auth configured
   return {
     honoContext: context,
-    session: null,
+    req: context.req,
     db: prisma, // Attach the database instance to the context
+    user: null as User | null, // Will be set by auth middleware
   };
 }
 

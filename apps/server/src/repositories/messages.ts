@@ -3,9 +3,10 @@ import type { MessageStatus } from '@/utils/constants';
 
 export type CreateMessageParams = Omit<
   Message,
-  'id' | 'createdAt' | 'updatedAt' | 'parts'
+  'id' | 'createdAt' | 'updatedAt' | 'parts' | 'userId'
 > & {
   parts: Prisma.InputJsonValue;
+  userId: number;
 };
 
 export type UpdateMessageParams = CreateMessageParams & Pick<Message, 'id'>;
@@ -26,6 +27,7 @@ export async function saveMessage(
         parts: params.parts,
         status: params.status,
         modelId: params.modelId,
+        userId: params.userId,
       },
     });
 
@@ -94,6 +96,7 @@ export async function saveMessages(
         parts: p.parts,
         status: p.status,
         modelId: p.modelId,
+        userId: p.userId,
       })),
     });
 
@@ -147,11 +150,12 @@ export async function getMessagesByThread(
 /**
  * Deletes a specific message by ID.
  * @param id - The message ID.
+ * @param userId - The user ID.
  */
-export async function deleteMessage(id: number): Promise<void> {
+export async function deleteMessage(id: number, userId: number): Promise<void> {
   try {
-    await prisma.message.delete({
-      where: { id },
+    await prisma.message.deleteMany({
+      where: { id, userId },
     });
   } catch (error) {
     console.error(`Failed to delete message ${id}:`, error);
@@ -162,11 +166,15 @@ export async function deleteMessage(id: number): Promise<void> {
 /**
  * Deletes all messages in a specific thread.
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  */
-export async function clearThread(threadId: number): Promise<void> {
+export async function clearThread(
+  threadId: number,
+  userId: number
+): Promise<void> {
   try {
     await prisma.message.deleteMany({
-      where: { threadId },
+      where: { threadId, userId },
     });
   } catch (error) {
     console.error(`Failed to clear thread ${threadId}:`, error);
@@ -177,14 +185,16 @@ export async function clearThread(threadId: number): Promise<void> {
 /**
  * Gets the last used model in a thread.
  * @param threadId - The thread ID.
+ * @param userId - The user ID.
  * @returns The last used model or null if no messages exist.
  */
 export async function getLastUsedModelInThread(
-  threadId: number
+  threadId: number,
+  userId: number
 ): Promise<LLMModel | null> {
   try {
     const lastMessage = await prisma.message.findFirst({
-      where: { threadId },
+      where: { threadId, userId },
       orderBy: { createdAt: 'desc' },
       include: {
         model: true,
@@ -202,12 +212,16 @@ export async function getLastUsedModelInThread(
 }
 
 /**
- * Gets the last used model across all messages.
+ * Gets the last used model across all messages for a user.
+ * @param userId - The user ID.
  * @returns The last used model or null if no messages exist.
  */
-export async function getLastUsedModelGlobal(): Promise<LLMModel | null> {
+export async function getLastUsedModelGlobal(
+  userId: number
+): Promise<LLMModel | null> {
   try {
     const lastMessage = await prisma.message.findFirst({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
         model: true,

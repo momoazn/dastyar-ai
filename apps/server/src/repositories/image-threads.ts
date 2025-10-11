@@ -2,11 +2,11 @@ import { type ImageThread, prisma } from '@/database';
 
 /**
  * Creates a new image thread with an optional title.
- * @param params - Optional parameters including title.
+ * @param params - Optional parameters including title and userId.
  * @returns The ID of the created thread.
  */
 export async function createImageThread(
-  params?: Partial<Pick<ImageThread, 'title'>>
+  params?: Partial<Pick<ImageThread, 'title'>> & { userId: number }
 ): Promise<{ id: number }> {
   try {
     const title = (params?.title ?? 'گفتگوی تصویری جدید').trim();
@@ -15,6 +15,7 @@ export async function createImageThread(
       data: {
         title,
         isArchived: false,
+        userId: params!.userId,
       },
     });
 

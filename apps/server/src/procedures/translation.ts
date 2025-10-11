@@ -15,7 +15,7 @@ import {
   tones,
 } from '@/utils/constants';
 import { extractJsonField } from '@/utils/llm-json';
-import { publicProcedure } from './base';
+import { protectedProcedure } from './base';
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,
@@ -57,23 +57,23 @@ const translateWithPlainJson = async (
 };
 
 export const translationProcedures = {
-  list: publicProcedure.handler(async () => {
-    const rows = await listTranslations();
+  list: protectedProcedure.handler(async ({ context }) => {
+    const rows = await listTranslations(context.user!.id);
     return rows;
   }),
-  get: publicProcedure
+  get: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      const row = await getTranslation(input.id);
+    .handler(async ({ input, context }) => {
+      const row = await getTranslation(input.id, context.user!.id);
       return row;
     }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteTranslation(input.id);
+    .handler(async ({ input, context }) => {
+      await deleteTranslation(input.id, context.user!.id);
       return { ok: true } as const;
     }),
-  translate: publicProcedure
+  translate: protectedProcedure
     .input(
       z.object({
         text: z.string().min(1),
@@ -83,7 +83,7 @@ export const translationProcedures = {
         modelId: z.number(),
       })
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
         throw new Error('Model not found');
@@ -138,6 +138,7 @@ export const translationProcedures = {
         sourceLanguage: input.sourceLanguage,
         targetLanguage: input.targetLanguage,
         tone: (input.tone as Tone) ?? null,
+        userId: context.user!.id,
       });
       return created;
     }),

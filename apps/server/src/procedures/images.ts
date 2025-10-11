@@ -10,7 +10,7 @@ import {
   type ImageGenerationParams,
   stableDiffusionService,
 } from '@/services/stable-diffusion';
-import { publicProcedure } from './base';
+import { protectedProcedure, publicProcedure } from './base';
 
 const imageGenerationParamsSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
@@ -37,9 +37,9 @@ export const imageProcedures = {
   }),
 
   // Generate an image
-  generate: publicProcedure
+  generate: protectedProcedure
     .input(imageGenerationParamsSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       console.log(
         'Starting image generation with prompt:',
         input.prompt.substring(0, 100)
@@ -86,7 +86,8 @@ export const imageProcedures = {
             width: input.width,
             height: input.height,
           }),
-          imageThreadId: input.threadId,
+          threadId: input.threadId,
+          userId: context.user!.id,
         });
 
         // Update thread's last image timestamp
@@ -130,15 +131,18 @@ export const imageProcedures = {
   }),
 
   // List images by thread
-  listByThread: publicProcedure
+  listByThread: protectedProcedure
     .input(z.object({ threadId: z.number() }))
-    .handler(async ({ input }) => {
-      const images = await listGeneratedImagesByThread(input.threadId);
+    .handler(async ({ input, context }) => {
+      const images = await listGeneratedImagesByThread(
+        input.threadId,
+        context.user!.id
+      );
       console.log(`Listing images for thread ${input.threadId}`);
 
       return images.map((img) => ({
         id: img.id,
-        threadId: img.imageThreadId,
+        threadId: img.threadId,
         prompt: img.prompt,
         negativePrompt: img.negativePrompt,
         imageUrl: imageStorageService.getImageUrl(img.id),
@@ -148,10 +152,10 @@ export const imageProcedures = {
     }),
 
   // Clear images by thread
-  clearByThread: publicProcedure
+  clearByThread: protectedProcedure
     .input(z.object({ threadId: z.number() }))
-    .handler(async ({ input }) => {
-      await clearGeneratedImagesByThread(input.threadId);
+    .handler(async ({ input, context }) => {
+      await clearGeneratedImagesByThread(input.threadId, context.user!.id);
       return { success: true };
     }),
 
