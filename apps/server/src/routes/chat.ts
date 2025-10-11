@@ -59,7 +59,7 @@ const ChatRequestSchema = z.object({
 const authMiddleware = async (c: Context, next: () => Promise<void>) => {
   const authHeader = c.req.header('Authorization');
 
-  if (!(authHeader && authHeader.startsWith('Bearer '))) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return c.json(
       {
         error: {
@@ -101,7 +101,7 @@ const authMiddleware = async (c: Context, next: () => Promise<void>) => {
     });
 
     await next();
-  } catch (error) {
+  } catch {
     return c.json(
       { error: { code: 'UNAUTHORIZED', message: 'Invalid token' } },
       401
