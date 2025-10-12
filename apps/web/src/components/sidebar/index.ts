@@ -27,7 +27,6 @@ export * from "./nav";
 
 // Navigation components
 export * from "./navigation";
-// navigation-sidebar removed as unused to simplify structure
 export * from "./summaries-list";
 export * from "./translations-list";
-// types.ts removed; types are colocated with modules
+export * from "./user-profile-button";

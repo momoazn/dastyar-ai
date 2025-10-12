@@ -171,6 +171,13 @@ export const fa = {
   ui: {
     themeToggle: "تغییر تم",
   },
+  userProfile: {
+    notLoggedIn: "وارد نشده",
+    clickToLogin: "برای ورود کلیک کنید",
+    loading: "در حال بارگذاری...",
+    pleaseWait: "لطفاً صبر کنید",
+    logOut: "خروج",
+  },
   transcribe: {
     title: "تبدیل گفتار به متن",
     description: "یک پیام کوتاه ضبط کنید تا آن را برای شما تبدیل کنیم.",

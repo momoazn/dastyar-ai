@@ -9,6 +9,7 @@ import {
   Button,
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
 } from "@/components/ui";
@@ -18,6 +19,7 @@ import { ImagesSidebar } from "./images-sidebar";
 import { AppSidebarHeader, NavigationMenu } from "./navigation";
 import { SummariesList } from "./summaries-list";
 import { TranslationsList } from "./translations-list";
+import { UserProfileButton } from "./user-profile-button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeItem = useActiveNavItem();
@@ -89,6 +91,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         )}
       </SidebarContent>
+
+      <SidebarFooter className="gap-2 p-2">
+        <UserProfileButton />
+      </SidebarFooter>
     </Sidebar>
   );
 }
