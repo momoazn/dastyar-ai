@@ -14,17 +14,39 @@ export const dbProvider = o.middleware(({ context, next }) =>
 export const authMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header("Authorization");
 
+  console.debug(
+    "[authMiddleware] Authorization header present: " +
+      (authHeader ? "YES" : "NO")
+  );
+
   const authResult = await validateAuthHeader(authHeader);
 
+  console.debug(
+    "[authMiddleware] Validation result: success=" +
+      authResult.success +
+      ", user=" +
+      Boolean(authResult.user)
+  );
+
   if (!authResult.success) {
+    console.debug(
+      "[authMiddleware] Authentication failed: " +
+        (authResult.error?.message ?? "Unknown error")
+    );
     throw new Error(
       `Authentication failed: ${authResult.error?.message ?? "Unknown error"}`
     );
   }
 
   if (!authResult.user) {
+    console.debug("[authMiddleware] Authentication failed: User not found");
     throw new Error("Authentication failed: User not found");
   }
+
+  console.debug(
+    "[authMiddleware] Authentication succeeded for user: " +
+      (authResult.user.id ?? "unknown-id")
+  );
 
   return next({
     context: {

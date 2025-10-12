@@ -8,7 +8,7 @@ import {
   verifyUserCredentials,
 } from "@/repositories/auth";
 import { generateJwtToken } from "@/services/auth";
-import { publicProcedure } from "./base";
+import { protectedProcedure, publicProcedure } from "./base";
 
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
@@ -130,7 +130,7 @@ export const authProcedures = {
     };
   }),
 
-  me: publicProcedure.handler(({ context }) => {
+  me: protectedProcedure.handler(({ context }) => {
     console.debug("[auth.me] Me handler invoked");
 
     if (!context.user) {
