@@ -14,12 +14,13 @@ enum UserRole {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  role         UserRole @default(user)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  salt      String
+  role      UserRole @default(user)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   chatThreads        ChatThread[]

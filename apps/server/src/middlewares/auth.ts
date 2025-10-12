@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { prisma, type User } from "@/database";
+import type { User } from "@/database";
 import { validateAuthHeader } from "@/services/auth";
 
 // Define the environment type for Hono
@@ -19,7 +19,7 @@ export const authMiddleware = async (
 ) => {
   const authHeader = c.req.header("Authorization");
 
-  const authResult = await validateAuthHeader(authHeader, prisma);
+  const authResult = await validateAuthHeader(authHeader);
 
   if (!authResult.success) {
     return c.json(

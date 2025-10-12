@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 
-// Load environment variables from .env file
 loadEnv();
 
 const schema = z.object({
@@ -15,6 +14,7 @@ const schema = z.object({
   JWT_SECRET: z
     .string()
     .default("your-super-secret-jwt-key-change-this-in-production"),
+  JWT_EXPIRES_IN: z.number().default(24 * 60 * 60),
 
   DATABASE_FILE: z.string().default("./data.db"),
 

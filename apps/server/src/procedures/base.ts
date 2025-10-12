@@ -1,6 +1,6 @@
 import { os } from "@orpc/server";
-import type { Context } from "../lib/context";
-import { validateAuthHeader } from "../services/auth";
+import type { Context } from "@/lib/context";
+import { validateAuthHeader } from "@/services/auth";
 
 // Create the base context with database support
 export const o = os.$context<Context>();
@@ -14,7 +14,7 @@ export const dbProvider = o.middleware(({ context, next }) =>
 export const authMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header("Authorization");
 
-  const authResult = await validateAuthHeader(authHeader, context.db);
+  const authResult = await validateAuthHeader(authHeader);
 
   if (!authResult.success) {
     throw new Error(
