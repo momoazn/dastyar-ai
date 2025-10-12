@@ -7,7 +7,7 @@ import { useImageThreads } from "@/hooks/use-image-threads";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/image")({
+export const Route = createFileRoute("/_authenticated/image")({
   component: () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();

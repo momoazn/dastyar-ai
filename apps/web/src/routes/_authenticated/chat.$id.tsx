@@ -16,7 +16,7 @@ import { fa } from "@/lib/persian-texts";
 import type { MyUIMessage } from "@/server/utils/chat";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/chat/$id")({
+export const Route = createFileRoute("/_authenticated/chat/$id")({
   component: ChatThreadRouteComponent,
 });
 

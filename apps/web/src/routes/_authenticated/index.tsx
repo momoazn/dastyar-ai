@@ -10,7 +10,7 @@ import {
 import { Button, Card } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: HomeComponent,
 });
 

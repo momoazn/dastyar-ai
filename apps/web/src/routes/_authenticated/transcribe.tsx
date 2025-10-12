@@ -62,7 +62,7 @@ const getStatusText = (
   return fa.transcribe.idle;
 };
 
-export const Route = createFileRoute("/transcribe")({
+export const Route = createFileRoute("/_authenticated/transcribe")({
   component: RouteComponent,
 });
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/chat/")({
+export const Route = createFileRoute("/_authenticated/chat/")({
   component: ChatRouteComponent,
 });
 

@@ -62,7 +62,7 @@ const IMAGE_SIZES = [
   { label: "768x512", value: "768x512" },
 ] as const;
 
-export const Route = createFileRoute("/image/$id")({
+export const Route = createFileRoute("/_authenticated/image/$id")({
   component: RouteComponent,
 });
 

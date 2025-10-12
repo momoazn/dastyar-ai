@@ -3,8 +3,12 @@ import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { createStore } from "jotai";
 import { toast } from "sonner";
+import { tokenAtom } from "@/atoms/auth";
 import type { appRouter } from "@/server/procedures";
+
+const store = createStore();
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -24,7 +28,7 @@ export const queryClient = new QueryClient({
 export const link = new RPCLink({
   url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
   headers: () => {
-    const token = localStorage.getItem("auth-token");
+    const token = store.get(tokenAtom);
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 });

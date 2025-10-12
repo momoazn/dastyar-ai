@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
-import { AuthLayout } from "@/components/auth/auth-layout";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -72,23 +71,21 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <AuthLayout>
-          <SidebarProvider
-            style={
-              {
-                "--sidebar-width": "300px",
-              } as React.CSSProperties
-            }
-          >
-            <AppSidebar side="right" />
-            <SidebarInset className="bg-sidebar pe-2 pb-2">
-              <Header SideBarTrigger={<SidebarTrigger />} />
-              <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
-                {isFetching ? <Loader /> : <Outlet />}
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
-        </AuthLayout>
+        <SidebarProvider
+          style={
+            {
+              "--sidebar-width": "300px",
+            } as React.CSSProperties
+          }
+        >
+          <AppSidebar side="right" />
+          <SidebarInset className="bg-sidebar pe-2 pb-2">
+            <Header SideBarTrigger={<SidebarTrigger />} />
+            <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
+              {isFetching ? <Loader /> : <Outlet />}
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />

@@ -21,7 +21,7 @@ import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import { fa } from "@/lib/persian-texts";
 import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/code")({
+export const Route = createFileRoute("/_authenticated/code")({
   component: CodeAssistantPage,
 });
 

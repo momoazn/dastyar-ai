@@ -5,7 +5,7 @@ import { Button, Card } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/code/$id")({
+export const Route = createFileRoute("/_authenticated/code/$id")({
   component: CodeSessionPage,
 });
 

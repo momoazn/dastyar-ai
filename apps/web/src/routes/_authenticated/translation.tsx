@@ -35,7 +35,7 @@ import { orpc, queryClient } from "@/utils/orpc";
 const languages = createLanguageOptions();
 const tones = createToneOptions();
 
-export const Route = createFileRoute("/translation")({
+export const Route = createFileRoute("/_authenticated/translation")({
   component: RouteComponent,
 });
 
