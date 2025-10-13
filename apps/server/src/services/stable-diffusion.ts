@@ -13,14 +13,14 @@ const MAX_RETRIES = 3;
 
 let provider: Automatic1111Provider | null = null;
 
-const getProvider = (): Automatic1111Provider => {
+function getProvider(): Automatic1111Provider {
   if (!provider) {
     provider = createAutomatic1111({
       baseURL: env.STABLE_DIFFUSION_URL,
     });
   }
   return provider;
-};
+}
 
 export type GenerateParams = {
   prompt: string;
@@ -49,7 +49,7 @@ export type Progress = {
   textinfo?: string;
 };
 
-export const ping = async (): Promise<boolean> => {
+export async function ping(): Promise<boolean> {
   try {
     const response = await fetch(`${env.STABLE_DIFFUSION_URL}/internal/ping`, {
       method: "GET",
@@ -59,9 +59,9 @@ export const ping = async (): Promise<boolean> => {
   } catch {
     return false;
   }
-};
+}
 
-export const getSamplers = async (): Promise<string[]> => {
+export async function getSamplers(): Promise<string[]> {
   const response = await fetch(
     `${env.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
     {
@@ -73,9 +73,9 @@ export const getSamplers = async (): Promise<string[]> => {
   }
   const samplers = await response.json();
   return samplers.map((s: { name: string }) => s.name);
-};
+}
 
-const getModelId = async (): Promise<string> => {
+async function getModelId(): Promise<string> {
   const response = await fetch(`${env.STABLE_DIFFUSION_URL}/sdapi/v1/options`, {
     signal: AbortSignal.timeout(10_000),
   }).catch(() => null);
@@ -90,9 +90,9 @@ const getModelId = async (): Promise<string> => {
     }
   }
   return "v1-5-pruned-emaonly";
-};
+}
 
-export const generate = async (params: GenerateParams): Promise<string> => {
+export async function generate(params: GenerateParams): Promise<string> {
   const available = await ping();
   if (!available) {
     throw new Error("Stable Diffusion service is not available");
@@ -120,9 +120,9 @@ export const generate = async (params: GenerateParams): Promise<string> => {
     throw new Error("No images generated");
   }
   return images[0].base64;
-};
+}
 
-export const progress = async (): Promise<Progress | null> => {
+export async function progress(): Promise<Progress | null> {
   try {
     const response = await fetch(
       `${env.STABLE_DIFFUSION_URL}/sdapi/v1/progress`,
@@ -137,9 +137,9 @@ export const progress = async (): Promise<Progress | null> => {
   } catch {
     return null;
   }
-};
+}
 
-export const interrupt = async (): Promise<boolean> => {
+export async function interrupt(): Promise<boolean> {
   try {
     const response = await fetch(
       `${env.STABLE_DIFFUSION_URL}/sdapi/v1/interrupt`,
@@ -152,4 +152,4 @@ export const interrupt = async (): Promise<boolean> => {
   } catch {
     return false;
   }
-};
+}

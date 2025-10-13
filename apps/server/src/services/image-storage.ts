@@ -2,7 +2,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { env } from "@/config";
 
-// Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 
 export const ALLOWED_FORMATS = ["png", "jpg", "jpeg", "webp"];
@@ -13,24 +12,24 @@ export type SaveImageResult = {
   fileName: string;
 };
 
-const getImagesDir = (): string => env.IMAGES_DIR;
+function getImagesDir(): string {
+  return env.IMAGES_DIR;
+}
 
-const generateFileName = (): string => {
+function generateFileName(): string {
   const timestamp = Date.now();
   const randomSuffix = Math.random().toString(36).slice(2, 8);
   return `${timestamp}-${randomSuffix}.png`;
-};
+}
 
-const getDateBasedDir = (): string => {
+function getDateBasedDir(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   return path.join(getImagesDir(), String(year), month);
-};
+}
 
-export const saveImage = async (
-  base64Data: string
-): Promise<SaveImageResult> => {
+export async function saveImage(base64Data: string): Promise<SaveImageResult> {
   const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, "");
   const dateDir = getDateBasedDir();
 
@@ -45,20 +44,22 @@ export const saveImage = async (
   const imageBuffer = Buffer.from(cleanBase64, "base64");
   await fs.writeFile(filePath, imageBuffer);
   return { filePath, fileName };
-};
+}
 
-export const deleteImage = async (filePath: string): Promise<void> => {
+export async function deleteImage(filePath: string): Promise<void> {
   try {
     await fs.access(filePath);
     await fs.unlink(filePath);
   } catch {
     throw new Error("Failed to delete image file");
   }
-};
+}
 
-export const getImageUrl = (id: number): string => `/api/images/${id}/file`;
+export function getImageUrl(id: number): string {
+  return `/api/images/${id}/file`;
+}
 
-export const validateImageFile = async (filePath: string): Promise<boolean> => {
+export async function validateImageFile(filePath: string): Promise<boolean> {
   try {
     const stats = await fs.stat(filePath);
     if (stats.size > MAX_FILE_SIZE) {
@@ -69,14 +70,14 @@ export const validateImageFile = async (filePath: string): Promise<boolean> => {
   } catch {
     return false;
   }
-};
+}
 
-export const cleanupOrphanedFiles = async (
+export async function cleanupOrphanedFiles(
   existingFilePaths: string[]
-): Promise<number> => {
+): Promise<number> {
   let deletedCount = 0;
 
-  const walkDir = async (dir: string): Promise<void> => {
+  async function walkDir(dir: string): Promise<void> {
     try {
       const files = await fs.readdir(dir);
       for (const file of files) {
@@ -101,16 +102,16 @@ export const cleanupOrphanedFiles = async (
     } catch {
       // ignore errors during directory reading
     }
-  };
+  }
 
   await walkDir(getImagesDir());
   return deletedCount;
-};
+}
 
-export const getFileStats = async (): Promise<{
+export async function getFileStats(): Promise<{
   totalFiles: number;
   totalSize: number;
-}> => {
+}> {
   let totalFiles = 0;
   let totalSize = 0;
 
@@ -134,4 +135,4 @@ export const getFileStats = async (): Promise<{
 
   await walkDir(getImagesDir());
   return { totalFiles, totalSize };
-};
+}
