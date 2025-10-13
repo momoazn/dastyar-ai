@@ -1,15 +1,27 @@
-import { Navigate } from "@tanstack/react-router";
+import { Navigate, useSearch } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
-import { tokenAtom } from "@/atoms/auth";
+import { LS_TOKEN_KEY, tokenAtom } from "@/atoms/auth";
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
-  const token = useAtomValue(tokenAtom);
+  const atomToken = useAtomValue(tokenAtom);
+  const search = useSearch({ from: "/login" }) as { redirect?: string };
+  const storedToken =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null")
+      : null;
+  const token = atomToken ?? storedToken;
+  const isHydrating = atomToken === null && !!storedToken;
 
-  if (token) {
-    return <Navigate to="/" />;
+  if (isHydrating) {
+    return null;
   }
 
-  return <>{children}</>;
+  if (token) {
+    const to = search?.redirect ? decodeURIComponent(search.redirect) : "/";
+    return <Navigate to={to} />;
+  }
+
+  return children;
 }
 
 export default AuthLayout;

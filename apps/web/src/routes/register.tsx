@@ -2,11 +2,10 @@ import { useMutation } from "@tanstack/react-query";
 import {
   createFileRoute,
   Link,
-  redirect,
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { createStore, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
@@ -28,13 +27,6 @@ import { orpc } from "@/utils/orpc";
 const MIN_PASSWORD_LENGTH = 6;
 
 export const Route = createFileRoute("/register")({
-  beforeLoad: () => {
-    // If user is already authenticated, redirect to home
-    const token = createStore().get(tokenAtom);
-    if (token) {
-      throw redirect({ to: "/" });
-    }
-  },
   component: () => (
     <AuthLayout>
       <RegisterPage />

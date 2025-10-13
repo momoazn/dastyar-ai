@@ -1,17 +1,31 @@
-import { Navigate } from "@tanstack/react-router";
+import { Navigate, useRouterState } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
-import { tokenAtom } from "@/atoms/auth";
+import { LS_TOKEN_KEY, tokenAtom } from "@/atoms/auth";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const token = useAtomValue(tokenAtom);
+  const atomToken = useAtomValue(tokenAtom);
+  const href = useRouterState({
+    select: (s) => s.location.href,
+  });
+  const storedToken =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null")
+      : null;
+  const token = atomToken ?? storedToken;
+  const isHydrating = atomToken === null && !!storedToken;
 
-  if (!token) {
-    return <Navigate to="/login" />;
+  if (isHydrating) {
+    return null;
   }
 
-  return <>{children}</>;
+  if (!token) {
+    const redirect = encodeURIComponent(href);
+    return <Navigate to={`/login?redirect=${redirect}`} />;
+  }
+
+  return children;
 }
