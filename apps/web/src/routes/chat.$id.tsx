@@ -12,15 +12,20 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatInput, Message } from "@/components/chat";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
+import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import type { MyUIMessage } from "@/server/utils/chat";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/_authenticated/chat/$id")({
-  component: ChatThreadRouteComponent,
+export const Route = createFileRoute("/chat/$id")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
-function ChatThreadRouteComponent() {
+function RouteComponent() {
   const { id: threadId } = useParams({ from: "/chat/$id" });
 
   const { modelId } = useChatModelSelection({ threadId: Number(threadId) });

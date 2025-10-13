@@ -2,14 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Code, Shield } from "lucide-react";
 import { Button, Card } from "@/components/ui";
+import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/_authenticated/code/$id")({
-  component: CodeSessionPage,
+export const Route = createFileRoute("/code/$id")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
-function CodeSessionPage() {
+function RouteComponent() {
   const { id } = Route.useParams();
   const sessionId = Number.parseInt(id, 10);
 

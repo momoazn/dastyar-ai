@@ -26,6 +26,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
+import ProtectedLayout from "@/layouts/protected";
 import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
@@ -35,8 +36,12 @@ import { orpc, queryClient } from "@/utils/orpc";
 const languages = createLanguageOptions();
 const tones = createToneOptions();
 
-export const Route = createFileRoute("/_authenticated/translation")({
-  component: RouteComponent,
+export const Route = createFileRoute("/translation")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
 function RouteComponent() {

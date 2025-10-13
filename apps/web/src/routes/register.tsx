@@ -6,7 +6,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { useSetAtom } from "jotai";
+import { createStore, useSetAtom } from "jotai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import AuthLayout from "@/layouts/auth";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
@@ -29,12 +30,16 @@ const MIN_PASSWORD_LENGTH = 6;
 export const Route = createFileRoute("/register")({
   beforeLoad: () => {
     // If user is already authenticated, redirect to home
-    const token = localStorage.getItem("auth-token");
+    const token = createStore().get(tokenAtom);
     if (token) {
       throw redirect({ to: "/" });
     }
   },
-  component: RegisterPage,
+  component: () => (
+    <AuthLayout>
+      <RegisterPage />
+    </AuthLayout>
+  ),
 });
 
 function RegisterPage() {

@@ -18,6 +18,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useSummarizeModelSelection } from "@/hooks/use-feature-model-selection";
+import ProtectedLayout from "@/layouts/protected";
 import {
   createSummaryModeOptions,
   createToneOptions,
@@ -32,8 +33,12 @@ const COPY_SUCCESS_DURATION_MS = 2000;
 const modes = createSummaryModeOptions();
 const tones = createToneOptions();
 
-export const Route = createFileRoute("/_authenticated/summarize")({
-  component: SummarizePage,
+export const Route = createFileRoute("/summarize")({
+  component: () => (
+    <ProtectedLayout>
+      <SummarizePage />
+    </ProtectedLayout>
+  ),
 });
 
 function SummarizePage() {

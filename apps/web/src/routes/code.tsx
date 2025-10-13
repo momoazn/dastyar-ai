@@ -18,11 +18,16 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
+import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/_authenticated/code")({
-  component: CodeAssistantPage,
+export const Route = createFileRoute("/code")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
 type CodeMode = "generate" | "explain" | "review" | "debug";
@@ -56,7 +61,7 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
   { value: "rust", label: "Rust" },
 ];
 
-function CodeAssistantPage() {
+function RouteComponent() {
   const search = useSearch({ from: "/code" }) as { id?: string };
   const navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
@@ -207,7 +212,7 @@ function CodeAssistantPage() {
         break;
       case "debug":
         if (!errorMessage.trim()) {
-          alert(fa.codeAssistant.messages.errorRequired);
+          console.error(fa.codeAssistant.messages.errorRequired);
           return;
         }
         debugCodeMutation.mutate({

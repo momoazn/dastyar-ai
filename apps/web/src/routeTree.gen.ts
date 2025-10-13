@@ -9,20 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TranslationRouteImport } from './routes/translation'
+import { Route as TranscribeRouteImport } from './routes/transcribe'
+import { Route as SummarizeRouteImport } from './routes/summarize'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedTranslationRouteImport } from './routes/_authenticated/translation'
-import { Route as AuthenticatedTranscribeRouteImport } from './routes/_authenticated/transcribe'
-import { Route as AuthenticatedSummarizeRouteImport } from './routes/_authenticated/summarize'
-import { Route as AuthenticatedImageRouteImport } from './routes/_authenticated/image'
-import { Route as AuthenticatedCodeRouteImport } from './routes/_authenticated/code'
-import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
-import { Route as AuthenticatedImageIdRouteImport } from './routes/_authenticated/image.$id'
-import { Route as AuthenticatedCodeIdRouteImport } from './routes/_authenticated/code.$id'
-import { Route as AuthenticatedChatIdRouteImport } from './routes/_authenticated/chat.$id'
+import { Route as ImageRouteImport } from './routes/image'
+import { Route as CodeRouteImport } from './routes/code'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as ImageIdRouteImport } from './routes/image.$id'
+import { Route as CodeIdRouteImport } from './routes/code.$id'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
 
+const TranslationRoute = TranslationRouteImport.update({
+  id: '/translation',
+  path: '/translation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TranscribeRoute = TranscribeRouteImport.update({
+  id: '/transcribe',
+  path: '/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SummarizeRoute = SummarizeRouteImport.update({
+  id: '/summarize',
+  path: '/summarize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -33,160 +47,166 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedTranslationRoute =
-  AuthenticatedTranslationRouteImport.update({
-    id: '/translation',
-    path: '/translation',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedTranscribeRoute = AuthenticatedTranscribeRouteImport.update({
-  id: '/transcribe',
-  path: '/transcribe',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedSummarizeRoute = AuthenticatedSummarizeRouteImport.update({
-  id: '/summarize',
-  path: '/summarize',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedImageRoute = AuthenticatedImageRouteImport.update({
+const ImageRoute = ImageRouteImport.update({
   id: '/image',
   path: '/image',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedCodeRoute = AuthenticatedCodeRouteImport.update({
+const CodeRoute = CodeRouteImport.update({
   id: '/code',
   path: '/code',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
   id: '/chat/',
   path: '/chat/',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedImageIdRoute = AuthenticatedImageIdRouteImport.update({
+const ImageIdRoute = ImageIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AuthenticatedImageRoute,
+  getParentRoute: () => ImageRoute,
 } as any)
-const AuthenticatedCodeIdRoute = AuthenticatedCodeIdRouteImport.update({
+const CodeIdRoute = CodeIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AuthenticatedCodeRoute,
+  getParentRoute: () => CodeRoute,
 } as any)
-const AuthenticatedChatIdRoute = AuthenticatedChatIdRouteImport.update({
+const ChatIdRoute = ChatIdRouteImport.update({
   id: '/chat/$id',
   path: '/chat/$id',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/code': typeof CodeRouteWithChildren
+  '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/code': typeof AuthenticatedCodeRouteWithChildren
-  '/image': typeof AuthenticatedImageRouteWithChildren
-  '/summarize': typeof AuthenticatedSummarizeRoute
-  '/transcribe': typeof AuthenticatedTranscribeRoute
-  '/translation': typeof AuthenticatedTranslationRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/chat/$id': typeof AuthenticatedChatIdRoute
-  '/code/$id': typeof AuthenticatedCodeIdRoute
-  '/image/$id': typeof AuthenticatedImageIdRoute
-  '/chat': typeof AuthenticatedChatIndexRoute
+  '/summarize': typeof SummarizeRoute
+  '/transcribe': typeof TranscribeRoute
+  '/translation': typeof TranslationRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
+  '/image/$id': typeof ImageIdRoute
+  '/chat': typeof ChatIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/code': typeof CodeRouteWithChildren
+  '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/code': typeof AuthenticatedCodeRouteWithChildren
-  '/image': typeof AuthenticatedImageRouteWithChildren
-  '/summarize': typeof AuthenticatedSummarizeRoute
-  '/transcribe': typeof AuthenticatedTranscribeRoute
-  '/translation': typeof AuthenticatedTranslationRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/chat/$id': typeof AuthenticatedChatIdRoute
-  '/code/$id': typeof AuthenticatedCodeIdRoute
-  '/image/$id': typeof AuthenticatedImageIdRoute
-  '/chat': typeof AuthenticatedChatIndexRoute
+  '/summarize': typeof SummarizeRoute
+  '/transcribe': typeof TranscribeRoute
+  '/translation': typeof TranslationRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
+  '/image/$id': typeof ImageIdRoute
+  '/chat': typeof ChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
+  '/code': typeof CodeRouteWithChildren
+  '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/_authenticated/code': typeof AuthenticatedCodeRouteWithChildren
-  '/_authenticated/image': typeof AuthenticatedImageRouteWithChildren
-  '/_authenticated/summarize': typeof AuthenticatedSummarizeRoute
-  '/_authenticated/transcribe': typeof AuthenticatedTranscribeRoute
-  '/_authenticated/translation': typeof AuthenticatedTranslationRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
-  '/_authenticated/code/$id': typeof AuthenticatedCodeIdRoute
-  '/_authenticated/image/$id': typeof AuthenticatedImageIdRoute
-  '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/summarize': typeof SummarizeRoute
+  '/transcribe': typeof TranscribeRoute
+  '/translation': typeof TranslationRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
+  '/image/$id': typeof ImageIdRoute
+  '/chat/': typeof ChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/login'
-    | '/register'
+    | '/'
     | '/code'
     | '/image'
+    | '/login'
+    | '/register'
     | '/summarize'
     | '/transcribe'
     | '/translation'
-    | '/'
     | '/chat/$id'
     | '/code/$id'
     | '/image/$id'
     | '/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/login'
-    | '/register'
+    | '/'
     | '/code'
     | '/image'
+    | '/login'
+    | '/register'
     | '/summarize'
     | '/transcribe'
     | '/translation'
-    | '/'
     | '/chat/$id'
     | '/code/$id'
     | '/image/$id'
     | '/chat'
   id:
     | '__root__'
-    | '/_authenticated'
+    | '/'
+    | '/code'
+    | '/image'
     | '/login'
     | '/register'
-    | '/_authenticated/code'
-    | '/_authenticated/image'
-    | '/_authenticated/summarize'
-    | '/_authenticated/transcribe'
-    | '/_authenticated/translation'
-    | '/_authenticated/'
-    | '/_authenticated/chat/$id'
-    | '/_authenticated/code/$id'
-    | '/_authenticated/image/$id'
-    | '/_authenticated/chat/'
+    | '/summarize'
+    | '/transcribe'
+    | '/translation'
+    | '/chat/$id'
+    | '/code/$id'
+    | '/image/$id'
+    | '/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  IndexRoute: typeof IndexRoute
+  CodeRoute: typeof CodeRouteWithChildren
+  ImageRoute: typeof ImageRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SummarizeRoute: typeof SummarizeRoute
+  TranscribeRoute: typeof TranscribeRoute
+  TranslationRoute: typeof TranslationRoute
+  ChatIdRoute: typeof ChatIdRoute
+  ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/translation': {
+      id: '/translation'
+      path: '/translation'
+      fullPath: '/translation'
+      preLoaderRoute: typeof TranslationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transcribe': {
+      id: '/transcribe'
+      path: '/transcribe'
+      fullPath: '/transcribe'
+      preLoaderRoute: typeof TranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/summarize': {
+      id: '/summarize'
+      path: '/summarize'
+      fullPath: '/summarize'
+      preLoaderRoute: typeof SummarizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -201,138 +221,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/translation': {
-      id: '/_authenticated/translation'
-      path: '/translation'
-      fullPath: '/translation'
-      preLoaderRoute: typeof AuthenticatedTranslationRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/transcribe': {
-      id: '/_authenticated/transcribe'
-      path: '/transcribe'
-      fullPath: '/transcribe'
-      preLoaderRoute: typeof AuthenticatedTranscribeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/summarize': {
-      id: '/_authenticated/summarize'
-      path: '/summarize'
-      fullPath: '/summarize'
-      preLoaderRoute: typeof AuthenticatedSummarizeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/image': {
-      id: '/_authenticated/image'
+    '/image': {
+      id: '/image'
       path: '/image'
       fullPath: '/image'
-      preLoaderRoute: typeof AuthenticatedImageRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof ImageRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/code': {
-      id: '/_authenticated/code'
+    '/code': {
+      id: '/code'
       path: '/code'
       fullPath: '/code'
-      preLoaderRoute: typeof AuthenticatedCodeRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/chat/': {
-      id: '/_authenticated/chat/'
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/': {
+      id: '/chat/'
       path: '/chat'
       fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/image/$id': {
-      id: '/_authenticated/image/$id'
+    '/image/$id': {
+      id: '/image/$id'
       path: '/$id'
       fullPath: '/image/$id'
-      preLoaderRoute: typeof AuthenticatedImageIdRouteImport
-      parentRoute: typeof AuthenticatedImageRoute
+      preLoaderRoute: typeof ImageIdRouteImport
+      parentRoute: typeof ImageRoute
     }
-    '/_authenticated/code/$id': {
-      id: '/_authenticated/code/$id'
+    '/code/$id': {
+      id: '/code/$id'
       path: '/$id'
       fullPath: '/code/$id'
-      preLoaderRoute: typeof AuthenticatedCodeIdRouteImport
-      parentRoute: typeof AuthenticatedCodeRoute
+      preLoaderRoute: typeof CodeIdRouteImport
+      parentRoute: typeof CodeRoute
     }
-    '/_authenticated/chat/$id': {
-      id: '/_authenticated/chat/$id'
+    '/chat/$id': {
+      id: '/chat/$id'
       path: '/chat/$id'
       fullPath: '/chat/$id'
-      preLoaderRoute: typeof AuthenticatedChatIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AuthenticatedCodeRouteChildren {
-  AuthenticatedCodeIdRoute: typeof AuthenticatedCodeIdRoute
+interface CodeRouteChildren {
+  CodeIdRoute: typeof CodeIdRoute
 }
 
-const AuthenticatedCodeRouteChildren: AuthenticatedCodeRouteChildren = {
-  AuthenticatedCodeIdRoute: AuthenticatedCodeIdRoute,
+const CodeRouteChildren: CodeRouteChildren = {
+  CodeIdRoute: CodeIdRoute,
 }
 
-const AuthenticatedCodeRouteWithChildren =
-  AuthenticatedCodeRoute._addFileChildren(AuthenticatedCodeRouteChildren)
+const CodeRouteWithChildren = CodeRoute._addFileChildren(CodeRouteChildren)
 
-interface AuthenticatedImageRouteChildren {
-  AuthenticatedImageIdRoute: typeof AuthenticatedImageIdRoute
+interface ImageRouteChildren {
+  ImageIdRoute: typeof ImageIdRoute
 }
 
-const AuthenticatedImageRouteChildren: AuthenticatedImageRouteChildren = {
-  AuthenticatedImageIdRoute: AuthenticatedImageIdRoute,
+const ImageRouteChildren: ImageRouteChildren = {
+  ImageIdRoute: ImageIdRoute,
 }
 
-const AuthenticatedImageRouteWithChildren =
-  AuthenticatedImageRoute._addFileChildren(AuthenticatedImageRouteChildren)
-
-interface AuthenticatedRouteChildren {
-  AuthenticatedCodeRoute: typeof AuthenticatedCodeRouteWithChildren
-  AuthenticatedImageRoute: typeof AuthenticatedImageRouteWithChildren
-  AuthenticatedSummarizeRoute: typeof AuthenticatedSummarizeRoute
-  AuthenticatedTranscribeRoute: typeof AuthenticatedTranscribeRoute
-  AuthenticatedTranslationRoute: typeof AuthenticatedTranslationRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedChatIdRoute: typeof AuthenticatedChatIdRoute
-  AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
-}
-
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedCodeRoute: AuthenticatedCodeRouteWithChildren,
-  AuthenticatedImageRoute: AuthenticatedImageRouteWithChildren,
-  AuthenticatedSummarizeRoute: AuthenticatedSummarizeRoute,
-  AuthenticatedTranscribeRoute: AuthenticatedTranscribeRoute,
-  AuthenticatedTranslationRoute: AuthenticatedTranslationRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedChatIdRoute: AuthenticatedChatIdRoute,
-  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
-}
-
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
+const ImageRouteWithChildren = ImageRoute._addFileChildren(ImageRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  IndexRoute: IndexRoute,
+  CodeRoute: CodeRouteWithChildren,
+  ImageRoute: ImageRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SummarizeRoute: SummarizeRoute,
+  TranscribeRoute: TranscribeRoute,
+  TranslationRoute: TranslationRoute,
+  ChatIdRoute: ChatIdRoute,
+  ChatIndexRoute: ChatIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

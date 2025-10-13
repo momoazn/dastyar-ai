@@ -2,14 +2,19 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui";
+import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/_authenticated/chat/")({
-  component: ChatRouteComponent,
+export const Route = createFileRoute("/chat/")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
-function ChatRouteComponent() {
+function RouteComponent() {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
 

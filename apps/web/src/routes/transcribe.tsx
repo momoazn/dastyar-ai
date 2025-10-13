@@ -30,6 +30,7 @@ import {
   type RecordingError,
   useVoiceRecorder,
 } from "@/hooks/use-voice-recorder";
+import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
@@ -62,8 +63,12 @@ const getStatusText = (
   return fa.transcribe.idle;
 };
 
-export const Route = createFileRoute("/_authenticated/transcribe")({
-  component: RouteComponent,
+export const Route = createFileRoute("/transcribe")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
 function RouteComponent() {

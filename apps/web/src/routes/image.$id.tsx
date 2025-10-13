@@ -40,6 +40,7 @@ import {
 import type { ImageGenerationParams } from "@/hooks/use-image-generation";
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
+import ProtectedLayout from "@/layouts/protected";
 import { detectTextDirection } from "@/lib/utils";
 
 const DEFAULT_NEGATIVE_PROMPT =
@@ -62,8 +63,12 @@ const IMAGE_SIZES = [
   { label: "768x512", value: "768x512" },
 ] as const;
 
-export const Route = createFileRoute("/_authenticated/image/$id")({
-  component: RouteComponent,
+export const Route = createFileRoute("/image/$id")({
+  component: () => (
+    <ProtectedLayout>
+      <RouteComponent />
+    </ProtectedLayout>
+  ),
 });
 
 function RouteComponent() {

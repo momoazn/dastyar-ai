@@ -10,6 +10,7 @@ import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
+  useLocation,
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
@@ -71,25 +72,40 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <SidebarProvider
-          style={
-            {
-              "--sidebar-width": "300px",
-            } as React.CSSProperties
-          }
-        >
-          <AppSidebar side="right" />
-          <SidebarInset className="bg-sidebar pe-2 pb-2">
-            <Header SideBarTrigger={<SidebarTrigger />} />
-            <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
-              {isFetching ? <Loader /> : <Outlet />}
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+        <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
       <ReactQueryDevtools buttonPosition="relative" position="bottom" />
     </>
+  );
+}
+
+function Wrapper({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+
+  if (
+    location.pathname.startsWith("/login") ||
+    location.pathname.startsWith("/register")
+  ) {
+    return children;
+  }
+
+  return (
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "300px",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar side="right" />
+      <SidebarInset className="bg-sidebar pe-2 pb-2">
+        <Header SideBarTrigger={<SidebarTrigger />} />
+        <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
