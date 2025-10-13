@@ -4,13 +4,12 @@ import {
   listGeneratedImagesByThread,
 } from "@/repositories/images";
 import { getImageUrl } from "@/services/image-storage";
-import { type GenerateInput, generateAndPersistImage } from "@/services/images";
+import { generateAndPersistImage } from "@/services/images";
 import {
   getSamplers,
   interrupt,
   ping,
   progress,
-  systemInfo,
 } from "@/services/stable-diffusion";
 import { protectedProcedure, publicProcedure } from "./base";
 
@@ -24,6 +23,8 @@ const imageGenerationParamsSchema = z.object({
   height: z.number().int().min(64).max(2048).default(512),
   threadId: z.number().int().positive("Thread ID is required"),
 });
+
+export type GenerateInput = z.infer<typeof imageGenerationParamsSchema>;
 
 export const imageProcedures = {
   // Check if Stable Diffusion service is available
@@ -41,20 +42,9 @@ export const imageProcedures = {
   // Generate an image
   generate: protectedProcedure
     .input(imageGenerationParamsSchema)
-    .handler(async ({ input, context }) => {
-      const savedImage = await generateAndPersistImage(
-        input as GenerateInput,
-        context.user?.id
-      );
-
-      return {
-        id: savedImage.id,
-        url: getImageUrl(savedImage.id),
-        prompt: savedImage.prompt,
-        createdAt: savedImage.createdAt,
-        settings: savedImage.settings,
-      };
-    }),
+    .handler(async ({ input, context }) =>
+      generateAndPersistImage(input, context.user?.id)
+    ),
 
   // Get generation progress (for real-time updates)
   getProgress: publicProcedure.handler(async () => {
@@ -102,10 +92,4 @@ export const imageProcedures = {
       await clearGeneratedImagesByThread(input.threadId, context.user?.id);
       return { success: true };
     }),
-
-  // Get system info from A1111
-  getSystemInfo: publicProcedure.handler(async () => {
-    const info = await systemInfo();
-    return info;
-  }),
 };

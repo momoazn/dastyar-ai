@@ -93,6 +93,11 @@ const getModelId = async (): Promise<string> => {
 };
 
 export const generate = async (params: GenerateParams): Promise<string> => {
+  const available = await ping();
+  if (!available) {
+    throw new Error("Stable Diffusion service is not available");
+  }
+
   const modelId = await getModelId();
   const apiProvider = getProvider();
   const { images } = await generateImage({
@@ -146,22 +151,5 @@ export const interrupt = async (): Promise<boolean> => {
     return response.ok;
   } catch {
     return false;
-  }
-};
-
-export const systemInfo = async (): Promise<Record<string, unknown> | null> => {
-  try {
-    const response = await fetch(
-      `${env.STABLE_DIFFUSION_URL}/sdapi/v1/memory`,
-      {
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch {
-    return null;
   }
 };

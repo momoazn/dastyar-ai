@@ -4,6 +4,20 @@ import { Hono } from "hono";
 import { type AuthEnv, authMiddleware } from "@/middlewares";
 import { getGeneratedImageByUser } from "@/repositories/images";
 
+const getContentType = (fileName: string): string => {
+  const ext = path.extname(fileName).toLowerCase();
+  if (ext === ".png") {
+    return "image/png";
+  }
+  if (ext === ".jpg" || ext === ".jpeg") {
+    return "image/jpeg";
+  }
+  if (ext === ".webp") {
+    return "image/webp";
+  }
+  return "application/octet-stream";
+};
+
 const app = new Hono<AuthEnv>()
   .use(authMiddleware)
   // Serve image file
@@ -29,18 +43,7 @@ const app = new Hono<AuthEnv>()
       const stat = await fs.promises.stat(image.filePath);
       const fileStream = fs.createReadStream(image.filePath);
 
-      // Determine content type from file extension
-      const ext = path.extname(image.fileName).toLowerCase();
-      let contentType = "application/octet-stream";
-      if (ext === ".png") {
-        contentType = "image/png";
-      } else if (ext === ".jpg" || ext === ".jpeg") {
-        contentType = "image/jpeg";
-      } else if (ext === ".webp") {
-        contentType = "image/webp";
-      }
-
-      c.header("Content-Type", contentType);
+      c.header("Content-Type", getContentType(image.fileName));
       c.header("Content-Disposition", `inline; filename="${image.fileName}"`);
       c.header("Content-Length", stat.size.toString());
       c.header("Cache-Control", "public, max-age=31536000"); // Cache for 1 year

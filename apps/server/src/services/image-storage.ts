@@ -8,13 +8,6 @@ const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 export const ALLOWED_FORMATS = ["png", "jpg", "jpeg", "webp"];
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB;
 
-export type ImageMetadata = {
-  id: string;
-  prompt: string;
-  negativePrompt?: string;
-  settings: Record<string, unknown>;
-};
-
 export type SaveImageResult = {
   filePath: string;
   fileName: string;
@@ -36,8 +29,7 @@ const getDateBasedDir = (): string => {
 };
 
 export const saveImage = async (
-  base64Data: string,
-  _metadata: ImageMetadata
+  base64Data: string
 ): Promise<SaveImageResult> => {
   const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, "");
   const dateDir = getDateBasedDir();
