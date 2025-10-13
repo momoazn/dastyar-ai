@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import { Hono } from "hono";
 import { type AuthEnv, authMiddleware } from "@/middlewares";
 import { getGeneratedImageByUser } from "@/repositories/images";
@@ -25,21 +26,30 @@ const app = new Hono<AuthEnv>()
         return c.json({ error: "Image file not found on disk" }, 404);
       }
 
-      const fileBuffer = await fs.promises.readFile(image.filePath);
+      const stat = await fs.promises.stat(image.filePath);
+      const fileStream = fs.createReadStream(image.filePath);
 
-      // Set appropriate headers
-      c.header("Content-Type", "image/png");
+      // Determine content type from file extension
+      const ext = path.extname(image.fileName).toLowerCase();
+      let contentType = "application/octet-stream";
+      if (ext === ".png") {
+        contentType = "image/png";
+      } else if (ext === ".jpg" || ext === ".jpeg") {
+        contentType = "image/jpeg";
+      } else if (ext === ".webp") {
+        contentType = "image/webp";
+      }
+
+      c.header("Content-Type", contentType);
       c.header("Content-Disposition", `inline; filename="${image.fileName}"`);
-      c.header("Content-Length", fileBuffer.length.toString());
+      c.header("Content-Length", stat.size.toString());
       c.header("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
 
-      // Convert Buffer to Uint8Array for Hono compatibility
-      return new Response(new Uint8Array(fileBuffer), {
+      return new Response(fileStream as unknown as ReadableStream, {
         status: 200,
         headers: c.res.headers,
       });
-    } catch (error) {
-      console.error("Error serving image file:", error);
+    } catch {
       return c.json({ error: "Internal server error" }, 500);
     }
   })
@@ -64,7 +74,8 @@ const app = new Hono<AuthEnv>()
         return c.json({ error: "Image file not found on disk" }, 404);
       }
 
-      const fileBuffer = await fs.promises.readFile(image.filePath);
+      const stat = await fs.promises.stat(image.filePath);
+      const fileStream = fs.createReadStream(image.filePath);
 
       // Set download headers
       c.header("Content-Type", "application/octet-stream");
@@ -72,15 +83,13 @@ const app = new Hono<AuthEnv>()
         "Content-Disposition",
         `attachment; filename="${image.fileName}"`
       );
-      c.header("Content-Length", fileBuffer.length.toString());
+      c.header("Content-Length", stat.size.toString());
 
-      // Convert Buffer to Uint8Array for Hono compatibility
-      return new Response(new Uint8Array(fileBuffer), {
+      return new Response(fileStream as unknown as ReadableStream, {
         status: 200,
         headers: c.res.headers,
       });
-    } catch (error) {
-      console.error("Error downloading image:", error);
+    } catch {
       return c.json({ error: "Internal server error" }, 500);
     }
   });

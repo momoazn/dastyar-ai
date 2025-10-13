@@ -1,5 +1,5 @@
 /**
- * Service for interacting with the Stable Diffusion A1111 API
+ * Stable Diffusion service - minimal API for image generation
  */
 
 import { experimental_generateImage as generateImage } from "ai";
@@ -9,157 +9,115 @@ import {
 } from "automatic1111-provider";
 import { env } from "@/config";
 
-let automatic1111Provider: Automatic1111Provider | null = null;
+const MAX_RETRIES = 3;
 
-const getAutomatic1111Provider = (): Automatic1111Provider => {
-  if (!automatic1111Provider) {
-    automatic1111Provider = createAutomatic1111({
+let provider: Automatic1111Provider | null = null;
+
+const getProvider = (): Automatic1111Provider => {
+  if (!provider) {
+    provider = createAutomatic1111({
       baseURL: env.STABLE_DIFFUSION_URL,
     });
   }
-  return automatic1111Provider;
+  return provider;
 };
-const MAX_RETRIES = 3;
 
-export type ImageGenerationParams = {
+export type GenerateParams = {
   prompt: string;
   steps: number;
-  cfg_scale: number;
-  negative_prompt?: string;
-  sampler_name: string;
+  cfgScale: number;
+  negativePrompt?: string;
+  sampler: string;
   width: number;
   height: number;
 };
 
-export type GenerationProgress = {
+export type Progress = {
   progress: number;
-  eta_relative: number;
+  eta: number;
   state: {
     skipped: boolean;
     interrupted: boolean;
     job: string;
-    job_count: number;
-    job_timestamp: string;
-    job_no: number;
-    sampling_step: number;
-    sampling_steps: number;
+    jobCount: number;
+    jobTimestamp: string;
+    jobNo: number;
+    samplingStep: number;
+    samplingSteps: number;
   };
-  current_image?: string;
+  currentImage?: string;
   textinfo?: string;
 };
 
-const checkAvailability = async (): Promise<boolean> => {
+export const ping = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${env.STABLE_DIFFUSION_URL}/internal/ping`, {
       method: "GET",
       signal: AbortSignal.timeout(5000),
     });
     return response.ok;
-  } catch (error) {
-    console.error("SD service availability check failed:", error);
+  } catch {
     return false;
   }
 };
 
-const getSamplers = async (): Promise<string[]> => {
-  try {
-    const response = await fetch(
-      `${env.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
-      {
-        signal: AbortSignal.timeout(10_000),
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+export const getSamplers = async (): Promise<string[]> => {
+  const response = await fetch(
+    `${env.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
+    {
+      signal: AbortSignal.timeout(10_000),
     }
-    const samplers = await response.json();
-    return samplers.map((s: { name: string }) => s.name);
-  } catch (error) {
-    console.error("Failed to fetch samplers:", error);
-    return [
-      "Euler",
-      "Euler a",
-      "LMS",
-      "Heun",
-      "DPM2",
-      "DPM2 a",
-      "DPM++ 2S a",
-      "DPM++ 2M",
-      "DPM++ SDE",
-      "DPM++ 2M Karras",
-      "DPM++ SDE Karras",
-      "LMS Karras",
-    ];
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to fetch samplers: HTTP ${response.status}`);
   }
+  const samplers = await response.json();
+  return samplers.map((s: { name: string }) => s.name);
 };
 
-const resolveModelId = async (): Promise<string> => {
-  try {
-    const optionsRes = await fetch(
-      `${env.STABLE_DIFFUSION_URL}/sdapi/v1/options`,
-      {
-        signal: AbortSignal.timeout(10_000),
-      }
-    );
-    if (optionsRes.ok) {
-      const options = (await optionsRes.json()) as {
-        sd_model_checkpoint?: unknown;
-      };
-      const current = options.sd_model_checkpoint;
-      if (typeof current === "string" && current.length > 0) {
-        return current;
-      }
+const getModelId = async (): Promise<string> => {
+  const response = await fetch(`${env.STABLE_DIFFUSION_URL}/sdapi/v1/options`, {
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+
+  if (response?.ok) {
+    const options = (await response.json()) as {
+      sd_model_checkpoint?: unknown;
+    };
+    const model = options.sd_model_checkpoint;
+    if (typeof model === "string" && model.length > 0) {
+      return model;
     }
-  } catch (error) {
-    console.warn("Failed to list A1111 models, using default:", error);
   }
   return "v1-5-pruned-emaonly";
 };
 
-const generateImageFn = async (
-  params: ImageGenerationParams
-): Promise<string> => {
-  try {
-    console.log("Generating image with params:", {
-      prompt: `${params.prompt.substring(0, 100)}...`,
-      steps: params.steps,
-      cfg_scale: params.cfg_scale,
-      sampler_name: params.sampler_name,
-      size: `${params.width}x${params.height}`,
-    });
-
-    const modelId = await resolveModelId();
-    const provider = getAutomatic1111Provider();
-
-    const { images } = await generateImage({
-      model: provider.image(modelId),
-      prompt: params.prompt,
-      size: `${params.width}x${params.height}`,
-      n: 1,
-      maxRetries: MAX_RETRIES,
-      abortSignal: AbortSignal.timeout(300_000),
-      providerOptions: {
-        automatic1111: {
-          negative_prompt: params.negative_prompt || "",
-          steps: params.steps,
-          cfg_scale: params.cfg_scale,
-          sampler_name: params.sampler_name,
-        },
+export const generate = async (params: GenerateParams): Promise<string> => {
+  const modelId = await getModelId();
+  const apiProvider = getProvider();
+  const { images } = await generateImage({
+    model: apiProvider.image(modelId),
+    prompt: params.prompt,
+    size: `${params.width}x${params.height}`,
+    n: 1,
+    maxRetries: MAX_RETRIES,
+    abortSignal: AbortSignal.timeout(300_000),
+    providerOptions: {
+      automatic1111: {
+        negative_prompt: params.negativePrompt || "",
+        steps: params.steps,
+        cfg_scale: params.cfgScale,
+        sampler_name: params.sampler,
       },
-    });
-
-    if (!images || images.length === 0) {
-      throw new Error("No images generated by A1111");
-    }
-
-    return images[0].base64;
-  } catch (error) {
-    console.error("SD generation error:", error);
-    throw error;
+    },
+  });
+  if (!images || images.length === 0) {
+    throw new Error("No images generated");
   }
+  return images[0].base64;
 };
 
-const getProgress = async (): Promise<GenerationProgress | null> => {
+export const progress = async (): Promise<Progress | null> => {
   try {
     const response = await fetch(
       `${env.STABLE_DIFFUSION_URL}/sdapi/v1/progress`,
@@ -171,13 +129,12 @@ const getProgress = async (): Promise<GenerationProgress | null> => {
       return null;
     }
     return await response.json();
-  } catch (error) {
-    console.error("Failed to get progress:", error);
+  } catch {
     return null;
   }
 };
 
-const interrupt = async (): Promise<boolean> => {
+export const interrupt = async (): Promise<boolean> => {
   try {
     const response = await fetch(
       `${env.STABLE_DIFFUSION_URL}/sdapi/v1/interrupt`,
@@ -187,13 +144,12 @@ const interrupt = async (): Promise<boolean> => {
       }
     );
     return response.ok;
-  } catch (error) {
-    console.error("Failed to interrupt generation:", error);
+  } catch {
     return false;
   }
 };
 
-const getSystemInfo = async (): Promise<Record<string, unknown> | null> => {
+export const systemInfo = async (): Promise<Record<string, unknown> | null> => {
   try {
     const response = await fetch(
       `${env.STABLE_DIFFUSION_URL}/sdapi/v1/memory`,
@@ -205,17 +161,7 @@ const getSystemInfo = async (): Promise<Record<string, unknown> | null> => {
       return null;
     }
     return await response.json();
-  } catch (error) {
-    console.error("Failed to get system info:", error);
+  } catch {
     return null;
   }
-};
-
-export const stableDiffusionService = {
-  checkAvailability,
-  getSamplers,
-  generateImage: generateImageFn,
-  getProgress,
-  interrupt,
-  getSystemInfo,
 };

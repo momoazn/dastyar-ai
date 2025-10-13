@@ -1,6 +1,6 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
-import { env, isProduction } from "@/config";
+import { env } from "@/config";
 
 // Regex constants at module level for performance
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
@@ -20,165 +20,126 @@ export type SaveImageResult = {
   fileName: string;
 };
 
-export class ImageStorageService {
-  private get imagesDir() {
-    return env.IMAGES_DIR;
+const getImagesDir = (): string => env.IMAGES_DIR;
+
+const generateFileName = (): string => {
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  return `${timestamp}-${randomSuffix}.png`;
+};
+
+const getDateBasedDir = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return path.join(getImagesDir(), String(year), month);
+};
+
+export const saveImage = async (
+  base64Data: string,
+  _metadata: ImageMetadata
+): Promise<SaveImageResult> => {
+  const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, "");
+  const dateDir = getDateBasedDir();
+
+  try {
+    await fs.access(dateDir);
+  } catch {
+    await fs.mkdir(dateDir, { recursive: true });
   }
 
-  private generateFileName(id: string): string {
-    const timestamp = Date.now();
-    return `${timestamp}-${id}.png`;
+  const fileName = generateFileName();
+  const filePath = path.join(dateDir, fileName);
+  const imageBuffer = Buffer.from(cleanBase64, "base64");
+  await fs.writeFile(filePath, imageBuffer);
+  return { filePath, fileName };
+};
+
+export const deleteImage = async (filePath: string): Promise<void> => {
+  try {
+    await fs.access(filePath);
+    await fs.unlink(filePath);
+  } catch {
+    throw new Error("Failed to delete image file");
   }
+};
 
-  private getDateBasedDir(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    return path.join(this.imagesDir, String(year), month);
-  }
+export const getImageUrl = (id: number): string => `/api/images/${id}/file`;
 
-  saveImage(base64Data: string, metadata: ImageMetadata): SaveImageResult {
-    // Remove data URL prefix if present
-    const cleanBase64 = base64Data.replace(DATA_URL_PREFIX_REGEX, "");
-
-    // Create date-based directory structure
-    const dateDir = this.getDateBasedDir();
-    if (!fs.existsSync(dateDir)) {
-      fs.mkdirSync(dateDir, { recursive: true });
-    }
-
-    // Generate file names
-    const fileName = this.generateFileName(metadata.id);
-    const filePath = path.join(dateDir, fileName);
-
-    // Save the main image
-    const imageBuffer = Buffer.from(cleanBase64, "base64");
-    fs.writeFileSync(filePath, imageBuffer);
-
-    return {
-      filePath,
-      fileName,
-    };
-  }
-
-  deleteImage(filePath: string): void {
-    try {
-      // Delete main image file
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (error) {
-      console.error("Error deleting image file:", error);
-      throw new Error("Failed to delete image file");
-    }
-  }
-
-  getImageUrl(id: number): string {
-    // In development, the web app runs on a different port than the server,
-    // so we must return an absolute URL to avoid broken links.
-    if (!isProduction()) {
-      const baseUrl = `http://${env.HOST}:${env.PORT}`;
-      return `${baseUrl}/api/images/${id}/file`;
-    }
-
-    // In production, the server hosts the web assets under the same origin
-    return `/api/images/${id}/file`;
-  }
-
-  validateImageFile(filePath: string): boolean {
-    try {
-      if (!fs.existsSync(filePath)) {
-        return false;
-      }
-
-      const stats = fs.statSync(filePath);
-
-      // Check file size
-      if (stats.size > MAX_FILE_SIZE) {
-        return false;
-      }
-
-      // Check file extension
-      const ext = path.extname(filePath).toLowerCase().replace(".", "");
-      return ALLOWED_FORMATS.includes(ext);
-    } catch {
+export const validateImageFile = async (filePath: string): Promise<boolean> => {
+  try {
+    const stats = await fs.stat(filePath);
+    if (stats.size > MAX_FILE_SIZE) {
       return false;
     }
+    const ext = path.extname(filePath).toLowerCase().replace(".", "");
+    return ALLOWED_FORMATS.includes(ext);
+  } catch {
+    return false;
   }
+};
 
-  cleanupOrphanedFiles(existingFilePaths: string[]): number {
-    let deletedCount = 0;
-    const walkDir = (dir: string) => {
-      if (!fs.existsSync(dir)) {
-        return;
-      }
+export const cleanupOrphanedFiles = async (
+  existingFilePaths: string[]
+): Promise<number> => {
+  let deletedCount = 0;
 
-      const files = fs.readdirSync(dir);
+  const walkDir = async (dir: string): Promise<void> => {
+    try {
+      const files = await fs.readdir(dir);
       for (const file of files) {
         const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
-
+        const stat = await fs.stat(fullPath);
         if (stat.isDirectory()) {
-          walkDir(fullPath);
-          // Remove empty directories
+          await walkDir(fullPath);
           try {
-            fs.rmdirSync(fullPath);
+            await fs.rmdir(fullPath);
           } catch {
-            // Directory not empty, that's fine
+            // ignore non-empty directories
           }
         } else if (!existingFilePaths.includes(fullPath)) {
-          // Check if this file is referenced in the database
           try {
-            fs.unlinkSync(fullPath);
+            await fs.unlink(fullPath);
             deletedCount++;
-            console.log(`Deleted orphaned file: ${fullPath}`);
-          } catch (error) {
-            console.error(`Failed to delete orphaned file ${fullPath}:`, error);
+          } catch {
+            // ignore failures during cleanup
           }
         }
       }
-    };
+    } catch {
+      // ignore errors during directory reading
+    }
+  };
 
-    // Clean main images directory
-    walkDir(this.imagesDir);
+  await walkDir(getImagesDir());
+  return deletedCount;
+};
 
-    return deletedCount;
-  }
+export const getFileStats = async (): Promise<{
+  totalFiles: number;
+  totalSize: number;
+}> => {
+  let totalFiles = 0;
+  let totalSize = 0;
 
-  getFileStats(): {
-    totalFiles: number;
-    totalSize: number;
-  } {
-    let totalFiles = 0;
-    let totalSize = 0;
-
-    const walkDir = (dir: string) => {
-      if (!fs.existsSync(dir)) {
-        return;
-      }
-
-      const files = fs.readdirSync(dir);
+  const walkDir = async (dir: string): Promise<void> => {
+    try {
+      const files = await fs.readdir(dir);
       for (const file of files) {
         const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
-
+        const stat = await fs.stat(fullPath);
         if (stat.isFile()) {
           totalFiles++;
           totalSize += stat.size;
         } else if (stat.isDirectory()) {
-          walkDir(fullPath);
+          await walkDir(fullPath);
         }
       }
-    };
+    } catch {
+      // ignore errors during directory reading
+    }
+  };
 
-    walkDir(this.imagesDir);
-
-    return {
-      totalFiles,
-      totalSize,
-    };
-  }
-}
-
-// Export singleton instance
-export const imageStorageService = new ImageStorageService();
+  await walkDir(getImagesDir());
+  return { totalFiles, totalSize };
+};

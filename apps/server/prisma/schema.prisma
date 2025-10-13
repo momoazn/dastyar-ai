@@ -164,7 +164,7 @@ model GeneratedImage {
   negativePrompt String?
   filePath       String
   fileName       String
-  settings       String // JSON string of generation settings
+  settings       Json // JSON object of generation settings
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
