@@ -11,7 +11,7 @@ import { z } from "zod";
 import type { Prisma } from "@/database";
 import { type AuthEnv, authMiddleware } from "@/middlewares";
 import { getModelById } from "@/repositories/llm-models";
-import { saveMessage } from "@/repositories/messages";
+import { createMessage, updateMessage } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
 import { getProviderForModel } from "@/services";
 import type { MyUIMessage } from "@/utils/chat";
@@ -79,7 +79,7 @@ const app = new Hono<AuthEnv>()
 
       // Persist user message (last)
       try {
-        await saveMessage({
+        await createMessage({
           threadId,
           parts: last.parts as Prisma.InputJsonValue,
           modelId,
@@ -98,6 +98,22 @@ const app = new Hono<AuthEnv>()
 
       const modelMessages = convertToModelMessages(uiMessages);
 
+      const assistantMessage = await createMessage({
+        modelId,
+        parts: [],
+        role: "assistant",
+        status: "streaming",
+        threadId,
+        userId: user.id,
+      });
+
+      // Accumulate assistant text and reasoning and persist in AI SDK parts format with a 500ms throttle
+      const throttledUpdateIntervalMs = 500;
+      let accumulatedText = "";
+      let accumulatedReasoning = "";
+      let lastPersistTime = 0;
+      let inFlightPersist: Promise<void> | null = null;
+
       const result = streamText({
         model: wrapLanguageModel({
           model: providerModel,
@@ -109,20 +125,56 @@ const app = new Hono<AuthEnv>()
         messages: modelMessages,
         system: CHAT_SYSTEM_PROMPT,
         providerOptions: {},
+        onChunk: ({ chunk }) => {
+          if (chunk.type === "text-delta") {
+            accumulatedText += chunk.text;
+          } else if (chunk.type === "reasoning-delta") {
+            accumulatedReasoning += chunk.text;
+          }
+
+          const now = Date.now();
+          if (now - lastPersistTime >= throttledUpdateIntervalMs) {
+            lastPersistTime = now;
+
+            const partialParts: unknown[] = [];
+            if (accumulatedReasoning) {
+              partialParts.push({
+                type: "reasoning",
+                text: accumulatedReasoning,
+              });
+            }
+            if (accumulatedText) {
+              partialParts.push({ type: "text", text: accumulatedText });
+            }
+
+            const persistPromise = updateMessage({
+              id: assistantMessage.id,
+              parts: partialParts as Prisma.JsonValue,
+              status: "streaming",
+            });
+            inFlightPersist = persistPromise.catch(() => {
+              // On transient failure we drop this update and wait for next tick
+              inFlightPersist = null;
+            });
+          }
+        },
       });
+
+      // Ensure stream runs to completion and onFinish is triggered even if client disconnects
+      result.consumeStream();
 
       return result.toUIMessageStreamResponse({
         originalMessages: uiMessages,
         sendReasoning: true,
         onFinish: async ({ responseMessage }) => {
           try {
-            await saveMessage({
-              threadId,
-              parts: responseMessage.parts as Prisma.InputJsonValue,
-              modelId,
+            if (inFlightPersist) {
+              await inFlightPersist;
+            }
+            await updateMessage({
+              id: assistantMessage.id,
+              parts: responseMessage.parts as Prisma.JsonValue,
               status: "finished",
-              role: "assistant",
-              userId: user.id,
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());
           } catch {

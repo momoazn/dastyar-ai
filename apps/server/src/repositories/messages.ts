@@ -14,26 +14,19 @@ export type CreateMessageParams = Omit<
   userId: number;
 };
 
-export type UpdateMessageParams = CreateMessageParams & Pick<Message, "id">;
+export type UpdateMessageParams = Pick<Message, "id" | "parts" | "status">;
 
 /**
  * Saves a single message to the database.
  * @param params - The message parameters excluding auto-generated fields.
  * @returns The ID of the created message.
  */
-export async function saveMessage(
+export async function createMessage(
   params: CreateMessageParams
 ): Promise<{ id: number }> {
   try {
     const message = await prisma.message.create({
-      data: {
-        threadId: params.threadId,
-        role: params.role,
-        parts: params.parts,
-        status: params.status,
-        modelId: params.modelId,
-        userId: params.userId,
-      },
+      data: params,
     });
 
     return { id: message.id };
@@ -54,7 +47,6 @@ export async function updateMessage(
     const updateData: Partial<{
       parts: Prisma.InputJsonValue;
       status: MessageStatus;
-      modelId: number;
     }> = {};
 
     if (params.parts !== undefined) {
@@ -62,9 +54,6 @@ export async function updateMessage(
     }
     if (params.status !== undefined) {
       updateData.status = params.status as MessageStatus;
-    }
-    if (params.modelId !== undefined) {
-      updateData.modelId = params.modelId;
     }
 
     if (Object.keys(updateData).length === 0) {

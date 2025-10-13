@@ -180,8 +180,7 @@ model GeneratedImage {
 
 // Enums
 enum MessageStatus {
-  reasoning
-  generating
+  streaming
   finished
   errored
   stopped
