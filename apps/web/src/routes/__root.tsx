@@ -5,7 +5,7 @@ import { createORPCClient } from "@orpc/client";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -13,7 +13,7 @@ import {
   useLocation,
   useRouterState,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
@@ -75,8 +75,8 @@ function RootComponent() {
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster richColors />
       </ThemeProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools buttonPosition="relative" position="bottom" />
+      {/* <TanStackRouterDevtools position="bottom-left" /> */}
+      {/* <ReactQueryDevtools buttonPosition="relative" position="bottom" /> */}
     </>
   );
 }
