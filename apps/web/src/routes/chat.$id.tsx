@@ -2,8 +2,10 @@ import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { DefaultChatTransport } from "ai";
+import { useAtomValue } from "jotai";
 import { MessageCircleIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { tokenAtom } from "@/atoms/auth";
 import {
   Conversation,
   ConversationContent,
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/chat/$id")({
 
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/chat/$id" });
+  const token = useAtomValue(tokenAtom);
 
   const { modelId } = useChatModelSelection({ threadId: Number(threadId) });
   const isInitialRender = useRef(true);
@@ -42,6 +45,9 @@ function RouteComponent() {
       id: threadId,
       transport: new DefaultChatTransport({
         api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }),
       onFinish: () => {
         messagesQuery.refetch();
