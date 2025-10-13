@@ -97,18 +97,15 @@ export function useSummarizeModelSelection({
 } = {}) {
   const [modelId, setModelId] = useAtom(summarizeModelIdAtom);
 
-  const modelsQuery = useQuery({
-    ...orpc.models.list.queryOptions({
+  const modelsQuery = useQuery(
+    orpc.models.list.queryOptions({
       input: { isEnabled: true, sync: true },
-    }),
-    enabled,
-  });
+      enabled,
+    })
+  );
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-    if (!modelsQuery.data) {
+    if (!(enabled && modelsQuery.data)) {
       return;
     }
 
@@ -136,18 +133,15 @@ export function useTranslationModelSelection({
 } = {}) {
   const [modelId, setModelId] = useAtom(translationModelIdAtom);
 
-  const modelsQuery = useQuery({
-    ...orpc.models.list.queryOptions({
+  const modelsQuery = useQuery(
+    orpc.models.list.queryOptions({
       input: { isEnabled: true, sync: true },
-    }),
-    enabled,
-  });
+      enabled,
+    })
+  );
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-    if (!modelsQuery.data) {
+    if (!(enabled && modelsQuery.data)) {
       return;
     }
 
@@ -175,18 +169,15 @@ export function useCodeModelSelection({
 } = {}) {
   const [modelId, setModelId] = useAtom(codeModelIdAtom);
 
-  const modelsQuery = useQuery({
-    ...orpc.models.list.queryOptions({
+  const modelsQuery = useQuery(
+    orpc.models.list.queryOptions({
       input: { isEnabled: true, sync: true },
-    }),
-    enabled,
-  });
+      enabled,
+    })
+  );
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-    if (!modelsQuery.data) {
+    if (!(enabled && modelsQuery.data)) {
       return;
     }
 

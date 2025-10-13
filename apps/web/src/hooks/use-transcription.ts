@@ -16,6 +16,7 @@ export type UseTranscriptionHandlers = {
 
 export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
   const handlersRef = useRef<UseTranscriptionHandlers | undefined>(handlers);
+
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);

@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ImagePlus } from "lucide-react";
 import { useCallback } from "react";
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
-import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/image")({
   component: () => (
@@ -18,18 +16,14 @@ export const Route = createFileRoute("/image")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { create } = useImageThreads();
 
   const handleCreate = useCallback(async () => {
     const created = await create.mutateAsync({
       title: fa.imageChat.newChatDefaultTitle,
     });
-    await queryClient.invalidateQueries({
-      queryKey: orpc.imageThreads.list.queryKey(),
-    });
     navigate({ to: "/image/$id", params: { id: created.id.toString() } });
-  }, [create, navigate, queryClient]);
+  }, [create, navigate]);
 
   return (
     <div

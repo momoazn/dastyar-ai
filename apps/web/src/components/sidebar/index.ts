@@ -10,7 +10,6 @@ export { type EditingState, useEditingState } from "./base/use-editing-state";
 export {
   useArchiveMutation,
   useDeleteMutation,
-  useImageThreadMutations,
   useRenameMutation,
   useSummaryMutations,
   useThreadMutations,

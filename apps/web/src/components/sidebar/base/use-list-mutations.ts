@@ -112,21 +112,3 @@ export function useTranslationMutations() {
     }),
   };
 }
-
-export function useImageThreadMutations() {
-  return {
-    delete: useDeleteMutation({
-      listQueryKey: orpc.imageThreads.list.queryKey(),
-      deleteFn: (id: number) => client.imageThreads.delete({ id }),
-    }),
-    archive: useArchiveMutation({
-      listQueryKey: orpc.imageThreads.list.queryKey(),
-      archiveFn: (id: number) => client.imageThreads.archive({ id }),
-    }),
-    rename: useRenameMutation({
-      listQueryKey: orpc.imageThreads.list.queryKey(),
-      renameFn: (id: number, title: string) =>
-        client.imageThreads.rename({ id, title }),
-    }),
-  };
-}

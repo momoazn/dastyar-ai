@@ -37,20 +37,20 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui";
-import type { ImageGenerationParams } from "@/hooks/use-image-generation";
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
 import { detectTextDirection } from "@/lib/utils";
+import type { GenerateInput } from "@/server/procedures/images";
 
 const DEFAULT_NEGATIVE_PROMPT =
   "blurry, low quality, distorted, deformed, extra limbs, bad anatomy, text, watermark, logo, grainy, out of frame, ugly, poorly drawn, unnatural lighting";
 
-const DEFAULT_SETTINGS: Omit<ImageGenerationParams, "prompt"> = {
+const DEFAULT_SETTINGS: Omit<GenerateInput, "prompt" | "threadId"> = {
   steps: 20,
-  cfg_scale: 7.5,
-  negative_prompt: DEFAULT_NEGATIVE_PROMPT,
-  sampler_name: "Euler a",
+  cfgScale: 7.5,
+  negativePrompt: DEFAULT_NEGATIVE_PROMPT,
+  sampler: "Euler a",
   width: 512,
   height: 512,
 };
@@ -78,7 +78,7 @@ function RouteComponent() {
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
   const [settings, setSettings] =
-    useState<Omit<ImageGenerationParams, "prompt">>(DEFAULT_SETTINGS);
+    useState<Omit<GenerateInput, "prompt" | "threadId">>(DEFAULT_SETTINGS);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [transcribeModel, setTranscribeModel] = useState("");
 
@@ -89,13 +89,16 @@ function RouteComponent() {
     refetchImages,
     samplers,
     isServiceAvailable,
-    generateImageAsync,
+    generate,
     isGenerating,
     downloadImage,
   } = useImageGeneration(numericThreadId);
 
   const handleSubmit = useCallback(
-    async (promptText: string, generationSettings: ImageGenerationParams) => {
+    async (
+      promptText: string,
+      generationSettings: Omit<GenerateInput, "threadId">
+    ) => {
       if (!promptText.trim()) {
         toast.error("لطفاً توضیحات تصویر را وارد کنید");
         return;
@@ -106,7 +109,7 @@ function RouteComponent() {
         return;
       }
 
-      const result = await generateImageAsync({
+      const result = await generate({
         ...generationSettings,
         prompt: promptText.trim(),
         threadId: numericThreadId,
@@ -123,7 +126,7 @@ function RouteComponent() {
       }
     },
     [
-      generateImageAsync,
+      generate,
       isServiceAvailable,
       numericThreadId,
       refetchImages,
@@ -198,12 +201,37 @@ function RouteComponent() {
           <Conversation className="h-full">
             <ConversationContent>
               {orderedImages.map((img) => {
-                const s = img.settings ?? {
-                  steps: settings.steps,
-                  cfg_scale: settings.cfg_scale,
-                  sampler_name: settings.sampler_name,
-                  width: settings.width,
-                  height: settings.height,
+                const raw =
+                  (img.settings as unknown as {
+                    steps?: number;
+                    cfgScale?: number;
+                    sampler?: string;
+                    width?: number;
+                    height?: number;
+                  }) || {};
+                const s: {
+                  steps: number;
+                  cfgScale: number;
+                  sampler: string;
+                  width: number;
+                  height: number;
+                } = {
+                  steps:
+                    typeof raw.steps === "number" ? raw.steps : settings.steps,
+                  cfgScale:
+                    typeof raw.cfgScale === "number"
+                      ? raw.cfgScale
+                      : settings.cfgScale,
+                  sampler:
+                    typeof raw.sampler === "string"
+                      ? raw.sampler
+                      : settings.sampler,
+                  width:
+                    typeof raw.width === "number" ? raw.width : settings.width,
+                  height:
+                    typeof raw.height === "number"
+                      ? raw.height
+                      : settings.height,
                 };
                 const aspect = `${Math.max(1, s.width)} / ${Math.max(1, s.height)}`;
                 return (
@@ -227,7 +255,7 @@ function RouteComponent() {
                             alt={img.prompt}
                             className="h-auto max-w-full bg-muted object-contain"
                             height={s.height}
-                            src={img.imageUrl}
+                            src={img.url}
                             style={{ aspectRatio: aspect }}
                             width={s.width}
                           />
@@ -235,10 +263,14 @@ function RouteComponent() {
                             <Badge variant="secondary">
                               {s.width}×{s.height}
                             </Badge>
-                            <Badge variant="secondary">{s.sampler_name}</Badge>
-                            <Badge variant="secondary">steps: {s.steps}</Badge>
                             <Badge variant="secondary">
-                              cfg: {s.cfg_scale}
+                              {String(s.sampler)}
+                            </Badge>
+                            <Badge variant="secondary">
+                              steps: {Number(s.steps)}
+                            </Badge>
+                            <Badge variant="secondary">
+                              cfg: {Number(s.cfgScale)}
                             </Badge>
                           </div>
                           <div className="absolute top-2 left-2 flex items-center gap-2">
@@ -285,9 +317,9 @@ function RouteComponent() {
               handleSubmit(prompt, {
                 prompt,
                 steps: settings.steps,
-                cfg_scale: settings.cfg_scale,
-                negative_prompt: negativePrompt,
-                sampler_name: settings.sampler_name,
+                cfgScale: settings.cfgScale,
+                negativePrompt,
+                sampler: settings.sampler,
                 width: settings.width,
                 height: settings.height,
               });
@@ -395,9 +427,9 @@ function RouteComponent() {
                   </label>
                   <Select
                     onValueChange={(value) =>
-                      setSettings((prev) => ({ ...prev, sampler_name: value }))
+                      setSettings((prev) => ({ ...prev, sampler: value }))
                     }
-                    value={settings.sampler_name}
+                    value={settings.sampler}
                   >
                     <SelectTrigger className="h-9 w-full cursor-pointer gap-2">
                       <SelectValue placeholder="نمونه‌بردار" />
@@ -436,7 +468,7 @@ function RouteComponent() {
                       className="mb-2 block font-medium text-sm"
                       htmlFor="cfg-slider"
                     >
-                      CFG Scale: {settings.cfg_scale}
+                      CFG Scale: {settings.cfgScale}
                     </label>
                     <Slider
                       className="w-full"
@@ -444,10 +476,10 @@ function RouteComponent() {
                       max={30}
                       min={1}
                       onValueChange={([value]) =>
-                        setSettings((prev) => ({ ...prev, cfg_scale: value }))
+                        setSettings((prev) => ({ ...prev, cfgScale: value }))
                       }
                       step={0.5}
-                      value={[settings.cfg_scale]}
+                      value={[settings.cfgScale]}
                     />
                   </div>
                 </div>

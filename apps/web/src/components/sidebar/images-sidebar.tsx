@@ -1,17 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
+import { useImageThreads } from "@/hooks/use-image-threads";
 import { orpc } from "@/utils/orpc";
-import { SidebarItem, useImageThreadMutations } from "./base";
+import { SidebarItem } from "./base";
 import { ImageEmptyState } from "./empty-state";
 
 export function ImagesSidebar() {
   const location = useLocation();
   const isImagePage = location.pathname.startsWith("/image");
 
-  const mutations = useImageThreadMutations();
+  const { del } = useImageThreads();
 
   const handleDelete = (id: number) => {
-    mutations.delete.mutate(id);
+    del.mutate({ id });
   };
 
   const listQuery = useQuery({
