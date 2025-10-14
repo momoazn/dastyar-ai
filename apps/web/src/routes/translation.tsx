@@ -45,7 +45,7 @@ export const Route = createFileRoute("/translation")({
 });
 
 function RouteComponent() {
-  const search = useSearch({ from: "/translation" }) as { id?: number };
+  const search = useSearch({ from: "/translation" }) as { id?: number | string };
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -65,11 +65,15 @@ function RouteComponent() {
     error: modelsError,
   } = useTranslationModelSelection();
 
+  const translationId =
+    typeof search.id === "number" ? search.id : Number(search.id ?? 0);
+  const hasTranslationId = translationId > 0;
+
   // Load translation if ID is provided in URL
   const { data: selectedTranslation } = useQuery(
     orpc.translations.get.queryOptions({
-      input: { id: search.id ?? 0 },
-      enabled: !!search.id,
+      input: { id: translationId },
+      enabled: hasTranslationId,
     })
   );
 
@@ -97,8 +101,11 @@ function RouteComponent() {
       setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
       setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
       setTone((selectedTranslation.tone as Tone) || "formal");
+      if (typeof selectedTranslation.modelId === "number") {
+        setModelId(selectedTranslation.modelId);
+      }
     }
-  }, [selectedTranslation]);
+  }, [selectedTranslation, setModelId]);
 
   const swapLanguages = useCallback(() => {
     setSourceLanguage(targetLanguage);

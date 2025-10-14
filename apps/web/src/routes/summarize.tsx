@@ -42,7 +42,7 @@ export const Route = createFileRoute("/summarize")({
 });
 
 function SummarizePage() {
-  const search = useSearch({ from: "/summarize" }) as { id?: string };
+  const search = useSearch({ from: "/summarize" }) as { id?: number | string };
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [summaryText, setSummaryText] = useState("");
@@ -58,11 +58,15 @@ function SummarizePage() {
     error: modelsError,
   } = useSummarizeModelSelection();
 
+  const summaryId =
+    typeof search.id === "number" ? search.id : Number(search.id ?? 0);
+  const hasSummaryId = summaryId > 0;
+
   // Load summary if ID is provided in URL
   const { data: selectedSummary } = useQuery(
     orpc.summarize.get.queryOptions({
-      input: { id: search.id ? Number(search.id) : 0 },
-      enabled: !!search.id,
+      input: { id: summaryId },
+      enabled: hasSummaryId,
     })
   );
 
@@ -89,8 +93,11 @@ function SummarizePage() {
       setSummaryText(selectedSummary.summaryText || "");
       setMode(selectedSummary.mode as SummaryMode);
       setTone((selectedSummary.tone as Tone) || "formal");
+      if (typeof selectedSummary.modelId === "number") {
+        setModelId(selectedSummary.modelId);
+      }
     }
-  }, [selectedSummary]);
+  }, [selectedSummary, setModelId]);
 
   const handleCopy = async () => {
     try {
