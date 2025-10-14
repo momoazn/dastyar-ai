@@ -188,6 +188,15 @@ export const fa = {
     loading: "در حال بارگذاری...",
     pleaseWait: "لطفاً صبر کنید",
     logOut: "خروج",
+    title: "پروفایل کاربر",
+    username: "نام کاربری",
+    role: "نقش",
+    id: "شناسه",
+    failedToLoad: "خطا در بارگذاری اطلاعات کاربر",
+    roles: {
+      admin: "مدیر",
+      user: "کاربر",
+    },
   },
   transcribe: {
     title: "تبدیل گفتار به متن",
