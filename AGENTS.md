@@ -6,7 +6,7 @@ The monorepo is coordinated by Turbo and Bun workspaces. Place API logic in `app
 
 ## Build, Test, and Development Commands
 
-Install dependencies once with `bun install` at the repo root. Use `bun run dev` for the coordinated Turbo pipeline, or target individual surfaces with `bun run dev:web` and `bun run dev:server`. Produce release artifacts via `bun run build`, which executes `build.ts` to emit the Bun server binary. Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
+Install dependencies once with `bun install` at the repo root. Use `bun run dev` for the coordinated Turbo pipeline, or target individual surfaces with `bun run dev:web` and `bun run dev:server`. Produce release artifacts via `bun run build`, which executes `build.ts` to emit the Bun server binary. Cross-compile a Windows build from macOS with `bun run build:windows`, which targets `bun-windows-x64` and writes the executable into the dist tree. Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
 
 ## Coding Style & Naming Conventions
 
