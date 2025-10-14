@@ -11,10 +11,11 @@ export function SummariesList() {
 
   const mutations = useSummaryMutations();
 
-  const listQuery = useQuery({
-    ...orpc.summarize.list.queryOptions(),
-    enabled: isSummarizePage,
-  });
+  const listQuery = useQuery(
+    orpc.summarize.list.queryOptions({
+      enabled: isSummarizePage,
+    })
+  );
 
   const handleDelete = (id: number) => {
     mutations.delete.mutate(id);
@@ -40,7 +41,7 @@ export function SummariesList() {
             },
           ]}
           key={summary.id}
-          search={{ id: summary.id.toString() }}
+          search={{ id: summary.id }}
           title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
           to="/summarize"
         />
