@@ -1,124 +1,133 @@
+import { and, desc, eq } from "drizzle-orm";
 import {
+  codeAssistSessions,
+  codeGenerations,
+  codeReviews,
+  db,
   type CodeAssistSession,
   type CodeGeneration,
   type CodeReview,
-  prisma,
 } from "@/database";
 
-/**
- * Creates a new code assistant session.
- * @param params - Parameters including title, language, and userId.
- * @returns The ID of the created session.
- */
+export type CodeAssistSessionWithRelations = CodeAssistSession & {
+  codeGenerations: CodeGeneration[];
+  codeReviews: CodeReview[];
+};
+
 export async function createCodeAssistSession(
   params: Pick<CodeAssistSession, "title" | "language"> & { userId: number }
 ): Promise<{ id: number }> {
   try {
-    const session = await prisma.codeAssistSession.create({
-      data: {
+    const result = await db
+      .insert(codeAssistSessions)
+      .values({
         title: params.title.trim(),
         language: params.language,
         userId: params.userId,
-      },
-    });
+      })
+      .run();
 
-    return { id: session.id };
+    return { id: Number(result.lastInsertRowid) };
   } catch (error) {
     console.error("Failed to create code assistant session:", error);
     throw new Error("Unable to create code assistant session");
   }
 }
 
-/**
- * Retrieves a specific code assistant session by ID.
- * @param id - The session ID.
- * @param userId - The user ID.
- * @returns The session record or null if not found.
- */
 export async function getCodeAssistSession(
   id: number,
   userId: number
-): Promise<CodeAssistSession | null> {
+): Promise<CodeAssistSessionWithRelations | null> {
   try {
-    const session = await prisma.codeAssistSession.findFirst({
-      where: { id, userId },
-      include: {
-        codeGenerations: {
-          orderBy: { createdAt: "desc" },
-        },
-        codeReviews: {
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
+    const rows = await db
+      .select()
+      .from(codeAssistSessions)
+      .where(
+        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+      )
+      .limit(1);
 
-    return session;
+    const session = rows.at(0);
+    if (!session) {
+      return null;
+    }
+
+    const [generations, reviews] = await Promise.all([
+      getCodeGenerations(session.id, userId),
+      getCodeReviews(session.id, userId),
+    ]);
+
+    return {
+      ...session,
+      codeGenerations: generations,
+      codeReviews: reviews,
+    };
   } catch (error) {
     console.error(`Failed to get code assistant session ${id}:`, error);
     throw new Error("Unable to retrieve code assistant session");
   }
 }
 
-/**
- * Retrieves all code assistant sessions for a user.
- * @param userId - The user ID.
- * @returns Array of sessions.
- */
 export function listCodeAssistSessions(
   userId: number
 ): Promise<CodeAssistSession[]> {
-  return prisma.codeAssistSession.findMany({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-  });
+  return db
+    .select()
+    .from(codeAssistSessions)
+    .where(eq(codeAssistSessions.userId, userId))
+    .orderBy(desc(codeAssistSessions.updatedAt));
 }
 
-/**
- * Updates a code assistant session.
- * @param id - The session ID.
- * @param data - The data to update.
- * @param userId - The user ID.
- */
 export async function updateCodeAssistSession(
   id: number,
   data: Partial<Pick<CodeAssistSession, "title" | "language">>,
   userId: number
 ): Promise<void> {
   try {
-    await prisma.codeAssistSession.updateMany({
-      where: { id, userId },
-      data,
-    });
+    const update: Partial<typeof codeAssistSessions.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+    if (data.title !== undefined) {
+      update.title = data.title;
+    }
+    if (data.language !== undefined) {
+      update.language = data.language;
+    }
+
+    if (Object.keys(update).length <= 1) {
+      return;
+    }
+
+    await db
+      .update(codeAssistSessions)
+      .set(update)
+      .where(
+        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+      )
+      .run();
   } catch (error) {
     console.error(`Failed to update code assistant session ${id}:`, error);
     throw new Error("Unable to update code assistant session");
   }
 }
 
-/**
- * Deletes a code assistant session by ID.
- * @param id - The session ID.
- * @param userId - The user ID.
- */
 export async function deleteCodeAssistSession(
   id: number,
   userId: number
 ): Promise<void> {
   try {
-    await prisma.codeAssistSession.deleteMany({
-      where: { id, userId },
-    });
+    await db
+      .delete(codeAssistSessions)
+      .where(
+        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+      )
+      .run();
   } catch (error) {
     console.error(`Failed to delete code assistant session ${id}:`, error);
     throw new Error("Unable to delete code assistant session");
   }
 }
 
-/**
- * Creates a new code generation record.
- * @param params - Parameters for the code generation.
- * @returns The ID of the created generation.
- */
 export async function createCodeGeneration(
   params: Pick<
     CodeGeneration,
@@ -126,43 +135,67 @@ export async function createCodeGeneration(
   > & { userId: number }
 ): Promise<{ id: number }> {
   try {
-    const generation = await prisma.codeGeneration.create({
-      data: {
+    const result = await db
+      .insert(codeGenerations)
+      .values({
         sessionId: params.sessionId,
         prompt: params.prompt,
         generatedCode: params.generatedCode,
         language: params.language,
         modelId: params.modelId,
         userId: params.userId,
-      },
-    });
+      })
+      .run();
 
-    return { id: generation.id };
+    await db
+      .update(codeAssistSessions)
+      .set({ updatedAt: new Date() })
+      .where(eq(codeAssistSessions.id, params.sessionId))
+      .run();
+
+    return { id: Number(result.lastInsertRowid) };
   } catch (error) {
     console.error("Failed to create code generation:", error);
     throw new Error("Unable to create code generation");
   }
 }
 
-/**
- * Retrieves code generations for a specific session.
- * @param sessionId - The session ID.
- * @returns Array of code generations.
- */
 export async function getCodeGenerations(
   sessionId: number,
   userId?: number
 ): Promise<CodeGeneration[]> {
   try {
-    const generations = await prisma.codeGeneration.findMany({
-      where: {
-        sessionId,
-        ...(userId ? { session: { userId } } : {}),
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    if (userId === undefined) {
+      return await db
+        .select()
+        .from(codeGenerations)
+        .where(eq(codeGenerations.sessionId, sessionId))
+        .orderBy(desc(codeGenerations.createdAt));
+    }
 
-    return generations;
+    return await db
+      .select({
+        id: codeGenerations.id,
+        sessionId: codeGenerations.sessionId,
+        prompt: codeGenerations.prompt,
+        generatedCode: codeGenerations.generatedCode,
+        language: codeGenerations.language,
+        modelId: codeGenerations.modelId,
+        createdAt: codeGenerations.createdAt,
+        userId: codeGenerations.userId,
+      })
+      .from(codeGenerations)
+      .innerJoin(
+        codeAssistSessions,
+        eq(codeGenerations.sessionId, codeAssistSessions.id)
+      )
+      .where(
+        and(
+          eq(codeGenerations.sessionId, sessionId),
+          eq(codeAssistSessions.userId, userId)
+        )
+      )
+      .orderBy(desc(codeGenerations.createdAt));
   } catch (error) {
     console.error(
       `Failed to get code generations for session ${sessionId}:`,
@@ -172,11 +205,6 @@ export async function getCodeGenerations(
   }
 }
 
-/**
- * Creates a new code review record.
- * @param params - Parameters for the code review.
- * @returns The ID of the created review.
- */
 export async function createCodeReview(
   params: Pick<
     CodeReview,
@@ -189,8 +217,9 @@ export async function createCodeReview(
   > & { userId: number }
 ): Promise<{ id: number }> {
   try {
-    const review = await prisma.codeReview.create({
-      data: {
+    const result = await db
+      .insert(codeReviews)
+      .values({
         sessionId: params.sessionId,
         codeInput: params.codeInput,
         reviewFeedback: params.reviewFeedback,
@@ -198,35 +227,59 @@ export async function createCodeReview(
         severityLevels: params.severityLevels,
         modelId: params.modelId,
         userId: params.userId,
-      },
-    });
+      })
+      .run();
 
-    return { id: review.id };
+    await db
+      .update(codeAssistSessions)
+      .set({ updatedAt: new Date() })
+      .where(eq(codeAssistSessions.id, params.sessionId))
+      .run();
+
+    return { id: Number(result.lastInsertRowid) };
   } catch (error) {
     console.error("Failed to create code review:", error);
     throw new Error("Unable to create code review");
   }
 }
 
-/**
- * Retrieves code reviews for a specific session.
- * @param sessionId - The session ID.
- * @returns Array of code reviews.
- */
 export async function getCodeReviews(
   sessionId: number,
   userId?: number
 ): Promise<CodeReview[]> {
   try {
-    const reviews = await prisma.codeReview.findMany({
-      where: {
-        sessionId,
-        ...(userId ? { session: { userId } } : {}),
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    if (userId === undefined) {
+      return await db
+        .select()
+        .from(codeReviews)
+        .where(eq(codeReviews.sessionId, sessionId))
+        .orderBy(desc(codeReviews.createdAt));
+    }
 
-    return reviews;
+    return await db
+      .select({
+        id: codeReviews.id,
+        sessionId: codeReviews.sessionId,
+        codeInput: codeReviews.codeInput,
+        reviewFeedback: codeReviews.reviewFeedback,
+        suggestions: codeReviews.suggestions,
+        severityLevels: codeReviews.severityLevels,
+        modelId: codeReviews.modelId,
+        createdAt: codeReviews.createdAt,
+        userId: codeReviews.userId,
+      })
+      .from(codeReviews)
+      .innerJoin(
+        codeAssistSessions,
+        eq(codeReviews.sessionId, codeAssistSessions.id)
+      )
+      .where(
+        and(
+          eq(codeReviews.sessionId, sessionId),
+          eq(codeAssistSessions.userId, userId)
+        )
+      )
+      .orderBy(desc(codeReviews.createdAt));
   } catch (error) {
     console.error(
       `Failed to get code reviews for session ${sessionId}:`,
@@ -236,44 +289,40 @@ export async function getCodeReviews(
   }
 }
 
-/**
- * Deletes a code generation by ID.
- * @param id - The generation ID.
- */
 export async function deleteCodeGeneration(
   id: number,
   userId?: number
 ): Promise<void> {
   try {
-    // Restrict deletion to records owned by the requesting user when provided
-    await prisma.codeGeneration.deleteMany({
-      where: {
-        id,
-        ...(userId ? { userId } : {}),
-      },
-    });
+    const conditions = [eq(codeGenerations.id, id)];
+    if (userId !== undefined) {
+      conditions.push(eq(codeGenerations.userId, userId));
+    }
+
+    await db
+      .delete(codeGenerations)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .run();
   } catch (error) {
     console.error(`Failed to delete code generation ${id}:`, error);
     throw new Error("Unable to delete code generation");
   }
 }
 
-/**
- * Deletes a code review by ID.
- * @param id - The review ID.
- */
 export async function deleteCodeReview(
   id: number,
   userId?: number
 ): Promise<void> {
   try {
-    // Restrict deletion to records owned by the requesting user when provided
-    await prisma.codeReview.deleteMany({
-      where: {
-        id,
-        ...(userId ? { userId } : {}),
-      },
-    });
+    const conditions = [eq(codeReviews.id, id)];
+    if (userId !== undefined) {
+      conditions.push(eq(codeReviews.userId, userId));
+    }
+
+    await db
+      .delete(codeReviews)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .run();
   } catch (error) {
     console.error(`Failed to delete code review ${id}:`, error);
     throw new Error("Unable to delete code review");

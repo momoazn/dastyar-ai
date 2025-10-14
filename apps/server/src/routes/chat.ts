@@ -8,7 +8,7 @@ import {
 import { type Context, Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
-import type { Prisma } from "@/database";
+import type { JsonValue } from "@/database";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
@@ -81,7 +81,7 @@ const app = new Hono<AuthEnv>()
       try {
         await createMessage({
           threadId,
-          parts: last.parts as Prisma.InputJsonValue,
+          parts: last.parts as JsonValue,
           modelId,
           status: "finished",
           role: "user",
@@ -149,7 +149,7 @@ const app = new Hono<AuthEnv>()
 
             const persistPromise = updateMessage({
               id: assistantMessage.id,
-              parts: partialParts as Prisma.JsonValue,
+              parts: partialParts as JsonValue,
               status: "streaming",
             });
             inFlightPersist = persistPromise.catch(() => {
@@ -173,7 +173,7 @@ const app = new Hono<AuthEnv>()
             }
             await updateMessage({
               id: assistantMessage.id,
-              parts: responseMessage.parts as Prisma.JsonValue,
+              parts: responseMessage.parts as JsonValue,
               status: "finished",
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());

@@ -125,6 +125,4 @@ export const resolveConfiguredPath = (
   return resolve(baseDir, configuredPath);
 };
 
-export const collectOfflineModelIds = (): string[] => {
-  return [...whisperModelIds];
-};
+export const collectOfflineModelIds = (): string[] => [...whisperModelIds];

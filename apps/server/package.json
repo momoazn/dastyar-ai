@@ -13,11 +13,11 @@
     "config:show": "bun run src/scripts/config-generator.ts show",
     "config:validate": "bun run src/scripts/config-generator.ts validate",
     "db:local": "bun run src/database/index.ts",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:bundle": "bun run src/scripts/bundle-migrations.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^1.0.19",
@@ -28,11 +28,12 @@
     "@huggingface/transformers": "^3.7.5",
     "@orpc/client": "^1.9.3",
     "@orpc/server": "^1.9.3",
-    "@prisma/client": "^6.17.0",
     "ai": "^5.0.61",
     "automatic1111-provider": "^0.1.1",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.6",
+    "drizzle-zod": "^0.8.3",
     "hono": "^4.9.10",
     "jsonwebtoken": "^9.0.2",
     "ollama-ai-provider-v2": "^1.4.1",
@@ -45,7 +46,7 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/bun": "^1.2.23",
     "@types/jsonwebtoken": "^9.0.10",
-    "prisma": "^6.17.0",
+    "drizzle-kit": "^0.31.5",
     "typescript": "^5.9.3"
   },
   "browser": {

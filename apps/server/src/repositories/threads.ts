@@ -1,8 +1,12 @@
+import { and, asc, desc, eq } from "drizzle-orm";
 import {
+  chatThreads,
+  db,
+  llmModels,
+  messages,
   type ChatThread,
   type LLMModel,
   type Message,
-  prisma,
 } from "@/database";
 
 /**
@@ -11,20 +15,24 @@ import {
  * @returns The ID of the created thread.
  */
 export async function createThread(
-  params?: Partial<Pick<ChatThread, "title">> & { userId: number }
+  params: Partial<Pick<ChatThread, "title">> & { userId?: number }
 ): Promise<{ id: number }> {
   try {
+    if (!params.userId) {
+      throw new Error("User id is required to create a thread");
+    }
     const title = (params?.title ?? "گفتگوی جدید").trim();
 
-    const thread = await prisma.chatThread.create({
-      data: {
+    const result = await db
+      .insert(chatThreads)
+      .values({
         title,
         isArchived: false,
-        userId: params?.userId,
-      },
-    });
+        userId: params.userId,
+      })
+      .run();
 
-    return { id: thread.id };
+    return { id: Number(result.lastInsertRowid) };
   } catch (error) {
     console.error("Failed to create thread:", error);
     throw new Error("Unable to create thread");
@@ -39,14 +47,19 @@ export async function createThread(
  */
 export async function getThread(
   id: number,
-  userId: number
+  userId: number | undefined
 ): Promise<ChatThread | null> {
   try {
-    const thread = await prisma.chatThread.findFirst({
-      where: { id, userId },
-    });
+    if (!userId) {
+      throw new Error("User id is required to load thread");
+    }
+    const rows = await db
+      .select()
+      .from(chatThreads)
+      .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
+      .limit(1);
 
-    return thread;
+    return rows.at(0) ?? null;
   } catch (error) {
     console.error(`Failed to get thread ${id}:`, error);
     throw new Error("Unable to retrieve thread");
@@ -60,17 +73,24 @@ export async function getThread(
  */
 export function listThreads(options?: {
   includeArchived?: boolean;
-  userId: number;
+  userId?: number;
 }): Promise<ChatThread[]> {
   const includeArchived = options?.includeArchived ?? false;
+  if (!options?.userId) {
+    throw new Error("User id is required to list threads");
+  }
 
-  return prisma.chatThread.findMany({
-    where: {
-      userId: options?.userId,
-      ...(includeArchived ? {} : { isArchived: false }),
-    },
-    orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
-  });
+  const conditions = [eq(chatThreads.userId, options.userId)];
+  if (!includeArchived) {
+    conditions.push(eq(chatThreads.isArchived, false));
+  }
+  let query = db.select().from(chatThreads);
+  if (conditions.length === 1) {
+    query = query.where(conditions[0]);
+  } else {
+    query = query.where(and(...conditions));
+  }
+  return query.orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
 }
 
 /**
@@ -82,13 +102,20 @@ export function listThreads(options?: {
 export async function renameThread(
   id: number,
   title: string,
-  userId: number
+  userId: number | undefined
 ): Promise<void> {
   try {
-    await prisma.chatThread.updateMany({
-      where: { id, userId },
-      data: { title },
-    });
+    if (!userId) {
+      throw new Error("User id is required to rename thread");
+    }
+    await db
+      .update(chatThreads)
+      .set({
+        title,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to rename thread ${id}:`, error);
     throw new Error("Unable to rename thread");
@@ -104,13 +131,20 @@ export async function renameThread(
 export async function setArchived(
   id: number,
   isArchived: boolean,
-  userId: number
+  userId: number | undefined
 ): Promise<void> {
   try {
-    await prisma.chatThread.updateMany({
-      where: { id, userId },
-      data: { isArchived },
-    });
+    if (!userId) {
+      throw new Error("User id is required to update archive status");
+    }
+    await db
+      .update(chatThreads)
+      .set({
+        isArchived,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to set archived status for thread ${id}:`, error);
     throw new Error("Unable to update thread archived status");
@@ -122,11 +156,18 @@ export async function setArchived(
  * @param id - The thread ID.
  * @param userId - The user ID.
  */
-export async function deleteThread(id: number, userId: number): Promise<void> {
+export async function deleteThread(
+  id: number,
+  userId: number | undefined
+): Promise<void> {
   try {
-    await prisma.chatThread.deleteMany({
-      where: { id, userId },
-    });
+    if (!userId) {
+      throw new Error("User id is required to delete thread");
+    }
+    await db
+      .delete(chatThreads)
+      .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to delete thread ${id}:`, error);
     throw new Error("Unable to delete thread");
@@ -141,14 +182,21 @@ export async function deleteThread(id: number, userId: number): Promise<void> {
  */
 export async function updateThreadOnNewMessage(
   threadId: number,
-  userId: number,
+  userId: number | undefined,
   date: Date = new Date()
 ): Promise<void> {
   try {
-    await prisma.chatThread.updateMany({
-      where: { id: threadId, userId },
-      data: { lastMessageAt: date },
-    });
+    if (!userId) {
+      throw new Error("User id is required to update thread");
+    }
+    await db
+      .update(chatThreads)
+      .set({
+        lastMessageAt: date,
+        updatedAt: date,
+      })
+      .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to update thread ${threadId} on new message:`, error);
     throw new Error("Unable to update thread timestamp");
@@ -167,23 +215,48 @@ export type MessageWithModel = Message & {
  */
 export async function loadThreadMessages(
   threadId: number,
-  userId: number
+  userId: number | undefined
 ): Promise<MessageWithModel[]> {
   try {
-    const messages = await prisma.message.findMany({
-      where: { threadId, userId },
-      orderBy: { createdAt: "asc" },
-      include: {
-        model: {
-          select: {
-            name: true,
-            provider: true,
-          },
-        },
-      },
-    });
+    if (!userId) {
+      throw new Error("User id is required to load thread messages");
+    }
+    const rows = await db
+      .select({
+        id: messages.id,
+        parts: messages.parts,
+        status: messages.status,
+        role: messages.role,
+        modelId: messages.modelId,
+        threadId: messages.threadId,
+        createdAt: messages.createdAt,
+        updatedAt: messages.updatedAt,
+        userId: messages.userId,
+        modelName: llmModels.name,
+        modelProvider: llmModels.provider,
+      })
+      .from(messages)
+      .innerJoin(llmModels, eq(messages.modelId, llmModels.id))
+      .where(
+        and(eq(messages.threadId, threadId), eq(messages.userId, userId))
+      )
+      .orderBy(asc(messages.createdAt));
 
-    return messages;
+    return rows.map((row) => ({
+      id: row.id,
+      parts: row.parts,
+      status: row.status,
+      role: row.role,
+      modelId: row.modelId,
+      threadId: row.threadId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      userId: row.userId,
+      model: {
+        name: row.modelName,
+        provider: row.modelProvider,
+      },
+    }));
   } catch (error) {
     console.error(`Failed to load messages for thread ${threadId}:`, error);
     throw new Error("Unable to load thread messages");

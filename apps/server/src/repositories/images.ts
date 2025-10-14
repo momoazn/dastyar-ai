@@ -1,165 +1,141 @@
-import { type GeneratedImage, type Prisma, prisma } from "@/database";
+import { and, asc, desc, eq } from "drizzle-orm";
 import {
-  deleteImage as deleteImageFile,
+  db,
+  generatedImages as generatedImagesTable,
+  type GeneratedImage,
+  type JsonValue,
+} from "@/database";
+import {
   cleanupOrphanedFiles as storageCleanupOrphanedFiles,
+  deleteImage as deleteImageFile,
 } from "@/services/image-storage";
 
-/**
- * Creates a new generated image record in the database.
- * @param params - The image parameters excluding auto-generated fields.
- * @returns The created image record.
- */
-export function createGeneratedImage(
-  params: Omit<GeneratedImage, "id" | "createdAt" | "updatedAt" | "userId"> & {
-    userId: number;
+export async function createGeneratedImage(
+  params: Omit<GeneratedImage, "id" | "createdAt" | "updatedAt" | "settings"> & {
+    settings: JsonValue;
   }
 ): Promise<GeneratedImage> {
-  return prisma.generatedImage.create({
-    data: {
+  const result = await db
+    .insert(generatedImagesTable)
+    .values({
       prompt: params.prompt,
       negativePrompt: params.negativePrompt,
       filePath: params.filePath,
       fileName: params.fileName,
-      settings: params.settings as Prisma.InputJsonValue,
+      settings: params.settings,
       threadId: params.threadId,
       userId: params.userId,
-    },
-  });
+    })
+    .run();
+
+  const created = await getGeneratedImage(Number(result.lastInsertRowid));
+  if (!created) {
+    throw new Error("Unable to load generated image after insert");
+  }
+  return created;
 }
 
-/**
- * Retrieves all generated images ordered by creation date (newest first).
- * @returns Array of generated images.
- */
 export function listGeneratedImages(): Promise<GeneratedImage[]> {
-  return prisma.generatedImage.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  return db
+    .select()
+    .from(generatedImagesTable)
+    .orderBy(desc(generatedImagesTable.createdAt));
 }
 
-/**
- * Retrieves a specific generated image by ID.
- * @param id - The image ID.
- * @returns The image record or null if not found.
- */
-export function getGeneratedImage(id: number): Promise<GeneratedImage | null> {
-  return prisma.generatedImage.findUnique({
-    where: { id },
-  });
+export async function getGeneratedImage(
+  id: number
+): Promise<GeneratedImage | null> {
+  const rows = await db
+    .select()
+    .from(generatedImagesTable)
+    .where(eq(generatedImagesTable.id, id))
+    .limit(1);
+  return rows.at(0) ?? null;
 }
 
-/**
- * Gets a generated image by ID with user ownership verification
- * @param id - The image ID
- * @param userId - The user ID to verify ownership
- * @returns The image if found and owned by the user, null otherwise
- */
-export function getGeneratedImageByUser(
+export async function getGeneratedImageByUser(
   id: number,
   userId: number
 ): Promise<GeneratedImage | null> {
-  return prisma.generatedImage.findFirst({
-    where: {
-      id,
-      userId,
-    },
-  });
+  const rows = await db
+    .select()
+    .from(generatedImagesTable)
+    .where(
+      and(
+        eq(generatedImagesTable.id, id),
+        eq(generatedImagesTable.userId, userId)
+      )
+    )
+    .limit(1);
+  return rows.at(0) ?? null;
 }
 
-/**
- * Deletes a generated image and its associated files.
- * @param id - The image ID.
- * @throws Error if the image is not found or deletion fails.
- */
 export async function deleteGeneratedImage(id: number): Promise<void> {
-  // First get the image to access file paths
   const image = await getGeneratedImage(id);
   if (!image) {
     throw new Error(`Generated image with id ${id} not found`);
   }
 
-  // Delete the files from storage
   await deleteImageFile(image.filePath);
-
-  // Delete from database
-  await prisma.generatedImage.delete({
-    where: { id },
-  });
+  await db
+    .delete(generatedImagesTable)
+    .where(eq(generatedImagesTable.id, id))
+    .run();
 }
 
-/**
- * Deletes all generated images and their associated files.
- */
 export async function clearGeneratedImages(): Promise<void> {
-  // First get all images to delete their files
   const allImages = await listGeneratedImages();
-
-  // Delete all files from storage
   const deletePromises = allImages.map((image) =>
     deleteImageFile(image.filePath)
   );
-
   await Promise.allSettled(deletePromises);
 
-  // Delete all records from database
-  await prisma.generatedImage.deleteMany();
+  await db.delete(generatedImagesTable).run();
 }
 
-/**
- * Retrieves all file paths of generated images.
- * @returns Array of file paths.
- */
 export async function getAllImageFilePaths(): Promise<string[]> {
   const images = await listGeneratedImages();
   return images.map((img) => img.filePath);
 }
 
-/**
- * Cleans up orphaned image files not associated with any database records.
- * @returns The number of files cleaned up.
- */
 export async function cleanupOrphanedFiles(): Promise<number> {
   const existingPaths = await getAllImageFilePaths();
   return await storageCleanupOrphanedFiles(existingPaths);
 }
 
-/**
- * Retrieves all generated images for a specific thread ordered by creation date (newest first).
- * @param threadId - The thread ID.
- * @param userId - The user ID.
- * @returns Array of generated images.
- */
 export function listGeneratedImagesByThread(
   threadId: number,
   userId: number
 ): Promise<GeneratedImage[]> {
-  return prisma.generatedImage.findMany({
-    where: { threadId, userId },
-    orderBy: { createdAt: "asc" },
-  });
+  return db
+    .select()
+    .from(generatedImagesTable)
+    .where(
+      and(
+        eq(generatedImagesTable.threadId, threadId),
+        eq(generatedImagesTable.userId, userId)
+      )
+    )
+    .orderBy(asc(generatedImagesTable.createdAt));
 }
 
-/**
- * Deletes all generated images for a specific thread and their associated files.
- * @param threadId - The thread ID.
- * @param userId - The user ID.
- */
 export async function clearGeneratedImagesByThread(
   threadId: number,
   userId: number
 ): Promise<void> {
-  // First get all images for this thread to delete their files
   const threadImages = await listGeneratedImagesByThread(threadId, userId);
-
-  // Delete all files from storage
   const deletePromises = threadImages.map((image) =>
     deleteImageFile(image.filePath)
   );
-
   await Promise.allSettled(deletePromises);
 
-  // Delete all records from database
-  await prisma.generatedImage.deleteMany({
-    where: { threadId, userId },
-  });
+  await db
+    .delete(generatedImagesTable)
+    .where(
+      and(
+        eq(generatedImagesTable.threadId, threadId),
+        eq(generatedImagesTable.userId, userId)
+      )
+    )
+    .run();
 }

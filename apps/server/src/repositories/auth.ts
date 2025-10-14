@@ -1,37 +1,48 @@
 import bcrypt from "bcryptjs";
-import { prisma, type User, type UserRole } from "@/database";
+import { eq } from "drizzle-orm";
+import { db, type User, type UserRole, users } from "@/database";
 
 export async function findUserByUsername(
   username: string
 ): Promise<User | null> {
-  return await prisma.user.findUnique({
-    where: { username },
+  return await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 }
 
 export async function findUserById(id: number): Promise<User | null> {
-  return await prisma.user.findUnique({
-    where: { id },
+  return await db.query.users.findFirst({
+    where: eq(users.id, id),
   });
 }
 
 export async function createUser(
   userData: Pick<User, "username" | "password" | "salt" | "role">
 ): Promise<User> {
-  return await prisma.user.create({
-    data: {
-      ...userData,
+  const result = await db
+    .insert(users)
+    .values({
+      username: userData.username,
+      password: userData.password,
+      salt: userData.salt,
       role: userData.role ?? ("user" as UserRole),
-    },
-  });
+    })
+    .run();
+
+  const created = await findUserById(Number(result.lastInsertRowid));
+  if (!created) {
+    throw new Error("Unable to create user");
+  }
+  return created;
 }
 
 export async function usernameExists(username: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { username },
-    select: { id: true },
-  });
-  return user !== null;
+  const user = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
+  return user.length > 0;
 }
 
 export async function verifyUserCredentials({

@@ -1,80 +1,75 @@
+import { and, asc, desc, eq } from "drizzle-orm";
 import {
+  db,
+  llmModels,
+  messages as messagesTable,
+  type JsonValue,
   type LLMModel,
   type Message,
-  type MessageStatus,
-  type Prisma,
-  prisma,
 } from "@/database";
 
 export type CreateMessageParams = Omit<
   Message,
-  "id" | "createdAt" | "updatedAt" | "parts" | "userId"
+  "id" | "createdAt" | "updatedAt" | "parts"
 > & {
-  parts: Prisma.InputJsonValue;
-  userId: number;
+  parts: JsonValue;
 };
 
 export type UpdateMessageParams = Pick<Message, "id" | "parts" | "status">;
 
-/**
- * Saves a single message to the database.
- * @param params - The message parameters excluding auto-generated fields.
- * @returns The ID of the created message.
- */
 export async function createMessage(
   params: CreateMessageParams
 ): Promise<{ id: number }> {
   try {
-    const message = await prisma.message.create({
-      data: params,
-    });
+    const result = await db
+      .insert(messagesTable)
+      .values({
+        threadId: params.threadId,
+        role: params.role,
+        parts: params.parts,
+        status: params.status,
+        modelId: params.modelId,
+        userId: params.userId,
+      })
+      .run();
 
-    return { id: message.id };
+    return { id: Number(result.lastInsertRowid) };
   } catch (error) {
     console.error("Failed to save message:", error);
     throw new Error("Unable to save message");
   }
 }
 
-/**
- * Updates an existing message with partial data.
- * @param params - The message ID and fields to update.
- */
 export async function updateMessage(
   params: UpdateMessageParams
 ): Promise<void> {
   try {
-    const updateData: Partial<{
-      parts: Prisma.InputJsonValue;
-      status: MessageStatus;
-    }> = {};
+    const updateData: Partial<typeof messagesTable.$inferInsert> = {
+      updatedAt: new Date(),
+    };
 
     if (params.parts !== undefined) {
-      updateData.parts = params.parts as Prisma.InputJsonValue;
+      updateData.parts = params.parts;
     }
     if (params.status !== undefined) {
-      updateData.status = params.status as MessageStatus;
+      updateData.status = params.status;
     }
 
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length <= 1) {
       return;
     }
 
-    await prisma.message.update({
-      where: { id: params.id },
-      data: updateData,
-    });
+    await db
+      .update(messagesTable)
+      .set(updateData)
+      .where(eq(messagesTable.id, params.id))
+      .run();
   } catch (error) {
     console.error(`Failed to update message ${params.id}:`, error);
     throw new Error("Unable to update message");
   }
 }
 
-/**
- * Saves multiple messages to the database in a batch operation.
- * @param params - Array of message parameters.
- * @returns The number of messages created.
- */
 export async function saveMessages(
   params: CreateMessageParams[]
 ): Promise<{ count: number }> {
@@ -83,29 +78,27 @@ export async function saveMessages(
       return { count: 0 };
     }
 
-    const result = await prisma.message.createMany({
-      data: params.map((p) => ({
-        threadId: p.threadId,
-        role: p.role,
-        parts: p.parts,
-        status: p.status,
-        modelId: p.modelId,
-        userId: p.userId,
-      })),
-    });
+    await db
+      .insert(messagesTable)
+      .values(
+        params.map((message) => ({
+          threadId: message.threadId,
+          role: message.role,
+          parts: message.parts,
+          status: message.status,
+          modelId: message.modelId,
+          userId: message.userId,
+        }))
+      )
+      .run();
 
-    return { count: result.count };
+    return { count: params.length };
   } catch (error) {
     console.error("Failed to save messages:", error);
     throw new Error("Unable to save messages");
   }
 }
 
-/**
- * Retrieves messages for a specific thread with optional pagination.
- * @param params - Thread ID and pagination options.
- * @returns Array of messages with model relation.
- */
 export async function getMessagesByThread(
   params: { threadId: number } & {
     limit?: number;
@@ -114,25 +107,32 @@ export async function getMessagesByThread(
   }
 ): Promise<Message[]> {
   try {
-    const DEFAULT_MESSAGE_LIMIT = 50;
-    const limit = params.limit ?? DEFAULT_MESSAGE_LIMIT;
+    const limit = params.limit ?? 50;
     const order = params.order ?? "desc";
 
-    const messages = await prisma.message.findMany({
-      where: { threadId: params.threadId },
-      orderBy: { createdAt: order },
-      take: limit,
-      include: {
-        model: {
-          select: {
-            name: true,
-            provider: true,
-          },
-        },
-      },
-    });
+    const query = db
+      .select({
+        id: messagesTable.id,
+        parts: messagesTable.parts,
+        status: messagesTable.status,
+        role: messagesTable.role,
+        modelId: messagesTable.modelId,
+        threadId: messagesTable.threadId,
+        createdAt: messagesTable.createdAt,
+        updatedAt: messagesTable.updatedAt,
+        userId: messagesTable.userId,
+      })
+      .from(messagesTable)
+      .where(eq(messagesTable.threadId, params.threadId))
+      .orderBy(
+        order === "asc"
+          ? asc(messagesTable.createdAt)
+          : desc(messagesTable.createdAt)
+      )
+      .limit(limit);
 
-    return messages;
+    const rows = await query;
+    return rows;
   } catch (error) {
     console.error(
       `Failed to get messages for thread ${params.threadId}:`,
@@ -142,61 +142,67 @@ export async function getMessagesByThread(
   }
 }
 
-/**
- * Deletes a specific message by ID.
- * @param id - The message ID.
- * @param userId - The user ID.
- */
-export async function deleteMessage(id: number, userId: number): Promise<void> {
+export async function deleteMessage(
+  id: number,
+  userId: number
+): Promise<void> {
   try {
-    await prisma.message.deleteMany({
-      where: { id, userId },
-    });
+    await db
+      .delete(messagesTable)
+      .where(and(eq(messagesTable.id, id), eq(messagesTable.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to delete message ${id}:`, error);
     throw new Error("Unable to delete message");
   }
 }
 
-/**
- * Deletes all messages in a specific thread.
- * @param threadId - The thread ID.
- * @param userId - The user ID.
- */
 export async function clearThread(
   threadId: number,
   userId: number
 ): Promise<void> {
   try {
-    await prisma.message.deleteMany({
-      where: { threadId, userId },
-    });
+    await db
+      .delete(messagesTable)
+      .where(
+        and(
+          eq(messagesTable.threadId, threadId),
+          eq(messagesTable.userId, userId)
+        )
+      )
+      .run();
   } catch (error) {
     console.error(`Failed to clear thread ${threadId}:`, error);
     throw new Error("Unable to clear thread");
   }
 }
 
-/**
- * Gets the last used model in a thread.
- * @param threadId - The thread ID.
- * @param userId - The user ID.
- * @returns The last used model or null if no messages exist.
- */
 export async function getLastUsedModelInThread(
   threadId: number,
   userId: number
 ): Promise<LLMModel | null> {
   try {
-    const lastMessage = await prisma.message.findFirst({
-      where: { threadId, userId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        model: true,
-      },
-    });
+    const rows = await db
+      .select({
+        id: llmModels.id,
+        name: llmModels.name,
+        provider: llmModels.provider,
+        isEnabled: llmModels.isEnabled,
+        createdAt: llmModels.createdAt,
+        updatedAt: llmModels.updatedAt,
+      })
+      .from(messagesTable)
+      .innerJoin(llmModels, eq(messagesTable.modelId, llmModels.id))
+      .where(
+        and(
+          eq(messagesTable.threadId, threadId),
+          eq(messagesTable.userId, userId)
+        )
+      )
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(1);
 
-    return lastMessage?.model || null;
+    return rows.at(0) ?? null;
   } catch (error) {
     console.error(
       `Failed to get last used model for thread ${threadId}:`,
@@ -206,24 +212,26 @@ export async function getLastUsedModelInThread(
   }
 }
 
-/**
- * Gets the last used model across all messages for a user.
- * @param userId - The user ID.
- * @returns The last used model or null if no messages exist.
- */
 export async function getLastUsedModelGlobal(
   userId: number
 ): Promise<LLMModel | null> {
   try {
-    const lastMessage = await prisma.message.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        model: true,
-      },
-    });
+    const rows = await db
+      .select({
+        id: llmModels.id,
+        name: llmModels.name,
+        provider: llmModels.provider,
+        isEnabled: llmModels.isEnabled,
+        createdAt: llmModels.createdAt,
+        updatedAt: llmModels.updatedAt,
+      })
+      .from(messagesTable)
+      .innerJoin(llmModels, eq(messagesTable.modelId, llmModels.id))
+      .where(eq(messagesTable.userId, userId))
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(1);
 
-    return lastMessage?.model || null;
+    return rows.at(0) ?? null;
   } catch (error) {
     console.error("Failed to get last used model globally:", error);
     throw new Error("Unable to retrieve last used model");

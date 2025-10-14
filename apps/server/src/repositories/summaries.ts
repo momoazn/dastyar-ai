@@ -1,78 +1,77 @@
-import { prisma, type Summary } from "@/database";
+import { and, desc, eq } from "drizzle-orm";
+import {
+  db,
+  summaries as summariesTable,
+  type Summary,
+} from "@/database";
 
-/**
- * Retrieves all summaries for a user ordered by creation date (newest first).
- * @param userId - The user ID.
- * @returns Array of summaries.
- */
 export function listSummaries(userId: number): Promise<Summary[]> {
-  return prisma.summary.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
+  return db
+    .select()
+    .from(summariesTable)
+    .where(eq(summariesTable.userId, userId))
+    .orderBy(desc(summariesTable.createdAt));
 }
 
-/**
- * Creates a new summary record in the database.
- * @param params - The summary parameters excluding auto-generated fields.
- * @returns The created summary record.
- */
 export async function createSummary(
-  params: Omit<Summary, "id" | "createdAt" | "updatedAt" | "userId"> & {
+  params: Omit<Summary, "id" | "createdAt" | "updatedAt"> & {
     userId: number;
   }
 ): Promise<Summary> {
   try {
-    const summary = await prisma.summary.create({
-      data: {
+    const result = await db
+      .insert(summariesTable)
+      .values({
         sourceText: params.sourceText,
         summaryText: params.summaryText,
         modelId: params.modelId,
         mode: params.mode,
         tone: params.tone,
         userId: params.userId,
-      },
-    });
+      })
+      .run();
 
-    return summary;
+    const created = await getSummary(
+      Number(result.lastInsertRowid),
+      params.userId
+    );
+    if (!created) {
+      throw new Error("Unable to load summary after insert");
+    }
+    return created;
   } catch (error) {
     console.error("Failed to create summary:", error);
     throw new Error("Unable to create summary");
   }
 }
 
-/**
- * Retrieves a specific summary by ID.
- * @param id - The summary ID.
- * @param userId - The user ID.
- * @returns The summary record or null if not found.
- */
 export async function getSummary(
   id: number,
   userId: number
 ): Promise<Summary | null> {
   try {
-    const summary = await prisma.summary.findFirst({
-      where: { id, userId },
-    });
+    const rows = await db
+      .select()
+      .from(summariesTable)
+      .where(and(eq(summariesTable.id, id), eq(summariesTable.userId, userId)))
+      .limit(1);
 
-    return summary;
+    return rows.at(0) ?? null;
   } catch (error) {
     console.error(`Failed to get summary ${id}:`, error);
     throw new Error("Unable to retrieve summary");
   }
 }
 
-/**
- * Deletes a specific summary by ID.
- * @param id - The summary ID.
- * @param userId - The user ID.
- */
-export async function deleteSummary(id: number, userId: number): Promise<void> {
+export async function deleteSummary(
+  id: number,
+  userId: number
+): Promise<void> {
   try {
-    await prisma.summary.deleteMany({
-      where: { id, userId },
-    });
+    await db
+      .delete(summariesTable)
+      .where(and(eq(summariesTable.id, id), eq(summariesTable.userId, userId)))
+      .run();
   } catch (error) {
     console.error(`Failed to delete summary ${id}:`, error);
     throw new Error("Unable to delete summary");

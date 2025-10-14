@@ -1,8 +1,13 @@
-import { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
 import { serve } from "bun";
 import { createApp } from "./app";
-import { ensureDirectoriesExist, env, isProduction } from "./config";
+import {
+  ensureDirectoriesExist,
+  env,
+  isProduction,
+  resolveConfiguredPath,
+} from "./config";
+import { sqlite } from "./database";
 
 const SQL = `
 -- CreateTable
@@ -162,11 +167,10 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 CREATE INDEX "idx_generated_images_thread" ON "generated_images"("thread_id");
 `;
 
-const db = new Database(env.DATABASE_FILE);
-
-const dbExists = existsSync(env.DATABASE_FILE);
+const databasePath = resolveConfiguredPath(env.DATABASE_FILE);
+const dbExists = existsSync(databasePath);
 if (!dbExists) {
-  db.run(SQL);
+  sqlite.run(SQL);
 }
 
 console.log("Running app in", isProduction() ? "production" : "development");
