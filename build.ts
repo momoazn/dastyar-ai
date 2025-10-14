@@ -21,6 +21,33 @@ const DIST_DIR = join(ROOT_DIR, "dist");
 const SERVER_DIR = join(ROOT_DIR, "apps", "server");
 const WEB_DIR = join(ROOT_DIR, "apps", "web");
 
+type BuildPlatform = "host" | "windows";
+
+const parseBuildPlatform = (): BuildPlatform => {
+  const envPlatform = process.env.BUILD_PLATFORM?.toLowerCase();
+  if (envPlatform === "windows") {
+    return "windows";
+  }
+
+  const args = process.argv.slice(2);
+  for (let idx = 0; idx < args.length; idx += 1) {
+    const arg = args[idx];
+    if (arg === "--platform" && idx + 1 < args.length) {
+      const next = args[idx + 1]?.toLowerCase();
+      if (next === "windows") {
+        return "windows";
+      }
+    } else if (arg.startsWith("--platform=")) {
+      const value = arg.split("=", 2)[1]?.toLowerCase();
+      if (value === "windows") {
+        return "windows";
+      }
+    }
+  }
+
+  return "host";
+};
+
 const ensureDir = (dirPath: string): void => {
   if (!existsSync(dirPath)) {
     mkdirSync(dirPath, { recursive: true });
@@ -159,12 +186,20 @@ const downloadModelRepo = async (
 const main = async (): Promise<void> => {
   console.log("🚀 Building Dastyar AI...");
 
+  const buildPlatform = parseBuildPlatform();
+  const serverBuildCommand =
+    buildPlatform === "windows" ? "bun run build:windows" : "bun run build";
+  const serverTargetLabel =
+    buildPlatform === "windows"
+      ? "bun-windows-x64"
+      : `native (${process.platform})`;
+
   // Create root dist directory
   ensureDir(DIST_DIR);
 
   // Build server
-  console.log("📦 Building server...");
-  execSync("bun run build", { cwd: SERVER_DIR, stdio: "inherit" });
+  console.log(`📦 Building server (target: ${serverTargetLabel})...`);
+  execSync(serverBuildCommand, { cwd: SERVER_DIR, stdio: "inherit" });
 
   // Copy .env.example to dist/
   safeCopyFile(
