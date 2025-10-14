@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
 import { z } from "zod";
@@ -48,10 +48,50 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
+const parseList = (value: string): string[] =>
+  value
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+const computeWhisperModelIds = (): string[] => {
+  const configured = parseList(env.WHISPER_MODELS);
+  if (configured.length > 0) {
+    return configured;
+  }
+  return ["Xenova/whisper-tiny"];
+};
+
+export const whisperModelIds = computeWhisperModelIds();
+export const defaultWhisperModel = whisperModelIds[0];
+
 export const isProduction = (): boolean => {
   const modulePath = fileURLToPath(import.meta.url);
   return modulePath.includes("$bunfs");
 };
+
+const serverRootDir = fileURLToPath(new URL("..", import.meta.url));
+
+const getRuntimeBaseDir = (): string => {
+  if (isProduction()) {
+    const bunExec = typeof Bun !== "undefined" ? Bun.argv?.[0] : undefined;
+    const execCandidate = bunExec ?? process.argv?.[0];
+    if (execCandidate) {
+      return dirname(execCandidate);
+    }
+  }
+  return serverRootDir;
+};
+
+const resolveWebDistDir = (): string => {
+  const configured = env.WEB_DIST_DIR;
+  if (isAbsolute(configured)) {
+    return configured;
+  }
+  return resolve(getRuntimeBaseDir(), configured);
+};
+
+export const webDistDir = resolveWebDistDir();
 
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
@@ -73,4 +113,18 @@ export const ensureDirectoriesExist = (): void => {
       console.warn(`Failed to create directory ${dir}:`, err);
     }
   }
+};
+
+export const resolveConfiguredPath = (
+  configuredPath: string,
+  baseDir: string = getRuntimeBaseDir()
+): string => {
+  if (isAbsolute(configuredPath)) {
+    return configuredPath;
+  }
+  return resolve(baseDir, configuredPath);
+};
+
+export const collectOfflineModelIds = (): string[] => {
+  return [...whisperModelIds];
 };

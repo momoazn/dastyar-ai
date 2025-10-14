@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { WaveFile } from "wavefile";
 import { z } from "zod";
-import { env } from "@/config";
+import { defaultWhisperModel, env, whisperModelIds } from "@/config";
 import { publicProcedure } from "./base";
 
 // Type for the ASR pipeline
@@ -58,7 +58,7 @@ export const transcribeProcedures = {
       return models;
     }
     // Fallback to allowed remote models only if none installed
-    const allowed = env.WHISPER_MODELS.split(",").map((id) => ({
+    const allowed = whisperModelIds.map((id) => ({
       id,
       name: prettyWhisperName(id),
     }));
@@ -79,8 +79,7 @@ export const transcribeProcedures = {
       const discovered = discoverInstalledWhisperModels();
       const defaultModel =
         discovered[0]?.id ??
-        env.WHISPER_MODELS.split(",")[0] ??
-        "Xenova/whisper-tiny";
+        defaultWhisperModel;
       const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,

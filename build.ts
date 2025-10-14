@@ -9,7 +9,12 @@ import {
   mkdirSync,
   readdirSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
+import {
+  collectOfflineModelIds,
+  resolveConfiguredPath,
+  env as serverEnv,
+} from "./apps/server/src/config";
 
 const ROOT_DIR = process.cwd();
 const DIST_DIR = join(ROOT_DIR, "dist");
@@ -42,12 +47,6 @@ const safeCopyFile = (srcFile: string, destFile: string): void => {
   copyFileSync(srcFile, destFile);
 };
 
-const mkdirp = (dirPath: string): void => {
-  if (!existsSync(dirPath)) {
-    mkdirSync(dirPath, { recursive: true });
-  }
-};
-
 const writeFileAtomic = async (
   dest: string,
   data: Uint8Array
@@ -64,14 +63,17 @@ const copyFileIfExists = (src: string, dest: string): void => {
   copyFileSync(src, dest);
 };
 
-const parseList = (value?: string): string[] => {
-  if (!value) {
-    return [];
+const resolveDistPath = (
+  configuredPath: string,
+  fallbackRelative: string
+): string => {
+  if (isAbsolute(configuredPath)) {
+    console.warn(
+      `[build] Ignoring absolute configured path "${configuredPath}", using "./${fallbackRelative}" within dist`
+    );
+    return join(DIST_DIR, fallbackRelative);
   }
-  return value
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  return resolveConfiguredPath(configuredPath, DIST_DIR);
 };
 
 const findTransformersWasmDir = (workspaceRoot: string): string | null => {
@@ -139,7 +141,7 @@ const downloadModelRepo = async (
     }
     const url = `https://huggingface.co/${modelId}/resolve/main/${s.rfilename}`;
     const dest = join(outDir, modelId, s.rfilename);
-    mkdirp(dirname(dest));
+    ensureDir(dirname(dest));
     tasks.push(
       (async () => {
         const r = await fetch(url);
@@ -164,6 +166,12 @@ const main = async (): Promise<void> => {
   console.log("📦 Building server...");
   execSync("bun run build", { cwd: SERVER_DIR, stdio: "inherit" });
 
+  // Copy .env.example to dist/
+  safeCopyFile(
+    join(SERVER_DIR, ".env.example"),
+    join(DIST_DIR, ".env.example")
+  );
+
   // Build web
   console.log("🌐 Building web...");
   execSync("bun run build", { cwd: WEB_DIR, stdio: "inherit" });
@@ -175,7 +183,7 @@ const main = async (): Promise<void> => {
 
   // Copy web output into dist/web
   const webOut = join(WEB_DIR, "dist");
-  const webTarget = join(DIST_DIR, "web");
+  const webTarget = resolveDistPath(serverEnv.WEB_DIST_DIR, "web");
   console.log("📋 Copying web artifacts...");
   safeCopyDir(webOut, webTarget);
 
@@ -191,11 +199,17 @@ const main = async (): Promise<void> => {
   // Prepare minimal offline assets
   console.log("🤖 Preparing offline assets...");
   const wasmOut = join(DIST_DIR, "wasm");
-  const modelsOut = join(DIST_DIR, "whisper-models");
-  const cacheOut = join(DIST_DIR, ".whisper-cache");
-  mkdirp(wasmOut);
-  mkdirp(modelsOut);
-  mkdirp(cacheOut);
+  const modelsOut = resolveDistPath(
+    serverEnv.WHISPER_MODELS_DIR,
+    "whisper-models"
+  );
+  const cacheOut = resolveDistPath(
+    serverEnv.WHISPER_CACHE_DIR,
+    ".whisper-cache"
+  );
+  ensureDir(wasmOut);
+  ensureDir(modelsOut);
+  ensureDir(cacheOut);
 
   const wasmSrcDir = findTransformersWasmDir(ROOT_DIR);
   if (wasmSrcDir) {
@@ -210,17 +224,7 @@ const main = async (): Promise<void> => {
     }
   }
 
-  const envOfflineModels = parseList(process.env.OFFLINE_MODELS);
-  const envAllowedModels = parseList(process.env.WHISPER_ALLOWED_MODELS);
-  const envSingleOfflineModel = (process.env.OFFLINE_MODEL ?? "").trim();
-  const combined = [
-    ...envOfflineModels,
-    ...envAllowedModels,
-    ...(envSingleOfflineModel ? [envSingleOfflineModel] : []),
-  ];
-  const modelIds = Array.from(
-    new Set(combined.length > 0 ? combined : ["Xenova/whisper-tiny"])
-  );
+  const modelIds = collectOfflineModelIds();
 
   await Promise.all(
     modelIds.map(async (modelId) => {
