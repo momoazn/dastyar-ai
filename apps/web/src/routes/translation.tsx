@@ -273,7 +273,9 @@ function RouteComponent() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    isModelsLoading ? "Loading models..." : "Select model"
+                    isModelsLoading
+                      ? fa.general.loadingModels
+                      : fa.general.selectModel
                   }
                 />
               </SelectTrigger>
@@ -312,7 +314,7 @@ function RouteComponent() {
           transcribeError) && (
           <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
             <TriangleAlert className="h-4 w-4" />
-            <AlertTitle>خطا</AlertTitle>
+            <AlertTitle>{fa.translation.errorTitle}</AlertTitle>
             <AlertDescription>
               {(() => {
                 if (clipboardError) {
@@ -334,7 +336,7 @@ function RouteComponent() {
           <Card aria-live="polite" className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
               <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                <span>{sourceCharCount} کاراکتر</span>
+                <span>{fa.translation.charCount(sourceCharCount)}</span>
                 <div className="flex items-center gap-2">
                   <TranscribeButton
                     language={transcribeLanguage}
@@ -353,7 +355,9 @@ function RouteComponent() {
                     variant="ghost"
                   />
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {transcribeLanguage === "fa" ? "فارسی" : "English"}
+                    {transcribeLanguage === "fa"
+                      ? fa.translation.transcribeLanguagePersian
+                      : fa.translation.transcribeLanguageEnglish}
                   </span>
                   <span>
                     {sourceText.trim() ? fa.translation.keyboardHint : ""}

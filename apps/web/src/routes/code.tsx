@@ -179,7 +179,9 @@ function RouteComponent() {
     if (!sessionId) {
       // Create session first
       createSessionMutation.mutate({
-        title: `کد ${modes.find((m) => m.value === mode)?.label}`,
+        title: fa.codeAssistant.newSessionTitle(
+          modes.find((m) => m.value === mode)?.label || ""
+        ),
         language,
       });
       return;
@@ -319,7 +321,9 @@ function RouteComponent() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? "Loading models..." : "Select model"
+                    modelsLoading
+                      ? fa.general.loadingModels
+                      : fa.general.selectModel
                   }
                 />
               </SelectTrigger>

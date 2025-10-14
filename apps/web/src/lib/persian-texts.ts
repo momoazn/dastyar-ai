@@ -30,6 +30,8 @@ export const fa = {
     unknown: "نامشخص",
     charCount: (count: number) => `${count} کاراکتر`,
     download: "دانلود",
+    loadingModels: "در حال بارگذاری مدل‌ها...",
+    selectModel: "انتخاب مدل",
   },
   auth: {
     registerForm: {
@@ -144,6 +146,10 @@ export const fa = {
       "پارامترها تغییر کرده‌اند. برای ایجاد ترجمه جدید روی دکمه ترجمه کلیک کنید.",
     keyboardHint: "⌘/Ctrl+Enter برای ترجمه",
     copyTranslation: "کپی ترجمه",
+    errorTitle: "خطا",
+    charCount: (count: number) => `${count} کاراکتر`,
+    transcribeLanguagePersian: "فارسی",
+    transcribeLanguageEnglish: "English",
   },
   modelSelection: {
     aiModels: "مدل‌های هوش مصنوعی",
@@ -271,7 +277,6 @@ export const fa = {
     generationCommand: "دستور تولید",
     negativeCommand: "دستور منفی",
     stepsLabel: "مراحل:",
-    samplerLabel: "نمونه‌گیر:",
     sizeLabel: "اندازه:",
     imageNotFound: "تصویر مورد نظر یافت نشد.",
     preview: "پیش‌نمایش تصویر",
@@ -298,11 +303,29 @@ export const fa = {
     invalidImageId: "شناسه تصویر نامعتبر است.",
     loadingImageError: "خطا در بارگذاری تصویر:",
     voiceTranscriptionError: "خطا در تبدیل صدا:",
+    newChatTitle: "گفتگوی تصویری جدید",
+    newChatDescription: "اولین تصویر خود را تولید کنید",
+    promptPlaceholderAlt: "توضیحات تصویر خود را وارد کنید...",
+    resetButton: "بازنشانی",
+    transcribeLanguagePersian: "فارسی",
+    transcribeLanguageEnglish: "English",
+    negativePrefix: "منفی:",
+    sizePlaceholder: "اندازه",
+    advancedButton: "پیشنهادات",
+    negativeLabel: "منفی",
+    negativePlaceholder: "توضیحات منفی...",
+    samplerLabel: "نمونه‌بردار",
+    samplerPlaceholder: "نمونه‌بردار",
+    stepsLabelAlt: "مراحل: {steps}",
   },
   imageChat: {
     newChatDefaultTitle: "گفتگوی تصویری جدید",
     newChatTitle: "گفتگوی تصویری جدید",
     newChatDescription: "برای شروع، یک گفتگو ایجاد کنید.",
+    askQuestion: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
+    askQuestionDescription: "سوال خود را بپرسید تا بتوانم به شما کمک کنم",
+    newChatHint: "می‌توانید هر زمان خواستید عنوان گفتگو را تغییر دهید.",
+    newChatError: "خطا در ساخت گفتگوی جدید",
   },
   codeAssistant: {
     modes: {
@@ -362,6 +385,7 @@ export const fa = {
       reviewResult: "نتیجه بررسی",
       suggestions: "پیشنهادات",
       line: "خط",
+      generationsCount: (count: number) => `تولیدات کد (${count})`,
     },
     review: {
       overallScore: "امتیاز کلی",
@@ -376,6 +400,7 @@ export const fa = {
       prevention: "نکات پیشگیری",
     },
     charCount: (count: number) => `${count} کاراکتر`,
+    newSessionTitle: (modeLabel: string) => `کد ${modeLabel}`,
   },
   admin: {
     title: "پنل مدیریت",
@@ -442,4 +467,5 @@ export const fa = {
       logout: "خروج",
     },
   },
+  invalidThreadId: "شناسه گفتگوی نامعتبر",
 };

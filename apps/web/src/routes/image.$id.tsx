@@ -41,6 +41,7 @@ import {
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
+import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { GenerationSettings } from "@/server/procedures/images";
 
@@ -143,12 +144,12 @@ function RouteComponent() {
   const handleSubmit = useCallback(
     async (promptText: string, generationSettings: GenerationSettings) => {
       if (!promptText.trim()) {
-        toast.error("لطفاً توضیحات تصویر را وارد کنید");
+        toast.error(fa.imageGeneration.promptRequired);
         return;
       }
 
       if (!isServiceAvailable) {
-        toast.error("سرویس Stable Diffusion در دسترس نیست");
+        toast.error(fa.imageGeneration.serviceUnavailableError);
         return;
       }
 
@@ -213,7 +214,7 @@ function RouteComponent() {
     return (
       <div className="flex h-full items-center justify-center" dir="rtl">
         <Alert>
-          <AlertDescription>شناسه گفتگوی نامعتبر</AlertDescription>
+          <AlertDescription>{fa.invalidThreadId}</AlertDescription>
         </Alert>
       </div>
     );
@@ -225,7 +226,7 @@ function RouteComponent() {
         <div className="p-3">
           <Alert>
             <AlertDescription>
-              سرویس Stable Diffusion در دسترس نیست
+              {fa.imageGeneration.serviceUnavailableAlert}
             </AlertDescription>
           </Alert>
         </div>
@@ -236,8 +237,12 @@ function RouteComponent() {
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
             <ImagePlus className="size-10" />
             <div className="space-y-1">
-              <div className="font-medium">گفتگوی تصویری جدید</div>
-              <div className="text-xs">اولین تصویر خود را تولید کنید</div>
+              <div className="font-medium">
+                {fa.imageGeneration.newChatTitle}
+              </div>
+              <div className="text-xs">
+                {fa.imageGeneration.newChatDescription}
+              </div>
             </div>
           </div>
         ) : (
@@ -257,7 +262,8 @@ function RouteComponent() {
                         </div>
                         {img.negativePrompt ? (
                           <div className="text-[12px] text-muted-foreground">
-                            منفی: {img.negativePrompt}
+                            {fa.imageGeneration.negativePrefix}{" "}
+                            {img.negativePrompt}
                           </div>
                         ) : null}
                       </AIMsgContent>
@@ -278,7 +284,7 @@ function RouteComponent() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  aria-label="دانلود تصویر"
+                                  aria-label={fa.imageGeneration.downloadImage}
                                   className="h-8 w-8"
                                   onClick={(e) => {
                                     e.preventDefault();
@@ -291,7 +297,9 @@ function RouteComponent() {
                                   <Download className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>دانلود تصویر</TooltipContent>
+                              <TooltipContent>
+                                {fa.imageGeneration.downloadImage}
+                              </TooltipContent>
                             </Tooltip>
                           </div>
                         </div>
@@ -328,14 +336,16 @@ function RouteComponent() {
             <PromptInputTextarea
               dir={prompt ? detectTextDirection(prompt) : "rtl"}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="توضیحات تصویر خود را وارد کنید..."
+              placeholder={fa.imageGeneration.promptPlaceholderAlt}
               value={prompt}
             />
             <PromptInputToolbar>
               <PromptInputTools>
                 <Select onValueChange={handleSizeChange} value={getSizeValue()}>
                   <SelectTrigger className="h-9 w-36 cursor-pointer gap-2">
-                    <SelectValue placeholder="اندازه" />
+                    <SelectValue
+                      placeholder={fa.imageGeneration.sizePlaceholder}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {IMAGE_SIZES.map((size) => (
@@ -350,7 +360,7 @@ function RouteComponent() {
                 </Select>
                 <PromptInputButton onClick={resetSettings} variant="outline">
                   <RotateCcw className="size-4" />
-                  بازنشانی
+                  {fa.imageGeneration.resetButton}
                 </PromptInputButton>
               </PromptInputTools>
               <div className="flex items-center gap-2">
@@ -359,13 +369,15 @@ function RouteComponent() {
                   variant="outline"
                 >
                   <Settings2 className="size-4" />
-                  پیشرفته
+                  {fa.imageGeneration.advancedButton}
                 </PromptInputButton>
                 <TranscribeButton
                   language="en"
                   model={transcribeModel}
                   onError={(error) => {
-                    toast.error(`خطا در تبدیل صدا: ${error}`);
+                    toast.error(
+                      `${fa.imageGeneration.voiceTranscriptionError} ${error}`
+                    );
                   }}
                   onModelChange={setTranscribeModel}
                   onTranscribed={(text) =>
@@ -391,13 +403,15 @@ function RouteComponent() {
                       className="font-medium text-sm"
                       htmlFor="negative-prompt-input"
                     >
-                      منفی
+                      {fa.imageGeneration.negativeLabel}
                     </label>
                     <TranscribeButton
                       language="en"
                       model={transcribeModel}
                       onError={(error) => {
-                        toast.error(`خطا در تبدیل صدا: ${error}`);
+                        toast.error(
+                          `${fa.imageGeneration.voiceTranscriptionError} ${error}`
+                        );
                       }}
                       onModelChange={setTranscribeModel}
                       onTranscribed={(text) => setNegativePrompt(text)}
@@ -414,7 +428,7 @@ function RouteComponent() {
                     }
                     id="negative-prompt-input"
                     onChange={(e) => setNegativePrompt(e.target.value)}
-                    placeholder="توضیحات منفی..."
+                    placeholder={fa.imageGeneration.negativePlaceholder}
                     value={negativePrompt}
                   />
                 </div>
@@ -423,7 +437,7 @@ function RouteComponent() {
                     className="mb-2 block font-medium text-sm"
                     htmlFor="sampler-select"
                   >
-                    نمونه‌بردار
+                    {fa.imageGeneration.samplerLabel}
                   </label>
                   <Select
                     onValueChange={(value) =>
@@ -432,7 +446,9 @@ function RouteComponent() {
                     value={settings.sampler}
                   >
                     <SelectTrigger className="h-9 w-full cursor-pointer gap-2">
-                      <SelectValue placeholder="نمونه‌بردار" />
+                      <SelectValue
+                        placeholder={fa.imageGeneration.samplerPlaceholder}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {samplers.map((sampler: string) => (
@@ -449,7 +465,10 @@ function RouteComponent() {
                       className="mb-2 block font-medium text-sm"
                       htmlFor="steps-slider"
                     >
-                      مراحل: {settings.steps}
+                      {fa.imageGeneration.stepsLabelAlt.replace(
+                        "{steps}",
+                        settings.steps.toString()
+                      )}
                     </label>
                     <Slider
                       className="w-full"

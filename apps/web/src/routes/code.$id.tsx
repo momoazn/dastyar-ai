@@ -115,7 +115,7 @@ function RouteComponent() {
           <div>
             <h2 className="mb-3 flex items-center gap-2 font-semibold text-lg">
               <Code className="h-5 w-5" />
-              تولیدات کد ({generations.length})
+              {fa.codeAssistant.session.generationsCount(generations.length)}
             </h2>
             <div className="space-y-3">
               {generations.map((generation) => (

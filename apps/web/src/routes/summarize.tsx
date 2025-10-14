@@ -257,7 +257,9 @@ function SummarizePage() {
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    isModelsLoading ? "Loading models..." : "Select model"
+                    isModelsLoading
+                      ? fa.general.loadingModels
+                      : fa.general.selectModel
                   }
                 />
               </SelectTrigger>
