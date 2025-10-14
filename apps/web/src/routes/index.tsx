@@ -16,42 +16,42 @@ export const Route = createFileRoute("/")({
 
 const features = [
   {
-    icon: <MessageSquare className="h-12 w-12" />,
+    icon: <MessageSquare className="size-12" />,
     title: fa.index.chatTitle,
     description: fa.index.chatDescription,
     link: "/chat",
     color: "text-primary",
   },
   {
-    icon: <MessageCircle className="h-12 w-12" />,
+    icon: <MessageCircle className="size-12" />,
     title: fa.index.translationTitle,
     description: fa.index.translationDescription,
     link: "/translation",
     color: "text-primary",
   },
   {
-    icon: <FileText className="h-12 w-12" />,
+    icon: <FileText className="size-12" />,
     title: fa.summarize.title,
     description: fa.summarize.description,
     link: "/summarize",
     color: "text-blue-600",
   },
   {
-    icon: <Mic className="h-12 w-12" />,
+    icon: <Mic className="size-12" />,
     title: fa.transcribe.title,
     description: fa.transcribe.description,
     link: "/transcribe",
     color: "text-green-600",
   },
   {
-    icon: <Image className="h-12 w-12" />,
+    icon: <Image className="size-12" />,
     title: fa.index.imageTitle,
     description: fa.index.imageDescription,
     link: "/image",
     color: "text-accent-foreground",
   },
   {
-    icon: <Code className="h-12 w-12" />,
+    icon: <Code className="size-12" />,
     title: fa.index.codeTitle,
     description: fa.index.codeDescription,
     link: "/code",
@@ -90,7 +90,7 @@ function HomeComponent() {
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 p-8 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <Card
                   className="group fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden border-2 bg-card/80 p-6 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/20"
