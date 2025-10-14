@@ -58,20 +58,28 @@ function LoginPage() {
     loginMutation.error?.message ?? fa.auth.loginForm.unknownError;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-gray-900">
       <div className="w-full max-w-md space-y-4">
-        <Card className="mx-auto w-full max-w-md">
+        <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader>
-            <CardTitle>{fa.auth.loginForm.title}</CardTitle>
-            <CardDescription>{fa.auth.loginForm.description}</CardDescription>
+            <CardTitle className="text-gray-900 dark:text-gray-100">
+              {fa.auth.loginForm.title}
+            </CardTitle>
+            <CardDescription className="text-gray-700 dark:text-gray-300">
+              {fa.auth.loginForm.description}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="username">
+                <Label
+                  className="font-medium text-gray-900 dark:text-gray-100"
+                  htmlFor="username"
+                >
                   {fa.auth.loginForm.usernameLabel}
                 </Label>
                 <Input
+                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                   disabled={loginMutation.isPending}
                   id="username"
                   onChange={(e) => setUsername(e.target.value)}
@@ -81,10 +89,14 @@ function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">
+                <Label
+                  className="font-medium text-gray-900 dark:text-gray-100"
+                  htmlFor="password"
+                >
                   {fa.auth.loginForm.passwordLabel}
                 </Label>
                 <Input
+                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                   disabled={loginMutation.isPending}
                   id="password"
                   onChange={(e) => setPassword(e.target.value)}
@@ -99,7 +111,7 @@ function LoginPage() {
                 </Alert>
               )}
               <Button
-                className="w-full"
+                className="w-full bg-blue-600 font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                 disabled={loginMutation.isPending}
                 type="submit"
               >
@@ -112,14 +124,19 @@ function LoginPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-lg">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-gray-600 text-sm dark:text-gray-400">
+              <p className="text-gray-800 text-sm dark:text-gray-300">
                 {fa.auth.loginForm.noAccount}
               </p>
               <Button asChild className="mt-2" variant="link">
-                <Link to="/register">{fa.auth.registerForm.register}</Link>
+                <Link
+                  className="font-medium text-blue-700 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  to="/register"
+                >
+                  {fa.auth.registerForm.register}
+                </Link>
               </Button>
             </div>
           </CardContent>
