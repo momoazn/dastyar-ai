@@ -1,13 +1,38 @@
+# Repository Guidelines
+
+## Project Structure & Module Organization
+
+The monorepo is coordinated by Turbo and Bun workspaces. Place API logic in `apps/server/src`, including Hono handlers, ORPC endpoints, and Prisma schema files under `apps/server/prisma`; runtime scripts belong in `apps/server/src/scripts`. React 19 UI code lives in `apps/web/src`, with routes, hooks, and components co-located by domain, while shared primitives stay in `apps/web/src/components`. Archive research or product briefs in `docs/` and `specs/`, and keep compiled binaries in `dist/`. Runtime assets such as Whisper models and generated outputs stay in `whisper-models/` and `generated-images/`.
+
+## Build, Test, and Development Commands
+
+Install dependencies once with `bun install` at the repo root. Use `bun run dev` for the coordinated Turbo pipeline, or target individual surfaces with `bun run dev:web` and `bun run dev:server`. Produce release artifacts via `bun run build`, which executes `build.ts` to emit the Bun server binary. Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
+
+## Coding Style & Naming Conventions
+
+Ultracite + Biome enforce linting, formatting, and strict a11y—run `npx ultracite fix` before opening a PR. TypeScript and JSX files should default to 2-space indentation, arrow functions, and `as const` literals for configuration objects. Name files and folders in kebab-case (`session-manager.ts`), React components in PascalCase, and hooks with a `use` prefix. Prefer object spread over `Object.assign`, avoid `any`, and colocate module exports with their implementation.
+
+## Testing Guidelines
+
+Add unit or integration tests alongside the code they cover using Bun’s test runner (`bun test apps/server/src/...`). Name specs `*.test.ts` or `*.test.tsx` with descriptive titles. Focus coverage on authentication flows, AI orchestration, and config generation logic; document any temporary gaps in `specs/IMPROVEMENTS_TODO.md` until tests land.
+
+## Commit & Pull Request Guidelines
+
+Follow the observed conventional-commit style—start messages with `feat:`, `refactor:`, or `fix:` and keep the summary imperative. Reference related issues or specs, include screenshots or recordings for UI changes, and call out database or config migrations explicitly. Each PR should list verification steps (`bun test`, manual QA scenarios) and surface any follow-up tasks or risks.
+
 # Project Context
+
 Ultracite enforces strict type safety, accessibility standards, and consistent code quality for JavaScript/TypeScript projects using Biome's lightning-fast formatter and linter.
 
 ## Key Principles
+
 - Zero configuration required
 - Subsecond performance
 - Maximum type safety
 - AI-friendly code generation
 
 ## Before Writing Code
+
 1. Analyze existing patterns in the codebase
 2. Consider edge cases and error scenarios
 3. Follow the rules below strictly
@@ -16,6 +41,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 ## Rules
 
 ### Accessibility (a11y)
+
 - Don't use `accessKey` attribute on any HTML element.
 - Don't set `aria-hidden="true"` on focusable elements.
 - Don't add ARIA roles, states, and properties to elements that don't support them.
@@ -52,6 +78,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Use correct ISO language/country codes for the `lang` attribute.
 
 ### Code Complexity and Quality
+
 - Don't use consecutive spaces in regular expression literals.
 - Don't use the `arguments` object.
 - Don't use primitive type aliases or misleading types.
@@ -107,6 +134,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Don't use literal numbers that lose precision.
 
 ### React and JSX Best Practices
+
 - Don't use the return value of React.render.
 - Make sure all dependencies are correctly specified in React hooks.
 - Make sure all React hooks are called from the top level of component functions.
@@ -125,6 +153,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Watch out for possible "wrong" semicolons inside JSX elements.
 
 ### Correctness and Safety
+
 - Don't assign a value to itself.
 - Don't return a value from a setter.
 - Don't compare expressions that modify string case with non-compliant values.
@@ -149,7 +178,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Don't use bitwise operators.
 - Don't use expressions where the operation doesn't change the value.
 - Make sure Promise-like statements are handled appropriately.
-- Don't use __dirname and __filename in the global scope.
+- Don't use **dirname and **filename in the global scope.
 - Prevent import cycles.
 - Don't use configured elements.
 - Don't hardcode sensitive data like API keys and tokens.
@@ -180,6 +209,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Don't use `target="_blank"` without `rel="noopener"`.
 
 ### TypeScript Best Practices
+
 - Don't use TypeScript enums.
 - Don't export imported variables.
 - Don't add type annotations to variables, parameters, and class properties that are initialized with literal expressions.
@@ -204,6 +234,7 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Use the namespace keyword instead of the module keyword to declare TypeScript namespaces.
 
 ### Style and Consistency
+
 - Don't use global `eval()`.
 - Don't use callbacks in asynchronous tests and hooks.
 - Don't use negation in `if` statements that have `else` clauses.
@@ -291,30 +322,34 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 - Make sure to use the "use strict" directive in script files.
 
 ### Next.js Specific Rules
+
 - Don't use `<img>` elements in Next.js projects.
 - Don't use `<head>` elements in Next.js projects.
-- Don't import next/document outside of pages/_document.jsx in Next.js projects.
-- Don't use the next/head module in pages/_document.js on Next.js projects.
+- Don't import next/document outside of pages/\_document.jsx in Next.js projects.
+- Don't use the next/head module in pages/\_document.js on Next.js projects.
 
 ### Testing Best Practices
+
 - Don't use export or module.exports in test files.
 - Don't use focused tests.
 - Make sure the assertion function, like expect, is placed inside an it() function call.
 - Don't use disabled tests.
 
 ## Common Tasks
+
 - `npx ultracite init` - Initialize Ultracite in your project
 - `npx ultracite fix` - Format and fix code automatically
 - `npx ultracite check` - Check for issues without fixing
 
 ## Example: Error Handling
+
 ```typescript
 // ✅ Good: Comprehensive error handling
 try {
   const result = await fetchData();
   return { success: true, data: result };
 } catch (error) {
-  console.error('API call failed:', error);
+  console.error("API call failed:", error);
   return { success: false, error: error.message };
 }
 
