@@ -90,6 +90,24 @@ const copyFileIfExists = (src: string, dest: string): void => {
   copyFileSync(src, dest);
 };
 
+const parseBooleanEnv = (value: string | undefined, defaultValue = false) => {
+  if (value === undefined) {
+    return defaultValue;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+  return defaultValue;
+};
+
+const skipOfflineModelDownloads =
+  parseBooleanEnv(process.env.SKIP_OFFLINE_MODEL_DOWNLOADS) ||
+  parseBooleanEnv(process.env.SKIP_MODEL_DOWNLOADS);
+
 const resolveDistPath = (
   configuredPath: string,
   fallbackRelative: string
@@ -261,15 +279,37 @@ const main = async (): Promise<void> => {
 
   const modelIds = collectOfflineModelIds();
 
-  await Promise.all(
-    modelIds.map(async (modelId) => {
-      const modelDir = join(modelsOut, modelId);
-      if (existsSync(modelDir)) {
-        return;
-      }
-      await downloadModelRepo(modelId, modelsOut);
-    })
-  );
+  if (skipOfflineModelDownloads) {
+    console.log(
+      "⚠️  Skipping offline model downloads (SKIP_OFFLINE_MODEL_DOWNLOADS set)."
+    );
+  } else if (modelIds.length > 0) {
+    const downloadResults = await Promise.allSettled(
+      modelIds.map(async (modelId) => {
+        const modelDir = join(modelsOut, modelId);
+        if (existsSync(modelDir)) {
+          return;
+        }
+        await downloadModelRepo(modelId, modelsOut);
+      })
+    );
+    type RejectedDownload = Extract<
+      PromiseSettledResult<void>,
+      { status: "rejected" }
+    >;
+    const failedDownloads = downloadResults.filter(
+      (result): result is RejectedDownload => result.status === "rejected"
+    );
+    if (failedDownloads.length > 0) {
+      console.warn(
+        [
+          "⚠️  Failed to prefetch some offline models. They will need to be downloaded at runtime:",
+          ...failedDownloads.map((entry) => `   • ${entry.reason}`),
+          "   Set SKIP_OFFLINE_MODEL_DOWNLOADS=1 to silence this warning during builds without network access.",
+        ].join("\n")
+      );
+    }
+  }
 
   console.log("✅ Done. Artifacts available in ./dist");
 };
