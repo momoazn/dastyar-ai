@@ -23,19 +23,20 @@ export function ModelsTable() {
     error,
   } = useQuery(orpc.admin.listAllModels.queryOptions());
 
-  const toggleModelMutation = useMutation({
-    mutationFn: orpc.admin.toggleModelStatus.mutate,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: orpc.admin.listAllModels.queryKey(),
-      });
-      toast.success(fa.admin.models.messages.statusUpdated);
-    },
-    onError: (err) => {
-      console.error("Error toggling model status:", err);
-      toast.error(fa.admin.models.messages.errorUpdatingStatus);
-    },
-  });
+  const toggleModelMutation = useMutation(
+    orpc.admin.toggleModelStatus.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.admin.listAllModels.queryKey(),
+        });
+        toast.success(fa.admin.models.messages.statusUpdated);
+      },
+      onError: (err) => {
+        console.error("Error toggling model status:", err);
+        toast.error(fa.admin.models.messages.errorUpdatingStatus);
+      },
+    })
+  );
 
   const handleToggleModel = (modelId: number, isEnabled: boolean) => {
     toggleModelMutation.mutate({

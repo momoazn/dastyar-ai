@@ -70,7 +70,7 @@ export function UserProfileButton() {
   const userInitials = user?.username
     ? user.username
         .split(" ")
-        .map((name) => name[0])
+        .map((name: string) => name[0])
         .join("")
         .toUpperCase()
         .slice(0, 2)

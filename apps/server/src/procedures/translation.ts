@@ -1,6 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
-import { LanguageCode, Tone } from "@/database";
+import { type LanguageCode, languageCodes, type Tone, tones } from "@/database";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
@@ -73,12 +73,12 @@ export const translationProcedures = {
       z.object({
         text: z.string().min(1),
         sourceLanguage: z.enum(
-          Object.values(LanguageCode) as [string, ...string[]]
+          Object.values(languageCodes) as [string, ...string[]]
         ),
         targetLanguage: z.enum(
-          Object.values(LanguageCode) as [string, ...string[]]
+          Object.values(languageCodes) as [string, ...string[]]
         ),
-        tone: z.enum(Object.values(Tone) as [string, ...string[]]),
+        tone: z.enum(Object.values(tones) as [string, ...string[]]),
         modelId: z.number(),
       })
     )

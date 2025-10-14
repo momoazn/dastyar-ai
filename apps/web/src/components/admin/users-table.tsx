@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fa } from "@/lib/persian-texts";
-import type { User } from "@/server/database";
+import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
 import { ChangeRoleDialog } from "./change-role-dialog";
 import { ResetPasswordDialog } from "./reset-password-dialog";

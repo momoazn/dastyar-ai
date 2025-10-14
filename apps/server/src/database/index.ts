@@ -16,45 +16,5 @@ export const db = drizzle({
   schema,
 });
 
-export type {
-  InsertChatThread,
-  InsertCodeAssistSession,
-  InsertCodeGeneration,
-  InsertCodeReview,
-  InsertGeneratedImage,
-  InsertImageThread,
-  InsertLlmModel,
-  InsertMessage,
-  InsertSummary,
-  InsertTranslation,
-  InsertUser,
-  LanguageCode,
-  LLMModelProvider,
-  MessageRole,
-  MessageStatus,
-  SelectChatThread as ChatThread,
-  SelectCodeAssistSession as CodeAssistSession,
-  SelectCodeGeneration as CodeGeneration,
-  SelectCodeReview as CodeReview,
-  SelectGeneratedImage as GeneratedImage,
-  SelectImageThread as ImageThread,
-  SelectLlmModel as LLMModel,
-  SelectMessage as Message,
-  SelectSummary as Summary,
-  SelectTranslation as Translation,
-  SelectUser as User,
-  SummaryMode,
-  Tone,
-  UserRole,
-} from "./schema";
-
-export const schemaExports = schema;
-
-export type JsonPrimitive = string | number | boolean | null;
-export type JsonValue =
-  | JsonPrimitive
-  | { [key: string]: JsonValue }
-  | JsonValue[];
-
 // biome-ignore lint/performance/noBarrelFile: GO AWAY
 export * from "./schema";

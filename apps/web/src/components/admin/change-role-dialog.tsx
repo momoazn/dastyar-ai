@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { fa } from "@/lib/persian-texts";
-import type { User } from "@/server/database";
+import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 
 type UserType = Omit<User, "password" | "salt">;
 

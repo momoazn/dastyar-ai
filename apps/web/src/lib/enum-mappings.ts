@@ -1,5 +1,5 @@
 import { fa } from "@/lib/persian-texts";
-// Directly import Prisma-generated types
+// Directly import database schema types
 import type {
   LanguageCode,
   LLMModelProvider,
@@ -7,7 +7,7 @@ import type {
   MessageStatus,
   SummaryMode,
   Tone,
-} from "@/server/database";
+} from "@/server/database/schema";
 
 // Language code to label mappings
 export const languageCodeToLabel: Record<LanguageCode, string> = {
@@ -17,15 +17,6 @@ export const languageCodeToLabel: Record<LanguageCode, string> = {
   fr: fa.languages.french,
   de: fa.languages.german,
   es: fa.languages.spanish,
-  it: "ایتالیایی",
-  pt: "پرتغالی",
-  ru: "روسی",
-  zh: "چینی",
-  ja: "ژاپنی",
-  ko: "کره‌ای",
-  tr: "ترکی",
-  hi: "هندی",
-  ur: "اردو",
 } as const;
 
 // Tone to label mappings
@@ -33,7 +24,6 @@ export const toneToLabel: Record<Tone, string> = {
   formal: fa.tones.formal,
   informal: fa.tones.informal,
   business: fa.tones.business,
-  casual: fa.tones.casual,
   academic: fa.tones.academic,
   technical: fa.tones.technical,
   creative: fa.tones.creative,
@@ -50,8 +40,7 @@ export const summaryModeToLabel: Record<SummaryMode, string> = {
 
 // Message status to label mappings
 export const messageStatusToLabel: Record<MessageStatus, string> = {
-  reasoning: "در حال استدلال",
-  generating: "در حال تولید",
+  streaming: "در حال پاسخگویی",
   finished: "تمام شده",
   errored: "خطا",
   stopped: "متوقف شده",

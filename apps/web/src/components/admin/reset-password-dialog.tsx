@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { fa } from "@/lib/persian-texts";
-import type { User } from "@/server/database";
+import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 
 type UserType = Omit<User, "password" | "salt">;
 

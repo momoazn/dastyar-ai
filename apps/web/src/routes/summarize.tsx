@@ -26,7 +26,7 @@ import {
 } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
-import type { SummaryMode, Tone } from "@/server/database";
+import type { SummaryMode, Tone } from "@/server/database/schema";
 import { orpc, queryClient } from "@/utils/orpc";
 
 const COPY_SUCCESS_DURATION_MS = 2000;

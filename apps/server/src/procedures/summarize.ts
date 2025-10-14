@@ -1,6 +1,6 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
-import { SummaryMode, Tone } from "@/database";
+import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
@@ -76,10 +76,10 @@ export const summarizeProcedures = {
       z.object({
         text: z.string().min(1),
         mode: z
-          .enum(Object.values(SummaryMode) as [string, ...string[]])
+          .enum(Object.values(summaryModes) as [string, ...string[]])
           .default("standard"),
         tone: z
-          .enum(Object.values(Tone) as [string, ...string[]])
+          .enum(Object.values(tones) as [string, ...string[]])
           .default("professional"),
         modelId: z.number(),
       })
