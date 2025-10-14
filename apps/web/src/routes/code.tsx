@@ -5,7 +5,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -72,6 +72,7 @@ function RouteComponent() {
   const [output, setOutput] = useState("");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const lastSessionIdRef = useRef<number | null>(null);
 
   const {
     modelId,
@@ -90,26 +91,28 @@ function RouteComponent() {
   );
 
   const createSessionMutation = useMutation(
-    orpc.code.createSession.mutationOptions({
-      onSuccess: (data) => {
-        setSessionId(data.id);
-        navigate({
-          to: "/code",
-          search: { id: data.id },
-        });
-      },
-    })
+    orpc.code.createSession.mutationOptions()
   );
 
   const generateCodeMutation = useMutation(
     orpc.code.generateCode.mutationOptions({
       onSuccess: (data) => {
         setOutput(data.generatedCode || "");
+        const sid = lastSessionIdRef.current || sessionId || 0;
+        // Refresh session and sidebar
         queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({
-            input: { id: sessionId || 0 },
-          }),
+          queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
         });
+        queryClient.invalidateQueries({
+          queryKey: orpc.code.getGenerations.queryKey({ input: { sessionId: sid } }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.code.listSessions.queryKey(),
+        });
+        // Navigate to the session detail page so users see history immediately
+        if (sid) {
+          navigate({ to: "/code/$id", params: { id: String(sid) } });
+        }
       },
     })
   );
@@ -132,10 +135,15 @@ function RouteComponent() {
       onSuccess: (data) => {
         const reviewText = `${fa.codeAssistant.review.overallScore}: ${data.overallScore}/10\n\n${data.feedback}\n\n${fa.codeAssistant.review.suggestions}:\n${data.suggestions?.map((s) => `- ${s.message}`).join("\n") || fa.codeAssistant.review.noSuggestions}`;
         setOutput(reviewText);
+        const sid = lastSessionIdRef.current || sessionId || 0;
         queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({
-            input: { id: sessionId || 0 },
-          }),
+          queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.code.getReviews.queryKey({ input: { sessionId: sid } }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.code.listSessions.queryKey(),
         });
       },
     })
@@ -159,7 +167,11 @@ function RouteComponent() {
   useEffect(() => {
     if (selectedSession) {
       setSessionId(selectedSession.id);
-      setLanguage(selectedSession.language as ProgrammingLanguage);
+      const incoming = selectedSession.language as string;
+      const isSupported = languages.some((l) => l.value === incoming);
+      if (isSupported) {
+        setLanguage(incoming as ProgrammingLanguage);
+      }
     }
   }, [selectedSession]);
 
@@ -176,58 +188,81 @@ function RouteComponent() {
   };
 
   const handleExecute = () => {
-    if (!sessionId) {
-      // Create session first
-      createSessionMutation.mutate({
-        title: fa.codeAssistant.newSessionTitle(
-          modes.find((m) => m.value === mode)?.label || ""
-        ),
+    const executeWithSession = (sid: number) => {
+      lastSessionIdRef.current = sid;
+      if (!(inputCode.trim() && modelId)) {
+        return;
+      }
+
+      const shared = {
         language,
-      });
-      return;
-    }
+        modelId,
+      };
 
-    if (!(inputCode.trim() && modelId)) {
-      return;
-    }
-
-    const commonParams = {
-      sessionId,
-      code: inputCode,
-      language,
-      modelId: modelId || 0,
+      switch (mode) {
+        case "generate":
+          generateCodeMutation.mutate({
+            sessionId: sid,
+            prompt: inputCode,
+            context: context.trim() || undefined,
+            ...shared,
+          });
+          break;
+        case "explain":
+          explainCodeMutation.mutate({
+            sessionId: sid,
+            code: inputCode,
+            ...shared,
+          });
+          break;
+        case "review":
+          reviewCodeMutation.mutate({
+            sessionId: sid,
+            code: inputCode,
+            ...shared,
+          });
+          break;
+        case "debug":
+          if (!errorMessage.trim()) {
+            console.error(fa.codeAssistant.messages.errorRequired);
+            return;
+          }
+          debugCodeMutation.mutate({
+            sessionId: sid,
+            code: inputCode,
+            error: errorMessage,
+            ...shared,
+          });
+          break;
+        default:
+          break;
+      }
     };
 
-    switch (mode) {
-      case "generate":
-        generateCodeMutation.mutate({
-          ...commonParams,
-          prompt: inputCode,
-          context: context.trim() || undefined,
-        });
-        break;
-      case "explain":
-        explainCodeMutation.mutate(commonParams);
-        break;
-      case "review":
-        reviewCodeMutation.mutate(commonParams);
-        break;
-      case "debug":
-        if (!errorMessage.trim()) {
-          console.error(fa.codeAssistant.messages.errorRequired);
-          return;
-        }
-        debugCodeMutation.mutate({
-          sessionId,
-          code: inputCode,
+    if (!sessionId) {
+      // Create session first, then immediately execute the selected action
+      createSessionMutation.mutate(
+        {
+          title: fa.codeAssistant.newSessionTitle(
+            modes.find((m) => m.value === mode)?.label || ""
+          ),
           language,
-          error: errorMessage,
-          modelId: modelId || 0,
-        });
-        break;
-      default:
-        break;
+        },
+        {
+          onSuccess: (data) => {
+            setSessionId(data.id);
+            // Update sidebar list promptly
+            queryClient.invalidateQueries({
+              queryKey: orpc.code.listSessions.queryKey(),
+            });
+            executeWithSession(data.id);
+          },
+        }
+      );
+      return;
     }
+
+    executeWithSession(sessionId);
   };
 
   const currentMutation = {

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 import { ChatThreadsList } from "./chat-threads-list";
+import { CodeSessionsList } from "./code-sessions-list";
 import { ImagesSidebar } from "./images-sidebar";
 import { AppSidebarHeader, NavigationMenu } from "./navigation";
 import { SummariesList } from "./summaries-list";
@@ -33,6 +34,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       createChatThread();
     } else if (activeItem?.url === "/translation") {
       handleNewTranslation();
+    } else if (activeItem?.url === "/code") {
+      navigate({ to: "/code" });
     } else if (location.pathname.startsWith("/image")) {
       navigate({ to: "/image" });
     }
@@ -52,6 +55,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return <SummariesList />;
       case fa.navigation.imageGeneration:
         return <ImagesSidebar />;
+      case fa.navigation.codeAssistant:
+        return <CodeSessionsList />;
       default:
         return null;
     }

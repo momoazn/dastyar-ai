@@ -150,11 +150,15 @@ export async function createCodeGeneration(
  * @returns Array of code generations.
  */
 export async function getCodeGenerations(
-  sessionId: number
+  sessionId: number,
+  userId?: number
 ): Promise<CodeGeneration[]> {
   try {
     const generations = await prisma.codeGeneration.findMany({
-      where: { sessionId },
+      where: {
+        sessionId,
+        ...(userId ? { session: { userId } } : {}),
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -209,10 +213,16 @@ export async function createCodeReview(
  * @param sessionId - The session ID.
  * @returns Array of code reviews.
  */
-export async function getCodeReviews(sessionId: number): Promise<CodeReview[]> {
+export async function getCodeReviews(
+  sessionId: number,
+  userId?: number
+): Promise<CodeReview[]> {
   try {
     const reviews = await prisma.codeReview.findMany({
-      where: { sessionId },
+      where: {
+        sessionId,
+        ...(userId ? { session: { userId } } : {}),
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -230,10 +240,17 @@ export async function getCodeReviews(sessionId: number): Promise<CodeReview[]> {
  * Deletes a code generation by ID.
  * @param id - The generation ID.
  */
-export async function deleteCodeGeneration(id: number): Promise<void> {
+export async function deleteCodeGeneration(
+  id: number,
+  userId?: number
+): Promise<void> {
   try {
-    await prisma.codeGeneration.delete({
-      where: { id },
+    // Restrict deletion to records owned by the requesting user when provided
+    await prisma.codeGeneration.deleteMany({
+      where: {
+        id,
+        ...(userId ? { userId } : {}),
+      },
     });
   } catch (error) {
     console.error(`Failed to delete code generation ${id}:`, error);
@@ -245,10 +262,17 @@ export async function deleteCodeGeneration(id: number): Promise<void> {
  * Deletes a code review by ID.
  * @param id - The review ID.
  */
-export async function deleteCodeReview(id: number): Promise<void> {
+export async function deleteCodeReview(
+  id: number,
+  userId?: number
+): Promise<void> {
   try {
-    await prisma.codeReview.delete({
-      where: { id },
+    // Restrict deletion to records owned by the requesting user when provided
+    await prisma.codeReview.deleteMany({
+      where: {
+        id,
+        ...(userId ? { userId } : {}),
+      },
     });
   } catch (error) {
     console.error(`Failed to delete code review ${id}:`, error);

@@ -293,7 +293,7 @@ export const codeProcedures = {
     }),
 
   // Code explanation
-  explainCode: publicProcedure
+  explainCode: protectedProcedure
     .input(
       z.object({
         sessionId: z.number(),
@@ -445,7 +445,7 @@ export const codeProcedures = {
     }),
 
   // Code debugging
-  debugCode: publicProcedure
+  debugCode: protectedProcedure
     .input(
       z.object({
         sessionId: z.number(),
@@ -513,33 +513,43 @@ export const codeProcedures = {
       return result;
     }),
 
-  // Get generations and reviews for a session
-  getGenerations: publicProcedure
+  // Get generations and reviews for a session (ownership enforced)
+  getGenerations: protectedProcedure
     .input(z.object({ sessionId: z.number() }))
-    .handler(async ({ input }) => {
-      const generations = await getCodeGenerations(input.sessionId);
+    .handler(async ({ input, context }) => {
+      // Verify the session belongs to the current user
+      const session = await getCodeAssistSession(input.sessionId, context.user.id);
+      if (!session) {
+        throw new Error("Session not found or access denied");
+      }
+      const generations = await getCodeGenerations(input.sessionId, context.user.id);
       return generations;
     }),
 
-  getReviews: publicProcedure
+  getReviews: protectedProcedure
     .input(z.object({ sessionId: z.number() }))
-    .handler(async ({ input }) => {
-      const reviews = await getCodeReviews(input.sessionId);
+    .handler(async ({ input, context }) => {
+      // Verify the session belongs to the current user
+      const session = await getCodeAssistSession(input.sessionId, context.user.id);
+      if (!session) {
+        throw new Error("Session not found or access denied");
+      }
+      const reviews = await getCodeReviews(input.sessionId, context.user.id);
       return reviews;
     }),
 
   // Delete individual generations and reviews
   deleteGeneration: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteCodeGeneration(input.id);
+    .handler(async ({ input, context }) => {
+      await deleteCodeGeneration(input.id, context.user.id);
       return { ok: true } as const;
     }),
 
   deleteReview: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      await deleteCodeReview(input.id);
+    .handler(async ({ input, context }) => {
+      await deleteCodeReview(input.id, context.user.id);
       return { ok: true } as const;
     }),
 };

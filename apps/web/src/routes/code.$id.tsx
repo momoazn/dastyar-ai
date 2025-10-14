@@ -36,6 +36,17 @@ function RouteComponent() {
     })
   );
 
+  // Fetch models to map modelId -> model name for display
+  const { data: models } = useQuery(
+    orpc.models.list.queryOptions({
+      input: { isEnabled: true, sync: true },
+    })
+  );
+
+  const modelNameById = new Map<number, string>(
+    (models ?? []).map((m) => [m.id, m.name])
+  );
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center" dir="rtl">
@@ -125,7 +136,9 @@ function RouteComponent() {
                       {formatDate(generation.createdAt)}
                     </div>
                     <div className="text-muted-foreground text-sm">
-                      {fa.codeAssistant.session.model}: {generation.modelId}
+                      {fa.codeAssistant.session.model}:{" "}
+                      {modelNameById.get(generation.modelId) ||
+                        generation.modelId}
                     </div>
                   </div>
                   <div className="mb-3">
