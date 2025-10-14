@@ -54,6 +54,9 @@ function LoginPage() {
     loginMutation.mutate({ username, password });
   };
 
+  const localError =
+    loginMutation.error?.message ?? fa.auth.loginForm.unknownError;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
       <div className="w-full max-w-md space-y-4">
@@ -92,11 +95,7 @@ function LoginPage() {
               </div>
               {loginMutation.error && (
                 <Alert variant="destructive">
-                  <AlertDescription>
-                    {loginMutation.error instanceof Error
-                      ? loginMutation.error.message
-                      : fa.auth.loginForm.unknownError}
-                  </AlertDescription>
+                  <AlertDescription>{localError}</AlertDescription>
                 </Alert>
               )}
               <Button

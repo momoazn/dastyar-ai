@@ -9,7 +9,7 @@ import { type Context, Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import type { Prisma } from "@/database";
-import { type AuthEnv, authMiddleware } from "@/middlewares";
+import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";

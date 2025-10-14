@@ -1,8 +1,7 @@
+import { ORPCError } from "@orpc/client";
 import { z } from "zod";
-import type { User } from "@/database";
 import {
   createUser,
-  generateSalt,
   hashPassword,
   usernameExists,
   verifyUserCredentials,
@@ -24,61 +23,27 @@ export const authProcedures = {
   register: publicProcedure.input(registerSchema).handler(async ({ input }) => {
     const { username, password } = input;
 
-    console.debug(
-      `[auth.register] Registration attempt for username: ${username}`
-    );
-
-    // Check if user already exists
-    const userExists = await usernameExists(username);
-
-    console.debug(
-      `[auth.register] User existence check for "${username}": ${userExists ? "EXISTS" : "NOT FOUND"}`
-    );
-
-    if (userExists) {
-      console.warn(
-        `[auth.register] Registration failed: username "${username}" already exists`
-      );
-      throw new Error("Username already exists");
-    }
-
-    const salt = await generateSalt(12);
-    console.debug(`[auth.register] Salt generated for "${username}"`);
-    const hashedPassword = await hashPassword(password, salt);
-    console.debug(`[auth.register] Password hashed for "${username}"`);
-
-    let user: User;
-    try {
-      console.debug(`[auth.register] Attempting to create user "${username}"`);
-      user = await createUser({
-        username,
-        password: hashedPassword,
-        salt,
-        role: "user",
+    if (await usernameExists(username)) {
+      console.warn(`[auth.register] Username already exists: ${username}`);
+      throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+        message: "نام کاربری قبلاً استفاده شده است",
+        status: 400,
       });
-      console.debug(
-        `[auth.register] User successfully created for username: "${username}"`
-      );
-    } catch (error) {
-      console.error(
-        `[auth.register] Failed to create user "${username}":`,
-        error
-      );
-      throw new Error("Failed to register user. Please try again.");
     }
 
-    console.debug(
-      `[auth.register] User created: id=${user.id}, username=${user.username}`
-    );
+    const hashedPassword = await hashPassword(password);
+    const user = await createUser({
+      username,
+      password: hashedPassword,
+      salt: "", // bcrypt handles salt internally
+      role: "user",
+    });
 
-    // Generate JWT
     const token = generateJwtToken({
       id: user.id,
       username: user.username,
       role: user.role,
     });
-
-    console.debug(`[auth.register] JWT generated for "${username}"`);
 
     return {
       token,
@@ -93,32 +58,20 @@ export const authProcedures = {
   login: publicProcedure.input(loginSchema).handler(async ({ input }) => {
     const { username, password } = input;
 
-    console.debug(`[auth.login] Login attempt for username: ${username}`);
-
     const user = await verifyUserCredentials({ username, password });
-
-    console.debug(
-      `[auth.login] User lookup for "${username}": ${user ? "FOUND" : "NOT FOUND"}`
-    );
-
     if (!user) {
-      console.warn(
-        `[auth.login] Invalid credentials: user "${username}" not found or password mismatch`
-      );
-      throw new Error("Invalid credentials");
+      console.warn(`[auth.login] Invalid credentials: ${username}`);
+      throw new ORPCError("INVALID_CREDENTIALS", {
+        message: "نام کاربری یا رمز عبور اشتباه است",
+        status: 401,
+      });
     }
-
-    console.debug(
-      `[auth.login] Password verification for "${username}": SUCCESS`
-    );
 
     const token = generateJwtToken({
       id: user.id,
       username: user.username,
       role: user.role,
     });
-
-    console.debug(`[auth.login] JWT generated for "${username}"`);
 
     return {
       token,
@@ -130,22 +83,9 @@ export const authProcedures = {
     };
   }),
 
-  me: protectedProcedure.handler(({ context }) => {
-    console.debug("[auth.me] Me handler invoked");
-
-    if (!context.user) {
-      console.warn("[auth.me] Not authenticated - no user in context");
-      throw new Error("Not authenticated");
-    }
-
-    console.debug(
-      `[auth.me] Authenticated as user: id=${context.user.id}, username=${context.user.username}, role=${context.user.role}`
-    );
-
-    return {
-      id: context.user.id,
-      username: context.user.username,
-      role: context.user.role,
-    };
-  }),
+  me: protectedProcedure.handler(({ context }) => ({
+    id: context.user.id,
+    username: context.user.username,
+    role: context.user.role,
+  })),
 };

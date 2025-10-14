@@ -45,6 +45,8 @@ export const fa = {
       alreadyRegistered: "قبلاً ثبت نام کرده‌اید؟",
       noAccount: "حساب کاربری ندارید؟",
       login: "ورود",
+      usernameExists: "نام کاربری قبلاً استفاده شده است",
+      registrationFailed: "ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید",
     },
     loginForm: {
       title: "ورود به حساب کاربری",
@@ -55,6 +57,9 @@ export const fa = {
       noAccount: "حساب کاربری ندارید؟",
       register: "ثبت نام",
       unknownError: "خطای نامشخص",
+      userNotFound: "کاربری با این نام کاربری یافت نشد",
+      invalidPassword: "رمز عبور اشتباه است",
+      invalidCredentials: "نام کاربری یا رمز عبور اشتباه است",
     },
   },
   navigation: {

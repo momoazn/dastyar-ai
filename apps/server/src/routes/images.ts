@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Hono } from "hono";
-import { type AuthEnv, authMiddleware } from "@/middlewares";
+import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getGeneratedImageByUser } from "@/repositories/images";
 
 const getContentType = (fileName: string): string => {

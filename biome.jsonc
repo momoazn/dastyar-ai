@@ -10,7 +10,7 @@
         "noImgElement": "off"
       },
       "style": {
-        "noMagicNumbers": "info"
+        "noMagicNumbers": "off"
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": {
