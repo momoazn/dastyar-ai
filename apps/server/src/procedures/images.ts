@@ -25,6 +25,7 @@ const imageGenerationParamsSchema = z.object({
 });
 
 export type GenerateInput = z.infer<typeof imageGenerationParamsSchema>;
+export type GenerationSettings = Omit<GenerateInput, "prompt" | "threadId">;
 
 export const imageProcedures = {
   // Check if Stable Diffusion service is available
@@ -81,7 +82,7 @@ export const imageProcedures = {
         negativePrompt: img.negativePrompt,
         url: getImageUrl(img.id),
         createdAt: img.createdAt,
-        settings: img.settings,
+        settings: img.settings as GenerationSettings,
       }));
     }),
 

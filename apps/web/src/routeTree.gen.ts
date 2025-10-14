@@ -18,6 +18,7 @@ import { Route as ImageRouteImport } from './routes/image'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ImageIndexRouteImport } from './routes/image.index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ImageIdRouteImport } from './routes/image.$id'
 import { Route as CodeIdRouteImport } from './routes/code.$id'
@@ -68,6 +69,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImageIndexRoute = ImageIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ImageRoute,
+} as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
   id: '/chat/',
   path: '/chat/',
@@ -103,12 +109,12 @@ export interface FileRoutesByFullPath {
   '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
   '/chat': typeof ChatIndexRoute
+  '/image/': typeof ImageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/code': typeof CodeRouteWithChildren
-  '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/summarize': typeof SummarizeRoute
@@ -118,6 +124,7 @@ export interface FileRoutesByTo {
   '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
   '/chat': typeof ChatIndexRoute
+  '/image': typeof ImageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +141,7 @@ export interface FileRoutesById {
   '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
   '/chat/': typeof ChatIndexRoute
+  '/image/': typeof ImageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,12 +159,12 @@ export interface FileRouteTypes {
     | '/code/$id'
     | '/image/$id'
     | '/chat'
+    | '/image/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/code'
-    | '/image'
     | '/login'
     | '/register'
     | '/summarize'
@@ -166,6 +174,7 @@ export interface FileRouteTypes {
     | '/code/$id'
     | '/image/$id'
     | '/chat'
+    | '/image'
   id:
     | '__root__'
     | '/'
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/code/$id'
     | '/image/$id'
     | '/chat/'
+    | '/image/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/image/': {
+      id: '/image/'
+      path: '/'
+      fullPath: '/image/'
+      preLoaderRoute: typeof ImageIndexRouteImport
+      parentRoute: typeof ImageRoute
+    }
     '/chat/': {
       id: '/chat/'
       path: '/chat'
@@ -305,10 +322,12 @@ const CodeRouteWithChildren = CodeRoute._addFileChildren(CodeRouteChildren)
 
 interface ImageRouteChildren {
   ImageIdRoute: typeof ImageIdRoute
+  ImageIndexRoute: typeof ImageIndexRoute
 }
 
 const ImageRouteChildren: ImageRouteChildren = {
   ImageIdRoute: ImageIdRoute,
+  ImageIndexRoute: ImageIndexRoute,
 }
 
 const ImageRouteWithChildren = ImageRoute._addFileChildren(ImageRouteChildren)

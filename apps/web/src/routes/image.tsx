@@ -1,45 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ImagePlus } from "lucide-react";
-import { useCallback } from "react";
-import { Button } from "@/components/ui";
-import { useImageThreads } from "@/hooks/use-image-threads";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
 
 export const Route = createFileRoute("/image")({
   component: () => (
     <ProtectedLayout>
-      <RouteComponent />
+      <Outlet />
     </ProtectedLayout>
   ),
 });
-
-function RouteComponent() {
-  const navigate = useNavigate();
-  const { create } = useImageThreads();
-
-  const handleCreate = useCallback(async () => {
-    const created = await create.mutateAsync({
-      title: fa.imageChat.newChatDefaultTitle,
-    });
-    navigate({ to: "/image/$id", params: { id: created.id.toString() } });
-  }, [create, navigate]);
-
-  return (
-    <div
-      className="flex h-full flex-col items-center justify-center gap-4"
-      dir="rtl"
-    >
-      <ImagePlus className="size-16 text-muted-foreground" />
-      <div className="space-y-2 text-center">
-        <h1 className="font-semibold text-2xl">{fa.imageChat.newChatTitle}</h1>
-        <p className="text-muted-foreground">
-          {fa.imageChat.newChatDescription}
-        </p>
-      </div>
-      <Button onClick={handleCreate} size="lg">
-        {fa.navigation.newImageChat}
-      </Button>
-    </div>
-  );
-}

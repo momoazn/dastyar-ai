@@ -2,6 +2,7 @@ import { createFileRoute, useParams } from "@tanstack/react-router";
 import { Download, ImagePlus, RotateCcw, Settings2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { LS_TOKEN_KEY } from "@/atoms/auth";
 import {
   Conversation,
   ConversationContent,
@@ -41,12 +42,12 @@ import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
 import { detectTextDirection } from "@/lib/utils";
-import type { GenerateInput } from "@/server/procedures/images";
+import type { GenerationSettings } from "@/server/procedures/images";
 
 const DEFAULT_NEGATIVE_PROMPT =
   "blurry, low quality, distorted, deformed, extra limbs, bad anatomy, text, watermark, logo, grainy, out of frame, ugly, poorly drawn, unnatural lighting";
 
-const DEFAULT_SETTINGS: Omit<GenerateInput, "prompt" | "threadId"> = {
+const DEFAULT_SETTINGS: GenerationSettings = {
   steps: 20,
   cfgScale: 7.5,
   negativePrompt: DEFAULT_NEGATIVE_PROMPT,
@@ -71,6 +72,44 @@ export const Route = createFileRoute("/image/$id")({
   ),
 });
 
+function ImageBadges({ settings }: { settings: GenerationSettings }) {
+  return (
+    <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
+      <Badge variant="secondary">
+        {settings.width}×{settings.height}
+      </Badge>
+      <Badge variant="secondary">{String(settings.sampler)}</Badge>
+      <Badge variant="secondary">steps: {Number(settings.steps)}</Badge>
+      <Badge variant="secondary">cfg: {Number(settings.cfgScale)}</Badge>
+    </div>
+  );
+}
+
+function getMergedSettings(
+  raw: Partial<GenerationSettings>,
+  defaults: GenerationSettings
+) {
+  return {
+    width: typeof raw.width === "number" ? raw.width : defaults.width,
+    height: typeof raw.height === "number" ? raw.height : defaults.height,
+    sampler: typeof raw.sampler === "string" ? raw.sampler : defaults.sampler,
+    steps: typeof raw.steps === "number" ? raw.steps : defaults.steps,
+    cfgScale:
+      typeof raw.cfgScale === "number" ? raw.cfgScale : defaults.cfgScale,
+  };
+}
+
+const TRAILING_SLASH_RE = /\/$/;
+
+function buildSrc(url: string, token: string | null) {
+  const server = (import.meta.env.VITE_SERVER_URL || "").replace(
+    TRAILING_SLASH_RE,
+    ""
+  );
+  const absolute = url.startsWith("http") ? url : `${server}${url}`;
+  return token ? `${absolute}?token=${encodeURIComponent(token)}` : absolute;
+}
+
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/image/$id" });
   const numericThreadId = Number(threadId);
@@ -78,9 +117,16 @@ function RouteComponent() {
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
   const [settings, setSettings] =
-    useState<Omit<GenerateInput, "prompt" | "threadId">>(DEFAULT_SETTINGS);
+    useState<GenerationSettings>(DEFAULT_SETTINGS);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [transcribeModel, setTranscribeModel] = useState("");
+  const token = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null");
+    } catch {
+      return null;
+    }
+  }, []);
 
   const { rename } = useImageThreads();
 
@@ -95,10 +141,7 @@ function RouteComponent() {
   } = useImageGeneration(numericThreadId);
 
   const handleSubmit = useCallback(
-    async (
-      promptText: string,
-      generationSettings: Omit<GenerateInput, "threadId">
-    ) => {
+    async (promptText: string, generationSettings: GenerationSettings) => {
       if (!promptText.trim()) {
         toast.error("لطفاً توضیحات تصویر را وارد کنید");
         return;
@@ -201,38 +244,9 @@ function RouteComponent() {
           <Conversation className="h-full">
             <ConversationContent>
               {orderedImages.map((img) => {
-                const raw =
-                  (img.settings as unknown as {
-                    steps?: number;
-                    cfgScale?: number;
-                    sampler?: string;
-                    width?: number;
-                    height?: number;
-                  }) || {};
-                const s: {
-                  steps: number;
-                  cfgScale: number;
-                  sampler: string;
-                  width: number;
-                  height: number;
-                } = {
-                  steps:
-                    typeof raw.steps === "number" ? raw.steps : settings.steps,
-                  cfgScale:
-                    typeof raw.cfgScale === "number"
-                      ? raw.cfgScale
-                      : settings.cfgScale,
-                  sampler:
-                    typeof raw.sampler === "string"
-                      ? raw.sampler
-                      : settings.sampler,
-                  width:
-                    typeof raw.width === "number" ? raw.width : settings.width,
-                  height:
-                    typeof raw.height === "number"
-                      ? raw.height
-                      : settings.height,
-                };
+                const raw = img.settings || {};
+                const s = getMergedSettings(raw, settings);
+                const src = buildSrc(img.url, token);
                 const aspect = `${Math.max(1, s.width)} / ${Math.max(1, s.height)}`;
                 return (
                   <div className="space-y-1" key={img.id}>
@@ -255,24 +269,11 @@ function RouteComponent() {
                             alt={img.prompt}
                             className="h-auto max-w-full bg-muted object-contain"
                             height={s.height}
-                            src={img.url}
+                            src={src}
                             style={{ aspectRatio: aspect }}
                             width={s.width}
                           />
-                          <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
-                            <Badge variant="secondary">
-                              {s.width}×{s.height}
-                            </Badge>
-                            <Badge variant="secondary">
-                              {String(s.sampler)}
-                            </Badge>
-                            <Badge variant="secondary">
-                              steps: {Number(s.steps)}
-                            </Badge>
-                            <Badge variant="secondary">
-                              cfg: {Number(s.cfgScale)}
-                            </Badge>
-                          </div>
+                          <ImageBadges settings={s} />
                           <div className="absolute top-2 left-2 flex items-center gap-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -282,7 +283,7 @@ function RouteComponent() {
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    downloadImage(img);
+                                    downloadImage({ id: img.id, url: src });
                                   }}
                                   size="icon"
                                   variant="secondary"
@@ -315,7 +316,6 @@ function RouteComponent() {
                 return;
               }
               handleSubmit(prompt, {
-                prompt,
                 steps: settings.steps,
                 cfgScale: settings.cfgScale,
                 negativePrompt,

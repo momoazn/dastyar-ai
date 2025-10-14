@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Hono } from "hono";
-import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
+import { type AuthEnv, authMiddlewareHeaderOrQuery } from "@/middlewares/auth";
 import { getGeneratedImageByUser } from "@/repositories/images";
 
 const getContentType = (fileName: string): string => {
@@ -19,7 +19,7 @@ const getContentType = (fileName: string): string => {
 };
 
 const app = new Hono<AuthEnv>()
-  .use(authMiddleware)
+  .use(authMiddlewareHeaderOrQuery)
   // Serve image file
   .get("/:id/file", async (c) => {
     const { id } = c.req.param();

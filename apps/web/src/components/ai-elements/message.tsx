@@ -30,13 +30,17 @@ export const MessageContent = ({
   <div
     className={cn(
       "flex flex-col gap-2 overflow-hidden text-foreground text-sm",
+      // User bubble styling
       "group-[.is-user]:rounded-lg group-[.is-user]:bg-primary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-primary-foreground",
+      // Ensure sufficient contrast for any 'muted' or secondary text inside user bubble
+      "group-[.is-user]:[&_.text-muted-foreground]:text-primary-foreground/85",
+      // Assistant message (no bubble)
       "group-[.is-assistant]:bg-transparent group-[.is-assistant]:px-0 group-[.is-assistant]:py-0 group-[.is-assistant]:text-foreground",
       className
     )}
     {...props}
   >
-    <div className="is-user:dark">{children}</div>
+    <div>{children}</div>
   </div>
 );
 
@@ -51,10 +55,7 @@ export const MessageAvatar = ({
   className,
   ...props
 }: MessageAvatarProps) => (
-  <Avatar
-    className={cn("size-8 ring ring-1 ring-border", className)}
-    {...props}
-  >
+  <Avatar className={cn("size-8 ring-1 ring-border", className)} {...props}>
     <AvatarImage alt="" className="mt-0 mb-0" src={src} />
     <AvatarFallback>{name?.slice(0, 2) || "ME"}</AvatarFallback>
   </Avatar>
