@@ -168,14 +168,21 @@ CREATE INDEX "idx_generated_images_thread" ON "generated_images"("thread_id");
 `;
 
 const databasePath = resolveConfiguredPath(env.DATABASE_FILE);
+ensureDirectoriesExist();
+
 const dbExists = existsSync(databasePath);
-if (!dbExists) {
+const hasUsersTable =
+  sqlite
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
+    )
+    .get() !== undefined;
+
+if (!(dbExists && hasUsersTable)) {
   sqlite.run(SQL);
 }
 
 console.log("Running app in", isProduction() ? "production" : "development");
-
-ensureDirectoriesExist();
 
 const app = createApp();
 
