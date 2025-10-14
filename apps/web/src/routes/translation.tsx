@@ -10,7 +10,8 @@ import {
   SendIcon,
   TriangleAlert,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
@@ -33,8 +34,32 @@ import { detectTextDirection } from "@/lib/utils";
 import type { LanguageCode, Tone } from "@/server/database";
 import { orpc, queryClient } from "@/utils/orpc";
 
-const languages = createLanguageOptions();
-const tones = createToneOptions();
+// Precompute selection option lists to avoid repeated work during renders
+const languageOptions = createLanguageOptions();
+const toneOptions = createToneOptions();
+
+// Search params shape for this route
+type TranslationSearch = { id?: number | string };
+
+/**
+ * Normalize and validate translation id from search (accepts number or string).
+ * Returns 0 when id is not a valid positive integer.
+ */
+function parseTranslationId(value: number | string | undefined): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  return 0;
+}
+
+/** Determine whether the pressed keys indicate submit (Cmd/Ctrl+Enter). */
+function isSubmitShortcut(e: KeyboardEvent): boolean {
+  return (e.metaKey || e.ctrlKey) && e.key === "Enter";
+}
 
 export const Route = createFileRoute("/translation")({
   component: () => (
@@ -45,7 +70,7 @@ export const Route = createFileRoute("/translation")({
 });
 
 function RouteComponent() {
-  const search = useSearch({ from: "/translation" }) as { id?: number | string };
+  const search = useSearch({ from: "/translation" }) as TranslationSearch;
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -53,6 +78,8 @@ function RouteComponent() {
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("fa");
   const [tone, setTone] = useState<Tone>("formal");
   const [transcribeModel, setTranscribeModel] = useState("");
+  const [clipboardError, setClipboardError] = useState<string | null>(null);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
 
   // Infer transcribe language from source language
   const transcribeLanguage = sourceLanguage === "fa" ? "fa" : "en";
@@ -60,17 +87,16 @@ function RouteComponent() {
   const {
     modelId,
     setModelId,
-    models: modelList,
-    isLoading: modelsLoading,
+    models,
+    isLoading: isModelsLoading,
     error: modelsError,
   } = useTranslationModelSelection();
 
-  const translationId =
-    typeof search.id === "number" ? search.id : Number(search.id ?? 0);
+  const translationId = parseTranslationId(search.id);
   const hasTranslationId = translationId > 0;
 
   // Load translation if ID is provided in URL
-  const { data: selectedTranslation } = useQuery(
+  const { data: translationData } = useQuery(
     orpc.translations.get.queryOptions({
       input: { id: translationId },
       enabled: hasTranslationId,
@@ -93,59 +119,72 @@ function RouteComponent() {
     })
   );
 
-  // Load translation data when selectedTranslation changes
+  // Load translation data when URL id changes
   useEffect(() => {
-    if (selectedTranslation) {
-      setSourceText(selectedTranslation.sourceText || "");
-      setTranslatedText(selectedTranslation.translatedText || "");
-      setSourceLanguage(selectedTranslation.sourceLanguage as LanguageCode);
-      setTargetLanguage(selectedTranslation.targetLanguage as LanguageCode);
-      setTone((selectedTranslation.tone as Tone) || "formal");
-      if (typeof selectedTranslation.modelId === "number") {
-        setModelId(selectedTranslation.modelId);
-      }
+    if (!translationData) {
+      return;
     }
-  }, [selectedTranslation, setModelId]);
+    setSourceText(translationData.sourceText || "");
+    setTranslatedText(translationData.translatedText || "");
+    setSourceLanguage(translationData.sourceLanguage as LanguageCode);
+    setTargetLanguage(translationData.targetLanguage as LanguageCode);
+    setTone((translationData.tone as Tone) || "formal");
+    if (typeof translationData.modelId === "number") {
+      setModelId(translationData.modelId);
+    }
+  }, [translationData, setModelId]);
 
-  const swapLanguages = useCallback(() => {
+  /**
+   * Swap source/target languages and move translated text into the source area.
+   */
+  const swapLanguages = () => {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
     setSourceText(translatedText);
     setTranslatedText("");
-  }, [sourceLanguage, targetLanguage, translatedText]);
+  };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(translatedText);
+      setClipboardError(null);
     } catch {
-      // Silent fail
+      setClipboardError("Failed to copy to clipboard");
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+  /**
+   * Submit translation request using current inputs.
+   */
+  const submitTranslate = () => {
+    translateMutation.mutate({
+      text: sourceText,
+      sourceLanguage,
+      targetLanguage,
+      tone,
+      modelId: modelId || 0,
+    });
+  };
+
+  /**
+   * Keyboard shortcut handler for submitting with Cmd/Ctrl+Enter.
+   */
+  const handleSourceKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isSubmitShortcut(e)) {
       e.preventDefault();
-      translateMutation.mutate({
-        text: sourceText,
-        sourceLanguage,
-        targetLanguage,
-        tone,
-        modelId: modelId || 0,
-      });
+      submitTranslate();
     }
   };
 
   const canTranslate =
-    Boolean(sourceText.trim() && modelId && !modelsLoading) &&
+    Boolean(sourceText.trim() && modelId && !isModelsLoading) &&
     !translateMutation.isPending;
-  const charCount = sourceText.length;
+  const sourceCharCount = sourceText.length;
 
   return (
     <div className="flex h-full flex-col" dir="rtl">
-      {/* Controls Header */}
       <div className="bg-background p-4">
         <div className="grid grid-cols-4 gap-4">
-          {/* Source Language */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
               {fa.translation.sourceLanguage}
@@ -159,7 +198,7 @@ function RouteComponent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {languages.map((lang) => (
+                {languageOptions.map((lang) => (
                   <SelectItem
                     className="text-right"
                     key={lang.value}
@@ -172,7 +211,6 @@ function RouteComponent() {
             </Select>
           </div>
 
-          {/* Target Language */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
               {fa.translation.targetLanguage}
@@ -186,7 +224,7 @@ function RouteComponent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {languages.map((lang) => (
+                {languageOptions.map((lang) => (
                   <SelectItem
                     className="text-right"
                     key={lang.value}
@@ -199,7 +237,6 @@ function RouteComponent() {
             </Select>
           </div>
 
-          {/* Tone */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
               {fa.translation.translationTone}
@@ -213,7 +250,7 @@ function RouteComponent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {tones.map((t) => (
+                {toneOptions.map((t) => (
                   <SelectItem
                     className="text-right"
                     key={t.value}
@@ -226,23 +263,22 @@ function RouteComponent() {
             </Select>
           </div>
 
-          {/* Model */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.translation.model}</div>
             <Select
-              disabled={translateMutation.isPending || modelsLoading}
+              disabled={translateMutation.isPending || isModelsLoading}
               onValueChange={(value) => setModelId(Number(value))}
               value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? "Loading models..." : "Select model"
+                    isModelsLoading ? "Loading models..." : "Select model"
                   }
                 />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {modelList?.map((m) => (
+                {models?.map((m) => (
                   <SelectItem
                     className="text-right"
                     key={m.id}
@@ -256,7 +292,6 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Swap Languages Button */}
         <div className="mt-3 flex justify-end">
           <Button
             disabled={translateMutation.isPending}
@@ -270,36 +305,46 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col p-4">
-        {/* Error Alert */}
-        {(translateMutation.error || modelsError) && (
+        {(translateMutation.error ||
+          modelsError ||
+          clipboardError ||
+          transcribeError) && (
           <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>خطا</AlertTitle>
             <AlertDescription>
-              {modelsError
-                ? "Failed to load models. Please refresh the page."
-                : translateMutation.error?.message}
+              {(() => {
+                if (clipboardError) {
+                  return clipboardError;
+                }
+                if (transcribeError) {
+                  return transcribeError;
+                }
+                if (modelsError) {
+                  return "Failed to load models. Please refresh the page.";
+                }
+                return translateMutation.error?.message;
+              })()}
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Text Areas */}
         <div className="flex h-full w-full flex-col gap-4">
-          {/* Source Text Area */}
           <Card aria-live="polite" className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
-              {/* Header with counter, hint and transcribe button */}
               <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                <span>{charCount} کاراکتر</span>
+                <span>{sourceCharCount} کاراکتر</span>
                 <div className="flex items-center gap-2">
                   <TranscribeButton
                     language={transcribeLanguage}
                     model={transcribeModel}
                     onError={(error) => {
-                      // Handle transcription error - could show toast or alert
-                      console.error("Transcription error:", error);
+                      setTranscribeError(
+                        typeof error === "string"
+                          ? error
+                          : "Transcription failed"
+                      );
                     }}
                     onModelChange={setTranscribeModel}
                     onTranscribed={(text) => setSourceText(text)}
@@ -307,30 +352,27 @@ function RouteComponent() {
                     size="icon"
                     variant="ghost"
                   />
-                  {/* Language indicator */}
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                     {transcribeLanguage === "fa" ? "فارسی" : "English"}
                   </span>
                   <span>
-                    {sourceText.trim() ? "⌘/Ctrl+Enter برای ترجمه" : ""}
+                    {sourceText.trim() ? fa.translation.keyboardHint : ""}
                   </span>
                 </div>
               </div>
 
-              {/* Text area */}
               <Textarea
                 aria-label={fa.translation.enterText}
                 className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
                 dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
                 onChange={(e) => setSourceText(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleSourceKeyDown}
                 placeholder={fa.translation.enterText}
                 value={sourceText}
               />
             </div>
           </Card>
 
-          {/* Translated Text Area */}
           <Card className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
               {translateMutation.isPending ? (
@@ -341,7 +383,6 @@ function RouteComponent() {
                 </div>
               ) : (
                 <>
-                  {/* Header with copy button */}
                   <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
                     <span>{fa.translation.translatedText}</span>
                     <Button
@@ -357,7 +398,6 @@ function RouteComponent() {
                     </Button>
                   </div>
 
-                  {/* Text area */}
                   <Textarea
                     aria-label={fa.translation.translatedText}
                     aria-readonly
@@ -377,20 +417,11 @@ function RouteComponent() {
           </Card>
         </div>
 
-        {/* Translate Button */}
         <div className="mt-4 flex w-full flex-1/5 justify-end">
           <Button
             className="w-full cursor-pointer"
             disabled={!canTranslate}
-            onClick={() =>
-              translateMutation.mutate({
-                text: sourceText,
-                sourceLanguage,
-                targetLanguage,
-                tone,
-                modelId: modelId || 0,
-              })
-            }
+            onClick={submitTranslate}
             size="lg"
             type="button"
             variant="outline"

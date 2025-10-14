@@ -5,6 +5,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { Clipboard, Copy, Loader2 } from "lucide-react";
+import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -30,8 +31,32 @@ import { orpc, queryClient } from "@/utils/orpc";
 
 const COPY_SUCCESS_DURATION_MS = 2000;
 
-const modes = createSummaryModeOptions();
-const tones = createToneOptions();
+// Precompute selection option lists to avoid repeated work during renders
+const summaryModeOptions = createSummaryModeOptions();
+const toneOptions = createToneOptions();
+
+// Search params shape for this route
+type SummarizeSearch = { id?: number | string };
+
+/**
+ * Normalize and validate summary id from search (accepts number or string).
+ * Returns 0 when id is not a valid positive integer.
+ */
+function parseSummaryId(value: number | string | undefined): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  return 0;
+}
+
+/** Determine whether the pressed keys indicate a submit shortcut (Cmd/Ctrl+Enter). */
+function isSubmitShortcut(e: KeyboardEvent): boolean {
+  return (e.metaKey || e.ctrlKey) && e.key === "Enter";
+}
 
 export const Route = createFileRoute("/summarize")({
   component: () => (
@@ -41,29 +66,40 @@ export const Route = createFileRoute("/summarize")({
   ),
 });
 
+/**
+ * Summarization page
+ *
+ * Renders a two-pane UI where users can paste text and generate a summarized
+ * version using a selected model, summary mode, and tone configuration.
+ *
+ * The component maintains URL search state for a given summary `id` to load
+ * and display previously generated results.
+ */
 function SummarizePage() {
-  const search = useSearch({ from: "/summarize" }) as { id?: number | string };
+  const search = useSearch({ from: "/summarize" }) as SummarizeSearch;
   const navigate = useNavigate();
+
+  // Form state
   const [sourceText, setSourceText] = useState("");
   const [summaryText, setSummaryText] = useState("");
   const [mode, setMode] = useState<SummaryMode>("standard");
   const [tone, setTone] = useState<Tone>("formal");
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [clipboardError, setClipboardError] = useState<string | null>(null);
 
   const {
     modelId,
     setModelId,
-    models: modelList,
-    isLoading: modelsLoading,
+    models,
+    isLoading: isModelsLoading,
     error: modelsError,
   } = useSummarizeModelSelection();
 
-  const summaryId =
-    typeof search.id === "number" ? search.id : Number(search.id ?? 0);
+  const summaryId = parseSummaryId(search.id);
   const hasSummaryId = summaryId > 0;
 
   // Load summary if ID is provided in URL
-  const { data: selectedSummary } = useQuery(
+  const { data: summaryData } = useQuery(
     orpc.summarize.get.queryOptions({
       input: { id: summaryId },
       enabled: hasSummaryId,
@@ -86,61 +122,81 @@ function SummarizePage() {
     })
   );
 
-  // Load summary data when selectedSummary changes
+  // Sync local state with server record when a summary is loaded via URL id
   useEffect(() => {
-    if (selectedSummary) {
-      setSourceText(selectedSummary.sourceText || "");
-      setSummaryText(selectedSummary.summaryText || "");
-      setMode(selectedSummary.mode as SummaryMode);
-      setTone((selectedSummary.tone as Tone) || "formal");
-      if (typeof selectedSummary.modelId === "number") {
-        setModelId(selectedSummary.modelId);
-      }
+    if (!summaryData) {
+      return;
     }
-  }, [selectedSummary, setModelId]);
+    setSourceText(summaryData.sourceText || "");
+    setSummaryText(summaryData.summaryText || "");
+    setMode(summaryData.mode as SummaryMode);
+    setTone((summaryData.tone as Tone) || "formal");
+    if (typeof summaryData.modelId === "number") {
+      setModelId(summaryData.modelId);
+    }
+  }, [summaryData, setModelId]);
 
+  /**
+   * Copy the generated summary to clipboard.
+   * Shows transient visual confirmation or an inline error alert.
+   */
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(summaryText);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), COPY_SUCCESS_DURATION_MS);
+      setClipboardError(null);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), COPY_SUCCESS_DURATION_MS);
     } catch {
-      console.error("Failed to copy to clipboard");
+      setClipboardError("Failed to copy to clipboard");
     }
   };
 
+  /**
+   * Paste clipboard content into the source area.
+   */
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      setClipboardError(null);
       setSourceText(text);
     } catch {
-      console.error("Failed to paste from clipboard");
+      setClipboardError("Failed to paste from clipboard");
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+  /**
+   * Submit summarization request using current inputs.
+   * Centralized to keep mutation calls consistent across triggers.
+   */
+  const submitSummarize = () => {
+    summarizeMutation.mutate({
+      text: sourceText,
+      mode,
+      tone,
+      modelId: modelId || 0,
+    });
+  };
+
+  /**
+   * Keyboard shortcut handler for submitting with Cmd/Ctrl + Enter.
+   */
+  const handleSourceKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isSubmitShortcut(e)) {
       e.preventDefault();
-      summarizeMutation.mutate({
-        text: sourceText,
-        mode,
-        tone,
-        modelId: modelId || 0,
-      });
+      submitSummarize();
     }
   };
 
+  // Derived UI state
   const canSummarize =
-    Boolean(sourceText.trim() && modelId && !modelsLoading) &&
+    Boolean(sourceText.trim() && modelId && !isModelsLoading) &&
     !summarizeMutation.isPending;
-  const charCount = sourceText.length;
+  const sourceCharCount = sourceText.length;
 
   return (
     <div className="flex h-full flex-col" dir="rtl">
-      {/* Controls Header */}
       <div className="bg-background p-4">
         <div className="grid grid-cols-3 gap-4">
-          {/* Mode */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
             <Select
@@ -152,7 +208,7 @@ function SummarizePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {modes.map((m) => (
+                {summaryModeOptions.map((m) => (
                   <SelectItem
                     className="text-right"
                     key={m.value}
@@ -165,7 +221,6 @@ function SummarizePage() {
             </Select>
           </div>
 
-          {/* Tone */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
               {fa.translation.translationTone}
@@ -179,7 +234,7 @@ function SummarizePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {tones.map((t) => (
+                {toneOptions.map((t) => (
                   <SelectItem
                     className="text-right"
                     key={t.value}
@@ -192,23 +247,22 @@ function SummarizePage() {
             </Select>
           </div>
 
-          {/* Model */}
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.summarize.model}</div>
             <Select
-              disabled={summarizeMutation.isPending || modelsLoading}
+              disabled={summarizeMutation.isPending || isModelsLoading}
               onValueChange={(value) => setModelId(Number(value))}
               value={modelId?.toString()}
             >
               <SelectTrigger className="w-full text-right" dir="rtl">
                 <SelectValue
                   placeholder={
-                    modelsLoading ? "Loading models..." : "Select model"
+                    isModelsLoading ? "Loading models..." : "Select model"
                   }
                 />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                {modelList?.map((model) => (
+                {models?.map((model) => (
                   <SelectItem
                     className="text-right"
                     key={model.id}
@@ -223,17 +277,20 @@ function SummarizePage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 space-y-4 p-4">
-        {/* Source Text */}
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-medium">{fa.summarize.sourceText}</h3>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">
-                {fa.general.charCount(charCount)}
+                {fa.general.charCount(sourceCharCount)}
               </span>
-              <Button onClick={handlePaste} size="sm" variant="ghost">
+              <Button
+                onClick={handlePaste}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
                 <Clipboard className="h-4 w-4" />
                 {fa.summarize.paste}
               </Button>
@@ -244,7 +301,7 @@ function SummarizePage() {
             dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
             disabled={summarizeMutation.isPending}
             onChange={(e) => setSourceText(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleSourceKeyDown}
             placeholder={fa.summarize.enterText}
             value={sourceText}
           />
@@ -253,19 +310,19 @@ function SummarizePage() {
           </div>
         </Card>
 
-        {/* Summary */}
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-medium">{fa.summarize.generatedText}</h3>
             {summaryText && (
               <Button
-                className={copySuccess ? "bg-green-600 hover:bg-green-700" : ""}
+                className={isCopied ? "bg-green-600 hover:bg-green-700" : ""}
                 onClick={handleCopy}
                 size="sm"
-                variant={copySuccess ? "default" : "ghost"}
+                type="button"
+                variant={isCopied ? "default" : "ghost"}
               >
                 <Copy className="h-4 w-4" />
-                {copySuccess ? fa.summarize.copied : fa.summarize.copy}
+                {isCopied ? fa.summarize.copied : fa.summarize.copy}
               </Button>
             )}
           </div>
@@ -278,33 +335,28 @@ function SummarizePage() {
           />
         </Card>
 
-        {/* Error Display */}
-        {(summarizeMutation.isError || modelsError) && (
+        {(summarizeMutation.isError || modelsError || clipboardError) && (
           <Alert variant="destructive">
             <div className="flex items-center gap-2">
-              <span>
-                {modelsError
-                  ? "Failed to load models. Please refresh the page."
-                  : fa.summarize.errors.requestFailed}
-              </span>
+              {(() => {
+                const message =
+                  clipboardError ??
+                  (modelsError
+                    ? "Failed to load models. Please refresh the page."
+                    : fa.summarize.errors.requestFailed);
+                return <span>{message}</span>;
+              })()}
               <span>{fa.translation.tryAgain}</span>
             </div>
           </Alert>
         )}
 
-        {/* Generate Button */}
         <div className="flex justify-end">
           <Button
             className="min-w-[120px]"
             disabled={!canSummarize}
-            onClick={() =>
-              summarizeMutation.mutate({
-                text: sourceText,
-                mode,
-                tone,
-                modelId: modelId || 0,
-              })
-            }
+            onClick={submitSummarize}
+            type="button"
           >
             {summarizeMutation.isPending ? (
               <>
