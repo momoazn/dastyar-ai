@@ -86,7 +86,8 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
   if (
     location.pathname.startsWith("/login") ||
-    location.pathname.startsWith("/register")
+    location.pathname.startsWith("/register") ||
+    location.pathname.startsWith("/admin")
   ) {
     return children;
   }
