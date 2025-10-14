@@ -45,7 +45,7 @@ export const Route = createFileRoute("/translation")({
 });
 
 function RouteComponent() {
-  const search = useSearch({ from: "/translation" }) as { id?: string };
+  const search = useSearch({ from: "/translation" }) as { id?: number };
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -68,7 +68,7 @@ function RouteComponent() {
   // Load translation if ID is provided in URL
   const { data: selectedTranslation } = useQuery(
     orpc.translations.get.queryOptions({
-      input: { id: search.id ? Number(search.id) : 0 },
+      input: { id: search.id ?? 0 },
       enabled: !!search.id,
     })
   );

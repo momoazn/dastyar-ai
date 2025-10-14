@@ -15,7 +15,7 @@ export type SidebarItemProps = {
   title: string;
   to: string;
   params?: Record<string, string>;
-  search?: Record<string, string>;
+  search?: Record<string, string | number | boolean | null>;
   icon?: LucideIcon;
   iconText?: string;
   subtitle?: string;
