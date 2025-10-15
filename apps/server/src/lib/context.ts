@@ -10,7 +10,7 @@ export function createContext({ context }: CreateContextOptions) {
     honoContext: context,
     req: context.req,
     db, // Attach the database instance to the context
-    user: null as User | null, // Will be set by auth middleware
+    user: null as unknown as User, // Will be set by auth middleware
   };
 }
 

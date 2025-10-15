@@ -274,6 +274,60 @@ export const codeReviews = sqliteTable("code_reviews", {
     .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
 });
 
+// Documents for RAG
+export const documents = sqliteTable("documents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  filePath: text("file_path").notNull(),
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+});
+
+export const documentChunks = sqliteTable("document_chunks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  documentId: integer("document_id")
+    .notNull()
+    .references(() => documents.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  chunkIndex: integer("chunk_index").notNull(),
+  page: integer("page"),
+  content: text("content").notNull(),
+  embedding: text("embedding", { mode: "json" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const threadDocuments = sqliteTable("thread_documents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  threadId: integer("thread_id")
+    .notNull()
+    .references(() => chatThreads.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  documentId: integer("document_id")
+    .notNull()
+    .references(() => documents.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   chatThreads: many(chatThreads),
   messages: many(messages),
@@ -409,6 +463,32 @@ export const codeReviewsRelations = relations(codeReviews, ({ one }) => ({
   }),
 }));
 
+export const documentsRelations = relations(documents, ({ one, many }) => ({
+  user: one(users, { fields: [documents.userId], references: [users.id] }),
+  chunks: many(documentChunks),
+}));
+
+export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentChunks.documentId],
+    references: [documents.id],
+  }),
+}));
+
+export const threadDocumentsRelations = relations(
+  threadDocuments,
+  ({ one }) => ({
+    thread: one(chatThreads, {
+      fields: [threadDocuments.threadId],
+      references: [chatThreads.id],
+    }),
+    document: one(documents, {
+      fields: [threadDocuments.documentId],
+      references: [documents.id],
+    }),
+  })
+);
+
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -482,6 +562,9 @@ export type GeneratedImage = SelectGeneratedImage;
 export type CodeAssistSession = SelectCodeAssistSession;
 export type CodeGeneration = SelectCodeGeneration;
 export type CodeReview = SelectCodeReview;
+export type Document = SelectDocument;
+export type DocumentChunk = SelectDocumentChunk;
+export type ThreadDocument = SelectThreadDocument;
 
 // JsonValue type for JSON fields
 export type JsonValue =
@@ -494,3 +577,19 @@ export type JsonValue =
 
 // Json type alias for Drizzle JSON fields
 export type Json = JsonValue;
+
+// Zod schemas and types for documents
+export const insertDocumentSchema = createInsertSchema(documents);
+export const selectDocumentSchema = createSelectSchema(documents);
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type SelectDocument = z.infer<typeof selectDocumentSchema>;
+
+export const insertDocumentChunkSchema = createInsertSchema(documentChunks);
+export const selectDocumentChunkSchema = createSelectSchema(documentChunks);
+export type InsertDocumentChunk = z.infer<typeof insertDocumentChunkSchema>;
+export type SelectDocumentChunk = z.infer<typeof selectDocumentChunkSchema>;
+
+export const insertThreadDocumentSchema = createInsertSchema(threadDocuments);
+export const selectThreadDocumentSchema = createSelectSchema(threadDocuments);
+export type InsertThreadDocument = z.infer<typeof insertThreadDocumentSchema>;
+export type SelectThreadDocument = z.infer<typeof selectThreadDocumentSchema>;

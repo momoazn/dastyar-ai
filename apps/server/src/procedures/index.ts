@@ -1,6 +1,7 @@
 import { adminProcedures } from "./admin";
 import { authProcedures } from "./auth";
 import { codeProcedures } from "./code";
+import { documentProcedures } from "./documents";
 import { healthProcedures } from "./health";
 import { imageThreadProcedures } from "./image-threads";
 import { imageProcedures } from "./images";
@@ -24,6 +25,7 @@ export const appRouter = {
   images: imageProcedures,
   imageThreads: imageThreadProcedures,
   code: codeProcedures,
+  documents: documentProcedures,
 };
 
 export type AppRouter = typeof appRouter;

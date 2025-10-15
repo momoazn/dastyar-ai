@@ -14,6 +14,10 @@ import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
 import { getProviderForModel } from "@/services";
+import {
+  buildContextFromChunks,
+  retrieveRelevantChunksForThread,
+} from "@/services/rag";
 import type { MyUIMessage } from "@/utils/chat";
 import { CHAT_SYSTEM_PROMPT } from "@/utils/constants";
 
@@ -98,6 +102,47 @@ const app = new Hono<AuthEnv>()
 
       const modelMessages = convertToModelMessages(uiMessages);
 
+      // Build RAG context from any documents attached to this thread
+      // 1) Extract plain text from the last user message to use as the retrieval query
+      const extractTextFromParts = (parts: unknown[]): string => {
+        try {
+          let text = "";
+          for (const p of parts as unknown[]) {
+            if (!p || typeof p !== "object") {
+              continue;
+            }
+            if (p.type === "text" && typeof p.text === "string") {
+              text += p.text;
+            }
+          }
+          return text;
+        } catch {
+          return "";
+        }
+      };
+
+      let ragSystem = CHAT_SYSTEM_PROMPT;
+      try {
+        const userQuery = extractTextFromParts(last.parts as unknown[]).slice(
+          0,
+          2000
+        );
+        if (userQuery && threadId) {
+          const results = await retrieveRelevantChunksForThread({
+            userId: user.id,
+            threadId,
+            query: userQuery,
+            topK: 4,
+          });
+          if (results.length > 0) {
+            const ctx = buildContextFromChunks(results);
+            ragSystem = `${CHAT_SYSTEM_PROMPT}\n\n[CONTEXT]\n${ctx}\n[/CONTEXT]\n\nراهنما: فقط بر اساس «CONTEXT» پاسخ بده. در متن پاسخ، در صورت ارجاع به منابع از یادداشت‌های [1]، [2] و ... استفاده کن و عنوان/شماره صفحه را به اختصار بیاور. اگر پاسخ در منابع نبود، واضح بگو «در منابع موجود نیست».`;
+          }
+        }
+      } catch (_e) {
+        // Retrieval is best-effort; fall back to default system prompt on failure
+      }
+
       const assistantMessage = await createMessage({
         modelId,
         parts: [],
@@ -123,7 +168,7 @@ const app = new Hono<AuthEnv>()
           }),
         }),
         messages: modelMessages,
-        system: CHAT_SYSTEM_PROMPT,
+        system: ragSystem,
         providerOptions: {},
         onChunk: ({ chunk }) => {
           if (chunk.type === "text-delta") {

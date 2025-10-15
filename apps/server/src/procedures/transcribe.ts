@@ -89,43 +89,8 @@ export const transcribeProcedures = {
       );
 
       try {
-        // Expect a WAV file from the client. Convert to Float32Array @ 16k mono
-        const arrayBuffer = await input.file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        let wav: WaveFile;
-        try {
-          wav = new WaveFile(buffer);
-        } catch {
-          throw new Error("فرمت صوت نامعتبر است. لطفاً فایل WAV ارسال کنید.");
-        }
-
-        // Ensure correct format for Whisper
-        wav.toBitDepth("32f");
-        wav.toSampleRate(16_000);
-
-        let audioData = wav.getSamples();
-        if (Array.isArray(audioData)) {
-          if (audioData.length > 1) {
-            const SCALING_FACTOR = Math.sqrt(2);
-            for (let i = 0; i < audioData[0].length; ++i) {
-              // Merge stereo into mono
-              audioData[0][i] =
-                (SCALING_FACTOR * (audioData[0][i] + audioData[1][i])) / 2;
-            }
-          }
-          audioData = audioData[0];
-        }
-
-        let float32Audio: Float32Array;
-        if (Array.isArray(audioData)) {
-          float32Audio = audioData[0] as Float32Array;
-        } else {
-          float32Audio = audioData as unknown as Float32Array;
-        }
-
+        const float32Audio = await processAudioFile(input.file);
         const transcriber = await getTranscriber(modelId);
-
         const result = await transcriber(float32Audio, {
           language: input.language ?? undefined,
           task: "transcribe",
@@ -134,7 +99,9 @@ export const transcribeProcedures = {
 
         const tookMs = Date.now() - startedAt;
         console.log(
-          `[transcribe] success model=${modelId} lang=${language} took=${tookMs}ms chars=${output?.length ?? 0}`
+          `[transcribe] success model=${modelId} lang=${language} took=${tookMs}ms chars=${
+            output?.length ?? 0
+          }`
         );
         return (output ?? "").trim();
       } catch (err) {
@@ -144,31 +111,66 @@ export const transcribeProcedures = {
           `[transcribe] failed model=${modelId} lang=${language} took=${tookMs}ms error=${message}`,
           err
         );
-
-        // Map common errors to user-friendly messages
-        if (message.includes("WAV") || message.includes("نامعتبر")) {
-          throw new Error(
-            "فایل صوتی پشتیبانی نمی‌شود. لطفاً فایل WAV ارسال کنید."
-          );
-        }
-        if (message.includes("onnx") || message.includes("NAPI")) {
-          throw new Error(
-            "راه‌اندازی موتور تشخیص گفتار با مشکل مواجه شد. سرور را ری‌استارت کنید یا در حالت توسعه از Node استفاده کنید."
-          );
-        }
-        if (
-          message.includes("Failed to fetch") ||
-          message.includes("network")
-        ) {
-          throw new Error(
-            "دانلود مدل ناموفق بود. اتصال اینترنت را بررسی کنید."
-          );
-        }
-
-        throw new Error("تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.");
+        throw mapTranscriptionError(message);
       }
     }),
 };
+
+async function processAudioFile(file: File): Promise<Float32Array> {
+  // Expect a WAV file from the client. Convert to Float32Array @ 16k mono
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  let wav: WaveFile;
+  try {
+    wav = new WaveFile(buffer);
+  } catch {
+    throw new Error("فرمت صوت نامعتبر است. لطفاً فایل WAV ارسال کنید.");
+  }
+
+  // Ensure correct format for Whisper
+  wav.toBitDepth("32f");
+  wav.toSampleRate(16_000);
+
+  let audioData = wav.getSamples();
+  if (Array.isArray(audioData)) {
+    if (audioData.length > 1) {
+      const SCALING_FACTOR = Math.sqrt(2);
+      for (let i = 0; i < audioData[0].length; ++i) {
+        // Merge stereo into mono
+        audioData[0][i] =
+          (SCALING_FACTOR * (audioData[0][i] + audioData[1][i])) / 2;
+      }
+    }
+    audioData = audioData[0];
+  }
+
+  let float32Audio: Float32Array;
+  if (Array.isArray(audioData)) {
+    float32Audio = audioData[0] as Float32Array;
+  } else {
+    float32Audio = audioData as unknown as Float32Array;
+  }
+
+  return float32Audio;
+}
+
+function mapTranscriptionError(message: string): Error {
+  // Map common errors to user-friendly messages
+  if (message.includes("WAV") || message.includes("نامعتبر")) {
+    return new Error("فایل صوتی پشتیبانی نمی‌شود. لطفاً فایل WAV ارسال کنید.");
+  }
+  if (message.includes("onnx") || message.includes("NAPI")) {
+    return new Error(
+      "راه‌اندازی موتور تشخیص گفتار با مشکل مواجه شد. سرور را ری‌استارت کنید یا در حالت توسعه از Node استفاده کنید."
+    );
+  }
+  if (message.includes("Failed to fetch") || message.includes("network")) {
+    return new Error("دانلود مدل ناموفق بود. اتصال اینترنت را بررسی کنید.");
+  }
+
+  return new Error("تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.");
+}
 
 async function tryImportModule(id: string): Promise<TransformersModule | null> {
   try {

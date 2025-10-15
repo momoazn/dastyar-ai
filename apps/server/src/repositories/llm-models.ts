@@ -21,7 +21,7 @@ export async function getModelById(id: number): Promise<LLMModel | null> {
 }
 
 export async function getModels(where: ModelFilter = {}): Promise<LLMModel[]> {
-  const conditions = [];
+  const conditions: ReturnType<typeof eq>[] = [];
   if (where.id !== undefined) {
     conditions.push(eq(llmModels.id, where.id));
   }

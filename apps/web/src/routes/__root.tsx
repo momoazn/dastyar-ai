@@ -13,8 +13,8 @@ import {
   useLocation,
   useRouterState,
 } from "@tanstack/react-router";
-// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -73,7 +73,7 @@ function RootComponent() {
         storageKey="vite-ui-theme"
       >
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
-        <Toaster richColors />
+        <Toaster position="bottom-left" richColors />
       </ThemeProvider>
       {/* <TanStackRouterDevtools position="bottom-left" /> */}
       {/* <ReactQueryDevtools buttonPosition="relative" position="bottom" /> */}

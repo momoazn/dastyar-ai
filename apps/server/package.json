@@ -31,6 +31,7 @@
     "ai": "^5.0.61",
     "automatic1111-provider": "^0.1.1",
     "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.8.3",

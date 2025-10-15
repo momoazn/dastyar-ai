@@ -13,6 +13,11 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import {
+  ChatAttachments,
+  type PendingAttachment,
+} from "@/components/chat/attachments";
+import { DocumentUploadButton } from "@/components/document-upload-button";
 import { TranscribeButton } from "@/components/transcribe-button";
 import { Alert, AlertDescription } from "@/components/ui";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
@@ -33,6 +38,7 @@ export const ChatInput = ({
   threadId,
 }: ChatInputProps) => {
   const [prompt, setPrompt] = useState("");
+  const [pendingDocs, setPendingDocs] = useState<PendingAttachment[]>([]);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(
     null
   );
@@ -55,6 +61,27 @@ export const ChatInput = ({
   const handleTranscriptionError = (error: string) => {
     console.error("Transcription failed:", error);
     setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
+  };
+
+  // Pending document UI updates
+  const handleDocStatus = (s: {
+    filename: string;
+    phase: "extracting" | "uploading" | "indexing" | "done" | "error";
+  }) => {
+    setPendingDocs((prev) => {
+      if (s.phase === "done" || s.phase === "error") {
+        return prev.filter((p) => p.filename !== s.filename);
+      }
+      const existing = prev.find((p) => p.filename === s.filename);
+      if (existing) {
+        return prev.map((p) =>
+          p.filename === s.filename
+            ? { filename: s.filename, phase: s.phase }
+            : p
+        );
+      }
+      return [...prev, { filename: s.filename, phase: s.phase }];
+    });
   };
 
   // Memoize text direction calculation
@@ -128,6 +155,13 @@ export const ChatInput = ({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
+      {typeof threadId === "number" && (
+        <ChatAttachments
+          className="px-1"
+          pending={pendingDocs}
+          threadId={threadId}
+        />
+      )}
       <div>
         <PromptInput
           onSubmit={(e) => {
@@ -170,6 +204,18 @@ export const ChatInput = ({
               </PromptInputButton>
             </PromptInputTools>
             <div className="flex items-center gap-2">
+              {typeof threadId === "number" && (
+                <DocumentUploadButton
+                  onStatusChange={handleDocStatus}
+                  onUploaded={({ title, indexedChunks }) => {
+                    // eslint-disable-next-line no-console
+                    console.log(
+                      `Document uploaded: ${title} (indexed ${indexedChunks} chunks)`
+                    );
+                  }}
+                  threadId={threadId}
+                />
+              )}
               <TranscribeButton
                 language={transcriptionLanguage}
                 onError={handleTranscriptionError}

@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { env, resolveConfiguredPath } from "../config";
 
+// biome-ignore lint/performance/noNamespaceImport: because the schema is used in the index.ts file
 import * as schema from "./schema";
 
 const SQL = `
@@ -160,6 +161,45 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 
 -- CreateIndex
 CREATE INDEX "idx_generated_images_thread" ON "generated_images"("thread_id");
+
+-- CreateTable Documents
+CREATE TABLE "documents" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "title" TEXT NOT NULL,
+    "file_path" TEXT NOT NULL,
+    "file_name" TEXT NOT NULL,
+    "mime_type" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    CONSTRAINT "documents_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable Document Chunks
+CREATE TABLE "document_chunks" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "document_id" INTEGER NOT NULL,
+    "chunk_index" INTEGER NOT NULL,
+    "page" INTEGER,
+    "content" TEXT NOT NULL,
+    "embedding" JSONB NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "document_chunks_document_id_fkey" FOREIGN KEY ("document_id") REFERENCES "documents" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable Thread Documents (join)
+CREATE TABLE "thread_documents" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "thread_id" INTEGER NOT NULL,
+    "document_id" INTEGER NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "thread_documents_thread_id_fkey" FOREIGN KEY ("thread_id") REFERENCES "chat_threads" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "thread_documents_document_id_fkey" FOREIGN KEY ("document_id") REFERENCES "documents" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Indexes for RAG tables
+CREATE INDEX "idx_document_chunks_doc" ON "document_chunks"("document_id");
+CREATE INDEX "idx_thread_documents_thread" ON "thread_documents"("thread_id");
 `;
 
 // Resolve the database file path properly for both development and production
@@ -184,12 +224,12 @@ export const initializeDatabase = (): void => {
       )
       .get();
 
-    if (!tablesExist) {
+    if (tablesExist) {
+      console.log("[database] Database schema already exists");
+    } else {
       console.log("[database] Creating database schema...");
       sqliteDB.run(SQL);
       console.log("[database] Database schema created successfully");
-    } else {
-      console.log("[database] Database schema already exists");
     }
   } catch (error) {
     console.error("[database] Error initializing database:", error);

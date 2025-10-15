@@ -61,7 +61,9 @@ export async function getGeneratedImage(
     .limit(1);
 
   const row = rows.at(0);
-  if (!row) return null;
+  if (!row) {
+    return null;
+  }
 
   return {
     ...row,
@@ -85,7 +87,9 @@ export async function getGeneratedImageByUser(
     .limit(1);
 
   const row = rows.at(0);
-  if (!row) return null;
+  if (!row) {
+    return null;
+  }
 
   return {
     ...row,

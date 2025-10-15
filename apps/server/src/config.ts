@@ -37,6 +37,9 @@ const schema = z.object({
   STABLE_DIFFUSION_ENABLED: z.coerce.boolean().default(true),
 
   IMAGES_DIR: z.string().default("./generated-images"),
+  DOCUMENTS_DIR: z.string().default("./uploaded-documents"),
+  // Embedding model for RAG (must be available locally via Ollama)
+  EMBEDDING_MODEL: z.string().default("nomic-embed-text"),
   WEB_DIST_DIR: z.string().default("./web"),
 });
 
@@ -106,14 +109,6 @@ export const getRuntimeBaseDir = (): string => {
     base = cwd;
   }
 
-  console.log("[config] Runtime directory resolution:", {
-    isProduction: isProduction(),
-    serverRootDir,
-    resolvedBaseDir: base,
-    processExecPath: process.execPath,
-    processCwd: process.cwd(),
-  });
-
   return base;
 };
 
@@ -128,18 +123,13 @@ const resolveWebDistDir = (baseDir: string): string => {
 export const runtimeBaseDir = getRuntimeBaseDir();
 export const webDistDir = resolveWebDistDir(runtimeBaseDir);
 
-console.log("[config] SPA directory resolution:", {
-  configuredWebDist: env.WEB_DIST_DIR,
-  runtimeBaseDir,
-  webDistDir,
-});
-
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
     dirname(resolveConfiguredPath(env.DATABASE_FILE)),
     resolveConfiguredPath(env.WHISPER_MODELS_DIR),
     resolveConfiguredPath(env.WHISPER_CACHE_DIR),
     resolveConfiguredPath(env.IMAGES_DIR),
+    resolveConfiguredPath(env.DOCUMENTS_DIR),
   ];
   const unique = Array.from(new Set(directories)).filter(
     (dir) => dir !== "." && dir !== "./"
@@ -166,4 +156,7 @@ export const resolveConfiguredPath = (
   return resolve(baseDir, configuredPath);
 };
 
-export const collectOfflineModelIds = (): string[] => [...whisperModelIds];
+export const collectOfflineModelIds = (): string[] => [
+  ...whisperModelIds,
+  env.EMBEDDING_MODEL,
+];

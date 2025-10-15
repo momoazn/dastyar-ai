@@ -24,7 +24,7 @@ export function UserProfile() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="cursor-pointer">
         <CardHeader>
           <CardTitle>{fa.userProfile.title}</CardTitle>
         </CardHeader>
@@ -38,7 +38,7 @@ export function UserProfile() {
 
   if (error) {
     return (
-      <Card>
+      <Card className="cursor-pointer">
         <CardHeader>
           <CardTitle>{fa.userProfile.title}</CardTitle>
         </CardHeader>
@@ -54,7 +54,7 @@ export function UserProfile() {
   }
 
   return (
-    <Card>
+    <Card className="cursor-pointer">
       <CardHeader>
         <CardTitle>{fa.userProfile.title}</CardTitle>
       </CardHeader>
