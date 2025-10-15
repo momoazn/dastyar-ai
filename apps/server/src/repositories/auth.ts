@@ -1,35 +1,37 @@
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db, type User, type UserRole, users } from "@/database";
+import { db, type SelectUser, type UserRole, users } from "@/database";
 
 export async function findUserByUsername(
   username: string
-): Promise<User | null> {
-  return await db.query.users.findFirst({
+): Promise<SelectUser | null> {
+  const user = await db.query.users.findFirst({
     where: eq(users.username, username),
   });
+  return user ?? null;
 }
 
-export async function findUserById(id: number): Promise<User | null> {
-  return await db.query.users.findFirst({
+export async function findUserById(id: number): Promise<SelectUser | null> {
+  const user = await db.query.users.findFirst({
     where: eq(users.id, id),
   });
+  return user ?? null;
 }
 
 export async function createUser(
-  userData: Pick<User, "username" | "password" | "salt" | "role">
-): Promise<User> {
+  userData: Pick<SelectUser, "username" | "password" | "salt" | "role">
+): Promise<SelectUser> {
   const result = await db
     .insert(users)
     .values({
       username: userData.username,
       password: userData.password,
       salt: userData.salt,
-      role: userData.role ?? ("user" as UserRole),
+      role: (userData.role as UserRole) ?? ("user" as UserRole),
     })
-    .run();
+    .returning();
 
-  const created = await findUserById(Number(result.lastInsertRowid));
+  const created = await findUserById(Number(result.at(0)?.id));
   if (!created) {
     throw new Error("Unable to create user");
   }
@@ -51,7 +53,7 @@ export async function verifyUserCredentials({
 }: {
   username: string;
   password: string;
-}): Promise<User | null> {
+}): Promise<SelectUser | null> {
   const user = await findUserByUsername(username);
   if (!user) {
     console.warn(`[auth.verifyUserCredentials] User not found: ${username}`);

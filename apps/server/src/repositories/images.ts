@@ -1,17 +1,21 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import {
   db,
-  generatedImages as generatedImagesTable,
   type GeneratedImage,
+  generatedImages as generatedImagesTable,
+  type Json,
   type JsonValue,
 } from "@/database";
 import {
-  cleanupOrphanedFiles as storageCleanupOrphanedFiles,
   deleteImage as deleteImageFile,
+  cleanupOrphanedFiles as storageCleanupOrphanedFiles,
 } from "@/services/image-storage";
 
 export async function createGeneratedImage(
-  params: Omit<GeneratedImage, "id" | "createdAt" | "updatedAt" | "settings"> & {
+  params: Omit<
+    GeneratedImage,
+    "id" | "createdAt" | "updatedAt" | "settings"
+  > & {
     settings: JsonValue;
   }
 ): Promise<GeneratedImage> {
@@ -26,20 +30,25 @@ export async function createGeneratedImage(
       threadId: params.threadId,
       userId: params.userId,
     })
-    .run();
+    .returning();
 
-  const created = await getGeneratedImage(Number(result.lastInsertRowid));
+  const created = await getGeneratedImage(Number(result.at(0)?.id));
   if (!created) {
     throw new Error("Unable to load generated image after insert");
   }
   return created;
 }
 
-export function listGeneratedImages(): Promise<GeneratedImage[]> {
-  return db
+export async function listGeneratedImages(): Promise<GeneratedImage[]> {
+  const results = await db
     .select()
     .from(generatedImagesTable)
     .orderBy(desc(generatedImagesTable.createdAt));
+
+  return results.map((row) => ({
+    ...row,
+    settings: row.settings as Json,
+  }));
 }
 
 export async function getGeneratedImage(
@@ -50,7 +59,14 @@ export async function getGeneratedImage(
     .from(generatedImagesTable)
     .where(eq(generatedImagesTable.id, id))
     .limit(1);
-  return rows.at(0) ?? null;
+
+  const row = rows.at(0);
+  if (!row) return null;
+
+  return {
+    ...row,
+    settings: row.settings as Json,
+  };
 }
 
 export async function getGeneratedImageByUser(
@@ -67,7 +83,14 @@ export async function getGeneratedImageByUser(
       )
     )
     .limit(1);
-  return rows.at(0) ?? null;
+
+  const row = rows.at(0);
+  if (!row) return null;
+
+  return {
+    ...row,
+    settings: row.settings as Json,
+  };
 }
 
 export async function deleteGeneratedImage(id: number): Promise<void> {
@@ -103,11 +126,11 @@ export async function cleanupOrphanedFiles(): Promise<number> {
   return await storageCleanupOrphanedFiles(existingPaths);
 }
 
-export function listGeneratedImagesByThread(
+export async function listGeneratedImagesByThread(
   threadId: number,
   userId: number
 ): Promise<GeneratedImage[]> {
-  return db
+  const results = await db
     .select()
     .from(generatedImagesTable)
     .where(
@@ -117,6 +140,11 @@ export function listGeneratedImagesByThread(
       )
     )
     .orderBy(asc(generatedImagesTable.createdAt));
+
+  return results.map((row) => ({
+    ...row,
+    settings: row.settings as Json,
+  }));
 }
 
 export async function clearGeneratedImagesByThread(

@@ -83,7 +83,7 @@ export function createApp() {
     const path = c.req.path;
     if (isGet && !path.startsWith("/api") && !path.startsWith("/rpc")) {
       const indexFile = Bun.file(spaIndexPath);
-      return c.newResponse(indexFile, 200, {
+      return c.newResponse(indexFile.stream(), 200, {
         "Content-Type": "text/html; charset=utf-8",
       });
     }

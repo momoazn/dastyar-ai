@@ -21,7 +21,9 @@ export function CodeSessionsList() {
   if (isLoading) {
     return (
       <div className="p-4">
-        <div className="text-muted-foreground text-sm">{fa.codeAssistant.messages.loading}</div>
+        <div className="text-muted-foreground text-sm">
+          {fa.codeAssistant.messages.loading}
+        </div>
       </div>
     );
   }

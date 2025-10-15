@@ -1,9 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import {
-  db,
-  summaries as summariesTable,
-  type Summary,
-} from "@/database";
+import { db, type Summary, summaries as summariesTable } from "@/database";
 
 export function listSummaries(userId: number): Promise<Summary[]> {
   return db
@@ -29,12 +25,9 @@ export async function createSummary(
         tone: params.tone,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
-    const created = await getSummary(
-      Number(result.lastInsertRowid),
-      params.userId
-    );
+    const created = await getSummary(Number(result.at(0)?.id), params.userId);
     if (!created) {
       throw new Error("Unable to load summary after insert");
     }
@@ -63,10 +56,7 @@ export async function getSummary(
   }
 }
 
-export async function deleteSummary(
-  id: number,
-  userId: number
-): Promise<void> {
+export async function deleteSummary(id: number, userId: number): Promise<void> {
   try {
     await db
       .delete(summariesTable)

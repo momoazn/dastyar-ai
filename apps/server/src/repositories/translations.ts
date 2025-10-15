@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import {
   db,
-  translations as translationsTable,
   type Translation,
+  translations as translationsTable,
 } from "@/database";
 
 export function listTranslations(userId: number): Promise<Translation[]> {
@@ -29,10 +29,10 @@ export async function createTranslation(
         tone: params.tone,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
     const created = await getTranslation(
-      Number(result.lastInsertRowid),
+      Number(result.at(0)?.id),
       params.userId
     );
     if (!created) {

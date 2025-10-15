@@ -1,12 +1,13 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import {
+  type ChatThread,
   chatThreads,
   db,
-  llmModels,
-  messages,
-  type ChatThread,
+  type Json,
   type LLMModel,
+  llmModels,
   type Message,
+  messages,
 } from "@/database";
 
 /**
@@ -30,9 +31,9 @@ export async function createThread(
         isArchived: false,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to create thread:", error);
     throw new Error("Unable to create thread");
@@ -84,13 +85,18 @@ export function listThreads(options?: {
   if (!includeArchived) {
     conditions.push(eq(chatThreads.isArchived, false));
   }
-  let query = db.select().from(chatThreads);
   if (conditions.length === 1) {
-    query = query.where(conditions[0]);
-  } else {
-    query = query.where(and(...conditions));
+    return db
+      .select()
+      .from(chatThreads)
+      .where(conditions[0])
+      .orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
   }
-  return query.orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
+  return db
+    .select()
+    .from(chatThreads)
+    .where(and(...conditions))
+    .orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
 }
 
 /**
@@ -237,14 +243,12 @@ export async function loadThreadMessages(
       })
       .from(messages)
       .innerJoin(llmModels, eq(messages.modelId, llmModels.id))
-      .where(
-        and(eq(messages.threadId, threadId), eq(messages.userId, userId))
-      )
+      .where(and(eq(messages.threadId, threadId), eq(messages.userId, userId)))
       .orderBy(asc(messages.createdAt));
 
     return rows.map((row) => ({
       id: row.id,
-      parts: row.parts,
+      parts: row.parts as Json,
       status: row.status,
       role: row.role,
       modelId: row.modelId,

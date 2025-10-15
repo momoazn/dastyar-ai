@@ -20,7 +20,7 @@ import {
   extractJsonObject,
   getFirstFieldName,
 } from "@/utils/llm-json";
-import { protectedProcedure, publicProcedure } from "./base";
+import { protectedProcedure } from "./base";
 
 // Code generation schemas
 const CodeGenerationSchema = z.object({
@@ -518,11 +518,17 @@ export const codeProcedures = {
     .input(z.object({ sessionId: z.number() }))
     .handler(async ({ input, context }) => {
       // Verify the session belongs to the current user
-      const session = await getCodeAssistSession(input.sessionId, context.user.id);
+      const session = await getCodeAssistSession(
+        input.sessionId,
+        context.user.id
+      );
       if (!session) {
         throw new Error("Session not found or access denied");
       }
-      const generations = await getCodeGenerations(input.sessionId, context.user.id);
+      const generations = await getCodeGenerations(
+        input.sessionId,
+        context.user.id
+      );
       return generations;
     }),
 
@@ -530,7 +536,10 @@ export const codeProcedures = {
     .input(z.object({ sessionId: z.number() }))
     .handler(async ({ input, context }) => {
       // Verify the session belongs to the current user
-      const session = await getCodeAssistSession(input.sessionId, context.user.id);
+      const session = await getCodeAssistSession(
+        input.sessionId,
+        context.user.id
+      );
       if (!session) {
         throw new Error("Session not found or access denied");
       }

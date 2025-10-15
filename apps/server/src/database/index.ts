@@ -1,8 +1,7 @@
 import { Database } from "bun:sqlite";
+import { existsSync } from "node:fs";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { existsSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import { env, resolveConfiguredPath } from "../config";
+import { env } from "../config";
 
 // biome-ignore lint/performance/noNamespaceImport: GO AWAY
 import * as schema from "./schema";

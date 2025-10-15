@@ -77,9 +77,7 @@ export const transcribeProcedures = {
       const startedAt = Date.now();
       const language = input.language ?? "fa";
       const discovered = discoverInstalledWhisperModels();
-      const defaultModel =
-        discovered[0]?.id ??
-        defaultWhisperModel;
+      const defaultModel = discovered[0]?.id ?? defaultWhisperModel;
       const modelId = input.model ?? defaultModel;
       const fileInfo = {
         name: input.file.name,

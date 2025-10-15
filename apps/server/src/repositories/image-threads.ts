@@ -1,9 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import {
-  db,
-  imageThreads,
-  type ImageThread,
-} from "@/database";
+import { db, type ImageThread, imageThreads } from "@/database";
 
 export async function createImageThread(
   params: Partial<Pick<ImageThread, "title">> & { userId: number }
@@ -18,9 +14,9 @@ export async function createImageThread(
         isArchived: false,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to create image thread:", error);
     throw new Error("Unable to create image thread");
@@ -46,11 +42,17 @@ export function listImageThreads(options?: {
   includeArchived?: boolean;
 }): Promise<ImageThread[]> {
   const includeArchived = options?.includeArchived ?? false;
-  let query = db.select().from(imageThreads);
-  if (!includeArchived) {
-    query = query.where(eq(imageThreads.isArchived, false));
+  if (includeArchived) {
+    return db
+      .select()
+      .from(imageThreads)
+      .orderBy(desc(imageThreads.lastImageAt), desc(imageThreads.updatedAt));
   }
-  return query.orderBy(desc(imageThreads.lastImageAt), desc(imageThreads.updatedAt));
+  return db
+    .select()
+    .from(imageThreads)
+    .where(eq(imageThreads.isArchived, false))
+    .orderBy(desc(imageThreads.lastImageAt), desc(imageThreads.updatedAt));
 }
 
 export async function renameImageThread(

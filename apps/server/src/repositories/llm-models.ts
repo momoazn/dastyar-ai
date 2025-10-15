@@ -14,9 +14,10 @@ type ModelFilter = Partial<{
 }>;
 
 export async function getModelById(id: number): Promise<LLMModel | null> {
-  return await db.query.llmModels.findFirst({
+  const result = await db.query.llmModels.findFirst({
     where: eq(llmModels.id, id),
   });
+  return result ?? null;
 }
 
 export async function getModels(where: ModelFilter = {}): Promise<LLMModel[]> {

@@ -3,19 +3,21 @@ import {
   db,
   llmModels,
   messages as messagesTable,
-  type JsonValue,
-  type LLMModel,
-  type Message,
+  type SelectLlmModel,
+  type SelectMessage,
 } from "@/database";
 
 export type CreateMessageParams = Omit<
-  Message,
+  SelectMessage,
   "id" | "createdAt" | "updatedAt" | "parts"
 > & {
-  parts: JsonValue;
+  parts: unknown;
 };
 
-export type UpdateMessageParams = Pick<Message, "id" | "parts" | "status">;
+export type UpdateMessageParams = Pick<
+  SelectMessage,
+  "id" | "parts" | "status"
+>;
 
 export async function createMessage(
   params: CreateMessageParams
@@ -31,9 +33,9 @@ export async function createMessage(
         modelId: params.modelId,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to save message:", error);
     throw new Error("Unable to save message");
@@ -105,7 +107,7 @@ export async function getMessagesByThread(
     cursor?: string | null;
     order?: "asc" | "desc";
   }
-): Promise<Message[]> {
+): Promise<SelectMessage[]> {
   try {
     const limit = params.limit ?? 50;
     const order = params.order ?? "desc";
@@ -132,7 +134,7 @@ export async function getMessagesByThread(
       .limit(limit);
 
     const rows = await query;
-    return rows;
+    return rows as SelectMessage[];
   } catch (error) {
     console.error(
       `Failed to get messages for thread ${params.threadId}:`,
@@ -142,10 +144,7 @@ export async function getMessagesByThread(
   }
 }
 
-export async function deleteMessage(
-  id: number,
-  userId: number
-): Promise<void> {
+export async function deleteMessage(id: number, userId: number): Promise<void> {
   try {
     await db
       .delete(messagesTable)
@@ -180,7 +179,7 @@ export async function clearThread(
 export async function getLastUsedModelInThread(
   threadId: number,
   userId: number
-): Promise<LLMModel | null> {
+): Promise<SelectLlmModel | null> {
   try {
     const rows = await db
       .select({
@@ -214,7 +213,7 @@ export async function getLastUsedModelInThread(
 
 export async function getLastUsedModelGlobal(
   userId: number
-): Promise<LLMModel | null> {
+): Promise<SelectLlmModel | null> {
   try {
     const rows = await db
       .select({

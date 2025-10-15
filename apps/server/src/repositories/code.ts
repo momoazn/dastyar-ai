@@ -1,12 +1,12 @@
 import { and, desc, eq } from "drizzle-orm";
 import {
+  type CodeAssistSession,
+  type CodeGeneration,
+  type CodeReview,
   codeAssistSessions,
   codeGenerations,
   codeReviews,
   db,
-  type CodeAssistSession,
-  type CodeGeneration,
-  type CodeReview,
 } from "@/database";
 
 export type CodeAssistSessionWithRelations = CodeAssistSession & {
@@ -25,9 +25,9 @@ export async function createCodeAssistSession(
         language: params.language,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to create code assistant session:", error);
     throw new Error("Unable to create code assistant session");
@@ -43,7 +43,10 @@ export async function getCodeAssistSession(
       .select()
       .from(codeAssistSessions)
       .where(
-        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+        and(
+          eq(codeAssistSessions.id, id),
+          eq(codeAssistSessions.userId, userId)
+        )
       )
       .limit(1);
 
@@ -102,7 +105,10 @@ export async function updateCodeAssistSession(
       .update(codeAssistSessions)
       .set(update)
       .where(
-        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+        and(
+          eq(codeAssistSessions.id, id),
+          eq(codeAssistSessions.userId, userId)
+        )
       )
       .run();
   } catch (error) {
@@ -119,7 +125,10 @@ export async function deleteCodeAssistSession(
     await db
       .delete(codeAssistSessions)
       .where(
-        and(eq(codeAssistSessions.id, id), eq(codeAssistSessions.userId, userId))
+        and(
+          eq(codeAssistSessions.id, id),
+          eq(codeAssistSessions.userId, userId)
+        )
       )
       .run();
   } catch (error) {
@@ -145,7 +154,7 @@ export async function createCodeGeneration(
         modelId: params.modelId,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
     await db
       .update(codeAssistSessions)
@@ -153,7 +162,7 @@ export async function createCodeGeneration(
       .where(eq(codeAssistSessions.id, params.sessionId))
       .run();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to create code generation:", error);
     throw new Error("Unable to create code generation");
@@ -228,7 +237,7 @@ export async function createCodeReview(
         modelId: params.modelId,
         userId: params.userId,
       })
-      .run();
+      .returning();
 
     await db
       .update(codeAssistSessions)
@@ -236,7 +245,7 @@ export async function createCodeReview(
       .where(eq(codeAssistSessions.id, params.sessionId))
       .run();
 
-    return { id: Number(result.lastInsertRowid) };
+    return { id: Number(result.at(0)?.id) };
   } catch (error) {
     console.error("Failed to create code review:", error);
     throw new Error("Unable to create code review");

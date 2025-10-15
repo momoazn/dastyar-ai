@@ -469,3 +469,28 @@ export const insertCodeReviewSchema = createInsertSchema(codeReviews);
 export const selectCodeReviewSchema = createSelectSchema(codeReviews);
 export type InsertCodeReview = z.infer<typeof insertCodeReviewSchema>;
 export type SelectCodeReview = z.infer<typeof selectCodeReviewSchema>;
+
+// Type aliases for backward compatibility
+export type User = SelectUser;
+export type LLMModel = SelectLlmModel;
+export type ChatThread = SelectChatThread;
+export type Message = SelectMessage;
+export type Translation = SelectTranslation;
+export type Summary = SelectSummary;
+export type ImageThread = SelectImageThread;
+export type GeneratedImage = SelectGeneratedImage;
+export type CodeAssistSession = SelectCodeAssistSession;
+export type CodeGeneration = SelectCodeGeneration;
+export type CodeReview = SelectCodeReview;
+
+// JsonValue type for JSON fields
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+// Json type alias for Drizzle JSON fields
+export type Json = JsonValue;

@@ -104,7 +104,9 @@ function RouteComponent() {
           queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
         });
         queryClient.invalidateQueries({
-          queryKey: orpc.code.getGenerations.queryKey({ input: { sessionId: sid } }),
+          queryKey: orpc.code.getGenerations.queryKey({
+            input: { sessionId: sid },
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: orpc.code.listSessions.queryKey(),
@@ -140,7 +142,9 @@ function RouteComponent() {
           queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
         });
         queryClient.invalidateQueries({
-          queryKey: orpc.code.getReviews.queryKey({ input: { sessionId: sid } }),
+          queryKey: orpc.code.getReviews.queryKey({
+            input: { sessionId: sid },
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: orpc.code.listSessions.queryKey(),
