@@ -1,4 +1,5 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
+import { ORPCError } from "@orpc/client";
 import { z } from "zod";
 import { type LanguageCode, languageCodes, type Tone, tones } from "@/database";
 import { getModelById } from "@/repositories/llm-models";
@@ -85,7 +86,10 @@ export const translationProcedures = {
     .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
-        throw new Error("Model not found");
+        throw new ORPCError("MODEL_NOT_FOUND", {
+          message: "مدل مورد نظر پیدا نشد",
+          status: 400,
+        });
       }
       const providerModel = getProviderForModel(model.name, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
@@ -117,29 +121,53 @@ export const translationProcedures = {
       }
 
       if (!translatedText) {
-        translatedText = await translateWithPlainJson(
-          providerModel,
-          [
-            `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-            `Use a ${tone} tone.`,
-            "Preserve meaning and formatting.",
-            'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
-          ]
-            .filter(Boolean)
-            .join("\n"),
-          input.text
-        );
+        try {
+          translatedText = await translateWithPlainJson(
+            providerModel,
+            [
+              `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
+              `Use a ${tone} tone.`,
+              "Preserve meaning and formatting.",
+              'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
+            ]
+              .filter(Boolean)
+              .join("\n"),
+            input.text
+          );
+        } catch (err) {
+          console.error("--- translateWithPlainJson failed:", err);
+          throw new ORPCError("TRANSLATION_FAILED", {
+            message:
+              "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
+            status: 502,
+          });
+        }
       }
 
-      const created = await createTranslation({
-        sourceText: input.text,
-        translatedText,
-        sourceLanguage,
-        targetLanguage,
-        tone,
-        modelId: input.modelId,
-        userId: context.user?.id,
-      });
-      return created;
+      if (!translatedText) {
+        throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
+          message: "پاسخی از مدل دریافت نشد",
+          status: 500,
+        });
+      }
+
+      try {
+        const created = await createTranslation({
+          sourceText: input.text,
+          translatedText,
+          sourceLanguage,
+          targetLanguage,
+          tone,
+          modelId: input.modelId,
+          userId: context.user?.id,
+        });
+        return created;
+      } catch (err) {
+        console.error("--- failed to persist translation:", err);
+        throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
+          message: "ذخیره‌سازی ترجمه ناموفق بود",
+          status: 500,
+        });
+      }
     }),
 };
