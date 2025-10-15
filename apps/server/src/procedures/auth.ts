@@ -31,8 +31,20 @@ export const authProcedures = {
 
     logEvent("auth.register.attempt", { username });
 
-    const exists = await usernameExists(username);
-    logEvent("auth.register.username.exists_check", { username, exists });
+    let exists = false;
+    try {
+      exists = await usernameExists(username);
+      logEvent("auth.register.username.exists_check", { username, exists });
+    } catch (err) {
+      logEvent("auth.register.username.exists_check.error", {
+        username,
+        error: (err as Error)?.message || err,
+      });
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: "خطای داخلی سیستم",
+        status: 500,
+      });
+    }
 
     if (exists) {
       console.warn(`[auth.register] Username already exists: ${username}`);
