@@ -111,8 +111,11 @@ const app = new Hono<AuthEnv>()
             if (!p || typeof p !== "object") {
               continue;
             }
-            if (p.type === "text" && typeof p.text === "string") {
-              text += p.text;
+            const candidate = p as Record<string, unknown>;
+            const typeVal = candidate.type as unknown;
+            const textVal = candidate.text as unknown;
+            if (typeVal === "text" && typeof textVal === "string") {
+              text += textVal;
             }
           }
           return text;

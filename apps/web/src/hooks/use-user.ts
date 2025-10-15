@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
-import { tokenAtom } from "@/atoms/auth";
+import { useAtom, useAtomValue } from "jotai";
+import { logoutAtom, tokenAtom } from "@/atoms/auth";
 import { orpc } from "@/utils/orpc";
 
 export type User = {
@@ -11,6 +11,7 @@ export type User = {
 
 export function useUser() {
   const token = useAtomValue(tokenAtom);
+  const [, logout] = useAtom(logoutAtom);
 
   return useQuery(
     orpc.auth.me.queryOptions({
@@ -22,6 +23,17 @@ export function useUser() {
           return false;
         }
         return failureCount < 3;
+      },
+      onError: (error: unknown) => {
+        // If the user is not found (401 error), automatically logout
+        if (
+          error instanceof Error &&
+          (error.message.includes("UNAUTHORIZED") ||
+            error.message.includes("User not found") ||
+            error.message.includes("Authentication failed"))
+        ) {
+          logout();
+        }
       },
     })
   );

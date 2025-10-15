@@ -1,13 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* biome-ignore lint/nursery/noUnknownAtRule: Streamdown CSS */
+/* biome-ignore lint/suspicious/noUnknownAtRules: Streamdown CSS */
 @source "../node_modules/streamdown/dist/index.js";
 
-/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS custom variant */
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS custom variant */
 @custom-variant dark (&:is(.dark *));
 
-/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind theme tokens */
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind theme tokens */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -242,11 +242,11 @@
 
 @layer base {
   * {
-    /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind apply */
+    /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind apply */
     @apply border-border outline-ring/50;
   }
   body {
-    /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind apply */
+    /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind apply */
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }

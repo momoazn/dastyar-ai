@@ -25,9 +25,16 @@ export async function extractPdfPages(file: File): Promise<PdfPageText[]> {
   const out: PdfPageText[] = [];
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
-    const content = await page.getTextContent({ normalizeWhitespace: true });
+    const content = await page.getTextContent();
+    // Narrow union TextItem | TextMarkedContent to items that contain a string 'str'
     const text = normalizePdfText(
-      content.items?.map((i: { str?: string }) => i.str || "").join(" ")
+      (content.items || [])
+        .map((i: unknown) =>
+          i && typeof i === "object" && "str" in (i as Record<string, unknown>)
+            ? String((i as Record<string, unknown>).str ?? "")
+            : ""
+        )
+        .join(" ")
     );
     if (text.trim()) {
       out.push({ page: p, text });

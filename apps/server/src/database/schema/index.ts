@@ -208,71 +208,7 @@ export const generatedImages = sqliteTable(
   })
 );
 
-export const codeAssistSessions = sqliteTable("code_assist_sessions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  title: text("title").notNull(),
-  language: text("language").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
-
-export const codeGenerations = sqliteTable("code_generations", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sessionId: integer("session_id")
-    .notNull()
-    .references(() => codeAssistSessions.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  prompt: text("prompt").notNull(),
-  generatedCode: text("generatedCode").notNull(),
-  language: text("language").notNull(),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
-
-export const codeReviews = sqliteTable("code_reviews", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sessionId: integer("session_id")
-    .notNull()
-    .references(() => codeAssistSessions.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  codeInput: text("codeInput").notNull(),
-  reviewFeedback: text("reviewFeedback").notNull(),
-  suggestions: text("suggestions").notNull(),
-  severityLevels: text("severityLevels").notNull(),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+// Code Assist tables removed
 
 // Documents for RAG
 export const documents = sqliteTable("documents", {
@@ -335,17 +271,12 @@ export const usersRelations = relations(users, ({ many }) => ({
   summaries: many(summaries),
   imageThreads: many(imageThreads),
   generatedImages: many(generatedImages),
-  codeAssistSessions: many(codeAssistSessions),
-  codeGenerations: many(codeGenerations),
-  codeReviews: many(codeReviews),
 }));
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
   messages: many(messages),
   translations: many(translations),
   summaries: many(summaries),
-  codeGenerations: many(codeGenerations),
-  codeReviews: many(codeReviews),
 }));
 
 export const chatThreadsRelations = relations(chatThreads, ({ one, many }) => ({
@@ -418,50 +349,7 @@ export const generatedImagesRelations = relations(
   })
 );
 
-export const codeAssistSessionsRelations = relations(
-  codeAssistSessions,
-  ({ one, many }) => ({
-    user: one(users, {
-      fields: [codeAssistSessions.userId],
-      references: [users.id],
-    }),
-    codeGenerations: many(codeGenerations),
-    codeReviews: many(codeReviews),
-  })
-);
-
-export const codeGenerationsRelations = relations(
-  codeGenerations,
-  ({ one }) => ({
-    session: one(codeAssistSessions, {
-      fields: [codeGenerations.sessionId],
-      references: [codeAssistSessions.id],
-    }),
-    model: one(llmModels, {
-      fields: [codeGenerations.modelId],
-      references: [llmModels.id],
-    }),
-    user: one(users, {
-      fields: [codeGenerations.userId],
-      references: [users.id],
-    }),
-  })
-);
-
-export const codeReviewsRelations = relations(codeReviews, ({ one }) => ({
-  session: one(codeAssistSessions, {
-    fields: [codeReviews.sessionId],
-    references: [codeAssistSessions.id],
-  }),
-  model: one(llmModels, {
-    fields: [codeReviews.modelId],
-    references: [llmModels.id],
-  }),
-  user: one(users, {
-    fields: [codeReviews.userId],
-    references: [users.id],
-  }),
-}));
+// Code Assist relations removed
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   user: one(users, { fields: [documents.userId], references: [users.id] }),
@@ -529,26 +417,7 @@ export const selectGeneratedImageSchema = createSelectSchema(generatedImages);
 export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
 export type SelectGeneratedImage = z.infer<typeof selectGeneratedImageSchema>;
 
-export const insertCodeAssistSessionSchema =
-  createInsertSchema(codeAssistSessions);
-export const selectCodeAssistSessionSchema =
-  createSelectSchema(codeAssistSessions);
-export type InsertCodeAssistSession = z.infer<
-  typeof insertCodeAssistSessionSchema
->;
-export type SelectCodeAssistSession = z.infer<
-  typeof selectCodeAssistSessionSchema
->;
-
-export const insertCodeGenerationSchema = createInsertSchema(codeGenerations);
-export const selectCodeGenerationSchema = createSelectSchema(codeGenerations);
-export type InsertCodeGeneration = z.infer<typeof insertCodeGenerationSchema>;
-export type SelectCodeGeneration = z.infer<typeof selectCodeGenerationSchema>;
-
-export const insertCodeReviewSchema = createInsertSchema(codeReviews);
-export const selectCodeReviewSchema = createSelectSchema(codeReviews);
-export type InsertCodeReview = z.infer<typeof insertCodeReviewSchema>;
-export type SelectCodeReview = z.infer<typeof selectCodeReviewSchema>;
+// Code Assist schemas removed
 
 // Type aliases for backward compatibility
 export type User = SelectUser;
@@ -559,9 +428,7 @@ export type Translation = SelectTranslation;
 export type Summary = SelectSummary;
 export type ImageThread = SelectImageThread;
 export type GeneratedImage = SelectGeneratedImage;
-export type CodeAssistSession = SelectCodeAssistSession;
-export type CodeGeneration = SelectCodeGeneration;
-export type CodeReview = SelectCodeReview;
+// Code Assist types removed
 export type Document = SelectDocument;
 export type DocumentChunk = SelectDocumentChunk;
 export type ThreadDocument = SelectThreadDocument;

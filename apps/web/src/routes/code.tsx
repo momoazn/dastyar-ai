@@ -1,11 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
-import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Bug, Code, FileText, Loader2, Play, Shield } from "lucide-react";
+import { useState } from "react";
+import { Response } from "@/components/ai-elements/response";
 import {
   Alert,
   Button,
@@ -20,7 +17,8 @@ import {
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
-import { orpc, queryClient } from "@/utils/orpc";
+import { cn, detectTextDirection } from "@/lib/utils";
+import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/code")({
   component: () => (
@@ -61,18 +59,13 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
   { value: "rust", label: "Rust" },
 ];
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
-  const search = useSearch({ from: "/code" }) as { id?: string };
-  const navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
   const [inputCode, setInputCode] = useState("");
-  const [context, setContext] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [output, setOutput] = useState("");
-  const [sessionId, setSessionId] = useState<number | null>(null);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const lastSessionIdRef = useRef<number | null>(null);
 
   const {
     modelId,
@@ -82,207 +75,88 @@ function RouteComponent() {
     error: modelsError,
   } = useCodeModelSelection();
 
-  // Load session if ID is provided in URL
-  const { data: selectedSession } = useQuery(
-    orpc.code.getSession.queryOptions({
-      input: { id: Number.parseInt(search.id || "0", 10) },
-      enabled: !!search.id,
-    })
-  );
-
-  const createSessionMutation = useMutation(
-    orpc.code.createSession.mutationOptions()
-  );
-
-  const generateCodeMutation = useMutation(
-    orpc.code.generateCode.mutationOptions({
-      onSuccess: (data) => {
-        setOutput(data.generatedCode || "");
-        const sid = lastSessionIdRef.current || sessionId || 0;
-        // Refresh session and sidebar
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
-        });
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getGenerations.queryKey({
-            input: { sessionId: sid },
-          }),
-        });
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.listSessions.queryKey(),
-        });
-        // Navigate to the session detail page so users see history immediately
-        if (sid) {
-          navigate({ to: "/code/$id", params: { id: String(sid) } });
+  const runMutation = useMutation(
+    orpc.code.run.mutationOptions({
+      onSuccess: (data, vars) => {
+        switch (vars.mode) {
+          case "generate":
+            setOutput((data as { generatedCode?: string }).generatedCode ?? "");
+            break;
+          case "explain":
+            setOutput((data as { explanation?: string }).explanation ?? "");
+            break;
+          case "review": {
+            const r = data as { feedback?: string; suggestions?: string[] };
+            const suggestions = (r.suggestions ?? [])
+              .map((s) => `- ${s}`)
+              .join("\n");
+            setOutput(
+              `${r.feedback ?? ""}${
+                suggestions
+                  ? `\n\n${fa.codeAssistant.review.suggestions}:\n${suggestions}`
+                  : ""
+              }`
+            );
+            break;
+          }
+          case "debug": {
+            const d = data as {
+              rootCause?: string;
+              solution?: string;
+              codeFix?: string;
+            };
+            setOutput(
+              `${fa.codeAssistant.debug.rootCause}: ${d.rootCause ?? ""}\n\n${
+                fa.codeAssistant.debug.solution
+              }: ${d.solution ?? ""}${
+                d.codeFix
+                  ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${d.codeFix}`
+                  : ""
+              }`
+            );
+            break;
+          }
+          default:
+            break;
         }
       },
     })
   );
 
-  const explainCodeMutation = useMutation(
-    orpc.code.explainCode.mutationOptions({
-      onSuccess: (data) => {
-        setOutput(data.explanation || "");
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({
-            input: { id: sessionId || 0 },
-          }),
-        });
-      },
-    })
-  );
-
-  const reviewCodeMutation = useMutation(
-    orpc.code.reviewCode.mutationOptions({
-      onSuccess: (data) => {
-        const reviewText = `${fa.codeAssistant.review.overallScore}: ${data.overallScore}/10\n\n${data.feedback}\n\n${fa.codeAssistant.review.suggestions}:\n${data.suggestions?.map((s) => `- ${s.message}`).join("\n") || fa.codeAssistant.review.noSuggestions}`;
-        setOutput(reviewText);
-        const sid = lastSessionIdRef.current || sessionId || 0;
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({ input: { id: sid } }),
-        });
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getReviews.queryKey({
-            input: { sessionId: sid },
-          }),
-        });
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.listSessions.queryKey(),
-        });
-      },
-    })
-  );
-
-  const debugCodeMutation = useMutation(
-    orpc.code.debugCode.mutationOptions({
-      onSuccess: (data) => {
-        const debugText = `${fa.codeAssistant.debug.rootCause}: ${data.rootCause}\n\n${fa.codeAssistant.debug.solution}: ${data.solution}${data.codeFix ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${data.codeFix}` : ""}${data.prevention ? `\n\n${fa.codeAssistant.debug.prevention}:\n${data.prevention.map((p) => `- ${p}`).join("\n")}` : ""}`;
-        setOutput(debugText);
-        queryClient.invalidateQueries({
-          queryKey: orpc.code.getSession.queryKey({
-            input: { id: sessionId || 0 },
-          }),
-        });
-      },
-    })
-  );
-
-  // Load session data when selectedSession changes
-  useEffect(() => {
-    if (selectedSession) {
-      setSessionId(selectedSession.id);
-      const incoming = selectedSession.language as string;
-      const isSupported = languages.some((l) => l.value === incoming);
-      if (isSupported) {
-        setLanguage(incoming as ProgrammingLanguage);
-      }
-    }
-  }, [selectedSession]);
-
-  const handleCopy = () => {
-    navigator.clipboard
-      .writeText(output)
-      .then(() => {
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-      })
-      .catch(() => {
-        console.error("Failed to copy to clipboard");
+  const _handleCopy = () => {
+    // Intentionally ignoring copy errors
+    try {
+      // no await to keep UI snappy
+      navigator.clipboard.writeText(output).catch(() => {
+        /* ignore */
       });
+    } catch {
+      // noop
+    }
   };
 
   const handleExecute = () => {
-    const executeWithSession = (sid: number) => {
-      lastSessionIdRef.current = sid;
-      if (!(inputCode.trim() && modelId)) {
-        return;
-      }
-
-      const shared = {
-        language,
-        modelId,
-      };
-
-      switch (mode) {
-        case "generate":
-          generateCodeMutation.mutate({
-            sessionId: sid,
-            prompt: inputCode,
-            context: context.trim() || undefined,
-            ...shared,
-          });
-          break;
-        case "explain":
-          explainCodeMutation.mutate({
-            sessionId: sid,
-            code: inputCode,
-            ...shared,
-          });
-          break;
-        case "review":
-          reviewCodeMutation.mutate({
-            sessionId: sid,
-            code: inputCode,
-            ...shared,
-          });
-          break;
-        case "debug":
-          if (!errorMessage.trim()) {
-            console.error(fa.codeAssistant.messages.errorRequired);
-            return;
-          }
-          debugCodeMutation.mutate({
-            sessionId: sid,
-            code: inputCode,
-            error: errorMessage,
-            ...shared,
-          });
-          break;
-        default:
-          break;
-      }
-    };
-
-    if (!sessionId) {
-      // Create session first, then immediately execute the selected action
-      createSessionMutation.mutate(
-        {
-          title: fa.codeAssistant.newSessionTitle(
-            modes.find((m) => m.value === mode)?.label || ""
-          ),
-          language,
-        },
-        {
-          onSuccess: (data) => {
-            setSessionId(data.id);
-            // Update sidebar list promptly
-            queryClient.invalidateQueries({
-              queryKey: orpc.code.listSessions.queryKey(),
-            });
-            executeWithSession(data.id);
-          },
-        }
-      );
+    if (!(inputCode.trim() && modelId)) {
       return;
     }
-
-    executeWithSession(sessionId);
+    runMutation.mutate({
+      mode,
+      language,
+      modelId,
+      prompt: mode === "generate" ? inputCode : undefined,
+      code: mode !== "generate" ? inputCode : undefined,
+      error: mode === "debug" ? errorMessage : undefined,
+    });
   };
 
-  const currentMutation = {
-    generate: generateCodeMutation,
-    explain: explainCodeMutation,
-    review: reviewCodeMutation,
-    debug: debugCodeMutation,
-  }[mode];
+  const currentMutation = runMutation;
 
   const canExecute = Boolean(
     inputCode.trim() &&
       modelId &&
       !modelsLoading &&
       (mode !== "debug" || errorMessage.trim()) &&
-      !currentMutation.isPending &&
-      !createSessionMutation.isPending
+      !currentMutation.isPending
   );
 
   return (
@@ -390,7 +264,7 @@ function RouteComponent() {
               disabled={!canExecute}
               onClick={handleExecute}
             >
-              {currentMutation.isPending || createSessionMutation.isPending ? (
+              {currentMutation.isPending ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   {fa.codeAssistant.buttons.processing}
@@ -408,40 +282,6 @@ function RouteComponent() {
 
       {/* Main Content */}
       <div className="flex-1 space-y-4 p-4">
-        {/* Context Input (for generate mode) */}
-        {mode === "generate" && (
-          <Card className="p-4">
-            <div className="mb-2">
-              <h3 className="font-medium">{fa.codeAssistant.labels.context}</h3>
-            </div>
-            <Textarea
-              className="min-h-[100px] resize-none"
-              disabled={currentMutation.isPending}
-              onChange={(e) => setContext(e.target.value)}
-              placeholder={fa.codeAssistant.placeholders.context}
-              value={context}
-            />
-          </Card>
-        )}
-
-        {/* Error Input (for debug mode) */}
-        {mode === "debug" && (
-          <Card className="p-4">
-            <div className="mb-2">
-              <h3 className="font-medium">
-                {fa.codeAssistant.labels.errorMessage}
-              </h3>
-            </div>
-            <Textarea
-              className="min-h-[100px] resize-none"
-              disabled={currentMutation.isPending}
-              onChange={(e) => setErrorMessage(e.target.value)}
-              placeholder={fa.codeAssistant.placeholders.errorMessage}
-              value={errorMessage}
-            />
-          </Card>
-        )}
-
         {/* Input Code */}
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
@@ -457,7 +297,15 @@ function RouteComponent() {
             </div>
           </div>
           <Textarea
-            className="min-h-[200px] resize-none font-mono text-sm"
+            autoCapitalize="off"
+            autoCorrect="off"
+            className={cn(
+              "min-h-[200px] resize-none font-mono text-sm",
+              (inputCode ? detectTextDirection(inputCode) : "ltr") === "rtl"
+                ? "text-right"
+                : "text-left"
+            )}
+            dir={inputCode ? detectTextDirection(inputCode) : "ltr"}
             disabled={currentMutation.isPending}
             onChange={(e) => setInputCode(e.target.value)}
             placeholder={
@@ -465,40 +313,66 @@ function RouteComponent() {
                 ? fa.codeAssistant.placeholders.codeRequest
                 : fa.codeAssistant.placeholders.inputCode
             }
+            spellCheck={false}
             value={inputCode}
           />
+          {mode !== "generate" && inputCode.trim() && (
+            <div className="mt-3 rounded-md border p-3 text-left" dir="ltr">
+              <Response>{`\`\`\`${language}\n${inputCode}\n\`\`\``}</Response>
+            </div>
+          )}
         </Card>
+
+        {/* Error Input (for debug mode) */}
+        {mode === "debug" && (
+          <Card className="p-4">
+            <div className="mb-2">
+              <h3 className="font-medium">
+                {fa.codeAssistant.labels.errorMessage}
+              </h3>
+            </div>
+            <Textarea
+              autoCapitalize="off"
+              autoCorrect="off"
+              className={cn(
+                "min-h-[100px] resize-none font-mono text-sm",
+                (errorMessage ? detectTextDirection(errorMessage) : "ltr") ===
+                  "rtl"
+                  ? "text-right"
+                  : "text-left"
+              )}
+              dir={errorMessage ? detectTextDirection(errorMessage) : "ltr"}
+              disabled={currentMutation.isPending}
+              onChange={(e) => setErrorMessage(e.target.value)}
+              placeholder={fa.codeAssistant.placeholders.errorMessage}
+              spellCheck={false}
+              value={errorMessage}
+            />
+            {errorMessage.trim() && (
+              <div className="mt-3 rounded-md border p-3 text-left" dir="ltr">
+                <Response>{`\`\`\`text\n${errorMessage}\n\`\`\``}</Response>
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Output */}
         <Card className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-medium">{fa.codeAssistant.labels.result}</h3>
-            {output && (
-              <Button
-                className={copySuccess ? "bg-green-600 hover:bg-green-700" : ""}
-                onClick={handleCopy}
-                size="sm"
-                variant={copySuccess ? "default" : "ghost"}
-              >
-                <Copy className="h-4 w-4" />
-                {copySuccess
-                  ? fa.codeAssistant.buttons.copied
-                  : fa.codeAssistant.buttons.copy}
-              </Button>
-            )}
+            {output && null}
           </div>
-          <Textarea
-            className="min-h-[200px] resize-none font-mono text-sm"
-            placeholder={fa.codeAssistant.placeholders.result}
-            readOnly
-            value={output}
-          />
+          <div className="min-h-[200px] text-left" dir="ltr">
+            <Response>
+              {mode === "generate" && output
+                ? `\`\`\`${language}\n${output}\n\`\`\``
+                : output}
+            </Response>
+          </div>
         </Card>
 
         {/* Error Display */}
-        {(currentMutation.isError ||
-          createSessionMutation.isError ||
-          modelsError) && (
+        {(currentMutation.isError || modelsError) && (
           <Alert variant="destructive">
             <div className="flex items-center gap-2">
               <span>

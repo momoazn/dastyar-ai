@@ -72,15 +72,20 @@ export const ChatInput = ({
       if (s.phase === "done" || s.phase === "error") {
         return prev.filter((p) => p.filename !== s.filename);
       }
+      // Narrow phase to the allowed PendingAttachment phase type
+      const phase: PendingAttachment["phase"] =
+        s.phase === "extracting" ||
+        s.phase === "uploading" ||
+        s.phase === "indexing"
+          ? s.phase
+          : "extracting";
       const existing = prev.find((p) => p.filename === s.filename);
       if (existing) {
         return prev.map((p) =>
-          p.filename === s.filename
-            ? { filename: s.filename, phase: s.phase }
-            : p
+          p.filename === s.filename ? { filename: s.filename, phase } : p
         );
       }
-      return [...prev, { filename: s.filename, phase: s.phase }];
+      return [...prev, { filename: s.filename, phase }];
     });
   };
 

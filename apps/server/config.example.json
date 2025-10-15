@@ -1,0 +1,29 @@
+{
+  "PORT": 3000,
+  "HOST": "127.0.0.1",
+  "CORS_ORIGIN": "*",
+
+  "JWT_SECRET": "change-me-in-production",
+  "JWT_EXPIRES_IN": 86400,
+
+  "DATABASE_FILE": "./data.db",
+
+  "WHISPER_MODELS_DIR": "./whisper-models",
+  "WHISPER_CACHE_DIR": "./.whisper-cache",
+  "WHISPER_WASM_DIR": "./node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist",
+  "WHISPER_MODELS": "Xenova/whisper-tiny",
+
+  "OLLAMA_BASE_URL": "http://localhost:11434",
+  "OLLAMA_ENABLED": true,
+
+  "LMSTUDIO_BASE_URL": "http://localhost:1234/v1",
+  "LMSTUDIO_ENABLED": false,
+
+  "STABLE_DIFFUSION_URL": "http://localhost:7860",
+  "STABLE_DIFFUSION_ENABLED": true,
+
+  "IMAGES_DIR": "./generated-images",
+  "DOCUMENTS_DIR": "./uploaded-documents",
+  "EMBEDDING_MODEL": "nomic-embed-text",
+  "WEB_DIST_DIR": "./web"
+}
