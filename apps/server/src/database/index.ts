@@ -1,9 +1,7 @@
 import { Database } from "bun:sqlite";
-import { existsSync } from "node:fs";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { env } from "../config";
+import { env, resolveConfiguredPath } from "../config";
 
-// biome-ignore lint/performance/noNamespaceImport: GO AWAY
 import * as schema from "./schema";
 
 const SQL = `
@@ -164,21 +162,55 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 CREATE INDEX "idx_generated_images_thread" ON "generated_images"("thread_id");
 `;
 
-export const sqlite = new Database(env.DATABASE_FILE, {
+// Resolve the database file path properly for both development and production
+const databaseFilePath = resolveConfiguredPath(env.DATABASE_FILE);
+
+export const sqliteDB = new Database(databaseFilePath, {
   create: true,
   strict: true,
 });
 
 export const initializeDatabase = (): void => {
-  if (!existsSync(env.DATABASE_FILE)) {
-    sqlite.run(SQL);
+  console.log(`[database] Initializing database at: ${databaseFilePath}`);
+
+  try {
+    // Check if database file exists and has tables
+    const tablesExist = sqliteDB
+      .prepare(
+        `
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name='users'
+    `
+      )
+      .get();
+
+    if (!tablesExist) {
+      console.log("[database] Creating database schema...");
+      sqliteDB.run(SQL);
+      console.log("[database] Database schema created successfully");
+    } else {
+      console.log("[database] Database schema already exists");
+    }
+  } catch (error) {
+    console.error("[database] Error initializing database:", error);
+    // If there's an error, try to recreate the schema
+    console.log("[database] Attempting to recreate database schema...");
+    try {
+      sqliteDB.run(SQL);
+      console.log("[database] Database schema recreated successfully");
+    } catch (recreateError) {
+      console.error(
+        "[database] Failed to recreate database schema:",
+        recreateError
+      );
+      throw recreateError;
+    }
   }
 };
 
 export const db = drizzle({
-  client: sqlite,
+  client: sqliteDB,
   schema,
 });
 
-// biome-ignore lint/performance/noBarrelFile: GO AWAY
 export * from "./schema";

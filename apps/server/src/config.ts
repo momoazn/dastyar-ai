@@ -136,10 +136,10 @@ console.log("[config] SPA directory resolution:", {
 
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
-    dirname(env.DATABASE_FILE),
-    env.WHISPER_MODELS_DIR,
-    env.WHISPER_CACHE_DIR,
-    env.IMAGES_DIR,
+    dirname(resolveConfiguredPath(env.DATABASE_FILE)),
+    resolveConfiguredPath(env.WHISPER_MODELS_DIR),
+    resolveConfiguredPath(env.WHISPER_CACHE_DIR),
+    resolveConfiguredPath(env.IMAGES_DIR),
   ];
   const unique = Array.from(new Set(directories)).filter(
     (dir) => dir !== "." && dir !== "./"
