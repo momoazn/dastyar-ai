@@ -63,7 +63,9 @@ export async function runMigrations(): Promise<void> {
         const sqlContent = migrationData[sqlFileName];
 
         if (!sqlContent) {
-          console.warn(`[migrate] Missing SQL file for migration: ${migrationTag}`);
+          console.warn(
+            `[migrate] Missing SQL file for migration: ${migrationTag}`
+          );
           continue;
         }
 
@@ -77,7 +79,7 @@ export async function runMigrations(): Promise<void> {
         // Split by statement-breakpoint (drizzle's delimiter) or semicolon
         const statements = sqlContent
           .split(/--> statement-breakpoint/g)
-          .flatMap((block) => 
+          .flatMap((block) =>
             block
               .split(";")
               .map((s) => s.trim())
@@ -104,7 +106,9 @@ export async function runMigrations(): Promise<void> {
           [migrationTag, Date.now()]
         );
 
-        console.log(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
+        console.log(
+          `[migrate] ✓ Migration ${migrationTag} applied successfully`
+        );
       }
 
       console.log("[migrate] All migrations completed successfully");
@@ -112,10 +116,7 @@ export async function runMigrations(): Promise<void> {
     }
 
     // Fallback to file-based migrations in development
-    const migrationsPath = join(
-      import.meta.dir,
-      "migrations"
-    );
+    const migrationsPath = join(import.meta.dir, "migrations");
 
     if (existsSync(migrationsPath)) {
       console.log(
