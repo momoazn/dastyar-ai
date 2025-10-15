@@ -75,15 +75,6 @@ const safeCopyFile = (srcFile: string, destFile: string): void => {
   copyFileSync(srcFile, destFile);
 };
 
-const writeFileAtomic = async (
-  dest: string,
-  data: Uint8Array
-): Promise<void> => {
-  const tmp = `${dest}.tmp-${Date.now()}`;
-  await fsPromises.writeFile(tmp, data);
-  await fsPromises.rename(tmp, dest);
-};
-
 const copyFileIfExists = (src: string, dest: string): void => {
   if (!existsSync(src)) {
     return;
@@ -153,7 +144,9 @@ const findTransformersWasmDir = (workspaceRoot: string): string | null => {
 
 const numFromEnv = (name: string, def: number): number => {
   const raw = process.env[name];
-  if (!raw) return def;
+  if (!raw) {
+    return def;
+  }
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : def;
 };
@@ -194,7 +187,9 @@ const fetchWithRetry = async (
         signal: controller.signal,
       });
       clearTimeout(timer);
-      if (resp.ok) return resp;
+      if (resp.ok) {
+        return resp;
+      }
       const retriable = resp.status >= 500 || resp.status === 429;
       if (!retriable) {
         return resp;
@@ -221,9 +216,13 @@ const headRemoteSize = async (url: string): Promise<number | null> => {
     const len = r.headers.get("content-length");
     if (len) {
       const n = Number(len);
-      if (Number.isFinite(n)) return n;
+      if (Number.isFinite(n)) {
+        return n;
+      }
     }
-  } catch {}
+  } catch {
+    // Ignore errors when checking remote file size
+  }
   return null;
 };
 
@@ -271,7 +270,9 @@ const limitPool = async <T, R>(
   const run = async (): Promise<void> => {
     while (true) {
       const idx = i;
-      if (idx >= items.length) return;
+      if (idx >= items.length) {
+        return;
+      }
       i += 1;
       const r = await worker(items[idx], idx);
       results[idx] = r;
@@ -330,7 +331,9 @@ const downloadModelRepo = async (
     const url = remoteUrlFor(modelId, rel);
     const dest = join(outDir, modelId, rel);
     const wrote = await ensureDownloaded(url, dest);
-    if (wrote) downloaded += 1;
+    if (wrote) {
+      downloaded += 1;
+    }
   });
   // bounded parallelism
   await limitPool(tasks, DOWNLOAD_CONCURRENCY, (t) => t());
