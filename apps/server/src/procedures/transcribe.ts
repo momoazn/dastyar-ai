@@ -2,7 +2,13 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { WaveFile } from "wavefile";
 import { z } from "zod";
-import { defaultWhisperModel, env, whisperModelIds } from "@/config";
+import {
+  defaultWhisperModel,
+  env,
+  whisperModelIds,
+  resolveConfiguredPath,
+  isProduction,
+} from "@/config";
 import { publicProcedure } from "./base";
 
 // Type for the ASR pipeline
@@ -160,6 +166,16 @@ function mapTranscriptionError(message: string): Error {
   if (message.includes("WAV") || message.includes("نامعتبر")) {
     return new Error("فایل صوتی پشتیبانی نمی‌شود. لطفاً فایل WAV ارسال کنید.");
   }
+  if (
+    message.includes("local_files_only") ||
+    message.includes("allowRemoteModels=false") ||
+    message.includes("file was not found locally") ||
+    message.includes("preprocessor_config.json")
+  ) {
+    return new Error(
+      "مدل آفلاین یافت نشد. لطفاً در زمان بیلد مدل‌های لازم را دریافت کنید (bun run build) یا مدل را در پوشه whisper-models قرار دهید."
+    );
+  }
   if (message.includes("onnx") || message.includes("NAPI")) {
     return new Error(
       "راه‌اندازی موتور تشخیص گفتار با مشکل مواجه شد. سرور را ری‌استارت کنید یا در حالت توسعه از Node استفاده کنید."
@@ -203,14 +219,14 @@ async function getTransformers(): Promise<TransformersModule> {
   // Resolve paths next to the compiled binary for offline execution
   const execDir = path.dirname(process.execPath);
   const localWasmDir = env.WHISPER_WASM_DIR || path.join(execDir, "wasm");
-  const localModelsDir =
-    env.WHISPER_MODELS_DIR || path.join(execDir, "whisper-models");
+  const localModelsDir = resolveConfiguredPath(env.WHISPER_MODELS_DIR);
 
-  // Enforce offline mode and local assets
-  mod.env.allowRemoteModels = false;
+  // Allow downloads in development; strictly offline in production builds.
+  mod.env.allowRemoteModels = !isProduction();
   mod.env.localModelPath = localModelsDir;
-  mod.env.cacheDir =
-    env.WHISPER_CACHE_DIR || path.join(execDir, ".whisper-cache");
+  mod.env.cacheDir = resolveConfiguredPath(
+    env.WHISPER_CACHE_DIR || path.join(execDir, ".whisper-cache")
+  );
 
   const onnxBackend = mod.env.backends?.onnx;
   if (onnxBackend) {
@@ -240,9 +256,7 @@ function prettyWhisperName(modelId: string): string {
 }
 
 function discoverInstalledWhisperModels(): ModelInfo[] {
-  const execDir = path.dirname(process.execPath);
-  const modelsRoot =
-    env.WHISPER_MODELS_DIR || path.join(execDir, "whisper-models");
+  const modelsRoot = resolveConfiguredPath(env.WHISPER_MODELS_DIR);
   if (!existsSync(modelsRoot)) {
     return [];
   }
@@ -285,9 +299,40 @@ function discoverInstalledWhisperModels(): ModelInfo[] {
   return result;
 }
 
+function ensureModelAvailable(modelId: string): void {
+  // Ensure the selected model exists and has essential assets
+  const modelsRoot = resolveConfiguredPath(env.WHISPER_MODELS_DIR);
+  const [vendor, model] = modelId.split("/");
+  const modelDir = path.join(modelsRoot, vendor ?? "", model ?? "");
+  const hasPreprocessor = existsSync(
+    path.join(modelDir, "preprocessor_config.json")
+  );
+  const onnxDir = path.join(modelDir, "onnx");
+  let hasOnnx = false;
+  try {
+    if (existsSync(onnxDir)) {
+      const files = readdirSync(onnxDir);
+      hasOnnx = files.some((f) => f.toLowerCase().endsWith(".onnx"));
+    }
+  } catch {
+    // ignore
+  }
+  if (!(hasPreprocessor && hasOnnx)) {
+    // In development, allow remote download fallback
+    if (!isProduction()) {
+      return;
+    }
+    const pretty = prettyWhisperName(modelId);
+    throw new Error(
+      `مدل آفلاین "${pretty}" یافت نشد. لطفاً در زمان بیلد مدل‌ها را دریافت کنید (bun run build) یا فایل‌ها را در مسیر ${modelDir} قرار دهید.`
+    );
+  }
+}
+
 function getTranscriber(modelId: string): Promise<ASRPipeline> {
   if (!transcriberCache.has(modelId)) {
     const create = (async () => {
+      ensureModelAvailable(modelId);
       const { pipeline } = await getTransformers();
       const p = await pipeline("automatic-speech-recognition", modelId);
       return p;
