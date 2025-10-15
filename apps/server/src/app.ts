@@ -5,7 +5,7 @@ import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
-import { env, isProduction, webDistDir } from "./config";
+import { env, isProduction, runtimeBaseDir, webDistDir } from "./config";
 import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
@@ -33,22 +33,37 @@ export function createApp() {
   app.route("/api/images", imagesHandler);
 
   // Health endpoints
-  if (!isProduction()) {
-    app.get("/", (c) => c.text("Server is running", 200));
-  }
+  // if (!isProduction()) {
+  //   app.get("/", (c) => c.text("Server is running", 200));
+  // }
   app.get("/healthz", (c) => c.text("ok", 200));
 
-  const spaRootExists = isProduction() && existsSync(webDistDir);
+  const spaRootExists = existsSync(webDistDir);
   const spaIndexPath = join(webDistDir, "index.html");
   const spaIndexExists = spaRootExists && existsSync(spaIndexPath);
-  if (spaRootExists) {
-    app.use(
-      "/*",
-      serveStatic({
-        root: webDistDir,
-      })
-    );
-  }
+  const bunExecutable = typeof Bun !== "undefined" ? Bun.argv?.[0] : undefined;
+  console.log("SPA Debug Info:", {
+    isProduction: isProduction(),
+    webDistDir,
+    spaRootExists,
+    spaIndexPath,
+    spaIndexExists,
+    runtimeBaseDir,
+    configuredWebDist: env.WEB_DIST_DIR,
+    bunExecutable,
+    processExecPath: process.execPath,
+    processArgv0: process.argv?.[0],
+    processCwd: process.cwd(),
+    platform: process.platform,
+  });
+  // if (spaRootExists) {
+  app.use(
+    "/*",
+    serveStatic({
+      root: webDistDir,
+    })
+  );
+  // }
 
   // Global error handler
   app.onError((err, c) => {
@@ -62,19 +77,19 @@ export function createApp() {
 
   // 404 handler
   app.notFound((c) => c.json({ error: "Not Found" }, 404));
-  if (spaIndexExists) {
-    app.notFound((c) => {
-      const isGet = c.req.method === "GET";
-      const path = c.req.path;
-      if (isGet && !path.startsWith("/api") && !path.startsWith("/rpc")) {
-        const indexFile = Bun.file(spaIndexPath);
-        return c.newResponse(indexFile, 200, {
-          "Content-Type": "text/html; charset=utf-8",
-        });
-      }
-      return c.json({ error: "Not Found" }, 404);
-    });
-  }
+  // if (spaIndexExists) {
+  app.notFound((c) => {
+    const isGet = c.req.method === "GET";
+    const path = c.req.path;
+    if (isGet && !path.startsWith("/api") && !path.startsWith("/rpc")) {
+      const indexFile = Bun.file(spaIndexPath);
+      return c.newResponse(indexFile, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+      });
+    }
+    return c.json({ error: "Not Found" }, 404);
+  });
+  // }
 
   return app;
 }

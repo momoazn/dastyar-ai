@@ -67,31 +67,72 @@ export const defaultWhisperModel = whisperModelIds[0];
 
 export const isProduction = (): boolean => {
   const modulePath = fileURLToPath(import.meta.url);
-  return modulePath.includes("$bunfs");
+  const normalized = modulePath.split("\\").join("/").toLowerCase();
+  return normalized.includes("$bunfs") || normalized.includes("~bun");
 };
 
 const serverRootDir = fileURLToPath(new URL("..", import.meta.url));
 
-const getRuntimeBaseDir = (): string => {
-  if (isProduction()) {
-    const bunExec = typeof Bun !== "undefined" ? Bun.argv?.[0] : undefined;
-    const execCandidate = bunExec ?? process.argv?.[0];
-    if (execCandidate) {
-      return dirname(execCandidate);
-    }
+const isVirtualBunPath = (candidate: string | undefined): boolean => {
+  if (!candidate) {
+    return false;
   }
-  return serverRootDir;
+  const normalized = candidate.split("\\").join("/").toLowerCase();
+  return normalized.includes("~bun") || normalized.includes("$bunfs");
 };
 
-const resolveWebDistDir = (): string => {
+export const getRuntimeBaseDir = (): string => {
+  let base = serverRootDir;
+
+  if (isProduction()) {
+    const bunExec = typeof Bun !== "undefined" ? Bun.argv?.[0] : undefined;
+    const execCandidate = process.execPath ?? bunExec ?? process.argv?.[0];
+    if (execCandidate && !isVirtualBunPath(execCandidate)) {
+      base = dirname(execCandidate);
+    }
+
+    if (isVirtualBunPath(base)) {
+      const cwd = process.cwd();
+      console.warn(
+        `[config] Executable directory resolved to virtual Bun path "${base}", using process.cwd() instead: "${cwd}"`
+      );
+      base = cwd;
+    }
+  } else if (isVirtualBunPath(base)) {
+    const cwd = process.cwd();
+    console.warn(
+      `[config] Server root directory resolved inside virtual Bun path "${base}", using process.cwd() instead: "${cwd}"`
+    );
+    base = cwd;
+  }
+
+  console.log("[config] Runtime directory resolution:", {
+    isProduction: isProduction(),
+    serverRootDir,
+    resolvedBaseDir: base,
+    processExecPath: process.execPath,
+    processCwd: process.cwd(),
+  });
+
+  return base;
+};
+
+const resolveWebDistDir = (baseDir: string): string => {
   const configured = env.WEB_DIST_DIR;
   if (isAbsolute(configured)) {
     return configured;
   }
-  return resolve(getRuntimeBaseDir(), configured);
+  return resolve(baseDir, configured);
 };
 
-export const webDistDir = resolveWebDistDir();
+export const runtimeBaseDir = getRuntimeBaseDir();
+export const webDistDir = resolveWebDistDir(runtimeBaseDir);
+
+console.log("[config] SPA directory resolution:", {
+  configuredWebDist: env.WEB_DIST_DIR,
+  runtimeBaseDir,
+  webDistDir,
+});
 
 export const ensureDirectoriesExist = (): void => {
   const directories: string[] = [
@@ -117,7 +158,7 @@ export const ensureDirectoriesExist = (): void => {
 
 export const resolveConfiguredPath = (
   configuredPath: string,
-  baseDir: string = getRuntimeBaseDir()
+  baseDir: string = runtimeBaseDir
 ): string => {
   if (isAbsolute(configuredPath)) {
     return configuredPath;
