@@ -1,7 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Bug, Code, FileText, Loader2, Play, Shield } from "lucide-react";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
+import {
+  Bug,
+  Code,
+  FileText,
+  Loader2,
+  Play,
+  Shield,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import {
   Alert,
@@ -61,6 +69,7 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
+  const search = useSearch({ from: "/code" }) as { runId?: string };
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
   const [inputCode, setInputCode] = useState("");
@@ -150,6 +159,95 @@ function RouteComponent() {
   };
 
   const currentMutation = runMutation;
+
+  // History
+  const runsQuery = useQuery(orpc.code.listRuns.queryOptions());
+  const deleteRunMutation = useMutation(
+    orpc.code.deleteRun.mutationOptions({
+      onSuccess: () => {
+        runsQuery.refetch();
+      },
+    })
+  );
+
+  type RunItem = {
+    id: number;
+    mode: string;
+    language: string;
+    inputText: string;
+    errorText?: string | null;
+    output: string;
+    modelId: number;
+    createdAt: string | Date;
+  };
+
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: straightforward parsing/formatting for four modes
+  const formatRunOutput = useCallback((run: RunItem): string => {
+    try {
+      const parsed = JSON.parse(run.output) as unknown;
+      if (run.mode === "generate") {
+        return (parsed as { generatedCode?: string }).generatedCode || "";
+      }
+      if (run.mode === "explain") {
+        return (parsed as { explanation?: string }).explanation || "";
+      }
+      if (run.mode === "review") {
+        const r = parsed as { feedback?: string; suggestions?: string[] };
+        const suggestions = (r.suggestions ?? [])
+          .map((s) => `- ${s}`)
+          .join("\n");
+        return `${r.feedback ?? ""}${
+          suggestions
+            ? `\n\n${fa.codeAssistant.review.suggestions}:\n${suggestions}`
+            : ""
+        }`;
+      }
+      if (run.mode === "debug") {
+        const d = parsed as {
+          rootCause?: string;
+          solution?: string;
+          codeFix?: string;
+        };
+        return `${fa.codeAssistant.debug.rootCause}: ${d.rootCause ?? ""}\n\n${
+          fa.codeAssistant.debug.solution
+        }: ${d.solution ?? ""}${
+          d.codeFix
+            ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${d.codeFix}`
+            : ""
+        }`;
+      }
+      return run.output;
+    } catch {
+      return run.output;
+    }
+  }, []);
+
+  const handleLoadRun = useCallback(
+    (run: RunItem) => {
+      setModelId(run.modelId);
+      if (languages.some((l) => l.value === run.language)) {
+        setLanguage(run.language as ProgrammingLanguage);
+      }
+      if (["generate", "explain", "review", "debug"].includes(run.mode)) {
+        setMode(run.mode as CodeMode);
+      }
+      setInputCode(run.inputText || "");
+      setErrorMessage(run.errorText || "");
+      setOutput(formatRunOutput(run));
+    },
+    [setModelId, formatRunOutput]
+  );
+  const selectedRunQuery = useQuery(
+    orpc.code.getRun.queryOptions({
+      input: { id: Number.parseInt(search.runId || "0", 10) },
+      enabled: Boolean(search.runId),
+    })
+  );
+  useEffect(() => {
+    if (selectedRunQuery.data) {
+      handleLoadRun(selectedRunQuery.data as unknown as RunItem);
+    }
+  }, [selectedRunQuery.data, handleLoadRun]);
 
   const canExecute = Boolean(
     inputCode.trim() &&
@@ -384,6 +482,78 @@ function RouteComponent() {
             </div>
           </Alert>
         )}
+
+        {/* History */}
+        <Card className="p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="font-medium">تاریخچه</h3>
+          </div>
+          <div className="space-y-2">
+            {runsQuery.isLoading && (
+              <div className="text-muted-foreground text-sm">
+                در حال بارگذاری…
+              </div>
+            )}
+            {runsQuery.data?.length === 0 && (
+              <div className="text-muted-foreground text-sm">
+                موردی موجود نیست
+              </div>
+            )}
+            {runsQuery.data?.map((run) => {
+              let Icon = Code;
+              if (run.mode === "explain") {
+                Icon = FileText;
+              } else if (run.mode === "review") {
+                Icon = Shield;
+              } else if (run.mode === "debug") {
+                Icon = Bug;
+              }
+              const when = new Date(run.createdAt);
+              const date = when.toLocaleString("fa-IR", {
+                month: "short",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              return (
+                <div
+                  className="flex items-start justify-between gap-2 rounded-md border p-2 hover:bg-accent"
+                  key={run.id}
+                >
+                  <button
+                    className="text-right"
+                    onClick={() => handleLoadRun(run)}
+                    type="button"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span className="font-medium text-sm">{run.mode}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {run.language}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        • {date}
+                      </span>
+                    </div>
+                    <div className="line-clamp-1 text-muted-foreground text-xs">
+                      {run.inputText}
+                    </div>
+                  </button>
+                  <button
+                    aria-label="delete"
+                    className="text-muted-foreground hover:text-destructive"
+                    disabled={deleteRunMutation.isPending}
+                    onClick={() => deleteRunMutation.mutate({ id: run.id })}
+                    title="حذف"
+                    type="button"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       </div>
     </div>
   );

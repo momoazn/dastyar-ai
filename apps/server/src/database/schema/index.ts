@@ -208,7 +208,27 @@ export const generatedImages = sqliteTable(
   })
 );
 
-// Code Assist tables removed
+// Code assist runs (simple history without sessions)
+export const codeRuns = sqliteTable("code_runs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mode: text("mode").notNull(),
+  language: text("language").notNull(),
+  inputText: text("input_text").notNull(),
+  errorText: text("error_text"),
+  output: text("output").notNull(),
+  modelId: integer("model_id")
+    .notNull()
+    .references(() => llmModels.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+});
 
 // Documents for RAG
 export const documents = sqliteTable("documents", {
@@ -271,12 +291,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   summaries: many(summaries),
   imageThreads: many(imageThreads),
   generatedImages: many(generatedImages),
+  codeRuns: many(codeRuns),
 }));
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
   messages: many(messages),
   translations: many(translations),
   summaries: many(summaries),
+  codeRuns: many(codeRuns),
 }));
 
 export const chatThreadsRelations = relations(chatThreads, ({ one, many }) => ({
@@ -417,6 +439,11 @@ export const selectGeneratedImageSchema = createSelectSchema(generatedImages);
 export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
 export type SelectGeneratedImage = z.infer<typeof selectGeneratedImageSchema>;
 
+export const insertCodeRunSchema = createInsertSchema(codeRuns);
+export const selectCodeRunSchema = createSelectSchema(codeRuns);
+export type InsertCodeRun = z.infer<typeof insertCodeRunSchema>;
+export type SelectCodeRun = z.infer<typeof selectCodeRunSchema>;
+
 // Code Assist schemas removed
 
 // Type aliases for backward compatibility
@@ -428,6 +455,7 @@ export type Translation = SelectTranslation;
 export type Summary = SelectSummary;
 export type ImageThread = SelectImageThread;
 export type GeneratedImage = SelectGeneratedImage;
+export type CodeRun = SelectCodeRun;
 // Code Assist types removed
 export type Document = SelectDocument;
 export type DocumentChunk = SelectDocumentChunk;

@@ -130,3 +130,4 @@ config.json
 
 # Local development
 dev-dist/
+src/database/migration-data.generated.ts

@@ -5,7 +5,7 @@ import { initializeDatabase } from "./database";
 
 ensureDirectoriesExist();
 
-initializeDatabase();
+await initializeDatabase();
 
 console.log("Running app in", isProduction() ? "production" : "development");
 

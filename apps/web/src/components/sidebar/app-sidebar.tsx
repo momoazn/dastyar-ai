@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 import { ChatThreadsList } from "./chat-threads-list";
+import { CodeRunsList } from "./code-runs-list";
 import { ImagesSidebar } from "./images-sidebar";
 import { AppSidebarHeader, NavigationMenu } from "./navigation";
 import { SummariesList } from "./summaries-list";
@@ -55,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       case fa.navigation.imageGeneration:
         return <ImagesSidebar />;
       case fa.navigation.codeAssistant:
-        return null;
+        return <CodeRunsList />;
       default:
         return null;
     }

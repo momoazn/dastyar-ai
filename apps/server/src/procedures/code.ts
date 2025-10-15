@@ -1,5 +1,11 @@
 import { generateText } from "ai";
 import { z } from "zod";
+import {
+  createCodeRun,
+  deleteCodeRun,
+  getCodeRun,
+  listCodeRuns,
+} from "@/repositories/code-runs";
 import { getModelById } from "@/repositories/llm-models";
 import { getProviderForModel } from "@/services";
 import { extractJsonObject } from "@/utils/llm-json";
@@ -18,7 +24,7 @@ export const codeProcedures = {
         context: z.string().optional(),
       })
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const model = await getModelById(input.modelId);
       if (!model) {
         throw new Error("Model not found");
@@ -42,7 +48,17 @@ export const codeProcedures = {
           .filter(Boolean)
           .join("\n");
         const { text } = await makeRequest(sys, user);
-        return { generatedCode: text.trim() } as const;
+        const payload = { generatedCode: text.trim() } as const;
+        await createCodeRun({
+          mode: input.mode,
+          language: input.language,
+          inputText: input.prompt ?? "",
+          errorText: null,
+          output: JSON.stringify(payload),
+          modelId: input.modelId,
+          userId: context.user.id,
+        });
+        return payload;
       }
 
       if (input.mode === "explain") {
@@ -53,7 +69,19 @@ export const codeProcedures = {
           text,
           z.object({ explanation: z.string() })
         );
-        return { explanation: parsed?.explanation ?? text.trim() } as const;
+        const payload = {
+          explanation: parsed?.explanation ?? text.trim(),
+        } as const;
+        await createCodeRun({
+          mode: input.mode,
+          language: input.language,
+          inputText: input.code ?? "",
+          errorText: null,
+          output: JSON.stringify(payload),
+          modelId: input.modelId,
+          userId: context.user.id,
+        });
+        return payload;
       }
 
       if (input.mode === "review") {
@@ -67,10 +95,20 @@ export const codeProcedures = {
             suggestions: z.array(z.string()).optional(),
           })
         );
-        return {
+        const payload = {
           feedback: parsed?.feedback ?? text.trim(),
           suggestions: parsed?.suggestions ?? [],
         } as const;
+        await createCodeRun({
+          mode: input.mode,
+          language: input.language,
+          inputText: input.code ?? "",
+          errorText: null,
+          output: JSON.stringify(payload),
+          modelId: input.modelId,
+          userId: context.user.id,
+        });
+        return payload;
       }
 
       // debug
@@ -85,17 +123,37 @@ export const codeProcedures = {
           codeFix: z.string().optional(),
         })
       );
-      if (parsed) {
-        return parsed as {
-          rootCause: string;
-          solution: string;
-          codeFix?: string;
-        };
-      }
-      return {
-        rootCause: dbgText.trim(),
-        solution: "",
-        codeFix: undefined,
-      } as const;
+      const payload = parsed
+        ? (parsed as { rootCause: string; solution: string; codeFix?: string })
+        : ({
+            rootCause: dbgText.trim(),
+            solution: "",
+            codeFix: undefined,
+          } as const);
+      await createCodeRun({
+        mode: input.mode,
+        language: input.language,
+        inputText: input.code ?? "",
+        errorText: input.error ?? null,
+        output: JSON.stringify(payload),
+        modelId: input.modelId,
+        userId: context.user.id,
+      });
+      return payload;
+    }),
+  // History endpoints
+  listRuns: protectedProcedure.handler(async ({ context }) =>
+    listCodeRuns(context.user.id)
+  ),
+  getRun: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .handler(async ({ input, context }) =>
+      getCodeRun(input.id, context.user.id)
+    ),
+  deleteRun: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .handler(async ({ input, context }) => {
+      await deleteCodeRun(input.id, context.user.id);
+      return { ok: true } as const;
     }),
 };

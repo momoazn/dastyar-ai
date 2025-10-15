@@ -3,8 +3,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "bun build src/index.ts --compile --minify --target bun --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai",
-    "build:windows": "bun build src/index.ts --compile --minify --target bun-windows-x64 --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai.exe",
+    "build": "bun db:bundle && bun build src/index.ts --compile --minify --target bun --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai",
+    "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai.exe",
     "check-types": "tsc -b",
     "dev": "bun run --hot src/index.ts",
     "start": "./dist/dastyar-ai",
