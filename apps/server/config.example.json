@@ -8,9 +8,7 @@
 
   "DATABASE_FILE": "./data.db",
 
-  "WHISPER_MODELS_DIR": "./whisper-models",
-  "WHISPER_CACHE_DIR": "./.whisper-cache",
-  "WHISPER_WASM_DIR": "./node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist",
+  "WHISPER_SERVER_URL": "http://127.0.0.1:8001",
   "WHISPER_MODELS": "Xenova/whisper-tiny",
 
   "OLLAMA_BASE_URL": "http://localhost:11434",

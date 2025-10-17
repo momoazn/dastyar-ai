@@ -69,13 +69,8 @@ const Schema = z.object({
     .default("your-super-secret-jwt-key-change-this-in-production"),
   JWT_EXPIRES_IN: z.number().default(24 * 60 * 60),
   DATABASE_FILE: z.string().default("./data.db"),
-  WHISPER_MODELS_DIR: z.string().default("./whisper-models"),
-  WHISPER_CACHE_DIR: z.string().default("./.whisper-cache"),
-  WHISPER_WASM_DIR: z
-    .string()
-    .default(
-      "./node_modules/.bun/@huggingface+transformers@*/node_modules/@huggingface/transformers/dist"
-    ),
+  // Optional external Whisper server (FastAPI) used for transcription
+  WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
   WHISPER_MODELS: z.string().default("Xenova/whisper-tiny"),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_ENABLED: z.coerce.boolean().default(true),
@@ -126,8 +121,6 @@ export const resolveConfiguredPath = (
 export const ensureDirectoriesExist = (): void => {
   const dirs = [
     dirname(resolveConfiguredPath(env.DATABASE_FILE)),
-    resolveConfiguredPath(env.WHISPER_MODELS_DIR),
-    resolveConfiguredPath(env.WHISPER_CACHE_DIR),
     resolveConfiguredPath(env.IMAGES_DIR),
     resolveConfiguredPath(env.DOCUMENTS_DIR),
   ];
@@ -147,4 +140,5 @@ export const ensureDirectoriesExist = (): void => {
 };
 
 export const runtimeBaseDir = _runtimeBaseDir;
-export const collectOfflineModelIds = (): string[] => [...whisperModelIds];
+// Deprecated: offline model prefetch removed; keep API surface if imported elsewhere
+export const collectOfflineModelIds = (): string[] => [];

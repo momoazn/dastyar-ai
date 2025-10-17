@@ -35,7 +35,24 @@ export function createApp() {
   // if (!isProduction()) {
   //   app.get("/", (c) => c.text("Server is running", 200));
   // }
-  app.get("/healthz", (c) => c.text("ok", 200));
+  app.get("/health", async (c) => {
+    const base = env.WHISPER_SERVER_URL?.replace(/\/$/, "") || "";
+    let whisper = { available: false, status: 0 };
+    if (base) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${base}/health`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        whisper = { available: res.ok, status: res.status };
+      } catch {
+        whisper = { available: false, status: 0 };
+      }
+    }
+    return c.json({ status: "ok", whisper });
+  });
 
   const spaIndexPath = join(webDistDir, "index.html");
   app.use(

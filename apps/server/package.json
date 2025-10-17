@@ -3,8 +3,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "bun db:bundle && bun build src/index.ts --compile --minify --target bun --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai",
-    "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --conditions=browser --external onnxruntime-node --external onnxruntime-gpu --external onnxruntime-openvino --outfile ./dist/dastyar-ai.exe",
+    "build": "bun db:bundle && bun build src/index.ts --compile --minify --target bun --outfile ./dist/dastyar-ai",
+    "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --outfile ./dist/dastyar-ai.exe",
     "check-types": "tsc -b",
     "dev": "bun run --hot src/index.ts",
     "start": "./dist/dastyar-ai",
@@ -25,7 +25,6 @@
     "@emnapi/core": "^1.5.0",
     "@emnapi/wasi-threads": "^1.1.0",
     "@hono/zod-validator": "^0.7.3",
-    "@huggingface/transformers": "^3.7.5",
     "@orpc/client": "^1.9.3",
     "@orpc/server": "^1.9.3",
     "ai": "^5.0.61",
@@ -38,9 +37,7 @@
     "hono": "^4.9.10",
     "jsonwebtoken": "^9.0.2",
     "ollama-ai-provider-v2": "^1.4.1",
-    "onnxruntime-web": "^1.23.0",
     "openai": "^6.2.0",
-    "wavefile": "^11.0.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -51,9 +48,6 @@
     "typescript": "^5.9.3"
   },
   "browser": {
-    "onnxruntime-node": false,
-    "onnxruntime-gpu": false,
-    "onnxruntime-openvino": false,
     "sharp": false
   }
 }
