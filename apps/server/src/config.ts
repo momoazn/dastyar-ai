@@ -71,6 +71,8 @@ const Schema = z.object({
   DATABASE_FILE: z.string().default("./data.db"),
   // Optional external Whisper server (FastAPI) used for transcription
   WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
+  // Timeout for requests to the Whisper server (ms)
+  WHISPER_TIMEOUT_MS: z.coerce.number().default(20_000),
   WHISPER_MODELS: z.string().default("Xenova/whisper-tiny"),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_ENABLED: z.coerce.boolean().default(true),

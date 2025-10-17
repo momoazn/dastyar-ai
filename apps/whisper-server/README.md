@@ -20,6 +20,7 @@ Quick start
 Config (env)
 - WHISPER_DEVICE: cpu|cuda (default cpu)
 - WHISPER_DEFAULT_MODEL: tiny|base|small|medium|large|large-v2|large-v3 (default tiny)
+- MAX_UPLOAD_MB: maximum upload size enforced for /transcribe (default 50)
 
 Endpoints
 - GET /health -> { status: "ok" }
@@ -29,4 +30,3 @@ Endpoints
   - model: optional whisper model name (default tiny)
   - language: optional ISO 639-1 language code (e.g., fa, en)
   Returns: { text: "..." }
-

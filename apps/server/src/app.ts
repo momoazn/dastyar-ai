@@ -9,6 +9,9 @@ import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
 
+// Regex patterns moved to top level for performance
+const TRAILING_SLASH_REGEX = /\/$/;
+
 console.log("starting app with env", env);
 
 export function createApp() {
@@ -36,12 +39,16 @@ export function createApp() {
   //   app.get("/", (c) => c.text("Server is running", 200));
   // }
   app.get("/health", async (c) => {
-    const base = env.WHISPER_SERVER_URL?.replace(/\/$/, "") || "";
+    const base =
+      env.WHISPER_SERVER_URL?.replace(TRAILING_SLASH_REGEX, "") || "";
     let whisper = { available: false, status: 0 };
     if (base) {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 2000);
+        const timer = setTimeout(
+          () => controller.abort(),
+          env.WHISPER_TIMEOUT_MS
+        );
         const res = await fetch(`${base}/health`, {
           signal: controller.signal,
         });

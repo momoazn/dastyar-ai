@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from string import ascii_letters
 from functools import lru_cache
 from typing import Dict, List
 
@@ -19,6 +20,9 @@ except Exception as e:  # pragma: no cover
 
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu").lower()
 DEFAULT_MODEL = os.getenv("WHISPER_DEFAULT_MODEL", "tiny")
+# Maximum accepted upload size in megabytes (to avoid excessive memory/IO)
+MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "50"))
+MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 APP = FastAPI(title="Whisper Transcription Server", version="0.1.0")
 
@@ -87,17 +91,41 @@ async def transcribe(
     try:
         suffix = os.path.splitext(file.filename or "audio")[1] or ".bin"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            data = await file.read()
-            tmp.write(data)
             tmp_path = tmp.name
+            total = 0
+            # Stream to disk to avoid loading entire file into memory
+            while True:
+                chunk = await file.read(1 << 20)  # 1MB chunks
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_UPLOAD_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large. Max {MAX_UPLOAD_MB}MB allowed.",
+                    )
+                tmp.write(chunk)
+    except HTTPException:
+        raise
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
 
     try:
-        model_name = model or DEFAULT_MODEL
+        model_name = (model or DEFAULT_MODEL).strip()
         asr = get_model(model_name)
         # OpenAI whisper accepts language=.. and will auto-detect if None
-        result = asr.transcribe(tmp_path, language=language, task="transcribe")
+        lang: str | None
+        if language:
+            # Accept simple 2-letter language codes; anything else -> None (auto)
+            raw = language.strip().lower()
+            if len(raw) == 2 and all(ch in ascii_letters for ch in raw):
+                lang = raw
+            else:
+                lang = None
+        else:
+            lang = None
+
+        result = asr.transcribe(tmp_path, language=lang, task="transcribe")
         text = (result.get("text") or "").strip()
         return TranscribeResponse(text=text)
     except Exception as e:  # pragma: no cover
@@ -111,4 +139,3 @@ async def transcribe(
 
 # Entry point for `uv run uvicorn whisper_server.main:app`
 app = APP
-
