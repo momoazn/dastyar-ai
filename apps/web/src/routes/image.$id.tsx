@@ -141,7 +141,8 @@ function RouteComponent() {
 
   const handleSubmit = useCallback(
     async (promptText: string, generationSettings: GenerationSettings) => {
-      if (!promptText.trim()) {
+      const trimmed = promptText.trim();
+      if (!trimmed) {
         toast.error(fa.imageGeneration.promptRequired);
         return;
       }
@@ -153,7 +154,7 @@ function RouteComponent() {
 
       const result = await generate({
         ...generationSettings,
-        prompt: promptText.trim(),
+        prompt: trimmed,
         threadId: numericThreadId,
       });
 
@@ -162,7 +163,7 @@ function RouteComponent() {
 
         // Rename thread on first image generation
         if (images.length === 0) {
-          const title = promptText.trim().slice(0, 50);
+          const title = trimmed.slice(0, 50);
           await rename.mutateAsync({ id: numericThreadId, title });
         }
       }
