@@ -113,7 +113,10 @@ export function AdvancedSettings({
             className="mb-2 block font-medium text-sm"
             htmlFor="cfg-slider"
           >
-            CFG Scale: {settings.cfgScale}
+            {fa.imageGeneration.cfgScaleLabel.replace(
+              "{cfgScale}",
+              settings.cfgScale.toString()
+            )}
           </label>
           <Slider
             className="w-full"

@@ -67,12 +67,14 @@ export function useImageGeneration({
   const generateMutation = useMutation(
     orpc.images.generate.mutationOptions({
       onSuccess: () => {
-        toast.success("تصویر با موفقیت تولید شد");
+        toast.success(fa.imageGeneration.generationSuccess);
         refetchImages();
       },
       onError: (error) => {
         const errorMessage =
-          error instanceof Error ? error.message : "خطای ناشناخته";
+          error instanceof Error
+            ? error.message
+            : fa.imageGeneration.unknownError;
         toast.error(`خطا در تولید تصویر: ${errorMessage}`);
       },
     })
@@ -81,19 +83,19 @@ export function useImageGeneration({
   const generate = useCallback(
     async (input: GenerateInput): Promise<GeneratedImage | null> => {
       if (!input.prompt.trim()) {
-        toast.error("لطفاً توضیحات تصویر را وارد کنید");
+        toast.error(fa.imageGeneration.promptRequired);
         return null;
       }
       if (!input.threadId) {
-        toast.error("شناسه گفتگو الزامی است");
+        toast.error(fa.imageGeneration.threadIdRequired);
         return null;
       }
       if (generateMutation.isPending) {
-        toast.error("در حال تولید تصویر قبلی");
+        toast.error(fa.imageGeneration.alreadyGenerating);
         return null;
       }
       if (!serviceStatus?.available) {
-        toast.error("سرویس Stable Diffusion در دسترس نیست");
+        toast.error(fa.imageGeneration.serviceUnavailable);
         return null;
       }
 

@@ -326,6 +326,10 @@ export const fa = {
     samplerLabel: "نمونه‌بردار",
     samplerPlaceholder: "نمونه‌بردار",
     stepsLabelAlt: "مراحل: {steps}",
+    cfgScaleLabel: "مقیاس راهنمایی: {cfgScale}",
+    unknownError: "خطای ناشناخته",
+    threadIdRequired: "شناسه گفتگو الزامی است",
+    serviceUnavailable: "سرویس Stable Diffusion در دسترس نیست",
   },
   imageChat: {
     newChatDefaultTitle: "گفتگوی تصویری جدید",
