@@ -7,7 +7,7 @@ import {
   listCodeRuns,
 } from "@/repositories/code-runs";
 import { getModelById } from "@/repositories/llm-models";
-import { getProviderForModel } from "@/services";
+import { getProviderForModel } from "@/services/llm-providers";
 import { extractJsonObject } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -113,7 +113,9 @@ export const codeProcedures = {
 
       // debug
       const sys = `Debug the ${input.language} code and error. Return JSON with rootCause (string), solution (string), and optional codeFix (string).`;
-      const user = `Code:\n\n${input.code ?? ""}\n\nError:\n${input.error ?? ""}`;
+      const user = `Code:\n\n${input.code ?? ""}\n\nError:\n${
+        input.error ?? ""
+      }`;
       const { text: dbgText } = await makeRequest(sys, user);
       const parsed = extractJsonObject(
         dbgText,

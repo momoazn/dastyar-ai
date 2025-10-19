@@ -13,7 +13,7 @@ import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
-import { getProviderForModel } from "@/services";
+import { getProviderForModel } from "@/services/llm-providers";
 import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,

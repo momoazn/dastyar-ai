@@ -9,7 +9,7 @@ import {
   getTranslation,
   listTranslations,
 } from "@/repositories/translations";
-import { getProviderForModel } from "@/services";
+import { getProviderForModel } from "@/services/llm-providers";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
