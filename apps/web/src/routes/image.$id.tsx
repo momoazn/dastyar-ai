@@ -1,6 +1,6 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { Download, ImagePlus, RotateCcw, Settings2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LS_TOKEN_KEY } from "@/atoms/auth";
 import {
@@ -114,6 +114,9 @@ function buildSrc(url: string, token: string | null) {
 
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/image/$id" });
+  const search = useSearch({ from: "/image/$id" }) as {
+    initialPrompt?: string;
+  };
   const numericThreadId = Number(threadId);
 
   const [prompt, setPrompt] = useState("");
@@ -210,6 +213,20 @@ function RouteComponent() {
       }),
     [images]
   );
+
+  // Auto-submit once if an initial prompt is provided via navigation
+  const hasSubmittedInitialRef = useRef(false);
+  useEffect(() => {
+    const p =
+      typeof search?.initialPrompt === "string" ? search.initialPrompt : "";
+    if (!hasSubmittedInitialRef.current && p.trim() && images.length === 0) {
+      hasSubmittedInitialRef.current = true;
+      handleSubmit(p, settings).catch(() => {
+        // eslint-disable-next-line no-console
+        console.error("Failed to submit initial prompt", p);
+      });
+    }
+  }, [search, images.length, handleSubmit, settings]);
 
   if (Number.isNaN(numericThreadId) || numericThreadId <= 0) {
     return (
