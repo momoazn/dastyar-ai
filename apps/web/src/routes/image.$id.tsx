@@ -118,6 +118,7 @@ function RouteComponent() {
   const [settings, setSettings] =
     useState<GenerationSettings>(DEFAULT_SETTINGS);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [transcribeModel, setTranscribeModel] = useState("");
   const token = useMemo(() => {
     try {
@@ -152,6 +153,8 @@ function RouteComponent() {
         return;
       }
 
+      setPendingPrompt(trimmed);
+
       const result = await generate({
         ...generationSettings,
         prompt: trimmed,
@@ -167,6 +170,8 @@ function RouteComponent() {
           await rename.mutateAsync({ id: numericThreadId, title });
         }
       }
+
+      setPendingPrompt(null);
     },
     [
       generate,
@@ -277,9 +282,7 @@ function RouteComponent() {
     const initial = getMergedSettings(raw, DEFAULT_SETTINGS);
     if (!hasSubmittedInitialRef.current && p.trim() && images.length === 0) {
       hasSubmittedInitialRef.current = true;
-      handleSubmit(p, initial).catch(() => {
-        console.error("Failed to submit initial prompt", p);
-      });
+      handleSubmit(p, initial);
     }
   }, [search, images.length, handleSubmit]);
 
@@ -370,7 +373,28 @@ function RouteComponent() {
                 </div>
               );
             })}
-            {isGenerating && <Loader />}
+            {pendingPrompt ? (
+              <>
+                <AIMsg from="user">
+                  <AIMsgContent>
+                    <div className="whitespace-pre-wrap leading-relaxed">
+                      {pendingPrompt}
+                    </div>
+                    {negativePrompt ? (
+                      <div className="text-[12px] text-muted-foreground">
+                        {fa.imageGeneration.negativePrefix} {negativePrompt}
+                      </div>
+                    ) : null}
+                  </AIMsgContent>
+                </AIMsg>
+                <AIMsg from="assistant">
+                  <AIMsgContent>
+                    <Loader />
+                  </AIMsgContent>
+                </AIMsg>
+              </>
+            ) : null}
+            {isGenerating && !pendingPrompt && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
@@ -538,8 +562,6 @@ function RouteComponent() {
                 sampler: settings.sampler,
                 width: settings.width,
                 height: settings.height,
-              }).catch(() => {
-                console.error("Failed to submit prompt", prompt);
               });
             }}
             placeholder={fa.imageGeneration.promptPlaceholderAlt}
@@ -578,7 +600,7 @@ function RouteComponent() {
           />
         </div>
       }
-      isEmpty={orderedImages.length === 0 && !isGenerating}
+      isEmpty={orderedImages.length === 0 && !isGenerating && !pendingPrompt}
     />
   );
 }
