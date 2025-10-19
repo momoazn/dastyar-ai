@@ -215,8 +215,7 @@ export const fa = {
       processFailed: "پردازش فایل صوتی ناموفق بود.",
       micAccess: "عدم دسترسی به میکروفون یا عدم پشتیبانی مرورگر.",
       transcribeFailed: "تبدیل گفتار به متن با خطا مواجه شد. دوباره تلاش کنید.",
-      fileTooLarge:
-        "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.",
+      fileTooLarge: "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.",
     },
   },
   summarize: {
@@ -255,8 +254,7 @@ export const fa = {
     serviceUnavailableError:
       "سرویس Stable Diffusion در دسترس نیست. لطفاً مطمئن شوید که A1111 در حال اجرا است.",
     generatingAlt: "در حال تولید تصویر...",
-    generatingDescription:
-      "لطفاً صبر کنید، این کار ممکن است چند دقیقه طول بکشد",
+    generatingDescription: "لطفاً صبر کنید، این کار ممکن است چند دقیقه طول بکشد",
     serviceUnavailableAlert:
       "سرویس Stable Diffusion در دسترس نیست. لطفاً A1111 را در پورت 7860 راه‌اندازی کنید.",
     title: "تولید تصویر",

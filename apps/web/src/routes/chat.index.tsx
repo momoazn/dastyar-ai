@@ -1,10 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { toast } from "sonner";
+import { createFileRoute } from "@tanstack/react-router";
 import { ChatInput } from "@/components/chat";
+import { useChatInput } from "@/hooks/use-chat-input";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
-import { client, orpc, queryClient } from "@/utils/orpc";
 
 export const Route = createFileRoute("/chat/")({
   component: () => (
@@ -15,35 +13,7 @@ export const Route = createFileRoute("/chat/")({
 });
 
 function RouteComponent() {
-  const navigate = useNavigate();
-  const [creating, setCreating] = useState(false);
-
-  const handleSendPrompt = async (prompt: string) => {
-    const trimmed = prompt.trim();
-    if (!trimmed || creating) {
-      return;
-    }
-    try {
-      setCreating(true);
-      const created = await client.threads.create({
-        title: trimmed.slice(0, 10),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: orpc.threads.list.queryKey(),
-      });
-      // Navigate and let /chat/$id send the initial prompt
-      navigate({
-        to: "/chat/$id",
-        params: { id: created.id.toString() },
-        search: { initialPrompt: trimmed },
-      });
-    } catch (error) {
-      console.error("Failed to start new chat", error);
-      toast.error(fa.chat.newChatError);
-    } finally {
-      setCreating(false);
-    }
-  };
+  const { handleSendPrompt, isGenerating } = useChatInput();
 
   return (
     <div className="flex h-full items-center justify-center p-6">
@@ -56,7 +26,7 @@ function RouteComponent() {
         </div>
         <ChatInput
           handleSendPrompt={handleSendPrompt}
-          isGenerating={creating}
+          isGenerating={isGenerating}
           // No thread yet; attachments hidden until redirected
         />
         <p className="mt-3 text-center text-muted-foreground text-xs" dir="rtl">

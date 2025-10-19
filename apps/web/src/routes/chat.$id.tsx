@@ -1,11 +1,6 @@
-import { useChat } from "@ai-sdk/react";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
-import { DefaultChatTransport } from "ai";
-import { useAtomValue } from "jotai";
 import { MessageCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
-import { tokenAtom } from "@/atoms/auth";
+import { useEffect, useRef } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -14,11 +9,11 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatInput, Message } from "@/components/chat";
 import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
+import { useAIChat } from "@/hooks/use-ai-chat";
+import { useChatInput } from "@/hooks/use-chat-input";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
-import type { MyUIMessage } from "@/server/utils/chat";
-import { client, orpc, queryClient } from "@/utils/orpc";
 
 export const Route = createFileRoute("/chat/$id")({
   component: () => (
@@ -31,62 +26,23 @@ export const Route = createFileRoute("/chat/$id")({
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/chat/$id" });
   const search = useSearch({ from: "/chat/$id" }) as { initialPrompt?: string };
-  const token = useAtomValue(tokenAtom);
+  const threadIdNum = Number(threadId);
 
-  const { modelId } = useChatModelSelection({ threadId: Number(threadId) });
-  const isInitialRender = useRef(true);
+  const { modelId } = useChatModelSelection({ threadId: threadIdNum });
+  const { messages, status, stop, sendPrompt } = useAIChat({
+    threadId: threadIdNum,
+  });
 
-  const messagesQuery = useQuery(
-    orpc.messages.listByThread.queryOptions({
-      input: { threadId: Number(threadId) },
-    })
-  );
-
-  const { messages, status, stop, sendMessage, setMessages } =
-    useChat<MyUIMessage>({
-      id: threadId,
-      transport: new DefaultChatTransport({
-        api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-      onFinish: () => {
-        messagesQuery.refetch();
-      },
-    });
-
-  const handleSendPrompt = useCallback(
-    async (prompt: string) => {
-      const trimmed = prompt.trim();
-      if (!trimmed) {
-        return;
-      }
-
-      if (messages.length === 0) {
-        try {
-          await client.threads.rename({
-            id: Number(threadId),
-            title: trimmed.slice(0, 10),
-          });
-          await queryClient.invalidateQueries({
-            queryKey: orpc.threads.list.queryKey(),
-          });
-        } catch (error) {
-          console.error("Failed to rename thread on first message", error);
-        }
-      }
-
+  const { handleSendPrompt, isGenerating } = useChatInput({
+    threadId: threadIdNum,
+    onSendMessage: (prompt) => {
       if (!modelId) {
-        return;
+        return Promise.resolve();
       }
-      sendMessage(
-        { text: trimmed },
-        { body: { modelId, threadId: Number(threadId) } }
-      );
+      sendPrompt(prompt, modelId.toString());
+      return Promise.resolve();
     },
-    [messages.length, modelId, sendMessage, threadId]
-  );
+  });
 
   // If navigated here with an initial prompt from /chat, send it once
   const hasSentInitialPromptRef = useRef(false);
@@ -101,13 +57,6 @@ function RouteComponent() {
       });
     }
   }, [search, messages.length, handleSendPrompt]);
-
-  useEffect(() => {
-    if (isInitialRender.current && messagesQuery.data) {
-      setMessages([...messagesQuery.data]);
-      isInitialRender.current = false;
-    }
-  }, [messagesQuery.data, setMessages]);
 
   return (
     <ConversationScaffold
@@ -134,9 +83,11 @@ function RouteComponent() {
       footer={
         <ChatInput
           handleSendPrompt={handleSendPrompt}
-          isGenerating={status === "streaming" || status === "submitted"}
+          isGenerating={
+            isGenerating || status === "streaming" || status === "submitted"
+          }
           stopGenerating={stop}
-          threadId={Number(threadId)}
+          threadId={threadIdNum}
         />
       }
       isEmpty={messages.length === 0}
