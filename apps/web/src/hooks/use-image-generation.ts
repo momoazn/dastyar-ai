@@ -1,15 +1,44 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  DEFAULT_NEGATIVE_PROMPT,
+  DEFAULT_SETTINGS,
+} from "@/lib/image-generation-constants";
 import { fa } from "@/lib/persian-texts";
-import type { GenerateInput } from "@/server/procedures/images";
+import type {
+  GenerateInput,
+  GenerationSettings,
+} from "@/server/procedures/images";
 import { type OrpcClient, orpc } from "@/utils/orpc";
 
 export type GeneratedImage = Awaited<
   ReturnType<OrpcClient["images"]["listByThread"]>
 >[number];
 
-export function useImageGeneration(threadId?: number) {
+type UseImageGenerationProps = {
+  threadId?: number;
+  initialSettings?: Partial<GenerationSettings>;
+  onSuccess?: (result: unknown) => void;
+};
+
+export function useImageGeneration({
+  threadId,
+  initialSettings,
+  onSuccess,
+}: UseImageGenerationProps = {}) {
+  // Form state
+  const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [transcribeModel, setTranscribeModel] = useState("");
+
+  // Settings state
+  const [settings, setSettings] = useState<GenerationSettings>({
+    ...DEFAULT_SETTINGS,
+    ...initialSettings,
+  });
+
   // Query for service availability
   const { data: serviceStatus } = useQuery(
     orpc.images.checkService.queryOptions()
@@ -88,11 +117,121 @@ export function useImageGeneration(threadId?: number) {
     }
   }, []);
 
+  // Settings management
+  const handleSizeChange = useCallback((value: string) => {
+    if (value.includes("x")) {
+      const [width, height] = value.split("x").map(Number);
+      setSettings((prev) => ({ ...prev, width, height }));
+    } else {
+      const size = Number(value);
+      setSettings((prev) => ({ ...prev, width: size, height: size }));
+    }
+  }, []);
+
+  const getSizeValue = useCallback(() => {
+    if (settings.width === settings.height) {
+      return settings.width.toString();
+    }
+    return `${settings.width}x${settings.height}`;
+  }, [settings.width, settings.height]);
+
+  const resetSettings = useCallback(() => {
+    setSettings(DEFAULT_SETTINGS);
+  }, []);
+
+  const updateSettings = useCallback((updates: Partial<GenerationSettings>) => {
+    setSettings((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  // Keep settings.negativePrompt in sync with the dedicated state
+  useEffect(() => {
+    updateSettings({ negativePrompt });
+  }, [negativePrompt, updateSettings]);
+
+  // Form submission handler
+  const handleSubmit = useCallback(
+    async (promptText?: string, generationSettings?: GenerationSettings) => {
+      const trimmed = (promptText || prompt).trim();
+      if (!trimmed) {
+        toast.error(fa.imageGeneration.promptRequired);
+        return;
+      }
+
+      if (!serviceStatus?.available) {
+        toast.error(fa.imageGeneration.serviceUnavailableError);
+        return;
+      }
+
+      const settingsToUse = generationSettings || {
+        ...settings,
+        negativePrompt,
+      };
+
+      const result = await generate({
+        ...settingsToUse,
+        prompt: trimmed,
+        threadId: threadId ?? 0,
+      });
+
+      if (result && onSuccess) {
+        onSuccess(result);
+        // Clear the prompt after successful generation
+        setPrompt("");
+      }
+
+      return result;
+    },
+    [
+      prompt,
+      serviceStatus?.available,
+      settings,
+      negativePrompt,
+      generate,
+      threadId,
+      onSuccess,
+    ]
+  );
+
+  // Transcription handlers
+  const handleTranscribeError = useCallback((error: string) => {
+    toast.error(`${fa.imageGeneration.voiceTranscriptionError} ${error}`);
+  }, []);
+
+  const handleTranscribed = useCallback((text: string) => {
+    setPrompt((prev) => (prev ? `${prev} ${text}` : text));
+  }, []);
+
+  const handleNegativePromptTranscribed = useCallback((text: string) => {
+    setNegativePrompt(text);
+  }, []);
+
   return {
+    // API data
     images,
     samplers: samplersData?.samplers || [],
     isServiceAvailable: serviceStatus?.available,
     isGenerating: generateMutation.isPending,
+
+    // Form state
+    prompt,
+    setPrompt,
+    negativePrompt,
+    setNegativePrompt,
+    advancedSettingsOpen,
+    setAdvancedSettingsOpen,
+    transcribeModel,
+    setTranscribeModel,
+    settings,
+
+    // Handlers
+    handleSubmit,
+    handleSizeChange,
+    getSizeValue,
+    resetSettings,
+    updateSettings,
+    handleTranscribeError,
+    handleTranscribed,
+    handleNegativePromptTranscribed,
     generate,
     downloadImage,
     refetchImages,

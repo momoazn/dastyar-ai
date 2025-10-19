@@ -1,8 +1,9 @@
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
-import { Download, ImagePlus, RotateCcw, Settings2 } from "lucide-react";
+import { useAtomValue } from "jotai";
+import { Download, ImagePlus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LS_TOKEN_KEY } from "@/atoms/auth";
+import { tokenAtom } from "@/atoms/auth";
 import {
   Conversation,
   ConversationContent,
@@ -13,22 +14,13 @@ import {
   Message as AIMsg,
   MessageContent as AIMsgContent,
 } from "@/components/ai-elements/message";
-import { PromptInputButton } from "@/components/ai-elements/prompt-input";
-import { PromptInputBase } from "@/components/prompt-input-base";
+import { ImageBadges } from "@/components/image-generation/image-badges";
+import { ImageGenerationInput } from "@/components/image-generation/image-generation-input";
 import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
-import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
   AlertDescription,
-  Badge,
   Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Slider,
-  Textarea,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -36,29 +28,10 @@ import {
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
+import { DEFAULT_SETTINGS } from "@/lib/image-generation-constants";
+import { buildSrc, getMergedSettings } from "@/lib/image-generation-utils";
 import { fa } from "@/lib/persian-texts";
-import { detectTextDirection } from "@/lib/utils";
 import type { GenerationSettings } from "@/server/procedures/images";
-
-const DEFAULT_NEGATIVE_PROMPT =
-  "blurry, low quality, distorted, deformed, extra limbs, bad anatomy, text, watermark, logo, grainy, out of frame, ugly, poorly drawn, unnatural lighting";
-
-const DEFAULT_SETTINGS: GenerationSettings = {
-  steps: 20,
-  cfgScale: 7.5,
-  negativePrompt: DEFAULT_NEGATIVE_PROMPT,
-  sampler: "Euler a",
-  width: 512,
-  height: 512,
-};
-
-const IMAGE_SIZES = [
-  { label: "512x512", value: 512 },
-  { label: "768x768", value: 768 },
-  { label: "1024x1024", value: 1024 },
-  { label: "512x768", value: "512x768" },
-  { label: "768x512", value: "768x512" },
-] as const;
 
 export const Route = createFileRoute("/image/$id")({
   component: () => (
@@ -68,44 +41,6 @@ export const Route = createFileRoute("/image/$id")({
   ),
 });
 
-function ImageBadges({ settings }: { settings: GenerationSettings }) {
-  return (
-    <div className="pointer-events-none absolute right-2 bottom-2 flex flex-wrap gap-2">
-      <Badge variant="secondary">
-        {settings.width}×{settings.height}
-      </Badge>
-      <Badge variant="secondary">{String(settings.sampler)}</Badge>
-      <Badge variant="secondary">steps: {Number(settings.steps)}</Badge>
-      <Badge variant="secondary">cfg: {Number(settings.cfgScale)}</Badge>
-    </div>
-  );
-}
-
-function getMergedSettings(
-  raw: Partial<GenerationSettings>,
-  defaults: GenerationSettings
-) {
-  return {
-    width: typeof raw.width === "number" ? raw.width : defaults.width,
-    height: typeof raw.height === "number" ? raw.height : defaults.height,
-    sampler: typeof raw.sampler === "string" ? raw.sampler : defaults.sampler,
-    steps: typeof raw.steps === "number" ? raw.steps : defaults.steps,
-    cfgScale:
-      typeof raw.cfgScale === "number" ? raw.cfgScale : defaults.cfgScale,
-  };
-}
-
-const TRAILING_SLASH_RE = /\/$/;
-
-function buildSrc(url: string, token: string | null) {
-  const server = (import.meta.env.VITE_SERVER_URL || "").replace(
-    TRAILING_SLASH_RE,
-    ""
-  );
-  const absolute = url.startsWith("http") ? url : `${server}${url}`;
-  return token ? `${absolute}?token=${encodeURIComponent(token)}` : absolute;
-}
-
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/image/$id" });
   const search = useSearch({ from: "/image/$id" }) as GenerationSettings & {
@@ -113,20 +48,8 @@ function RouteComponent() {
   };
   const numericThreadId = Number(threadId);
 
-  const [prompt, setPrompt] = useState("");
-  const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
-  const [settings, setSettings] =
-    useState<GenerationSettings>(DEFAULT_SETTINGS);
-  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
-  const [transcribeModel, setTranscribeModel] = useState("");
-  const token = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null");
-    } catch {
-      return null;
-    }
-  }, []);
+  const token = useAtomValue(tokenAtom);
 
   const { rename } = useImageThreads();
 
@@ -138,9 +61,29 @@ function RouteComponent() {
     generate,
     isGenerating,
     downloadImage,
-  } = useImageGeneration(numericThreadId);
+    prompt,
+    setPrompt,
+    negativePrompt,
+    setNegativePrompt,
+    advancedSettingsOpen,
+    setAdvancedSettingsOpen,
+    transcribeModel,
+    setTranscribeModel,
+    settings,
+    handleSizeChange,
+    getSizeValue,
+    resetSettings,
+    updateSettings,
+    handleTranscribeError,
+    handleTranscribed,
+  } = useImageGeneration({
+    threadId: numericThreadId,
+    onSuccess: () => {
+      refetchImages();
+    },
+  });
 
-  const handleSubmit = useCallback(
+  const handleSubmitWithRename = useCallback(
     async (promptText: string, generationSettings: GenerationSettings) => {
       const trimmed = promptText.trim();
       if (!trimmed) {
@@ -169,6 +112,9 @@ function RouteComponent() {
           const title = trimmed.slice(0, 50);
           await rename.mutateAsync({ id: numericThreadId, title });
         }
+
+        // Clear the prompt after successful generation
+        setPrompt("");
       }
 
       setPendingPrompt(null);
@@ -180,29 +126,9 @@ function RouteComponent() {
       refetchImages,
       images.length,
       rename,
+      setPrompt,
     ]
   );
-
-  const handleSizeChange = (value: string) => {
-    if (value.includes("x")) {
-      const [width, height] = value.split("x").map(Number);
-      setSettings((prev) => ({ ...prev, width, height }));
-    } else {
-      const size = Number(value);
-      setSettings((prev) => ({ ...prev, width: size, height: size }));
-    }
-  };
-
-  const getSizeValue = () => {
-    if (settings.width === settings.height) {
-      return settings.width.toString();
-    }
-    return `${settings.width}x${settings.height}`;
-  };
-
-  const resetSettings = () => {
-    setSettings(DEFAULT_SETTINGS);
-  };
 
   const orderedImages = useMemo(
     () =>
@@ -249,10 +175,10 @@ function RouteComponent() {
       raw.sampler ||
       typeof raw.negativePrompt === "string"
     ) {
-      setSettings(merged);
+      updateSettings(merged);
     }
     hasMergedInitialSettingsRef.current = true;
-  }, [search]);
+  }, [search, updateSettings]);
 
   // Auto-submit once if an initial prompt is provided via navigation
   const hasSubmittedInitialRef = useRef(false);
@@ -282,9 +208,9 @@ function RouteComponent() {
     const initial = getMergedSettings(raw, DEFAULT_SETTINGS);
     if (!hasSubmittedInitialRef.current && p.trim() && images.length === 0) {
       hasSubmittedInitialRef.current = true;
-      handleSubmit(p, initial);
+      handleSubmitWithRename(p, initial);
     }
-  }, [search, images.length, handleSubmit]);
+  }, [search, images.length, handleSubmitWithRename]);
 
   if (Number.isNaN(numericThreadId) || numericThreadId <= 0) {
     return (
@@ -412,150 +338,22 @@ function RouteComponent() {
       }
       footer={
         <div className="mx-auto max-w-4xl px-6 py-4">
-          <PromptInputBase
-            bottomContent={
-              advancedSettingsOpen ? (
-                <div className="space-y-4 p-3">
-                  <div>
-                    <div className="mb-2 flex items-center justify-between">
-                      <label
-                        className="font-medium text-sm"
-                        htmlFor="negative-prompt-input"
-                      >
-                        {fa.imageGeneration.negativeLabel}
-                      </label>
-                      <TranscribeButton
-                        language="en"
-                        model={transcribeModel}
-                        onError={(error) => {
-                          toast.error(
-                            `${fa.imageGeneration.voiceTranscriptionError} ${error}`
-                          );
-                        }}
-                        onModelChange={setTranscribeModel}
-                        onTranscribed={(text) => setNegativePrompt(text)}
-                        size="icon"
-                        variant="ghost"
-                      />
-                    </div>
-                    <Textarea
-                      className="min-h-[70px] resize-none"
-                      dir={
-                        negativePrompt
-                          ? detectTextDirection(negativePrompt)
-                          : "rtl"
-                      }
-                      id="negative-prompt-input"
-                      onChange={(e) => setNegativePrompt(e.target.value)}
-                      placeholder={fa.imageGeneration.negativePlaceholder}
-                      value={negativePrompt}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="mb-2 block font-medium text-sm"
-                      htmlFor="sampler-select"
-                    >
-                      {fa.imageGeneration.samplerLabel}
-                    </label>
-                    <Select
-                      onValueChange={(value) =>
-                        setSettings((prev) => ({ ...prev, sampler: value }))
-                      }
-                      value={settings.sampler}
-                    >
-                      <SelectTrigger className="h-9 w-full cursor-pointer gap-2">
-                        <SelectValue
-                          placeholder={fa.imageGeneration.samplerPlaceholder}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {samplers.map((sampler: string) => (
-                          <SelectItem key={sampler} value={sampler}>
-                            {sampler}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-2 block font-medium text-sm"
-                        htmlFor="steps-slider"
-                      >
-                        {fa.imageGeneration.stepsLabelAlt.replace(
-                          "{steps}",
-                          settings.steps.toString()
-                        )}
-                      </label>
-                      <Slider
-                        className="w-full"
-                        id="steps-slider"
-                        max={150}
-                        min={1}
-                        onValueChange={([value]) =>
-                          setSettings((prev) => ({ ...prev, steps: value }))
-                        }
-                        step={1}
-                        value={[settings.steps]}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="mb-2 block font-medium text-sm"
-                        htmlFor="cfg-slider"
-                      >
-                        CFG Scale: {settings.cfgScale}
-                      </label>
-                      <Slider
-                        className="w-full"
-                        id="cfg-slider"
-                        max={30}
-                        min={1}
-                        onValueChange={([value]) =>
-                          setSettings((prev) => ({ ...prev, cfgScale: value }))
-                        }
-                        step={0.5}
-                        value={[settings.cfgScale]}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : null
-            }
+          <ImageGenerationInput
+            advancedSettingsOpen={advancedSettingsOpen}
+            getSizeValue={getSizeValue}
             isGenerating={isGenerating}
-            leftTools={
-              <>
-                <Select onValueChange={handleSizeChange} value={getSizeValue()}>
-                  <SelectTrigger className="h-9 w-36 cursor-pointer gap-2">
-                    <SelectValue
-                      placeholder={fa.imageGeneration.sizePlaceholder}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {IMAGE_SIZES.map((size) => (
-                      <SelectItem
-                        key={size.label}
-                        value={size.value.toString()}
-                      >
-                        {size.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <PromptInputButton onClick={resetSettings} variant="outline">
-                  <RotateCcw className="size-4" />
-                  {fa.imageGeneration.resetButton}
-                </PromptInputButton>
-              </>
-            }
-            onChange={setPrompt}
+            negativePrompt={negativePrompt}
+            onAdvancedSettingsToggle={() => setAdvancedSettingsOpen((v) => !v)}
+            onNegativePromptChange={setNegativePrompt}
+            onPromptChange={setPrompt}
+            onResetSettings={resetSettings}
+            onSettingsChange={updateSettings}
+            onSizeChange={handleSizeChange}
             onSubmit={() => {
               if (isGenerating || !prompt.trim() || !isServiceAvailable) {
                 return;
               }
-              handleSubmit(prompt, {
+              handleSubmitWithRename(prompt, {
                 steps: settings.steps,
                 cfgScale: settings.cfgScale,
                 negativePrompt,
@@ -564,39 +362,18 @@ function RouteComponent() {
                 height: settings.height,
               });
             }}
-            placeholder={fa.imageGeneration.promptPlaceholderAlt}
-            rightTools={
-              <>
-                <PromptInputButton
-                  onClick={() => setAdvancedSettingsOpen((v) => !v)}
-                  variant="outline"
-                >
-                  <Settings2 className="size-4" />
-                  {fa.imageGeneration.advancedButton}
-                </PromptInputButton>
-                <TranscribeButton
-                  language="en"
-                  model={transcribeModel}
-                  onError={(error) => {
-                    toast.error(
-                      `${fa.imageGeneration.voiceTranscriptionError} ${error}`
-                    );
-                  }}
-                  onModelChange={setTranscribeModel}
-                  onTranscribed={(text) =>
-                    setPrompt((prev) => (prev ? `${prev} ${text}` : text))
-                  }
-                  size="icon"
-                  variant="outline"
-                />
-              </>
+            onTranscribed={handleTranscribed}
+            onTranscribeError={handleTranscribeError}
+            onTranscribeModelChange={setTranscribeModel}
+            prompt={prompt}
+            samplers={samplers}
+            settings={settings}
+            submitDisabled={
+              isGenerating || !prompt.trim() || !isServiceAvailable
             }
-            submitProps={{
-              disabled: isGenerating || !prompt.trim() || !isServiceAvailable,
-              status: isGenerating ? "submitted" : undefined,
-              variant: isGenerating ? "destructive" : "default",
-            }}
-            value={prompt}
+            submitStatus={isGenerating ? "submitted" : undefined}
+            submitVariant={isGenerating ? "destructive" : "default"}
+            transcribeModel={transcribeModel}
           />
         </div>
       }
