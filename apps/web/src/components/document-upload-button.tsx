@@ -79,7 +79,6 @@ function showUploadSuccess(
 }
 
 function handleUploadError(err: unknown) {
-  // eslint-disable-next-line no-console
   console.error("Failed to upload document", err);
   const message = err instanceof Error ? err.message : "خطای ناشناخته";
   toast.error(`خطا در آپلود فایل: ${message}`);

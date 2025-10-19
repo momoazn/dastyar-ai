@@ -1,23 +1,19 @@
 import { RefreshCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
-  PromptInput,
   PromptInputButton,
   PromptInputModelSelect,
   PromptInputModelSelectContent,
   PromptInputModelSelectItem,
   PromptInputModelSelectTrigger,
   PromptInputModelSelectValue,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputToolbar,
-  PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import {
   ChatAttachments,
   type PendingAttachment,
 } from "@/components/chat/attachments";
 import { DocumentUploadButton } from "@/components/document-upload-button";
+import { PromptInputBase } from "@/components/prompt-input-base";
 import { TranscribeButton } from "@/components/transcribe-button";
 import { Alert, AlertDescription } from "@/components/ui";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
@@ -89,44 +85,17 @@ export const ChatInput = ({
     });
   };
 
-  // Memoize text direction calculation
-  const textDirection = useMemo(
-    () => (prompt ? detectTextDirection(prompt) : "rtl"),
-    [prompt]
-  );
-
-  // Handle key presses in the textarea
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (isGenerating) {
-        stopGenerating?.();
-        return;
-      }
-      const trimmed = prompt.trim();
-      if (trimmed) {
-        handleSendPrompt(trimmed);
-        setPrompt("");
-      }
-    }
-  };
-
-  // Handle send/stop button click
-  const handleSendButtonClick = () => {
+  const submit = () => {
     if (isGenerating) {
       stopGenerating?.();
       return;
     }
     const trimmed = prompt.trim();
-    if (trimmed) {
-      handleSendPrompt(trimmed);
-      setPrompt("");
+    if (!trimmed) {
+      return;
     }
-  };
-
-  // Memoize prompt change handler
-  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPrompt(e.target.value);
+    handleSendPrompt(trimmed);
+    setPrompt("");
   };
 
   // Memoize models list rendering
@@ -168,21 +137,10 @@ export const ChatInput = ({
         />
       )}
       <div>
-        <PromptInput
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendButtonClick();
-          }}
-        >
-          <PromptInputTextarea
-            dir={textDirection}
-            onChange={handlePromptChange}
-            onKeyDown={handleKeyDown}
-            placeholder={fa.chat.writeMessage}
-            value={prompt}
-          />
-          <PromptInputToolbar>
-            <PromptInputTools>
+        <PromptInputBase
+          isGenerating={isGenerating}
+          leftTools={
+            <>
               <PromptInputModelSelect
                 defaultValue={modelId?.toString()}
                 onValueChange={(value) => setModelId(Number(value))}
@@ -207,13 +165,18 @@ export const ChatInput = ({
               <PromptInputButton onClick={() => refetch()} variant="outline">
                 <RefreshCcw className="size-4" />
               </PromptInputButton>
-            </PromptInputTools>
-            <div className="flex items-center gap-2">
+            </>
+          }
+          onChange={setPrompt}
+          onStop={stopGenerating}
+          onSubmit={submit}
+          placeholder={fa.chat.writeMessage}
+          rightTools={
+            <>
               {typeof threadId === "number" && (
                 <DocumentUploadButton
                   onStatusChange={handleDocStatus}
                   onUploaded={({ title, indexedChunks }) => {
-                    // eslint-disable-next-line no-console
                     console.log(
                       `Document uploaded: ${title} (indexed ${indexedChunks} chunks)`
                     );
@@ -228,14 +191,15 @@ export const ChatInput = ({
                 size="icon"
                 variant="outline"
               />
-              <PromptInputSubmit
-                disabled={!(isGenerating || (prompt.trim() && modelId))}
-                status={isGenerating ? "streaming" : undefined}
-                variant={isGenerating ? "destructive" : "default"}
-              />
-            </div>
-          </PromptInputToolbar>
-        </PromptInput>
+            </>
+          }
+          submitProps={{
+            disabled: !(isGenerating || (prompt.trim() && modelId)),
+            status: isGenerating ? "streaming" : undefined,
+            variant: isGenerating ? "destructive" : "default",
+          }}
+          value={prompt}
+        />
       </div>
       {transcriptionError && (
         <Alert className="mt-2" variant="destructive">

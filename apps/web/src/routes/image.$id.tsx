@@ -13,14 +13,8 @@ import {
   Message as AIMsg,
   MessageContent as AIMsgContent,
 } from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  PromptInputButton,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputToolbar,
-  PromptInputTools,
-} from "@/components/ai-elements/prompt-input";
+import { PromptInputButton } from "@/components/ai-elements/prompt-input";
+import { PromptInputBase } from "@/components/prompt-input-base";
 import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
 import { TranscribeButton } from "@/components/transcribe-button";
 import {
@@ -114,7 +108,7 @@ function buildSrc(url: string, token: string | null) {
 
 function RouteComponent() {
   const { id: threadId } = useParams({ from: "/image/$id" });
-  const search = useSearch({ from: "/image/$id" }) as {
+  const search = useSearch({ from: "/image/$id" }) as GenerationSettings & {
     initialPrompt?: string;
   };
   const numericThreadId = Number(threadId);
@@ -214,19 +208,79 @@ function RouteComponent() {
     [images]
   );
 
+  // Merge any settings provided via search once
+  const hasMergedInitialSettingsRef = useRef(false);
+  useEffect(() => {
+    if (hasMergedInitialSettingsRef.current) {
+      return;
+    }
+    const raw: Partial<GenerationSettings> = {
+      width:
+        typeof search.width === "string"
+          ? Number(search.width)
+          : (search.width as number | undefined),
+      height:
+        typeof search.height === "string"
+          ? Number(search.height)
+          : (search.height as number | undefined),
+      steps:
+        typeof search.steps === "string"
+          ? Number(search.steps)
+          : (search.steps as number | undefined),
+      cfgScale:
+        typeof search.cfgScale === "string"
+          ? Number(search.cfgScale)
+          : (search.cfgScale as number | undefined),
+      sampler: search.sampler,
+      negativePrompt: search.negativePrompt,
+    };
+    const merged = getMergedSettings(raw, DEFAULT_SETTINGS);
+    if (
+      raw.width ||
+      raw.height ||
+      raw.steps ||
+      raw.cfgScale ||
+      raw.sampler ||
+      typeof raw.negativePrompt === "string"
+    ) {
+      setSettings(merged);
+    }
+    hasMergedInitialSettingsRef.current = true;
+  }, [search]);
+
   // Auto-submit once if an initial prompt is provided via navigation
   const hasSubmittedInitialRef = useRef(false);
   useEffect(() => {
     const p =
       typeof search?.initialPrompt === "string" ? search.initialPrompt : "";
+    const raw: Partial<GenerationSettings> = {
+      width:
+        typeof search.width === "string"
+          ? Number(search.width)
+          : (search.width as number | undefined),
+      height:
+        typeof search.height === "string"
+          ? Number(search.height)
+          : (search.height as number | undefined),
+      steps:
+        typeof search.steps === "string"
+          ? Number(search.steps)
+          : (search.steps as number | undefined),
+      cfgScale:
+        typeof search.cfgScale === "string"
+          ? Number(search.cfgScale)
+          : (search.cfgScale as number | undefined),
+      sampler: search.sampler,
+      negativePrompt: search.negativePrompt,
+    };
+    const initial = getMergedSettings(raw, DEFAULT_SETTINGS);
     if (!hasSubmittedInitialRef.current && p.trim() && images.length === 0) {
       hasSubmittedInitialRef.current = true;
-      handleSubmit(p, settings).catch(() => {
-        // eslint-disable-next-line no-console
+      handleSubmit(p, initial).catch(() => {
         console.error("Failed to submit initial prompt", p);
       });
     }
-  }, [search, images.length, handleSubmit, settings]);
+  }, [search, images.length, handleSubmit]);
 
   if (Number.isNaN(numericThreadId) || numericThreadId <= 0) {
     return (
@@ -333,30 +387,121 @@ function RouteComponent() {
       }
       footer={
         <div className="mx-auto max-w-4xl px-6 py-4">
-          <PromptInput
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (isGenerating || !prompt.trim() || !isServiceAvailable) {
-                return;
-              }
-              handleSubmit(prompt, {
-                steps: settings.steps,
-                cfgScale: settings.cfgScale,
-                negativePrompt,
-                sampler: settings.sampler,
-                width: settings.width,
-                height: settings.height,
-              });
-            }}
-          >
-            <PromptInputTextarea
-              dir={prompt ? detectTextDirection(prompt) : "rtl"}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={fa.imageGeneration.promptPlaceholderAlt}
-              value={prompt}
-            />
-            <PromptInputToolbar>
-              <PromptInputTools>
+          <PromptInputBase
+            bottomContent={
+              advancedSettingsOpen ? (
+                <div className="space-y-4 p-3">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label
+                        className="font-medium text-sm"
+                        htmlFor="negative-prompt-input"
+                      >
+                        {fa.imageGeneration.negativeLabel}
+                      </label>
+                      <TranscribeButton
+                        language="en"
+                        model={transcribeModel}
+                        onError={(error) => {
+                          toast.error(
+                            `${fa.imageGeneration.voiceTranscriptionError} ${error}`
+                          );
+                        }}
+                        onModelChange={setTranscribeModel}
+                        onTranscribed={(text) => setNegativePrompt(text)}
+                        size="icon"
+                        variant="ghost"
+                      />
+                    </div>
+                    <Textarea
+                      className="min-h-[70px] resize-none"
+                      dir={
+                        negativePrompt
+                          ? detectTextDirection(negativePrompt)
+                          : "rtl"
+                      }
+                      id="negative-prompt-input"
+                      onChange={(e) => setNegativePrompt(e.target.value)}
+                      placeholder={fa.imageGeneration.negativePlaceholder}
+                      value={negativePrompt}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="mb-2 block font-medium text-sm"
+                      htmlFor="sampler-select"
+                    >
+                      {fa.imageGeneration.samplerLabel}
+                    </label>
+                    <Select
+                      onValueChange={(value) =>
+                        setSettings((prev) => ({ ...prev, sampler: value }))
+                      }
+                      value={settings.sampler}
+                    >
+                      <SelectTrigger className="h-9 w-full cursor-pointer gap-2">
+                        <SelectValue
+                          placeholder={fa.imageGeneration.samplerPlaceholder}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {samplers.map((sampler: string) => (
+                          <SelectItem key={sampler} value={sampler}>
+                            {sampler}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label
+                        className="mb-2 block font-medium text-sm"
+                        htmlFor="steps-slider"
+                      >
+                        {fa.imageGeneration.stepsLabelAlt.replace(
+                          "{steps}",
+                          settings.steps.toString()
+                        )}
+                      </label>
+                      <Slider
+                        className="w-full"
+                        id="steps-slider"
+                        max={150}
+                        min={1}
+                        onValueChange={([value]) =>
+                          setSettings((prev) => ({ ...prev, steps: value }))
+                        }
+                        step={1}
+                        value={[settings.steps]}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="mb-2 block font-medium text-sm"
+                        htmlFor="cfg-slider"
+                      >
+                        CFG Scale: {settings.cfgScale}
+                      </label>
+                      <Slider
+                        className="w-full"
+                        id="cfg-slider"
+                        max={30}
+                        min={1}
+                        onValueChange={([value]) =>
+                          setSettings((prev) => ({ ...prev, cfgScale: value }))
+                        }
+                        step={0.5}
+                        value={[settings.cfgScale]}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null
+            }
+            isGenerating={isGenerating}
+            leftTools={
+              <>
                 <Select onValueChange={handleSizeChange} value={getSizeValue()}>
                   <SelectTrigger className="h-9 w-36 cursor-pointer gap-2">
                     <SelectValue
@@ -378,8 +523,27 @@ function RouteComponent() {
                   <RotateCcw className="size-4" />
                   {fa.imageGeneration.resetButton}
                 </PromptInputButton>
-              </PromptInputTools>
-              <div className="flex items-center gap-2">
+              </>
+            }
+            onChange={setPrompt}
+            onSubmit={() => {
+              if (isGenerating || !prompt.trim() || !isServiceAvailable) {
+                return;
+              }
+              handleSubmit(prompt, {
+                steps: settings.steps,
+                cfgScale: settings.cfgScale,
+                negativePrompt,
+                sampler: settings.sampler,
+                width: settings.width,
+                height: settings.height,
+              }).catch(() => {
+                console.error("Failed to submit prompt", prompt);
+              });
+            }}
+            placeholder={fa.imageGeneration.promptPlaceholderAlt}
+            rightTools={
+              <>
                 <PromptInputButton
                   onClick={() => setAdvancedSettingsOpen((v) => !v)}
                   variant="outline"
@@ -402,125 +566,15 @@ function RouteComponent() {
                   size="icon"
                   variant="outline"
                 />
-                <PromptInputSubmit
-                  disabled={
-                    isGenerating || !prompt.trim() || !isServiceAvailable
-                  }
-                  status={isGenerating ? "submitted" : undefined}
-                  variant={isGenerating ? "destructive" : "default"}
-                />
-              </div>
-            </PromptInputToolbar>
-            {advancedSettingsOpen && (
-              <div className="space-y-4 p-3">
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label
-                      className="font-medium text-sm"
-                      htmlFor="negative-prompt-input"
-                    >
-                      {fa.imageGeneration.negativeLabel}
-                    </label>
-                    <TranscribeButton
-                      language="en"
-                      model={transcribeModel}
-                      onError={(error) => {
-                        toast.error(
-                          `${fa.imageGeneration.voiceTranscriptionError} ${error}`
-                        );
-                      }}
-                      onModelChange={setTranscribeModel}
-                      onTranscribed={(text) => setNegativePrompt(text)}
-                      size="icon"
-                      variant="ghost"
-                    />
-                  </div>
-                  <Textarea
-                    className="min-h-[70px] resize-none"
-                    dir={
-                      negativePrompt
-                        ? detectTextDirection(negativePrompt)
-                        : "rtl"
-                    }
-                    id="negative-prompt-input"
-                    onChange={(e) => setNegativePrompt(e.target.value)}
-                    placeholder={fa.imageGeneration.negativePlaceholder}
-                    value={negativePrompt}
-                  />
-                </div>
-                <div>
-                  <label
-                    className="mb-2 block font-medium text-sm"
-                    htmlFor="sampler-select"
-                  >
-                    {fa.imageGeneration.samplerLabel}
-                  </label>
-                  <Select
-                    onValueChange={(value) =>
-                      setSettings((prev) => ({ ...prev, sampler: value }))
-                    }
-                    value={settings.sampler}
-                  >
-                    <SelectTrigger className="h-9 w-full cursor-pointer gap-2">
-                      <SelectValue
-                        placeholder={fa.imageGeneration.samplerPlaceholder}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {samplers.map((sampler: string) => (
-                        <SelectItem key={sampler} value={sampler}>
-                          {sampler}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label
-                      className="mb-2 block font-medium text-sm"
-                      htmlFor="steps-slider"
-                    >
-                      {fa.imageGeneration.stepsLabelAlt.replace(
-                        "{steps}",
-                        settings.steps.toString()
-                      )}
-                    </label>
-                    <Slider
-                      className="w-full"
-                      id="steps-slider"
-                      max={150}
-                      min={1}
-                      onValueChange={([value]) =>
-                        setSettings((prev) => ({ ...prev, steps: value }))
-                      }
-                      step={1}
-                      value={[settings.steps]}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="mb-2 block font-medium text-sm"
-                      htmlFor="cfg-slider"
-                    >
-                      CFG Scale: {settings.cfgScale}
-                    </label>
-                    <Slider
-                      className="w-full"
-                      id="cfg-slider"
-                      max={30}
-                      min={1}
-                      onValueChange={([value]) =>
-                        setSettings((prev) => ({ ...prev, cfgScale: value }))
-                      }
-                      step={0.5}
-                      value={[settings.cfgScale]}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </PromptInput>
+              </>
+            }
+            submitProps={{
+              disabled: isGenerating || !prompt.trim() || !isServiceAvailable,
+              status: isGenerating ? "submitted" : undefined,
+              variant: isGenerating ? "destructive" : "default",
+            }}
+            value={prompt}
+          />
         </div>
       }
       isEmpty={orderedImages.length === 0 && !isGenerating}

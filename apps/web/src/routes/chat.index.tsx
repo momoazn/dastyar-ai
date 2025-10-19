@@ -38,7 +38,6 @@ function RouteComponent() {
         search: { initialPrompt: trimmed },
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Failed to start new chat", error);
       toast.error(fa.chat.newChatError);
     } finally {

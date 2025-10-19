@@ -73,7 +73,6 @@ function RouteComponent() {
             queryKey: orpc.threads.list.queryKey(),
           });
         } catch (error) {
-          // eslint-disable-next-line no-console
           console.error("Failed to rename thread on first message", error);
         }
       }
@@ -98,7 +97,6 @@ function RouteComponent() {
       hasSentInitialPromptRef.current = true;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
-        // eslint-disable-next-line no-console
         console.error("Failed to send initial prompt", p);
       });
     }
