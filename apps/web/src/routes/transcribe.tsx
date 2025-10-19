@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
   AlertDescription,
@@ -260,36 +261,8 @@ function RouteComponent() {
         </Card>
       }
       toolbar={
-        <>
-          <div className="flex items-center justify-end gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <span>
-                {language === "fa"
-                  ? fa.languages.persian
-                  : fa.languages.english}
-              </span>
-              <Switch
-                aria-label="toggle input audio language"
-                checked={language === "fa"}
-                onCheckedChange={(checked) =>
-                  setLanguage(checked ? "fa" : "en")
-                }
-              />
-            </div>
-            <Select onValueChange={setModel} value={model}>
-              <SelectTrigger className="w-56" size="sm">
-                <SelectValue placeholder={fa.modelSelection.model} />
-              </SelectTrigger>
-              <SelectContent>
-                {models?.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="mt-3 flex justify-end">
+        <ToolbarRow
+          action={
             <Button
               aria-label={
                 isRecording
@@ -315,8 +288,34 @@ function RouteComponent() {
                 </>
               )}
             </Button>
+          }
+          columns={2}
+        >
+          <div className="flex items-center justify-end gap-2 text-sm">
+            <span>
+              {language === "fa" ? fa.languages.persian : fa.languages.english}
+            </span>
+            <Switch
+              aria-label="toggle input audio language"
+              checked={language === "fa"}
+              onCheckedChange={(checked) => setLanguage(checked ? "fa" : "en")}
+            />
           </div>
-        </>
+          <div className="flex justify-end">
+            <Select onValueChange={setModel} value={model}>
+              <SelectTrigger className="w-56" size="sm">
+                <SelectValue placeholder={fa.modelSelection.model} />
+              </SelectTrigger>
+              <SelectContent>
+                {models?.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </ToolbarRow>
       }
     />
   );

@@ -8,6 +8,7 @@ import { Clipboard, Copy, Loader2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
   Button,
@@ -273,89 +274,8 @@ function SummarizePage() {
         </>
       }
       toolbar={
-        <>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.summarize.modeLabel}
-              </div>
-              <Select
-                disabled={summarizeMutation.isPending}
-                onValueChange={(v) => setMode(v as SummaryMode)}
-                value={mode}
-              >
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {summaryModeOptions.map((m) => (
-                    <SelectItem
-                      className="text-right"
-                      key={m.value}
-                      value={m.value}
-                    >
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.translation.translationTone}
-              </div>
-              <Select
-                disabled={summarizeMutation.isPending}
-                onValueChange={(v) => setTone(v as Tone)}
-                value={tone}
-              >
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {toneOptions.map((t) => (
-                    <SelectItem
-                      className="text-right"
-                      key={t.value}
-                      value={t.value}
-                    >
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">{fa.summarize.model}</div>
-              <Select
-                disabled={summarizeMutation.isPending || isModelsLoading}
-                onValueChange={(value) => setModelId(Number(value))}
-                value={modelId?.toString()}
-              >
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue
-                    placeholder={
-                      isModelsLoading
-                        ? fa.general.loadingModels
-                        : fa.general.selectModel
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {models?.map((model) => (
-                    <SelectItem
-                      className="text-right"
-                      key={model.id}
-                      value={model.id.toString()}
-                    >
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-3 flex justify-end">
+        <ToolbarRow
+          action={
             <Button
               className="min-w-[140px]"
               disabled={!canSummarize}
@@ -371,8 +291,87 @@ function SummarizePage() {
                 fa.summarize.generate
               )}
             </Button>
+          }
+          columns={3}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
+            <Select
+              disabled={summarizeMutation.isPending}
+              onValueChange={(v) => setMode(v as SummaryMode)}
+              value={mode}
+            >
+              <SelectTrigger className="w-full text-right" dir="rtl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {summaryModeOptions.map((m) => (
+                  <SelectItem
+                    className="text-right"
+                    key={m.value}
+                    value={m.value}
+                  >
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </>
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-sm">
+              {fa.translation.translationTone}
+            </div>
+            <Select
+              disabled={summarizeMutation.isPending}
+              onValueChange={(v) => setTone(v as Tone)}
+              value={tone}
+            >
+              <SelectTrigger className="w-full text-right" dir="rtl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {toneOptions.map((t) => (
+                  <SelectItem
+                    className="text-right"
+                    key={t.value}
+                    value={t.value}
+                  >
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-sm">{fa.summarize.model}</div>
+            <Select
+              disabled={summarizeMutation.isPending || isModelsLoading}
+              onValueChange={(value) => setModelId(Number(value))}
+              value={modelId?.toString()}
+            >
+              <SelectTrigger className="w-full text-right" dir="rtl">
+                <SelectValue
+                  placeholder={
+                    isModelsLoading
+                      ? fa.general.loadingModels
+                      : fa.general.selectModel
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {models?.map((model) => (
+                  <SelectItem
+                    className="text-right"
+                    key={model.id}
+                    value={model.id.toString()}
+                  >
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </ToolbarRow>
       }
     />
   );
