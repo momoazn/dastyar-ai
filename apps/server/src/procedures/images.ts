@@ -4,14 +4,14 @@ import {
   clearGeneratedImagesByThread,
   listGeneratedImagesByThread,
 } from "@/repositories/images";
-import { getImageUrl } from "@/services/image-storage";
-import { generateAndPersistImage } from "@/services/images";
 import {
   getSamplers,
   interrupt,
   ping,
   progress,
-} from "@/services/stable-diffusion";
+} from "@/services/ai-providers";
+import { generateAndPersistImage } from "@/services/processors";
+import { getImageUrl } from "@/services/storage";
 import { protectedProcedure, publicProcedure } from "./base";
 
 const imageGenerationParamsSchema = z.object({

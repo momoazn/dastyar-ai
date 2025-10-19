@@ -2,21 +2,14 @@
  * Services Index
  *
  * This file provides a centralized export for all services in the application.
- * Services are organized by category for better maintainability.
+ * Services are organized by functional category for better maintainability.
  */
 
+// AI Provider Services
+export * from "./ai-providers";
 // Authentication Services
 export * from "./auth";
 // Document Processing Services
-export * from "./document-storage";
-// AI/ML Services
-export * from "./embeddings";
-// Image Services
-export * from "./image-storage";
-export * from "./images";
-// LLM Provider Services
-export * from "./llm-providers";
-export * from "./pdf";
-export * from "./rag";
-export * from "./stable-diffusion";
-export * from "./whisper";
+export * from "./processors";
+// Storage Services
+export * from "./storage";

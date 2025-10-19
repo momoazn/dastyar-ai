@@ -9,7 +9,7 @@ import {
 import {
   deleteImage as deleteImageFile,
   cleanupOrphanedFiles as storageCleanupOrphanedFiles,
-} from "@/services/image-storage";
+} from "@/services/storage";
 
 export async function createGeneratedImage(
   params: Omit<

@@ -8,7 +8,7 @@ import {
   getSummary,
   listSummaries,
 } from "@/repositories/summaries";
-import { getProviderForModel } from "@/services/llm-providers";
+import { getProviderForModel } from "@/services/ai-providers";
 import { summaryModePrompts } from "@/utils/constants";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";

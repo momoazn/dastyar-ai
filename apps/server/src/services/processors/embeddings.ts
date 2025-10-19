@@ -1,6 +1,6 @@
 import type { OpenAI } from "openai";
 import { env } from "@/config";
-import { ollamaClient } from "./ollama";
+import { ollamaClient } from "../ai-providers/ollama-provider";
 
 export type EmbeddingVector = number[];
 

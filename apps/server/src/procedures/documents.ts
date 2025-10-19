@@ -6,9 +6,12 @@ import {
   detachDocumentFromThread,
   listThreadDocuments,
 } from "@/repositories/documents";
-import { saveDocumentFromFile } from "@/services/document-storage";
-import { extractTextFromPdf } from "@/services/pdf";
-import { indexDocumentPages, indexDocumentText } from "@/services/rag";
+import {
+  extractTextFromPdf,
+  indexDocumentPages,
+  indexDocumentText,
+} from "@/services/processors";
+import { saveDocumentFromFile } from "@/services/storage";
 import { protectedProcedure } from "./base";
 
 export const documentProcedures = {

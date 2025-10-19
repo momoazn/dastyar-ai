@@ -1,17 +1,13 @@
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 import type { LLMModelProvider } from "@/database";
+import { geminiProvider, listGeminiModels } from "./google-provider";
+import { groqProvider, listGroqModels } from "./groq-provider";
+import { listLmstudioModels, lmstudioProvider } from "./lmstudio-provider";
+import { listOllamaModels, ollamaProvider } from "./ollama-provider";
 import {
-  geminiProvider,
-  groqProvider,
-  listGeminiModels,
-  listGroqModels,
-  listLmstudioModels,
-  listOllamaModels,
   listOpenRouterModels,
-  lmstudioProvider,
-  ollamaProvider,
   openrouterProvider,
-} from "./providers";
+} from "./openrouter-provider";
 
 const providerToModel = {
   ollama: ollamaProvider,

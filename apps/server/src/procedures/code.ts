@@ -7,7 +7,7 @@ import {
   listCodeRuns,
 } from "@/repositories/code-runs";
 import { getModelById } from "@/repositories/llm-models";
-import { getProviderForModel } from "@/services/llm-providers";
+import { getProviderForModel } from "@/services/ai-providers";
 import { extractJsonObject } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 

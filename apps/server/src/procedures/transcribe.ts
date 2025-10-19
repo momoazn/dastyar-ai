@@ -3,7 +3,7 @@ import { defaultWhisperModel } from "@/config";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
-} from "@/services/whisper";
+} from "@/services/ai-providers";
 import { publicProcedure } from "./base";
 
 export const transcribeProcedures = {

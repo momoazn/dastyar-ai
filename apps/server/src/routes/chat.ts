@@ -13,11 +13,11 @@ import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
-import { getProviderForModel } from "@/services/llm-providers";
+import { getProviderForModel } from "@/services/ai-providers";
 import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
-} from "@/services/rag";
+} from "@/services/processors";
 import type { MyUIMessage } from "@/utils/chat";
 import { CHAT_SYSTEM_PROMPT } from "@/utils/constants";
 

@@ -1,8 +1,8 @@
 import type { GenerateInput } from "@/procedures/images";
 import { touchLastImageAt } from "@/repositories/image-threads";
 import { createGeneratedImage } from "@/repositories/images";
-import { getImageUrl, saveImage } from "./image-storage";
-import { generate } from "./stable-diffusion";
+import { generate } from "../ai-providers";
+import { getImageUrl, saveImage } from "../storage";
 
 export async function generateAndPersistImage(
   input: GenerateInput,

@@ -5,7 +5,7 @@ import {
   syncModels,
   updateModel,
 } from "@/repositories/llm-models";
-import { listAllModels } from "@/services/llm-providers";
+import { listAllModels } from "@/services/ai-providers";
 import { publicProcedure } from "./base";
 
 export const llmModelProcedures = {
