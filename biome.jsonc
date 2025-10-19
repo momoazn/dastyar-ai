@@ -14,7 +14,8 @@
         "noBarrelFile": "off"
       },
       "style": {
-        "noMagicNumbers": "off"
+        "noMagicNumbers": "off",
+        "useBlockStatements": "off"
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": {

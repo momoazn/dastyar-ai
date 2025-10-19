@@ -7,6 +7,7 @@ import {
 import { Clipboard, Copy, Loader2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import {
   Alert,
   Button,
@@ -194,8 +195,101 @@ function SummarizePage() {
   const sourceCharCount = sourceText.length;
 
   return (
-    <div className="flex h-full flex-col" dir="rtl">
-      <div className="bg-background p-4">
+    <ToolScaffold
+      actionBar={
+        <Button
+          className="min-w-[120px]"
+          disabled={!canSummarize}
+          onClick={submitSummarize}
+          type="button"
+        >
+          {summarizeMutation.isPending ? (
+            <>
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              {fa.summarize.generating}
+            </>
+          ) : (
+            fa.summarize.generate
+          )}
+        </Button>
+      }
+      alerts={
+        (summarizeMutation.isError || modelsError || clipboardError) && (
+          <Alert variant="destructive">
+            <div className="flex items-center gap-2">
+              {(() => {
+                const message =
+                  clipboardError ??
+                  (modelsError
+                    ? "Failed to load models. Please refresh the page."
+                    : fa.summarize.errors.requestFailed);
+                return <span>{message}</span>;
+              })()}
+              <span>{fa.translation.tryAgain}</span>
+            </div>
+          </Alert>
+        )
+      }
+      content={
+        <>
+          <Card className="p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-medium">{fa.summarize.sourceText}</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">
+                  {fa.general.charCount(sourceCharCount)}
+                </span>
+                <Button
+                  onClick={handlePaste}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Clipboard className="h-4 w-4" />
+                  {fa.summarize.paste}
+                </Button>
+              </div>
+            </div>
+            <Textarea
+              className="min-h-[200px] resize-none"
+              dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
+              disabled={summarizeMutation.isPending}
+              onChange={(e) => setSourceText(e.target.value)}
+              onKeyDown={handleSourceKeyDown}
+              placeholder={fa.summarize.enterText}
+              value={sourceText}
+            />
+            <div className="mt-2 text-muted-foreground text-xs">
+              {fa.summarize.keyboardHint}
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-medium">{fa.summarize.generatedText}</h3>
+              {summaryText && (
+                <Button
+                  className={isCopied ? "bg-green-600 hover:bg-green-700" : ""}
+                  onClick={handleCopy}
+                  size="sm"
+                  type="button"
+                  variant={isCopied ? "default" : "ghost"}
+                >
+                  <Copy className="h-4 w-4" />
+                  {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                </Button>
+              )}
+            </div>
+            <Textarea
+              className="min-h-[200px] resize-none"
+              dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
+              placeholder={fa.summarize.summaryPlaceholder}
+              readOnly
+              value={summaryText}
+            />
+          </Card>
+        </>
+      }
+      toolbar={
         <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
@@ -220,7 +314,6 @@ function SummarizePage() {
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">
               {fa.translation.translationTone}
@@ -246,7 +339,6 @@ function SummarizePage() {
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex flex-col gap-2">
             <div className="font-medium text-sm">{fa.summarize.model}</div>
             <Select
@@ -277,100 +369,7 @@ function SummarizePage() {
             </Select>
           </div>
         </div>
-      </div>
-
-      <div className="flex-1 space-y-4 p-4">
-        <Card className="p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="font-medium">{fa.summarize.sourceText}</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">
-                {fa.general.charCount(sourceCharCount)}
-              </span>
-              <Button
-                onClick={handlePaste}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <Clipboard className="h-4 w-4" />
-                {fa.summarize.paste}
-              </Button>
-            </div>
-          </div>
-          <Textarea
-            className="min-h-[200px] resize-none"
-            dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
-            disabled={summarizeMutation.isPending}
-            onChange={(e) => setSourceText(e.target.value)}
-            onKeyDown={handleSourceKeyDown}
-            placeholder={fa.summarize.enterText}
-            value={sourceText}
-          />
-          <div className="mt-2 text-muted-foreground text-xs">
-            {fa.summarize.keyboardHint}
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="font-medium">{fa.summarize.generatedText}</h3>
-            {summaryText && (
-              <Button
-                className={isCopied ? "bg-green-600 hover:bg-green-700" : ""}
-                onClick={handleCopy}
-                size="sm"
-                type="button"
-                variant={isCopied ? "default" : "ghost"}
-              >
-                <Copy className="h-4 w-4" />
-                {isCopied ? fa.summarize.copied : fa.summarize.copy}
-              </Button>
-            )}
-          </div>
-          <Textarea
-            className="min-h-[200px] resize-none"
-            dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
-            placeholder={fa.summarize.summaryPlaceholder}
-            readOnly
-            value={summaryText}
-          />
-        </Card>
-
-        {(summarizeMutation.isError || modelsError || clipboardError) && (
-          <Alert variant="destructive">
-            <div className="flex items-center gap-2">
-              {(() => {
-                const message =
-                  clipboardError ??
-                  (modelsError
-                    ? "Failed to load models. Please refresh the page."
-                    : fa.summarize.errors.requestFailed);
-                return <span>{message}</span>;
-              })()}
-              <span>{fa.translation.tryAgain}</span>
-            </div>
-          </Alert>
-        )}
-
-        <div className="flex justify-end">
-          <Button
-            className="min-w-[120px]"
-            disabled={!canSummarize}
-            onClick={submitSummarize}
-            type="button"
-          >
-            {summarizeMutation.isPending ? (
-              <>
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                {fa.summarize.generating}
-              </>
-            ) : (
-              fa.summarize.generate
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
+      }
+    />
   );
 }

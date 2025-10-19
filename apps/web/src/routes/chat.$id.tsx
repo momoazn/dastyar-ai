@@ -13,6 +13,7 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatInput, Message } from "@/components/chat";
+import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
@@ -92,37 +93,36 @@ function RouteComponent() {
   }, [messagesQuery.data, setMessages]);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-hidden">
-        {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-            <MessageCircleIcon className="size-10" />
-            <div className="space-y-1" dir="rtl">
-              <div className="font-medium">{fa.chat.askQuestion}</div>
-              <div className="text-xs">{fa.chat.askQuestionDescription}</div>
-            </div>
+    <ConversationScaffold
+      conversation={
+        <Conversation className="h-full">
+          <ConversationContent>
+            {messages.map((m) => (
+              <Message key={m.id} message={m} />
+            ))}
+            {status === "submitted" && <Loader />}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+      }
+      empty={
+        <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+          <MessageCircleIcon className="size-10" />
+          <div className="space-y-1" dir="rtl">
+            <div className="font-medium">{fa.chat.askQuestion}</div>
+            <div className="text-xs">{fa.chat.askQuestionDescription}</div>
           </div>
-        ) : (
-          <Conversation className="h-full">
-            <ConversationContent>
-              {messages.map((m) => (
-                <Message key={m.id} message={m} />
-              ))}
-              {status === "submitted" && <Loader />}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        )}
-      </div>
-
-      <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        </div>
+      }
+      footer={
         <ChatInput
           handleSendPrompt={handleSendPrompt}
           isGenerating={status === "streaming" || status === "submitted"}
           stopGenerating={stop}
           threadId={Number(threadId)}
         />
-      </div>
-    </div>
+      }
+      isEmpty={messages.length === 0}
+    />
   );
 }

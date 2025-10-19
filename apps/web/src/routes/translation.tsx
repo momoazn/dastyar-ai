@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
@@ -182,133 +183,26 @@ function RouteComponent() {
   const sourceCharCount = sourceText.length;
 
   return (
-    <div className="flex h-full flex-col" dir="rtl">
-      <div className="bg-background p-4">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.sourceLanguage}
-            </div>
-            <Select
-              disabled={translateMutation.isPending}
-              onValueChange={(v) => setSourceLanguage(v as LanguageCode)}
-              value={sourceLanguage}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languageOptions.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.targetLanguage}
-            </div>
-            <Select
-              disabled={translateMutation.isPending}
-              onValueChange={(v) => setTargetLanguage(v as LanguageCode)}
-              value={targetLanguage}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languageOptions.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.translationTone}
-            </div>
-            <Select
-              disabled={translateMutation.isPending}
-              onValueChange={(v) => setTone(v as Tone)}
-              value={tone}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {toneOptions.map((t) => (
-                  <SelectItem
-                    className="text-right"
-                    key={t.value}
-                    value={t.value}
-                  >
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.translation.model}</div>
-            <Select
-              disabled={translateMutation.isPending || isModelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    isModelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {models?.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.id}
-                    value={m.id.toString()}
-                  >
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="mt-3 flex justify-end">
-          <Button
-            disabled={translateMutation.isPending}
-            onClick={swapLanguages}
-            type="button"
-            variant="outline"
-          >
-            <ArrowLeftRightIcon className="mr-2 h-4 w-4" />
-            {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-4">
-        {(translateMutation.error ||
+    <ToolScaffold
+      actionBar={
+        <Button
+          className="w-full cursor-pointer"
+          disabled={!canTranslate}
+          onClick={submitTranslate}
+          size="lg"
+          type="button"
+          variant="outline"
+        >
+          <span className="text-sm">
+            {translatedText
+              ? fa.translation.retranslate
+              : fa.translation.translate}
+          </span>
+          <SendIcon className="size-4" />
+        </Button>
+      }
+      alerts={
+        (translateMutation.error ||
           modelsError ||
           clipboardError ||
           transcribeError) && (
@@ -317,21 +211,17 @@ function RouteComponent() {
             <AlertTitle>{fa.translation.errorTitle}</AlertTitle>
             <AlertDescription>
               {(() => {
-                if (clipboardError) {
-                  return clipboardError;
-                }
-                if (transcribeError) {
-                  return transcribeError;
-                }
-                if (modelsError) {
+                if (clipboardError) return clipboardError;
+                if (transcribeError) return transcribeError;
+                if (modelsError)
                   return "Failed to load models. Please refresh the page.";
-                }
                 return translateMutation.error?.message;
               })()}
             </AlertDescription>
           </Alert>
-        )}
-
+        )
+      }
+      content={
         <div className="flex h-full w-full flex-col gap-4">
           <Card aria-live="polite" className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
@@ -364,7 +254,6 @@ function RouteComponent() {
                   </span>
                 </div>
               </div>
-
               <Textarea
                 aria-label={fa.translation.enterText}
                 className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
@@ -376,7 +265,6 @@ function RouteComponent() {
               />
             </div>
           </Card>
-
           <Card className="flex-2/5 p-4">
             <div className="flex h-full flex-col">
               {translateMutation.isPending ? (
@@ -401,7 +289,6 @@ function RouteComponent() {
                       <ClipboardIcon className="h-3 w-3" />
                     </Button>
                   </div>
-
                   <Textarea
                     aria-label={fa.translation.translatedText}
                     aria-readonly
@@ -420,25 +307,128 @@ function RouteComponent() {
             </div>
           </Card>
         </div>
-
-        <div className="mt-4 flex w-full flex-1/5 justify-end">
-          <Button
-            className="w-full cursor-pointer"
-            disabled={!canTranslate}
-            onClick={submitTranslate}
-            size="lg"
-            type="button"
-            variant="outline"
-          >
-            <span className="text-sm">
-              {translatedText
-                ? fa.translation.retranslate
-                : fa.translation.translate}
-            </span>
-            <SendIcon className="size-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+      }
+      toolbar={
+        <>
+          <div className="grid grid-cols-4 gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.sourceLanguage}
+              </div>
+              <Select
+                disabled={translateMutation.isPending}
+                onValueChange={(v) => setSourceLanguage(v as LanguageCode)}
+                value={sourceLanguage}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languageOptions.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.targetLanguage}
+              </div>
+              <Select
+                disabled={translateMutation.isPending}
+                onValueChange={(v) => setTargetLanguage(v as LanguageCode)}
+                value={targetLanguage}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languageOptions.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.translationTone}
+              </div>
+              <Select
+                disabled={translateMutation.isPending}
+                onValueChange={(v) => setTone(v as Tone)}
+                value={tone}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {toneOptions.map((t) => (
+                    <SelectItem
+                      className="text-right"
+                      key={t.value}
+                      value={t.value}
+                    >
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">{fa.translation.model}</div>
+              <Select
+                disabled={translateMutation.isPending || isModelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      isModelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {models?.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.id}
+                      value={m.id.toString()}
+                    >
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <Button
+              disabled={translateMutation.isPending}
+              onClick={swapLanguages}
+              type="button"
+              variant="outline"
+            >
+              <ArrowLeftRightIcon className="mr-2 h-4 w-4" />
+              {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
+            </Button>
+          </div>
+        </>
+      }
+    />
   );
 }

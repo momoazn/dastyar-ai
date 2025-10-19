@@ -21,6 +21,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
 import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
@@ -221,101 +222,99 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex h-full flex-col" dir="rtl">
-      {!isServiceAvailable && (
-        <div className="p-3">
+    <ConversationScaffold
+      banner={
+        isServiceAvailable ? null : (
           <Alert>
             <AlertDescription>
               {fa.imageGeneration.serviceUnavailableAlert}
             </AlertDescription>
           </Alert>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-hidden">
-        {orderedImages.length === 0 && !isGenerating ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-            <ImagePlus className="size-10" />
-            <div className="space-y-1">
-              <div className="font-medium">
-                {fa.imageGeneration.newChatTitle}
-              </div>
-              <div className="text-xs">
-                {fa.imageGeneration.newChatDescription}
-              </div>
+        )
+      }
+      conversation={
+        <Conversation className="h-full">
+          <ConversationContent>
+            {orderedImages.map((img) => {
+              const raw = img.settings || {};
+              const s = getMergedSettings(raw, settings);
+              const src = buildSrc(img.url, token);
+              const aspect = `${Math.max(1, s.width)} / ${Math.max(
+                1,
+                s.height
+              )}`;
+              return (
+                <div className="space-y-1" key={img.id}>
+                  <AIMsg from="user">
+                    <AIMsgContent>
+                      <div className="whitespace-pre-wrap leading-relaxed">
+                        {img.prompt}
+                      </div>
+                      {img.negativePrompt ? (
+                        <div className="text-[12px] text-muted-foreground">
+                          {fa.imageGeneration.negativePrefix}{" "}
+                          {img.negativePrompt}
+                        </div>
+                      ) : null}
+                    </AIMsgContent>
+                  </AIMsg>
+                  <AIMsg from="assistant">
+                    <AIMsgContent>
+                      <div className="relative inline-block overflow-hidden rounded-md border">
+                        <img
+                          alt={img.prompt}
+                          className="h-auto max-w-full bg-muted object-contain"
+                          height={s.height}
+                          src={src}
+                          style={{ aspectRatio: aspect }}
+                          width={s.width}
+                        />
+                        <ImageBadges settings={s} />
+                        <div className="absolute top-2 left-2 flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label={fa.imageGeneration.downloadImage}
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  downloadImage({ id: img.id, url: src });
+                                }}
+                                size="icon"
+                                variant="secondary"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {fa.imageGeneration.downloadImage}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    </AIMsgContent>
+                  </AIMsg>
+                </div>
+              );
+            })}
+            {isGenerating && <Loader />}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+      }
+      empty={
+        <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+          <ImagePlus className="size-10" />
+          <div className="space-y-1">
+            <div className="font-medium">{fa.imageGeneration.newChatTitle}</div>
+            <div className="text-xs">
+              {fa.imageGeneration.newChatDescription}
             </div>
           </div>
-        ) : (
-          <Conversation className="h-full">
-            <ConversationContent>
-              {orderedImages.map((img) => {
-                const raw = img.settings || {};
-                const s = getMergedSettings(raw, settings);
-                const src = buildSrc(img.url, token);
-                const aspect = `${Math.max(1, s.width)} / ${Math.max(1, s.height)}`;
-                return (
-                  <div className="space-y-1" key={img.id}>
-                    <AIMsg from="user">
-                      <AIMsgContent>
-                        <div className="whitespace-pre-wrap leading-relaxed">
-                          {img.prompt}
-                        </div>
-                        {img.negativePrompt ? (
-                          <div className="text-[12px] text-muted-foreground">
-                            {fa.imageGeneration.negativePrefix}{" "}
-                            {img.negativePrompt}
-                          </div>
-                        ) : null}
-                      </AIMsgContent>
-                    </AIMsg>
-                    <AIMsg from="assistant">
-                      <AIMsgContent>
-                        <div className="relative inline-block overflow-hidden rounded-md border">
-                          <img
-                            alt={img.prompt}
-                            className="h-auto max-w-full bg-muted object-contain"
-                            height={s.height}
-                            src={src}
-                            style={{ aspectRatio: aspect }}
-                            width={s.width}
-                          />
-                          <ImageBadges settings={s} />
-                          <div className="absolute top-2 left-2 flex items-center gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  aria-label={fa.imageGeneration.downloadImage}
-                                  className="h-8 w-8"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    downloadImage({ id: img.id, url: src });
-                                  }}
-                                  size="icon"
-                                  variant="secondary"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {fa.imageGeneration.downloadImage}
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      </AIMsgContent>
-                    </AIMsg>
-                  </div>
-                );
-              })}
-              {isGenerating && <Loader />}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        )}
-      </div>
-
-      <div className="sticky bottom-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        </div>
+      }
+      footer={
         <div className="mx-auto max-w-4xl px-6 py-4">
           <PromptInput
             onSubmit={(e) => {
@@ -506,7 +505,8 @@ function RouteComponent() {
             )}
           </PromptInput>
         </div>
-      </div>
-    </div>
+      }
+      isEmpty={orderedImages.length === 0 && !isGenerating}
+    />
   );
 }
