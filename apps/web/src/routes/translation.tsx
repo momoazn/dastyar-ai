@@ -184,23 +184,6 @@ function RouteComponent() {
 
   return (
     <ToolScaffold
-      actionBar={
-        <Button
-          className="w-full cursor-pointer"
-          disabled={!canTranslate}
-          onClick={submitTranslate}
-          size="lg"
-          type="button"
-          variant="outline"
-        >
-          <span className="text-sm">
-            {translatedText
-              ? fa.translation.retranslate
-              : fa.translation.translate}
-          </span>
-          <SendIcon className="size-4" />
-        </Button>
-      }
       alerts={
         (translateMutation.error ||
           modelsError ||
@@ -416,7 +399,7 @@ function RouteComponent() {
               </Select>
             </div>
           </div>
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex items-center justify-between gap-2">
             <Button
               disabled={translateMutation.isPending}
               onClick={swapLanguages}
@@ -425,6 +408,19 @@ function RouteComponent() {
             >
               <ArrowLeftRightIcon className="mr-2 h-4 w-4" />
               {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
+            </Button>
+            <Button
+              className="min-w-[140px]"
+              disabled={!canTranslate}
+              onClick={submitTranslate}
+              type="button"
+            >
+              <span className="text-sm">
+                {translatedText
+                  ? fa.translation.retranslate
+                  : fa.translation.translate}
+              </span>
+              <SendIcon className="size-4" />
             </Button>
           </div>
         </>

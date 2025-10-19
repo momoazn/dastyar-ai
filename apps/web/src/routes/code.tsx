@@ -439,99 +439,99 @@ function RouteComponent() {
         </>
       }
       toolbar={
-        <div className="grid grid-cols-4 gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.mode}
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.mode}
+              </div>
+              <Select
+                disabled={currentMutation.isPending}
+                onValueChange={(v) => setMode(v as CodeMode)}
+                value={mode}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {modes.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.value}
+                      value={m.value}
+                    >
+                      <div className="flex items-center gap-2">
+                        <m.icon className="h-4 w-4" />
+                        {m.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select
-              disabled={currentMutation.isPending}
-              onValueChange={(v) => setMode(v as CodeMode)}
-              value={mode}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {modes.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.value}
-                    value={m.value}
-                  >
-                    <div className="flex items-center gap-2">
-                      <m.icon className="h-4 w-4" />
-                      {m.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.language}
+              </div>
+              <Select
+                disabled={currentMutation.isPending}
+                onValueChange={(v) => setLanguage(v as ProgrammingLanguage)}
+                value={language}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languages.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.model}
+              </div>
+              <Select
+                disabled={currentMutation.isPending || modelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      modelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {modelList?.map((model) => (
+                    <SelectItem
+                      className="text-right"
+                      key={model.id}
+                      value={model.id.toString()}
+                    >
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.language}
-            </div>
-            <Select
-              disabled={currentMutation.isPending}
-              onValueChange={(v) => setLanguage(v as ProgrammingLanguage)}
-              value={language}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languages.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.model}
-            </div>
-            <Select
-              disabled={currentMutation.isPending || modelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    modelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {modelList?.map((model) => (
-                  <SelectItem
-                    className="text-right"
-                    key={model.id}
-                    value={model.id.toString()}
-                  >
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm opacity-0">
-              {fa.codeAssistant.labels.active}
-            </div>
+          <div className="mt-3 flex justify-end">
             <Button
-              className="w-full"
+              className="min-w-[140px]"
               disabled={!canExecute}
               onClick={handleExecute}
+              type="button"
             >
               {currentMutation.isPending ? (
                 <>
@@ -546,7 +546,7 @@ function RouteComponent() {
               )}
             </Button>
           </div>
-        </div>
+        </>
       }
     />
   );

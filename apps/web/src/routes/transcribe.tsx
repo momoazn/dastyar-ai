@@ -194,33 +194,7 @@ function RouteComponent() {
                   )}
                   <Badge variant={badgeVariant}>{statusText}</Badge>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Button
-                    aria-label={
-                      isRecording
-                        ? fa.transcribe.recordStop
-                        : fa.transcribe.recordStart
-                    }
-                    aria-pressed={isRecording}
-                    className="h-12 min-w-48 gap-2 text-base"
-                    disabled={isTranscribing}
-                    onClick={isRecording ? stopRecording : handleStartRecording}
-                    type="button"
-                    variant={isRecording ? "destructive" : "default"}
-                  >
-                    {isRecording ? (
-                      <>
-                        <Square className="size-4" />
-                        {fa.transcribe.recordStop}
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="size-4" />
-                        {fa.transcribe.recordStart}
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <div className="flex items-center gap-3" />
               </div>
               <Progress value={isRecording ? progressValue : 0} />
             </div>
@@ -286,30 +260,63 @@ function RouteComponent() {
         </Card>
       }
       toolbar={
-        <div className="flex items-center justify-end gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span>
-              {language === "fa" ? fa.languages.persian : fa.languages.english}
-            </span>
-            <Switch
-              aria-label="toggle input audio language"
-              checked={language === "fa"}
-              onCheckedChange={(checked) => setLanguage(checked ? "fa" : "en")}
-            />
+        <>
+          <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span>
+                {language === "fa"
+                  ? fa.languages.persian
+                  : fa.languages.english}
+              </span>
+              <Switch
+                aria-label="toggle input audio language"
+                checked={language === "fa"}
+                onCheckedChange={(checked) =>
+                  setLanguage(checked ? "fa" : "en")
+                }
+              />
+            </div>
+            <Select onValueChange={setModel} value={model}>
+              <SelectTrigger className="w-56" size="sm">
+                <SelectValue placeholder={fa.modelSelection.model} />
+              </SelectTrigger>
+              <SelectContent>
+                {models?.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select onValueChange={setModel} value={model}>
-            <SelectTrigger className="w-56" size="sm">
-              <SelectValue placeholder={fa.modelSelection.model} />
-            </SelectTrigger>
-            <SelectContent>
-              {models?.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="mt-3 flex justify-end">
+            <Button
+              aria-label={
+                isRecording
+                  ? fa.transcribe.recordStop
+                  : fa.transcribe.recordStart
+              }
+              aria-pressed={isRecording}
+              className="min-w-[140px] gap-2"
+              disabled={isTranscribing}
+              onClick={isRecording ? stopRecording : handleStartRecording}
+              type="button"
+              variant={isRecording ? "destructive" : "default"}
+            >
+              {isRecording ? (
+                <>
+                  <Square className="size-4" />
+                  {fa.transcribe.recordStop}
+                </>
+              ) : (
+                <>
+                  <Mic className="size-4" />
+                  {fa.transcribe.recordStart}
+                </>
+              )}
+            </Button>
+          </div>
+        </>
       }
     />
   );

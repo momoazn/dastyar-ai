@@ -15,21 +15,21 @@ type ToolScaffoldProps = {
  * summarize, transcribe, code). It standardizes paddings, spacing, and the
  * vertical layout across routes without constraining the inner card structure.
  */
-export const ToolScaffold = ({
+export function ToolScaffold({
   toolbar,
   alerts,
   content,
   actionBar,
   dir = "rtl",
-}: ToolScaffoldProps) => (
-  <div className="flex h-full flex-col" dir={dir}>
-    {toolbar ? <div className="bg-background p-4">{toolbar}</div> : null}
-    <div className="flex-1 space-y-4 p-4">
-      {alerts}
-      {content}
-      {actionBar ? <div className="flex justify-end">{actionBar}</div> : null}
+}: ToolScaffoldProps) {
+  return (
+    <div className="flex h-full flex-col" dir={dir}>
+      {toolbar ? <div className="bg-background p-4">{toolbar}</div> : null}
+      <div className="flex-1 space-y-4 p-4">
+        {alerts}
+        {content}
+        {actionBar ? <div className="flex justify-end">{actionBar}</div> : null}
+      </div>
     </div>
-  </div>
-);
-
-export default ToolScaffold;
+  );
+}

@@ -196,23 +196,6 @@ function SummarizePage() {
 
   return (
     <ToolScaffold
-      actionBar={
-        <Button
-          className="min-w-[120px]"
-          disabled={!canSummarize}
-          onClick={submitSummarize}
-          type="button"
-        >
-          {summarizeMutation.isPending ? (
-            <>
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              {fa.summarize.generating}
-            </>
-          ) : (
-            fa.summarize.generate
-          )}
-        </Button>
-      }
       alerts={
         (summarizeMutation.isError || modelsError || clipboardError) && (
           <Alert variant="destructive">
@@ -290,85 +273,106 @@ function SummarizePage() {
         </>
       }
       toolbar={
-        <div className="grid grid-cols-3 gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
-            <Select
-              disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setMode(v as SummaryMode)}
-              value={mode}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {summaryModeOptions.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.value}
-                    value={m.value}
-                  >
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.translationTone}
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.summarize.modeLabel}
+              </div>
+              <Select
+                disabled={summarizeMutation.isPending}
+                onValueChange={(v) => setMode(v as SummaryMode)}
+                value={mode}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {summaryModeOptions.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.value}
+                      value={m.value}
+                    >
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select
-              disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setTone(v as Tone)}
-              value={tone}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {toneOptions.map((t) => (
-                  <SelectItem
-                    className="text-right"
-                    key={t.value}
-                    value={t.value}
-                  >
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.translationTone}
+              </div>
+              <Select
+                disabled={summarizeMutation.isPending}
+                onValueChange={(v) => setTone(v as Tone)}
+                value={tone}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {toneOptions.map((t) => (
+                    <SelectItem
+                      className="text-right"
+                      key={t.value}
+                      value={t.value}
+                    >
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">{fa.summarize.model}</div>
+              <Select
+                disabled={summarizeMutation.isPending || isModelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      isModelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {models?.map((model) => (
+                    <SelectItem
+                      className="text-right"
+                      key={model.id}
+                      value={model.id.toString()}
+                    >
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.summarize.model}</div>
-            <Select
-              disabled={summarizeMutation.isPending || isModelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
+          <div className="mt-3 flex justify-end">
+            <Button
+              className="min-w-[140px]"
+              disabled={!canSummarize}
+              onClick={submitSummarize}
+              type="button"
             >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    isModelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {models?.map((model) => (
-                  <SelectItem
-                    className="text-right"
-                    key={model.id}
-                    value={model.id.toString()}
-                  >
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {summarizeMutation.isPending ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  {fa.summarize.generating}
+                </>
+              ) : (
+                fa.summarize.generate
+              )}
+            </Button>
           </div>
-        </div>
+        </>
       }
     />
   );
