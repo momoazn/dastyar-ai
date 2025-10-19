@@ -6,7 +6,13 @@ import type { z } from "zod";
 export const userRoles = ["admin", "user"] as const;
 export type UserRole = (typeof userRoles)[number];
 
-export const llmModelProviders = ["ollama", "lmstudio"] as const;
+export const llmModelProviders = [
+  "ollama",
+  "lmstudio",
+  "openrouter",
+  "groq",
+  "gemini",
+] as const;
 export type LLMModelProvider = (typeof llmModelProviders)[number];
 
 export const messageStatuses = [

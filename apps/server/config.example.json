@@ -18,6 +18,15 @@
   "LMSTUDIO_BASE_URL": "http://localhost:1234/v1",
   "LMSTUDIO_ENABLED": false,
 
+  "OPENROUTER_API_KEY": "",
+  "OPENROUTER_ENABLED": false,
+
+  "GROQ_API_KEY": "",
+  "GROQ_ENABLED": false,
+
+  "GEMINI_API_KEY": "",
+  "GEMINI_ENABLED": false,
+
   "STABLE_DIFFUSION_URL": "http://localhost:7860",
   "STABLE_DIFFUSION_ENABLED": true,
 
