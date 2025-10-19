@@ -1,10 +1,15 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   DEFAULT_NEGATIVE_PROMPT,
   DEFAULT_SETTINGS,
 } from "@/lib/image-generation-constants";
+import {
+  formatSizeValue,
+  parseSearchParams,
+  parseSizeValue,
+} from "@/lib/image-generation-utils";
 import { fa } from "@/lib/persian-texts";
 import type {
   GenerateInput,
@@ -119,21 +124,14 @@ export function useImageGeneration({
 
   // Settings management
   const handleSizeChange = useCallback((value: string) => {
-    if (value.includes("x")) {
-      const [width, height] = value.split("x").map(Number);
-      setSettings((prev) => ({ ...prev, width, height }));
-    } else {
-      const size = Number(value);
-      setSettings((prev) => ({ ...prev, width: size, height: size }));
-    }
+    const { width, height } = parseSizeValue(value);
+    setSettings((prev) => ({ ...prev, width, height }));
   }, []);
 
-  const getSizeValue = useCallback(() => {
-    if (settings.width === settings.height) {
-      return settings.width.toString();
-    }
-    return `${settings.width}x${settings.height}`;
-  }, [settings.width, settings.height]);
+  const getSizeValue = useCallback(
+    () => formatSizeValue(settings.width, settings.height),
+    [settings.width, settings.height]
+  );
 
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
@@ -205,6 +203,79 @@ export function useImageGeneration({
     setNegativePrompt(text);
   }, []);
 
+  // NEW: Unified initialization method
+  const initializeFromSearch = useCallback(
+    (search: Record<string, unknown>) => {
+      const { settings: parsedSettings, initialPrompt } =
+        parseSearchParams(search);
+      if (Object.keys(parsedSettings).length > 0) {
+        updateSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+      }
+      if (initialPrompt) {
+        setPrompt(initialPrompt);
+      }
+    },
+    [updateSettings]
+  );
+
+  // NEW: Auto-submit handler
+  const handleAutoSubmit = useCallback(
+    async (
+      targetThreadId: number,
+      onRenameCallback?: (title: string) => Promise<void>
+    ) => {
+      if (!prompt.trim() || generateMutation.isPending) return null;
+
+      const result = await generate({
+        ...settings,
+        prompt,
+        threadId: targetThreadId,
+      });
+
+      if (result && onRenameCallback && images.length === 0) {
+        await onRenameCallback(prompt.slice(0, 50));
+      }
+
+      setPrompt(""); // Clear after success
+      return result;
+    },
+    [prompt, generateMutation.isPending, generate, settings, images.length]
+  );
+
+  // NEW: Bundle form props
+  const formProps = useMemo(
+    () => ({
+      prompt,
+      setPrompt,
+      negativePrompt,
+      setNegativePrompt,
+      advancedSettingsOpen,
+      setAdvancedSettingsOpen,
+      transcribeModel,
+      setTranscribeModel,
+      settings,
+      handleSizeChange,
+      getSizeValue,
+      handleTranscribeError,
+      handleTranscribed,
+      onSettingsChange: updateSettings,
+      samplers: samplersData?.samplers || [],
+    }),
+    [
+      prompt,
+      negativePrompt,
+      advancedSettingsOpen,
+      transcribeModel,
+      settings,
+      handleSizeChange,
+      getSizeValue,
+      handleTranscribeError,
+      handleTranscribed,
+      updateSettings,
+      samplersData?.samplers,
+    ]
+  );
+
   return {
     // API data
     images,
@@ -212,28 +283,26 @@ export function useImageGeneration({
     isServiceAvailable: serviceStatus?.available,
     isGenerating: generateMutation.isPending,
 
-    // Form state
-    prompt,
-    setPrompt,
-    negativePrompt,
-    setNegativePrompt,
-    advancedSettingsOpen,
-    setAdvancedSettingsOpen,
-    transcribeModel,
-    setTranscribeModel,
-    settings,
-
-    // Handlers
-    handleSubmit,
-    handleSizeChange,
-    getSizeValue,
-    resetSettings,
-    updateSettings,
-    handleTranscribeError,
-    handleTranscribed,
-    handleNegativePromptTranscribed,
+    // Actions
     generate,
     downloadImage,
     refetchImages,
+    updateSettings,
+    resetSettings,
+
+    // NEW: Bundled form props
+    formProps,
+
+    // NEW: Initialization & auto-submit
+    initializeFromSearch,
+    handleAutoSubmit,
+
+    // Legacy handlers (for backward compatibility)
+    handleSubmit,
+    handleSizeChange,
+    getSizeValue,
+    handleTranscribeError,
+    handleTranscribed,
+    handleNegativePromptTranscribed,
   };
 }

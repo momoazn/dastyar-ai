@@ -9,63 +9,68 @@ import { AdvancedSettings } from "./advanced-settings";
 import { SizeSelector } from "./size-selector";
 
 type ImageGenerationInputProps = {
-  prompt: string;
-  onPromptChange: (value: string) => void;
+  formProps: {
+    prompt: string;
+    setPrompt: (value: string) => void;
+    negativePrompt: string;
+    setNegativePrompt: (value: string) => void;
+    advancedSettingsOpen: boolean;
+    setAdvancedSettingsOpen: (value: boolean) => void;
+    transcribeModel: string;
+    setTranscribeModel: (model: string) => void;
+    settings: GenerationSettings;
+    handleSizeChange: (value: string) => void;
+    getSizeValue: () => string;
+    handleTranscribeError: (error: string) => void;
+    handleTranscribed: (text: string) => void;
+    onSettingsChange: (updates: Partial<GenerationSettings>) => void;
+    samplers: string[];
+  };
   onSubmit: () => void;
-  isGenerating: boolean;
-  settings: GenerationSettings;
-  onSettingsChange: (updates: Partial<GenerationSettings>) => void;
-  negativePrompt: string;
-  onNegativePromptChange: (value: string) => void;
-  advancedSettingsOpen: boolean;
-  onAdvancedSettingsToggle: () => void;
-  samplers: string[];
-  transcribeModel: string;
-  onTranscribeModelChange: (model: string) => void;
-  onTranscribeError: (error: string) => void;
-  onTranscribed: (text: string) => void;
-  onSizeChange: (value: string) => void;
   onResetSettings: () => void;
-  getSizeValue: () => string;
+  isGenerating: boolean;
   submitDisabled?: boolean;
   submitStatus?: "submitted" | undefined;
   submitVariant?: "default" | "destructive";
 };
 
 export function ImageGenerationInput({
-  prompt,
-  onPromptChange,
+  formProps,
   onSubmit,
-  isGenerating,
-  settings,
-  onSettingsChange,
-  negativePrompt,
-  onNegativePromptChange,
-  advancedSettingsOpen,
-  onAdvancedSettingsToggle,
-  samplers,
-  transcribeModel,
-  onTranscribeModelChange,
-  onTranscribeError,
-  onTranscribed,
-  onSizeChange,
   onResetSettings,
-  getSizeValue,
+  isGenerating,
   submitDisabled = false,
   submitStatus,
   submitVariant = "default",
 }: ImageGenerationInputProps) {
+  const {
+    prompt,
+    setPrompt,
+    negativePrompt,
+    setNegativePrompt,
+    advancedSettingsOpen,
+    setAdvancedSettingsOpen,
+    transcribeModel,
+    setTranscribeModel,
+    settings,
+    handleSizeChange,
+    getSizeValue,
+    handleTranscribeError,
+    handleTranscribed,
+    onSettingsChange,
+    samplers,
+  } = formProps;
   return (
     <PromptInputBase
       bottomContent={
         advancedSettingsOpen ? (
           <AdvancedSettings
             negativePrompt={negativePrompt}
-            onNegativePromptChange={onNegativePromptChange}
+            onNegativePromptChange={setNegativePrompt}
             onSettingsChange={onSettingsChange}
-            onTranscribed={onTranscribed}
-            onTranscribeError={onTranscribeError}
-            onTranscribeModelChange={onTranscribeModelChange}
+            onTranscribed={handleTranscribed}
+            onTranscribeError={handleTranscribeError}
+            onTranscribeModelChange={setTranscribeModel}
             samplers={samplers}
             settings={settings}
             transcribeModel={transcribeModel}
@@ -75,20 +80,23 @@ export function ImageGenerationInput({
       isGenerating={isGenerating}
       leftTools={
         <>
-          <SizeSelector onValueChange={onSizeChange} value={getSizeValue()} />
+          <SizeSelector
+            onValueChange={handleSizeChange}
+            value={getSizeValue()}
+          />
           <PromptInputButton onClick={onResetSettings} variant="outline">
             <RotateCcw className="size-4" />
             {fa.imageGeneration.resetButton}
           </PromptInputButton>
         </>
       }
-      onChange={onPromptChange}
+      onChange={setPrompt}
       onSubmit={onSubmit}
       placeholder={fa.imageGeneration.promptPlaceholderAlt}
       rightTools={
         <>
           <PromptInputButton
-            onClick={onAdvancedSettingsToggle}
+            onClick={() => setAdvancedSettingsOpen(!advancedSettingsOpen)}
             variant="outline"
           >
             <Settings2 className="size-4" />
@@ -99,10 +107,10 @@ export function ImageGenerationInput({
               prompt && detectTextDirection(prompt) === "rtl" ? "fa" : "en"
             }
             model={transcribeModel}
-            onError={onTranscribeError}
-            onModelChange={onTranscribeModelChange}
+            onError={handleTranscribeError}
+            onModelChange={setTranscribeModel}
             onTranscribed={(text) =>
-              onPromptChange(prompt ? `${prompt} ${text}` : text)
+              setPrompt(prompt ? `${prompt} ${text}` : text)
             }
             size="icon"
             variant="outline"

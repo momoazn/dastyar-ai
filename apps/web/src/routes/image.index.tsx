@@ -20,64 +20,31 @@ function RouteComponent() {
   const { create } = useImageThreads();
   const [creating, setCreating] = useState(false);
 
-  const {
-    prompt,
-    setPrompt,
-    negativePrompt,
-    setNegativePrompt,
-    advancedSettingsOpen,
-    setAdvancedSettingsOpen,
-    transcribeModel,
-    setTranscribeModel,
-    settings,
-    samplers,
-    isServiceAvailable,
-    handleSizeChange,
-    getSizeValue,
-    resetSettings,
-    updateSettings,
-    handleTranscribeError,
-    handleTranscribed,
-  } = useImageGeneration();
+  const { formProps, isServiceAvailable, resetSettings } = useImageGeneration();
 
   const handleCreateAndNavigate = useCallback(async () => {
-    const trimmed = prompt.trim();
-    if (!trimmed || creating) {
-      return;
-    }
-    if (!isServiceAvailable) {
-      return;
-    }
+    const trimmed = formProps.prompt.trim();
+    if (!trimmed || creating || !isServiceAvailable) return;
+
     try {
       setCreating(true);
       const created = await create.mutateAsync({
         title: fa.imageChat.newChatDefaultTitle,
       });
+
       navigate({
         to: "/image/$id",
         params: { id: created.id.toString() },
         search: {
           initialPrompt: trimmed,
-          width: settings.width,
-          height: settings.height,
-          steps: settings.steps,
-          cfgScale: settings.cfgScale,
-          sampler: settings.sampler,
-          negativePrompt,
+          ...formProps.settings,
+          negativePrompt: formProps.negativePrompt,
         },
       });
     } finally {
       setCreating(false);
     }
-  }, [
-    prompt,
-    creating,
-    isServiceAvailable,
-    create,
-    navigate,
-    settings,
-    negativePrompt,
-  ]);
+  }, [formProps, creating, isServiceAvailable, create, navigate]);
 
   return (
     <div className="flex h-full items-center justify-center p-6">
@@ -92,25 +59,11 @@ function RouteComponent() {
           </p>
         </div>
         <ImageGenerationInput
-          advancedSettingsOpen={advancedSettingsOpen}
-          getSizeValue={getSizeValue}
+          formProps={formProps}
           isGenerating={creating}
-          negativePrompt={negativePrompt}
-          onAdvancedSettingsToggle={() => setAdvancedSettingsOpen((v) => !v)}
-          onNegativePromptChange={setNegativePrompt}
-          onPromptChange={setPrompt}
           onResetSettings={resetSettings}
-          onSettingsChange={updateSettings}
-          onSizeChange={handleSizeChange}
           onSubmit={handleCreateAndNavigate}
-          onTranscribed={handleTranscribed}
-          onTranscribeError={handleTranscribeError}
-          onTranscribeModelChange={setTranscribeModel}
-          prompt={prompt}
-          samplers={samplers}
-          settings={settings}
-          submitDisabled={creating || !prompt.trim()}
-          transcribeModel={transcribeModel}
+          submitDisabled={creating || !formProps.prompt.trim()}
         />
       </div>
     </div>

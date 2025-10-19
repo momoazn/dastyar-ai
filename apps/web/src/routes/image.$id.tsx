@@ -1,8 +1,7 @@
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
 import { Download, ImagePlus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { tokenAtom } from "@/atoms/auth";
 import {
   Conversation,
@@ -28,7 +27,6 @@ import {
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
-import { DEFAULT_SETTINGS } from "@/lib/image-generation-constants";
 import { buildSrc, getMergedSettings } from "@/lib/image-generation-utils";
 import { fa } from "@/lib/persian-texts";
 import type { GenerationSettings } from "@/server/procedures/images";
@@ -48,34 +46,20 @@ function RouteComponent() {
   };
   const numericThreadId = Number(threadId);
 
-  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const token = useAtomValue(tokenAtom);
 
   const { rename } = useImageThreads();
 
   const {
+    formProps,
     images = [],
     refetchImages,
-    samplers,
     isServiceAvailable,
-    generate,
     isGenerating,
     downloadImage,
-    prompt,
-    setPrompt,
-    negativePrompt,
-    setNegativePrompt,
-    advancedSettingsOpen,
-    setAdvancedSettingsOpen,
-    transcribeModel,
-    setTranscribeModel,
-    settings,
-    handleSizeChange,
-    getSizeValue,
     resetSettings,
-    updateSettings,
-    handleTranscribeError,
-    handleTranscribed,
+    initializeFromSearch,
+    handleAutoSubmit,
   } = useImageGeneration({
     threadId: numericThreadId,
     onSuccess: () => {
@@ -83,52 +67,30 @@ function RouteComponent() {
     },
   });
 
-  const handleSubmitWithRename = useCallback(
-    async (promptText: string, generationSettings: GenerationSettings) => {
-      const trimmed = promptText.trim();
-      if (!trimmed) {
-        toast.error(fa.imageGeneration.promptRequired);
-        return;
-      }
+  // Simple submit handler
+  const handleSubmit = useCallback(() => {
+    const hasPrompt = formProps.prompt.trim();
+    const canSubmit = hasPrompt && isServiceAvailable && !isGenerating;
 
-      if (!isServiceAvailable) {
-        toast.error(fa.imageGeneration.serviceUnavailableError);
-        return;
-      }
+    if (!canSubmit) return;
 
-      setPendingPrompt(trimmed);
+    const onRename =
+      images.length === 0
+        ? async (title: string) => {
+            await rename.mutateAsync({ id: numericThreadId, title });
+          }
+        : undefined;
 
-      const result = await generate({
-        ...generationSettings,
-        prompt: trimmed,
-        threadId: numericThreadId,
-      });
-
-      if (result) {
-        refetchImages();
-
-        // Rename thread on first image generation
-        if (images.length === 0) {
-          const title = trimmed.slice(0, 50);
-          await rename.mutateAsync({ id: numericThreadId, title });
-        }
-
-        // Clear the prompt after successful generation
-        setPrompt("");
-      }
-
-      setPendingPrompt(null);
-    },
-    [
-      generate,
-      isServiceAvailable,
-      numericThreadId,
-      refetchImages,
-      images.length,
-      rename,
-      setPrompt,
-    ]
-  );
+    handleAutoSubmit(numericThreadId, onRename);
+  }, [
+    formProps.prompt,
+    isServiceAvailable,
+    isGenerating,
+    handleAutoSubmit,
+    numericThreadId,
+    images.length,
+    rename,
+  ]);
 
   const orderedImages = useMemo(
     () =>
@@ -140,77 +102,42 @@ function RouteComponent() {
     [images]
   );
 
-  // Merge any settings provided via search once
-  const hasMergedInitialSettingsRef = useRef(false);
+  // Initialize from search params
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (hasMergedInitialSettingsRef.current) {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+    initializeFromSearch(search);
+  }, [search, initializeFromSearch]);
+
+  // Auto-submit if initialPrompt provided (separate effect to ensure prompt is set)
+  const hasAutoSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (
+      hasAutoSubmittedRef.current ||
+      !search.initialPrompt ||
+      images.length > 0 ||
+      !formProps.prompt.trim()
+    ) {
       return;
     }
-    const raw: Partial<GenerationSettings> = {
-      width:
-        typeof search.width === "string"
-          ? Number(search.width)
-          : (search.width as number | undefined),
-      height:
-        typeof search.height === "string"
-          ? Number(search.height)
-          : (search.height as number | undefined),
-      steps:
-        typeof search.steps === "string"
-          ? Number(search.steps)
-          : (search.steps as number | undefined),
-      cfgScale:
-        typeof search.cfgScale === "string"
-          ? Number(search.cfgScale)
-          : (search.cfgScale as number | undefined),
-      sampler: search.sampler,
-      negativePrompt: search.negativePrompt,
-    };
-    const merged = getMergedSettings(raw, DEFAULT_SETTINGS);
-    if (
-      raw.width ||
-      raw.height ||
-      raw.steps ||
-      raw.cfgScale ||
-      raw.sampler ||
-      typeof raw.negativePrompt === "string"
-    ) {
-      updateSettings(merged);
-    }
-    hasMergedInitialSettingsRef.current = true;
-  }, [search, updateSettings]);
 
-  // Auto-submit once if an initial prompt is provided via navigation
-  const hasSubmittedInitialRef = useRef(false);
-  useEffect(() => {
-    const p =
-      typeof search?.initialPrompt === "string" ? search.initialPrompt : "";
-    const raw: Partial<GenerationSettings> = {
-      width:
-        typeof search.width === "string"
-          ? Number(search.width)
-          : (search.width as number | undefined),
-      height:
-        typeof search.height === "string"
-          ? Number(search.height)
-          : (search.height as number | undefined),
-      steps:
-        typeof search.steps === "string"
-          ? Number(search.steps)
-          : (search.steps as number | undefined),
-      cfgScale:
-        typeof search.cfgScale === "string"
-          ? Number(search.cfgScale)
-          : (search.cfgScale as number | undefined),
-      sampler: search.sampler,
-      negativePrompt: search.negativePrompt,
-    };
-    const initial = getMergedSettings(raw, DEFAULT_SETTINGS);
-    if (!hasSubmittedInitialRef.current && p.trim() && images.length === 0) {
-      hasSubmittedInitialRef.current = true;
-      handleSubmitWithRename(p, initial);
-    }
-  }, [search, images.length, handleSubmitWithRename]);
+    hasAutoSubmittedRef.current = true;
+    handleAutoSubmit(numericThreadId, async (title) => {
+      await rename.mutateAsync({ id: numericThreadId, title });
+    });
+  }, [
+    search.initialPrompt,
+    images.length,
+    formProps.prompt,
+    numericThreadId,
+    handleAutoSubmit,
+    rename,
+  ]);
+
+  const hasPrompt = formProps.prompt.trim();
+  const isServiceUnavailable = !isServiceAvailable;
+  const isSubmitDisabled = !hasPrompt || isServiceUnavailable;
 
   if (Number.isNaN(numericThreadId) || numericThreadId <= 0) {
     return (
@@ -238,7 +165,7 @@ function RouteComponent() {
           <ConversationContent>
             {orderedImages.map((img) => {
               const raw = img.settings || {};
-              const s = getMergedSettings(raw, settings);
+              const s = getMergedSettings(raw, formProps.settings);
               const src = buildSrc(img.url, token);
               const aspect = `${Math.max(1, s.width)} / ${Math.max(
                 1,
@@ -299,18 +226,19 @@ function RouteComponent() {
                 </div>
               );
             })}
-            {pendingPrompt ? (
+            {isGenerating && formProps.prompt && (
               <>
                 <AIMsg from="user">
                   <AIMsgContent>
                     <div className="whitespace-pre-wrap leading-relaxed">
-                      {pendingPrompt}
+                      {formProps.prompt}
                     </div>
-                    {negativePrompt ? (
+                    {formProps.negativePrompt && (
                       <div className="text-[12px] text-muted-foreground">
-                        {fa.imageGeneration.negativePrefix} {negativePrompt}
+                        {fa.imageGeneration.negativePrefix}{" "}
+                        {formProps.negativePrompt}
                       </div>
-                    ) : null}
+                    )}
                   </AIMsgContent>
                 </AIMsg>
                 <AIMsg from="assistant">
@@ -319,8 +247,7 @@ function RouteComponent() {
                   </AIMsgContent>
                 </AIMsg>
               </>
-            ) : null}
-            {isGenerating && !pendingPrompt && <Loader />}
+            )}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
@@ -339,45 +266,17 @@ function RouteComponent() {
       footer={
         <div className="mx-auto max-w-4xl px-6 py-4">
           <ImageGenerationInput
-            advancedSettingsOpen={advancedSettingsOpen}
-            getSizeValue={getSizeValue}
+            formProps={formProps}
             isGenerating={isGenerating}
-            negativePrompt={negativePrompt}
-            onAdvancedSettingsToggle={() => setAdvancedSettingsOpen((v) => !v)}
-            onNegativePromptChange={setNegativePrompt}
-            onPromptChange={setPrompt}
             onResetSettings={resetSettings}
-            onSettingsChange={updateSettings}
-            onSizeChange={handleSizeChange}
-            onSubmit={() => {
-              if (isGenerating || !prompt.trim() || !isServiceAvailable) {
-                return;
-              }
-              handleSubmitWithRename(prompt, {
-                steps: settings.steps,
-                cfgScale: settings.cfgScale,
-                negativePrompt,
-                sampler: settings.sampler,
-                width: settings.width,
-                height: settings.height,
-              });
-            }}
-            onTranscribed={handleTranscribed}
-            onTranscribeError={handleTranscribeError}
-            onTranscribeModelChange={setTranscribeModel}
-            prompt={prompt}
-            samplers={samplers}
-            settings={settings}
-            submitDisabled={
-              isGenerating || !prompt.trim() || !isServiceAvailable
-            }
+            onSubmit={handleSubmit}
+            submitDisabled={isSubmitDisabled}
             submitStatus={isGenerating ? "submitted" : undefined}
             submitVariant={isGenerating ? "destructive" : "default"}
-            transcribeModel={transcribeModel}
           />
         </div>
       }
-      isEmpty={orderedImages.length === 0 && !isGenerating && !pendingPrompt}
+      isEmpty={orderedImages.length === 0 && !isGenerating}
     />
   );
 }
