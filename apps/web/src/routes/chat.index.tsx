@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui";
+import { ChatInput } from "@/components/chat";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { client, orpc, queryClient } from "@/utils/orpc";
@@ -16,40 +16,53 @@ export const Route = createFileRoute("/chat/")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const [isCreating, setIsCreating] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const handleCreate = async () => {
+  const handleSendPrompt = async (prompt: string) => {
+    const trimmed = prompt.trim();
+    if (!trimmed || creating) {
+      return;
+    }
     try {
-      setIsCreating(true);
+      setCreating(true);
       const created = await client.threads.create({
-        title: fa.chat.newChatDefaultTitle,
+        title: trimmed.slice(0, 10),
       });
       await queryClient.invalidateQueries({
         queryKey: orpc.threads.list.queryKey(),
       });
-      navigate({ to: "/chat/$id", params: { id: created.id.toString() } });
+      // Navigate and let /chat/$id send the initial prompt
+      navigate({
+        to: "/chat/$id",
+        params: { id: created.id.toString() },
+        search: { initialPrompt: trimmed },
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("Failed to create a new chat thread", error);
+      console.error("Failed to start new chat", error);
       toast.error(fa.chat.newChatError);
     } finally {
-      setIsCreating(false);
+      setCreating(false);
     }
   };
 
   return (
     <div className="flex h-full items-center justify-center p-6">
-      <div className="space-y-4 text-center" dir="rtl">
-        <h1 className="font-semibold text-xl">{fa.chat.newChatTitle}</h1>
-        <p className="text-muted-foreground text-sm">
-          {fa.chat.newChatDescription}
-        </p>
-        <div>
-          <Button disabled={isCreating} onClick={handleCreate}>
-            {isCreating ? fa.general.loading : fa.navigation.newChat}
-          </Button>
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-6 text-center" dir="rtl">
+          <h1 className="font-semibold text-xl">{fa.chat.newChatTitle}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            {fa.chat.newChatDescription}
+          </p>
         </div>
-        <p className="text-muted-foreground text-xs">{fa.chat.newChatHint}</p>
+        <ChatInput
+          handleSendPrompt={handleSendPrompt}
+          isGenerating={creating}
+          // No thread yet; attachments hidden until redirected
+        />
+        <p className="mt-3 text-center text-muted-foreground text-xs" dir="rtl">
+          {fa.chat.newChatHint}
+        </p>
       </div>
     </div>
   );
