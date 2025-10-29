@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CopyIcon, Mic, RefreshCcw, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
-import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
   AlertDescription,
@@ -22,9 +21,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
   Textarea,
 } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useTranscription } from "@/hooks/use-transcription";
 import {
@@ -173,149 +172,200 @@ function RouteComponent() {
         ) : null
       }
       content={
-        <Card className="mx-auto w-10/12">
-          <CardHeader className="gap-1">
-            <div>
-              <CardTitle>{fa.transcribe.title}</CardTitle>
-              <CardDescription>{fa.transcribe.description}</CardDescription>
-            </div>
+        <Card className="mx-auto w-full max-w-6xl">
+          <CardHeader>
+            <CardTitle>{fa.transcribe.title}</CardTitle>
+            <CardDescription>{fa.transcribe.description}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  {isTranscribing ? (
-                    <LoadingSpinner className="size-4" />
-                  ) : (
-                    <span
-                      className={`inline-block size-2 rounded-full ${
-                        isRecording ? "bg-red-500" : "bg-muted-foreground/40"
-                      }`}
-                    />
-                  )}
-                  <Badge variant={badgeVariant}>{statusText}</Badge>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    {isTranscribing ? (
+                      <LoadingSpinner className="size-4" />
+                    ) : (
+                      <span
+                        className={`inline-block size-2 rounded-full ${
+                          isRecording ? "bg-red-500" : "bg-muted-foreground/40"
+                        }`}
+                      />
+                    )}
+                    <Badge aria-live="polite" variant={badgeVariant}>
+                      {statusText}
+                    </Badge>
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {isRecording
+                      ? `${fa.transcribe.elapsedLabel}: ${formatElapsed(elapsedMs)}`
+                      : ""}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3" />
+
+                <div className="rounded-md border p-4">
+                  <div className="flex items-center justify-center">
+                    <Button
+                      aria-label={
+                        isRecording
+                          ? fa.transcribe.recordStop
+                          : fa.transcribe.recordStart
+                      }
+                      aria-pressed={isRecording}
+                      className={`gap-2 ${isRecording ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}`}
+                      disabled={isTranscribing}
+                      onClick={
+                        isRecording ? stopRecording : handleStartRecording
+                      }
+                      size="default"
+                      type="button"
+                      variant={isRecording ? "destructive" : "default"}
+                    >
+                      {isRecording ? (
+                        <>
+                          <Square className="size-5" />
+                          {fa.transcribe.recordStop}
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="size-5" />
+                          {fa.transcribe.recordStart}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="mt-4">
+                    <Progress value={isRecording ? progressValue : 0} />
+                  </div>
+                </div>
+
+                <div className="grid items-end gap-3 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <Label
+                      className="text-muted-foreground text-xs"
+                      htmlFor="language-select"
+                    >
+                      {fa.translation.sourceLanguage}
+                    </Label>
+                    <Select
+                      onValueChange={(v) => setLanguage(v as "fa" | "en")}
+                      value={language}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        id="language-select"
+                        size="sm"
+                      >
+                        <SelectValue
+                          placeholder={fa.translation.sourceLanguage}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fa">
+                          {fa.languages.persian}
+                        </SelectItem>
+                        <SelectItem value="en">
+                          {fa.languages.english}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label
+                      className="text-muted-foreground text-xs"
+                      htmlFor="model-select"
+                    >
+                      {fa.modelSelection.speechModel}
+                    </Label>
+                    <Select
+                      disabled={!models?.length}
+                      onValueChange={setModel}
+                      value={model}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        id="model-select"
+                        size="sm"
+                      >
+                        <SelectValue
+                          placeholder={fa.modelSelection.selectSpeechModel}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models?.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
-              <Progress value={isRecording ? progressValue : 0} />
+
+              <div className="flex flex-col space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-sm">
+                    {fa.transcribe.title}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {recordedFile && !isTranscribing && (
+                      <Button
+                        className="gap-2"
+                        onClick={async () => {
+                          try {
+                            await transcribe({
+                              file: recordedFile,
+                              language,
+                              model,
+                            });
+                          } catch {
+                            setTranscribeError(
+                              fa.transcribe.errors.processFailed
+                            );
+                          }
+                        }}
+                        type="button"
+                        variant="outline"
+                      >
+                        <RefreshCcw className="size-4" /> {fa.general.retry}
+                      </Button>
+                    )}
+                    <Button
+                      className="gap-2"
+                      disabled={!result}
+                      onClick={handleCopy}
+                      type="button"
+                      variant="default"
+                    >
+                      <CopyIcon className="size-4" /> {fa.transcribe.copy}
+                    </Button>
+                    <Button
+                      className="gap-2"
+                      disabled={!result || isRecording || isTranscribing}
+                      onClick={handleClear}
+                      type="button"
+                      variant="secondary"
+                    >
+                      <Trash2 className="size-4" /> {fa.transcribe.clear}
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  aria-label={fa.transcribe.title}
+                  className={
+                    language === "fa" ? "rtl text-right" : "ltr text-left"
+                  }
+                  dir={language === "fa" ? "rtl" : "ltr"}
+                  placeholder={fa.transcribe.resultPlaceholder}
+                  readOnly
+                  rows={14}
+                  value={result}
+                />
+              </div>
             </div>
           </CardContent>
-          <CardFooter className="flex-col gap-3">
-            <Textarea
-              aria-label={fa.transcribe.title}
-              className={language === "fa" ? "rtl text-right" : "ltr text-left"}
-              dir={language === "fa" ? "rtl" : "ltr"}
-              placeholder={fa.transcribe.resultPlaceholder}
-              readOnly
-              rows={8}
-              value={result}
-            />
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="text-muted-foreground text-xs">
-                {isRecording
-                  ? `${fa.transcribe.elapsedLabel}: ${formatElapsed(elapsedMs)}`
-                  : ""}
-              </div>
-              <div className="flex items-center gap-2">
-                {recordedFile && !isTranscribing && (
-                  <Button
-                    className="gap-2"
-                    onClick={async () => {
-                      try {
-                        await transcribe({
-                          file: recordedFile,
-                          language,
-                          model,
-                        });
-                      } catch {
-                        setTranscribeError(fa.transcribe.errors.processFailed);
-                      }
-                    }}
-                    type="button"
-                    variant="outline"
-                  >
-                    <RefreshCcw className="size-4" /> {fa.general.retry}
-                  </Button>
-                )}
-                <Button
-                  className="gap-2"
-                  disabled={!result}
-                  onClick={handleCopy}
-                  type="button"
-                  variant="default"
-                >
-                  <CopyIcon className="size-4" /> {fa.transcribe.copy}
-                </Button>
-                <Button
-                  className="gap-2"
-                  disabled={!result || isRecording || isTranscribing}
-                  onClick={handleClear}
-                  type="button"
-                  variant="secondary"
-                >
-                  <Trash2 className="size-4" /> {fa.transcribe.clear}
-                </Button>
-              </div>
-            </div>
-          </CardFooter>
+          <CardFooter />
         </Card>
-      }
-      toolbar={
-        <ToolbarRow
-          action={
-            <Button
-              aria-label={
-                isRecording
-                  ? fa.transcribe.recordStop
-                  : fa.transcribe.recordStart
-              }
-              aria-pressed={isRecording}
-              className="min-w-[140px] gap-2"
-              disabled={isTranscribing}
-              onClick={isRecording ? stopRecording : handleStartRecording}
-              type="button"
-              variant={isRecording ? "destructive" : "default"}
-            >
-              {isRecording ? (
-                <>
-                  <Square className="size-4" />
-                  {fa.transcribe.recordStop}
-                </>
-              ) : (
-                <>
-                  <Mic className="size-4" />
-                  {fa.transcribe.recordStart}
-                </>
-              )}
-            </Button>
-          }
-          columns={2}
-        >
-          <div className="flex items-center justify-end gap-2 text-sm">
-            <span>
-              {language === "fa" ? fa.languages.persian : fa.languages.english}
-            </span>
-            <Switch
-              aria-label="toggle input audio language"
-              checked={language === "fa"}
-              onCheckedChange={(checked) => setLanguage(checked ? "fa" : "en")}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Select onValueChange={setModel} value={model}>
-              <SelectTrigger className="w-56" size="sm">
-                <SelectValue placeholder={fa.modelSelection.model} />
-              </SelectTrigger>
-              <SelectContent>
-                {models?.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </ToolbarRow>
       }
     />
   );
