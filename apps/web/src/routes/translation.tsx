@@ -8,16 +8,18 @@ import {
   ArrowLeftRightIcon,
   ClipboardIcon,
   FileIcon,
+  FileText,
   Loader2,
   SendIcon,
   TriangleAlert,
+  Upload,
+  X,
 } from "lucide-react";
-import type { ChangeEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import { ToolbarRow } from "@/components/scaffold/toolbar-row";
-import { TranscribeButton } from "@/components/transcribe-button";
 import {
   Alert,
   AlertDescription,
@@ -25,8 +27,6 @@ import {
   Badge,
   Button,
   Card,
-  Input,
-  Label,
   ScrollArea,
   Select,
   SelectContent,
@@ -97,13 +97,9 @@ function RouteComponent() {
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>("en");
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("fa");
   const [tone, setTone] = useState<Tone>("formal");
-  const [transcribeModel, setTranscribeModel] = useState("");
   const [clipboardError, setClipboardError] = useState<string | null>(null);
-  const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
-
-  // Infer transcribe language from source language
-  const transcribeLanguage = sourceLanguage === "fa" ? "fa" : "en";
+  const [isDragging, setIsDragging] = useState(false);
 
   const {
     modelId,
@@ -217,12 +213,16 @@ function RouteComponent() {
     if (!file) {
       return;
     }
+    validateAndSetPdf(file);
+    event.target.value = "";
+  };
+
+  const validateAndSetPdf = (file: File) => {
     if (file.type !== "application/pdf") {
       setPdfError(fa.translation.pdfInvalidFile);
       setSelectedPdf(null);
       setPdfResult(null);
       setPdfFileName("");
-      event.target.value = "";
       return;
     }
     setPdfError(null);
@@ -231,7 +231,43 @@ function RouteComponent() {
     setPdfFileName(file.name);
     setPdfResult(null);
     setTranslatedText("");
-    event.target.value = "";
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isTranslating) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isTranslating) {
+      return;
+    }
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      validateAndSetPdf(file);
+    }
+  };
+
+  const handleRemovePdf = () => {
+    setSelectedPdf(null);
+    setPdfResult(null);
+    setPdfFileName("");
+    setTranslatedText("");
+    setPdfError(null);
   };
 
   /**
@@ -273,11 +309,6 @@ function RouteComponent() {
   const isTranslatingText = translateMutation.isPending;
   const isTranslatingPdf = translatePdfMutation.isPending;
   const isTranslating = isTranslatingText || isTranslatingPdf;
-  const handleTranscribeError = (error: string | unknown) => {
-    setTranscribeError(
-      typeof error === "string" ? error : "Transcription failed"
-    );
-  };
 
   const canTranslateText =
     Boolean(sourceText.trim() && modelId && !isModelsLoading) && !isTranslating;
@@ -303,7 +334,6 @@ function RouteComponent() {
   const getErrorMessage = () => {
     if (pdfError) return pdfError;
     if (clipboardError) return clipboardError;
-    if (transcribeError) return transcribeError;
     if (modelsError) return "Failed to load models. Please refresh the page.";
     if (translatePdfMutation.error) {
       return translatePdfMutation.error.message;
@@ -316,7 +346,6 @@ function RouteComponent() {
     translatePdfMutation.error ||
     modelsError ||
     clipboardError ||
-    transcribeError ||
     pdfError;
 
   return (
@@ -346,14 +375,14 @@ function RouteComponent() {
           >
             <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="flex flex-col">
-                <div className="flex flex-col gap-3 p-4">
+                <div className="flex flex-col gap-2 p-3">
                   <div className="flex items-center justify-between">
                     <Badge className="text-xs" variant="secondary">
                       {fa.translation.translatedText}
                     </Badge>
                     <Button
                       aria-label={fa.translation.copyTranslation}
-                      className="h-7 gap-1.5 px-2"
+                      className="h-6 gap-1.5 px-2"
                       disabled={!translatedText || isTranslating}
                       onClick={handleCopy}
                       size="sm"
@@ -395,40 +424,17 @@ function RouteComponent() {
                 </div>
               </Card>
               <Card aria-live="polite" className="flex flex-col">
-                <div className="flex flex-col gap-3 p-4">
+                <div className="flex flex-col gap-2 p-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="text-xs" variant="secondary">
-                        {fa.translation.sourceLanguage}
-                      </Badge>
+                    <Badge className="text-xs" variant="secondary">
+                      {fa.translation.sourceLanguage}
+                    </Badge>
+                    <div className="flex h-6 items-center px-2">
                       <span className="text-muted-foreground text-xs">
                         {fa.translation.charCount(sourceCharCount)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <TranscribeButton
-                        disabled={isTranslating}
-                        language={transcribeLanguage}
-                        model={transcribeModel}
-                        onError={handleTranscribeError}
-                        onModelChange={setTranscribeModel}
-                        onTranscribed={(text) => setSourceText(text)}
-                        showControls={true}
-                        size="icon"
-                        variant="ghost"
-                      />
-                      <Badge className="text-[10px]" variant="outline">
-                        {transcribeLanguage === "fa"
-                          ? fa.translation.transcribeLanguagePersian
-                          : fa.translation.transcribeLanguageEnglish}
-                      </Badge>
-                    </div>
                   </div>
-                  {sourceText.trim() && (
-                    <div className="text-muted-foreground text-xs">
-                      {fa.translation.keyboardHint}
-                    </div>
-                  )}
                 </div>
                 <Separator />
                 <div className="flex-1 p-4">
@@ -451,14 +457,14 @@ function RouteComponent() {
           >
             <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="flex flex-col">
-                <div className="flex flex-col gap-3 p-4">
+                <div className="flex flex-col gap-2 p-3">
                   <div className="flex items-center justify-between">
                     <Badge className="text-xs" variant="secondary">
                       {fa.translation.translatedText}
                     </Badge>
                     <Button
                       aria-label={fa.translation.copyTranslation}
-                      className="h-7 gap-1.5 px-2"
+                      className="h-6 gap-1.5 px-2"
                       disabled={!translatedText || isTranslating}
                       onClick={handleCopy}
                       size="sm"
@@ -532,54 +538,117 @@ function RouteComponent() {
                 </div>
               </Card>
               <Card className="flex flex-col">
-                <div className="flex flex-col gap-4 p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <FileIcon className="h-4 w-4 text-muted-foreground" />
-                      <Label
-                        className="font-medium text-sm"
-                        htmlFor="pdf-upload"
-                      >
-                        {fa.translation.selectPdf}
-                      </Label>
+                <div className="flex flex-col gap-2 p-3">
+                  <div className="flex items-center justify-between">
+                    <Badge className="text-xs" variant="secondary">
+                      {fa.translation.sourceLanguage}
+                    </Badge>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex-1 p-4">
+                  {selectedPdf ? (
+                    <div className="flex h-full flex-col gap-4">
+                      <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                          <FileText className="h-6 w-6 text-destructive" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium text-sm">
+                            {selectedPdf.name}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
+                        <Button
+                          aria-label="Remove PDF"
+                          className="h-8 w-8 shrink-0"
+                          onClick={handleRemovePdf}
+                          size="icon"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {pdfResult && (
+                        <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 p-4">
+                          <div className="font-medium text-sm">
+                            {fa.translation.pdfSummaryHeader}
+                          </div>
+                          <div className="flex flex-col gap-1 text-muted-foreground text-xs">
+                            <div>
+                              {fa.translation.pdfPageCount(pdfResult.pageCount)}
+                            </div>
+                            {pdfFileName && (
+                              <div>
+                                {fa.translation.pdfSourceFile(pdfFileName)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <Input
+                  ) : (
+                    <div
+                      className={`flex h-full min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
+                        isDragging
+                          ? "border-primary bg-primary/5"
+                          : "border-muted-foreground/25 bg-muted/30"
+                      }`}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <input
                         accept=".pdf"
+                        className="hidden"
                         disabled={isTranslating}
                         id="pdf-upload"
                         onChange={handlePdfSelect}
                         type="file"
                       />
-                      <span className="text-muted-foreground text-xs">
-                        {fa.translation.pdfHint}
-                      </span>
-                    </div>
-                    {selectedPdf && (
-                      <Badge className="w-fit" variant="secondary">
-                        {fa.translation.pdfSelected(selectedPdf.name)}
-                      </Badge>
-                    )}
-                  </div>
-                  {pdfResult && (
-                    <>
-                      <Separator />
-                      <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 p-4">
-                        <div className="font-medium text-sm">
-                          {fa.translation.pdfSummaryHeader}
-                        </div>
-                        <div className="flex flex-col gap-1 text-muted-foreground text-xs">
-                          <div>
-                            {fa.translation.pdfPageCount(pdfResult.pageCount)}
-                          </div>
-                          {pdfFileName && (
-                            <div>
-                              {fa.translation.pdfSourceFile(pdfFileName)}
-                            </div>
+                      <label
+                        className="flex cursor-pointer flex-col items-center gap-3 p-6 text-center"
+                        htmlFor="pdf-upload"
+                      >
+                        <div
+                          className={`flex h-16 w-16 items-center justify-center rounded-full transition-colors ${
+                            isDragging
+                              ? "bg-primary/10"
+                              : "bg-muted-foreground/10"
+                          }`}
+                        >
+                          {isDragging ? (
+                            <Upload className="h-8 w-8 text-primary" />
+                          ) : (
+                            <FileIcon className="h-8 w-8 text-muted-foreground" />
                           )}
                         </div>
-                      </div>
-                    </>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-sm">
+                            {isDragging
+                              ? "رها کنید برای آپلود"
+                              : fa.translation.selectPdf}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {fa.translation.pdfHint}
+                          </span>
+                        </div>
+                        <Button
+                          className="mt-2"
+                          disabled={isTranslating}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          انتخاب فایل
+                        </Button>
+                      </label>
+                    </div>
                   )}
                 </div>
               </Card>
