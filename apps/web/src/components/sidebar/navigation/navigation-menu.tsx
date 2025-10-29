@@ -37,7 +37,7 @@ export function NavigationMenu({
       {navMain.map((item) => (
         <Link
           className={cn(
-            "flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-sm",
+            "my-1 flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-sm",
             activeItem?.url === item.url
               ? "bg-sidebar-accent text-sidebar-accent-foreground"
               : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
