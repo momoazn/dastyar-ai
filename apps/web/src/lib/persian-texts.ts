@@ -132,7 +132,7 @@ export const fa = {
     targetLanguage: "زبان مقصد",
     translationTone: "لحن ترجمه",
     model: "مدل زبانی ترجمه",
-    enterText: "متن مورد نظر برای ترجمه را وارد کنید...",
+    enterText: "مثال: سلام، چطور می‌توانم یک وب‌سایت بسازم؟",
     negativePrompt: "پرامپت منفی...",
     translating: "در حال ترجمه...",
     translate: "ترجمه",
@@ -221,7 +221,7 @@ export const fa = {
     recordStop: "پایان ضبط",
     copy: "کپی",
     clear: "پاک کردن",
-    resultPlaceholder: "نتیجه تبدیل اینجا نمایش داده می‌شود...",
+    resultPlaceholder: "مثال: فایل صوتی شما اینجا تبدیل به متن خواهد شد...",
     elapsedLabel: "زمان ضبط",
     errors: {
       noAudio: "هیچ صدایی ضبط نشد.",
@@ -241,7 +241,8 @@ export const fa = {
       detailed: "تفصیلی",
     },
     model: "مدل خلاصه‌سازی",
-    enterText: "متن مورد نظر برای خلاصه‌سازی را وارد کنید...",
+    enterText:
+      "مثال: این مقاله درباره هوش مصنوعی و کاربردهای آن در صنعت است...",
     generating: "در حال خلاصه‌سازی...",
     generate: "خلاصه‌سازی",
     regenerate: "خلاصه‌سازی مجدد",
@@ -372,11 +373,12 @@ export const fa = {
       result: "نتیجه",
     },
     placeholders: {
-      context: "توضیحات اضافی درباره کدی که می‌خواهید تولید شود...",
-      errorMessage: "پیام خطایی که دریافت کرده‌اید را اینجا وارد کنید...",
-      codeRequest: "توضیح دهید چه کدی می‌خواهید تولید شود...",
-      inputCode: "کد خود را اینجا وارد کنید...",
-      result: "نتیجه اینجا نمایش داده خواهد شد...",
+      context: "مثال: یک تابع برای محاسبه میانگین اعداد در JavaScript",
+      errorMessage:
+        "مثال: TypeError: Cannot read property 'length' of undefined",
+      codeRequest: "مثال: یک مولد رمز عبور امن با قابلیت تنظیم طول و کاراکترها",
+      inputCode: "مثال: function calculateSum(a, b) { return a + b; }",
+      result: "نتیجه تولید کد اینجا نمایش داده خواهد شد...",
     },
     buttons: {
       processing: "در حال پردازش...",

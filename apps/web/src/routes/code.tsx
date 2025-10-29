@@ -410,11 +410,20 @@ function RouteComponent() {
                   dir={inputCode ? detectTextDirection(inputCode) : "ltr"}
                   disabled={currentMutation.isPending}
                   onChange={(e) => setInputCode(e.target.value)}
-                  placeholder={
-                    mode === "generate"
-                      ? fa.codeAssistant.placeholders.codeRequest
-                      : fa.codeAssistant.placeholders.inputCode
-                  }
+                  placeholder={(() => {
+                    switch (mode) {
+                      case "generate":
+                        return "مثال: یک مولد رمز عبور امن با قابلیت تنظیم طول و کاراکترها";
+                      case "explain":
+                        return "مثال: function calculateSum(a, b) { return a + b; }";
+                      case "review":
+                        return "مثال: function calculateSum(a, b) { return a + b; }";
+                      case "debug":
+                        return "مثال: function calculateSum(a, b) { return a + b; }";
+                      default:
+                        return "کد خود را اینجا وارد کنید...";
+                    }
+                  })()}
                   spellCheck={false}
                   value={inputCode}
                 />
@@ -493,7 +502,7 @@ function RouteComponent() {
                 dir={errorMessage ? detectTextDirection(errorMessage) : "ltr"}
                 disabled={currentMutation.isPending}
                 onChange={(e) => setErrorMessage(e.target.value)}
-                placeholder={fa.codeAssistant.placeholders.errorMessage}
+                placeholder="مثال: TypeError: Cannot read property 'length' of undefined"
                 spellCheck={false}
                 value={errorMessage}
               />
