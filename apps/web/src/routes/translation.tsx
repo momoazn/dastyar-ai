@@ -41,7 +41,7 @@ import { useTranslationModelSelection } from "@/hooks/use-feature-model-selectio
 import ProtectedLayout from "@/layouts/protected";
 import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
-import { detectTextDirection } from "@/lib/utils";
+import { cn, detectTextDirection } from "@/lib/utils";
 import type {
   LanguageCode,
   Tone,
@@ -262,6 +262,15 @@ function RouteComponent() {
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (!isTranslating) {
+        document.getElementById("pdf-upload")?.click();
+      }
+    }
+  };
+
   const handleRemovePdf = () => {
     setSelectedPdf(null);
     setPdfResult(null);
@@ -375,7 +384,7 @@ function RouteComponent() {
           >
             <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="flex flex-col">
-                <div className="flex flex-col gap-2 p-3">
+                <div className="flex flex-col gap-1 px-3 py-1.5">
                   <div className="flex items-center justify-between">
                     <Badge className="text-xs" variant="secondary">
                       {fa.translation.translatedText}
@@ -424,7 +433,7 @@ function RouteComponent() {
                 </div>
               </Card>
               <Card aria-live="polite" className="flex flex-col">
-                <div className="flex flex-col gap-2 p-3">
+                <div className="flex flex-col gap-1 px-3 py-1.5">
                   <div className="flex items-center justify-between">
                     <Badge className="text-xs" variant="secondary">
                       {fa.translation.sourceLanguage}
@@ -591,16 +600,20 @@ function RouteComponent() {
                       )}
                     </div>
                   ) : (
+                    // biome-ignore lint/a11y/noStaticElementInteractions: Drag handlers require div for drag-and-drop functionality
+                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag handlers require div for drag-and-drop functionality
                     <div
-                      className={`flex h-full min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
+                      className={cn(
+                        "flex h-full min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
                         isDragging
                           ? "border-primary bg-primary/5"
                           : "border-muted-foreground/25 bg-muted/30"
-                      }`}
+                      )}
                       onDragLeave={handleDragLeave}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
-                      role="button"
+                      onKeyDown={handleKeyDown}
+                      // biome-ignore lint/a11y/noNoninteractiveTabindex: Drag handlers require div for drag-and-drop functionality
                       tabIndex={0}
                     >
                       <input
