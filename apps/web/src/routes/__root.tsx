@@ -103,7 +103,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
       <AppSidebar side="right" />
       <SidebarInset className="bg-sidebar pe-2 pb-2">
         <Header SideBarTrigger={<SidebarTrigger />} />
-        <div className="flex h-full flex-col rounded-2xl border-2 bg-background p-2">
+        <div className="flex h-full flex-col rounded-md border bg-background p-2">
           {children}
         </div>
       </SidebarInset>
