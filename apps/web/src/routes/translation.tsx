@@ -7,11 +7,14 @@ import {
 import {
   ArrowLeftRightIcon,
   ClipboardIcon,
+  FileIcon,
+  Loader2,
   SendIcon,
   TriangleAlert,
 } from "lucide-react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import { TranscribeButton } from "@/components/transcribe-button";
@@ -19,6 +22,7 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
+  Badge,
   Button,
   Card,
   Input,
@@ -29,6 +33,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
   Textarea,
 } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,6 +84,7 @@ export const Route = createFileRoute("/translation")({
   ),
 });
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional rendering and state management
 function RouteComponent() {
   const search = useSearch({ from: "/translation" }) as TranslationSearch;
   const navigate = useNavigate();
@@ -199,8 +205,10 @@ function RouteComponent() {
     try {
       await navigator.clipboard.writeText(translatedText);
       setClipboardError(null);
+      toast.success("ترجمه با موفقیت کپی شد");
     } catch {
       setClipboardError("Failed to copy to clipboard");
+      toast.error("خطا در کپی کردن ترجمه");
     }
   };
 
@@ -265,6 +273,12 @@ function RouteComponent() {
   const isTranslatingText = translateMutation.isPending;
   const isTranslatingPdf = translatePdfMutation.isPending;
   const isTranslating = isTranslatingText || isTranslatingPdf;
+  const handleTranscribeError = (error: string | unknown) => {
+    setTranscribeError(
+      typeof error === "string" ? error : "Transcription failed"
+    );
+  };
+
   const canTranslateText =
     Boolean(sourceText.trim() && modelId && !isModelsLoading) && !isTranslating;
   const canTranslatePdf =
@@ -273,40 +287,46 @@ function RouteComponent() {
   const actionDisabled = mode === "pdf" ? !canTranslatePdf : !canTranslateText;
   const actionHandler =
     mode === "pdf" ? submitPdfTranslation : submitTextTranslation;
-  const actionLabel =
-    mode === "pdf"
-      ? pdfResult
+
+  const getActionLabel = () => {
+    if (mode === "pdf") {
+      return pdfResult
         ? fa.translation.retranslatePdf
-        : fa.translation.translatePdf
-      : translatedText
-        ? fa.translation.retranslate
-        : fa.translation.translate;
+        : fa.translation.translatePdf;
+    }
+    return translatedText
+      ? fa.translation.retranslate
+      : fa.translation.translate;
+  };
+  const actionLabel = getActionLabel();
+
+  const getErrorMessage = () => {
+    if (pdfError) return pdfError;
+    if (clipboardError) return clipboardError;
+    if (transcribeError) return transcribeError;
+    if (modelsError) return "Failed to load models. Please refresh the page.";
+    if (translatePdfMutation.error) {
+      return translatePdfMutation.error.message;
+    }
+    return translateMutation.error?.message;
+  };
+
+  const hasError =
+    translateMutation.error ||
+    translatePdfMutation.error ||
+    modelsError ||
+    clipboardError ||
+    transcribeError ||
+    pdfError;
 
   return (
     <ToolScaffold
       alerts={
-        (translateMutation.error ||
-          translatePdfMutation.error ||
-          modelsError ||
-          clipboardError ||
-          transcribeError ||
-          pdfError) && (
+        hasError && (
           <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>{fa.translation.errorTitle}</AlertTitle>
-            <AlertDescription>
-              {(() => {
-                if (pdfError) return pdfError;
-                if (clipboardError) return clipboardError;
-                if (transcribeError) return transcribeError;
-                if (modelsError)
-                  return "Failed to load models. Please refresh the page.";
-                if (translatePdfMutation.error) {
-                  return translatePdfMutation.error.message;
-                }
-                return translateMutation.error?.message;
-              })()}
-            </AlertDescription>
+            <AlertDescription>{getErrorMessage()}</AlertDescription>
           </Alert>
         )
       }
@@ -324,42 +344,97 @@ function RouteComponent() {
             className="flex-1 focus-visible:outline-none focus-visible:ring-0"
             value="text"
           >
-            <div className="mt-4 flex h-full w-full flex-col gap-4">
-              <Card aria-live="polite" className="flex-2/5 p-4">
-                <div className="flex h-full flex-col">
-                  <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                    <span>{fa.translation.charCount(sourceCharCount)}</span>
+            <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
+              <Card className="flex flex-col">
+                <div className="flex flex-col gap-3 p-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className="text-xs" variant="secondary">
+                      {fa.translation.translatedText}
+                    </Badge>
+                    <Button
+                      aria-label={fa.translation.copyTranslation}
+                      className="h-7 gap-1.5 px-2"
+                      disabled={!translatedText || isTranslating}
+                      onClick={handleCopy}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ClipboardIcon className="h-3.5 w-3.5" />
+                      <span className="text-xs">
+                        {fa.translation.copyTranslation}
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex-1 p-4">
+                  {isTranslatingText ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="text-muted-foreground text-sm">
+                          {fa.translation.translating}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Textarea
+                      aria-label={fa.translation.translatedText}
+                      className="h-full min-h-[300px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
+                      dir={
+                        translatedText
+                          ? detectTextDirection(translatedText)
+                          : "rtl"
+                      }
+                      placeholder={fa.translation.translatedText}
+                      readOnly
+                      value={translatedText}
+                    />
+                  )}
+                </div>
+              </Card>
+              <Card aria-live="polite" className="flex flex-col">
+                <div className="flex flex-col gap-3 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className="text-xs" variant="secondary">
+                        {fa.translation.sourceLanguage}
+                      </Badge>
+                      <span className="text-muted-foreground text-xs">
+                        {fa.translation.charCount(sourceCharCount)}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <TranscribeButton
                         disabled={isTranslating}
                         language={transcribeLanguage}
                         model={transcribeModel}
-                        onError={(error) => {
-                          setTranscribeError(
-                            typeof error === "string"
-                              ? error
-                              : "Transcription failed"
-                          );
-                        }}
+                        onError={handleTranscribeError}
                         onModelChange={setTranscribeModel}
                         onTranscribed={(text) => setSourceText(text)}
                         showControls={true}
                         size="icon"
                         variant="ghost"
                       />
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      <Badge className="text-[10px]" variant="outline">
                         {transcribeLanguage === "fa"
                           ? fa.translation.transcribeLanguagePersian
                           : fa.translation.transcribeLanguageEnglish}
-                      </span>
-                      <span>
-                        {sourceText.trim() ? fa.translation.keyboardHint : ""}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
+                  {sourceText.trim() && (
+                    <div className="text-muted-foreground text-xs">
+                      {fa.translation.keyboardHint}
+                    </div>
+                  )}
+                </div>
+                <Separator />
+                <div className="flex-1 p-4">
                   <Textarea
                     aria-label={fa.translation.enterText}
-                    className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+                    className="h-full min-h-[300px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
                     dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
                     onChange={(e) => setSourceText(e.target.value)}
                     onKeyDown={handleSourceKeyDown}
@@ -368,119 +443,51 @@ function RouteComponent() {
                   />
                 </div>
               </Card>
-              <Card className="flex-2/5 p-4">
-                <div className="flex h-full flex-col">
-                  {isTranslatingText ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="text-muted-foreground">
-                        {fa.translation.translating}...
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                        <span>{fa.translation.translatedText}</span>
-                        <Button
-                          aria-label={fa.translation.copyTranslation}
-                          className="h-6 px-2"
-                          disabled={
-                            !(pdfResult && translatedText) || isTranslating
-                          }
-                          onClick={handleCopy}
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <ClipboardIcon className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <Textarea
-                        aria-label={fa.translation.translatedText}
-                        className="min-h-[200px] flex-1 resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
-                        dir={
-                          translatedText
-                            ? detectTextDirection(translatedText)
-                            : "rtl"
-                        }
-                        placeholder={fa.translation.translatedText}
-                        readOnly
-                        value={translatedText}
-                      />
-                    </>
-                  )}
-                </div>
-              </Card>
             </div>
           </TabsContent>
           <TabsContent
             className="flex-1 focus-visible:outline-none focus-visible:ring-0"
             value="pdf"
           >
-            <div className="mt-4 flex h-full w-full flex-col gap-4">
-              <Card className="flex-2/5 p-4">
-                <div className="flex h-full flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <Label className="font-medium text-sm" htmlFor="pdf-upload">
-                      {fa.translation.selectPdf}
-                    </Label>
-                    <Input
-                      accept=".pdf"
-                      disabled={isTranslating}
-                      id="pdf-upload"
-                      onChange={handlePdfSelect}
-                      type="file"
-                    />
-                    <span className="text-muted-foreground text-xs">
-                      {fa.translation.pdfHint}
-                    </span>
-                    {selectedPdf && (
-                      <span className="text-muted-foreground text-sm">
-                        {fa.translation.pdfSelected(selectedPdf.name)}
+            <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
+              <Card className="flex flex-col">
+                <div className="flex flex-col gap-3 p-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className="text-xs" variant="secondary">
+                      {fa.translation.translatedText}
+                    </Badge>
+                    <Button
+                      aria-label={fa.translation.copyTranslation}
+                      className="h-7 gap-1.5 px-2"
+                      disabled={!translatedText || isTranslating}
+                      onClick={handleCopy}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ClipboardIcon className="h-3.5 w-3.5" />
+                      <span className="text-xs">
+                        {fa.translation.copyTranslation}
                       </span>
-                    )}
+                    </Button>
                   </div>
-                  {pdfResult && (
-                    <div className="rounded border border-dashed p-3 text-muted-foreground text-xs leading-relaxed">
-                      <div>{fa.translation.pdfSummaryHeader}</div>
-                      <div className="mt-1">
-                        {fa.translation.pdfPageCount(pdfResult.pageCount)}
-                      </div>
-                      {pdfFileName && (
-                        <div className="mt-1">
-                          {fa.translation.pdfSourceFile(pdfFileName)}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              </Card>
-              <Card className="flex-2/5 p-4">
-                <div className="flex h-full flex-col">
+                <Separator />
+                <div className="flex flex-1 flex-col gap-4 p-4">
                   {isTranslatingPdf ? (
                     <div className="flex h-full items-center justify-center">
-                      <div className="text-muted-foreground">
-                        {fa.translation.translating}...
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="text-muted-foreground text-sm">
+                          {fa.translation.translating}
+                        </div>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-                        <span>{fa.translation.translatedText}</span>
-                        <Button
-                          aria-label={fa.translation.copyTranslation}
-                          className="h-6 px-2"
-                          disabled={!translatedText || isTranslating}
-                          onClick={handleCopy}
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <ClipboardIcon className="h-3 w-3" />
-                        </Button>
-                      </div>
                       <Textarea
                         aria-label={fa.translation.translatedText}
-                        className="min-h-[140px] resize-none border-none p-2 text-base shadow-none focus-visible:ring-0"
+                        className="min-h-[140px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
                         dir={
                           pdfResult && translatedText
                             ? detectTextDirection(translatedText)
@@ -491,15 +498,14 @@ function RouteComponent() {
                         value={pdfResult ? translatedText : ""}
                       />
                       {pdfResult && pdfResult.pages.length > 0 ? (
-                        <ScrollArea className="mt-4 flex-1 pr-2">
+                        <ScrollArea className="flex-1 pr-2">
                           <div className="flex flex-col gap-3">
                             {pdfResult.pages.map((page) => (
-                              <div
-                                className="rounded border p-3"
-                                key={page.page}
-                              >
-                                <div className="mb-1 font-medium text-muted-foreground text-xs">
-                                  {fa.translation.pdfPageLabel(page.page)}
+                              <Card className="p-4" key={page.page}>
+                                <div className="mb-2 flex items-center gap-2">
+                                  <Badge className="text-xs" variant="outline">
+                                    {fa.translation.pdfPageLabel(page.page)}
+                                  </Badge>
                                 </div>
                                 <p
                                   className="whitespace-pre-wrap text-sm leading-relaxed"
@@ -507,15 +513,72 @@ function RouteComponent() {
                                 >
                                   {page.translatedText}
                                 </p>
-                              </div>
+                              </Card>
                             ))}
                           </div>
                         </ScrollArea>
                       ) : (
-                        <div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
-                          {fa.translation.pdfAwaitingUpload}
+                        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed bg-muted/30">
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <FileIcon className="h-8 w-8 text-muted-foreground" />
+                            <p className="text-muted-foreground text-sm">
+                              {fa.translation.pdfAwaitingUpload}
+                            </p>
+                          </div>
                         </div>
                       )}
+                    </>
+                  )}
+                </div>
+              </Card>
+              <Card className="flex flex-col">
+                <div className="flex flex-col gap-4 p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <FileIcon className="h-4 w-4 text-muted-foreground" />
+                      <Label
+                        className="font-medium text-sm"
+                        htmlFor="pdf-upload"
+                      >
+                        {fa.translation.selectPdf}
+                      </Label>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        accept=".pdf"
+                        disabled={isTranslating}
+                        id="pdf-upload"
+                        onChange={handlePdfSelect}
+                        type="file"
+                      />
+                      <span className="text-muted-foreground text-xs">
+                        {fa.translation.pdfHint}
+                      </span>
+                    </div>
+                    {selectedPdf && (
+                      <Badge className="w-fit" variant="secondary">
+                        {fa.translation.pdfSelected(selectedPdf.name)}
+                      </Badge>
+                    )}
+                  </div>
+                  {pdfResult && (
+                    <>
+                      <Separator />
+                      <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 p-4">
+                        <div className="font-medium text-sm">
+                          {fa.translation.pdfSummaryHeader}
+                        </div>
+                        <div className="flex flex-col gap-1 text-muted-foreground text-xs">
+                          <div>
+                            {fa.translation.pdfPageCount(pdfResult.pageCount)}
+                          </div>
+                          {pdfFileName && (
+                            <div>
+                              {fa.translation.pdfSourceFile(pdfFileName)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </>
                   )}
                 </div>
@@ -528,13 +591,22 @@ function RouteComponent() {
         <ToolbarRow
           action={
             <Button
-              className="min-w-[160px]"
+              className="min-w-[160px] gap-2"
               disabled={actionDisabled}
               onClick={actionHandler}
               type="button"
             >
-              <span className="text-sm">{actionLabel}</span>
-              <SendIcon className="size-4" />
+              {isTranslating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">{fa.translation.translating}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm">{actionLabel}</span>
+                  <SendIcon className="size-4" />
+                </>
+              )}
             </Button>
           }
           columns={4}
@@ -643,15 +715,19 @@ function RouteComponent() {
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="flex items-end">
             <Button
+              className="w-full gap-2"
               disabled={isTranslating || mode === "pdf"}
               onClick={swapLanguages}
               type="button"
               variant="outline"
             >
-              <ArrowLeftRightIcon className="mr-2 h-4 w-4" />
-              {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
+              <ArrowLeftRightIcon className="h-4 w-4" />
+              <span className="text-sm">
+                {fa.translation.sourceLanguage} ↔{" "}
+                {fa.translation.targetLanguage}
+              </span>
             </Button>
           </div>
         </ToolbarRow>
