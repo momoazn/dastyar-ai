@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d967c228-e457-4b1e-82a9-2c35194db647",
+  "id": "e9e2f8c5-affa-4ff3-91b4-36f3cb1ab85f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "chat_threads": {
@@ -853,6 +853,28 @@
         },
         "tone": {
           "name": "tone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'text'"
+        },
+        "sourceFileName": {
+          "name": "sourceFileName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "payload": {
+          "name": "payload",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

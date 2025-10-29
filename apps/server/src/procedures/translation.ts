@@ -1,7 +1,13 @@
 import { ORPCError } from "@orpc/client";
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
-import { type LanguageCode, languageCodes, type Tone, tones } from "@/database";
+import {
+  type LanguageCode,
+  languageCodes,
+  type Tone,
+  type TranslationPayload,
+  tones,
+} from "@/database";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
@@ -10,8 +16,13 @@ import {
   listTranslations,
 } from "@/repositories/translations";
 import { getProviderForModel } from "@/services/ai-providers";
+import { extractTextFromPdf } from "@/services/processors";
+import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
+
+const STORAGE_TEXT_LIMIT = 12_000;
+const TRANSLATION_CHUNK_LIMIT = 2800;
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,
@@ -50,6 +61,157 @@ const translateWithPlainJson = async (
     prompt: inputText,
   });
   return extractJsonField(rawOutput, "translatedText") ?? rawOutput.trim();
+};
+
+const buildStructuredPrompt = (
+  sourceLanguage: LanguageCode,
+  targetLanguage: LanguageCode,
+  tone: Tone
+): string =>
+  [
+    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
+    `Use a ${tone} tone.`,
+    "Preserve meaning and formatting. Return only the translated text without extra commentary.",
+    "Always return a json object with the translated text.",
+    "Please generate only the JSON output. DO NOT provide any preamble.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+const buildPlainJsonPrompt = (
+  sourceLanguage: LanguageCode,
+  targetLanguage: LanguageCode,
+  tone: Tone
+): string =>
+  [
+    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
+    `Use a ${tone} tone.`,
+    "Preserve meaning and formatting.",
+    'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+type TranslateTextParams = {
+  model: LanguageModel;
+  text: string;
+  sourceLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
+  tone: Tone;
+};
+
+const translateTextWithModel = async ({
+  model,
+  text,
+  sourceLanguage,
+  targetLanguage,
+  tone,
+}: TranslateTextParams): Promise<string> => {
+  let translatedText: string | null = null;
+
+  try {
+    translatedText = await translateWithStructuredOutput(
+      model,
+      buildStructuredPrompt(sourceLanguage, targetLanguage, tone),
+      text
+    );
+  } catch {
+    translatedText = null;
+  }
+
+  if (!translatedText) {
+    try {
+      translatedText = await translateWithPlainJson(
+        model,
+        buildPlainJsonPrompt(sourceLanguage, targetLanguage, tone),
+        text
+      );
+    } catch {
+      throw new ORPCError("TRANSLATION_FAILED", {
+        message:
+          "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
+        status: 502,
+      });
+    }
+  }
+
+  if (!translatedText) {
+    throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
+      message: "پاسخی از مدل دریافت نشد",
+      status: 500,
+    });
+  }
+
+  return translatedText;
+};
+
+const chunkPageText = (text: string): string[] => {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+  if (!normalized) {
+    return [];
+  }
+  if (normalized.length <= TRANSLATION_CHUNK_LIMIT) {
+    return [normalized];
+  }
+
+  const paragraphs = normalized
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  const chunks: string[] = [];
+  let buffer = "";
+  for (const paragraph of paragraphs) {
+    const candidate = buffer ? `${buffer}\n\n${paragraph}` : paragraph;
+    if (candidate.length > TRANSLATION_CHUNK_LIMIT) {
+      if (buffer) {
+        chunks.push(buffer);
+      }
+      if (paragraph.length > TRANSLATION_CHUNK_LIMIT) {
+        let start = 0;
+        while (start < paragraph.length) {
+          const end = Math.min(
+            start + TRANSLATION_CHUNK_LIMIT,
+            paragraph.length
+          );
+          chunks.push(paragraph.slice(start, end));
+          start = end;
+        }
+        buffer = "";
+      } else {
+        buffer = paragraph;
+      }
+    } else {
+      buffer = candidate;
+    }
+  }
+
+  if (buffer) {
+    chunks.push(buffer);
+  }
+
+  if (chunks.length === 0) {
+    return [normalized];
+  }
+  return chunks;
+};
+
+const aggregatePages = (
+  pages: TranslationPayload["pages"],
+  key: "sourceText" | "translatedText"
+): string =>
+  pages
+    .filter((page) => page[key]?.trim())
+    .map((page) => `[#${page.page}]\n${page[key]}`)
+    .join("\n\n");
+
+const truncateForStorage = (text: string): string => {
+  if (!text) {
+    return "";
+  }
+  return text.length > STORAGE_TEXT_LIMIT
+    ? `${text.slice(0, STORAGE_TEXT_LIMIT)}...`
+    : text;
 };
 
 export const translationProcedures = {
@@ -91,65 +253,19 @@ export const translationProcedures = {
           status: 400,
         });
       }
+
       const providerModel = getProviderForModel(model.name, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
 
-      const systemPrompt = [
-        `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-        `Use a ${tone} tone.`,
-        "Preserve meaning and formatting. Return only the translated text without extra commentary.",
-        "Always return a json object with the translated text.",
-        "Please generate only the JSON output. DO NOT provide any preamble.",
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      let translatedText: string | null = null;
-      try {
-        translatedText = await translateWithStructuredOutput(
-          providerModel,
-          systemPrompt,
-          input.text
-        );
-      } catch {
-        // ignore and fallback
-        console.error(
-          "--- could not translate with structured output, falling back to plain json"
-        );
-      }
-
-      if (!translatedText) {
-        try {
-          translatedText = await translateWithPlainJson(
-            providerModel,
-            [
-              `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-              `Use a ${tone} tone.`,
-              "Preserve meaning and formatting.",
-              'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
-            ]
-              .filter(Boolean)
-              .join("\n"),
-            input.text
-          );
-        } catch (err) {
-          console.error("--- translateWithPlainJson failed:", err);
-          throw new ORPCError("TRANSLATION_FAILED", {
-            message:
-              "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
-            status: 502,
-          });
-        }
-      }
-
-      if (!translatedText) {
-        throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
-          message: "پاسخی از مدل دریافت نشد",
-          status: 500,
-        });
-      }
+      const translatedText = await translateTextWithModel({
+        model: providerModel,
+        text: input.text,
+        sourceLanguage,
+        targetLanguage,
+        tone,
+      });
 
       try {
         const created = await createTranslation({
@@ -159,11 +275,133 @@ export const translationProcedures = {
           targetLanguage,
           tone,
           modelId: input.modelId,
-          userId: context.user?.id,
+          userId: context.user.id,
+          sourceType: "text",
+          payload: null,
         });
         return created;
-      } catch (err) {
-        console.error("--- failed to persist translation:", err);
+      } catch {
+        throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
+          message: "ذخیره‌سازی ترجمه ناموفق بود",
+          status: 500,
+        });
+      }
+    }),
+  translatePdf: protectedProcedure
+    .input(
+      z.object({
+        file: z.instanceof(File),
+        sourceLanguage: z.enum(
+          Object.values(languageCodes) as [string, ...string[]]
+        ),
+        targetLanguage: z.enum(
+          Object.values(languageCodes) as [string, ...string[]]
+        ),
+        tone: z.enum(Object.values(tones) as [string, ...string[]]),
+        modelId: z.number(),
+      })
+    )
+    .handler(async ({ input, context }) => {
+      const model = await getModelById(input.modelId);
+      if (!model) {
+        throw new ORPCError("MODEL_NOT_FOUND", {
+          message: "مدل مورد نظر پیدا نشد",
+          status: 400,
+        });
+      }
+
+      const providerModel = getProviderForModel(model.name, model.provider);
+      const sourceLanguage = input.sourceLanguage as LanguageCode;
+      const targetLanguage = input.targetLanguage as LanguageCode;
+      const tone = input.tone as Tone;
+
+      const stored = await saveDocumentFromFile(input.file, input.file.name);
+
+      let pdfPages: Awaited<ReturnType<typeof extractTextFromPdf>> = [];
+      try {
+        pdfPages = await extractTextFromPdf(stored.filePath);
+      } finally {
+        await deleteDocumentFile(stored.filePath);
+      }
+
+      if (pdfPages.length === 0) {
+        throw new ORPCError("PDF_EXTRACTION_FAILED", {
+          message: "استخراج متن از PDF ناموفق بود",
+          status: 400,
+        });
+      }
+
+      const translatedPages: TranslationPayload["pages"] = [];
+      for (const page of pdfPages) {
+        const chunks = chunkPageText(page.text);
+        if (chunks.length === 0) {
+          continue;
+        }
+        const translatedChunks: string[] = [];
+        for (const chunk of chunks) {
+          try {
+            const chunkTranslation = await translateTextWithModel({
+              model: providerModel,
+              text: chunk,
+              sourceLanguage,
+              targetLanguage,
+              tone,
+            });
+            translatedChunks.push(chunkTranslation);
+          } catch (error) {
+            if (error instanceof ORPCError) {
+              throw new ORPCError(error.code, {
+                message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
+                status: error.status,
+                data: error.data,
+              });
+            }
+            throw error;
+          }
+        }
+        if (translatedChunks.length === 0) {
+          continue;
+        }
+        translatedPages.push({
+          page: page.page,
+          sourceText: page.text,
+          translatedText: translatedChunks.join("\n\n"),
+        });
+      }
+
+      if (translatedPages.length === 0) {
+        throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
+          message: "ترجمه‌ای برای صفحات استخراج‌شده تولید نشد",
+          status: 500,
+        });
+      }
+
+      const payload: TranslationPayload = {
+        pageCount: pdfPages.length,
+        pages: translatedPages,
+      };
+
+      const aggregatedSource = aggregatePages(translatedPages, "sourceText");
+      const aggregatedTranslation = aggregatePages(
+        translatedPages,
+        "translatedText"
+      );
+
+      try {
+        const created = await createTranslation({
+          sourceText: truncateForStorage(aggregatedSource),
+          translatedText: truncateForStorage(aggregatedTranslation),
+          sourceLanguage,
+          targetLanguage,
+          tone,
+          modelId: input.modelId,
+          userId: context.user.id,
+          sourceType: "pdf",
+          sourceFileName: input.file.name,
+          payload,
+        });
+        return created;
+      } catch {
         throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
           message: "ذخیره‌سازی ترجمه ناموفق بود",
           status: 500,

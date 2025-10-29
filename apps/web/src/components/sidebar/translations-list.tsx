@@ -41,7 +41,11 @@ export function TranslationsList() {
           ]}
           key={translation.id}
           search={{ id: translation.id }}
-          title={translation.sourceText?.slice(0, 30) || fa.general.untitled}
+          title={
+            translation.sourceFileName ||
+            translation.sourceText?.slice(0, 30) ||
+            fa.general.untitled
+          }
           to="/translation"
         />
       ))}

@@ -41,6 +41,18 @@ export const tones = [
 ] as const;
 export type Tone = (typeof tones)[number];
 
+export const translationSourceTypes = ["text", "pdf"] as const;
+export type TranslationSourceType = (typeof translationSourceTypes)[number];
+
+export type TranslationPayload = {
+  pageCount: number;
+  pages: Array<{
+    page: number;
+    sourceText: string;
+    translatedText: string;
+  }>;
+};
+
 export const summaryModes = ["concise", "standard", "detailed"] as const;
 export type SummaryMode = (typeof summaryModes)[number];
 
@@ -132,6 +144,11 @@ export const translations = sqliteTable("translations", {
   sourceLanguage: text("sourceLanguage", { enum: languageCodes }).notNull(),
   targetLanguage: text("targetLanguage", { enum: languageCodes }).notNull(),
   tone: text("tone", { enum: tones }),
+  sourceType: text("sourceType", { enum: translationSourceTypes })
+    .notNull()
+    .default("text"),
+  sourceFileName: text("sourceFileName"),
+  payload: text("payload", { mode: "json" }).$type<TranslationPayload | null>(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),

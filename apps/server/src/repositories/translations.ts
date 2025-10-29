@@ -2,8 +2,22 @@ import { and, eq } from "drizzle-orm";
 import {
   db,
   type Translation,
+  type TranslationPayload,
   translations as translationsTable,
 } from "@/database";
+
+type CreateTranslationParams = {
+  sourceText: string;
+  translatedText: string | null;
+  modelId: Translation["modelId"];
+  sourceLanguage: Translation["sourceLanguage"];
+  targetLanguage: Translation["targetLanguage"];
+  tone?: Translation["tone"];
+  userId: number;
+  sourceType?: Translation["sourceType"];
+  sourceFileName?: Translation["sourceFileName"];
+  payload?: TranslationPayload | null;
+};
 
 export function listTranslations(userId: number): Promise<Translation[]> {
   return db
@@ -13,9 +27,7 @@ export function listTranslations(userId: number): Promise<Translation[]> {
 }
 
 export async function createTranslation(
-  params: Omit<Translation, "id" | "createdAt" | "updatedAt"> & {
-    userId: number;
-  }
+  params: CreateTranslationParams
 ): Promise<Translation> {
   try {
     const result = await db
@@ -26,7 +38,10 @@ export async function createTranslation(
         modelId: params.modelId,
         sourceLanguage: params.sourceLanguage,
         targetLanguage: params.targetLanguage,
-        tone: params.tone,
+        tone: params.tone ?? null,
+        sourceType: params.sourceType ?? "text",
+        sourceFileName: params.sourceFileName ?? null,
+        payload: params.payload ?? null,
         userId: params.userId,
       })
       .returning();
