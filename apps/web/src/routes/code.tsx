@@ -1,18 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import {
-  Bug,
-  Code,
-  FileText,
-  Loader2,
-  Play,
-  Shield,
-  Trash2,
-} from "lucide-react";
+import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
-import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
   Button,
@@ -77,6 +68,7 @@ function RouteComponent() {
   const [inputCode, setInputCode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [output, setOutput] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
 
   const {
     modelId,
@@ -141,6 +133,8 @@ function RouteComponent() {
       navigator.clipboard.writeText(output).catch(() => {
         /* ignore */
       });
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch {
       // noop
     }
@@ -161,16 +155,6 @@ function RouteComponent() {
   };
 
   const currentMutation = runMutation;
-
-  // History
-  const runsQuery = useQuery(orpc.code.listRuns.queryOptions());
-  const deleteRunMutation = useMutation(
-    orpc.code.deleteRun.mutationOptions({
-      onSuccess: () => {
-        runsQuery.refetch();
-      },
-    })
-  );
 
   type RunItem = {
     id: number;
@@ -276,47 +260,217 @@ function RouteComponent() {
         )
       }
       content={
-        <>
-          {/* Input Code */}
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-medium">
-                {mode === "generate"
-                  ? fa.codeAssistant.labels.codeRequest
-                  : fa.codeAssistant.labels.inputCode}
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">
-                  {fa.codeAssistant.charCount(inputCode.length)}
-                </span>
+        <div className="flex h-full flex-col gap-6">
+          {/* Title Header */}
+          <div className="flex flex-col gap-2">
+            <h1 className="font-bold text-2xl">دستیار کد</h1>
+          </div>
+
+          {/* Options Section */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.mode}
               </div>
+              <Select
+                disabled={currentMutation.isPending}
+                onValueChange={(v) => setMode(v as CodeMode)}
+                value={mode}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {modes.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.value}
+                      value={m.value}
+                    >
+                      <div className="flex items-center gap-2">
+                        <m.icon className="h-4 w-4" />
+                        {m.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Textarea
-              autoCapitalize="off"
-              autoCorrect="off"
-              className={cn(
-                "min-h-[200px] resize-none font-mono text-sm",
-                (inputCode ? detectTextDirection(inputCode) : "ltr") === "rtl"
-                  ? "text-right"
-                  : "text-left"
-              )}
-              dir={inputCode ? detectTextDirection(inputCode) : "ltr"}
-              disabled={currentMutation.isPending}
-              onChange={(e) => setInputCode(e.target.value)}
-              placeholder={
-                mode === "generate"
-                  ? fa.codeAssistant.placeholders.codeRequest
-                  : fa.codeAssistant.placeholders.inputCode
-              }
-              spellCheck={false}
-              value={inputCode}
-            />
-            {mode !== "generate" && inputCode.trim() && (
-              <div className="mt-3 rounded-md border p-3 text-left" dir="ltr">
-                <Response>{`\`\`\`${language}\n${inputCode}\n\`\`\``}</Response>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.language}
               </div>
-            )}
-          </Card>
+              <Select
+                disabled={currentMutation.isPending}
+                onValueChange={(v) => setLanguage(v as ProgrammingLanguage)}
+                value={language}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languages.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.codeAssistant.labels.model}
+              </div>
+              <Select
+                disabled={currentMutation.isPending || modelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      modelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {modelList?.map((model) => (
+                    <SelectItem
+                      className="text-right"
+                      key={model.id}
+                      value={model.id.toString()}
+                    >
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Main Action Button */}
+          <div className="flex justify-end">
+            <Button
+              className="min-w-[160px] gap-2"
+              disabled={!canExecute}
+              onClick={handleExecute}
+              type="button"
+            >
+              {currentMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {fa.codeAssistant.buttons.processing}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm">
+                    {fa.codeAssistant.buttons.execute}
+                  </span>
+                  <Play className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Two Column Layout */}
+          <div
+            className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+            dir="rtl"
+          >
+            {/* Input Column (Right) */}
+            <Card className="flex flex-col py-0 lg:order-1">
+              <div className="border-b bg-muted/30 px-4 py-2.5">
+                <div className="flex h-8 items-center justify-between">
+                  <span className="font-semibold text-foreground text-sm">
+                    {mode === "generate"
+                      ? fa.codeAssistant.labels.codeRequest
+                      : fa.codeAssistant.labels.inputCode}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                <Textarea
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  className={cn(
+                    "h-full max-h-[400px] min-h-[200px] resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
+                    (inputCode ? detectTextDirection(inputCode) : "ltr") ===
+                      "rtl"
+                      ? "text-right"
+                      : "text-left"
+                  )}
+                  dir={inputCode ? detectTextDirection(inputCode) : "ltr"}
+                  disabled={currentMutation.isPending}
+                  onChange={(e) => setInputCode(e.target.value)}
+                  placeholder={
+                    mode === "generate"
+                      ? fa.codeAssistant.placeholders.codeRequest
+                      : fa.codeAssistant.placeholders.inputCode
+                  }
+                  spellCheck={false}
+                  value={inputCode}
+                />
+              </div>
+            </Card>
+
+            {/* Output Column (Left) */}
+            <Card className="flex flex-col py-0 lg:order-2">
+              <div className="border-b bg-muted/30 px-4 py-2.5">
+                <div className="flex h-8 items-center justify-between">
+                  <span className="font-semibold text-foreground text-sm">
+                    {fa.codeAssistant.labels.result}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {output && (
+                      <Button
+                        className={
+                          isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                        }
+                        onClick={_handleCopy}
+                        size="sm"
+                        type="button"
+                        variant={isCopied ? "default" : "ghost"}
+                      >
+                        <Copy className="h-4 w-4" />
+                        {isCopied ? "کپی شد" : "کپی"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                {currentMutation.isPending ? (
+                  <div className="flex h-full max-h-[400px] min-h-[200px] items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <div className="text-muted-foreground text-sm">
+                        {fa.codeAssistant.buttons.processing}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="h-full max-h-[400px] min-h-[200px] overflow-auto text-left"
+                    dir="ltr"
+                  >
+                    <Response>
+                      {mode === "generate" && output
+                        ? `\`\`\`${language}\n${output}\n\`\`\``
+                        : output}
+                    </Response>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
 
           {/* Error Input (for debug mode) */}
           {mode === "debug" && (
@@ -350,204 +504,7 @@ function RouteComponent() {
               )}
             </Card>
           )}
-
-          {/* Output */}
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-medium">{fa.codeAssistant.labels.result}</h3>
-              {output && null}
-            </div>
-            <div className="min-h-[200px] text-left" dir="ltr">
-              <Response>
-                {mode === "generate" && output
-                  ? `\`\`\`${language}\n${output}\n\`\`\``
-                  : output}
-              </Response>
-            </div>
-          </Card>
-
-          {/* History */}
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-medium">تاریخچه</h3>
-            </div>
-            <div className="space-y-2">
-              {runsQuery.isLoading && (
-                <div className="text-muted-foreground text-sm">
-                  در حال بارگذاری…
-                </div>
-              )}
-              {runsQuery.data?.length === 0 && (
-                <div className="text-muted-foreground text-sm">
-                  موردی موجود نیست
-                </div>
-              )}
-              {runsQuery.data?.map((run) => {
-                let Icon = Code;
-                if (run.mode === "explain") {
-                  Icon = FileText;
-                } else if (run.mode === "review") {
-                  Icon = Shield;
-                } else if (run.mode === "debug") {
-                  Icon = Bug;
-                }
-                const when = new Date(run.createdAt);
-                const date = when.toLocaleString("fa-IR", {
-                  month: "short",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-                return (
-                  <div
-                    className="flex items-start justify-between gap-2 rounded-md border p-2 hover:bg-accent"
-                    key={run.id}
-                  >
-                    <button
-                      className="text-right"
-                      onClick={() => handleLoadRun(run)}
-                      type="button"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        <span className="font-medium text-sm">{run.mode}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {run.language}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          • {date}
-                        </span>
-                      </div>
-                      <div className="line-clamp-1 text-muted-foreground text-xs">
-                        {run.inputText}
-                      </div>
-                    </button>
-                    <button
-                      aria-label="delete"
-                      className="text-muted-foreground hover:text-destructive"
-                      disabled={deleteRunMutation.isPending}
-                      onClick={() => deleteRunMutation.mutate({ id: run.id })}
-                      title="حذف"
-                      type="button"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        </>
-      }
-      toolbar={
-        <ToolbarRow
-          action={
-            <Button
-              className="min-w-[140px]"
-              disabled={!canExecute}
-              onClick={handleExecute}
-              type="button"
-            >
-              {currentMutation.isPending ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  {fa.codeAssistant.buttons.processing}
-                </>
-              ) : (
-                <>
-                  <Play className="ml-2 h-4 w-4" />
-                  {fa.codeAssistant.buttons.execute}
-                </>
-              )}
-            </Button>
-          }
-          columns={3}
-        >
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.mode}
-            </div>
-            <Select
-              disabled={currentMutation.isPending}
-              onValueChange={(v) => setMode(v as CodeMode)}
-              value={mode}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {modes.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.value}
-                    value={m.value}
-                  >
-                    <div className="flex items-center gap-2">
-                      <m.icon className="h-4 w-4" />
-                      {m.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.language}
-            </div>
-            <Select
-              disabled={currentMutation.isPending}
-              onValueChange={(v) => setLanguage(v as ProgrammingLanguage)}
-              value={language}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languages.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.codeAssistant.labels.model}
-            </div>
-            <Select
-              disabled={currentMutation.isPending || modelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    modelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {modelList?.map((model) => (
-                  <SelectItem
-                    className="text-right"
-                    key={model.id}
-                    value={model.id.toString()}
-                  >
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </ToolbarRow>
+        </div>
       }
     />
   );
