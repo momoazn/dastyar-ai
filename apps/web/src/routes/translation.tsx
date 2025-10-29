@@ -6,24 +6,19 @@ import {
 } from "@tanstack/react-router";
 import {
   ArrowLeftRightIcon,
-  ClipboardIcon,
+  Copy,
   FileIcon,
   FileText,
   Loader2,
   SendIcon,
-  TriangleAlert,
   Upload,
   X,
 } from "lucide-react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
-import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
-  AlertDescription,
-  AlertTitle,
   Badge,
   Button,
   Card,
@@ -100,6 +95,7 @@ function RouteComponent() {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const {
     modelId,
@@ -201,10 +197,11 @@ function RouteComponent() {
     try {
       await navigator.clipboard.writeText(translatedText);
       setClipboardError(null);
-      toast.success("ترجمه با موفقیت کپی شد");
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch {
       setClipboardError("Failed to copy to clipboard");
-      toast.error("خطا در کپی کردن ترجمه");
+      setIsCopied(false);
     }
   };
 
@@ -323,7 +320,6 @@ function RouteComponent() {
     Boolean(sourceText.trim() && modelId && !isModelsLoading) && !isTranslating;
   const canTranslatePdf =
     Boolean(selectedPdf && modelId && !isModelsLoading) && !isTranslating;
-  const sourceCharCount = sourceText.length;
   const actionDisabled = mode === "pdf" ? !canTranslatePdf : !canTranslateText;
   const actionHandler =
     mode === "pdf" ? submitPdfTranslation : submitTextTranslation;
@@ -361,317 +357,146 @@ function RouteComponent() {
     <ToolScaffold
       alerts={
         hasError && (
-          <Alert className="mb-3" dir="rtl" role="alert" variant="destructive">
-            <TriangleAlert className="h-4 w-4" />
-            <AlertTitle>{fa.translation.errorTitle}</AlertTitle>
-            <AlertDescription>{getErrorMessage()}</AlertDescription>
+          <Alert variant="destructive">
+            <div className="flex items-center gap-2">
+              <span>{getErrorMessage()}</span>
+              <span>{fa.translation.tryAgain}</span>
+            </div>
           </Alert>
         )
       }
       content={
-        <Tabs
-          className="flex h-full w-full flex-col"
-          onValueChange={(value) => setMode(value as "text" | "pdf")}
-          value={mode}
-        >
-          <TabsList className="w-fit">
-            <TabsTrigger value="text">{fa.translation.textTab}</TabsTrigger>
-            <TabsTrigger value="pdf">{fa.translation.pdfTab}</TabsTrigger>
-          </TabsList>
-          <TabsContent
-            className="flex-1 focus-visible:outline-none focus-visible:ring-0"
-            value="text"
-          >
-            <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
-              <Card className="flex flex-col">
-                <div className="flex flex-col gap-1 px-3 py-1.5">
-                  <div className="flex items-center justify-between">
-                    <Badge className="text-xs" variant="secondary">
-                      {fa.translation.translatedText}
-                    </Badge>
-                    <Button
-                      aria-label={fa.translation.copyTranslation}
-                      className="h-6 gap-1.5 px-2"
-                      disabled={!translatedText || isTranslating}
-                      onClick={handleCopy}
-                      size="sm"
-                      type="button"
-                      variant="ghost"
+        <div className="flex h-full flex-col gap-6">
+          {/* Title Header */}
+          <div className="flex flex-col gap-2">
+            <h1 className="font-bold text-2xl">{fa.index.translationTitle}</h1>
+          </div>
+
+          {/* Options Section */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.sourceLanguage}
+              </div>
+              <Select
+                disabled={isTranslating}
+                onValueChange={(v) => setSourceLanguage(v as LanguageCode)}
+                value={sourceLanguage}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languageOptions.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
                     >
-                      <ClipboardIcon className="h-3.5 w-3.5" />
-                      <span className="text-xs">
-                        {fa.translation.copyTranslation}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex-1 p-4">
-                  {isTranslatingText ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <div className="text-muted-foreground text-sm">
-                          {fa.translation.translating}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <Textarea
-                      aria-label={fa.translation.translatedText}
-                      className="h-full min-h-[300px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
-                      dir={
-                        translatedText
-                          ? detectTextDirection(translatedText)
-                          : "rtl"
-                      }
-                      placeholder={fa.translation.translatedText}
-                      readOnly
-                      value={translatedText}
-                    />
-                  )}
-                </div>
-              </Card>
-              <Card aria-live="polite" className="flex flex-col">
-                <div className="flex flex-col gap-1 px-3 py-1.5">
-                  <div className="flex items-center justify-between">
-                    <Badge className="text-xs" variant="secondary">
-                      {fa.translation.sourceLanguage}
-                    </Badge>
-                    <div className="flex h-6 items-center px-2">
-                      <span className="text-muted-foreground text-xs">
-                        {fa.translation.charCount(sourceCharCount)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex-1 p-4">
-                  <Textarea
-                    aria-label={fa.translation.enterText}
-                    className="h-full min-h-[300px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
-                    dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
-                    onChange={(e) => setSourceText(e.target.value)}
-                    onKeyDown={handleSourceKeyDown}
-                    placeholder={fa.translation.enterText}
-                    value={sourceText}
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.targetLanguage}
+              </div>
+              <Select
+                disabled={isTranslating}
+                onValueChange={(v) => setTargetLanguage(v as LanguageCode)}
+                value={targetLanguage}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {languageOptions.map((lang) => (
+                    <SelectItem
+                      className="text-right"
+                      key={lang.value}
+                      value={lang.value}
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.translationTone}
+              </div>
+              <Select
+                disabled={isTranslating}
+                onValueChange={(v) => setTone(v as Tone)}
+                value={tone}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {toneOptions.map((t) => (
+                    <SelectItem
+                      className="text-right"
+                      key={t.value}
+                      value={t.value}
+                    >
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">{fa.translation.model}</div>
+              <Select
+                disabled={isTranslating || isModelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      isModelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
                   />
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
-          <TabsContent
-            className="flex-1 focus-visible:outline-none focus-visible:ring-0"
-            value="pdf"
-          >
-            <div className="mt-4 grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2">
-              <Card className="flex flex-col">
-                <div className="flex flex-col gap-2 p-3">
-                  <div className="flex items-center justify-between">
-                    <Badge className="text-xs" variant="secondary">
-                      {fa.translation.translatedText}
-                    </Badge>
-                    <Button
-                      aria-label={fa.translation.copyTranslation}
-                      className="h-6 gap-1.5 px-2"
-                      disabled={!translatedText || isTranslating}
-                      onClick={handleCopy}
-                      size="sm"
-                      type="button"
-                      variant="ghost"
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {models?.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.id}
+                      value={m.id.toString()}
                     >
-                      <ClipboardIcon className="h-3.5 w-3.5" />
-                      <span className="text-xs">
-                        {fa.translation.copyTranslation}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex flex-1 flex-col gap-4 p-4">
-                  {isTranslatingPdf ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <div className="text-muted-foreground text-sm">
-                          {fa.translation.translating}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Textarea
-                        aria-label={fa.translation.translatedText}
-                        className="min-h-[140px] resize-none border-none p-3 text-base shadow-none focus-visible:ring-0"
-                        dir={
-                          pdfResult && translatedText
-                            ? detectTextDirection(translatedText)
-                            : "rtl"
-                        }
-                        placeholder={fa.translation.translatedText}
-                        readOnly
-                        value={pdfResult ? translatedText : ""}
-                      />
-                      {pdfResult && pdfResult.pages.length > 0 ? (
-                        <ScrollArea className="flex-1 pr-2">
-                          <div className="flex flex-col gap-3">
-                            {pdfResult.pages.map((page) => (
-                              <Card className="p-4" key={page.page}>
-                                <div className="mb-2 flex items-center gap-2">
-                                  <Badge className="text-xs" variant="outline">
-                                    {fa.translation.pdfPageLabel(page.page)}
-                                  </Badge>
-                                </div>
-                                <p
-                                  className="whitespace-pre-wrap text-sm leading-relaxed"
-                                  dir={detectTextDirection(page.translatedText)}
-                                >
-                                  {page.translatedText}
-                                </p>
-                              </Card>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      ) : (
-                        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed bg-muted/30">
-                          <div className="flex flex-col items-center gap-2 text-center">
-                            <FileIcon className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground text-sm">
-                              {fa.translation.pdfAwaitingUpload}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </Card>
-              <Card className="flex flex-col">
-                <div className="flex flex-col gap-2 p-3">
-                  <div className="flex items-center justify-between">
-                    <Badge className="text-xs" variant="secondary">
-                      {fa.translation.sourceLanguage}
-                    </Badge>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex-1 p-4">
-                  {selectedPdf ? (
-                    <div className="flex h-full flex-col gap-4">
-                      <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-                          <FileText className="h-6 w-6 text-destructive" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate font-medium text-sm">
-                            {selectedPdf.name}
-                          </div>
-                          <div className="text-muted-foreground text-xs">
-                            {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
-                          </div>
-                        </div>
-                        <Button
-                          aria-label="Remove PDF"
-                          className="h-8 w-8 shrink-0"
-                          onClick={handleRemovePdf}
-                          size="icon"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {pdfResult && (
-                        <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 p-4">
-                          <div className="font-medium text-sm">
-                            {fa.translation.pdfSummaryHeader}
-                          </div>
-                          <div className="flex flex-col gap-1 text-muted-foreground text-xs">
-                            <div>
-                              {fa.translation.pdfPageCount(pdfResult.pageCount)}
-                            </div>
-                            {pdfFileName && (
-                              <div>
-                                {fa.translation.pdfSourceFile(pdfFileName)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    // biome-ignore lint/a11y/noStaticElementInteractions: Drag handlers require div for drag-and-drop functionality
-                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag handlers require div for drag-and-drop functionality
-                    <div
-                      className={cn(
-                        "flex h-full min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
-                        isDragging
-                          ? "border-primary bg-primary/5"
-                          : "border-muted-foreground/25 bg-muted/30"
-                      )}
-                      onDragLeave={handleDragLeave}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      onKeyDown={handleKeyDown}
-                      // biome-ignore lint/a11y/noNoninteractiveTabindex: Drag handlers require div for drag-and-drop functionality
-                      tabIndex={0}
-                    >
-                      <input
-                        accept=".pdf"
-                        className="hidden"
-                        disabled={isTranslating}
-                        id="pdf-upload"
-                        onChange={handlePdfSelect}
-                        type="file"
-                      />
-                      <label
-                        className="flex cursor-pointer flex-col items-center gap-3 p-6 text-center"
-                        htmlFor="pdf-upload"
-                      >
-                        <div
-                          className={`flex h-16 w-16 items-center justify-center rounded-full transition-colors ${
-                            isDragging
-                              ? "bg-primary/10"
-                              : "bg-muted-foreground/10"
-                          }`}
-                        >
-                          {isDragging ? (
-                            <Upload className="h-8 w-8 text-primary" />
-                          ) : (
-                            <FileIcon className="h-8 w-8 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium text-sm">
-                            {isDragging
-                              ? "رها کنید برای آپلود"
-                              : fa.translation.selectPdf}
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {fa.translation.pdfHint}
-                          </span>
-                        </div>
-                        <Button
-                          className="mt-2"
-                          disabled={isTranslating}
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          انتخاب فایل
-                        </Button>
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </Card>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </TabsContent>
-        </Tabs>
-      }
-      toolbar={
-        <ToolbarRow
-          action={
+            <div className="flex items-end">
+              <Button
+                className="w-full gap-2"
+                disabled={isTranslating || mode === "pdf"}
+                onClick={swapLanguages}
+                type="button"
+                variant="outline"
+              >
+                <ArrowLeftRightIcon className="h-4 w-4" />
+                <span className="text-sm">
+                  {fa.translation.sourceLanguage} ↔{" "}
+                  {fa.translation.targetLanguage}
+                </span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Main Action Button */}
+          <div className="flex justify-end">
             <Button
               className="min-w-[160px] gap-2"
               disabled={actionDisabled}
@@ -690,129 +515,344 @@ function RouteComponent() {
                 </>
               )}
             </Button>
-          }
-          columns={4}
-        >
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.sourceLanguage}
-            </div>
-            <Select
-              disabled={isTranslating}
-              onValueChange={(v) => setSourceLanguage(v as LanguageCode)}
-              value={sourceLanguage}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languageOptions.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.targetLanguage}
-            </div>
-            <Select
-              disabled={isTranslating}
-              onValueChange={(v) => setTargetLanguage(v as LanguageCode)}
-              value={targetLanguage}
+
+          {/* Two Column Layout */}
+          <Tabs
+            className="flex h-full w-full flex-col"
+            onValueChange={(value) => setMode(value as "text" | "pdf")}
+            value={mode}
+          >
+            <TabsContent
+              className="flex-1 focus-visible:outline-none focus-visible:ring-0"
+              value="text"
             >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {languageOptions.map((lang) => (
-                  <SelectItem
-                    className="text-right"
-                    key={lang.value}
-                    value={lang.value}
-                  >
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.translationTone}
-            </div>
-            <Select
-              disabled={isTranslating}
-              onValueChange={(v) => setTone(v as Tone)}
-              value={tone}
+              <div
+                className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+                dir="rtl"
+              >
+                {/* Source Column (Right) */}
+                <Card className="flex flex-col py-0 lg:order-1">
+                  <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex h-8 items-center justify-between">
+                      <span className="font-semibold text-foreground text-sm">
+                        {fa.translation.sourceLanguage}
+                      </span>
+                      <TabsList className="w-fit">
+                        <TabsTrigger value="text">
+                          {fa.translation.textTab}
+                        </TabsTrigger>
+                        <TabsTrigger value="pdf">
+                          {fa.translation.pdfTab}
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                  </div>
+                  <div className="flex-1 p-4">
+                    <Textarea
+                      aria-label={fa.translation.enterText}
+                      className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                      dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
+                      disabled={isTranslating}
+                      onChange={(e) => setSourceText(e.target.value)}
+                      onKeyDown={handleSourceKeyDown}
+                      placeholder={fa.translation.enterText}
+                      value={sourceText}
+                    />
+                  </div>
+                </Card>
+
+                {/* Result Column (Left) */}
+                <Card className="flex flex-col py-0 lg:order-2">
+                  <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex h-8 items-center justify-between">
+                      <span className="font-semibold text-foreground text-sm">
+                        {fa.translation.translatedText}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {translatedText && (
+                          <Button
+                            className={
+                              isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                            }
+                            onClick={handleCopy}
+                            size="sm"
+                            type="button"
+                            variant={isCopied ? "default" : "ghost"}
+                          >
+                            <Copy className="h-4 w-4" />
+                            {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 p-4">
+                    {isTranslatingText ? (
+                      <div className="flex h-full min-h-[300px] items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <div className="text-muted-foreground text-sm">
+                            {fa.translation.translating}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Textarea
+                        aria-label={fa.translation.translatedText}
+                        className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                        dir={
+                          translatedText
+                            ? detectTextDirection(translatedText)
+                            : "rtl"
+                        }
+                        placeholder={fa.translation.translatedText}
+                        readOnly
+                        value={translatedText}
+                      />
+                    )}
+                  </div>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              className="flex-1 focus-visible:outline-none focus-visible:ring-0"
+              value="pdf"
             >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {toneOptions.map((t) => (
-                  <SelectItem
-                    className="text-right"
-                    key={t.value}
-                    value={t.value}
-                  >
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.translation.model}</div>
-            <Select
-              disabled={isTranslating || isModelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    isModelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {models?.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.id}
-                    value={m.id.toString()}
-                  >
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <Button
-              className="w-full gap-2"
-              disabled={isTranslating || mode === "pdf"}
-              onClick={swapLanguages}
-              type="button"
-              variant="outline"
-            >
-              <ArrowLeftRightIcon className="h-4 w-4" />
-              <span className="text-sm">
-                {fa.translation.sourceLanguage} ↔{" "}
-                {fa.translation.targetLanguage}
-              </span>
-            </Button>
-          </div>
-        </ToolbarRow>
+              <div
+                className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+                dir="rtl"
+              >
+                {/* Source Column (Right) */}
+                <Card className="flex flex-col py-0 lg:order-1">
+                  <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex h-8 items-center justify-between">
+                      <span className="font-semibold text-foreground text-sm">
+                        {fa.translation.sourceLanguage}
+                      </span>
+                      <TabsList className="w-fit">
+                        <TabsTrigger value="text">
+                          {fa.translation.textTab}
+                        </TabsTrigger>
+                        <TabsTrigger value="pdf">
+                          {fa.translation.pdfTab}
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                  </div>
+                  <div className="flex-1 p-4">
+                    {selectedPdf ? (
+                      <div className="flex h-full flex-col gap-4">
+                        <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                            <FileText className="h-6 w-6 text-destructive" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium text-sm">
+                              {selectedPdf.name}
+                            </div>
+                            <div className="text-muted-foreground text-xs">
+                              {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
+                            </div>
+                          </div>
+                          <Button
+                            aria-label="Remove PDF"
+                            className="h-8 w-8 shrink-0"
+                            onClick={handleRemovePdf}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {pdfResult && (
+                          <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 p-4">
+                            <div className="font-medium text-sm">
+                              {fa.translation.pdfSummaryHeader}
+                            </div>
+                            <div className="flex flex-col gap-1 text-muted-foreground text-xs">
+                              <div>
+                                {fa.translation.pdfPageCount(
+                                  pdfResult.pageCount
+                                )}
+                              </div>
+                              {pdfFileName && (
+                                <div>
+                                  {fa.translation.pdfSourceFile(pdfFileName)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // biome-ignore lint/a11y/noStaticElementInteractions: Drag handlers require div for drag-and-drop functionality
+                      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag handlers require div for drag-and-drop functionality
+                      <div
+                        className={cn(
+                          "flex h-full min-h-[300px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+                          isDragging
+                            ? "border-primary bg-primary/5"
+                            : "border-muted-foreground/25 bg-muted/30"
+                        )}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onKeyDown={handleKeyDown}
+                        // biome-ignore lint/a11y/noNoninteractiveTabindex: Drag handlers require div for drag-and-drop functionality
+                        tabIndex={0}
+                      >
+                        <input
+                          accept=".pdf"
+                          className="hidden"
+                          disabled={isTranslating}
+                          id="pdf-upload"
+                          onChange={handlePdfSelect}
+                          type="file"
+                        />
+                        <label
+                          className="flex cursor-pointer flex-col items-center gap-3 p-6 text-center"
+                          htmlFor="pdf-upload"
+                        >
+                          <div
+                            className={`flex h-16 w-16 items-center justify-center rounded-full transition-colors ${
+                              isDragging
+                                ? "bg-primary/10"
+                                : "bg-muted-foreground/10"
+                            }`}
+                          >
+                            {isDragging ? (
+                              <Upload className="h-8 w-8 text-primary" />
+                            ) : (
+                              <FileIcon className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-sm">
+                              {isDragging
+                                ? "رها کنید برای آپلود"
+                                : fa.translation.selectPdf}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              {fa.translation.pdfHint}
+                            </span>
+                          </div>
+                          <Button
+                            className="mt-2"
+                            disabled={isTranslating}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            انتخاب فایل
+                          </Button>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Result Column (Left) */}
+                <Card className="flex flex-col py-0 lg:order-2">
+                  <div className="border-b bg-muted/30 px-4 py-2.5">
+                    <div className="flex h-8 items-center justify-between">
+                      <span className="font-semibold text-foreground text-sm">
+                        {fa.translation.translatedText}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {translatedText && (
+                          <Button
+                            className={
+                              isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                            }
+                            onClick={handleCopy}
+                            size="sm"
+                            type="button"
+                            variant={isCopied ? "default" : "ghost"}
+                          >
+                            <Copy className="h-4 w-4" />
+                            {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex flex-1 flex-col gap-4 p-4">
+                    {isTranslatingPdf ? (
+                      <div className="flex h-full min-h-[300px] items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <div className="text-muted-foreground text-sm">
+                            {fa.translation.translating}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {pdfResult && translatedText && (
+                          <Textarea
+                            aria-label={fa.translation.translatedText}
+                            className="min-h-[140px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                            dir={detectTextDirection(translatedText)}
+                            placeholder={fa.translation.translatedText}
+                            readOnly
+                            value={translatedText}
+                          />
+                        )}
+                        {pdfResult && pdfResult.pages.length > 0 ? (
+                          <ScrollArea className="flex-1 pr-2">
+                            <div className="flex flex-col gap-3">
+                              {pdfResult.pages.map((page) => (
+                                <Card className="p-4" key={page.page}>
+                                  <div className="mb-2 flex items-center gap-2">
+                                    <Badge
+                                      className="text-xs"
+                                      variant="outline"
+                                    >
+                                      {fa.translation.pdfPageLabel(page.page)}
+                                    </Badge>
+                                  </div>
+                                  <p
+                                    className="whitespace-pre-wrap text-sm leading-relaxed"
+                                    dir={detectTextDirection(
+                                      page.translatedText
+                                    )}
+                                  >
+                                    {page.translatedText}
+                                  </p>
+                                </Card>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          !pdfResult && (
+                            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed bg-muted/30">
+                              <div className="flex flex-col items-center gap-2 text-center">
+                                <FileIcon className="h-8 w-8 text-muted-foreground" />
+                                <p className="text-muted-foreground text-sm">
+                                  {fa.translation.pdfAwaitingUpload}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <Separator />
+                  <div className="px-4 py-2">
+                    <div className="text-muted-foreground text-xs">
+                      {translatedText ? fa.translation.keyboardHint : "\u00A0"}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       }
     />
   );

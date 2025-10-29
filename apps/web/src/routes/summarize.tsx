@@ -4,11 +4,10 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { Clipboard, Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
-import { ToolbarRow } from "@/components/scaffold/toolbar-row";
 import {
   Alert,
   Button,
@@ -154,19 +153,6 @@ function SummarizePage() {
   };
 
   /**
-   * Paste clipboard content into the source area.
-   */
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      setClipboardError(null);
-      setSourceText(text);
-    } catch {
-      setClipboardError("Failed to paste from clipboard");
-    }
-  };
-
-  /**
    * Submit summarization request using current inputs.
    * Centralized to keep mutation calls consistent across triggers.
    */
@@ -193,7 +179,6 @@ function SummarizePage() {
   const canSummarize =
     Boolean(sourceText.trim() && modelId && !isModelsLoading) &&
     !summarizeMutation.isPending;
-  const sourceCharCount = sourceText.length;
 
   return (
     <ToolScaffold
@@ -215,163 +200,189 @@ function SummarizePage() {
         )
       }
       content={
-        <>
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-medium">{fa.summarize.sourceText}</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">
-                  {fa.general.charCount(sourceCharCount)}
-                </span>
-                <Button
-                  onClick={handlePaste}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Clipboard className="h-4 w-4" />
-                  {fa.summarize.paste}
-                </Button>
+        <div className="flex h-full flex-col gap-6">
+          {/* Title Header */}
+          <div className="flex flex-col gap-2">
+            <h1 className="font-bold text-2xl">{fa.summarize.title}</h1>
+          </div>
+
+          {/* Options Section */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.summarize.modeLabel}
               </div>
+              <Select
+                disabled={summarizeMutation.isPending}
+                onValueChange={(v) => setMode(v as SummaryMode)}
+                value={mode}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {summaryModeOptions.map((m) => (
+                    <SelectItem
+                      className="text-right"
+                      key={m.value}
+                      value={m.value}
+                    >
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Textarea
-              className="min-h-[200px] resize-none"
-              dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
-              disabled={summarizeMutation.isPending}
-              onChange={(e) => setSourceText(e.target.value)}
-              onKeyDown={handleSourceKeyDown}
-              placeholder={fa.summarize.enterText}
-              value={sourceText}
-            />
-            <div className="mt-2 text-muted-foreground text-xs">
-              {fa.summarize.keyboardHint}
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">
+                {fa.translation.translationTone}
+              </div>
+              <Select
+                disabled={summarizeMutation.isPending}
+                onValueChange={(v) => setTone(v as Tone)}
+                value={tone}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {toneOptions.map((t) => (
+                    <SelectItem
+                      className="text-right"
+                      key={t.value}
+                      value={t.value}
+                    >
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </Card>
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-medium">{fa.summarize.generatedText}</h3>
-              {summaryText && (
-                <Button
-                  className={isCopied ? "bg-green-600 hover:bg-green-700" : ""}
-                  onClick={handleCopy}
-                  size="sm"
-                  type="button"
-                  variant={isCopied ? "default" : "ghost"}
-                >
-                  <Copy className="h-4 w-4" />
-                  {isCopied ? fa.summarize.copied : fa.summarize.copy}
-                </Button>
-              )}
+            <div className="flex flex-col gap-2">
+              <div className="font-medium text-sm">{fa.summarize.model}</div>
+              <Select
+                disabled={summarizeMutation.isPending || isModelsLoading}
+                onValueChange={(value) => setModelId(Number(value))}
+                value={modelId?.toString()}
+              >
+                <SelectTrigger className="w-full text-right" dir="rtl">
+                  <SelectValue
+                    placeholder={
+                      isModelsLoading
+                        ? fa.general.loadingModels
+                        : fa.general.selectModel
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {models?.map((model) => (
+                    <SelectItem
+                      className="text-right"
+                      key={model.id}
+                      value={model.id.toString()}
+                    >
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Textarea
-              className="min-h-[200px] resize-none"
-              dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
-              placeholder={fa.summarize.summaryPlaceholder}
-              readOnly
-              value={summaryText}
-            />
-          </Card>
-        </>
-      }
-      toolbar={
-        <ToolbarRow
-          action={
+          </div>
+
+          {/* Main Action Button */}
+          <div className="flex justify-end">
             <Button
-              className="min-w-[140px]"
+              className="min-w-[140px] gap-2"
               disabled={!canSummarize}
               onClick={submitSummarize}
               type="button"
             >
               {summarizeMutation.isPending ? (
                 <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  {fa.summarize.generating}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">{fa.summarize.generating}</span>
                 </>
               ) : (
-                fa.summarize.generate
+                <span className="text-sm">{fa.summarize.generate}</span>
               )}
             </Button>
-          }
-          columns={3}
-        >
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.summarize.modeLabel}</div>
-            <Select
-              disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setMode(v as SummaryMode)}
-              value={mode}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {summaryModeOptions.map((m) => (
-                  <SelectItem
-                    className="text-right"
-                    key={m.value}
-                    value={m.value}
-                  >
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">
-              {fa.translation.translationTone}
-            </div>
-            <Select
-              disabled={summarizeMutation.isPending}
-              onValueChange={(v) => setTone(v as Tone)}
-              value={tone}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {toneOptions.map((t) => (
-                  <SelectItem
-                    className="text-right"
-                    key={t.value}
-                    value={t.value}
-                  >
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-sm">{fa.summarize.model}</div>
-            <Select
-              disabled={summarizeMutation.isPending || isModelsLoading}
-              onValueChange={(value) => setModelId(Number(value))}
-              value={modelId?.toString()}
-            >
-              <SelectTrigger className="w-full text-right" dir="rtl">
-                <SelectValue
-                  placeholder={
-                    isModelsLoading
-                      ? fa.general.loadingModels
-                      : fa.general.selectModel
-                  }
+
+          {/* Two Column Layout */}
+          <div
+            className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+            dir="rtl"
+          >
+            {/* Source Column (Right) */}
+            <Card className="flex flex-col py-0 lg:order-1">
+              <div className="border-b bg-muted/30 px-4 py-2.5">
+                <div className="flex h-8 items-center justify-between">
+                  <span className="font-semibold text-foreground text-sm">
+                    {fa.summarize.sourceText}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                <Textarea
+                  className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                  dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
+                  disabled={summarizeMutation.isPending}
+                  onChange={(e) => setSourceText(e.target.value)}
+                  onKeyDown={handleSourceKeyDown}
+                  placeholder={fa.summarize.enterText}
+                  value={sourceText}
                 />
-              </SelectTrigger>
-              <SelectContent dir="rtl">
-                {models?.map((model) => (
-                  <SelectItem
-                    className="text-right"
-                    key={model.id}
-                    value={model.id.toString()}
-                  >
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </Card>
+
+            {/* Result Column (Left) */}
+            <Card className="flex flex-col py-0 lg:order-2">
+              <div className="border-b bg-muted/30 px-4 py-2.5">
+                <div className="flex h-8 items-center justify-between">
+                  <span className="font-semibold text-foreground text-sm">
+                    {fa.summarize.generatedText}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {summaryText && (
+                      <Button
+                        className={
+                          isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                        }
+                        onClick={handleCopy}
+                        size="sm"
+                        type="button"
+                        variant={isCopied ? "default" : "ghost"}
+                      >
+                        <Copy className="h-4 w-4" />
+                        {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 p-4">
+                {summarizeMutation.isPending ? (
+                  <div className="flex h-full min-h-[300px] items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <div className="text-muted-foreground text-sm">
+                        {fa.summarize.generating}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Textarea
+                    className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                    dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
+                    placeholder={fa.summarize.summaryPlaceholder}
+                    readOnly
+                    value={summaryText}
+                  />
+                )}
+              </div>
+            </Card>
           </div>
-        </ToolbarRow>
+        </div>
       }
     />
   );
