@@ -787,15 +787,18 @@ function RouteComponent() {
                         if (pdfResult && translatedText) {
                           return (
                             <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
-                              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                                  <FileText className="h-6 w-6 text-green-500" />
+                              <div
+                                className="flex items-center gap-3 rounded-lg border bg-green-500/10 p-4"
+                                dir="rtl"
+                              >
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+                                  <FileText className="h-6 w-6 text-green-600" />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="font-medium text-sm">
                                     ترجمه تکمیل شده
                                   </div>
-                                  <div className="text-muted-foreground text-xs">
+                                  <div className="text-green-600/80 text-xs">
                                     {pdfResult.pageCount} صفحه ترجمه شده
                                   </div>
                                 </div>
@@ -813,43 +816,51 @@ function RouteComponent() {
                         if (pdfResult && pdfResult.pages.length > 0) {
                           return (
                             <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
-                              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
-                                  <FileText className="h-6 w-6 text-green-500" />
+                              <div
+                                className="flex items-center gap-3 rounded-lg border bg-green-500/10 p-4"
+                                dir="rtl"
+                              >
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+                                  <FileText className="h-6 w-6 text-green-600" />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="font-medium text-sm">
                                     ترجمه تکمیل شده
                                   </div>
-                                  <div className="text-muted-foreground text-xs">
+                                  <div className="text-green-600/80 text-xs">
                                     {pdfResult.pageCount} صفحه ترجمه شده
                                   </div>
                                 </div>
                               </div>
                               <ScrollArea className="flex-1 pr-2">
                                 <div className="flex flex-col gap-3">
-                                  {pdfResult.pages.map((page) => (
-                                    <Card className="p-4" key={page.page}>
-                                      <div className="mb-2 flex items-center gap-2">
-                                        <Badge
-                                          className="text-xs"
-                                          variant="outline"
-                                        >
-                                          {fa.translation.pdfPageLabel(
-                                            page.page
-                                          )}
-                                        </Badge>
-                                      </div>
-                                      <p
-                                        className="whitespace-pre-wrap text-sm leading-relaxed"
-                                        dir={detectTextDirection(
-                                          page.translatedText
-                                        )}
+                                  {pdfResult.pages.map((page) => {
+                                    const textDir = detectTextDirection(
+                                      page.translatedText
+                                    );
+                                    return (
+                                      <Card
+                                        className="p-4"
+                                        dir={textDir}
+                                        key={page.page}
                                       >
-                                        {page.translatedText}
-                                      </p>
-                                    </Card>
-                                  ))}
+                                        <div className="mb-3 flex items-center gap-2">
+                                          <Badge
+                                            className="text-xs"
+                                            variant="secondary"
+                                          >
+                                            {fa.translation.pdfPageLabel(
+                                              page.page
+                                            )}
+                                          </Badge>
+                                          <div className="h-px flex-1 bg-border" />
+                                        </div>
+                                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                          {page.translatedText}
+                                        </p>
+                                      </Card>
+                                    );
+                                  })}
                                 </div>
                               </ScrollArea>
                             </div>
