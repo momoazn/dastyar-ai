@@ -28,7 +28,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Separator,
   Textarea,
 } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -739,15 +738,9 @@ function RouteComponent() {
                               {fa.translation.pdfHint}
                             </span>
                           </div>
-                          <Button
-                            className="mt-2"
-                            disabled={isTranslating}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
+                          <div className="mt-2 inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 font-medium text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
                             انتخاب فایل
-                          </Button>
+                          </div>
                         </label>
                       </div>
                     )}

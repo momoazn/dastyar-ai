@@ -77,7 +77,7 @@ const Schema = z.object({
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_ENABLED: z.coerce.boolean().default(true),
   LMSTUDIO_BASE_URL: z.string().default("http://localhost:1234/v1"),
-  LMSTUDIO_ENABLED: z.coerce.boolean().default(false),
+  LMSTUDIO_ENABLED: z.coerce.boolean().default(true),
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_ENABLED: z.coerce.boolean().default(false),
   GROQ_API_KEY: z.string().default(""),

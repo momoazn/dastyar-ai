@@ -41,6 +41,7 @@
     "jsonwebtoken": "^9.0.2",
     "ollama-ai-provider-v2": "^1.4.1",
     "openai": "^6.2.0",
+    "pdf-parse": "^2.4.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
