@@ -48,7 +48,7 @@ const languageOptions = createLanguageOptions();
 const toneOptions = createToneOptions();
 
 // Search params shape for this route
-type TranslationSearch = { id?: number | string };
+type TranslationSearch = { fromId?: number | string };
 
 /**
  * Normalize and validate translation id from search (accepts number or string).
@@ -70,7 +70,7 @@ function isSubmitShortcut(e: KeyboardEvent): boolean {
   return (e.metaKey || e.ctrlKey) && e.key === "Enter";
 }
 
-export const Route = createFileRoute("/translation")({
+export const Route = createFileRoute("/translations")({
   component: () => (
     <ProtectedLayout>
       <RouteComponent />
@@ -80,7 +80,7 @@ export const Route = createFileRoute("/translation")({
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional rendering and state management
 function RouteComponent() {
-  const search = useSearch({ from: "/translation" }) as TranslationSearch;
+  const search = useSearch({ from: "/translations" }) as TranslationSearch;
   const navigate = useNavigate();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -104,10 +104,10 @@ function RouteComponent() {
     error: modelsError,
   } = useTranslationModelSelection();
 
-  const translationId = parseTranslationId(search.id);
+  const translationId = parseTranslationId(search.fromId);
   const hasTranslationId = translationId > 0;
 
-  // Load translation if ID is provided in URL
+  // Load translation if fromId is provided in URL (for copying)
   const { data: translationData } = useQuery(
     orpc.translations.get.queryOptions({
       input: { id: translationId },
@@ -122,10 +122,10 @@ function RouteComponent() {
           queryKey: orpc.translations.list.queryKey(),
         });
         setTranslatedText(data.translatedText ?? "");
-        // Update URL to reflect the new translation
+        // Navigate to history view
         navigate({
-          to: "/translation",
-          search: { id: data.id },
+          to: "/translation/$id",
+          params: { id: String(data.id) },
         });
       },
     })
@@ -138,14 +138,10 @@ function RouteComponent() {
           queryKey: orpc.translations.list.queryKey(),
         });
         setPdfError(null);
-        setMode("pdf");
-        setTranslatedText(data.translatedText ?? "");
-        setPdfResult((data.payload as TranslationPayload) ?? null);
-        setPdfFileName(data.sourceFileName ?? selectedPdf?.name ?? "");
-        setSelectedPdf(null);
+        // Navigate to history view
         navigate({
-          to: "/translation",
-          search: { id: data.id },
+          to: "/translation/$id",
+          params: { id: String(data.id) },
         });
       },
     })

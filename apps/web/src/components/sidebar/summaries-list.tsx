@@ -41,9 +41,9 @@ export function SummariesList() {
             },
           ]}
           key={summary.id}
-          search={{ id: summary.id }}
+          params={{ id: String(summary.id) }}
           title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
-          to="/summarize"
+          to="/summary/$id"
         />
       ))}
     </>

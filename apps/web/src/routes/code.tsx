@@ -1,5 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
@@ -62,7 +66,8 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
-  const search = useSearch({ from: "/code" }) as { runId?: string };
+  const search = useSearch({ from: "/code" }) as { fromId?: string };
+  const navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
   const [inputCode, setInputCode] = useState("");
@@ -80,48 +85,12 @@ function RouteComponent() {
 
   const runMutation = useMutation(
     orpc.code.run.mutationOptions({
-      onSuccess: (data, vars) => {
-        switch (vars.mode) {
-          case "generate":
-            setOutput((data as { generatedCode?: string }).generatedCode ?? "");
-            break;
-          case "explain":
-            setOutput((data as { explanation?: string }).explanation ?? "");
-            break;
-          case "review": {
-            const r = data as { feedback?: string; suggestions?: string[] };
-            const suggestions = (r.suggestions ?? [])
-              .map((s) => `- ${s}`)
-              .join("\n");
-            setOutput(
-              `${r.feedback ?? ""}${
-                suggestions
-                  ? `\n\n${fa.codeAssistant.review.suggestions}:\n${suggestions}`
-                  : ""
-              }`
-            );
-            break;
-          }
-          case "debug": {
-            const d = data as {
-              rootCause?: string;
-              solution?: string;
-              codeFix?: string;
-            };
-            setOutput(
-              `${fa.codeAssistant.debug.rootCause}: ${d.rootCause ?? ""}\n\n${
-                fa.codeAssistant.debug.solution
-              }: ${d.solution ?? ""}${
-                d.codeFix
-                  ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${d.codeFix}`
-                  : ""
-              }`
-            );
-            break;
-          }
-          default:
-            break;
-        }
+      onSuccess: (data) => {
+        // Navigate to history view
+        navigate({
+          to: "/code/$id",
+          params: { id: String((data as { id?: number }).id) },
+        });
       },
     })
   );
@@ -225,8 +194,8 @@ function RouteComponent() {
   );
   const selectedRunQuery = useQuery(
     orpc.code.getRun.queryOptions({
-      input: { id: Number.parseInt(search.runId || "0", 10) },
-      enabled: Boolean(search.runId),
+      input: { id: Number.parseInt(search.fromId || "0", 10) },
+      enabled: Boolean(search.fromId),
     })
   );
   useEffect(() => {

@@ -32,6 +32,7 @@ export const fa = {
     download: "دانلود",
     loadingModels: "در حال بارگذاری مدل‌ها...",
     selectModel: "انتخاب مدل",
+    history: "تاریخچه",
   },
   auth: {
     registerForm: {

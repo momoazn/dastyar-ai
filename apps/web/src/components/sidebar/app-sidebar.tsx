@@ -32,8 +32,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const handleNew = () => {
     if (activeItem?.url === "/chat") {
       createChatThread();
-    } else if (activeItem?.url === "/translation") {
+    } else if (activeItem?.url === "/translations") {
       handleNewTranslation();
+    } else if (activeItem?.url === "/summaries") {
+      navigate({ to: "/summaries" });
     } else if (activeItem?.url === "/code") {
       navigate({ to: "/code" });
     } else if (location.pathname.startsWith("/image")) {

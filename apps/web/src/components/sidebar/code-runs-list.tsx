@@ -64,8 +64,8 @@ export function CodeRunsList() {
             <Link
               className="block"
               key={run.id}
-              search={{ runId: String(run.id) }}
-              to="/code"
+              params={{ id: String(run.id) }}
+              to="/code/$id"
             >
               <div className="group flex items-center gap-2 rounded-md p-2 text-sm hover:bg-accent">
                 <Icon className="h-4 w-4 text-muted-foreground" />

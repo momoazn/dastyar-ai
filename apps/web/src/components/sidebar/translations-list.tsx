@@ -40,13 +40,13 @@ export function TranslationsList() {
             },
           ]}
           key={translation.id}
-          search={{ id: translation.id }}
+          params={{ id: String(translation.id) }}
           title={
             translation.sourceFileName ||
             translation.sourceText?.slice(0, 30) ||
             fa.general.untitled
           }
-          to="/translation"
+          to="/translation/$id"
         />
       ))}
     </>

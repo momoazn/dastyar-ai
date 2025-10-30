@@ -37,7 +37,7 @@ const summaryModeOptions = createSummaryModeOptions();
 const toneOptions = createToneOptions();
 
 // Search params shape for this route
-type SummarizeSearch = { id?: number | string };
+type SummarizeSearch = { fromId?: number | string };
 
 /**
  * Normalize and validate summary id from search (accepts number or string).
@@ -59,7 +59,7 @@ function isSubmitShortcut(e: KeyboardEvent): boolean {
   return (e.metaKey || e.ctrlKey) && e.key === "Enter";
 }
 
-export const Route = createFileRoute("/summarize")({
+export const Route = createFileRoute("/summaries")({
   component: () => (
     <ProtectedLayout>
       <SummarizePage />
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/summarize")({
  * and display previously generated results.
  */
 function SummarizePage() {
-  const search = useSearch({ from: "/summarize" }) as SummarizeSearch;
+  const search = useSearch({ from: "/summaries" }) as SummarizeSearch;
   const navigate = useNavigate();
 
   // Form state
@@ -96,10 +96,10 @@ function SummarizePage() {
     error: modelsError,
   } = useSummarizeModelSelection();
 
-  const summaryId = parseSummaryId(search.id);
+  const summaryId = parseSummaryId(search.fromId);
   const hasSummaryId = summaryId > 0;
 
-  // Load summary if ID is provided in URL
+  // Load summary if fromId is provided in URL (for copying)
   const { data: summaryData } = useQuery(
     orpc.summarize.get.queryOptions({
       input: { id: summaryId },
@@ -113,11 +113,10 @@ function SummarizePage() {
         queryClient.invalidateQueries({
           queryKey: orpc.summarize.list.queryKey(),
         });
-        setSummaryText(data.summaryText ?? "");
-        // Update URL to reflect the new summary
+        // Navigate to history view
         navigate({
-          to: "/summarize",
-          search: { id: data.id },
+          to: "/summary/$id",
+          params: { id: String(data.id) },
         });
       },
     })

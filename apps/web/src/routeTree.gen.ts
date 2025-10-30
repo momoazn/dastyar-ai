@@ -9,9 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TranslationRouteImport } from './routes/translation'
+import { Route as TranslationsRouteImport } from './routes/translations'
 import { Route as TranscribeRouteImport } from './routes/transcribe'
-import { Route as SummarizeRouteImport } from './routes/summarize'
+import { Route as SummariesRouteImport } from './routes/summaries'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImageRouteImport } from './routes/image'
@@ -20,12 +20,15 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ImageIndexRouteImport } from './routes/image.index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as TranslationIdRouteImport } from './routes/translation.$id'
+import { Route as SummaryIdRouteImport } from './routes/summary.$id'
 import { Route as ImageIdRouteImport } from './routes/image.$id'
+import { Route as CodeIdRouteImport } from './routes/code.$id'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 
-const TranslationRoute = TranslationRouteImport.update({
-  id: '/translation',
-  path: '/translation',
+const TranslationsRoute = TranslationsRouteImport.update({
+  id: '/translations',
+  path: '/translations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TranscribeRoute = TranscribeRouteImport.update({
@@ -33,9 +36,9 @@ const TranscribeRoute = TranscribeRouteImport.update({
   path: '/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SummarizeRoute = SummarizeRouteImport.update({
-  id: '/summarize',
-  path: '/summarize',
+const SummariesRoute = SummariesRouteImport.update({
+  id: '/summaries',
+  path: '/summaries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -78,10 +81,25 @@ const ChatIndexRoute = ChatIndexRouteImport.update({
   path: '/chat/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TranslationIdRoute = TranslationIdRouteImport.update({
+  id: '/translation/$id',
+  path: '/translation/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SummaryIdRoute = SummaryIdRouteImport.update({
+  id: '/summary/$id',
+  path: '/summary/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImageIdRoute = ImageIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ImageRoute,
+} as any)
+const CodeIdRoute = CodeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CodeRoute,
 } as any)
 const ChatIdRoute = ChatIdRouteImport.update({
   id: '/chat/$id',
@@ -92,29 +110,35 @@ const ChatIdRoute = ChatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/code': typeof CodeRoute
+  '/code': typeof CodeRouteWithChildren
   '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/summarize': typeof SummarizeRoute
+  '/summaries': typeof SummariesRoute
   '/transcribe': typeof TranscribeRoute
-  '/translation': typeof TranslationRoute
+  '/translations': typeof TranslationsRoute
   '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
+  '/summary/$id': typeof SummaryIdRoute
+  '/translation/$id': typeof TranslationIdRoute
   '/chat': typeof ChatIndexRoute
   '/image/': typeof ImageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/code': typeof CodeRoute
+  '/code': typeof CodeRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/summarize': typeof SummarizeRoute
+  '/summaries': typeof SummariesRoute
   '/transcribe': typeof TranscribeRoute
-  '/translation': typeof TranslationRoute
+  '/translations': typeof TranslationsRoute
   '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
+  '/summary/$id': typeof SummaryIdRoute
+  '/translation/$id': typeof TranslationIdRoute
   '/chat': typeof ChatIndexRoute
   '/image': typeof ImageIndexRoute
 }
@@ -122,15 +146,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/code': typeof CodeRoute
+  '/code': typeof CodeRouteWithChildren
   '/image': typeof ImageRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/summarize': typeof SummarizeRoute
+  '/summaries': typeof SummariesRoute
   '/transcribe': typeof TranscribeRoute
-  '/translation': typeof TranslationRoute
+  '/translations': typeof TranslationsRoute
   '/chat/$id': typeof ChatIdRoute
+  '/code/$id': typeof CodeIdRoute
   '/image/$id': typeof ImageIdRoute
+  '/summary/$id': typeof SummaryIdRoute
+  '/translation/$id': typeof TranslationIdRoute
   '/chat/': typeof ChatIndexRoute
   '/image/': typeof ImageIndexRoute
 }
@@ -143,11 +170,14 @@ export interface FileRouteTypes {
     | '/image'
     | '/login'
     | '/register'
-    | '/summarize'
+    | '/summaries'
     | '/transcribe'
-    | '/translation'
+    | '/translations'
     | '/chat/$id'
+    | '/code/$id'
     | '/image/$id'
+    | '/summary/$id'
+    | '/translation/$id'
     | '/chat'
     | '/image/'
   fileRoutesByTo: FileRoutesByTo
@@ -157,11 +187,14 @@ export interface FileRouteTypes {
     | '/code'
     | '/login'
     | '/register'
-    | '/summarize'
+    | '/summaries'
     | '/transcribe'
-    | '/translation'
+    | '/translations'
     | '/chat/$id'
+    | '/code/$id'
     | '/image/$id'
+    | '/summary/$id'
+    | '/translation/$id'
     | '/chat'
     | '/image'
   id:
@@ -172,11 +205,14 @@ export interface FileRouteTypes {
     | '/image'
     | '/login'
     | '/register'
-    | '/summarize'
+    | '/summaries'
     | '/transcribe'
-    | '/translation'
+    | '/translations'
     | '/chat/$id'
+    | '/code/$id'
     | '/image/$id'
+    | '/summary/$id'
+    | '/translation/$id'
     | '/chat/'
     | '/image/'
   fileRoutesById: FileRoutesById
@@ -184,24 +220,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  CodeRoute: typeof CodeRoute
+  CodeRoute: typeof CodeRouteWithChildren
   ImageRoute: typeof ImageRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  SummarizeRoute: typeof SummarizeRoute
+  SummariesRoute: typeof SummariesRoute
   TranscribeRoute: typeof TranscribeRoute
-  TranslationRoute: typeof TranslationRoute
+  TranslationsRoute: typeof TranslationsRoute
   ChatIdRoute: typeof ChatIdRoute
+  SummaryIdRoute: typeof SummaryIdRoute
+  TranslationIdRoute: typeof TranslationIdRoute
   ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/translation': {
-      id: '/translation'
-      path: '/translation'
-      fullPath: '/translation'
-      preLoaderRoute: typeof TranslationRouteImport
+    '/translations': {
+      id: '/translations'
+      path: '/translations'
+      fullPath: '/translations'
+      preLoaderRoute: typeof TranslationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transcribe': {
@@ -211,11 +249,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/summarize': {
-      id: '/summarize'
-      path: '/summarize'
-      fullPath: '/summarize'
-      preLoaderRoute: typeof SummarizeRouteImport
+    '/summaries': {
+      id: '/summaries'
+      path: '/summaries'
+      fullPath: '/summaries'
+      preLoaderRoute: typeof SummariesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -274,12 +312,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/translation/$id': {
+      id: '/translation/$id'
+      path: '/translation/$id'
+      fullPath: '/translation/$id'
+      preLoaderRoute: typeof TranslationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/summary/$id': {
+      id: '/summary/$id'
+      path: '/summary/$id'
+      fullPath: '/summary/$id'
+      preLoaderRoute: typeof SummaryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/image/$id': {
       id: '/image/$id'
       path: '/$id'
       fullPath: '/image/$id'
       preLoaderRoute: typeof ImageIdRouteImport
       parentRoute: typeof ImageRoute
+    }
+    '/code/$id': {
+      id: '/code/$id'
+      path: '/$id'
+      fullPath: '/code/$id'
+      preLoaderRoute: typeof CodeIdRouteImport
+      parentRoute: typeof CodeRoute
     }
     '/chat/$id': {
       id: '/chat/$id'
@@ -290,6 +349,16 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface CodeRouteChildren {
+  CodeIdRoute: typeof CodeIdRoute
+}
+
+const CodeRouteChildren: CodeRouteChildren = {
+  CodeIdRoute: CodeIdRoute,
+}
+
+const CodeRouteWithChildren = CodeRoute._addFileChildren(CodeRouteChildren)
 
 interface ImageRouteChildren {
   ImageIdRoute: typeof ImageIdRoute
@@ -306,14 +375,16 @@ const ImageRouteWithChildren = ImageRoute._addFileChildren(ImageRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  CodeRoute: CodeRoute,
+  CodeRoute: CodeRouteWithChildren,
   ImageRoute: ImageRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  SummarizeRoute: SummarizeRoute,
+  SummariesRoute: SummariesRoute,
   TranscribeRoute: TranscribeRoute,
-  TranslationRoute: TranslationRoute,
+  TranslationsRoute: TranslationsRoute,
   ChatIdRoute: ChatIdRoute,
+  SummaryIdRoute: SummaryIdRoute,
+  TranslationIdRoute: TranslationIdRoute,
   ChatIndexRoute: ChatIndexRoute,
 }
 export const routeTree = rootRouteImport

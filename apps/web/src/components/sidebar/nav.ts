@@ -24,12 +24,12 @@ export const navMain: NavItem[] = [
   },
   {
     title: fa.navigation.translation,
-    url: "/translation",
+    url: "/translations",
     icon: MessageCircle,
   },
   {
     title: fa.navigation.summarize,
-    url: "/summarize",
+    url: "/summaries",
     icon: FileText,
   },
   {

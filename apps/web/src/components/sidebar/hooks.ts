@@ -27,6 +27,6 @@ export function useCreateThread(isActive: boolean) {
 export function useTranslationActions() {
   const navigate = useNavigate();
   return {
-    handleNewTranslation: () => navigate({ to: "/translation" }),
+    handleNewTranslation: () => navigate({ to: "/translations" }),
   } as const;
 }
