@@ -692,7 +692,7 @@ function RouteComponent() {
                       // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag handlers require div for drag-and-drop functionality
                       <div
                         className={cn(
-                          "flex h-full min-h-[300px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+                          "flex h-full max-h-[400px] min-h-[300px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
                           isDragging
                             ? "border-primary bg-primary/5"
                             : "border-muted-foreground/25 bg-muted/30"
@@ -713,7 +713,7 @@ function RouteComponent() {
                           type="file"
                         />
                         <label
-                          className="flex cursor-pointer flex-col items-center gap-3 p-6 text-center"
+                          className="flex cursor-pointer flex-col items-center gap-4 p-6 text-center"
                           htmlFor="pdf-upload"
                         >
                           <div
@@ -729,7 +729,7 @@ function RouteComponent() {
                               <FileIcon className="h-8 w-8 text-muted-foreground" />
                             )}
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-2">
                             <span className="font-medium text-sm">
                               {isDragging
                                 ? "رها کنید برای آپلود"
@@ -779,10 +779,9 @@ function RouteComponent() {
                       </div>
                     </div>
                   </div>
-                  <Separator />
                   <div className="flex flex-1 flex-col gap-4 p-4">
                     {isTranslatingPdf ? (
-                      <div className="flex h-full min-h-[300px] items-center justify-center">
+                      <div className="flex h-full max-h-[400px] min-h-[300px] items-center justify-center">
                         <div className="flex flex-col items-center gap-3">
                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
                           <div className="text-muted-foreground text-sm">
@@ -791,62 +790,98 @@ function RouteComponent() {
                         </div>
                       </div>
                     ) : (
-                      <>
-                        {pdfResult && translatedText && (
-                          <Textarea
-                            aria-label={fa.translation.translatedText}
-                            className="min-h-[140px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
-                            dir={detectTextDirection(translatedText)}
-                            placeholder={fa.translation.translatedText}
-                            readOnly
-                            value={translatedText}
-                          />
-                        )}
-                        {pdfResult && pdfResult.pages.length > 0 ? (
-                          <ScrollArea className="flex-1 pr-2">
-                            <div className="flex flex-col gap-3">
-                              {pdfResult.pages.map((page) => (
-                                <Card className="p-4" key={page.page}>
-                                  <div className="mb-2 flex items-center gap-2">
-                                    <Badge
-                                      className="text-xs"
-                                      variant="outline"
-                                    >
-                                      {fa.translation.pdfPageLabel(page.page)}
-                                    </Badge>
+                      (() => {
+                        if (pdfResult && translatedText) {
+                          return (
+                            <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
+                              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                                  <FileText className="h-6 w-6 text-green-500" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-sm">
+                                    ترجمه تکمیل شده
                                   </div>
-                                  <p
-                                    className="whitespace-pre-wrap text-sm leading-relaxed"
-                                    dir={detectTextDirection(
-                                      page.translatedText
-                                    )}
-                                  >
-                                    {page.translatedText}
-                                  </p>
-                                </Card>
-                              ))}
+                                  <div className="text-muted-foreground text-xs">
+                                    {pdfResult.pageCount} صفحه ترجمه شده
+                                  </div>
+                                </div>
+                              </div>
+                              <Textarea
+                                aria-label={fa.translation.translatedText}
+                                className="min-h-[140px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+                                dir={detectTextDirection(translatedText)}
+                                readOnly
+                                value={translatedText}
+                              />
                             </div>
-                          </ScrollArea>
-                        ) : (
-                          !pdfResult && (
-                            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed bg-muted/30">
-                              <div className="flex flex-col items-center gap-2 text-center">
-                                <FileIcon className="h-8 w-8 text-muted-foreground" />
-                                <p className="text-muted-foreground text-sm">
-                                  {fa.translation.pdfAwaitingUpload}
-                                </p>
+                          );
+                        }
+                        if (pdfResult && pdfResult.pages.length > 0) {
+                          return (
+                            <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
+                              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                                  <FileText className="h-6 w-6 text-green-500" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-sm">
+                                    ترجمه تکمیل شده
+                                  </div>
+                                  <div className="text-muted-foreground text-xs">
+                                    {pdfResult.pageCount} صفحه ترجمه شده
+                                  </div>
+                                </div>
+                              </div>
+                              <ScrollArea className="flex-1 pr-2">
+                                <div className="flex flex-col gap-3">
+                                  {pdfResult.pages.map((page) => (
+                                    <Card className="p-4" key={page.page}>
+                                      <div className="mb-2 flex items-center gap-2">
+                                        <Badge
+                                          className="text-xs"
+                                          variant="outline"
+                                        >
+                                          {fa.translation.pdfPageLabel(
+                                            page.page
+                                          )}
+                                        </Badge>
+                                      </div>
+                                      <p
+                                        className="whitespace-pre-wrap text-sm leading-relaxed"
+                                        dir={detectTextDirection(
+                                          page.translatedText
+                                        )}
+                                      >
+                                        {page.translatedText}
+                                      </p>
+                                    </Card>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="flex h-full max-h-[400px] min-h-[300px] flex-col items-center justify-center rounded-lg border-2 border-muted-foreground/25 border-dashed bg-muted/30">
+                            <div className="flex flex-col items-center gap-4 p-6 text-center">
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted-foreground/10">
+                                <FileText className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <span className="font-medium text-sm">
+                                  برای مشاهده نتیجه، فایل PDF را انتخاب و ترجمه
+                                  کنید
+                                </span>
+                                <span className="text-muted-foreground text-xs">
+                                  فایل PDF خود را انتخاب کنید تا ترجمه شروع شود
+                                </span>
                               </div>
                             </div>
-                          )
-                        )}
-                      </>
+                          </div>
+                        );
+                      })()
                     )}
-                  </div>
-                  <Separator />
-                  <div className="px-4 py-2">
-                    <div className="text-muted-foreground text-xs">
-                      {translatedText ? fa.translation.keyboardHint : "\u00A0"}
-                    </div>
                   </div>
                 </Card>
               </div>
