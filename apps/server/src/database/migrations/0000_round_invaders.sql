@@ -75,11 +75,14 @@ CREATE TABLE `image_threads` (
 --> statement-breakpoint
 CREATE TABLE `llm_models` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`name` text NOT NULL,
+	`identifier` text NOT NULL,
 	`provider` text NOT NULL,
+	`creator` text,
+	`family` text,
+	`size` text,
 	`is_enabled` integer DEFAULT true NOT NULL,
-	`createdAt` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updatedAt` integer DEFAULT CURRENT_TIMESTAMP NOT NULL
+	`created_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `messages` (

@@ -28,12 +28,12 @@ export const llmModelProcedures = {
         if (sync) {
           const availableModels = await listAllModels();
           const allModels = await syncModels(availableModels, { isEnabled });
-
-          return allModels;
+          return allModels.filter((model) => !model.identifier.includes("embed"));
         }
 
         // Return models without syncing
-        return await getModels({ isEnabled });
+        const models = await getModels({ isEnabled });
+        return models.filter((model) => !model.identifier.includes("embed"));
       } catch (error) {
         console.error("Error listing models:", error);
         throw error;

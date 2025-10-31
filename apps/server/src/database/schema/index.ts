@@ -74,13 +74,16 @@ export const users = sqliteTable("users", {
 
 export const llmModels = sqliteTable("llm_models", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
+  identifier: text("identifier").notNull(),
   provider: text("provider", { enum: llmModelProviders }).notNull(),
+  creator: text("creator"),
+  family: text("family"),
+  size: text("size"),
   isEnabled: integer("is_enabled", { mode: "boolean" }).notNull().default(true),
-  createdAt: integer("createdAt", { mode: "timestamp" })
+  createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updatedAt", { mode: "timestamp" })
+  updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 });

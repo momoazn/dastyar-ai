@@ -277,7 +277,7 @@ function SummarizePage() {
                       key={model.id}
                       value={model.id.toString()}
                     >
-                      {model.name}
+                      {model.identifier}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -254,7 +254,7 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(model.name, model.provider);
+      const providerModel = getProviderForModel(model.identifier, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
@@ -310,7 +310,7 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(model.name, model.provider);
+      const providerModel = getProviderForModel(model.identifier, model.provider);
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;

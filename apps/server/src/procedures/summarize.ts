@@ -91,7 +91,7 @@ export const summarizeProcedures = {
       if (!model) {
         throw new Error("Model not found");
       }
-      const providerModel = getProviderForModel(model.name, model.provider);
+      const providerModel = getProviderForModel(model.identifier, model.provider);
 
       const systemPrompt = [
         "You are a professional summarizer. Create clear, accurate summaries.",

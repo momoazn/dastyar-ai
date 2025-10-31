@@ -29,7 +29,7 @@ export const codeProcedures = {
       if (!model) {
         throw new Error("Model not found");
       }
-      const providerModel = getProviderForModel(model.name, model.provider);
+      const providerModel = getProviderForModel(model.identifier, model.provider);
       const makeRequest = (s: string, u: string) =>
         generateText({
           model: providerModel,

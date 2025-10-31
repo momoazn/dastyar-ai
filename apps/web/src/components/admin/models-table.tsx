@@ -141,7 +141,7 @@ export function ModelsTable() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {model.name}
+                    {model.identifier}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {model.id}

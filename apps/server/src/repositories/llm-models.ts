@@ -8,7 +8,7 @@ import {
 
 type ModelFilter = Partial<{
   id: number;
-  name: string;
+  identifier: string;
   provider: LLMModelProvider;
   isEnabled: boolean;
 }>;
@@ -25,8 +25,8 @@ export async function getModels(where: ModelFilter = {}): Promise<LLMModel[]> {
   if (where.id !== undefined) {
     conditions.push(eq(llmModels.id, where.id));
   }
-  if (where.name !== undefined) {
-    conditions.push(eq(llmModels.name, where.name));
+  if (where.identifier !== undefined) {
+    conditions.push(eq(llmModels.identifier, where.identifier));
   }
   if (where.provider !== undefined) {
     conditions.push(eq(llmModels.provider, where.provider));
@@ -53,14 +53,23 @@ export async function updateModel(
   const update: Partial<typeof llmModels.$inferInsert> = {
     updatedAt: new Date(),
   };
-  if (model.name !== undefined) {
-    update.name = model.name;
+  if (model.identifier !== undefined) {
+    update.identifier = model.identifier;
   }
   if (model.provider !== undefined) {
     update.provider = model.provider;
   }
   if (model.isEnabled !== undefined) {
     update.isEnabled = model.isEnabled;
+  }
+  if (model.size !== undefined) {
+    update.size = model.size;
+  }
+  if (model.creator !== undefined) {
+    update.creator = model.creator;
+  }
+  if (model.family !== undefined) {
+    update.family = model.family;
   }
 
   await db.update(llmModels).set(update).where(eq(llmModels.id, id)).run();
@@ -77,25 +86,72 @@ export async function syncModels(
   where: ModelFilter = {}
 ): Promise<LLMModel[]> {
   const existingModels = await getModels();
-  const modelsToCreate = modelsList.filter(
+  const modelsWithInfo = modelsList.map((model) => {
+    const parsedInfo = parseModelName(model.name);
+    return {
+      identifier: model.name,
+      provider: model.provider,
+      size: parsedInfo.size,
+      creator: parsedInfo.creator,
+      family: parsedInfo.familyName,
+    };
+  });
+
+  const modelsToCreate = modelsWithInfo.filter(
     (model) =>
       !existingModels.some(
-        (m) => m.name === model.name && m.provider === model.provider
+        (m) => m.identifier === model.identifier && m.provider === model.provider
       )
   );
 
   if (modelsToCreate.length > 0) {
-    await db
-      .insert(llmModels)
+    db.insert(llmModels)
       .values(
         modelsToCreate.map((model) => ({
-          name: model.name,
+          identifier: model.identifier,
           provider: model.provider,
           isEnabled: true,
+          size: model.size,
+          creator: model.creator,
+          family: model.family,
         }))
       )
       .run();
   }
 
   return await getModels(where);
+}
+
+type ModelInfo = {
+  creator?: string;
+  size?: string;
+  familyName: string;
+  rawName: string;
+};
+
+function parseModelName(rawName: string): ModelInfo {
+  // Split by '/' to check for creator
+  const parts = rawName.split("/");
+  const creator = parts.length > 1 ? parts[0] : undefined;
+  const nameWithSize = parts.length > 1 ? parts[1] : parts[0];
+
+  // Extract size using regex - matches patterns like:
+  // - 270m, 1.7b, 20b (number with unit)
+  // - e4b (alphanumeric size indicator)
+  const sizeMatch = nameWithSize.match(/[-:]([0-9.]+[a-z]+|e\d+[a-z]+)$/i);
+  const size = sizeMatch ? sizeMatch[1] : undefined;
+
+  // Extract family name by removing the size suffix
+  let familyName = nameWithSize;
+  if (size) {
+    // Remove the size and its preceding delimiter (: or -)
+    familyName = nameWithSize.replace(new RegExp(`[-:]${size}$`, "i"), "");
+  }
+
+  return {
+    creator,
+    size,
+    familyName,
+    rawName,
+  };
 }

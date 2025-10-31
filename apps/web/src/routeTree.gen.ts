@@ -61,9 +61,9 @@ const SummaryIndexRoute = SummaryIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImageIndexRoute = ImageIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ImageRoute,
+  id: '/image/',
+  path: '/image/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CodeIndexRoute = CodeIndexRouteImport.update({
   id: '/code/',
@@ -115,7 +115,7 @@ export interface FileRoutesByFullPath {
   '/translation/$translationId': typeof TranslationTranslationIdRoute
   '/chat': typeof ChatIndexRoute
   '/code': typeof CodeIndexRoute
-  '/image/': typeof ImageIndexRoute
+  '/image': typeof ImageIndexRoute
   '/summary': typeof SummaryIndexRoute
   '/translation': typeof TranslationIndexRoute
 }
@@ -169,7 +169,7 @@ export interface FileRouteTypes {
     | '/translation/$translationId'
     | '/chat'
     | '/code'
-    | '/image/'
+    | '/image'
     | '/summary'
     | '/translation'
   fileRoutesByTo: FileRoutesByTo
@@ -221,6 +221,7 @@ export interface RootRouteChildren {
   TranslationTranslationIdRoute: typeof TranslationTranslationIdRoute
   ChatIndexRoute: typeof ChatIndexRoute
   CodeIndexRoute: typeof CodeIndexRoute
+  ImageIndexRoute: typeof ImageIndexRoute
   SummaryIndexRoute: typeof SummaryIndexRoute
   TranslationIndexRoute: typeof TranslationIndexRoute
 }
@@ -278,10 +279,10 @@ declare module '@tanstack/react-router' {
     }
     '/image/': {
       id: '/image/'
-      path: '/'
-      fullPath: '/image/'
+      path: '/image'
+      fullPath: '/image'
       preLoaderRoute: typeof ImageIndexRouteImport
-      parentRoute: typeof ImageRoute
+      parentRoute: typeof rootRouteImport
     }
     '/code/': {
       id: '/code/'
@@ -348,6 +349,7 @@ const rootRouteChildren: RootRouteChildren = {
   TranslationTranslationIdRoute: TranslationTranslationIdRoute,
   ChatIndexRoute: ChatIndexRoute,
   CodeIndexRoute: CodeIndexRoute,
+  ImageIndexRoute: ImageIndexRoute,
   SummaryIndexRoute: SummaryIndexRoute,
   TranslationIndexRoute: TranslationIndexRoute,
 }

@@ -110,7 +110,7 @@ export const ChatInput = ({
       content: (
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-green-500" />
-          <span className="text-sm">{model.name}</span>
+          <span className="text-sm">{model.identifier}</span>
           {model.provider ? (
             <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
               {model.provider}
