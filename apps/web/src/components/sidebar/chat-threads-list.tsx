@@ -14,7 +14,7 @@ export function ChatThreadsList() {
 
   const redirectToChat = (id: number) => {
     if (location.pathname === `/chat/${id}`) {
-      navigate({ to: "/chat" });
+      navigate({ to: "/chat/" });
     }
   };
 

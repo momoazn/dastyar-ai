@@ -16,14 +16,14 @@ import ProtectedLayout from "@/layouts/protected";
 import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
 import { detectTextDirection } from "@/lib/utils";
-import type { LanguageCode, Tone, TranslationPayload } from "@/server/database/schema";
+import type { TranslationPayload } from "@/server/database/schema";
 import { orpc } from "@/utils/orpc";
 
 // Precompute selection option lists
 const languageOptions = createLanguageOptions();
 const toneOptions = createToneOptions();
 
-export const Route = createFileRoute("/translation/$id")({
+export const Route = createFileRoute("/translation/$translationId")({
   component: () => (
     <ProtectedLayout>
       <TranslationHistoryView />
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/translation/$id")({
 });
 
 function TranslationHistoryView() {
-  const { id } = Route.useParams();
+  const { translationId: id } = Route.useParams();
   const navigate = useNavigate();
   const [isCopied, setIsCopied] = useState(false);
 
@@ -47,21 +47,18 @@ function TranslationHistoryView() {
   const { models } = useTranslationModelSelection();
 
   // Helper functions to get labels
-  const getLanguageLabel = (code: string) => {
-    return languageOptions.find((lang) => lang.value === code)?.label ?? code;
-  };
+  const getLanguageLabel = (code: string) =>
+    languageOptions.find((lang) => lang.value === code)?.label ?? code;
 
-  const getToneLabel = (tone: string) => {
-    return toneOptions.find((t) => t.value === tone)?.label ?? tone;
-  };
+  const getToneLabel = (tone: string) =>
+    toneOptions.find((t) => t.value === tone)?.label ?? tone;
 
-  const getModelName = (modelId: number) => {
-    return models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
-  };
+  const getModelName = (modelId: number) =>
+    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
-      to: "/translations",
+      to: "/translation/",
       search: { fromId: translationId },
     });
   };

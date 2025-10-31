@@ -23,9 +23,9 @@ import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { fa } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
-import { orpc } from "@/utils/orpc";
+import { orpc, queryClient } from "@/utils/orpc";
 
-export const Route = createFileRoute("/code")({
+export const Route = createFileRoute("/code/")({
   component: () => (
     <ProtectedLayout>
       <RouteComponent />
@@ -66,7 +66,7 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
-  const search = useSearch({ from: "/code" }) as { fromId?: string };
+  const search = useSearch({ from: "/code/" }) as { fromId?: string };
   const navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
@@ -83,14 +83,47 @@ function RouteComponent() {
     error: modelsError,
   } = useCodeModelSelection();
 
+  type RunItem = {
+    id: number;
+    mode: string;
+    language: string;
+    inputText: string;
+    errorText?: string | null;
+    output: string;
+    modelId: number;
+    createdAt: string | Date;
+  };
+
   const runMutation = useMutation(
     orpc.code.run.mutationOptions({
       onSuccess: (data) => {
-        // Navigate to history view
-        navigate({
-          to: "/code/$id",
-          params: { id: String((data as { id?: number }).id) },
+        // Invalidate queries to update sidebar history
+        queryClient.invalidateQueries({
+          queryKey: orpc.code.listRuns.queryKey(),
         });
+        // Store the returned data - we'll format it later when displaying
+        const runData = data as RunItem;
+
+        // Parse and format the output based on mode
+        try {
+          const parsed = JSON.parse(runData.output) as unknown;
+          if (runData.mode === "generate") {
+            setOutput(
+              typeof parsed === "object" && parsed && "code" in parsed
+                ? String((parsed as { code?: string }).code || "")
+                : String(parsed || "")
+            );
+          } else {
+            setOutput(
+              typeof parsed === "object" && parsed && "explanation" in parsed
+                ? String((parsed as { explanation?: string }).explanation || "")
+                : String(parsed || "")
+            );
+          }
+        } catch {
+          setOutput(runData.output);
+        }
+        // Stay on the same page to allow quick iterations
       },
     })
   );
@@ -124,17 +157,6 @@ function RouteComponent() {
   };
 
   const currentMutation = runMutation;
-
-  type RunItem = {
-    id: number;
-    mode: string;
-    language: string;
-    inputText: string;
-    errorText?: string | null;
-    output: string;
-    modelId: number;
-    createdAt: string | Date;
-  };
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: straightforward parsing/formatting for four modes
   const formatRunOutput = useCallback((run: RunItem): string => {

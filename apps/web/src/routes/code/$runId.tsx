@@ -11,7 +11,7 @@ import { fa } from "@/lib/persian-texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 
-export const Route = createFileRoute("/code/$id")({
+export const Route = createFileRoute("/code/$runId")({
   component: () => (
     <ProtectedLayout>
       <CodeHistoryView />
@@ -27,7 +27,7 @@ const modeIcons = {
 };
 
 function CodeHistoryView() {
-  const { id } = Route.useParams();
+  const { runId: id } = Route.useParams();
   const navigate = useNavigate();
   const [isCopied, setIsCopied] = useState(false);
 
@@ -42,13 +42,12 @@ function CodeHistoryView() {
   const { models } = useCodeModelSelection();
 
   // Helper function to get model name
-  const getModelName = (modelId: number) => {
-    return models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
-  };
+  const getModelName = (modelId: number) =>
+    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
-      to: "/code",
+      to: "/code/",
       search: { fromId: runId },
     });
   };

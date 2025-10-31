@@ -19,7 +19,7 @@ export function CodeRunsList() {
         <div className="text-center text-muted-foreground text-sm">
           موردی موجود نیست
         </div>
-        <Link to="/code">
+        <Link to="/code/">
           <Button className="mt-2 w-full" size="sm">
             <Code className="ml-2 h-4 w-4" />
             شروع جدید
@@ -51,7 +51,7 @@ export function CodeRunsList() {
     <div className="p-2">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-medium text-muted-foreground text-sm">تاریخچه</h3>
-        <Link to="/code">
+        <Link to="/code/">
           <Button size="sm" variant="ghost">
             <Code className="h-4 w-4" />
           </Button>
@@ -64,8 +64,8 @@ export function CodeRunsList() {
             <Link
               className="block"
               key={run.id}
-              params={{ id: String(run.id) }}
-              to="/code/$id"
+              params={{ runId: String(run.id) }}
+              to="/code/$runId"
             >
               <div className="group flex items-center gap-2 rounded-md p-2 text-sm hover:bg-accent">
                 <Icon className="h-4 w-4 text-muted-foreground" />

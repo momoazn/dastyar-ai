@@ -19,17 +19,17 @@ export type NavItem = {
 export const navMain: NavItem[] = [
   {
     title: fa.navigation.chat,
-    url: "/chat",
+    url: "/chat/",
     icon: MessageSquare,
   },
   {
     title: fa.navigation.translation,
-    url: "/translations",
+    url: "/translation/",
     icon: MessageCircle,
   },
   {
     title: fa.navigation.summarize,
-    url: "/summaries",
+    url: "/summary/",
     icon: FileText,
   },
   {
@@ -44,7 +44,7 @@ export const navMain: NavItem[] = [
   },
   {
     title: fa.navigation.codeAssistant,
-    url: "/code",
+    url: "/code/",
     icon: Code,
   },
 ] as const satisfies NavItem[];
@@ -54,7 +54,14 @@ export function useActiveNavItem(): NavItem | undefined {
   const currentPath = location.pathname;
 
   for (const item of navMain) {
-    if (currentPath === item.url || currentPath.startsWith(`${item.url}/`)) {
+    // Normalize both paths for comparison (remove trailing slash if present)
+    const normalizedItemUrl = item.url.replace(/\/$/, "");
+    const normalizedCurrentPath = currentPath.replace(/\/$/, "");
+
+    if (
+      normalizedCurrentPath === normalizedItemUrl ||
+      normalizedCurrentPath.startsWith(`${normalizedItemUrl}/`)
+    ) {
       return item;
     }
   }

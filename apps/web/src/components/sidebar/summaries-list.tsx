@@ -7,7 +7,7 @@ import { SummaryEmptyState } from "./empty-state";
 
 export function SummariesList() {
   const location = useLocation();
-  const isSummarizePage = location.pathname.startsWith("/summarize");
+  const isSummarizePage = location.pathname.startsWith("/summary");
 
   const mutations = useSummaryMutations();
 
@@ -41,9 +41,9 @@ export function SummariesList() {
             },
           ]}
           key={summary.id}
-          params={{ id: String(summary.id) }}
+          params={{ summaryId: String(summary.id) }}
           title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
-          to="/summary/$id"
+          to="/summary/$summaryId"
         />
       ))}
     </>

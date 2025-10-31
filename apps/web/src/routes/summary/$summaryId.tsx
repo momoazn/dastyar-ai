@@ -18,7 +18,7 @@ import { orpc } from "@/utils/orpc";
 const summaryModeOptions = createSummaryModeOptions();
 const toneOptions = createToneOptions();
 
-export const Route = createFileRoute("/summary/$id")({
+export const Route = createFileRoute("/summary/$summaryId")({
   component: () => (
     <ProtectedLayout>
       <SummaryHistoryView />
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/summary/$id")({
 });
 
 function SummaryHistoryView() {
-  const { id } = Route.useParams();
+  const { summaryId: id } = Route.useParams();
   const navigate = useNavigate();
   const [isCopied, setIsCopied] = useState(false);
 
@@ -42,21 +42,18 @@ function SummaryHistoryView() {
   const { models } = useSummarizeModelSelection();
 
   // Helper functions to get labels
-  const getModeLabel = (mode: string) => {
-    return summaryModeOptions.find((m) => m.value === mode)?.label ?? mode;
-  };
+  const getModeLabel = (mode: string) =>
+    summaryModeOptions.find((m) => m.value === mode)?.label ?? mode;
 
-  const getToneLabel = (tone: string) => {
-    return toneOptions.find((t) => t.value === tone)?.label ?? tone;
-  };
+  const getToneLabel = (tone: string) =>
+    toneOptions.find((t) => t.value === tone)?.label ?? tone;
 
-  const getModelName = (modelId: number) => {
-    return models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
-  };
+  const getModelName = (modelId: number) =>
+    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
-      to: "/summaries",
+      to: "/summary/",
       search: { fromId: summaryId },
     });
   };

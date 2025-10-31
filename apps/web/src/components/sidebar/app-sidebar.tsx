@@ -24,20 +24,20 @@ import { UserProfileButton } from "./user-profile-button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeItem = useActiveNavItem();
-  const { createChatThread } = useCreateThread(activeItem?.url === "/chat");
+  const { createChatThread } = useCreateThread(activeItem?.url === "/chat/");
   const { handleNewTranslation } = useTranslationActions();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleNew = () => {
-    if (activeItem?.url === "/chat") {
+    if (activeItem?.url === "/chat/") {
       createChatThread();
-    } else if (activeItem?.url === "/translations") {
+    } else if (activeItem?.url === "/translation/") {
       handleNewTranslation();
-    } else if (activeItem?.url === "/summaries") {
-      navigate({ to: "/summaries" });
-    } else if (activeItem?.url === "/code") {
-      navigate({ to: "/code" });
+    } else if (activeItem?.url === "/summary/") {
+      navigate({ to: "/summary/" });
+    } else if (activeItem?.url === "/code/") {
+      navigate({ to: "/code/" });
     } else if (location.pathname.startsWith("/image")) {
       navigate({ to: "/image" });
     }

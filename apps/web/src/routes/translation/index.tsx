@@ -1,9 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import {
   ArrowLeftRightIcon,
   Copy,
@@ -70,7 +66,7 @@ function isSubmitShortcut(e: KeyboardEvent): boolean {
   return (e.metaKey || e.ctrlKey) && e.key === "Enter";
 }
 
-export const Route = createFileRoute("/translations")({
+export const Route = createFileRoute("/translation/")({
   component: () => (
     <ProtectedLayout>
       <RouteComponent />
@@ -80,8 +76,7 @@ export const Route = createFileRoute("/translations")({
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional rendering and state management
 function RouteComponent() {
-  const search = useSearch({ from: "/translations" }) as TranslationSearch;
-  const navigate = useNavigate();
+  const search = useSearch({ from: "/translation/" }) as TranslationSearch;
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [mode, setMode] = useState<"text" | "pdf">("text");
@@ -122,11 +117,7 @@ function RouteComponent() {
           queryKey: orpc.translations.list.queryKey(),
         });
         setTranslatedText(data.translatedText ?? "");
-        // Navigate to history view
-        navigate({
-          to: "/translation/$id",
-          params: { id: String(data.id) },
-        });
+        // Stay on the same page to allow quick iterations
       },
     })
   );
@@ -138,11 +129,9 @@ function RouteComponent() {
           queryKey: orpc.translations.list.queryKey(),
         });
         setPdfError(null);
-        // Navigate to history view
-        navigate({
-          to: "/translation/$id",
-          params: { id: String(data.id) },
-        });
+        setPdfResult((data.payload as TranslationPayload) ?? null);
+        setTranslatedText(data.translatedText ?? "");
+        // Stay on the same page to allow quick iterations
       },
     })
   );

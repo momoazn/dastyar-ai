@@ -59,7 +59,7 @@ function isSubmitShortcut(e: KeyboardEvent): boolean {
   return (e.metaKey || e.ctrlKey) && e.key === "Enter";
 }
 
-export const Route = createFileRoute("/summaries")({
+export const Route = createFileRoute("/summary/")({
   component: () => (
     <ProtectedLayout>
       <SummarizePage />
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/summaries")({
  * and display previously generated results.
  */
 function SummarizePage() {
-  const search = useSearch({ from: "/summaries" }) as SummarizeSearch;
+  const search = useSearch({ from: "/summary/" }) as SummarizeSearch;
   const navigate = useNavigate();
 
   // Form state
@@ -113,11 +113,8 @@ function SummarizePage() {
         queryClient.invalidateQueries({
           queryKey: orpc.summarize.list.queryKey(),
         });
-        // Navigate to history view
-        navigate({
-          to: "/summary/$id",
-          params: { id: String(data.id) },
-        });
+        setSummaryText(data.summaryText || "");
+        // Stay on the same page to allow quick iterations
       },
     })
   );
