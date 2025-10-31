@@ -9,7 +9,7 @@ import {
   listSummaries,
 } from "@/repositories/summaries";
 import { getProviderForModel } from "@/services/ai-providers";
-import { summaryModePrompts } from "@/utils/constants";
+import { buildSummaryPlainJsonPrompt, buildSummaryStructuredPrompt } from "@/prompts";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -96,17 +96,7 @@ export const summarizeProcedures = {
         model.provider
       );
 
-      const systemPrompt = [
-        "You are a professional summarizer. Create clear, accurate summaries.",
-        "IMPORTANT: Always summarize in the same language as the source text.",
-        summaryModePrompts[mode],
-        `Use a ${tone} tone.`,
-        "Preserve meaning and important details.",
-        "Always return a json object with the summary text.",
-        "Please generate only the JSON output. DO NOT provide any preamble.",
-      ]
-        .filter(Boolean)
-        .join("\n");
+      const systemPrompt = buildSummaryStructuredPrompt(mode, tone);
 
       let summaryText: string | null = null;
       try {
@@ -126,10 +116,7 @@ export const summarizeProcedures = {
         // fallback to plain json
         summaryText = await summarizeWithPlainJson(
           providerModel,
-          systemPrompt.replace(
-            "Always return a json object with the summary text.\nPlease generate only the JSON output. DO NOT provide any preamble.",
-            'Respond ONLY with a compact JSON object: {"summaryText": "..."}.'
-          ),
+          buildSummaryPlainJsonPrompt(mode, tone),
           input.text
         );
       }

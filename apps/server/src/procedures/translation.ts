@@ -19,6 +19,10 @@ import { getProviderForModel } from "@/services/ai-providers";
 import { extractTextFromPdf } from "@/services/processors";
 import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { extractJsonField } from "@/utils/llm-json";
+import {
+  buildTranslationPlainJsonPrompt,
+  buildTranslationStructuredPrompt,
+} from "@/prompts";
 import { protectedProcedure } from "./base";
 
 const STORAGE_TEXT_LIMIT = 12_000;
@@ -63,34 +67,7 @@ const translateWithPlainJson = async (
   return extractJsonField(rawOutput, "translatedText") ?? rawOutput.trim();
 };
 
-const buildStructuredPrompt = (
-  sourceLanguage: LanguageCode,
-  targetLanguage: LanguageCode,
-  tone: Tone
-): string =>
-  [
-    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-    `Use a ${tone} tone.`,
-    "Preserve meaning and formatting. Return only the translated text without extra commentary.",
-    "Always return a json object with the translated text.",
-    "Please generate only the JSON output. DO NOT provide any preamble.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-const buildPlainJsonPrompt = (
-  sourceLanguage: LanguageCode,
-  targetLanguage: LanguageCode,
-  tone: Tone
-): string =>
-  [
-    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-    `Use a ${tone} tone.`,
-    "Preserve meaning and formatting.",
-    'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
-  ]
-    .filter(Boolean)
-    .join("\n");
+// Prompts defined centrally in @/prompts
 
 type TranslateTextParams = {
   model: LanguageModel;
@@ -112,7 +89,7 @@ const translateTextWithModel = async ({
   try {
     translatedText = await translateWithStructuredOutput(
       model,
-      buildStructuredPrompt(sourceLanguage, targetLanguage, tone),
+      buildTranslationStructuredPrompt(sourceLanguage, targetLanguage, tone),
       text
     );
   } catch {
@@ -123,7 +100,7 @@ const translateTextWithModel = async ({
     try {
       translatedText = await translateWithPlainJson(
         model,
-        buildPlainJsonPrompt(sourceLanguage, targetLanguage, tone),
+        buildTranslationPlainJsonPrompt(sourceLanguage, targetLanguage, tone),
         text
       );
     } catch {

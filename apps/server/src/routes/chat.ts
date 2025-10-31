@@ -19,7 +19,7 @@ import {
   retrieveRelevantChunksForThread,
 } from "@/services/processors";
 import type { MyUIMessage } from "@/utils/chat";
-import { CHAT_SYSTEM_PROMPT } from "@/utils/constants";
+import { CHAT_SYSTEM_PROMPT } from "@/prompts";
 
 export function sendError(
   c: Context<AuthEnv>,
