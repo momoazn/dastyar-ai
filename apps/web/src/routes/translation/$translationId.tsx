@@ -54,7 +54,7 @@ function TranslationHistoryView() {
     toneOptions.find((t) => t.value === tone)?.label ?? tone;
 
   const getModelName = (modelId: number) =>
-    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
+    models?.find((m) => m.id === modelId)?.identifier ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
@@ -204,7 +204,7 @@ function TranslationHistoryView() {
                       </div>
                       <div className="flex flex-col gap-1 text-muted-foreground text-xs">
                         <div>
-                          {fa.translation.pdfPageCount(pdfResult.pageCount)}
+                          {fa.translation.pdfPageCount(pdfResult.page_count)}
                         </div>
                       </div>
                     </div>
@@ -264,7 +264,7 @@ function TranslationHistoryView() {
                           ترجمه تکمیل شده
                         </div>
                         <div className="text-green-600/80 text-xs">
-                          {pdfResult.pageCount} صفحه ترجمه شده
+                          {pdfResult.page_count} صفحه ترجمه شده
                         </div>
                       </div>
                     </div>
@@ -272,7 +272,7 @@ function TranslationHistoryView() {
                       <div className="flex flex-col gap-3">
                         {pdfResult.pages.map((page) => {
                           const textDir = detectTextDirection(
-                            page.translatedText
+                            page.translated_text
                           );
                           return (
                             <Card className="p-4" dir={textDir} key={page.page}>
@@ -283,7 +283,7 @@ function TranslationHistoryView() {
                                 <div className="h-px flex-1 bg-border" />
                               </div>
                               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                {page.translatedText}
+                                {page.translated_text}
                               </p>
                             </Card>
                           );

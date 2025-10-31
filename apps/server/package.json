@@ -32,7 +32,6 @@
     "automatic1111-provider": "^0.1.1",
     "bcryptjs": "^3.0.2",
     "better-sqlite3": "^12.4.1",
-    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.9.10",
@@ -46,7 +45,7 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/bun": "^1.2.23",
     "@types/jsonwebtoken": "^9.0.10",
-    "drizzle-kit": "^0.31.5",
+    "drizzle-kit": "^0.31.6",
     "typescript": "^5.9.3"
   },
   "browser": {

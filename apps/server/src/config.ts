@@ -63,9 +63,21 @@ const loadJson = (p?: string): Record<string, unknown> => {
 const Schema = z.object({
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default("127.0.0.1"),
-  CORS_ORIGIN: z.string().default("*"),
+  CORS_ORIGIN: z
+    .string()
+    .transform((val) => {
+      // Allow comma-separated list of origins
+      const origins = val.split(",").map((o) => o.trim());
+      // In development, allow localhost
+      if (process.env.NODE_ENV === "development") {
+        origins.push("http://localhost:3000", "http://localhost:5173");
+      }
+      return origins;
+    })
+    .default(["http://localhost:3000", "http://localhost:5173"]),
   JWT_SECRET: z
     .string()
+    .min(32, "JWT_SECRET must be at least 32 characters for security")
     .default("your-super-secret-jwt-key-change-this-in-production"),
   JWT_EXPIRES_IN: z.number().default(24 * 60 * 60),
   DATABASE_FILE: z.string().default("./data.db"),

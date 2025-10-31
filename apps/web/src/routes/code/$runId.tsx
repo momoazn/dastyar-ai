@@ -44,7 +44,7 @@ function CodeHistoryView() {
 
   // Helper function to get model name
   const getModelName = (modelId: number) =>
-    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
+    models?.find((m) => m.id === modelId)?.identifier ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
@@ -219,20 +219,20 @@ function CodeHistoryView() {
                   autoCorrect="off"
                   className={cn(
                     "h-full max-h-[400px] min-h-[200px] resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
-                    (runData.inputText
-                      ? detectTextDirection(runData.inputText)
+                    (runData.inputCode
+                      ? detectTextDirection(runData.inputCode)
                       : "ltr") === "rtl"
                       ? "text-right"
                       : "text-left"
                   )}
                   dir={
-                    runData.inputText
-                      ? detectTextDirection(runData.inputText)
+                    runData.inputCode
+                      ? detectTextDirection(runData.inputCode)
                       : "ltr"
                   }
                   readOnly
                   spellCheck={false}
-                  value={runData.inputText ?? ""}
+                  value={runData.inputCode ?? ""}
                 />
               </div>
             </Card>
@@ -278,7 +278,7 @@ function CodeHistoryView() {
           </div>
 
           {/* Error Input (for debug mode) */}
-          {mode === "debug" && runData.errorText && (
+          {mode === "debug" && runData.errorMessage && (
             <Card className="p-4">
               <div className="mb-2">
                 <h3 className="font-medium">
@@ -290,20 +290,20 @@ function CodeHistoryView() {
                 autoCorrect="off"
                 className={cn(
                   "min-h-[100px] resize-none font-mono text-sm",
-                  (runData.errorText
-                    ? detectTextDirection(runData.errorText)
+                  (runData.errorMessage
+                    ? detectTextDirection(runData.errorMessage)
                     : "ltr") === "rtl"
                     ? "text-right"
                     : "text-left"
                 )}
                 dir={
-                  runData.errorText
-                    ? detectTextDirection(runData.errorText)
+                  runData.errorMessage
+                    ? detectTextDirection(runData.errorMessage)
                     : "ltr"
                 }
                 readOnly
                 spellCheck={false}
-                value={runData.errorText}
+                value={runData.errorMessage}
               />
             </Card>
           )}

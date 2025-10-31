@@ -8,6 +8,7 @@ import {
   setArchived,
 } from "@/repositories/threads";
 import { protectedProcedure } from "./base";
+import { logger } from "@/lib/logger";
 
 export const threadProcedures = {
   create: protectedProcedure
@@ -26,7 +27,8 @@ export const threadProcedures = {
         userId: context.user?.id,
       });
       return rows;
-    } catch {
+    } catch (error) {
+      logger.error("Failed to list threads", error, { userId: context.user?.id });
       return [] as const;
     }
   }),

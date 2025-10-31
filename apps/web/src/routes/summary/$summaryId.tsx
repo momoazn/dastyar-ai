@@ -49,7 +49,7 @@ function SummaryHistoryView() {
     toneOptions.find((t) => t.value === tone)?.label ?? tone;
 
   const getModelName = (modelId: number) =>
-    models?.find((m) => m.id === modelId)?.name ?? `Model #${modelId}`;
+    models?.find((m) => m.id === modelId)?.identifier ?? `Model #${modelId}`;
 
   const handleCopyToNew = () => {
     navigate({
