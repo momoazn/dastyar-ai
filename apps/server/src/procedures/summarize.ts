@@ -1,6 +1,7 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
+import { summarySystemPrompt } from "@/lib/prompts";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
@@ -9,7 +10,6 @@ import {
   listSummaries,
 } from "@/repositories/summaries";
 import { getProviderForModel } from "@/services/ai-providers";
-import { buildSummaryPlainJsonPrompt, buildSummaryStructuredPrompt } from "@/prompts";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -96,7 +96,11 @@ export const summarizeProcedures = {
         model.provider
       );
 
-      const systemPrompt = buildSummaryStructuredPrompt(mode, tone);
+      const systemPrompt = summarySystemPrompt({
+        mode,
+        tone,
+        format: "structured",
+      });
 
       let summaryText: string | null = null;
       try {
@@ -106,17 +110,14 @@ export const summarizeProcedures = {
           input.text
         );
       } catch {
-        // ignore and fallback
-        console.error(
-          "--- could not summarize with structured output, falling back to plain json"
-        );
+        // ignore and fallback silently
       }
 
       if (!summaryText) {
         // fallback to plain json
         summaryText = await summarizeWithPlainJson(
           providerModel,
-          buildSummaryPlainJsonPrompt(mode, tone),
+          summarySystemPrompt({ mode, tone, format: "json" }),
           input.text
         );
       }

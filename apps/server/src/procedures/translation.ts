@@ -8,6 +8,7 @@ import {
   type TranslationPayload,
   tones,
 } from "@/database";
+import { translationSystemPrompt } from "@/lib/prompts";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
@@ -19,10 +20,6 @@ import { getProviderForModel } from "@/services/ai-providers";
 import { extractTextFromPdf } from "@/services/processors";
 import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { extractJsonField } from "@/utils/llm-json";
-import {
-  buildTranslationPlainJsonPrompt,
-  buildTranslationStructuredPrompt,
-} from "@/prompts";
 import { protectedProcedure } from "./base";
 
 const STORAGE_TEXT_LIMIT = 12_000;
@@ -89,7 +86,12 @@ const translateTextWithModel = async ({
   try {
     translatedText = await translateWithStructuredOutput(
       model,
-      buildTranslationStructuredPrompt(sourceLanguage, targetLanguage, tone),
+      translationSystemPrompt({
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        format: "structured",
+      }),
       text
     );
   } catch {
@@ -100,7 +102,12 @@ const translateTextWithModel = async ({
     try {
       translatedText = await translateWithPlainJson(
         model,
-        buildTranslationPlainJsonPrompt(sourceLanguage, targetLanguage, tone),
+        translationSystemPrompt({
+          sourceLanguage,
+          targetLanguage,
+          tone,
+          format: "json",
+        }),
         text
       );
     } catch {

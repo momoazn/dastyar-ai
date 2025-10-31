@@ -10,12 +10,7 @@ import { getModelById } from "@/repositories/llm-models";
 import { getProviderForModel } from "@/services/ai-providers";
 import { extractJsonObject } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
-import {
-  codeDebugSystem,
-  codeExplainSystem,
-  codeGenerateSystem,
-  codeReviewSystem,
-} from "@/prompts";
+import { codeSystemPrompt } from "@/lib/prompts";
 
 export const codeProcedures = {
   run: protectedProcedure
@@ -48,7 +43,7 @@ export const codeProcedures = {
         });
 
       if (input.mode === "generate") {
-        const sys = codeGenerateSystem(input.language);
+        const sys = codeSystemPrompt({ mode: "generate", language: input.language });
         const user = [
           input.context ? `Context: ${input.context}` : "",
           `Task: ${input.prompt ?? ""}`,
@@ -71,7 +66,7 @@ export const codeProcedures = {
       }
 
       if (input.mode === "explain") {
-        const sys = codeExplainSystem(input.language);
+        const sys = codeSystemPrompt({ mode: "explain", language: input.language });
         const user = `Code:\n\n${input.code ?? ""}`;
         const { text } = await makeRequest(sys, user);
         const parsed = extractJsonObject(
@@ -94,7 +89,7 @@ export const codeProcedures = {
       }
 
       if (input.mode === "review") {
-        const sys = codeReviewSystem(input.language);
+        const sys = codeSystemPrompt({ mode: "review", language: input.language });
         const user = `Code to review:\n\n${input.code ?? ""}`;
         const { text } = await makeRequest(sys, user);
         const parsed = extractJsonObject(
@@ -121,7 +116,7 @@ export const codeProcedures = {
       }
 
       // debug
-      const sys = codeDebugSystem(input.language);
+      const sys = codeSystemPrompt({ mode: "debug", language: input.language });
       const user = `Code:\n\n${input.code ?? ""}\n\nError:\n${
         input.error ?? ""
       }`;
