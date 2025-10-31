@@ -30,3 +30,27 @@ Endpoints
   - model: optional whisper model name (default tiny)
   - language: optional ISO 639-1 language code (e.g., fa, en)
   Returns: { text: "..." }
+
+Docker (contained, no host deps)
+- Build and run with Docker Compose (CPU-only):
+  - docker compose -f docker-compose.whisper.yml up --build
+  - Health: curl http://127.0.0.1:8001/health
+  - Transcribe: curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" http://127.0.0.1:8001/transcribe
+
+Notes
+- The container includes ffmpeg, PyTorch CPU, and openai-whisper; no host Python is required.
+- Override defaults via environment variables: WHISPER_DEVICE, WHISPER_DEFAULT_MODEL, MAX_UPLOAD_MB.
+
+Single binary build (no Docker)
+- One-command builder (cross-platform):
+  - bun run build:all
+  - Result binaries in dist/: whisper-server[.exe]
+- Run:
+  - ./dist/whisper-server --host 0.0.0.0 --port 8001
+- ffmpeg:
+  - The unified builder auto-downloads a static ffmpeg per platform (disable with FF_SKIP_FFMPEG_DOWNLOAD=1).
+  - To bundle a custom ffmpeg, place it at apps/whisper-server/bin/ before building.
+- Models and cache:
+  - By default, models are stored/loaded from a local folder next to the executable: ./whisper-models
+  - Cache is colocated in ./.whisper-cache
+  - Override with env: WHISPER_MODELS_DIR, XDG_CACHE_HOME

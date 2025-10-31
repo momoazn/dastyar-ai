@@ -24,8 +24,6 @@
     "@ai-sdk/groq": "^2.0.24",
     "@ai-sdk/openai-compatible": "^1.0.19",
     "@ai-sdk/provider": "^2.0.0",
-    "@emnapi/core": "^1.5.0",
-    "@emnapi/wasi-threads": "^1.1.0",
     "@hono/zod-validator": "^0.7.3",
     "@openrouter/ai-sdk-provider": "^1.2.0",
     "@orpc/client": "^1.9.3",

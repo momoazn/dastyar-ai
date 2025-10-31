@@ -2,112 +2,212 @@
 
 import { execSync } from "node:child_process";
 import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
-const ROOT_DIR = process.cwd();
-const DIST_DIR = join(ROOT_DIR, "dist");
-const SERVER_DIR = join(ROOT_DIR, "apps", "server");
-const WEB_DIR = join(ROOT_DIR, "apps", "web");
+const ROOT = process.cwd();
+const DIST = join(ROOT, "dist");
+const SERVER_DIR = join(ROOT, "apps", "server");
+const WEB_DIR = join(ROOT, "apps", "web");
+const WHISPER_DIR = join(ROOT, "apps", "whisper-server");
 
-type BuildPlatform = "host" | "windows";
+const isWindows = process.platform === "win32";
 
-const parseBuildPlatform = (): BuildPlatform => {
+function parseWantsWindows(): boolean {
   const envPlatform = process.env.BUILD_PLATFORM?.toLowerCase();
-  if (envPlatform === "windows") {
-    return "windows";
-  }
+  if (envPlatform === "windows") return true;
   const args = process.argv.slice(2);
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i];
-    if (a === "--platform" && i + 1 < args.length) {
-      const v = args[i + 1]?.toLowerCase();
-      if (v === "windows") {
-        return "windows";
-      }
-    } else if (a.startsWith("--platform=")) {
-      const v = a.split("=", 2)[1]?.toLowerCase();
-      if (v === "windows") {
-        return "windows";
-      }
-    }
-  }
-  return "host";
+  return args.some((a, i) =>
+    a.startsWith("--platform=")
+      ? a.split("=", 2)[1]?.toLowerCase() === "windows"
+      : a === "--platform" && args[i + 1]?.toLowerCase() === "windows"
+  );
+}
+
+const ensureDir = (dir: string) => {
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 };
 
-const ensureDir = (dirPath: string): void => {
-  if (!existsSync(dirPath)) {
-    mkdirSync(dirPath, { recursive: true });
-  }
-};
-
-const safeCopyDir = (srcDir: string, destDir: string): void => {
-  if (!existsSync(srcDir)) {
-    return;
-  }
+const safeCopyDir = (srcDir: string, destDir: string) => {
+  if (!existsSync(srcDir)) return;
   ensureDir(destDir);
   cpSync(srcDir, destDir, { recursive: true, force: true });
 };
 
-const safeCopyFile = (srcFile: string, destFile: string): void => {
-  if (!existsSync(srcFile)) {
-    return;
-  }
-  if (existsSync(destFile)) {
-    return;
-  }
-  ensureDir(dirname(destFile));
+const safeCopyFile = (srcFile: string, destFile: string) => {
+  if (!existsSync(srcFile)) return;
+  ensureDir(join(destFile, ".."));
   copyFileSync(srcFile, destFile);
 };
 
-function main() {
-  console.log("🚀 Building Dastyar AI...");
+const run = (cmd: string, cwd?: string) => {
+  execSync(cmd, { cwd, stdio: "inherit", env: process.env });
+};
 
-  const buildPlatform = parseBuildPlatform();
-  const serverBuildCommand =
-    buildPlatform === "windows" ? "bun run build:windows" : "bun run build";
-  const serverTargetLabel =
-    buildPlatform === "windows"
-      ? "bun-windows-x64"
-      : `native (${process.platform})`;
+function ensureWhisperVenv() {
+  const venvDir = join(WHISPER_DIR, ".venv");
+  if (!existsSync(venvDir)) {
+    console.log("📦 Creating Python venv for Whisper...");
+    if (isWindows) {
+      run("py -3 -m venv .venv", WHISPER_DIR);
+    } else {
+      run("python3 -m venv .venv", WHISPER_DIR);
+    }
+  }
+  const py = isWindows
+    ? join(venvDir, "Scripts", "python.exe")
+    : join(venvDir, "bin", "python");
+  console.log("📦 Installing Python deps (Whisper, FastAPI, PyInstaller)...");
+  run(`${py} -m pip install --upgrade pip wheel setuptools`, WHISPER_DIR);
+  const pkgs = [
+    "fastapi==0.115.0",
+    '"uvicorn[standard]"==0.30.0',
+    "openai-whisper==20231117",
+    "imageio-ffmpeg==0.4.9",
+    "pyinstaller==6.4.0",
+  ];
+  run(`${py} -m pip install ${pkgs.join(" ")}`, WHISPER_DIR);
+  return { venvDir, py } as const;
+}
 
-  // Create root dist directory
-  ensureDir(DIST_DIR);
+function ensureFfmpegInBin(): string | null {
+  const binDir = join(WHISPER_DIR, "bin");
+  ensureDir(binDir);
+  const exe = isWindows ? "ffmpeg.exe" : "ffmpeg";
+  const ffLocal = join(binDir, exe);
+  if (existsSync(ffLocal)) return ffLocal;
+  if (process.env.FF_SKIP_FFMPEG_DOWNLOAD === "1") return null;
 
-  // Build server
-  console.log(`📦 Building server (target: ${serverTargetLabel})...`);
-  execSync(serverBuildCommand, { cwd: SERVER_DIR, stdio: "inherit" });
+  console.log("📥 Fetching static ffmpeg...");
+  const os = process.platform;
+  const arch = process.arch;
+  if (os === "linux") {
+    const url =
+      arch === "arm64"
+        ? "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
+        : "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz";
+    const tmp = join(WHISPER_DIR, ".tmp.ffmpeg");
+    run(`rm -rf "${tmp}" && mkdir -p "${tmp}"`);
+    run(`curl -fsSL "${url}" -o "${tmp}/ffmpeg.tar.xz"`);
+    run(`tar -xJf "${tmp}/ffmpeg.tar.xz" -C "${tmp}"`);
+    run(
+      `install -m 0755 "$(find "${tmp}" -type f -name ffmpeg -perm -u+x | head -n1)" "${ffLocal}"`
+    );
+    run(`rm -rf "${tmp}"`);
+    return ffLocal;
+  }
+  if (os === "darwin") {
+    const ver = "6.1.1";
+    const url = `https://evermeet.cx/ffmpeg/ffmpeg-${ver}.zip`;
+    const tmp = join(WHISPER_DIR, ".tmp.ffmpeg");
+    run(`rm -rf "${tmp}" && mkdir -p "${tmp}"`);
+    run(`curl -fsSL "${url}" -o "${tmp}/ffmpeg.zip"`);
+    run(`unzip -q "${tmp}/ffmpeg.zip" -d "${tmp}"`);
+    run(`install -m 0755 "${tmp}/ffmpeg" "${ffLocal}"`);
+    run(`rm -rf "${tmp}"`);
+    return ffLocal;
+  }
+  if (os === "win32") {
+    const url =
+      "https://www.gyan.dev/ffmpeg/builds/ffmpeg-6.1.1-essentials_build.zip";
+    const pwsh = `powershell -NoProfile -Command "& { $ErrorActionPreference='Stop'; $u='${url}'; $d='${WHISPER_DIR}\\.tmp.ffmpeg'; New-Item -ItemType Directory -Force -Path $d | Out-Null; $z=Join-Path $d 'ffmpeg.zip'; Invoke-WebRequest -Uri $u -OutFile $z; Expand-Archive -Force -Path $z -DestinationPath $d; $bin=Get-ChildItem -Recurse -File -Path $d -Filter ffmpeg.exe | Select-Object -First 1; if (-not $bin) { Write-Error 'ffmpeg.exe not found in archive'; }; Copy-Item $bin.FullName '${ffLocal.replace(/\\/g, "/").replace(/\s/g, "` ")}' -Force }"`;
+    run(pwsh);
+    return ffLocal;
+  }
+  console.warn("Unsupported OS for ffmpeg bootstrap; skipping.");
+  return null;
+}
 
-  // Copy .env.example to dist/
-  safeCopyFile(
-    join(SERVER_DIR, ".env.example"),
-    join(DIST_DIR, ".env.example")
-  );
+function buildWhisper() {
+  console.log("[1/3] Building Whisper binary...");
+  const { py } = ensureWhisperVenv();
+  const ff = ensureFfmpegInBin();
 
-  // Build web
-  console.log("🌐 Building web...");
-  execSync("bun run build", { cwd: WEB_DIR, stdio: "inherit" });
+  const exeName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const extra = ff ? ` --add-binary "${ff}${isWindows ? ";bin" : ":bin"}"` : "";
+  const cmd = `${py} -m PyInstaller --name whisper-server --onefile --clean --noconfirm${extra} whisper_server/main.py`;
+  run(cmd, WHISPER_DIR);
 
-  // Copy server output into dist/
-  const serverOut = join(SERVER_DIR, "dist");
-  console.log("📋 Copying server artifacts...");
-  safeCopyDir(serverOut, DIST_DIR);
+  const outDir = join(WHISPER_DIR, "dist");
+  const src = join(outDir, exeName);
+  const dest = join(DIST, exeName);
+  if (!existsSync(src)) throw new Error(`Whisper binary not found at ${src}`);
+  console.log("📋 Copying Whisper binary...");
+  safeCopyFile(src, dest);
+}
 
-  // Copy web output into dist/web
-  const webOut = join(WEB_DIR, "dist");
-  const webTarget = join(DIST_DIR, "web");
+function buildWeb() {
+  console.log("[2/3] Building web...");
+  run("bun run build", WEB_DIR);
   console.log("📋 Copying web artifacts...");
-  safeCopyDir(webOut, webTarget);
+  safeCopyDir(join(WEB_DIR, "dist"), join(DIST, "web"));
+}
 
-  // Optional convenience copies if present in workspace
-  // - Root config.json -> dist/config.json (server reads from exec dir)
-  safeCopyFile(join(ROOT_DIR, "config.json"), join(DIST_DIR, "config.json"));
+function buildServer(opts: { alsoWindowsOnMac?: boolean } = {}) {
+  console.log("[3/3] Building server...");
+  if (isWindows) {
+    run("bun run build:windows", SERVER_DIR);
+  } else {
+    run("bun run build", SERVER_DIR);
+    if (opts.alsoWindowsOnMac) {
+      try {
+        console.log("🪟 Building Windows server binary (cross-target)...");
+        run("bun run build:windows", SERVER_DIR);
+      } catch {
+        console.warn("Windows cross-build failed or unsupported. Skipping.");
+      }
+    }
+  }
 
-  console.log("✅ Done. Artifacts available in ./dist");
+  console.log("📋 Copying server artifacts...");
+  safeCopyDir(join(SERVER_DIR, "dist"), DIST);
+}
+
+function main() {
+  console.log("🚀 Build all: whisper → web → server");
+
+  const wantsWindows = parseWantsWindows();
+
+  if (process.env.NO_INSTALL !== "1") {
+    console.log("📦 Installing dependencies (bun install)...");
+    run("bun install", ROOT);
+  } else {
+    console.log("📦 Skipping dependency install (NO_INSTALL=1)");
+  }
+
+  ensureDir(DIST);
+
+  buildWhisper();
+  buildWeb();
+  buildServer({
+    alsoWindowsOnMac:
+      !isWindows && (wantsWindows || process.env.BUILD_WINDOWS_SERVER === "1"),
+  });
+
+  // Convenience copies
+  safeCopyFile(join(ROOT, ".env.example"), join(DIST, ".env.example"));
+  safeCopyFile(join(ROOT, "config.json"), join(DIST, "config.json"));
+
+  const whisperName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const serverHost = isWindows ? "dastyar-ai.exe" : "dastyar-ai";
+  const outWhisper = join(DIST, whisperName);
+  const outServerHost = join(DIST, serverHost);
+  const outServerWin = join(DIST, "dastyar-ai.exe");
+  console.log("\n✅ Done. Artifacts in ./dist:");
+  if (existsSync(outWhisper)) console.log(` - ${whisperName}`);
+  if (existsSync(outServerHost)) console.log(` - ${serverHost}`);
+  if (
+    !isWindows &&
+    existsSync(outServerWin) &&
+    serverHost !== "dastyar-ai.exe"
+  ) {
+    console.log(" - dastyar-ai.exe");
+  }
+  console.log(" - web/");
 }
 
 try {
   main();
 } catch (err) {
-  console.error("Build failed:", err);
+  console.error("❌ Build failed:", err);
   process.exit(1);
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 from string import ascii_letters
 from functools import lru_cache
@@ -18,8 +19,29 @@ except Exception as e:  # pragma: no cover
     ) from e
 
 
+def _runtime_base_dir() -> str:
+    # When bundled with PyInstaller, sys._MEIPASS points to the temp extraction dir
+    base = getattr(sys, "_MEIPASS", None)  # type: ignore[attr-defined]
+    if isinstance(base, str) and os.path.isdir(base):
+        return base
+    # Fall back to the package directory
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+_BASE_DIR = _runtime_base_dir()
+
+# Prefer colocated cache/models so the binary is self-contained by default
+_DEFAULT_CACHE_DIR = os.path.join(_BASE_DIR, ".whisper-cache")
+_DEFAULT_MODELS_DIR = os.path.join(_BASE_DIR, "whisper-models")
+
+# If not set, direct Whisper (and friends) cache into a local folder next to the binary
+os.environ.setdefault("XDG_CACHE_HOME", _DEFAULT_CACHE_DIR)
+
+# Optional environment overrides
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu").lower()
 DEFAULT_MODEL = os.getenv("WHISPER_DEFAULT_MODEL", "tiny")
+# Directory to store or load model weights
+MODELS_DIR = os.getenv("WHISPER_MODELS_DIR", _DEFAULT_MODELS_DIR)
 # Maximum accepted upload size in megabytes (to avoid excessive memory/IO)
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "50"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
@@ -61,9 +83,42 @@ def _pretty_name(name: str) -> str:
 def get_model(name: str):  # type: ignore
     norm = _MODEL_ALIASES.get(name.lower(), name.lower())
     try:
-        return whisper.load_model(norm, device=WHISPER_DEVICE)
+        # Ensure the local models dir exists; Whisper will use it to find or download weights
+        try:
+            os.makedirs(MODELS_DIR, exist_ok=True)
+        except Exception:
+            # Best-effort; continue if we can't create the folder
+            pass
+        return whisper.load_model(norm, device=WHISPER_DEVICE, download_root=MODELS_DIR)
     except Exception as e:  # pragma: no cover
         raise RuntimeError(f"Failed to load model '{name}': {e}") from e
+
+
+def _maybe_add_bundled_ffmpeg_to_path() -> None:
+    # Option 1: a colocated ffmpeg binary packaged under ./bin
+    candidates: List[str] = []
+    ffmpeg_name = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
+    candidates.append(os.path.join(_BASE_DIR, "bin", ffmpeg_name))
+
+    # Option 2: imageio-ffmpeg provides a managed ffmpeg path
+    try:
+        import imageio_ffmpeg  # type: ignore
+
+        try:
+            p = imageio_ffmpeg.get_ffmpeg_exe()  # type: ignore[attr-defined]
+            if isinstance(p, str) and os.path.isfile(p):
+                candidates.append(p)
+        except Exception:
+            pass
+    except Exception:
+        # Package not installed or failed — ignore
+        pass
+
+    for p in candidates:
+        d = os.path.dirname(p)
+        if os.path.isfile(p) and d not in os.environ.get("PATH", "").split(os.pathsep):
+            os.environ["PATH"] = d + os.pathsep + os.environ.get("PATH", "")
+            break
 
 
 @APP.get("/health")
@@ -87,6 +142,8 @@ async def transcribe(
     model: str | None = Form(None),
     language: str | None = Form(None),
 ):
+    # Make ffmpeg available before any decode/transcode operations
+    _maybe_add_bundled_ffmpeg_to_path()
     # Persist the upload to a temp file for ffmpeg/whisper
     try:
         suffix = os.path.splitext(file.filename or "audio")[1] or ".bin"
@@ -139,3 +196,21 @@ async def transcribe(
 
 # Entry point for `uv run uvicorn whisper_server.main:app`
 app = APP
+
+def _run_server_from_cli() -> None:
+    import argparse
+    try:
+        import uvicorn  # type: ignore
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError("uvicorn is required to run the server") from e
+
+    parser = argparse.ArgumentParser(description="Whisper Transcription Server")
+    parser.add_argument("--host", default=os.getenv("HOST", "0.0.0.0"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8001")))
+    args = parser.parse_args()
+
+    uvicorn.run("whisper_server.main:app", host=args.host, port=args.port)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    _run_server_from_cli()
