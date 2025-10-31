@@ -9,6 +9,7 @@ import { type Context, Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import type { JsonValue } from "@/database";
+import { chatSystemPrompt } from "@/lib/prompts";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import { createMessage, updateMessage } from "@/repositories/messages";
@@ -19,7 +20,6 @@ import {
   retrieveRelevantChunksForThread,
 } from "@/services/processors";
 import type { MyUIMessage } from "@/utils/chat";
-import { CHAT_SYSTEM_PROMPT } from "@/utils/constants";
 
 export function sendError(
   c: Context<AuthEnv>,
@@ -124,7 +124,7 @@ const app = new Hono<AuthEnv>()
         }
       };
 
-      let ragSystem = CHAT_SYSTEM_PROMPT;
+      let ragSystem = chatSystemPrompt();
       try {
         const userQuery = extractTextFromParts(last.parts as unknown[]).slice(
           0,
@@ -139,10 +139,11 @@ const app = new Hono<AuthEnv>()
           });
           if (results.length > 0) {
             const ctx = buildContextFromChunks(results);
-            ragSystem = `${CHAT_SYSTEM_PROMPT}\n\n[CONTEXT]\n${ctx}\n[/CONTEXT]\n\nراهنما: فقط بر اساس «CONTEXT» پاسخ بده. در متن پاسخ، در صورت ارجاع به منابع از یادداشت‌های [1]، [2] و ... استفاده کن و عنوان/شماره صفحه را به اختصار بیاور. اگر پاسخ در منابع نبود، واضح بگو «در منابع موجود نیست».`;
+            ragSystem = chatSystemPrompt({ context: ctx });
           }
         }
-      } catch (_e) {
+      } catch (error) {
+        console.error("RAG context retrieval failed:", error);
         // Retrieval is best-effort; fall back to default system prompt on failure
       }
 

@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { z } from "zod";
+import { codeSystemPrompt } from "@/lib/prompts";
 import {
   createCodeRun,
   deleteCodeRun,
@@ -42,7 +43,10 @@ export const codeProcedures = {
         });
 
       if (input.mode === "generate") {
-        const sys = `You are an expert ${input.language} developer. Return ONLY code, no markdown, no backticks.`;
+        const sys = codeSystemPrompt({
+          mode: "generate",
+          language: input.language,
+        });
         const user = [
           input.context ? `Context: ${input.context}` : "",
           `Task: ${input.prompt ?? ""}`,
@@ -65,7 +69,10 @@ export const codeProcedures = {
       }
 
       if (input.mode === "explain") {
-        const sys = `Explain the following ${input.language} code clearly.`;
+        const sys = codeSystemPrompt({
+          mode: "explain",
+          language: input.language,
+        });
         const user = `Code:\n\n${input.code ?? ""}`;
         const { text } = await makeRequest(sys, user);
         const parsed = extractJsonObject(
@@ -88,7 +95,10 @@ export const codeProcedures = {
       }
 
       if (input.mode === "review") {
-        const sys = `Review the ${input.language} code. Return JSON with keys: feedback (string) and suggestions (string[]).`;
+        const sys = codeSystemPrompt({
+          mode: "review",
+          language: input.language,
+        });
         const user = `Code to review:\n\n${input.code ?? ""}`;
         const { text } = await makeRequest(sys, user);
         const parsed = extractJsonObject(
@@ -115,7 +125,7 @@ export const codeProcedures = {
       }
 
       // debug
-      const sys = `Debug the ${input.language} code and error. Return JSON with rootCause (string), solution (string), and optional codeFix (string).`;
+      const sys = codeSystemPrompt({ mode: "debug", language: input.language });
       const user = `Code:\n\n${input.code ?? ""}\n\nError:\n${
         input.error ?? ""
       }`;

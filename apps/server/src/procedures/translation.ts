@@ -8,6 +8,7 @@ import {
   type TranslationPayload,
   tones,
 } from "@/database";
+import { translationSystemPrompt } from "@/lib/prompts";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
@@ -23,6 +24,7 @@ import { protectedProcedure } from "./base";
 
 const STORAGE_TEXT_LIMIT = 12_000;
 const TRANSLATION_CHUNK_LIMIT = 2800;
+const DOUBLE_NEWLINE_RE = /\n{2,}/u;
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,
@@ -63,34 +65,7 @@ const translateWithPlainJson = async (
   return extractJsonField(rawOutput, "translatedText") ?? rawOutput.trim();
 };
 
-const buildStructuredPrompt = (
-  sourceLanguage: LanguageCode,
-  targetLanguage: LanguageCode,
-  tone: Tone
-): string =>
-  [
-    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-    `Use a ${tone} tone.`,
-    "Preserve meaning and formatting. Return only the translated text without extra commentary.",
-    "Always return a json object with the translated text.",
-    "Please generate only the JSON output. DO NOT provide any preamble.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-const buildPlainJsonPrompt = (
-  sourceLanguage: LanguageCode,
-  targetLanguage: LanguageCode,
-  tone: Tone
-): string =>
-  [
-    `You are a professional translator. Translate the user's message from ${sourceLanguage} to ${targetLanguage}.`,
-    `Use a ${tone} tone.`,
-    "Preserve meaning and formatting.",
-    'Respond ONLY with a compact JSON object: {"translatedText": "..."}.',
-  ]
-    .filter(Boolean)
-    .join("\n");
+// Prompts defined centrally in @/prompts
 
 type TranslateTextParams = {
   model: LanguageModel;
@@ -112,7 +87,12 @@ const translateTextWithModel = async ({
   try {
     translatedText = await translateWithStructuredOutput(
       model,
-      buildStructuredPrompt(sourceLanguage, targetLanguage, tone),
+      translationSystemPrompt({
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        format: "structured",
+      }),
       text
     );
   } catch {
@@ -123,7 +103,12 @@ const translateTextWithModel = async ({
     try {
       translatedText = await translateWithPlainJson(
         model,
-        buildPlainJsonPrompt(sourceLanguage, targetLanguage, tone),
+        translationSystemPrompt({
+          sourceLanguage,
+          targetLanguage,
+          tone,
+          format: "json",
+        }),
         text
       );
     } catch {
@@ -145,6 +130,17 @@ const translateTextWithModel = async ({
   return translatedText;
 };
 
+const splitOversizeParagraph = (paragraph: string): string[] => {
+  const parts: string[] = [];
+  let start = 0;
+  while (start < paragraph.length) {
+    const end = Math.min(start + TRANSLATION_CHUNK_LIMIT, paragraph.length);
+    parts.push(paragraph.slice(start, end));
+    start = end;
+  }
+  return parts;
+};
+
 const chunkPageText = (text: string): string[] => {
   const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) {
@@ -155,7 +151,7 @@ const chunkPageText = (text: string): string[] => {
   }
 
   const paragraphs = normalized
-    .split(/\n{2,}/)
+    .split(DOUBLE_NEWLINE_RE)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
@@ -167,17 +163,9 @@ const chunkPageText = (text: string): string[] => {
       if (buffer) {
         chunks.push(buffer);
       }
+      buffer = "";
       if (paragraph.length > TRANSLATION_CHUNK_LIMIT) {
-        let start = 0;
-        while (start < paragraph.length) {
-          const end = Math.min(
-            start + TRANSLATION_CHUNK_LIMIT,
-            paragraph.length
-          );
-          chunks.push(paragraph.slice(start, end));
-          start = end;
-        }
-        buffer = "";
+        chunks.push(...splitOversizeParagraph(paragraph));
       } else {
         buffer = paragraph;
       }

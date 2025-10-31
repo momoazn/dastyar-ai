@@ -23,7 +23,7 @@ export async function extractTextFromPdf(filePath: string): Promise<PdfPage[]> {
 
     return pages;
   } catch (error) {
-    // Return empty array on any error
+    console.error("PDF extraction failed:", error);
     return [];
   }
 }

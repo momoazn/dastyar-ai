@@ -1,6 +1,7 @@
 import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
+import { summarySystemPrompt } from "@/lib/prompts";
 import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
@@ -9,7 +10,6 @@ import {
   listSummaries,
 } from "@/repositories/summaries";
 import { getProviderForModel } from "@/services/ai-providers";
-import { summaryModePrompts } from "@/utils/constants";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -96,17 +96,11 @@ export const summarizeProcedures = {
         model.provider
       );
 
-      const systemPrompt = [
-        "You are a professional summarizer. Create clear, accurate summaries.",
-        "IMPORTANT: Always summarize in the same language as the source text.",
-        summaryModePrompts[mode],
-        `Use a ${tone} tone.`,
-        "Preserve meaning and important details.",
-        "Always return a json object with the summary text.",
-        "Please generate only the JSON output. DO NOT provide any preamble.",
-      ]
-        .filter(Boolean)
-        .join("\n");
+      const systemPrompt = summarySystemPrompt({
+        mode,
+        tone,
+        format: "structured",
+      });
 
       let summaryText: string | null = null;
       try {
@@ -116,20 +110,14 @@ export const summarizeProcedures = {
           input.text
         );
       } catch {
-        // ignore and fallback
-        console.error(
-          "--- could not summarize with structured output, falling back to plain json"
-        );
+        // ignore and fallback silently
       }
 
       if (!summaryText) {
         // fallback to plain json
         summaryText = await summarizeWithPlainJson(
           providerModel,
-          systemPrompt.replace(
-            "Always return a json object with the summary text.\nPlease generate only the JSON output. DO NOT provide any preamble.",
-            'Respond ONLY with a compact JSON object: {"summaryText": "..."}.'
-          ),
+          summarySystemPrompt({ mode, tone, format: "json" }),
           input.text
         );
       }
