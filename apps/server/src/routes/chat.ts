@@ -77,7 +77,7 @@ const app = new Hono<AuthEnv>()
       }
 
       const providerModel = getProviderForModel(
-        llmModel.name,
+        llmModel.identifier,
         llmModel.provider
       );
 

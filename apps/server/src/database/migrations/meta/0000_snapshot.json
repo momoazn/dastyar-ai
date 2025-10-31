@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a474f58b-e570-4dc1-ac86-d5545dfaefb1",
+  "id": "041a046a-5ae7-456e-a219-882be330dcba",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "chat_threads": {
@@ -36,13 +36,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -50,17 +57,25 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_chat_threads_user_id": {
+          "name": "idx_chat_threads_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "idx_chat_threads_last_message_at": {
+          "name": "idx_chat_threads_last_message_at",
+          "columns": [
+            "last_message_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "chat_threads_user_id_users_id_fk": {
           "name": "chat_threads_user_id_users_id_fk",
@@ -104,15 +119,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "input_text": {
-          "name": "input_text",
+        "input_code": {
+          "name": "input_code",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "error_text": {
-          "name": "error_text",
+        "error_message": {
+          "name": "error_message",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -132,23 +147,31 @@
           "notNull": true,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
         "user_id": {
           "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_code_runs_user_id": {
+          "name": "idx_code_runs_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "code_runs_model_id_llm_models_id_fk": {
           "name": "code_runs_model_id_llm_models_id_fk",
@@ -232,10 +255,18 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_document_chunks_document_id": {
+          "name": "idx_document_chunks_document_id",
+          "columns": [
+            "document_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "document_chunks_document_id_documents_id_fk": {
           "name": "document_chunks_document_id_documents_id_fk",
@@ -293,13 +324,20 @@
           "notNull": true,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -307,17 +345,18 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_documents_user_id": {
+          "name": "idx_documents_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "documents_user_id_users_id_fk": {
           "name": "documents_user_id_users_id_fk",
@@ -354,22 +393,22 @@
           "notNull": true,
           "autoincrement": false
         },
-        "negativePrompt": {
-          "name": "negativePrompt",
+        "negative_prompt": {
+          "name": "negative_prompt",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "filePath": {
-          "name": "filePath",
+        "file_path": {
+          "name": "file_path",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "fileName": {
-          "name": "fileName",
+        "file_name": {
+          "name": "file_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -381,22 +420,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
         },
         "thread_id": {
           "name": "thread_id",
@@ -411,13 +434,36 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
         }
       },
       "indexes": {
-        "idx_generated_images_thread": {
-          "name": "idx_generated_images_thread",
+        "idx_generated_images_thread_id": {
+          "name": "idx_generated_images_thread_id",
           "columns": [
             "thread_id"
+          ],
+          "isUnique": false
+        },
+        "idx_generated_images_user_id": {
+          "name": "idx_generated_images_user_id",
+          "columns": [
+            "user_id"
           ],
           "isUnique": false
         }
@@ -486,13 +532,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -500,17 +553,25 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_image_threads_user_id": {
+          "name": "idx_image_threads_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "idx_image_threads_last_image_at": {
+          "name": "idx_image_threads_last_image_at",
+          "columns": [
+            "last_image_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "image_threads_user_id_users_id_fk": {
           "name": "image_threads_user_id_users_id_fk",
@@ -589,7 +650,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -597,10 +658,19 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_llm_models_provider_identifier": {
+          "name": "idx_llm_models_provider_identifier",
+          "columns": [
+            "provider",
+            "identifier"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -637,6 +707,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "thread_id": {
+          "name": "thread_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "model_id": {
           "name": "model_id",
           "type": "integer",
@@ -644,8 +721,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "thread_id": {
-          "name": "thread_id",
+        "user_id": {
+          "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -657,7 +734,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -665,24 +742,32 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_messages_thread_id": {
+          "name": "idx_messages_thread_id",
+          "columns": [
+            "thread_id"
+          ],
+          "isUnique": false
+        },
+        "idx_messages_user_id": {
+          "name": "idx_messages_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "messages_model_id_llm_models_id_fk": {
-          "name": "messages_model_id_llm_models_id_fk",
+        "messages_thread_id_chat_threads_id_fk": {
+          "name": "messages_thread_id_chat_threads_id_fk",
           "tableFrom": "messages",
-          "tableTo": "llm_models",
+          "tableTo": "chat_threads",
           "columnsFrom": [
-            "model_id"
+            "thread_id"
           ],
           "columnsTo": [
             "id"
@@ -690,12 +775,12 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "messages_thread_id_chat_threads_id_fk": {
-          "name": "messages_thread_id_chat_threads_id_fk",
+        "messages_model_id_llm_models_id_fk": {
+          "name": "messages_model_id_llm_models_id_fk",
           "tableFrom": "messages",
-          "tableTo": "chat_threads",
+          "tableTo": "llm_models",
           "columnsFrom": [
-            "thread_id"
+            "model_id"
           ],
           "columnsTo": [
             "id"
@@ -731,25 +816,18 @@
           "notNull": true,
           "autoincrement": true
         },
-        "sourceText": {
-          "name": "sourceText",
+        "source_text": {
+          "name": "source_text",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "summaryText": {
-          "name": "summaryText",
+        "summary_text": {
+          "name": "summary_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
-        },
-        "model_id": {
-          "name": "model_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
           "autoincrement": false
         },
         "mode": {
@@ -766,21 +844,12 @@
           "notNull": false,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
+        "model_id": {
+          "name": "model_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "autoincrement": false
         },
         "user_id": {
           "name": "user_id",
@@ -788,9 +857,33 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_summaries_user_id": {
+          "name": "idx_summaries_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "summaries_model_id_llm_models_id_fk": {
           "name": "summaries_model_id_llm_models_id_fk",
@@ -853,10 +946,25 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_thread_documents_thread_id": {
+          "name": "idx_thread_documents_thread_id",
+          "columns": [
+            "thread_id"
+          ],
+          "isUnique": false
+        },
+        "idx_thread_documents_document_id": {
+          "name": "idx_thread_documents_document_id",
+          "columns": [
+            "document_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "thread_documents_thread_id_chat_threads_id_fk": {
           "name": "thread_documents_thread_id_chat_threads_id_fk",
@@ -899,36 +1007,29 @@
           "notNull": true,
           "autoincrement": true
         },
-        "sourceText": {
-          "name": "sourceText",
+        "source_text": {
+          "name": "source_text",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "translatedText": {
-          "name": "translatedText",
+        "translated_text": {
+          "name": "translated_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "model_id": {
-          "name": "model_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "sourceLanguage": {
-          "name": "sourceLanguage",
+        "source_language": {
+          "name": "source_language",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "targetLanguage": {
-          "name": "targetLanguage",
+        "target_language": {
+          "name": "target_language",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -941,16 +1042,16 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sourceType": {
-          "name": "sourceType",
+        "source_type": {
+          "name": "source_type",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'text'"
         },
-        "sourceFileName": {
-          "name": "sourceFileName",
+        "source_file_name": {
+          "name": "source_file_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -963,21 +1064,12 @@
           "notNull": false,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
+        "model_id": {
+          "name": "model_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "autoincrement": false
         },
         "user_id": {
           "name": "user_id",
@@ -985,9 +1077,33 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_translations_user_id": {
+          "name": "idx_translations_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "translations_model_id_llm_models_id_fk": {
           "name": "translations_model_id_llm_models_id_fk",
@@ -1065,7 +1181,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(strftime('%s','now'))"
+          "default": "(unixepoch())"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1073,7 +1189,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(strftime('%s','now'))"
+          "default": "(unixepoch())"
         }
       },
       "indexes": {

@@ -2,223 +2,259 @@ import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
+import type {
+  CodeMode,
+  LanguageCode,
+  LLMModelProvider,
+  MessageRole,
+  MessageStatus,
+  ProgrammingLanguage,
+  SourceType,
+  SummaryMode,
+  Tone,
+  TranslationPayload,
+  UserRole,
+} from "./types";
+import {
+  codeModes,
+  languageCodes,
+  llmModelProviders,
+  messageRoles,
+  messageStatuses,
+  programmingLanguages,
+  sourceTypes,
+  summaryModes,
+  tones,
+  userRoles,
+} from "./types";
 
-export const userRoles = ["admin", "user"] as const;
-export type UserRole = (typeof userRoles)[number];
+// ============================================================================
+// Helpers
+// ============================================================================
 
-export const llmModelProviders = [
-  "ollama",
-  "lmstudio",
-  "openrouter",
-  "groq",
-  "gemini",
-] as const;
-export type LLMModelProvider = (typeof llmModelProviders)[number];
+const timestamp = sql`(unixepoch())`;
 
-export const messageStatuses = [
-  "streaming",
-  "finished",
-  "errored",
-  "stopped",
-] as const;
-export type MessageStatus = (typeof messageStatuses)[number];
-
-export const messageRoles = ["user", "assistant"] as const;
-export type MessageRole = (typeof messageRoles)[number];
-
-export const languageCodes = ["en", "fa", "ar", "fr", "de", "es"] as const;
-export type LanguageCode = (typeof languageCodes)[number];
-
-export const tones = [
-  "formal",
-  "informal",
-  "business",
-  "academic",
-  "technical",
-  "creative",
-  "friendly",
-  "professional",
-] as const;
-export type Tone = (typeof tones)[number];
-
-export const translationSourceTypes = ["text", "pdf"] as const;
-export type TranslationSourceType = (typeof translationSourceTypes)[number];
-
-export type TranslationPayload = {
-  pageCount: number;
-  pages: Array<{
-    page: number;
-    sourceText: string;
-    translatedText: string;
-  }>;
-};
-
-export const summaryModes = ["concise", "standard", "detailed"] as const;
-export type SummaryMode = (typeof summaryModes)[number];
-
-const nowUnix = sql`(strftime('%s','now'))`;
+// ============================================================================
+// Tables
+// ============================================================================
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   salt: text("salt").notNull(),
-  role: text("role").$type<UserRole>().notNull().default("user"),
+  role: text("role", { enum: userRoles })
+    .$type<UserRole>()
+    .notNull()
+    .default("user"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
-    .default(nowUnix),
+    .default(timestamp),
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
-    .default(nowUnix),
+    .default(timestamp),
 });
 
-export const llmModels = sqliteTable("llm_models", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  identifier: text("identifier").notNull(),
-  provider: text("provider", { enum: llmModelProviders }).notNull(),
-  creator: text("creator"),
-  family: text("family"),
-  size: text("size"),
-  isEnabled: integer("is_enabled", { mode: "boolean" }).notNull().default(true),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-});
+export const llmModels = sqliteTable(
+  "llm_models",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    identifier: text("identifier").notNull(),
+    provider: text("provider", { enum: llmModelProviders })
+      .$type<LLMModelProvider>()
+      .notNull(),
+    creator: text("creator"),
+    family: text("family"),
+    size: text("size"),
+    isEnabled: integer("is_enabled", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    providerIdentifierIdx: index("idx_llm_models_provider_identifier").on(
+      table.provider,
+      table.identifier
+    ),
+  })
+);
 
-export const chatThreads = sqliteTable("chat_threads", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  title: text("title").notNull(),
-  isArchived: integer("is_archived", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  lastMessageAt: integer("last_message_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const chatThreads = sqliteTable(
+  "chat_threads",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    isArchived: integer("is_archived", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    lastMessageAt: integer("last_message_at", { mode: "timestamp" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_chat_threads_user_id").on(table.userId),
+    lastMessageAtIdx: index("idx_chat_threads_last_message_at").on(
+      table.lastMessageAt
+    ),
+  })
+);
 
-export const messages = sqliteTable("messages", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  parts: text("parts", { mode: "json" }).notNull(),
-  status: text("status", { enum: messageStatuses }).notNull(),
-  role: text("role", { enum: messageRoles }).notNull(),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  threadId: integer("thread_id")
-    .notNull()
-    .references(() => chatThreads.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const messages = sqliteTable(
+  "messages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    parts: text("parts", { mode: "json" }).notNull(),
+    status: text("status", { enum: messageStatuses })
+      .$type<MessageStatus>()
+      .notNull(),
+    role: text("role", { enum: messageRoles }).$type<MessageRole>().notNull(),
+    threadId: integer("thread_id")
+      .notNull()
+      .references(() => chatThreads.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    modelId: integer("model_id")
+      .notNull()
+      .references(() => llmModels.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    threadIdIdx: index("idx_messages_thread_id").on(table.threadId),
+    userIdIdx: index("idx_messages_user_id").on(table.userId),
+  })
+);
 
-export const translations = sqliteTable("translations", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sourceText: text("sourceText").notNull(),
-  translatedText: text("translatedText"),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  sourceLanguage: text("sourceLanguage", { enum: languageCodes }).notNull(),
-  targetLanguage: text("targetLanguage", { enum: languageCodes }).notNull(),
-  tone: text("tone", { enum: tones }),
-  sourceType: text("sourceType", { enum: translationSourceTypes })
-    .notNull()
-    .default("text"),
-  sourceFileName: text("sourceFileName"),
-  payload: text("payload", { mode: "json" }).$type<TranslationPayload | null>(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const translations = sqliteTable(
+  "translations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sourceText: text("source_text").notNull(),
+    translatedText: text("translated_text"),
+    sourceLanguage: text("source_language", { enum: languageCodes })
+      .$type<LanguageCode>()
+      .notNull(),
+    targetLanguage: text("target_language", { enum: languageCodes })
+      .$type<LanguageCode>()
+      .notNull(),
+    tone: text("tone", { enum: tones }).$type<Tone>(),
+    sourceType: text("source_type", { enum: sourceTypes })
+      .$type<SourceType>()
+      .notNull()
+      .default("text"),
+    sourceFileName: text("source_file_name"),
+    payload: text("payload", {
+      mode: "json",
+    }).$type<TranslationPayload | null>(),
+    modelId: integer("model_id")
+      .notNull()
+      .references(() => llmModels.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_translations_user_id").on(table.userId),
+  })
+);
 
-export const summaries = sqliteTable("summaries", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sourceText: text("sourceText").notNull(),
-  summaryText: text("summaryText"),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  mode: text("mode", { enum: summaryModes }).notNull(),
-  tone: text("tone", { enum: tones }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const summaries = sqliteTable(
+  "summaries",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sourceText: text("source_text").notNull(),
+    summaryText: text("summary_text"),
+    mode: text("mode", { enum: summaryModes }).$type<SummaryMode>().notNull(),
+    tone: text("tone", { enum: tones }).$type<Tone>(),
+    modelId: integer("model_id")
+      .notNull()
+      .references(() => llmModels.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_summaries_user_id").on(table.userId),
+  })
+);
 
-export const imageThreads = sqliteTable("image_threads", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  title: text("title").notNull(),
-  isArchived: integer("is_archived", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  lastImageAt: integer("last_image_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const imageThreads = sqliteTable(
+  "image_threads",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    isArchived: integer("is_archived", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    lastImageAt: integer("last_image_at", { mode: "timestamp" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_image_threads_user_id").on(table.userId),
+    lastImageAtIdx: index("idx_image_threads_last_image_at").on(
+      table.lastImageAt
+    ),
+  })
+);
 
 export const generatedImages = sqliteTable(
   "generated_images",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     prompt: text("prompt").notNull(),
-    negativePrompt: text("negativePrompt"),
-    filePath: text("filePath").notNull(),
-    fileName: text("fileName").notNull(),
+    negativePrompt: text("negative_prompt"),
+    filePath: text("file_path").notNull(),
+    fileName: text("file_name").notNull(),
     settings: text("settings", { mode: "json" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
     threadId: integer("thread_id")
       .notNull()
       .references(() => imageThreads.id, {
@@ -228,87 +264,127 @@ export const generatedImages = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
   },
   (table) => ({
-    threadIdx: index("idx_generated_images_thread").on(table.threadId),
+    threadIdIdx: index("idx_generated_images_thread_id").on(table.threadId),
+    userIdIdx: index("idx_generated_images_user_id").on(table.userId),
   })
 );
 
-// Code assist runs (simple history without sessions)
-export const codeRuns = sqliteTable("code_runs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  mode: text("mode").notNull(),
-  language: text("language").notNull(),
-  inputText: text("input_text").notNull(),
-  errorText: text("error_text"),
-  output: text("output").notNull(),
-  modelId: integer("model_id")
-    .notNull()
-    .references(() => llmModels.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const codeRuns = sqliteTable(
+  "code_runs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    mode: text("mode", { enum: codeModes }).$type<CodeMode>().notNull(),
+    language: text("language", { enum: programmingLanguages })
+      .$type<ProgrammingLanguage>()
+      .notNull(),
+    inputCode: text("input_code").notNull(),
+    errorMessage: text("error_message"),
+    output: text("output").notNull(),
+    modelId: integer("model_id")
+      .notNull()
+      .references(() => llmModels.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_code_runs_user_id").on(table.userId),
+  })
+);
 
-// Documents for RAG
-export const documents = sqliteTable("documents", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  title: text("title").notNull(),
-  filePath: text("file_path").notNull(),
-  fileName: text("file_name").notNull(),
-  mimeType: text("mime_type").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-});
+export const documents = sqliteTable(
+  "documents",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    filePath: text("file_path").notNull(),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    userIdIdx: index("idx_documents_user_id").on(table.userId),
+  })
+);
 
-export const documentChunks = sqliteTable("document_chunks", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  documentId: integer("document_id")
-    .notNull()
-    .references(() => documents.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  chunkIndex: integer("chunk_index").notNull(),
-  page: integer("page"),
-  content: text("content").notNull(),
-  embedding: text("embedding", { mode: "json" }).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-});
+export const documentChunks = sqliteTable(
+  "document_chunks",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    documentId: integer("document_id")
+      .notNull()
+      .references(() => documents.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    chunkIndex: integer("chunk_index").notNull(),
+    page: integer("page"),
+    content: text("content").notNull(),
+    embedding: text("embedding", { mode: "json" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    documentIdIdx: index("idx_document_chunks_document_id").on(
+      table.documentId
+    ),
+  })
+);
 
-export const threadDocuments = sqliteTable("thread_documents", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  threadId: integer("thread_id")
-    .notNull()
-    .references(() => chatThreads.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  documentId: integer("document_id")
-    .notNull()
-    .references(() => documents.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-});
+export const threadDocuments = sqliteTable(
+  "thread_documents",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    threadId: integer("thread_id")
+      .notNull()
+      .references(() => chatThreads.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    documentId: integer("document_id")
+      .notNull()
+      .references(() => documents.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => ({
+    threadIdIdx: index("idx_thread_documents_thread_id").on(table.threadId),
+    documentIdIdx: index("idx_thread_documents_document_id").on(
+      table.documentId
+    ),
+  })
+);
+
+// ============================================================================
+// Relations
+// ============================================================================
 
 export const usersRelations = relations(users, ({ many }) => ({
   chatThreads: many(chatThreads),
@@ -318,6 +394,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   imageThreads: many(imageThreads),
   generatedImages: many(generatedImages),
   codeRuns: many(codeRuns),
+  documents: many(documents),
 }));
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
@@ -333,6 +410,7 @@ export const chatThreadsRelations = relations(chatThreads, ({ one, many }) => ({
     references: [users.id],
   }),
   messages: many(messages),
+  threadDocuments: many(threadDocuments),
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -397,11 +475,24 @@ export const generatedImagesRelations = relations(
   })
 );
 
-// Code Assist relations removed
+export const codeRunsRelations = relations(codeRuns, ({ one }) => ({
+  model: one(llmModels, {
+    fields: [codeRuns.modelId],
+    references: [llmModels.id],
+  }),
+  user: one(users, {
+    fields: [codeRuns.userId],
+    references: [users.id],
+  }),
+}));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
-  user: one(users, { fields: [documents.userId], references: [users.id] }),
+  user: one(users, {
+    fields: [documents.userId],
+    references: [users.id],
+  }),
   chunks: many(documentChunks),
+  threadDocuments: many(threadDocuments),
 }));
 
 export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
@@ -424,6 +515,10 @@ export const threadDocumentsRelations = relations(
     }),
   })
 );
+
+// ============================================================================
+// Zod Schemas
+// ============================================================================
 
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -470,36 +565,6 @@ export const selectCodeRunSchema = createSelectSchema(codeRuns);
 export type InsertCodeRun = z.infer<typeof insertCodeRunSchema>;
 export type SelectCodeRun = z.infer<typeof selectCodeRunSchema>;
 
-// Code Assist schemas removed
-
-// Type aliases for backward compatibility
-export type User = SelectUser;
-export type LLMModel = SelectLlmModel;
-export type ChatThread = SelectChatThread;
-export type Message = SelectMessage;
-export type Translation = SelectTranslation;
-export type Summary = SelectSummary;
-export type ImageThread = SelectImageThread;
-export type GeneratedImage = SelectGeneratedImage;
-export type CodeRun = SelectCodeRun;
-// Code Assist types removed
-export type Document = SelectDocument;
-export type DocumentChunk = SelectDocumentChunk;
-export type ThreadDocument = SelectThreadDocument;
-
-// JsonValue type for JSON fields
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
-
-// Json type alias for Drizzle JSON fields
-export type Json = JsonValue;
-
-// Zod schemas and types for documents
 export const insertDocumentSchema = createInsertSchema(documents);
 export const selectDocumentSchema = createSelectSchema(documents);
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
@@ -514,3 +579,23 @@ export const insertThreadDocumentSchema = createInsertSchema(threadDocuments);
 export const selectThreadDocumentSchema = createSelectSchema(threadDocuments);
 export type InsertThreadDocument = z.infer<typeof insertThreadDocumentSchema>;
 export type SelectThreadDocument = z.infer<typeof selectThreadDocumentSchema>;
+
+// ============================================================================
+// Type Aliases (for backwards compatibility)
+// ============================================================================
+
+export type User = SelectUser;
+export type LLMModel = SelectLlmModel;
+export type ChatThread = SelectChatThread;
+export type Message = SelectMessage;
+export type Translation = SelectTranslation;
+export type Summary = SelectSummary;
+export type ImageThread = SelectImageThread;
+export type GeneratedImage = SelectGeneratedImage;
+export type CodeRun = SelectCodeRun;
+export type Document = SelectDocument;
+export type DocumentChunk = SelectDocumentChunk;
+export type ThreadDocument = SelectThreadDocument;
+
+// Re-export types from types.ts
+export * from "./types";

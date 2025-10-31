@@ -28,7 +28,9 @@ export const llmModelProcedures = {
         if (sync) {
           const availableModels = await listAllModels();
           const allModels = await syncModels(availableModels, { isEnabled });
-          return allModels.filter((model) => !model.identifier.includes("embed"));
+          return allModels.filter(
+            (model) => !model.identifier.includes("embed")
+          );
         }
 
         // Return models without syncing

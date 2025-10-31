@@ -184,8 +184,11 @@ export async function getLastUsedModelInThread(
     const rows = await db
       .select({
         id: llmModels.id,
-        name: llmModels.name,
+        identifier: llmModels.identifier,
         provider: llmModels.provider,
+        creator: llmModels.creator,
+        family: llmModels.family,
+        size: llmModels.size,
         isEnabled: llmModels.isEnabled,
         createdAt: llmModels.createdAt,
         updatedAt: llmModels.updatedAt,
@@ -218,8 +221,11 @@ export async function getLastUsedModelGlobal(
     const rows = await db
       .select({
         id: llmModels.id,
-        name: llmModels.name,
+        identifier: llmModels.identifier,
         provider: llmModels.provider,
+        creator: llmModels.creator,
+        family: llmModels.family,
+        size: llmModels.size,
         isEnabled: llmModels.isEnabled,
         createdAt: llmModels.createdAt,
         updatedAt: llmModels.updatedAt,

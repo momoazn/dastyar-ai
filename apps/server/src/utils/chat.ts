@@ -18,6 +18,6 @@ export const convertDbMessagesToUiMessages = (
     metadata: {
       modelId: message.modelId,
       threadId: message.threadId,
-      modelName: message.model?.name,
+      modelName: message.model?.identifier,
     },
   }));

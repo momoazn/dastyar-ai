@@ -100,7 +100,8 @@ export async function syncModels(
   const modelsToCreate = modelsWithInfo.filter(
     (model) =>
       !existingModels.some(
-        (m) => m.identifier === model.identifier && m.provider === model.provider
+        (m) =>
+          m.identifier === model.identifier && m.provider === model.provider
       )
   );
 

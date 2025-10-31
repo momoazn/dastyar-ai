@@ -1,5 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
-import { type CodeRun, codeRuns, db } from "@/database";
+import {
+  type CodeMode,
+  type CodeRun,
+  codeRuns,
+  db,
+  type ProgrammingLanguage,
+} from "@/database";
 
 export async function createCodeRun(params: {
   mode: string;
@@ -13,10 +19,10 @@ export async function createCodeRun(params: {
   const res = await db
     .insert(codeRuns)
     .values({
-      mode: params.mode,
-      language: params.language,
-      inputText: params.inputText,
-      errorText: params.errorText ?? null,
+      mode: params.mode as CodeMode,
+      language: params.language as ProgrammingLanguage,
+      inputCode: params.inputText,
+      errorMessage: params.errorText ?? null,
       output: params.output,
       modelId: params.modelId,
       userId: params.userId,

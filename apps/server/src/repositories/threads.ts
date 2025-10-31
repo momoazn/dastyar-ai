@@ -210,7 +210,7 @@ export async function updateThreadOnNewMessage(
 }
 
 export type MessageWithModel = Message & {
-  model: Pick<LLMModel, "name" | "provider">;
+  model: Pick<LLMModel, "identifier" | "provider">;
 };
 
 /**
@@ -238,7 +238,7 @@ export async function loadThreadMessages(
         createdAt: messages.createdAt,
         updatedAt: messages.updatedAt,
         userId: messages.userId,
-        modelName: llmModels.name,
+        modelIdentifier: llmModels.identifier,
         modelProvider: llmModels.provider,
       })
       .from(messages)
@@ -257,7 +257,7 @@ export async function loadThreadMessages(
       updatedAt: row.updatedAt,
       userId: row.userId,
       model: {
-        name: row.modelName,
+        identifier: row.modelIdentifier,
         provider: row.modelProvider,
       },
     }));

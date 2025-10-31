@@ -198,7 +198,7 @@ const chunkPageText = (text: string): string[] => {
 
 const aggregatePages = (
   pages: TranslationPayload["pages"],
-  key: "sourceText" | "translatedText"
+  key: "source_text" | "translated_text"
 ): string =>
   pages
     .filter((page) => page[key]?.trim())
@@ -254,7 +254,10 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(model.identifier, model.provider);
+      const providerModel = getProviderForModel(
+        model.identifier,
+        model.provider
+      );
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
@@ -310,7 +313,10 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(model.identifier, model.provider);
+      const providerModel = getProviderForModel(
+        model.identifier,
+        model.provider
+      );
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
@@ -364,8 +370,8 @@ export const translationProcedures = {
         }
         translatedPages.push({
           page: page.page,
-          sourceText: page.text,
-          translatedText: translatedChunks.join("\n\n"),
+          source_text: page.text,
+          translated_text: translatedChunks.join("\n\n"),
         });
       }
 
@@ -377,14 +383,14 @@ export const translationProcedures = {
       }
 
       const payload: TranslationPayload = {
-        pageCount: pdfPages.length,
+        page_count: pdfPages.length,
         pages: translatedPages,
       };
 
-      const aggregatedSource = aggregatePages(translatedPages, "sourceText");
+      const aggregatedSource = aggregatePages(translatedPages, "source_text");
       const aggregatedTranslation = aggregatePages(
         translatedPages,
-        "translatedText"
+        "translated_text"
       );
 
       try {
