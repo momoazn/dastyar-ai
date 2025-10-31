@@ -142,7 +142,8 @@ const app = new Hono<AuthEnv>()
             ragSystem = chatSystemPrompt({ context: ctx });
           }
         }
-      } catch (_e) {
+      } catch (error) {
+        console.error("RAG context retrieval failed:", error);
         // Retrieval is best-effort; fall back to default system prompt on failure
       }
 

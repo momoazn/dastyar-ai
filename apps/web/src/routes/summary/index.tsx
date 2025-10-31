@@ -1,9 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { Copy, Loader2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
@@ -78,7 +74,6 @@ export const Route = createFileRoute("/summary/")({
  */
 function SummarizePage() {
   const search = useSearch({ from: "/summary/" }) as SummarizeSearch;
-  const _navigate = useNavigate();
 
   // Form state
   const [sourceText, setSourceText] = useState("");

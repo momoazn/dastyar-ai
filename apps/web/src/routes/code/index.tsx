@@ -1,9 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
@@ -67,7 +63,6 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
   const search = useSearch({ from: "/code/" }) as { fromId?: string };
-  const _navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
   const [inputCode, setInputCode] = useState("");

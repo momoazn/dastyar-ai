@@ -13,6 +13,9 @@ type ModelFilter = Partial<{
   isEnabled: boolean;
 }>;
 
+// Regex to extract size from model names (e.g., "llama-3.1-8b" -> "8b")
+const SIZE_REGEX = /[-:]([0-9.]+[a-z]+|e\d+[a-z]+)$/i;
+
 export async function getModelById(id: number): Promise<LLMModel | null> {
   const result = await db.query.llmModels.findFirst({
     where: eq(llmModels.id, id),
@@ -139,7 +142,7 @@ function parseModelName(rawName: string): ModelInfo {
   // Extract size using regex - matches patterns like:
   // - 270m, 1.7b, 20b (number with unit)
   // - e4b (alphanumeric size indicator)
-  const sizeMatch = nameWithSize.match(/[-:]([0-9.]+[a-z]+|e\d+[a-z]+)$/i);
+  const sizeMatch = nameWithSize.match(SIZE_REGEX);
   const size = sizeMatch ? sizeMatch[1] : undefined;
 
   // Extract family name by removing the size suffix
