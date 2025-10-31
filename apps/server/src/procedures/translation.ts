@@ -24,6 +24,7 @@ import { protectedProcedure } from "./base";
 
 const STORAGE_TEXT_LIMIT = 12_000;
 const TRANSLATION_CHUNK_LIMIT = 2800;
+const DOUBLE_NEWLINE_RE = /\n{2,}/u;
 
 const translateWithStructuredOutput = async (
   model: LanguageModel,
@@ -129,6 +130,17 @@ const translateTextWithModel = async ({
   return translatedText;
 };
 
+const splitOversizeParagraph = (paragraph: string): string[] => {
+  const parts: string[] = [];
+  let start = 0;
+  while (start < paragraph.length) {
+    const end = Math.min(start + TRANSLATION_CHUNK_LIMIT, paragraph.length);
+    parts.push(paragraph.slice(start, end));
+    start = end;
+  }
+  return parts;
+};
+
 const chunkPageText = (text: string): string[] => {
   const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) {
@@ -139,7 +151,7 @@ const chunkPageText = (text: string): string[] => {
   }
 
   const paragraphs = normalized
-    .split(/\n{2,}/)
+    .split(DOUBLE_NEWLINE_RE)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
@@ -151,17 +163,9 @@ const chunkPageText = (text: string): string[] => {
       if (buffer) {
         chunks.push(buffer);
       }
+      buffer = "";
       if (paragraph.length > TRANSLATION_CHUNK_LIMIT) {
-        let start = 0;
-        while (start < paragraph.length) {
-          const end = Math.min(
-            start + TRANSLATION_CHUNK_LIMIT,
-            paragraph.length
-          );
-          chunks.push(paragraph.slice(start, end));
-          start = end;
-        }
-        buffer = "";
+        chunks.push(...splitOversizeParagraph(paragraph));
       } else {
         buffer = paragraph;
       }

@@ -67,7 +67,7 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function RouteComponent() {
   const search = useSearch({ from: "/code/" }) as { fromId?: string };
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [mode, setMode] = useState<CodeMode>("generate");
   const [language, setLanguage] = useState<ProgrammingLanguage>("javascript");
   const [inputCode, setInputCode] = useState("");
@@ -101,28 +101,8 @@ function RouteComponent() {
         queryClient.invalidateQueries({
           queryKey: orpc.code.listRuns.queryKey(),
         });
-        // Store the returned data - we'll format it later when displaying
-        const runData = data as RunItem;
-
-        // Parse and format the output based on mode
-        try {
-          const parsed = JSON.parse(runData.output) as unknown;
-          if (runData.mode === "generate") {
-            setOutput(
-              typeof parsed === "object" && parsed && "code" in parsed
-                ? String((parsed as { code?: string }).code || "")
-                : String(parsed || "")
-            );
-          } else {
-            setOutput(
-              typeof parsed === "object" && parsed && "explanation" in parsed
-                ? String((parsed as { explanation?: string }).explanation || "")
-                : String(parsed || "")
-            );
-          }
-        } catch {
-          setOutput(runData.output);
-        }
+        // Use returned payload directly based on current mode
+        setOutput(formatImmediateOutput(mode, data));
         // Stay on the same page to allow quick iterations
       },
     })
@@ -509,3 +489,40 @@ function RouteComponent() {
     />
   );
 }
+const formatImmediateOutput = (m: CodeMode, data: unknown): string => {
+  try {
+    if (m === "generate") {
+      const payload = data as { generatedCode?: string };
+      return String(payload.generatedCode ?? "");
+    }
+    if (m === "explain") {
+      const payload = data as { explanation?: string };
+      return String(payload.explanation ?? "");
+    }
+    if (m === "review") {
+      const payload = data as { feedback?: string; suggestions?: string[] };
+      const suggestions = (payload.suggestions ?? [])
+        .map((s) => `- ${s}`)
+        .join("\n");
+      return `${payload.feedback ?? ""}${
+        suggestions
+          ? `\n\n${fa.codeAssistant.review.suggestions}:\n${suggestions}`
+          : ""
+      }`;
+    }
+    const payload = data as {
+      rootCause?: string;
+      solution?: string;
+      codeFix?: string;
+    };
+    return `${fa.codeAssistant.debug.rootCause}: ${payload.rootCause ?? ""}\n\n${
+      fa.codeAssistant.debug.solution
+    }: ${payload.solution ?? ""}${
+      payload.codeFix
+        ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${payload.codeFix}`
+        : ""
+    }`;
+  } catch {
+    return "";
+  }
+};

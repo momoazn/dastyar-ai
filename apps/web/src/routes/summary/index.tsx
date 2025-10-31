@@ -78,7 +78,7 @@ export const Route = createFileRoute("/summary/")({
  */
 function SummarizePage() {
   const search = useSearch({ from: "/summary/" }) as SummarizeSearch;
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   // Form state
   const [sourceText, setSourceText] = useState("");

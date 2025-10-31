@@ -10,6 +10,8 @@ import {
 import type React from "react";
 import { fa } from "@/lib/persian-texts";
 
+const TRAILING_SLASH_RE = /\/$/;
+
 export type NavItem = {
   title: string;
   url: string;
@@ -55,8 +57,8 @@ export function useActiveNavItem(): NavItem | undefined {
 
   for (const item of navMain) {
     // Normalize both paths for comparison (remove trailing slash if present)
-    const normalizedItemUrl = item.url.replace(/\/$/, "");
-    const normalizedCurrentPath = currentPath.replace(/\/$/, "");
+    const normalizedItemUrl = item.url.replace(TRAILING_SLASH_RE, "");
+    const normalizedCurrentPath = currentPath.replace(TRAILING_SLASH_RE, "");
 
     if (
       normalizedCurrentPath === normalizedItemUrl ||

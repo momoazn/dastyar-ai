@@ -26,6 +26,7 @@ const modeIcons = {
   debug: Bug,
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
 function CodeHistoryView() {
   const { runId: id } = Route.useParams();
   const navigate = useNavigate();
@@ -99,6 +100,7 @@ function CodeHistoryView() {
   const ModeIcon = modeIcons[mode as keyof typeof modeIcons] ?? Code;
 
   // Format output based on mode
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: straightforward parsing/formatting for four modes
   const formatOutput = (): string => {
     try {
       const parsed = JSON.parse(runData.output as string) as unknown;

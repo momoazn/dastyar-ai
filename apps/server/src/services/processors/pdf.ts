@@ -22,7 +22,7 @@ export async function extractTextFromPdf(filePath: string): Promise<PdfPage[]> {
       .filter((page) => page.text.trim().length > 0);
 
     return pages;
-  } catch (error) {
+  } catch (_error) {
     // Return empty array on any error
     return [];
   }
