@@ -37,7 +37,19 @@ type ProgrammingLanguage =
   | "java"
   | "cpp"
   | "go"
-  | "rust";
+  | "rust"
+  | "csharp"
+  | "php"
+  | "ruby"
+  | "swift"
+  | "kotlin"
+  | "scala"
+  | "r"
+  | "sql"
+  | "html"
+  | "css"
+  | "bash"
+  | "dart";
 
 const modes: Array<{
   value: CodeMode;
@@ -58,6 +70,18 @@ const languages: Array<{ value: ProgrammingLanguage; label: string }> = [
   { value: "cpp", label: "C++" },
   { value: "go", label: "Go" },
   { value: "rust", label: "Rust" },
+  { value: "csharp", label: "C#" },
+  { value: "php", label: "PHP" },
+  { value: "ruby", label: "Ruby" },
+  { value: "swift", label: "Swift" },
+  { value: "kotlin", label: "Kotlin" },
+  { value: "scala", label: "Scala" },
+  { value: "r", label: "R" },
+  { value: "sql", label: "SQL" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "bash", label: "Bash" },
+  { value: "dart", label: "Dart" },
 ];
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional blocks
@@ -226,7 +250,7 @@ function RouteComponent() {
         )
       }
       content={
-        <div className="flex h-full flex-col gap-6">
+        <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
             <h1 className="font-bold text-2xl">دستیار کد</h1>
@@ -348,11 +372,11 @@ function RouteComponent() {
 
           {/* Two Column Layout */}
           <div
-            className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+            className="grid min-h-0 w-full flex-1 grid-cols-1 gap-4 lg:grid-cols-2"
             dir="rtl"
           >
             {/* Input Column (Right) */}
-            <Card className="flex flex-col py-0 lg:order-1">
+            <Card className="flex min-h-0 flex-1 flex-col py-0 lg:order-1">
               <div className="border-b bg-muted/30 px-4 py-2.5">
                 <div className="flex h-8 items-center justify-between">
                   <span className="font-semibold text-foreground text-sm">
@@ -367,7 +391,7 @@ function RouteComponent() {
                   autoCapitalize="off"
                   autoCorrect="off"
                   className={cn(
-                    "h-full max-h-[400px] min-h-[200px] resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
+                    "h-full resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
                     (inputCode ? detectTextDirection(inputCode) : "ltr") ===
                       "rtl"
                       ? "text-right"
@@ -423,7 +447,7 @@ function RouteComponent() {
               </div>
               <div className="flex-1 p-4">
                 {currentMutation.isPending ? (
-                  <div className="flex h-full max-h-[400px] min-h-[200px] items-center justify-center">
+                  <div className="flex h-full items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       <div className="text-muted-foreground text-sm">
@@ -432,10 +456,7 @@ function RouteComponent() {
                     </div>
                   </div>
                 ) : (
-                  <div
-                    className="h-full max-h-[400px] min-h-[200px] overflow-auto text-left"
-                    dir="ltr"
-                  >
+                  <div className="h-full overflow-auto text-left" dir="ltr">
                     <Response>
                       {mode === "generate" && output
                         ? `\`\`\`${language}\n${output}\n\`\`\``

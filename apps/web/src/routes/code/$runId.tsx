@@ -146,7 +146,7 @@ function CodeHistoryView() {
   return (
     <ToolScaffold
       content={
-        <div className="flex h-full flex-col gap-6">
+        <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -198,11 +198,11 @@ function CodeHistoryView() {
 
           {/* Two Column Layout */}
           <div
-            className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
+            className="grid min-h-0 w-full flex-1 grid-cols-1 gap-4 lg:grid-cols-2"
             dir="rtl"
           >
             {/* Input Column (Right) */}
-            <Card className="flex flex-col py-0 lg:order-1">
+            <Card className="flex min-h-0 flex-1 flex-col py-0 lg:order-1">
               <div className="border-b bg-muted/30 px-4 py-2.5">
                 <div className="flex h-8 items-center justify-between">
                   <span className="font-semibold text-foreground text-sm">
@@ -218,7 +218,7 @@ function CodeHistoryView() {
                   autoCapitalize="off"
                   autoCorrect="off"
                   className={cn(
-                    "h-full max-h-[400px] min-h-[200px] resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
+                    "h-full resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
                     (runData.inputCode
                       ? detectTextDirection(runData.inputCode)
                       : "ltr") === "rtl"
@@ -263,10 +263,7 @@ function CodeHistoryView() {
                 </div>
               </div>
               <div className="flex-1 p-4">
-                <div
-                  className="h-full max-h-[400px] min-h-[200px] overflow-auto text-left"
-                  dir="ltr"
-                >
+                <div className="h-full overflow-auto text-left" dir="ltr">
                   <Response>
                     {mode === "generate" && formattedOutput
                       ? `\`\`\`${language}\n${formattedOutput}\n\`\`\``
