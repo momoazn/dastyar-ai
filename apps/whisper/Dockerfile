@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
       openai-whisper==20231117
 
 # Copy application code
-COPY apps/whisper-server/whisper_server /app/whisper_server
+COPY apps/whisper-server/whisper /app/whisper
 
 # Default environment (can be overridden at runtime)
 ENV WHISPER_DEVICE=cpu \
@@ -32,5 +32,5 @@ ENV WHISPER_DEVICE=cpu \
 EXPOSE 8001
 
 # Start the API server
-CMD ["uvicorn", "whisper_server.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "whisper.main:app", "--host", "0.0.0.0", "--port", "8001"]
 

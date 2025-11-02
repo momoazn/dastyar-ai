@@ -37,7 +37,7 @@ class ModelResolverTests(unittest.TestCase):
         _mock_deps_before_import()
         # Import module after injecting mocks
         global models
-        models = importlib.import_module("whisper_server.models")
+        models = importlib.import_module("whisper.models")
 
     def test_resolve_model_name_defaults(self):
         self.assertEqual(models.resolve_model_name(None), "tiny")

@@ -124,7 +124,7 @@ function buildWhisper() {
 
   const exeName = isWindows ? "whisper-server.exe" : "whisper-server";
   const extra = ff ? ` --add-binary "${ff}${isWindows ? ";bin" : ":bin"}"` : "";
-  const cmd = `${py} -m PyInstaller --name whisper-server --onefile --clean --noconfirm${extra} whisper_server/main.py`;
+  const cmd = `${py} -m PyInstaller --name whisper-server --onefile --clean --noconfirm${extra} whisper/main.py`;
   run(cmd, WHISPER_DIR);
 
   const outDir = join(WHISPER_DIR, "dist");

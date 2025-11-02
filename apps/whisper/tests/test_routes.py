@@ -39,8 +39,8 @@ class WhisperServerRouteTests(unittest.TestCase):
         # Import here after mocks are in place
         global TestClient, app, settings
         from fastapi.testclient import TestClient
-        from whisper_server.main import app
-        from whisper_server.config import settings
+        from whisper.main import app
+        from whisper.config import settings
 
         cls.client = TestClient(app)
         cls.settings = settings
@@ -61,7 +61,7 @@ class WhisperServerRouteTests(unittest.TestCase):
 
     def test_transcribe_success(self):
         # Patch load_model to avoid real model loading and return a fake transcriber
-        from whisper_server import models as models_mod
+        from whisper import models as models_mod
 
         class FakeModel:
             def transcribe(self, path, language=None, fp16=False):  # pragma: no cover
@@ -96,7 +96,7 @@ class WhisperServerRouteTests(unittest.TestCase):
 
     def test_transcribe_invalid_model(self):
         # Force ValueError from load_model to assert a 400 response
-        from whisper_server import models as models_mod
+        from whisper import models as models_mod
 
         def raise_value_error(_):  # pragma: no cover
             raise ValueError("Invalid model name: invalid")

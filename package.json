@@ -19,7 +19,7 @@
     "build:all:windows-server": "BUILD_WINDOWS_SERVER=1 bun run build.ts",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
-    "dev:whisper": "uv run --directory apps/whisper-server uvicorn whisper_server.main:app --host 127.0.0.1 --port 8001",
+    "dev:whisper": "uv run --directory apps/whisper-server uvicorn whisper.main:app --host 127.0.0.1 --port 8001",
     "build:whisper:binary": "bash apps/whisper-server/scripts/build-binary.sh",
     "config:generate": "turbo -F server config:generate",
     "config:show": "turbo -F server config:show",

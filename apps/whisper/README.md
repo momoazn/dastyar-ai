@@ -9,7 +9,7 @@ Requirements
 
 Quick start
 1) From repo root, start the server (uv will create a virtual environment automatically):
-   uv run --directory apps/whisper-server uvicorn whisper_server.main:app --host 127.0.0.1 --port 8001
+   uv run --directory apps/whisper-server uvicorn whisper.main:app --host 127.0.0.1 --port 8001
 
 2) Health check:
    curl http://127.0.0.1:8001/health
