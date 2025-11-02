@@ -1,19 +1,18 @@
 [project]
-name = "whisper-server"
+name = "whisperx-server"
 version = "0.1.0"
-description = "Simple FastAPI server for Whisper transcription"
+description = "FastAPI server for WhisperX transcription"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-  "fastapi>=0.115.0",
-  "uvicorn[standard]>=0.30.0",
-  "openai-whisper>=20231117",
+  "fastapi[standard]>=0.115.0",
+  "whisperx",
+  "pydantic-settings>=2.0.0",
   # Optional: helps resolve ffmpeg path when bundled; not required at runtime if ffmpeg is on PATH
   "imageio-ffmpeg>=0.4.9",
 ]
 
 [tool.uv]
-default-groups = ["default"]
 
 [tool.uv.sources]
 

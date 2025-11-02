@@ -8,7 +8,7 @@ const ROOT = process.cwd();
 const DIST = join(ROOT, "dist");
 const SERVER_DIR = join(ROOT, "apps", "server");
 const WEB_DIR = join(ROOT, "apps", "web");
-const WHISPER_DIR = join(ROOT, "apps", "whisper-server");
+const WHISPER_DIR = join(ROOT, "apps", "whisper");
 
 const isWindows = process.platform === "win32";
 
@@ -56,12 +56,11 @@ function ensureWhisperVenv() {
   const py = isWindows
     ? join(venvDir, "Scripts", "python.exe")
     : join(venvDir, "bin", "python");
-  console.log("📦 Installing Python deps (Whisper, FastAPI, PyInstaller)...");
+  console.log("📦 Installing Python deps (WhisperX, FastAPI[standard], PyInstaller)...");
   run(`${py} -m pip install --upgrade pip wheel setuptools`, WHISPER_DIR);
   const pkgs = [
-    "fastapi==0.115.0",
-    '"uvicorn[standard]"==0.30.0',
-    "openai-whisper==20231117",
+    '"fastapi[standard]"==0.115.0',
+    "whisperx",
     "imageio-ffmpeg==0.4.9",
     "pyinstaller==6.4.0",
   ];
@@ -118,13 +117,13 @@ function ensureFfmpegInBin(): string | null {
 }
 
 function buildWhisper() {
-  console.log("[1/3] Building Whisper binary...");
+  console.log("[1/3] Building WhisperX binary...");
   const { py } = ensureWhisperVenv();
   const ff = ensureFfmpegInBin();
 
-  const exeName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const exeName = isWindows ? "whisper.exe" : "whisper";
   const extra = ff ? ` --add-binary "${ff}${isWindows ? ";bin" : ":bin"}"` : "";
-  const cmd = `${py} -m PyInstaller --name whisper-server --onefile --clean --noconfirm${extra} whisper_server/main.py`;
+  const cmd = `${py} -m PyInstaller --name whisper --onefile --clean --noconfirm${extra} api/main.py`;
   run(cmd, WHISPER_DIR);
 
   const outDir = join(WHISPER_DIR, "dist");
@@ -187,7 +186,7 @@ function main() {
   safeCopyFile(join(ROOT, ".env.example"), join(DIST, ".env.example"));
   safeCopyFile(join(ROOT, "config.json"), join(DIST, "config.json"));
 
-  const whisperName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const whisperName = isWindows ? "whisper.exe" : "whisper";
   const serverHost = isWindows ? "dastyar-ai.exe" : "dastyar-ai";
   const outWhisper = join(DIST, whisperName);
   const outServerHost = join(DIST, serverHost);

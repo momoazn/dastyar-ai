@@ -144,3 +144,5 @@ bundle/assets/
 
 # Local development
 dev-dist/
+
+worktrees/
