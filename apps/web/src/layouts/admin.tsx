@@ -1,8 +1,9 @@
 import { Navigate } from "@tanstack/react-router";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowRight, LogOut } from "lucide-react";
-import { LS_TOKEN_KEY, tokenAtom } from "@/atoms/auth";
+import { logoutAtom, tokenAtom } from "@/atoms/auth";
 import { Button, Card } from "@/components/ui";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useUser } from "@/hooks/use-user";
 import { fa } from "@/lib/persian-texts";
 
@@ -12,20 +13,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { data: user, isLoading, error } = useUser();
-  const atomToken = useAtomValue(tokenAtom);
-  const storedToken =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null")
-      : null;
-  const token = atomToken ?? storedToken;
-  const isHydrating = atomToken === null && !!storedToken;
+  const token = useAtomValue(tokenAtom);
+  const logout = useSetAtom(logoutAtom);
 
-  // Show loading during hydration or while checking user
-  if (isHydrating || isLoading || (token && !user && !error)) {
+  // Show loading while checking user
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
+          <LoadingSpinner className="mx-auto mb-4 h-8 w-8" />
           <p className="text-muted-foreground">در حال بارگذاری...</p>
         </div>
       </div>
@@ -90,11 +86,14 @@ export default function AdminLayout({
               <div className="text-muted-foreground text-sm">
                 {user.username} ({user.role === "admin" ? "مدیر" : "کاربر"})
               </div>
-              <Button asChild size="sm" variant="outline">
-                <a className="flex items-center gap-2" href="/logout">
-                  <LogOut className="h-4 w-4" />
-                  {fa.admin.navigation.logout}
-                </a>
+              <Button
+                className="flex items-center gap-2"
+                onClick={() => logout()}
+                size="sm"
+                variant="outline"
+              >
+                <LogOut className="h-4 w-4" />
+                {fa.admin.navigation.logout}
               </Button>
             </div>
           </div>

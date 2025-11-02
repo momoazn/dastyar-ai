@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
-import { db, sqliteDB } from "./index";
 import { logger } from "@/lib/logger";
+import { db, sqliteDB } from "./index";
 
 type MigrationEntry = {
   idx: number;
@@ -20,7 +20,9 @@ async function loadBundledMigrations(): Promise<MigrationData | null> {
     const migrationModule = await import("./migration-data.generated");
     return migrationModule.migrationData;
   } catch (error) {
-    logger.info("No bundled migrations found, checking for migrations directory...");
+    logger.info(
+      "No bundled migrations found, checking for migrations directory..."
+    );
     return null;
   }
 }
