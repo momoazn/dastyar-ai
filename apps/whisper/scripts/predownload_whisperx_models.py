@@ -34,13 +34,21 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Iterable, List, Optional
+from collections.abc import Iterable
+from typing import cast
 
 import torch
-import whisperx
+import importlib
+from typing import Protocol, runtime_checkable
+
+@runtime_checkable
+class _WhisperXModule(Protocol):
+    def load_model(self, model_name: str, device: str, compute_type: str) -> object: ...
+
+whisperx = cast(_WhisperXModule, cast(object, importlib.import_module("whisperx")))
 
 # Keep aliases consistent with the server (see apps/whisper/api/models.py)
-KNOWN_MODELS: List[str] = ["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"]
+KNOWN_MODELS: list[str] = ["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"]
 ALIASES = {m: m for m in KNOWN_MODELS}
 
 
@@ -59,7 +67,7 @@ def _ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def _resolve_device(user_device: Optional[str]) -> str:
+def _resolve_device(user_device: str | None) -> str:
     device = (user_device or os.environ.get("WHISPER_DEVICE") or "cpu").strip().lower()
     if device not in ("cpu", "cuda"):
         print(f"[warn] Invalid device '{device}' provided. Falling back to 'cpu'.")
@@ -70,15 +78,15 @@ def _resolve_device(user_device: Optional[str]) -> str:
     return device
 
 
-def _resolve_compute_type(device: str, user_compute: Optional[str]) -> str:
+def _resolve_compute_type(device: str, user_compute: str | None) -> str:
     if user_compute:
         return user_compute
     # Sensible defaults mirroring the server
     return "float16" if device == "cuda" else "int8"
 
 
-def _normalize_models(models: Iterable[str]) -> List[str]:
-    result: List[str] = []
+def _normalize_models(models: Iterable[str]) -> list[str]:
+    result: list[str] = []
     for m in models:
         name = ALIASES.get(m.lower().strip(), m.lower().strip())
         if name not in KNOWN_MODELS:
@@ -87,47 +95,47 @@ def _normalize_models(models: Iterable[str]) -> List[str]:
     return result
 
 
-def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Predownload WhisperX models into the HuggingFace cache.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "positional_models",
         nargs="*",
         help=f"WhisperX model names: {', '.join(KNOWN_MODELS)}",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--models",
         type=str,
         default=os.environ.get("WHISPER_MODELS"),
         help="Comma-separated list of models (e.g., 'tiny,base,large-v3').",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--all",
         action="store_true",
         help="Download all known models.",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--device",
         type=str,
         choices=["cpu", "cuda"],
         default=os.environ.get("WHISPER_DEVICE", "cpu"),
         help="Compute device to initialize models.",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--compute-type",
         type=str,
         default=None,
         help="Compute type for faster-whisper (e.g., 'int8', 'int8_float16', 'float16', 'auto').",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--cache-dir",
         type=str,
         default=os.environ.get("XDG_CACHE_HOME") or str(_default_cache_dir()),
         help="Cache directory (sets XDG_CACHE_HOME for the process).",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Only show what would be downloaded, without loading models.",
@@ -135,26 +143,26 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _collect_models(args: argparse.Namespace) -> List[str]:
-    if args.all:
+def _collect_models(args: argparse.Namespace) -> list[str]:
+    if cast(bool, args.all):
         return KNOWN_MODELS[:]
 
-    selected: List[str] = []
-    if args.models:
-        selected.extend([s for s in args.models.split(",") if s.strip()])
-    if args.positional_models:
-        selected.extend(args.positional_models)
+    selected: list[str] = []
+    if (models_opt := cast(str | None, args.models)):
+        selected.extend([s for s in models_opt.split(",") if s.strip()])
+    if (positional := cast(list[str], args.positional_models)):
+        selected.extend(positional)
 
     if not selected:
         raise SystemExit(
             "No models specified. Use --all, pass names positionally, "
-            "or use --models tiny,base,large-v3"
+            + "or use --models tiny,base,large-v3"
         )
 
     return _normalize_models(selected)
 
 
-def _print_header(cache_dir: Path, device: str, compute_type: str, models: List[str], dry_run: bool) -> None:
+def _print_header(cache_dir: Path, device: str, compute_type: str, models: list[str], dry_run: bool) -> None:
     print("WhisperX Model Predownloader")
     print("=" * 60)
     print(f"Cache dir       : {cache_dir}")
@@ -167,36 +175,36 @@ def _print_header(cache_dir: Path, device: str, compute_type: str, models: List[
 
 def _load_once(model_name: str, device: str, compute_type: str) -> None:
     # Load model to trigger downloads; discard immediately.
-    model = whisperx.load_model(model_name, device=device, compute_type=compute_type)
+    model: object = whisperx.load_model(model_name, device=device, compute_type=compute_type)
     # Release resources
     del model
     if device == "cuda":
         torch.cuda.empty_cache()
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
 
     # Resolve cache dir and apply to environment to match server config
-    cache_dir = Path(args.cache_dir).expanduser().resolve()
+    cache_dir = Path(cast(str, args.cache_dir)).expanduser().resolve()
     _ensure_dir(cache_dir)
     os.environ["XDG_CACHE_HOME"] = str(cache_dir)
 
-    device = _resolve_device(args.device)
-    compute_type = _resolve_compute_type(device, args.compute_type)
+    device = _resolve_device(cast(str, args.device))
+    compute_type = _resolve_compute_type(device, cast(str | None, args.compute_type))
     try:
         models = _collect_models(args)
     except ValueError as e:
         print(f"[error] {e}")
         return 2
 
-    _print_header(cache_dir, device, compute_type, models, args.dry_run)
+    _print_header(cache_dir, device, compute_type, models, cast(bool, args.dry_run))
 
-    if args.dry_run:
+    if cast(bool, args.dry_run):
         print("Dry-run enabled. Exiting without downloading.")
         return 0
 
-    failures: List[str] = []
+    failures: list[str] = []
     for name in models:
         print(f"⬇️  Downloading '{name}' ...")
         try:

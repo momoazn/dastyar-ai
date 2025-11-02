@@ -4,9 +4,9 @@ import logging
 import tempfile
 from pathlib import Path
 
-from typing import Optional
+from typing import Annotated
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, FastAPI
 from fastapi.responses import HTMLResponse
 
 from . import schemas
@@ -68,20 +68,16 @@ async def list_models() -> list[schemas.ModelInfo]:
     },
 )
 async def transcribe(
-    file: UploadFile = File(..., description="Audio file to transcribe"),
-    model: Optional[str] = Form(None, description="Model name (default: tiny)"),
-    language: Optional[str] = Form(
-        None, description="ISO 639-1 language code (e.g., 'en', 'fa')"
-    ),
-    engine: Optional[str] = Form(
-        None, description="Transcription engine: 'whisperx' (default) or 'whisper'"
-    ),
+    file: Annotated[UploadFile, File(description="Audio file to transcribe")],
+    model: Annotated[str | None, Form(description="Model name (default: tiny)")] = None,
+    language: Annotated[str | None, Form(description="ISO 639-1 language code (e.g., 'en', 'fa')")] = None,
+    engine: Annotated[str | None, Form(description="Transcription engine: 'whisperx' (default) or 'whisper'")] = None,
 ) -> schemas.TranscribeResponse:
     """Transcribe an audio file using WhisperX."""
     # Check file size
-    file.file.seek(0, 2)  # Seek to end of file
+    _ = file.file.seek(0, 2)  # Seek to end of file
     file_size = file.file.tell()
-    file.file.seek(0)  # Reset file pointer
+    _ = file.file.seek(0)  # Reset file pointer
 
     if file_size > settings.MAX_UPLOAD_BYTES:
         raise HTTPException(
@@ -92,14 +88,14 @@ async def transcribe(
     # Resolve model name
     model_name = resolve_model_name(model)
 
-    temp_path: Optional[str] = None
+    temp_path: str | None = None
     try:
         # Save the uploaded file to a temporary file
         fname = file.filename or ""
         suffix = Path(fname).suffix if fname else ""
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
             content = await file.read()
-            temp_file.write(content)
+            _ = temp_file.write(content)
             temp_path = temp_file.name
 
         try:
@@ -145,6 +141,6 @@ async def transcribe(
         )
 
 
-def setup_routes(app):
+def setup_routes(app: FastAPI) -> None:
     """Set up API routes without a versioned prefix to preserve original paths."""
     app.include_router(router)

@@ -5,13 +5,15 @@ and other configurations.
 """
 
 import logging
-
+from contextlib import asynccontextmanager
+from typing import Callable
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import __version__
 from .config import settings
 from .routes import setup_routes
+setup_routes: Callable[[FastAPI], None]
 
 # Configure logging
 logging.basicConfig(
@@ -27,13 +29,27 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: The configured FastAPI application instance.
     """
-    # Initialize FastAPI app
+    # Initialize FastAPI app with lifespan
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        # Log application startup
+        logger.info("Starting WhisperX Transcription Server")
+        logger.info(
+            "Environment: %s", "development" if settings.RELOAD else "production"
+        )
+        logger.info("Device: %s", settings.WHISPER_DEVICE)
+        logger.info("Default model: %s", settings.WHISPER_DEFAULT_MODEL)
+        logger.info("Models directory: %s", settings.MODELS_DIR)
+        logger.info("Cache directory: %s", settings.CACHE_DIR)
+        yield
+
     app = FastAPI(
         title="WhisperX Transcription Server",
         description="FastAPI server for offline speech-to-text transcription using WhisperX",
         version=__version__,
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     # Add CORS middleware
@@ -48,18 +64,7 @@ def create_app() -> FastAPI:
     # Setup API routes
     setup_routes(app)
 
-    # Log application startup
-    @app.on_event("startup")
-    async def startup_event():
-        """Log application startup."""
-        logger.info("Starting WhisperX Transcription Server")
-        logger.info(
-            "Environment: %s", "development" if settings.RELOAD else "production"
-        )
-        logger.info("Device: %s", settings.WHISPER_DEVICE)
-        logger.info("Default model: %s", settings.WHISPER_DEFAULT_MODEL)
-        logger.info("Models directory: %s", settings.MODELS_DIR)
-        logger.info("Cache directory: %s", settings.CACHE_DIR)
+
 
     return app
 
