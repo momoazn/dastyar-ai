@@ -25,6 +25,16 @@ export const navMain: NavItem[] = [
     icon: MessageSquare,
   },
   {
+    title: fa.navigation.imageGeneration,
+    url: "/image",
+    icon: Image,
+  },
+  {
+    title: fa.navigation.codeAssistant,
+    url: "/code/",
+    icon: Code,
+  },
+  {
     title: fa.navigation.translation,
     url: "/translation/",
     icon: MessageCircle,
@@ -38,16 +48,6 @@ export const navMain: NavItem[] = [
     title: fa.navigation.transcribe,
     url: "/transcribe",
     icon: Mic,
-  },
-  {
-    title: fa.navigation.imageGeneration,
-    url: "/image",
-    icon: Image,
-  },
-  {
-    title: fa.navigation.codeAssistant,
-    url: "/code/",
-    icon: Code,
   },
 ] as const satisfies NavItem[];
 
