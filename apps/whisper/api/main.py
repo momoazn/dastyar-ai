@@ -71,7 +71,7 @@ if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     uvicorn.run(
-        "whisper.main:app",
+        "api.main:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.RELOAD,
