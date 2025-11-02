@@ -90,6 +90,7 @@ export default function AdminLayout({
                 className="flex items-center gap-2"
                 onClick={() => logout()}
                 size="sm"
+                type="button"
                 variant="outline"
               >
                 <LogOut className="h-4 w-4" />
