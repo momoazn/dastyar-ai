@@ -16,7 +16,9 @@
       "Bash(do echo -n \"  $dep: \")",
       "Bash(done)",
       "Bash(tree -L 3 /Users/mohamadhosein/Workspace/side/dastyar-ai/apps/server/src -I node_modules)",
-      "Bash(find apps/server/src -type f -name \"*.ts\" -exec grep -l \"console\\.log\\|console\\.warn\\|console\\.error\" {})"
+      "Bash(find apps/server/src -type f -name \"*.ts\" -exec grep -l \"console\\.log\\|console\\.warn\\|console\\.error\" {})",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": [],
     "ask": []
