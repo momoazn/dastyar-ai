@@ -8,12 +8,12 @@ dependencies = [
   "fastapi>=0.115.0",
   "uvicorn[standard]>=0.30.0",
   "openai-whisper>=20231117",
+  "pydantic-settings>=2.0.0",
   # Optional: helps resolve ffmpeg path when bundled; not required at runtime if ffmpeg is on PATH
   "imageio-ffmpeg>=0.4.9",
 ]
 
 [tool.uv]
-default-groups = ["default"]
 
 [tool.uv.sources]
 
