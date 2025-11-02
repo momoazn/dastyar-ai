@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { PDFParse } from "pdf-parse";
+import { logger } from "@/lib/logger";
 
 export type PdfPage = { page: number; text: string };
 
@@ -23,7 +24,7 @@ export async function extractTextFromPdf(filePath: string): Promise<PdfPage[]> {
 
     return pages;
   } catch (error) {
-    console.error("PDF extraction failed:", error);
+    logger.error("PDF extraction failed", error, { filePath });
     return [];
   }
 }

@@ -5,6 +5,7 @@ import {
   type TranslationPayload,
   translations as translationsTable,
 } from "@/database";
+import { logger } from "@/lib/logger";
 
 type CreateTranslationParams = {
   sourceText: string;
@@ -55,7 +56,7 @@ export async function createTranslation(
     }
     return created;
   } catch (error) {
-    console.error("Failed to create translation:", error);
+    logger.error("Failed to create translation", error);
     throw new Error("Unable to create translation");
   }
 }
@@ -75,7 +76,7 @@ export async function getTranslation(
 
     return rows.at(0) ?? null;
   } catch (error) {
-    console.error(`Failed to get translation ${id}:`, error);
+    logger.error("Failed to get translation", error, { id });
     throw new Error("Unable to retrieve translation");
   }
 }
@@ -92,7 +93,7 @@ export async function deleteTranslation(
       )
       .run();
   } catch (error) {
-    console.error(`Failed to delete translation ${id}:`, error);
+    logger.error("Failed to delete translation", error, { id });
     throw new Error("Unable to delete translation");
   }
 }

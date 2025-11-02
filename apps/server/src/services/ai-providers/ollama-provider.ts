@@ -1,6 +1,7 @@
 import { createOllama } from "ollama-ai-provider-v2";
 import OpenAI from "openai";
 import { env } from "@/config";
+import { logger } from "@/lib/logger";
 
 export const ollamaClient = new OpenAI({
   baseURL: `${env.OLLAMA_BASE_URL}/v1`,
@@ -33,7 +34,10 @@ export async function listOllamaModels() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Connection failed";
-    console.warn(`[Ollama] Not available (${env.OLLAMA_BASE_URL}): ${message}`);
+    logger.error("Ollama provider not available", error, {
+      baseURL: env.OLLAMA_BASE_URL,
+      message,
+    });
     return [];
   }
 }

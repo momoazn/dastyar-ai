@@ -1,5 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db, type Summary, summaries as summariesTable } from "@/database";
+import { logger } from "@/lib/logger";
 
 export function listSummaries(userId: number): Promise<Summary[]> {
   return db
@@ -33,7 +34,7 @@ export async function createSummary(
     }
     return created;
   } catch (error) {
-    console.error("Failed to create summary:", error);
+    logger.error("Failed to create summary", error);
     throw new Error("Unable to create summary");
   }
 }
@@ -51,7 +52,7 @@ export async function getSummary(
 
     return rows.at(0) ?? null;
   } catch (error) {
-    console.error(`Failed to get summary ${id}:`, error);
+    logger.error("Failed to get summary", error, { id });
     throw new Error("Unable to retrieve summary");
   }
 }
@@ -63,7 +64,7 @@ export async function deleteSummary(id: number, userId: number): Promise<void> {
       .where(and(eq(summariesTable.id, id), eq(summariesTable.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to delete summary ${id}:`, error);
+    logger.error("Failed to delete summary", error, { id });
     throw new Error("Unable to delete summary");
   }
 }

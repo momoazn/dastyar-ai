@@ -2,6 +2,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { logger } from "../lib/logger";
 
 const drizzleDir = resolve(process.cwd(), "src/database/migrations");
 const outputFile = resolve(
@@ -34,7 +35,7 @@ function readDrizzleFiles(): { [key: string]: string } {
     if (existsSync(filePath)) {
       files[sqlFileName] = readFileSync(filePath, "utf-8");
     } else {
-      console.warn(`⚠ Missing migration file: ${sqlFileName}`);
+      logger.warn("Missing migration file", { fileName: sqlFileName });
     }
   }
 
@@ -67,8 +68,7 @@ export default migrationData;
 function main() {
   try {
     if (!existsSync(drizzleDir)) {
-      console.error(`Migrations directory not found: ${drizzleDir}`);
-
+      logger.error("Migrations directory not found", { directory: drizzleDir });
       process.exit(1);
     }
 
@@ -82,7 +82,7 @@ function main() {
 
     writeFileSync(outputFile, generatedContent, "utf-8");
   } catch (error) {
-    console.error("❌ Failed to bundle migrations:", error);
+    logger.error("Failed to bundle migrations", error);
     process.exit(1);
   }
 }

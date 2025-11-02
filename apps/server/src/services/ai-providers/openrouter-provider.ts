@@ -1,5 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { env } from "@/config";
+import { logger } from "@/lib/logger";
 
 export const openrouterProvider = createOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
@@ -29,7 +30,7 @@ export function listOpenRouterModels() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Connection failed";
-    console.warn(`[OpenRouter] Not available: ${message}`);
+    logger.error("OpenRouter provider not available", error, { message });
     return [];
   }
 }

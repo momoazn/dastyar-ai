@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import {
   getAllUsers,
   getUserById,
@@ -31,7 +32,7 @@ export const adminProcedures = {
       const users = await getAllUsers();
       return users;
     } catch (error) {
-      console.error("Error listing users:", error);
+      logger.error("Error listing users", error);
       throw new ORPCError("INTERNAL_ERROR", {
         message: "Failed to fetch users",
         status: 500,
@@ -42,9 +43,8 @@ export const adminProcedures = {
   updateUserRole: adminProcedure
     .input(updateUserRoleSchema)
     .handler(async ({ input }) => {
+      const { userId, newRole } = input;
       try {
-        const { userId, newRole } = input;
-
         // Check if user exists
         const user = await getUserById(userId);
         if (!user) {
@@ -57,7 +57,7 @@ export const adminProcedures = {
         const updatedUser = await updateUserRole(userId, newRole);
         return updatedUser;
       } catch (error) {
-        console.error("Error updating user role:", error);
+        logger.error("Error updating user role", error, { userId, newRole });
         if (error instanceof ORPCError) {
           throw error;
         }
@@ -86,7 +86,9 @@ export const adminProcedures = {
         await updateUserPassword(userId, newPassword);
         return { success: true };
       } catch (error) {
-        console.error("Error updating user password:", error);
+        logger.error("Error updating user password:", error, {
+          function: "admin",
+        });
         if (error instanceof ORPCError) {
           throw error;
         }
@@ -103,7 +105,7 @@ export const adminProcedures = {
       const models = await getModels();
       return models;
     } catch (error) {
-      console.error("Error listing all models:", error);
+      logger.error("Error listing all models:", error, { function: "admin" });
       throw new ORPCError("INTERNAL_ERROR", {
         message: "Failed to fetch models",
         status: 500,
@@ -120,7 +122,9 @@ export const adminProcedures = {
         const updatedModel = await updateModel(modelId, { isEnabled });
         return updatedModel;
       } catch (error) {
-        console.error("Error toggling model status:", error);
+        logger.error("Error toggling model status:", error, {
+          function: "admin",
+        });
         throw new ORPCError("INTERNAL_ERROR", {
           message: "Failed to update model status",
           status: 500,

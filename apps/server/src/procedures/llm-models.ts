@@ -1,4 +1,5 @@
 import z from "zod";
+import { logger } from "@/lib/logger";
 import {
   getModelById,
   getModels,
@@ -37,7 +38,7 @@ export const llmModelProcedures = {
         const models = await getModels({ isEnabled });
         return models.filter((model) => !model.identifier.includes("embed"));
       } catch (error) {
-        console.error("Error listing models:", error);
+        logger.error("Error listing models", error);
         throw error;
       }
     }),
@@ -54,7 +55,7 @@ export const llmModelProcedures = {
         await updateModel(input.id, { isEnabled: true });
         return await getModels({ isEnabled: true });
       } catch (error) {
-        console.error("Error enabling model:", error);
+        logger.error("Error enabling model", error, { modelId: input.id });
         throw error;
       }
     }),
@@ -71,7 +72,7 @@ export const llmModelProcedures = {
         await updateModel(input.id, { isEnabled: false });
         return await getModels({ isEnabled: true });
       } catch (error) {
-        console.error("Error disabling model:", error);
+        logger.error("Error disabling model", error, { modelId: input.id });
         throw error;
       }
     }),

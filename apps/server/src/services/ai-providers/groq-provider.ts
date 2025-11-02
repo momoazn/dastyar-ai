@@ -1,5 +1,6 @@
 import { createGroq } from "@ai-sdk/groq";
 import { env } from "@/config";
+import { logger } from "@/lib/logger";
 
 export const groqProvider = createGroq({
   apiKey: env.GROQ_API_KEY,
@@ -25,7 +26,7 @@ export function listGroqModels() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Connection failed";
-    console.warn(`[Groq] Not available: ${message}`);
+    logger.error("Groq provider not available", error, { message });
     return [];
   }
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import {
   attachDocumentToThread,
   createDocument,
@@ -65,9 +66,13 @@ export const documentProcedures = {
           }
         }
       } catch (e) {
-        console.warn(
-          "[documents.upload] indexing failed, continuing without embeddings:",
-          e
+        logger.error(
+          "Document indexing failed, continuing without embeddings",
+          e,
+          {
+            documentId: doc.id,
+            userId,
+          }
         );
         chunks = 0;
       }

@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { env } from "@/config";
+import { logger } from "@/lib/logger";
 
 export const geminiProvider = createGoogleGenerativeAI({
   apiKey: env.GEMINI_API_KEY,
@@ -19,7 +20,7 @@ export function listGeminiModels() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Connection failed";
-    console.warn(`[Gemini] Not available: ${message}`);
+    logger.error("Gemini provider not available", error, { message });
     return [];
   }
 }

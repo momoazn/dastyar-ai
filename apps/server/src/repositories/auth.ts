@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, type SelectUser, type UserRole, users } from "@/database";
+import { logger } from "@/lib/logger";
 
 export async function findUserByUsername(
   username: string
@@ -56,7 +57,10 @@ export async function verifyUserCredentials({
 }): Promise<SelectUser | null> {
   const user = await findUserByUsername(username);
   if (!user) {
-    console.warn(`[auth.verifyUserCredentials] User not found: ${username}`);
+    logger.warn("User not found during credential verification", {
+      username,
+      function: "verifyUserCredentials",
+    });
     return null;
   }
 

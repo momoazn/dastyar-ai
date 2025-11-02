@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { env, resolveConfiguredPath } from "../config";
+import { logger } from "../lib/logger";
 
 // biome-ignore lint/performance/noNamespaceImport: because the schema is used in the index.ts file
 import * as schema from "./schema";
@@ -19,7 +20,7 @@ export const initializeDatabase = async (): Promise<void> => {
     const { runMigrations } = await import("./migrate");
     await runMigrations();
   } catch (error) {
-    console.error("[database] Error initializing database:", error);
+    logger.error("Error initializing database", error);
     throw error;
   }
 };

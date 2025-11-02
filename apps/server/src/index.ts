@@ -2,6 +2,7 @@ import { serve } from "bun";
 import { createApp } from "./app";
 import { ensureDirectoriesExist, env } from "./config";
 import { initializeDatabase } from "./database";
+import { logger } from "./lib/logger";
 
 ensureDirectoriesExist();
 
@@ -16,4 +17,4 @@ const server = serve({
   idleTimeout: 200,
 });
 
-console.log(`Server listening on http://${server.hostname}:${server.port}`);
+logger.info(`Server listening on http://${server.hostname}:${server.port}`);

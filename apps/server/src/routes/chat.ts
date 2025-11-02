@@ -9,6 +9,7 @@ import { type Context, Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import type { JsonValue } from "@/database";
+import { logger } from "@/lib/logger";
 import { chatSystemPrompt } from "@/lib/prompts";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
@@ -147,7 +148,10 @@ const app = new Hono<AuthEnv>()
           }
         }
       } catch (error) {
-        console.error("RAG context retrieval failed:", error);
+        logger.error("RAG context retrieval failed", error, {
+          threadId,
+          userId: user.id,
+        });
         // Retrieval is best-effort; fall back to default system prompt on failure
       }
 

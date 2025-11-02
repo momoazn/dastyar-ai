@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import { z } from "zod";
 import type { SelectUser } from "@/database";
+import { logger } from "@/lib/logger";
 import {
   createUser,
   hashPassword,
@@ -21,8 +22,7 @@ const loginSchema = z.object({
 });
 
 function logEvent(event: string, data: Record<string, unknown> = {}) {
-  const timestamp = new Date().toISOString();
-  console.info(`[${timestamp}] ${event}`, data);
+  logger.info(event, data);
 }
 
 export const authProcedures = {
@@ -47,7 +47,10 @@ export const authProcedures = {
     }
 
     if (exists) {
-      console.warn(`[auth.register] Username already exists: ${username}`);
+      logger.warn("Username already exists", {
+        username,
+        event: "auth.register",
+      });
       logEvent("auth.register.failure", {
         username,
         reason: "USERNAME_ALREADY_EXISTS",
@@ -130,7 +133,10 @@ export const authProcedures = {
     }
 
     if (!user) {
-      console.warn(`[auth.login] Invalid credentials: ${username}`);
+      logger.warn("Invalid login credentials", {
+        username,
+        event: "auth.login",
+      });
       logEvent("auth.login.failure", {
         username,
         reason: "INVALID_CREDENTIALS",

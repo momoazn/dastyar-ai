@@ -9,6 +9,7 @@ import {
   type Message,
   messages,
 } from "@/database";
+import { logger } from "@/lib/logger";
 
 /**
  * Creates a new thread with an optional title.
@@ -35,7 +36,7 @@ export async function createThread(
 
     return { id: Number(result.at(0)?.id) };
   } catch (error) {
-    console.error("Failed to create thread:", error);
+    logger.error("Failed to create thread:", error, { function: "threads" });
     throw new Error("Unable to create thread");
   }
 }
@@ -62,7 +63,7 @@ export async function getThread(
 
     return rows.at(0) ?? null;
   } catch (error) {
-    console.error(`Failed to get thread ${id}:`, error);
+    logger.error("Failed to get thread", error, { id });
     throw new Error("Unable to retrieve thread");
   }
 }
@@ -123,7 +124,7 @@ export async function renameThread(
       .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to rename thread ${id}:`, error);
+    logger.error("Failed to rename thread", error, { id });
     throw new Error("Unable to rename thread");
   }
 }
@@ -152,7 +153,7 @@ export async function setArchived(
       .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to set archived status for thread ${id}:`, error);
+    logger.error("Failed to set archived status for thread", error, { id });
     throw new Error("Unable to update thread archived status");
   }
 }
@@ -175,7 +176,7 @@ export async function deleteThread(
       .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to delete thread ${id}:`, error);
+    logger.error("Failed to delete thread", error, { id });
     throw new Error("Unable to delete thread");
   }
 }
@@ -204,7 +205,7 @@ export async function updateThreadOnNewMessage(
       .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to update thread ${threadId} on new message:`, error);
+    logger.error("Failed to update thread on new message", error, { threadId });
     throw new Error("Unable to update thread timestamp");
   }
 }
@@ -262,7 +263,7 @@ export async function loadThreadMessages(
       },
     }));
   } catch (error) {
-    console.error(`Failed to load messages for thread ${threadId}:`, error);
+    logger.error("Failed to load messages for thread", error, { threadId });
     throw new Error("Unable to load thread messages");
   }
 }

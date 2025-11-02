@@ -3,8 +3,9 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 import { env, webDistDir } from "./config";
+import { logger } from "./lib/logger";
 import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
@@ -16,7 +17,7 @@ export function createApp() {
   const app = new Hono();
 
   // Logger middleware
-  app.use(logger());
+  app.use(honoLogger());
 
   // CORS middleware
   app.use(
@@ -70,7 +71,10 @@ export function createApp() {
   // Global error handler
   app.onError((err, c) => {
     // Log the error for observability
-    console.error(err);
+    logger.error("Request error", err, {
+      path: c.req.path,
+      method: c.req.method,
+    });
     const status = err instanceof HTTPException ? err.status : 500;
     const message =
       err instanceof HTTPException ? err.message : "Internal Server Error";

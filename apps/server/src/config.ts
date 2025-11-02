@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { logger } from "./lib/logger";
 
 const CONFIG_FILE = "config.json";
 const serverRootDir = fileURLToPath(new URL("..", import.meta.url));
@@ -49,13 +50,13 @@ const findConfigPath = (baseDir: string): string | undefined => {
 
 const loadJson = (p?: string): Record<string, unknown> => {
   if (!p) {
-    console.warn("[config] No config.json found; using defaults");
+    logger.warn("No config.json found; using defaults", { path: p });
     return {};
   }
   try {
     return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>;
   } catch (err) {
-    console.error(`[config] Failed to read/parse ${p}:`, err);
+    logger.error("Failed to read/parse config file", err, { path: p });
     process.exit(1);
   }
 };
@@ -121,7 +122,7 @@ const _runtimeBaseDir = getRuntimeBaseDir();
 const configPath = findConfigPath(_runtimeBaseDir);
 const parsed = Schema.safeParse(loadJson(configPath));
 if (!parsed.success) {
-  console.error("Invalid config:", parsed.error.format());
+  logger.error("Invalid configuration", parsed.error);
   process.exit(1);
 }
 export const env: Env = parsed.data;
@@ -167,7 +168,7 @@ export const ensureDirectoriesExist = (): void => {
         mkdirSync(dir, { recursive: true });
       }
     } catch (err) {
-      console.warn(`Failed to create directory ${dir}:`, err);
+      logger.error("Failed to create directory", err, { directory: dir });
     }
   }
 };

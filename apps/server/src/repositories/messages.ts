@@ -6,6 +6,7 @@ import {
   type SelectLlmModel,
   type SelectMessage,
 } from "@/database";
+import { logger } from "@/lib/logger";
 
 export type CreateMessageParams = Omit<
   SelectMessage,
@@ -37,7 +38,10 @@ export async function createMessage(
 
     return { id: Number(result.at(0)?.id) };
   } catch (error) {
-    console.error("Failed to save message:", error);
+    logger.error("Failed to save message", error, {
+      threadId: params.threadId,
+      role: params.role,
+    });
     throw new Error("Unable to save message");
   }
 }
@@ -67,7 +71,7 @@ export async function updateMessage(
       .where(eq(messagesTable.id, params.id))
       .run();
   } catch (error) {
-    console.error(`Failed to update message ${params.id}:`, error);
+    logger.error("Failed to update message", error, { messageId: params.id });
     throw new Error("Unable to update message");
   }
 }
@@ -96,7 +100,7 @@ export async function saveMessages(
 
     return { count: params.length };
   } catch (error) {
-    console.error("Failed to save messages:", error);
+    logger.error("Failed to save messages:", error, { function: "messages" });
     throw new Error("Unable to save messages");
   }
 }
@@ -136,10 +140,9 @@ export async function getMessagesByThread(
     const rows = await query;
     return rows as SelectMessage[];
   } catch (error) {
-    console.error(
-      `Failed to get messages for thread ${params.threadId}:`,
-      error
-    );
+    logger.error("Failed to get messages for thread", error, {
+      threadId: params.threadId,
+    });
     throw new Error("Unable to retrieve messages");
   }
 }
@@ -151,7 +154,7 @@ export async function deleteMessage(id: number, userId: number): Promise<void> {
       .where(and(eq(messagesTable.id, id), eq(messagesTable.userId, userId)))
       .run();
   } catch (error) {
-    console.error(`Failed to delete message ${id}:`, error);
+    logger.error("Failed to delete message", error, { messageId: id });
     throw new Error("Unable to delete message");
   }
 }
@@ -171,7 +174,7 @@ export async function clearThread(
       )
       .run();
   } catch (error) {
-    console.error(`Failed to clear thread ${threadId}:`, error);
+    logger.error("Failed to clear thread", error, { threadId });
     throw new Error("Unable to clear thread");
   }
 }
@@ -206,10 +209,9 @@ export async function getLastUsedModelInThread(
 
     return rows.at(0) ?? null;
   } catch (error) {
-    console.error(
-      `Failed to get last used model for thread ${threadId}:`,
-      error
-    );
+    logger.error("Failed to get last used model for thread", error, {
+      threadId,
+    });
     throw new Error("Unable to retrieve last used model");
   }
 }
@@ -238,7 +240,9 @@ export async function getLastUsedModelGlobal(
 
     return rows.at(0) ?? null;
   } catch (error) {
-    console.error("Failed to get last used model globally:", error);
+    logger.error("Failed to get last used model globally:", error, {
+      function: "messages",
+    });
     throw new Error("Unable to retrieve last used model");
   }
 }

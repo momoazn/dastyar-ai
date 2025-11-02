@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import {
   clearGeneratedImagesByThread,
   listGeneratedImagesByThread,
@@ -41,7 +42,7 @@ export const imageProcedures = {
       const samplers = await getSamplers();
       return { samplers };
     } catch (error) {
-      console.error("Error getting samplers:", error);
+      logger.error("Error getting samplers", error);
       throw new ORPCError("SD_SERVICE_UNAVAILABLE", {
         message: "سرویس Stable Diffusion در دسترس نیست",
         status: 503,

@@ -1,6 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import OpenAI from "openai";
 import { env } from "@/config";
+import { logger } from "@/lib/logger";
 
 export const lmstudioClient = new OpenAI({
   baseURL: env.LMSTUDIO_BASE_URL,
@@ -34,9 +35,10 @@ export async function listLmstudioModels() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Connection failed";
-    console.warn(
-      `[LMStudio] Not available (${env.LMSTUDIO_BASE_URL}): ${message}`
-    );
+    logger.error("LMStudio provider not available", error, {
+      baseURL: env.LMSTUDIO_BASE_URL,
+      message,
+    });
     return [];
   }
 }
