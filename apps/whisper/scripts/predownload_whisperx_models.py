@@ -41,14 +41,24 @@ import torch
 import importlib
 from typing import Protocol, runtime_checkable
 
+
 @runtime_checkable
 class _WhisperXModule(Protocol):
     def load_model(self, model_name: str, device: str, compute_type: str) -> object: ...
 
+
 whisperx = cast(_WhisperXModule, cast(object, importlib.import_module("whisperx")))
 
 # Keep aliases consistent with the server (see apps/whisper/api/models.py)
-KNOWN_MODELS: list[str] = ["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"]
+KNOWN_MODELS: list[str] = [
+    "tiny",
+    "base",
+    "small",
+    "medium",
+    "large",
+    "large-v2",
+    "large-v3",
+]
 ALIASES = {m: m for m in KNOWN_MODELS}
 
 
@@ -90,7 +100,9 @@ def _normalize_models(models: Iterable[str]) -> list[str]:
     for m in models:
         name = ALIASES.get(m.lower().strip(), m.lower().strip())
         if name not in KNOWN_MODELS:
-            raise ValueError(f"Unknown model name: '{m}'. Allowed: {', '.join(KNOWN_MODELS)}")
+            raise ValueError(
+                f"Unknown model name: '{m}'. Allowed: {', '.join(KNOWN_MODELS)}"
+            )
         result.append(name)
     return result
 
@@ -148,9 +160,9 @@ def _collect_models(args: argparse.Namespace) -> list[str]:
         return KNOWN_MODELS[:]
 
     selected: list[str] = []
-    if (models_opt := cast(str | None, args.models)):
+    if models_opt := cast(str | None, args.models):
         selected.extend([s for s in models_opt.split(",") if s.strip()])
-    if (positional := cast(list[str], args.positional_models)):
+    if positional := cast(list[str], args.positional_models):
         selected.extend(positional)
 
     if not selected:
@@ -162,7 +174,9 @@ def _collect_models(args: argparse.Namespace) -> list[str]:
     return _normalize_models(selected)
 
 
-def _print_header(cache_dir: Path, device: str, compute_type: str, models: list[str], dry_run: bool) -> None:
+def _print_header(
+    cache_dir: Path, device: str, compute_type: str, models: list[str], dry_run: bool
+) -> None:
     print("WhisperX Model Predownloader")
     print("=" * 60)
     print(f"Cache dir       : {cache_dir}")
@@ -175,7 +189,9 @@ def _print_header(cache_dir: Path, device: str, compute_type: str, models: list[
 
 def _load_once(model_name: str, device: str, compute_type: str) -> None:
     # Load model to trigger downloads; discard immediately.
-    model: object = whisperx.load_model(model_name, device=device, compute_type=compute_type)
+    model: object = whisperx.load_model(
+        model_name, device=device, compute_type=compute_type
+    )
     # Release resources
     del model
     if device == "cuda":

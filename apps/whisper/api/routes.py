@@ -70,8 +70,13 @@ async def list_models() -> list[schemas.ModelInfo]:
 async def transcribe(
     file: Annotated[UploadFile, File(description="Audio file to transcribe")],
     model: Annotated[str | None, Form(description="Model name (default: tiny)")] = None,
-    language: Annotated[str | None, Form(description="ISO 639-1 language code (e.g., 'en', 'fa')")] = None,
-    engine: Annotated[str | None, Form(description="Transcription engine: 'whisperx' (default) or 'whisper'")] = None,
+    language: Annotated[
+        str | None, Form(description="ISO 639-1 language code (e.g., 'en', 'fa')")
+    ] = None,
+    engine: Annotated[
+        str | None,
+        Form(description="Transcription engine: 'whisperx' (default) or 'whisper'"),
+    ] = None,
 ) -> schemas.TranscribeResponse:
     """Transcribe an audio file using WhisperX."""
     # Check file size

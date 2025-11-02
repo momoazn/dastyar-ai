@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import __version__
 from .config import settings
 from .routes import setup_routes
+
 setup_routes: Callable[[FastAPI], None]
 
 # Configure logging
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: The configured FastAPI application instance.
     """
+
     # Initialize FastAPI app with lifespan
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -63,8 +65,6 @@ def create_app() -> FastAPI:
 
     # Setup API routes
     setup_routes(app)
-
-
 
     return app
 
