@@ -25,13 +25,21 @@ export const convertDbMessagesToUiMessages = (
 // Regex to extract numeric value and unit from model size (e.g., "8b", "1.7b", "270m")
 const MODEL_SIZE_REGEX = /^([0-9.]+)([a-z]+)$/;
 
-// Determine if a model is "small" based on size parameter
-// Small models: < 8B parameters (e.g., 270m, 1b, 1.7b, 3b, 7b)
-// Large models: >= 8B parameters (e.g., 8b, 13b, 70b, etc.)
-export function isSmallModel(modelSize: string | null | undefined): boolean {
+export type ModelSizeCategory =
+  | "minimal"
+  | "compact"
+  | "balanced"
+  | "large"
+  | "frontier";
+
+// Categorize model based on size parameter
+// Categories: <=2B (minimal), <=7B (compact), <=13B (balanced), <=70B (large), >70B (frontier)
+export function getModelSizeCategory(
+  modelSize: string | null | undefined
+): ModelSizeCategory {
   if (!modelSize) {
-    // Default to small if size is unknown
-    return true;
+    // Default to balanced if size is unknown (conservative default)
+    return "balanced";
   }
 
   const normalized = modelSize.toLowerCase().trim();
@@ -39,7 +47,7 @@ export function isSmallModel(modelSize: string | null | undefined): boolean {
   // Extract numeric value and unit
   const match = normalized.match(MODEL_SIZE_REGEX);
   if (!match) {
-    return true; // Default to small if format is unknown
+    return "balanced"; // Default to balanced if format is unknown
   }
 
   const value = Number.parseFloat(match[1]);
@@ -52,9 +60,27 @@ export function isSmallModel(modelSize: string | null | undefined): boolean {
   } else if (unit === "b" || unit === "billion") {
     billions = value;
   } else {
-    return true; // Default to small for unknown units
+    return "balanced"; // Default to balanced for unknown units
   }
 
-  // Consider models < 8B as small
-  return billions < 8;
+  // Categorize based on modern model size distribution
+  if (billions <= 2) {
+    return "minimal"; // Phi, MobileLLM, etc.
+  }
+  if (billions <= 7) {
+    return "compact"; // Llama 2 7B, Mistral 7B, etc.
+  }
+  if (billions <= 13) {
+    return "balanced"; // Llama 2 13B, neural-chat, etc.
+  }
+  if (billions <= 70) {
+    return "large"; // Llama 2 70B, Mixtral, etc.
+  }
+  return "frontier"; // GPT-4, Claude, Llama 405B, etc.
+}
+
+// Legacy function for backward compatibility
+export function isSmallModel(modelSize: string | null | undefined): boolean {
+  const category = getModelSizeCategory(modelSize);
+  return category === "minimal" || category === "compact";
 }

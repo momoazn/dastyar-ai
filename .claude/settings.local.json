@@ -18,7 +18,8 @@
       "Bash(tree -L 3 /Users/mohamadhosein/Workspace/side/dastyar-ai/apps/server/src -I node_modules)",
       "Bash(find apps/server/src -type f -name \"*.ts\" -exec grep -l \"console\\.log\\|console\\.warn\\|console\\.error\" {})",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(npx ultracite check apps/server/src/utils/chat.ts apps/server/src/lib/prompts.ts)"
     ],
     "deny": [],
     "ask": []
