@@ -1,13 +1,11 @@
 import { serve } from "bun";
 import { createApp } from "./app";
-import { ensureDirectoriesExist, env, isProduction } from "./config";
+import { ensureDirectoriesExist, env } from "./config";
 import { initializeDatabase } from "./database";
 
 ensureDirectoriesExist();
 
 await initializeDatabase();
-
-console.log("Running app in", isProduction() ? "production" : "development");
 
 const app = createApp();
 

@@ -12,8 +12,6 @@ import orpcHandler from "./routes/rpc";
 // Regex patterns moved to top level for performance
 const TRAILING_SLASH_REGEX = /\/$/;
 
-console.log("starting app with env", env);
-
 export function createApp() {
   const app = new Hono();
 

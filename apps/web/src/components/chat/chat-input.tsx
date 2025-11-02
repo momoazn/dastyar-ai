@@ -1,5 +1,6 @@
 import { RefreshCcw } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   PromptInputButton,
   PromptInputModelSelect,
@@ -177,8 +178,8 @@ export const ChatInput = ({
                 <DocumentUploadButton
                   onStatusChange={handleDocStatus}
                   onUploaded={({ title, indexedChunks }) => {
-                    console.log(
-                      `Document uploaded: ${title} (indexed ${indexedChunks} chunks)`
+                    toast.success(
+                      `سند "${title}" با موفقیت آپلود شد. ${indexedChunks} قطعه ایندکس شد.`
                     );
                   }}
                   threadId={threadId}

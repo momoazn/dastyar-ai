@@ -19,7 +19,7 @@ async function loadBundledMigrations(): Promise<MigrationData | null> {
   try {
     const migrationModule = await import("./migration-data.generated");
     return migrationModule.migrationData;
-  } catch (error) {
+  } catch (_error) {
     logger.info(
       "No bundled migrations found, checking for migrations directory..."
     );
@@ -76,11 +76,11 @@ function executeMigrationStatements(
     try {
       sqliteDB.run(statement);
     } catch (error) {
-      console.error(
+      logger.error(
         `[migrate] Error executing statement in ${migrationTag}:`,
         statement.substring(0, 100)
       );
-      console.error(error);
+      logger.error(error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -100,7 +100,7 @@ function recordMigration(migrationTag: string): void {
  * Apply bundled migrations
  */
 function applyBundledMigrations(migrationData: MigrationData): void {
-  console.log(
+  logger.info(
     `[migrate] Running migrations from bundled data (${
       Object.keys(migrationData).length
     } files)...`
@@ -123,22 +123,22 @@ function applyBundledMigrations(migrationData: MigrationData): void {
     const sqlContent = migrationData[sqlFileName];
 
     if (!sqlContent) {
-      console.warn(`[migrate] Missing SQL file for migration: ${migrationTag}`);
+      logger.warn(`[migrate] Missing SQL file for migration: ${migrationTag}`);
       continue;
     }
 
     if (appliedHashes.has(migrationTag)) {
-      console.log(`[migrate] ✓ Migration ${migrationTag} already applied`);
+      logger.info(`[migrate] ✓ Migration ${migrationTag} already applied`);
       continue;
     }
 
-    console.log(`[migrate] Applying migration: ${migrationTag}...`);
+    logger.info(`[migrate] Applying migration: ${migrationTag}...`);
 
     const statements = parseSqlStatements(sqlContent);
     executeMigrationStatements(statements, migrationTag);
     recordMigration(migrationTag);
 
-    console.log(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
+    logger.info(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
   }
 }
 
@@ -148,13 +148,13 @@ function applyBundledMigrations(migrationData: MigrationData): void {
  */
 export async function runMigrations(): Promise<void> {
   try {
-    console.log("[migrate] Starting database migrations...");
+    logger.info("[migrate] Starting database migrations...");
 
     const migrationData = await loadBundledMigrations();
 
     if (migrationData) {
       applyBundledMigrations(migrationData);
-      console.log("[migrate] All migrations completed successfully");
+      logger.info("[migrate] All migrations completed successfully");
       return;
     }
 
@@ -162,18 +162,21 @@ export async function runMigrations(): Promise<void> {
     const migrationsPath = join(import.meta.dir, "migrations");
 
     if (existsSync(migrationsPath)) {
-      console.log(
+      logger.info(
         `[migrate] Running migrations from directory: ${migrationsPath}`
       );
       await migrate(db, { migrationsFolder: migrationsPath });
-      console.log("[migrate] Migrations completed successfully");
+      logger.info("[migrate] Migrations completed successfully");
     } else {
-      console.log(
+      logger.info(
         "[migrate] No migrations found, database will be created from schema"
       );
     }
   } catch (error) {
-    console.error("[migrate] Migration failed:", error);
+    logger.error(
+      "[migrate] Migration failed:",
+      error instanceof Error ? error.message : String(error)
+    );
     throw error;
   }
 }

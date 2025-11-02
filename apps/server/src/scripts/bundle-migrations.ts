@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const drizzleDir = resolve(process.cwd(), "src/database/migrations");
 const outputFile = resolve(
@@ -11,8 +11,6 @@ const outputFile = resolve(
 
 function readDrizzleFiles(): { [key: string]: string } {
   const files: { [key: string]: string } = {};
-
-  console.log(`Reading migrations from: ${drizzleDir}`);
 
   const journalPath = join(drizzleDir, "meta", "_journal.json");
   if (!existsSync(journalPath)) {
@@ -26,8 +24,6 @@ function readDrizzleFiles(): { [key: string]: string } {
     (entry: { tag: string }) => `${entry.tag}.sql`
   );
 
-  console.log(`Found ${sqlFileNames.length} migration files:`, sqlFileNames);
-
   const snapshotPath = join(drizzleDir, "meta", "0000_snapshot.json");
   if (existsSync(snapshotPath)) {
     files["meta/0000_snapshot.json"] = readFileSync(snapshotPath, "utf-8");
@@ -37,7 +33,6 @@ function readDrizzleFiles(): { [key: string]: string } {
     const filePath = join(drizzleDir, sqlFileName);
     if (existsSync(filePath)) {
       files[sqlFileName] = readFileSync(filePath, "utf-8");
-      console.log(`✓ Bundled: ${sqlFileName}`);
     } else {
       console.warn(`⚠ Missing migration file: ${sqlFileName}`);
     }
@@ -73,7 +68,7 @@ function main() {
   try {
     if (!existsSync(drizzleDir)) {
       console.error(`Migrations directory not found: ${drizzleDir}`);
-      console.log('Run "bun db:generate" to create migrations first.');
+
       process.exit(1);
     }
 
@@ -86,10 +81,6 @@ function main() {
     }
 
     writeFileSync(outputFile, generatedContent, "utf-8");
-
-    console.log("✅ Migration data bundled successfully!");
-    console.log(`📦 Output: ${relative(process.cwd(), outputFile)}`);
-    console.log(`📊 Files bundled: ${Object.keys(files).length}`);
   } catch (error) {
     console.error("❌ Failed to bundle migrations:", error);
     process.exit(1);

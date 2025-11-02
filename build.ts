@@ -56,7 +56,9 @@ function ensureWhisperVenv() {
   const py = isWindows
     ? join(venvDir, "Scripts", "python.exe")
     : join(venvDir, "bin", "python");
-  console.log("📦 Installing Python deps (WhisperX, FastAPI[standard], PyInstaller)...");
+  console.log(
+    "📦 Installing Python deps (WhisperX, FastAPI[standard], PyInstaller)..."
+  );
   run(`${py} -m pip install --upgrade pip wheel setuptools`, WHISPER_DIR);
   const pkgs = [
     '"fastapi[standard]"==0.115.0',

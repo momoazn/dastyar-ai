@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Whisper API Test</title>
@@ -327,69 +327,90 @@
             opacity: 0.5;
         }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🎤 Whisper API Test</h1>
-        <p class="subtitle">Upload an audio file or record your voice to test the transcription service</p>
+      <h1>🎤 Whisper API Test</h1>
+      <p class="subtitle">
+        Upload an audio file or record your voice to test the transcription
+        service
+      </p>
 
-        <div class="source-toggle">
-            <div class="source-option active" id="uploadOption" onclick="switchSource('upload')">
-                📁 Upload File
-            </div>
-            <div class="source-option" id="recordOption" onclick="switchSource('record')">
-                🎙️ Record Voice
-            </div>
+      <div class="source-toggle">
+        <div
+          class="source-option active"
+          id="uploadOption"
+          onclick="switchSource('upload')"
+        >
+          📁 Upload File
         </div>
-
-        <div class="upload-section" id="uploadSection">
-            <input type="file" id="audioFile" accept="audio/*">
-            <label for="audioFile" class="file-label">Choose Audio File</label>
-            <div class="file-name" id="fileName"></div>
+        <div
+          class="source-option"
+          id="recordOption"
+          onclick="switchSource('record')"
+        >
+          🎙️ Record Voice
         </div>
+      </div>
 
-        <div class="recorder-section" id="recorderSection" style="display: none;">
-            <h3>Voice Recorder</h3>
-            <button id="recordBtn" class="record-btn" onclick="toggleRecording()">● Start Recording</button>
-            <div class="recording-indicator" id="recordingIndicator">
-                🔴 Recording... Speak now!
-            </div>
-            <div class="timer" id="timer">00:00</div>
-            <div class="audio-player" id="audioPlayer">
-                <audio id="recordedAudio" controls></audio>
-                <button class="delete-recording" onclick="deleteRecording()">Delete Recording</button>
-            </div>
+      <div class="upload-section" id="uploadSection">
+        <input type="file" id="audioFile" accept="audio/*">
+        <label for="audioFile" class="file-label">Choose Audio File</label>
+        <div class="file-name" id="fileName"></div>
+      </div>
+
+      <div class="recorder-section" id="recorderSection" style="display: none;">
+        <h3>Voice Recorder</h3>
+        <button id="recordBtn" class="record-btn" onclick="toggleRecording()">
+          ● Start Recording
+        </button>
+        <div class="recording-indicator" id="recordingIndicator">
+          🔴 Recording... Speak now!
         </div>
-
-        <div class="form-group">
-            <label for="model">Model (optional)</label>
-            <select id="model">
-                <option value="">Default (tiny)</option>
-                <option value="tiny">tiny</option>
-                <option value="base">base</option>
-                <option value="small">small</option>
-                <option value="medium">medium</option>
-                <option value="large">large</option>
-            </select>
+        <div class="timer" id="timer">00:00</div>
+        <div class="audio-player" id="audioPlayer">
+          <audio id="recordedAudio" controls></audio>
+          <button class="delete-recording" onclick="deleteRecording()">
+            Delete Recording
+          </button>
         </div>
+      </div>
 
-        <div class="form-group">
-            <label for="language">Language (optional, e.g., 'en', 'fa')</label>
-            <input type="text" id="language" placeholder="Leave empty for auto-detection">
-        </div>
+      <div class="form-group">
+        <label for="model">Model (optional)</label>
+        <select id="model">
+          <option value="">Default (tiny)</option>
+          <option value="tiny">tiny</option>
+          <option value="base">base</option>
+          <option value="small">small</option>
+          <option value="medium">medium</option>
+          <option value="large">large</option>
+        </select>
+      </div>
 
-        <button id="transcribeBtn" onclick="transcribe()">Transcribe Audio</button>
+      <div class="form-group">
+        <label for="language">Language (optional, e.g., 'en', 'fa')</label>
+        <input
+          type="text"
+          id="language"
+          placeholder="Leave empty for auto-detection"
+        >
+      </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div>Transcribing... This may take a while</div>
-        </div>
+      <button id="transcribeBtn" onclick="transcribe()">
+        Transcribe Audio
+      </button>
 
-        <div class="result" id="result" style="display: none;"></div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Transcribing... This may take a while</div>
+      </div>
 
-        <div class="api-url">
-            <strong>API Endpoint:</strong> /transcribe
-        </div>
+      <div class="result" id="result" style="display: none;"></div>
+
+      <div class="api-url">
+        <strong>API Endpoint:</strong>/transcribe
+      </div>
     </div>
 
     <script>
@@ -608,5 +629,5 @@
             }
         }
     </script>
-</body>
+  </body>
 </html>

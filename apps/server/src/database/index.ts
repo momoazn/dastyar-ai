@@ -14,8 +14,6 @@ export const sqliteDB = new Database(databaseFilePath, {
 });
 
 export const initializeDatabase = async (): Promise<void> => {
-  console.log(`[database] Initializing database at: ${databaseFilePath}`);
-
   try {
     // Run migrations automatically
     const { runMigrations } = await import("./migrate");
