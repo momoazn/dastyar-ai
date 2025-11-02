@@ -19,7 +19,7 @@ import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
 } from "@/services/processors";
-import type { MyUIMessage } from "@/utils/chat";
+import { isSmallModel, type MyUIMessage } from "@/utils/chat";
 
 export function sendError(
   c: Context<AuthEnv>,
@@ -124,7 +124,8 @@ const app = new Hono<AuthEnv>()
         }
       };
 
-      let ragSystem = chatSystemPrompt();
+      const isSmall = isSmallModel(llmModel.size);
+      let ragSystem = chatSystemPrompt({ isSmall });
       try {
         const userQuery = extractTextFromParts(last.parts as unknown[]).slice(
           0,
@@ -139,7 +140,10 @@ const app = new Hono<AuthEnv>()
           });
           if (results.length > 0) {
             const ctx = buildContextFromChunks(results);
-            ragSystem = chatSystemPrompt({ context: ctx });
+            ragSystem = chatSystemPrompt({
+              context: ctx,
+              isSmall,
+            });
           }
         }
       } catch (error) {

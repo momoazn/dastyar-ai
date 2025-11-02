@@ -70,11 +70,19 @@ const Schema = z.object({
       const origins = val.split(",").map((o) => o.trim());
       // In development, allow localhost
       if (process.env.NODE_ENV === "development") {
-        origins.push("http://localhost:3000", "http://localhost:5173");
+        origins.push(
+          "http://localhost:3000",
+          "http://localhost:3001",
+          "http://localhost:5173"
+        );
       }
       return origins;
     })
-    .default(["http://localhost:3000", "http://localhost:5173"]),
+    .default([
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:5173",
+    ]),
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters for security")

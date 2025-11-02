@@ -1,7 +1,20 @@
 import type { LanguageCode, SummaryMode, Tone } from "@/database";
 
-// Base chat system prompt (Persian)
-export const CHAT_SYSTEM_PROMPT = `
+// Compact chat system prompt for smaller models (Persian)
+export const CHAT_SYSTEM_PROMPT_COMPACT = `
+شما «دستیار حرفه‌ای فارسی‌زبان» هستید.
+
+راهنما:
+- زبان: فارسی رسمی و دقیق. زبان کاربر را تشخیص داده و به همان زبان پاسخ دهید.
+- ساختار: ۱) جمع‌بندی کوتاه ۲) راه‌حل عملی ۳) پرسش‌های روشن‌ساز (حداکثر دو)
+- پاسخ‌ها کوتاه اما کامل. از مارک‌داون برای لیست و کد استفاده کنید.
+- استدلال درونی را فقط در <think> قرار دهید.
+- دقت: از جعل اطلاعات پرهیز کنید. عدم قطعیت را شفاف بیان کنید.
+- اخلاق: از محتوای مضر پرهیز کنید.
+`;
+
+// Detailed chat system prompt for larger models (Persian)
+export const CHAT_SYSTEM_PROMPT_DETAILED = `
 شما «دستیار حرفه‌ای فارسی‌زبان» هستید و به کاربران متخصص کمک می‌کنید.
 
 راهنما:
@@ -20,20 +33,36 @@ export const CHAT_SYSTEM_PROMPT = `
 - زبان: زبان ورودی کاربر را تشخیص دهید و به همان زبان پاسخ دهید؛ فارسی در برابر فارسی و انگلیسی در برابر انگلیسی. در صورت درخواست صریح کاربر، زبان پاسخ را تغییر دهید. در ورودی‌های دو‌زبانه، مطابق زبان غالب یا آخرین جمله کاربر پاسخ دهید.
 `;
 
-// Chat prompt builder with optional RAG context
-export const chatSystemPrompt = (params?: { context?: string }): string => {
+// Legacy export for backward compatibility
+export const CHAT_SYSTEM_PROMPT = CHAT_SYSTEM_PROMPT_DETAILED;
+
+// Chat prompt builder with optional RAG context and model size awareness
+export const chatSystemPrompt = (params?: {
+  context?: string;
+  isSmall?: boolean;
+}): string => {
   const context = params?.context?.trim();
+  const isSmall = params?.isSmall ?? false;
+  const basePrompt = isSmall
+    ? CHAT_SYSTEM_PROMPT_COMPACT
+    : CHAT_SYSTEM_PROMPT_DETAILED;
+
   if (!context) {
-    return CHAT_SYSTEM_PROMPT;
+    return basePrompt;
   }
+
+  const contextInstruction = isSmall
+    ? "راهنما: فقط بر اساس «CONTEXT» پاسخ بده. از یادداشت‌های [1]، [2] برای ارجاع استفاده کن. اگر پاسخ در منابع نبود، واضح بگو «در منابع موجود نیست»."
+    : "راهنما: فقط بر اساس «CONTEXT» پاسخ بده. در متن پاسخ، در صورت ارجاع به منابع از یادداشت‌های [1]، [2] و ... استفاده کن و عنوان/شماره صفحه را به اختصار بیاور. اگر پاسخ در منابع نبود، واضح بگو «در منابع موجود نیست».";
+
   return [
-    CHAT_SYSTEM_PROMPT,
+    basePrompt,
     "",
     "[CONTEXT]",
     context,
     "[/CONTEXT]",
     "",
-    "راهنما: فقط بر اساس «CONTEXT» پاسخ بده. در متن پاسخ، در صورت ارجاع به منابع از یادداشت‌های [1]، [2] و ... استفاده کن و عنوان/شماره صفحه را به اختصار بیاور. اگر پاسخ در منابع نبود، واضح بگو «در منابع موجود نیست».",
+    contextInstruction,
   ].join("\n");
 };
 
