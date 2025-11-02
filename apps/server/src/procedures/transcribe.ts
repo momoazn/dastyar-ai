@@ -15,12 +15,7 @@ export const transcribeProcedures = {
         })
         .optional()
     )
-    .handler(async ({ input }) => {
-      const engine = input?.engine ?? defaultTranscribeEngine;
-      // Unused engine variable for future differentiation; currently both engines share model list
-      const _ = engine;
-      return await getWhisperModels();
-    }),
+    .handler(async () => await getWhisperModels()),
 
   transcribe: publicProcedure
     .input(

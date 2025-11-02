@@ -19,6 +19,22 @@ import {
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
+export function mapRecordingError(error: RecordingError): string {
+  switch (error) {
+    case "micAccessDenied":
+      return fa.transcribe.errors.micAccess;
+    case "noAudioCaptured":
+      return fa.transcribe.errors.noAudio;
+    case "fileTooLarge":
+      return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
+    case "initFailed":
+    case "processingFailed":
+      return fa.transcribe.errors.processFailed;
+    default:
+      return fa.transcribe.errors.processFailed;
+  }
+}
+
 type TranscribeButtonProps = {
   onTranscribed: (text: string) => void;
   onError?: (error: string) => void;
@@ -35,6 +51,20 @@ type TranscribeButtonProps = {
   onEngineChange?: (engine: "whisperx" | "whisper") => void;
   availableModels?: Array<{ id: string; name: string }>;
 };
+
+export function getTranscribeButtonText(
+  isRecording: boolean,
+  isPending: boolean,
+  elapsedMs: number
+): string {
+  if (isRecording) {
+    return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
+  }
+  if (isPending) {
+    return fa.chat.transcribingVoice;
+  }
+  return fa.chat.micStart;
+}
 
 export function TranscribeButton({
   onTranscribed,
@@ -106,32 +136,18 @@ export function TranscribeButton({
         engine,
       });
     }
-  }, [recordedFile, language, model, engine, onError, transcribe]);
+  }, [recordedFile, language, model, engine, transcribe]);
 
   // Map recording errors to user-friendly messages
-  const mapRecordingError = useCallback((error: RecordingError): string => {
-    switch (error) {
-      case "micAccessDenied":
-        return fa.transcribe.errors.micAccess;
-      case "noAudioCaptured":
-        return fa.transcribe.errors.noAudio;
-      case "fileTooLarge":
-        return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
-      case "initFailed":
-      case "processingFailed":
-        return fa.transcribe.errors.processFailed;
-      default:
-        return fa.transcribe.errors.processFailed;
-    }
-  }, []);
+  const mapRecordingErrorCb = useCallback(mapRecordingError, []);
 
   // Handle recording error
   useEffect(() => {
     if (recordingError) {
-      const errorMessage = mapRecordingError(recordingError);
+      const errorMessage = mapRecordingErrorCb(recordingError);
       onError?.(errorMessage);
     }
-  }, [recordingError, onError, mapRecordingError]);
+  }, [recordingError, onError, mapRecordingErrorCb]);
 
   const handleClick = async () => {
     if (isRecording) {
@@ -141,15 +157,8 @@ export function TranscribeButton({
     }
   };
 
-  const getButtonText = () => {
-    if (isRecording) {
-      return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
-    }
-    if (isPending) {
-      return fa.chat.transcribingVoice;
-    }
-    return fa.chat.micStart;
-  };
+  const getButtonText = () =>
+    getTranscribeButtonText(isRecording, isPending, elapsedMs);
 
   const isButtonDisabled = disabled || isPending;
 
@@ -206,18 +215,21 @@ export function TranscribeButton({
 
         {/* Transcribe Button */}
         <Button
+          aria-label={
+            isRecording ? fa.transcribe.recordStop : fa.transcribe.recordStart
+          }
           className={`${className} ${isRecording ? "animate-pulse" : ""}`}
           disabled={isButtonDisabled}
           onClick={handleClick}
           size={size}
           title={getButtonText()}
+          type="button"
           variant={isRecording ? "destructive" : variant}
         >
-          {isRecording ? (
-            <Square className="size-4" />
-          ) : (
-            <Mic className="size-4" />
-          )}
+          {(() => {
+            const Icon = isRecording ? Square : Mic;
+            return <Icon className="size-4" />;
+          })()}
           {isRecording && size !== "icon" && (
             <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
               {formatElapsed(elapsedMs)}
@@ -230,14 +242,21 @@ export function TranscribeButton({
 
   return (
     <Button
+      aria-label={
+        isRecording ? fa.transcribe.recordStop : fa.transcribe.recordStart
+      }
       className={`${className} ${isRecording ? "animate-pulse" : ""}`}
       disabled={isButtonDisabled}
       onClick={handleClick}
       size={size}
       title={getButtonText()}
+      type="button"
       variant={isRecording ? "destructive" : variant}
     >
-      {isRecording ? <Square className="size-4" /> : <Mic className="size-4" />}
+      {(() => {
+        const Icon = isRecording ? Square : Mic;
+        return <Icon className="size-4" />;
+      })()}
       {isRecording && size !== "icon" && (
         <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
           {formatElapsed(elapsedMs)}

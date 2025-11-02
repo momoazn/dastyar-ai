@@ -84,7 +84,6 @@ export async function transcribe({
   model,
   engine,
 }: TranscribeArgs): Promise<string> {
-  const startedAt = Date.now();
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
   const url = `${base}/transcribe`;
 
@@ -128,9 +127,6 @@ export async function transcribe({
     }
     const json = (await res.json()) as { text?: string };
     const output = (json?.text ?? "").trim();
-    // Avoid console logging per style guide
-    // Successful transcription
-    const _ = startedAt; // prevent unused variable in case formatters strip further
     return output;
   } catch (err) {
     clearTimeout(timer);
