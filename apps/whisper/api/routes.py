@@ -77,6 +77,10 @@ async def transcribe(
         str | None,
         Form(description="Transcription engine: 'whisperx' (default) or 'whisper'"),
     ] = None,
+    initial_prompt: Annotated[
+        str | None,
+        Form(description="Optional text to guide transcription style and vocabulary"),
+    ] = None,
 ) -> schemas.TranscribeResponse:
     """Transcribe an audio file using WhisperX."""
     # Check file size
@@ -114,6 +118,7 @@ async def transcribe(
                     model_name=model_name,
                     language=language,
                     device=device,
+                    initial_prompt=initial_prompt,
                 )
             else:
                 text = whisperx_transcribe(

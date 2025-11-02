@@ -31,6 +31,11 @@ class TranscribeRequest(BaseModel):
         example="fa",
         description="ISO 639-1 language code (e.g., 'en', 'fa')",
     )
+    initial_prompt: Optional[str] = Field(
+        default=None,
+        example="نام‌های خاص و اصطلاحات تخصصی",
+        description="Optional text prompt to guide transcription style and vocabulary (Persian: نام‌های خاص و اصطلاحات تخصصی)",
+    )
 
 
 class TranscribeResponse(BaseModel):

@@ -10,6 +10,9 @@ dependencies = [
   "pydantic-settings>=2.0.0",
   "imageio-ffmpeg>=0.4.9",
   "openai-whisper>=1.1.10",
+  "hazm>=0.7.0",
+  "numpy>=1.26.0",
+  "pandas>=2.1.1",
 ]
 
 [tool.uv]

@@ -27,13 +27,14 @@ export const transcribeProcedures = {
         language: z.enum(["fa", "en"]).optional(),
         model: z.string().optional(),
         engine: z.enum(["whisperx", "whisper"]).optional(),
+        initialPrompt: z.string().optional(),
       })
     )
     .output(z.string())
     .handler(({ input }) => {
       const engine = input.engine ?? defaultTranscribeEngine;
       const language = input.language ?? "fa";
-      const model = input.model ?? "tiny";
+      const model = input.model ?? "large-v2";
 
       // Convert Blob & { name } to File for whisper service
       const file = new File([input.file], input.file.name, {
@@ -45,6 +46,7 @@ export const transcribeProcedures = {
         language,
         model,
         engine,
+        initialPrompt: input.initialPrompt,
       });
     }),
 };

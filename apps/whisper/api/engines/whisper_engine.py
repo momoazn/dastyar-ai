@@ -64,6 +64,7 @@ def transcribe(
     model_name: str = "tiny",
     language: Optional[str] = None,
     device: Optional[str] = None,
+    initial_prompt: Optional[str] = None,
 ) -> str:
     """Transcribe an audio file with OpenAI Whisper (python) and return plain text.
 
@@ -72,6 +73,8 @@ def transcribe(
       model_name: Whisper model size (tiny, base, small, medium, large, large-v2, large-v3).
       language: Optional ISO 639-1 language code (e.g., 'fa', 'en'). If None, Whisper auto-detects.
       device: 'cpu' or 'cuda'. If 'cuda' requested but unavailable, it falls back to 'cpu'.
+      initial_prompt: Optional text to guide transcription style and vocabulary. Particularly useful
+                      for domain-specific terms, proper nouns, and technical vocabulary.
 
     Returns:
       A single string containing the transcribed text.
@@ -86,12 +89,18 @@ def transcribe(
         # fp16 is beneficial on CUDA, disable on CPU to avoid errors
         fp16 = norm_device == "cuda"
 
-        result = model.transcribe(
-            file_path,
-            language=language,
-            fp16=fp16,
-            temperature=0.0,  # stable outputs
-        )
+        # Build transcription parameters
+        transcribe_params = {
+            "language": language,
+            "fp16": fp16,
+            "temperature": 0.0,  # stable outputs for deterministic transcription
+        }
+
+        # Add initial_prompt if provided (helps with domain-specific vocabulary)
+        if initial_prompt:
+            transcribe_params["initial_prompt"] = initial_prompt
+
+        result = model.transcribe(file_path, **transcribe_params)
 
         text = (result.get("text") or "").strip()
 

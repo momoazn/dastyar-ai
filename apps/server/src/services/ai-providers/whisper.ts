@@ -75,6 +75,7 @@ export type TranscribeArgs = {
   language?: string;
   model?: string;
   engine?: SttEngine;
+  initialPrompt?: string;
 };
 
 // Transcribes via the WhisperX FastAPI server at WHISPER_SERVER_URL
@@ -83,6 +84,7 @@ export async function transcribe({
   language,
   model,
   engine,
+  initialPrompt,
 }: TranscribeArgs): Promise<string> {
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
   const url = `${base}/transcribe`;
@@ -108,6 +110,9 @@ export async function transcribe({
   }
   if (engine) {
     form.append("engine", engine);
+  }
+  if (initialPrompt) {
+    form.append("initial_prompt", initialPrompt);
   }
 
   const controller = new AbortController();
