@@ -46,7 +46,9 @@ export function useImageGeneration({
 
   // Query for service availability
   const { data: serviceStatus } = useQuery(
-    orpc.images.checkService.queryOptions()
+    orpc.images.checkService.queryOptions({
+      meta: { suppressErrorToast: true },
+    })
   );
 
   // Query for generated images list by thread
@@ -60,7 +62,10 @@ export function useImageGeneration({
 
   // Query for available samplers
   const { data: samplersData } = useQuery(
-    orpc.images.getSamplers.queryOptions()
+    orpc.images.getSamplers.queryOptions({
+      enabled: serviceStatus?.available === true,
+      meta: { suppressErrorToast: true },
+    })
   );
 
   // Mutation for generating images

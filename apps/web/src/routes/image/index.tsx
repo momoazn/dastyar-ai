@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ImagePlus } from "lucide-react";
+import { AlertCircle, ImagePlus } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ImageGenerationInput } from "@/components/image-generation/image-generation-input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
@@ -47,7 +48,7 @@ function RouteComponent() {
   }, [formProps, creating, isServiceAvailable, create, navigate]);
 
   return (
-    <div className="flex h-full items-center justify-center p-6">
+    <div className="flex h-full flex-col items-center justify-center p-6">
       <div className="mx-auto w-full max-w-3xl" dir="rtl">
         <div className="mb-6 text-center">
           <ImagePlus className="mx-auto mb-2 size-12 text-muted-foreground" />
@@ -65,6 +66,15 @@ function RouteComponent() {
           onSubmit={handleCreateAndNavigate}
           submitDisabled={creating || !formProps.prompt.trim()}
         />
+        {isServiceAvailable === false && (
+          <Alert className="mt-6" variant="destructive">
+            <AlertCircle />
+            <AlertTitle>{fa.general.error}</AlertTitle>
+            <AlertDescription>
+              {fa.imageGeneration.serviceUnavailableAlert}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );

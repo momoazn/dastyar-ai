@@ -9,7 +9,11 @@ import type { appRouter } from "@/server/procedures";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error) => {
+    onError: (error, query) => {
+      // Skip toast for queries that suppress error toasts
+      if (query.meta?.suppressErrorToast) {
+        return;
+      }
       toast.error(`Error: ${error.message}`, {
         action: {
           label: "retry",
