@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple
 import threading
+from ..text_normalize import normalize_persian
 
 try:
     import torch  # type: ignore
@@ -93,6 +94,11 @@ def transcribe(
         )
 
         text = (result.get("text") or "").strip()
+
+        # Light Persian-specific normalization
+        if (language or "").lower().startswith("fa") and text:
+            text = normalize_persian(text)
+
         return text
     except Exception as e:
         raise ValueError(f"Whisper transcription failed: {e}") from e

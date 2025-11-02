@@ -14,6 +14,7 @@ import threading
 
 import torch
 import whisperx
+from ..text_normalize import normalize_persian
 
 # Default batch sizes tuned lightly for CPU vs CUDA
 _DEFAULT_BATCH_SIZE_CPU = 8
@@ -94,6 +95,11 @@ def transcribe(
 
         segments = result.get("segments") or []
         text = " ".join((s.get("text") or "").strip() for s in segments).strip()
+
+        # Light Persian-specific normalization
+        if (language or "").lower().startswith("fa") and text:
+            text = normalize_persian(text)
+
         return text
     except Exception as e:
         raise ValueError(f"WhisperX transcription failed: {e}") from e
