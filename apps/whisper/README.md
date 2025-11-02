@@ -6,6 +6,7 @@ Requirements
 - Python 3.9+
 - ffmpeg installed and on PATH (required by WhisperX)
 - uv (https://docs.astral.sh/uv/)
+- Optional for engine=whisper: openai-whisper (pip package name), provides import whisper
 
 Quick start
 
@@ -31,7 +32,10 @@ Production mode:
 3) Test the API:
    - Open http://127.0.0.1:8001/ in your browser for the interactive test page
    - Or transcribe via curl:
-     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" http://127.0.0.1:8001/transcribe
+     # WhisperX (default)
+     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisperx" http://127.0.0.1:8001/transcribe
+     # OpenAI Whisper (python package)
+     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisper" http://127.0.0.1:8001/transcribe
 
 Config (env)
 - WHISPER_DEVICE: cpu|cuda (default cpu)
@@ -46,6 +50,7 @@ Endpoints
   - file: audio file (webm/mp4/wav)
   - model: optional whisper model name (default tiny)
   - language: optional ISO 639-1 language code (e.g., fa, en)
+  - engine: optional transcription engine; 'whisperx' (default) or 'whisper' (OpenAI Whisper)
   Returns: { text: "..." }
 
 Docker (contained, no host deps)
@@ -54,11 +59,12 @@ Docker (contained, no host deps)
   - docker run -p 8001:8001 whisperx-server
   - Health: curl http://127.0.0.1:8001/health
   - Test page: http://127.0.0.1:8001/
-  - Transcribe: curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" http://127.0.0.1:8001/transcribe
+  - Transcribe: curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisperx" http://127.0.0.1:8001/transcribe
 
 Notes
 - The container includes ffmpeg, PyTorch CPU, and whisperx; no host Python is required.
 - Override defaults via environment variables: WHISPER_DEVICE, WHISPER_DEFAULT_MODEL, MAX_UPLOAD_MB.
+- To use engine=whisper (OpenAI Whisper python), install pip package 'openai-whisper'. Default engine is whisperx.
 
 Single binary build (no Docker)
 - One-command builder (cross-platform):

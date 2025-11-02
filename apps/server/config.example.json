@@ -2,34 +2,25 @@
   "PORT": 3000,
   "HOST": "127.0.0.1",
   "CORS_ORIGIN": "http://localhost:3000,http://localhost:5173",
-
   "JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production-min-32-chars",
   "JWT_EXPIRES_IN": 86400,
-
   "DATABASE_FILE": "./data.db",
-
   "WHISPER_SERVER_URL": "http://127.0.0.1:8001",
   "WHISPER_TIMEOUT_MS": 20000,
   "WHISPER_MODELS": "Xenova/whisper-tiny",
-
+  "TRANSCRIBE_DEFAULT_ENGINE": "whisperx",
   "OLLAMA_BASE_URL": "http://localhost:11434",
   "OLLAMA_ENABLED": true,
-
   "LMSTUDIO_BASE_URL": "http://localhost:1234/v1",
   "LMSTUDIO_ENABLED": false,
-
   "OPENROUTER_API_KEY": "",
   "OPENROUTER_ENABLED": false,
-
   "GROQ_API_KEY": "",
   "GROQ_ENABLED": false,
-
   "GEMINI_API_KEY": "",
   "GEMINI_ENABLED": false,
-
   "STABLE_DIFFUSION_URL": "http://localhost:7860",
   "STABLE_DIFFUSION_ENABLED": true,
-
   "IMAGES_DIR": "./generated-images",
   "DOCUMENTS_DIR": "./uploaded-documents",
   "EMBEDDING_MODEL": "nomic-embed-text",

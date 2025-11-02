@@ -86,6 +86,7 @@ const Schema = z.object({
   // Timeout for requests to the Whisper server (ms)
   WHISPER_TIMEOUT_MS: z.coerce.number().default(20_000),
   WHISPER_MODELS: z.string().default("Xenova/whisper-tiny"),
+  TRANSCRIBE_DEFAULT_ENGINE: z.enum(["whisperx", "whisper"]).default("whisperx"),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_ENABLED: z.coerce.boolean().default(true),
   LMSTUDIO_BASE_URL: z.string().default("http://localhost:1234/v1"),
@@ -114,6 +115,9 @@ if (!parsed.success) {
   process.exit(1);
 }
 export const env: Env = parsed.data;
+
+export type TranscribeEngine = "whisperx" | "whisper";
+export const defaultTranscribeEngine: TranscribeEngine = env.TRANSCRIBE_DEFAULT_ENGINE;
 
 const parseCSV = (value: string): string[] =>
   value

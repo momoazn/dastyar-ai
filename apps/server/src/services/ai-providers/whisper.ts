@@ -1,3 +1,11 @@
+/**
+ * WhisperX engine client
+ *
+ * This module integrates with the external WhisperX FastAPI server
+ * configured by `WHISPER_SERVER_URL`. It is distinct from the official
+ * OpenAI Whisper API. To use OpenAI Whisper, use the OpenAI-specific provider
+ * (see `openai-whisper.ts`) and select engine "openai" at the call site.
+ */
 import { defaultWhisperModel, env, whisperModelIds } from "@/config";
 
 export type ModelInfo = { id: string; name: string };
@@ -26,6 +34,7 @@ type ModelsCache = { at: number; list: ModelInfo[] } | null;
 let _modelsCache: ModelsCache = null;
 const MODELS_TTL_MS = 60_000;
 
+// Lists models from the WhisperX FastAPI server; falls back to config defaults
 export async function getWhisperModels(): Promise<ModelInfo[]> {
   const now = Date.now();
   if (_modelsCache && now - _modelsCache.at < MODELS_TTL_MS) {
@@ -64,16 +73,20 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
   return list;
 }
 
+export type SttEngine = "whisperx" | "whisper";
 export type TranscribeArgs = {
   file: File;
   language?: string;
   model?: string;
+  engine?: SttEngine;
 };
 
+// Transcribes via the WhisperX FastAPI server at WHISPER_SERVER_URL
 export async function transcribe({
   file,
   language,
   model,
+  engine,
 }: TranscribeArgs): Promise<string> {
   const startedAt = Date.now();
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
@@ -97,6 +110,9 @@ export async function transcribe({
   }
   if (language) {
     form.append("language", language);
+  }
+  if (engine) {
+    form.append("engine", engine);
   }
 
   const controller = new AbortController();
@@ -127,6 +143,7 @@ export async function transcribe({
   }
 }
 
+// Maps WhisperX network/server errors to localized user-facing messages
 export function mapTranscriptionError(message: string): Error {
   if (
     message.includes("fetch") ||

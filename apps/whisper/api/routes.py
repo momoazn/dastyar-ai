@@ -3,15 +3,17 @@
 import logging
 import tempfile
 from pathlib import Path
-import whisperx
+
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import HTMLResponse
 
 from . import schemas
-from .models import load_model, resolve_model_name
+from .models import resolve_model_name
 from .config import settings
+from .engines.whisper_engine import transcribe as whisper_transcribe
+from .engines.whisperx_engine import transcribe as whisperx_transcribe
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -50,14 +52,15 @@ async def list_models() -> list[schemas.ModelInfo]:
     """List available WhisperX-compatible models."""
     from .models import get_available_models
 
-    return get_available_models()
+    models = get_available_models()
+    return [schemas.ModelInfo(id=m.id, name=m.name) for m in models]
 
 
 @router.post(
     "/transcribe",
     response_model=schemas.TranscribeResponse,
     summary="Transcribe audio",
-    description="Transcribe an audio file using WhisperX",
+    description="Transcribe an audio file using WhisperX or OpenAI Whisper (selectable via 'engine')",
     responses={
         400: {"model": schemas.ErrorResponse},
         413: {"model": schemas.ErrorResponse},
@@ -69,6 +72,9 @@ async def transcribe(
     model: Optional[str] = Form(None, description="Model name (default: tiny)"),
     language: Optional[str] = Form(
         None, description="ISO 639-1 language code (e.g., 'en', 'fa')"
+    ),
+    engine: Optional[str] = Form(
+        None, description="Transcription engine: 'whisperx' (default) or 'whisper'"
     ),
 ) -> schemas.TranscribeResponse:
     """Transcribe an audio file using WhisperX."""
@@ -86,41 +92,43 @@ async def transcribe(
     # Resolve model name
     model_name = resolve_model_name(model)
 
+    temp_path: Optional[str] = None
     try:
         # Save the uploaded file to a temporary file
-        suffix = Path(file.filename).suffix if getattr(file, "filename", None) else ""
+        fname = file.filename or ""
+        suffix = Path(fname).suffix if fname else ""
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
             content = await file.read()
             temp_file.write(content)
             temp_path = temp_file.name
 
         try:
-            # Load the model
-            model, model_name = load_model(model_name)
+            # Select engine and transcribe
+            selected_engine = (engine or "whisperx").lower().strip()
+            device = "cuda" if settings.WHISPER_DEVICE == "cuda" else "cpu"
 
-            # Load audio and transcribe via WhisperX
-            audio = whisperx.load_audio(temp_path)
-            # On CPU keep small batch size; allow language override if provided
-            result = model.transcribe(
-                audio,
-                batch_size=8 if settings.WHISPER_DEVICE == "cpu" else 16,
-                language=language,
-            )
+            if selected_engine == "whisper":
+                text = whisper_transcribe(
+                    temp_path,
+                    model_name=model_name,
+                    language=language,
+                    device=device,
+                )
+            else:
+                text = whisperx_transcribe(
+                    temp_path,
+                    model_name=model_name,
+                    language=language,
+                    device=device,
+                )
 
-            # WhisperX returns segments; build a single text for backward compatibility
-            segments = result.get("segments") or []
-            joined_text = " ".join(
-                (s.get("text") or "").strip() for s in segments
-            ).strip()
-
-            return schemas.TranscribeResponse(
-                text=joined_text,
-            )
+            return schemas.TranscribeResponse(text=text)
 
         finally:
             # Clean up the temporary file
             try:
-                Path(temp_path).unlink(missing_ok=True)
+                if temp_path:
+                    Path(temp_path).unlink(missing_ok=True)
             except Exception as e:
                 logger.warning(f"Failed to delete temporary file {temp_path}: {e}")
 

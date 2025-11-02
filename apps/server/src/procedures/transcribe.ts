@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defaultWhisperModel } from "@/config";
+import { defaultTranscribeEngine, defaultWhisperModel } from "@/config";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
@@ -7,7 +7,21 @@ import {
 import { publicProcedure } from "./base";
 
 export const transcribeProcedures = {
-  models: publicProcedure.handler(async () => await getWhisperModels()),
+  models: publicProcedure
+    .input(
+      z
+        .object({
+          engine: z.enum(["whisperx", "whisper"]).optional(),
+        })
+        .optional()
+    )
+    .handler(async ({ input }) => {
+      const engine = input?.engine ?? defaultTranscribeEngine;
+      if (engine) {
+        // Both engines share the same model id set for now.
+      }
+      return await getWhisperModels();
+    }),
 
   transcribe: publicProcedure
     .input(
@@ -15,14 +29,20 @@ export const transcribeProcedures = {
         file: z.instanceof(File),
         language: z.string().length(2).optional(),
         model: z.string().optional(),
+        engine: z.enum(["whisperx", "whisper"]).optional(),
       })
     )
     .output(z.string())
-    .handler(async ({ input }) =>
-      whisperTranscribe({
+    .handler(({ input }) => {
+      const engine = input.engine ?? defaultTranscribeEngine;
+      const language = input.language ?? "fa";
+      const model =
+        input.model ?? (engine === "whisper" ? "tiny" : defaultWhisperModel);
+      return whisperTranscribe({
         file: input.file,
-        language: input.language ?? "fa",
-        model: input.model ?? defaultWhisperModel,
-      })
-    ),
+        language,
+        model,
+        engine,
+      });
+    }),
 };
