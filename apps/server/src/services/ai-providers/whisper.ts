@@ -6,29 +6,22 @@
  * OpenAI Whisper API. To use OpenAI Whisper, use the OpenAI-specific provider
  * (see `openai-whisper.ts`) and select engine "openai" at the call site.
  */
-import { defaultWhisperModel, env, whisperModelIds } from "@/config";
+import { env, whisperModelIds } from "@/config";
 
 export type ModelInfo = { id: string; name: string };
 
-const RE_SPLIT_DELIMS = /[-_\s]+/;
-const RE_DIGIT = /[0-9]/;
-const RE_WHISPER_PREFIX = /^whisper-/i;
 const TRAILING_SLASH_REGEX = /\/$/;
 
-const toTitleCase = (s: string): string =>
-  s
-    .split(RE_SPLIT_DELIMS)
-    .map((w) => (RE_DIGIT.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(" ");
-
-export const prettyWhisperName = (modelId: string): string => {
-  const [vendor, model] = modelId.split("/");
-  const vendorPretty = vendor?.charAt(0).toUpperCase() + vendor?.slice(1);
-  const modelPretty = toTitleCase(
-    model?.replace(RE_WHISPER_PREFIX, "Whisper ") ?? ""
-  );
-  return `${vendorPretty} ${modelPretty}`.trim();
-};
+// Static fallback model list with human-readable names
+const STATIC_MODELS: ModelInfo[] = [
+  { id: "tiny", name: "Tiny" },
+  { id: "base", name: "Base" },
+  { id: "small", name: "Small" },
+  { id: "medium", name: "Medium" },
+  { id: "large", name: "Large" },
+  { id: "large-v2", name: "Large V2" },
+  { id: "large-v3", name: "Large V3" },
+];
 
 type ModelsCache = { at: number; list: ModelInfo[] } | null;
 let _modelsCache: ModelsCache = null;
@@ -63,12 +56,15 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
       return list;
     }
   } catch {
-    // ignore and fall back
+    // ignore and fall back to static list
   }
 
-  const list = (
-    whisperModelIds.length > 0 ? whisperModelIds : [defaultWhisperModel]
-  ).map((id) => ({ id, name: prettyWhisperName(id) }));
+  // Fallback: use config-based models if available, otherwise use static list
+  const configModels =
+    whisperModelIds.length > 0
+      ? whisperModelIds.map((id) => ({ id, name: id }))
+      : [];
+  const list = configModels.length > 0 ? configModels : STATIC_MODELS;
   _modelsCache = { at: now, list };
   return list;
 }
@@ -88,7 +84,6 @@ export async function transcribe({
   model,
   engine,
 }: TranscribeArgs): Promise<string> {
-  const startedAt = Date.now();
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
   const url = `${base}/transcribe`;
 
@@ -132,9 +127,6 @@ export async function transcribe({
     }
     const json = (await res.json()) as { text?: string };
     const output = (json?.text ?? "").trim();
-    // Avoid console logging per style guide
-    // Successful transcription
-    const _ = startedAt; // prevent unused variable in case formatters strip further
     return output;
   } catch (err) {
     clearTimeout(timer);
@@ -143,16 +135,35 @@ export async function transcribe({
   }
 }
 
-// Maps WhisperX network/server errors to localized user-facing messages
+// Maps WhisperX network/server errors to localized user-friendly messages
 export function mapTranscriptionError(message: string): Error {
+  const lowerMsg = message.toLowerCase();
+
+  // Payload too large (413) — prioritize this over generic server errors
   if (
-    message.includes("fetch") ||
-    message.includes("Whisper server error") ||
-    message.toLowerCase().includes("abort")
+    message.includes("413") ||
+    lowerMsg.includes("too large") ||
+    lowerMsg.includes("payload too large") ||
+    lowerMsg.includes("request entity too large")
+  ) {
+    return new Error(
+      "فایل ضبط شده خیلی بزرگ است. لطفاً صدای کوتاه‌تری ضبط کنید."
+    );
+  }
+
+  // Service unavailable, timeout, or network error
+  if (
+    lowerMsg.includes("fetch") ||
+    lowerMsg.includes("abort") ||
+    lowerMsg.includes("network") ||
+    lowerMsg.includes("econnrefused") ||
+    message.includes("Whisper server error")
   ) {
     return new Error(
       "سرویس تشخیص گفتار در دسترس نیست. لطفاً Whisper Server را اجرا کنید."
     );
   }
+
+  // Generic failure
   return new Error("تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.");
 }

@@ -76,7 +76,8 @@ function RouteComponent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState("");
   const [language, setLanguage] = useState<"fa" | "en">("fa");
-  const [model, setModel] = useState<string>("Xenova/whisper-tiny");
+  const [engine, setEngine] = useState<"whisperx" | "whisper">("whisperx");
+  const [model, setModel] = useState<string>("tiny");
 
   const {
     isRecording,
@@ -88,7 +89,9 @@ function RouteComponent() {
     clearRecordedFile,
   } = useVoiceRecorder();
 
-  const { data: models } = useQuery(orpc.transcribe.models.queryOptions());
+  const { data: models } = useQuery(
+    orpc.transcribe.models.queryOptions({ input: { engine } })
+  );
 
   const { transcribe, isPending: isTranscribing } = useTranscription({
     onSuccess: (data) => {
@@ -123,13 +126,9 @@ function RouteComponent() {
       processedFileRef.current = recordedFile;
       setTranscribeError(null);
       setResult("");
-      transcribe({ file: recordedFile, language, model }).catch(() => {
-        // Keep processed ref pointing to the same file to avoid auto-retry loops
-        processedFileRef.current = recordedFile;
-        setTranscribeError(fa.transcribe.errors.processFailed);
-      });
+      transcribe({ file: recordedFile, language, model, engine });
     }
-  }, [recordedFile, transcribe, language, model]);
+  }, [recordedFile, transcribe, language, model, engine]);
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
@@ -180,6 +179,95 @@ function RouteComponent() {
           <CardContent>
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
+                <div className="grid items-end gap-3 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <Label
+                      className="text-muted-foreground text-xs"
+                      htmlFor="engine-select"
+                    >
+                      موتور
+                    </Label>
+                    <Select
+                      onValueChange={(v) =>
+                        setEngine(v as "whisperx" | "whisper")
+                      }
+                      value={engine}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        id="engine-select"
+                        size="sm"
+                      >
+                        <SelectValue placeholder="موتور" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="whisperx">WhisperX</SelectItem>
+                        <SelectItem value="whisper">Whisper</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      className="text-muted-foreground text-xs"
+                      htmlFor="language-select"
+                    >
+                      {fa.translation.sourceLanguage}
+                    </Label>
+                    <Select
+                      onValueChange={(v) => setLanguage(v as "fa" | "en")}
+                      value={language}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        id="language-select"
+                        size="sm"
+                      >
+                        <SelectValue
+                          placeholder={fa.translation.sourceLanguage}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fa">
+                          {fa.languages.persian}
+                        </SelectItem>
+                        <SelectItem value="en">
+                          {fa.languages.english}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      className="text-muted-foreground text-xs"
+                      htmlFor="model-select"
+                    >
+                      {fa.modelSelection.speechModel}
+                    </Label>
+                    <Select
+                      disabled={!models?.length}
+                      onValueChange={setModel}
+                      value={model}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        id="model-select"
+                        size="sm"
+                      >
+                        <SelectValue
+                          placeholder={fa.modelSelection.selectSpeechModel}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models?.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     {isTranscribing ? (
@@ -237,69 +325,6 @@ function RouteComponent() {
                     <Progress value={isRecording ? progressValue : 0} />
                   </div>
                 </div>
-
-                <div className="grid items-end gap-3 sm:grid-cols-3">
-                  <div className="space-y-1">
-                    <Label
-                      className="text-muted-foreground text-xs"
-                      htmlFor="language-select"
-                    >
-                      {fa.translation.sourceLanguage}
-                    </Label>
-                    <Select
-                      onValueChange={(v) => setLanguage(v as "fa" | "en")}
-                      value={language}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        id="language-select"
-                        size="sm"
-                      >
-                        <SelectValue
-                          placeholder={fa.translation.sourceLanguage}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="fa">
-                          {fa.languages.persian}
-                        </SelectItem>
-                        <SelectItem value="en">
-                          {fa.languages.english}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
-                    <Label
-                      className="text-muted-foreground text-xs"
-                      htmlFor="model-select"
-                    >
-                      {fa.modelSelection.speechModel}
-                    </Label>
-                    <Select
-                      disabled={!models?.length}
-                      onValueChange={setModel}
-                      value={model}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        id="model-select"
-                        size="sm"
-                      >
-                        <SelectValue
-                          placeholder={fa.modelSelection.selectSpeechModel}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {models?.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
               </div>
 
               <div className="flex flex-col space-y-3">
@@ -311,18 +336,13 @@ function RouteComponent() {
                     {recordedFile && !isTranscribing && (
                       <Button
                         className="gap-2"
-                        onClick={async () => {
-                          try {
-                            await transcribe({
-                              file: recordedFile,
-                              language,
-                              model,
-                            });
-                          } catch {
-                            setTranscribeError(
-                              fa.transcribe.errors.processFailed
-                            );
-                          }
+                        onClick={() => {
+                          transcribe({
+                            file: recordedFile,
+                            language,
+                            model,
+                            engine,
+                          });
                         }}
                         type="button"
                         variant="outline"

@@ -19,11 +19,28 @@ import {
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
+export function mapRecordingError(error: RecordingError): string {
+  switch (error) {
+    case "micAccessDenied":
+      return fa.transcribe.errors.micAccess;
+    case "noAudioCaptured":
+      return fa.transcribe.errors.noAudio;
+    case "fileTooLarge":
+      return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
+    case "initFailed":
+    case "processingFailed":
+      return fa.transcribe.errors.processFailed;
+    default:
+      return fa.transcribe.errors.processFailed;
+  }
+}
+
 type TranscribeButtonProps = {
   onTranscribed: (text: string) => void;
   onError?: (error: string) => void;
   language?: "fa" | "en";
   model?: string;
+  engine?: "whisperx" | "whisper";
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
@@ -31,14 +48,30 @@ type TranscribeButtonProps = {
   showControls?: boolean;
   onLanguageChange?: (language: "fa" | "en") => void;
   onModelChange?: (model: string) => void;
+  onEngineChange?: (engine: "whisperx" | "whisper") => void;
   availableModels?: Array<{ id: string; name: string }>;
 };
+
+export function getTranscribeButtonText(
+  isRecording: boolean,
+  isPending: boolean,
+  elapsedMs: number
+): string {
+  if (isRecording) {
+    return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
+  }
+  if (isPending) {
+    return fa.chat.transcribingVoice;
+  }
+  return fa.chat.micStart;
+}
 
 export function TranscribeButton({
   onTranscribed,
   onError,
   language = "fa",
   model = "",
+  engine = "whisperx",
   variant = "outline",
   size = "default",
   className,
@@ -46,6 +79,7 @@ export function TranscribeButton({
   showControls = false,
   onLanguageChange,
   onModelChange,
+  onEngineChange,
   availableModels = [],
 }: TranscribeButtonProps) {
   // Use mutation pending state instead of separate local state for transcribing
@@ -62,7 +96,10 @@ export function TranscribeButton({
 
   // Fetch available transcription models
   const { data: models } = useQuery(
-    orpc.transcribe.models.queryOptions({ enabled: showControls })
+    orpc.transcribe.models.queryOptions({
+      input: { engine },
+      enabled: showControls,
+    })
   );
 
   // Auto-select first model when models are loaded and no model is selected
@@ -92,46 +129,25 @@ export function TranscribeButton({
   useEffect(() => {
     if (recordedFile && recordedFile !== processedFileRef.current) {
       processedFileRef.current = recordedFile;
-      (async () => {
-        try {
-          await transcribe({
-            file: recordedFile,
-            language,
-            model: model || undefined,
-          });
-        } catch {
-          // Prevent auto-retry loop by keeping reference to the same file
-          processedFileRef.current = recordedFile;
-          onError?.("خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.");
-        }
-      })();
+      transcribe({
+        file: recordedFile,
+        language,
+        model: model || undefined,
+        engine,
+      });
     }
-  }, [recordedFile, language, model, onError, transcribe]);
+  }, [recordedFile, language, model, engine, transcribe]);
 
   // Map recording errors to user-friendly messages
-  const mapRecordingError = useCallback((error: RecordingError): string => {
-    switch (error) {
-      case "micAccessDenied":
-        return fa.transcribe.errors.micAccess;
-      case "noAudioCaptured":
-        return fa.transcribe.errors.noAudio;
-      case "fileTooLarge":
-        return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
-      case "initFailed":
-      case "processingFailed":
-        return fa.transcribe.errors.processFailed;
-      default:
-        return fa.transcribe.errors.processFailed;
-    }
-  }, []);
+  const mapRecordingErrorCb = useCallback(mapRecordingError, []);
 
   // Handle recording error
   useEffect(() => {
     if (recordingError) {
-      const errorMessage = mapRecordingError(recordingError);
+      const errorMessage = mapRecordingErrorCb(recordingError);
       onError?.(errorMessage);
     }
-  }, [recordingError, onError, mapRecordingError]);
+  }, [recordingError, onError, mapRecordingErrorCb]);
 
   const handleClick = async () => {
     if (isRecording) {
@@ -141,15 +157,8 @@ export function TranscribeButton({
     }
   };
 
-  const getButtonText = () => {
-    if (isRecording) {
-      return `${fa.chat.micStop} • ${formatElapsed(elapsedMs)}`;
-    }
-    if (isPending) {
-      return fa.chat.transcribingVoice;
-    }
-    return fa.chat.micStart;
-  };
+  const getButtonText = () =>
+    getTranscribeButtonText(isRecording, isPending, elapsedMs);
 
   const isButtonDisabled = disabled || isPending;
 
@@ -172,6 +181,24 @@ export function TranscribeButton({
           </div>
         )}
 
+        {/* Engine Select - only show if onEngineChange is provided */}
+        {onEngineChange && (
+          <Select
+            onValueChange={(value) =>
+              onEngineChange?.(value as "whisperx" | "whisper")
+            }
+            value={engine}
+          >
+            <SelectTrigger className="h-8 w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="whisperx">WhisperX</SelectItem>
+              <SelectItem value="whisper">Whisper</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
         {/* Model Select */}
         <Select onValueChange={(value) => onModelChange?.(value)} value={model}>
           <SelectTrigger className="h-8 w-32">
@@ -188,18 +215,21 @@ export function TranscribeButton({
 
         {/* Transcribe Button */}
         <Button
+          aria-label={
+            isRecording ? fa.transcribe.recordStop : fa.transcribe.recordStart
+          }
           className={`${className} ${isRecording ? "animate-pulse" : ""}`}
           disabled={isButtonDisabled}
           onClick={handleClick}
           size={size}
           title={getButtonText()}
+          type="button"
           variant={isRecording ? "destructive" : variant}
         >
-          {isRecording ? (
-            <Square className="size-4" />
-          ) : (
-            <Mic className="size-4" />
-          )}
+          {(() => {
+            const Icon = isRecording ? Square : Mic;
+            return <Icon className="size-4" />;
+          })()}
           {isRecording && size !== "icon" && (
             <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
               {formatElapsed(elapsedMs)}
@@ -212,14 +242,21 @@ export function TranscribeButton({
 
   return (
     <Button
+      aria-label={
+        isRecording ? fa.transcribe.recordStop : fa.transcribe.recordStart
+      }
       className={`${className} ${isRecording ? "animate-pulse" : ""}`}
       disabled={isButtonDisabled}
       onClick={handleClick}
       size={size}
       title={getButtonText()}
+      type="button"
       variant={isRecording ? "destructive" : variant}
     >
-      {isRecording ? <Square className="size-4" /> : <Mic className="size-4" />}
+      {(() => {
+        const Icon = isRecording ? Square : Mic;
+        return <Icon className="size-4" />;
+      })()}
       {isRecording && size !== "icon" && (
         <span className="mr-2 text-xs rtl:mr-0 rtl:ml-2">
           {formatElapsed(elapsedMs)}

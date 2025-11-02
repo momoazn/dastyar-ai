@@ -338,14 +338,14 @@
 
       <div class="source-toggle">
         <div
-          class="source-option active"
+          class="source-option inactive"
           id="uploadOption"
           onclick="switchSource('upload')"
         >
           📁 Upload File
         </div>
         <div
-          class="source-option"
+          class="source-option active"
           id="recordOption"
           onclick="switchSource('record')"
         >
@@ -353,13 +353,13 @@
         </div>
       </div>
 
-      <div class="upload-section" id="uploadSection">
+      <div class="upload-section" id="uploadSection" style="display: none;">
         <input type="file" id="audioFile" accept="audio/*">
         <label for="audioFile" class="file-label">Choose Audio File</label>
         <div class="file-name" id="fileName"></div>
       </div>
 
-      <div class="recorder-section" id="recorderSection" style="display: none;">
+      <div class="recorder-section" id="recorderSection">
         <h3>Voice Recorder</h3>
         <button id="recordBtn" class="record-btn" onclick="toggleRecording()">
           ● Start Recording
@@ -377,24 +377,31 @@
       </div>
 
       <div class="form-group">
-        <label for="model">Model (optional)</label>
-        <select id="model">
-          <option value="">Default (tiny)</option>
-          <option value="tiny">tiny</option>
-          <option value="base">base</option>
-          <option value="small">small</option>
-          <option value="medium">medium</option>
-          <option value="large">large</option>
+        <label for="engine">Transcription Engine</label>
+        <select id="engine">
+          <option value="whisperx">WhisperX (default)</option>
+          <option value="whisper">Whisper</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="language">Language (optional, e.g., 'en', 'fa')</label>
-        <input
-          type="text"
-          id="language"
-          placeholder="Leave empty for auto-detection"
+        <label for="model">Model</label>
+        <select id="model">
+          <option value="">Loading models...</option>
+        </select>
+        <small
+          style="color: #666; font-size: 12px; margin-top: 5px; display: block;"
         >
+          Models are loaded from the Whisper server
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="language">Language</label>
+        <select id="language">
+          <option value="fa">Persian (fa)</option>
+          <option value="en">English (en)</option>
+        </select>
       </div>
 
       <button id="transcribeBtn" onclick="transcribe()">
@@ -409,7 +416,7 @@
       <div class="result" id="result" style="display: none;"></div>
 
       <div class="api-url">
-        <strong>API Endpoint:</strong>/transcribe
+        <strong>API Endpoints:</strong>GET /models, POST /transcribe
       </div>
     </div>
 
@@ -420,7 +427,7 @@
         let recordedBlob = null;
         let recordingTime = 0;
         let timerInterval = null;
-        let currentSource = 'upload';
+        let currentSource = 'record';
 
         // Elements
         const fileInput = document.getElementById('audioFile');
@@ -437,6 +444,51 @@
         const transcribeBtn = document.getElementById('transcribeBtn');
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
+        const engineSelect = document.getElementById('engine');
+        const modelSelect = document.getElementById('model');
+        const languageSelect = document.getElementById('language');
+
+        // Load available models from the Whisper server
+        async function loadModels() {
+            try {
+                const response = await fetch('/models');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch models');
+                }
+                const models = await response.json();
+
+                // Clear existing options
+                modelSelect.innerHTML = '';
+
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Default (tiny)';
+                modelSelect.appendChild(defaultOption);
+
+                // Add model options
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = `${model.name} (${model.id})`;
+                    modelSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading models:', error);
+                // Fallback to basic models if API fails
+                modelSelect.innerHTML = `
+                    <option value="">Default (tiny)</option>
+                    <option value="tiny">tiny</option>
+                    <option value="base">base</option>
+                    <option value="small">small</option>
+                    <option value="medium">medium</option>
+                    <option value="large">large</option>
+                `;
+            }
+        }
+
+        // Load models on page load
+        loadModels();
 
         // Drag and drop functionality
         uploadSection.addEventListener('dragover', (e) => {
@@ -580,8 +632,9 @@
                 file = new File([recordedBlob], 'recording.webm', { type: 'audio/webm' });
             }
 
-            const model = document.getElementById('model').value;
-            const language = document.getElementById('language').value;
+            const engine = engineSelect.value;
+            const model = modelSelect.value;
+            const language = languageSelect.value;
 
             transcribeBtn.disabled = true;
             loading.style.display = 'block';
@@ -591,13 +644,16 @@
                 const formData = new FormData();
                 formData.append('file', file);
 
+                // Always append engine
+                formData.append('engine', engine);
+
+                // Only append model if explicitly selected
                 if (model) {
                     formData.append('model', model);
                 }
 
-                if (language) {
-                    formData.append('language', language);
-                }
+                // Always append language
+                formData.append('language', language);
 
                 const response = await fetch('/transcribe', {
                     method: 'POST',
@@ -609,24 +665,33 @@
                 if (response.ok) {
                     result.style.display = 'block';
                     result.className = 'result';
+                    const transcriptionText = data.text || 'No text detected';
                     result.innerHTML = `
                         <h3>✓ Transcription Complete</h3>
-                        <div class="result-text">${data.text || 'No text detected'}</div>
+                        <div class="result-text">${escapeHtml(transcriptionText)}</div>
                     `;
                 } else {
-                    throw new Error(data.detail || 'Transcription failed');
+                    const errorMsg = data.detail || data.message || 'Transcription failed';
+                    throw new Error(errorMsg);
                 }
             } catch (error) {
                 result.style.display = 'block';
                 result.className = 'result error';
                 result.innerHTML = `
                     <h3>✗ Error</h3>
-                    <div class="result-text">${error.message}</div>
+                    <div class="result-text">${escapeHtml(error.message)}</div>
                 `;
             } finally {
                 transcribeBtn.disabled = false;
                 loading.style.display = 'none';
             }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
   </body>

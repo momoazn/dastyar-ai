@@ -85,7 +85,7 @@ const Schema = z.object({
   WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
   // Timeout for requests to the Whisper server (ms)
   WHISPER_TIMEOUT_MS: z.coerce.number().default(20_000),
-  WHISPER_MODELS: z.string().default("Xenova/whisper-tiny"),
+  WHISPER_MODELS: z.string().default("tiny"),
   TRANSCRIBE_DEFAULT_ENGINE: z
     .enum(["whisperx", "whisper"])
     .default("whisperx"),
@@ -129,9 +129,8 @@ const parseCSV = (value: string): string[] =>
     .filter((s) => s.length > 0);
 
 const whisper = parseCSV(env.WHISPER_MODELS);
-export const whisperModelIds =
-  whisper.length > 0 ? whisper : ["Xenova/whisper-tiny"];
-export const defaultWhisperModel = whisperModelIds[0];
+export const whisperModelIds = whisper.length > 0 ? whisper : ["tiny"];
+export const defaultWhisperModel = "tiny";
 
 const resolveWebDistDir = (baseDir: string): string =>
   isAbsolute(env.WEB_DIST_DIR)

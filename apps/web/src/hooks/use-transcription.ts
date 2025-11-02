@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
-import { fileToWav16kMono } from "@/utils/audio";
 import { orpc } from "@/utils/orpc";
 
 export type TranscriptionArgs = {
   file: File;
   language?: "fa" | "en";
   model?: string;
+  engine?: "whisperx" | "whisper";
 };
 
 export type UseTranscriptionHandlers = {
@@ -35,15 +35,8 @@ export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
   );
 
   const transcribe = useCallback(
-    async ({ file, language, model }: TranscriptionArgs) => {
-      try {
-        const wav = await fileToWav16kMono(file);
-        mutate({ file: wav, language, model });
-      } catch {
-        handlersRef.current?.onError?.(
-          "خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید."
-        );
-      }
+    ({ file, language, model, engine }: TranscriptionArgs) => {
+      mutate({ file, language, model, engine });
     },
     [mutate]
   );
