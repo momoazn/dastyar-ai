@@ -5,6 +5,8 @@ import { logger } from "@/lib/logger";
 import {
   createUser,
   hashPassword,
+  updateUsername as updateUsernameRepo,
+  updateUserPassword as updateUserPasswordRepo,
   usernameExists,
   verifyUserCredentials,
 } from "@/repositories/auth";
@@ -19,6 +21,15 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   username: z.string(),
   password: z.string(),
+});
+
+const updateUsernameSchema = z.object({
+  newUsername: z.string().min(3).max(50),
+});
+
+const updatePasswordSchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(6),
 });
 
 function logEvent(event: string, data: Record<string, unknown> = {}) {
@@ -181,4 +192,102 @@ export const authProcedures = {
       role: context.user.role,
     };
   }),
+
+  updateUsername: protectedProcedure
+    .input(updateUsernameSchema)
+    .handler(async ({ input, context }) => {
+      const { newUsername } = input;
+      const userId = context.user.id;
+
+      logEvent("auth.updateUsername.attempt", { userId, newUsername });
+
+      try {
+        // Check if username already exists
+        const exists = await usernameExists(newUsername);
+        if (exists) {
+          logEvent("auth.updateUsername.failure", {
+            userId,
+            newUsername,
+            reason: "USERNAME_ALREADY_EXISTS",
+          });
+          throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+            message: "نام کاربری قبلاً استفاده شده است",
+            status: 400,
+          });
+        }
+
+        // Update username
+        const updatedUser = await updateUsernameRepo(userId, newUsername);
+        logEvent("auth.updateUsername.success", {
+          userId,
+          oldUsername: context.user.username,
+          newUsername,
+        });
+
+        // Generate new JWT token with updated username
+        const token = generateJwtToken({
+          id: updatedUser.id,
+          username: updatedUser.username,
+          role: updatedUser.role,
+        });
+
+        return {
+          token,
+          user: {
+            id: updatedUser.id,
+            username: updatedUser.username,
+            role: updatedUser.role,
+          },
+        };
+      } catch (error) {
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        logEvent("auth.updateUsername.error", {
+          userId,
+          error: (error as Error)?.message || error,
+        });
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "خطا در به‌روزرسانی نام کاربری",
+          status: 500,
+        });
+      }
+    }),
+
+  updatePassword: protectedProcedure
+    .input(updatePasswordSchema)
+    .handler(async ({ input, context }) => {
+      const { currentPassword, newPassword } = input;
+      const userId = context.user.id;
+
+      logEvent("auth.updatePassword.attempt", { userId });
+
+      try {
+        // Update password (includes current password verification)
+        await updateUserPasswordRepo(userId, currentPassword, newPassword);
+        logEvent("auth.updatePassword.success", { userId });
+
+        return { success: true };
+      } catch (error) {
+        const errorMessage = (error as Error)?.message || "";
+        if (errorMessage.includes("Current password is incorrect")) {
+          logEvent("auth.updatePassword.failure", {
+            userId,
+            reason: "INVALID_CURRENT_PASSWORD",
+          });
+          throw new ORPCError("INVALID_CREDENTIALS", {
+            message: "رمز عبور فعلی اشتباه است",
+            status: 401,
+          });
+        }
+        logEvent("auth.updatePassword.error", {
+          userId,
+          error: errorMessage,
+        });
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "خطا در به‌روزرسانی رمز عبور",
+          status: 500,
+        });
+      }
+    }),
 };

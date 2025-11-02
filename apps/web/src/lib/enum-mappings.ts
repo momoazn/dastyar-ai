@@ -1,12 +1,16 @@
 import { fa } from "@/lib/persian-texts";
 // Directly import database schema types
 import type {
+  CodeMode,
   LanguageCode,
   LLMModelProvider,
   MessageRole,
   MessageStatus,
+  ProgrammingLanguage,
   SummaryMode,
   Tone,
+  TranscribeEngine,
+  TranscribeLanguage,
 } from "@/server/database/schema";
 
 // Language code to label mappings
@@ -36,6 +40,50 @@ export const summaryModeToLabel: Record<SummaryMode, string> = {
   concise: fa.summarize.modes.concise,
   standard: fa.summarize.modes.standard,
   detailed: fa.summarize.modes.detailed,
+} as const;
+
+// Code mode to label mappings
+export const codeModeToLabel: Record<CodeMode, string> = {
+  explain: fa.codeAssistant.modes.explain,
+  refactor: "بازنویسی کد",
+  debug: fa.codeAssistant.modes.debug,
+  optimize: "بهینه‌سازی",
+  document: "مستندسازی",
+  test: "تست‌نویسی",
+} as const;
+
+// Programming language to label mappings
+export const programmingLanguageToLabel: Record<ProgrammingLanguage, string> = {
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  python: "Python",
+  java: "Java",
+  c: "C",
+  cpp: "C++",
+  csharp: "C#",
+  go: "Go",
+  rust: "Rust",
+  php: "PHP",
+  ruby: "Ruby",
+  swift: "Swift",
+  kotlin: "Kotlin",
+  dart: "Dart",
+  sql: "SQL",
+  html: "HTML",
+  css: "CSS",
+  other: "سایر",
+} as const;
+
+// Transcribe engine to label mappings
+export const transcribeEngineToLabel: Record<TranscribeEngine, string> = {
+  whisperx: fa.transcribeEngines.whisperx,
+  whisper: fa.transcribeEngines.whisper,
+} as const;
+
+// Transcribe language to label mappings
+export const transcribeLanguageToLabel: Record<TranscribeLanguage, string> = {
+  fa: fa.transcribeLanguages.fa,
+  en: fa.transcribeLanguages.en,
 } as const;
 
 // Message status to label mappings
@@ -95,5 +143,29 @@ export const createMessageRoleOptions = () =>
 export const createLLMModelProviderOptions = () =>
   Object.entries(llmModelProviderToLabel).map(([value, label]) => ({
     value: value as LLMModelProvider,
+    label,
+  }));
+
+export const createCodeModeOptions = () =>
+  Object.entries(codeModeToLabel).map(([value, label]) => ({
+    value: value as CodeMode,
+    label,
+  }));
+
+export const createProgrammingLanguageOptions = () =>
+  Object.entries(programmingLanguageToLabel).map(([value, label]) => ({
+    value: value as ProgrammingLanguage,
+    label,
+  }));
+
+export const createTranscribeEngineOptions = () =>
+  Object.entries(transcribeEngineToLabel).map(([value, label]) => ({
+    value: value as TranscribeEngine,
+    label,
+  }));
+
+export const createTranscribeLanguageOptions = () =>
+  Object.entries(transcribeLanguageToLabel).map(([value, label]) => ({
+    value: value as TranscribeLanguage,
     label,
   }));

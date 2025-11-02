@@ -7,6 +7,7 @@ import { imageThreadProcedures } from "./image-threads";
 import { imageProcedures } from "./images";
 import { llmModelProcedures } from "./llm-models";
 import { messageProcedures } from "./messages";
+import { settingsProcedures } from "./settings";
 import { summarizeProcedures } from "./summarize";
 import { threadProcedures } from "./threads";
 import { transcribeProcedures } from "./transcribe";
@@ -16,6 +17,7 @@ export const appRouter = {
   ...healthProcedures,
   auth: authProcedures,
   admin: adminProcedures,
+  settings: settingsProcedures,
   models: llmModelProcedures,
   threads: threadProcedures,
   messages: messageProcedures,

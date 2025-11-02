@@ -13,18 +13,24 @@ Quick start
 Development mode (with hot reload):
 1) Change to apps/whisper directory and start the server:
    cd apps/whisper
-   uv run fastapi dev api/main.py --port 8001
+   uv run fastapi dev api/main.py:app --port 8001
 
    Alternative from repo root:
-   cd apps/whisper && uv run fastapi dev api/main.py --port 8001
+   cd apps/whisper && uv run fastapi dev api/main.py:app --port 8001
+
+   Or use npm script from apps/whisper:
+   bun run dev
 
 Production mode:
 1) Change to apps/whisper directory and start the server:
    cd apps/whisper
-   uv run fastapi run api/main:app --port 8001 --host 0.0.0.0
+   uv run fastapi run api/main.py:app --port 8001 --host 0.0.0.0
 
    Alternative from repo root:
-   cd apps/whisper && uv run fastapi run api/main:app --port 8001 --host 0.0.0.0
+   cd apps/whisper && uv run fastapi run api/main.py:app --port 8001 --host 0.0.0.0
+
+   Or use npm script from apps/whisper:
+   bun run start
 
 2) Health check:
    curl http://127.0.0.1:8001/health
@@ -39,7 +45,7 @@ Production mode:
 
 Config (env)
 - WHISPER_DEVICE: cpu|cuda (default cpu)
-- WHISPER_DEFAULT_MODEL: tiny|base|small|medium|large|large-v2|large-v3 (default tiny)
+- WHISPER_DEFAULT_MODEL: tiny|base|small|medium|large|large-v2|large-v3 (default large-v2 for better Persian accuracy)
 - MAX_UPLOAD_MB: maximum upload size enforced for /transcribe (default 50)
 
 Endpoints
@@ -48,9 +54,10 @@ Endpoints
 - GET /models -> [{ id, name }]
 - POST /transcribe (multipart/form-data):
   - file: audio file (webm/mp4/wav)
-  - model: optional whisper model name (default tiny)
+  - model: optional whisper model name (default large-v2)
   - language: optional ISO 639-1 language code (e.g., fa, en)
   - engine: optional transcription engine; 'whisperx' (default) or 'whisper' (OpenAI Whisper)
+  - initial_prompt: optional text to guide transcription with domain-specific vocabulary (e.g., proper nouns, technical terms)
   Returns: { text: "..." }
 
 Docker (contained, no host deps)

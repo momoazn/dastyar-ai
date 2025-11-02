@@ -8,6 +8,7 @@ import {
   translationModelIdAtom,
 } from "@/atoms/model";
 import { orpc } from "@/utils/orpc";
+import { useUser } from "@/hooks/use-user";
 
 type UseFeatureModelSelectionOptions = {
   threadId?: number;
@@ -96,6 +97,7 @@ export function useSummarizeModelSelection({
   enabled?: boolean;
 } = {}) {
   const [modelId, setModelId] = useAtom(summarizeModelIdAtom);
+  const { data: user } = useUser();
 
   const modelsQuery = useQuery(
     orpc.models.list.queryOptions({
@@ -104,16 +106,30 @@ export function useSummarizeModelSelection({
     })
   );
 
+  const preferencesQuery = useQuery({
+    ...orpc.settings.getPreferences.queryOptions(),
+    enabled: enabled && !!user,
+  });
+
   useEffect(() => {
     if (!(enabled && modelsQuery.data)) {
       return;
     }
 
-    // If no model is selected, set the first available model
-    if (!modelId && modelsQuery.data.length > 0) {
-      setModelId(modelsQuery.data[0].id);
+    // If no model is selected, set a default based on priority
+    if (!modelId) {
+      // Priority 1: User preference
+      if (preferencesQuery.data?.summarizeModelId) {
+        setModelId(preferencesQuery.data.summarizeModelId);
+        return;
+      }
+
+      // Priority 2: First available model
+      if (modelsQuery.data.length > 0) {
+        setModelId(modelsQuery.data[0].id);
+      }
     }
-  }, [modelsQuery.data, modelId, setModelId, enabled]);
+  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
 
   return {
     modelId,
@@ -132,6 +148,7 @@ export function useTranslationModelSelection({
   enabled?: boolean;
 } = {}) {
   const [modelId, setModelId] = useAtom(translationModelIdAtom);
+  const { data: user } = useUser();
 
   const modelsQuery = useQuery(
     orpc.models.list.queryOptions({
@@ -140,16 +157,30 @@ export function useTranslationModelSelection({
     })
   );
 
+  const preferencesQuery = useQuery({
+    ...orpc.settings.getPreferences.queryOptions(),
+    enabled: enabled && !!user,
+  });
+
   useEffect(() => {
     if (!(enabled && modelsQuery.data)) {
       return;
     }
 
-    // If no model is selected, set the first available model
-    if (!modelId && modelsQuery.data.length > 0) {
-      setModelId(modelsQuery.data[0].id);
+    // If no model is selected, set a default based on priority
+    if (!modelId) {
+      // Priority 1: User preference
+      if (preferencesQuery.data?.translationModelId) {
+        setModelId(preferencesQuery.data.translationModelId);
+        return;
+      }
+
+      // Priority 2: First available model
+      if (modelsQuery.data.length > 0) {
+        setModelId(modelsQuery.data[0].id);
+      }
     }
-  }, [modelsQuery.data, modelId, setModelId, enabled]);
+  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
 
   return {
     modelId,
@@ -168,6 +199,7 @@ export function useCodeModelSelection({
   enabled?: boolean;
 } = {}) {
   const [modelId, setModelId] = useAtom(codeModelIdAtom);
+  const { data: user } = useUser();
 
   const modelsQuery = useQuery(
     orpc.models.list.queryOptions({
@@ -176,16 +208,30 @@ export function useCodeModelSelection({
     })
   );
 
+  const preferencesQuery = useQuery({
+    ...orpc.settings.getPreferences.queryOptions(),
+    enabled: enabled && !!user,
+  });
+
   useEffect(() => {
     if (!(enabled && modelsQuery.data)) {
       return;
     }
 
-    // If no model is selected, set the first available model
-    if (!modelId && modelsQuery.data.length > 0) {
-      setModelId(modelsQuery.data[0].id);
+    // If no model is selected, set a default based on priority
+    if (!modelId) {
+      // Priority 1: User preference
+      if (preferencesQuery.data?.codeModelId) {
+        setModelId(preferencesQuery.data.codeModelId);
+        return;
+      }
+
+      // Priority 2: First available model
+      if (modelsQuery.data.length > 0) {
+        setModelId(modelsQuery.data[0].id);
+      }
     }
-  }, [modelsQuery.data, modelId, setModelId, enabled]);
+  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
 
   return {
     modelId,

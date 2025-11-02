@@ -12,6 +12,8 @@ import type {
   SourceType,
   SummaryMode,
   Tone,
+  TranscribeEngine,
+  TranscribeLanguage,
   TranslationPayload,
   UserRole,
 } from "./types";
@@ -25,6 +27,8 @@ import {
   sourceTypes,
   summaryModes,
   tones,
+  transcribeEngines,
+  transcribeLanguages,
   userRoles,
 } from "./types";
 
@@ -55,6 +59,58 @@ export const users = sqliteTable("users", {
     .default(timestamp),
 });
 
+export const userPreferences = sqliteTable(
+  "user_preferences",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    codeModelId: integer("code_model_id").references(() => llmModels.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    codeMode: text("code_mode", { enum: codeModes }).$type<CodeMode>(),
+    codeLanguage: text("code_language", {
+      enum: programmingLanguages,
+    }).$type<ProgrammingLanguage>(),
+    translationModelId: integer("translation_model_id").references(
+      () => llmModels.id,
+      { onDelete: "set null", onUpdate: "cascade" }
+    ),
+    translationSourceLanguage: text("translation_source_language", {
+      enum: languageCodes,
+    }).$type<LanguageCode>(),
+    translationTargetLanguage: text("translation_target_language", {
+      enum: languageCodes,
+    }).$type<LanguageCode>(),
+    translationTone: text("translation_tone", { enum: tones }).$type<Tone>(),
+    summarizeModelId: integer("summarize_model_id").references(
+      () => llmModels.id,
+      { onDelete: "set null", onUpdate: "cascade" }
+    ),
+    summarizeMode: text("summarize_mode", {
+      enum: summaryModes,
+    }).$type<SummaryMode>(),
+    summarizeTone: text("summarize_tone", { enum: tones }).$type<Tone>(),
+    transcribeModel: text("transcribe_model"),
+    transcribeEngine: text("transcribe_engine", {
+      enum: transcribeEngines,
+    }).$type<TranscribeEngine>(),
+    transcribeLanguage: text("transcribe_language", {
+      enum: transcribeLanguages,
+    }).$type<TranscribeLanguage>(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => [index("idx_user_preferences_user_id").on(table.userId)]
+);
+
 export const llmModels = sqliteTable(
   "llm_models",
   {
@@ -76,12 +132,12 @@ export const llmModels = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    providerIdentifierIdx: index("idx_llm_models_provider_identifier").on(
+  (table) => [
+    index("idx_llm_models_provider_identifier").on(
       table.provider,
       table.identifier
     ),
-  })
+  ]
 );
 
 export const chatThreads = sqliteTable(
@@ -103,12 +159,10 @@ export const chatThreads = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_chat_threads_user_id").on(table.userId),
-    lastMessageAtIdx: index("idx_chat_threads_last_message_at").on(
-      table.lastMessageAt
-    ),
-  })
+  (table) => [
+    index("idx_chat_threads_user_id").on(table.userId),
+    index("idx_chat_threads_last_message_at").on(table.lastMessageAt),
+  ]
 );
 
 export const messages = sqliteTable(
@@ -142,10 +196,10 @@ export const messages = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    threadIdIdx: index("idx_messages_thread_id").on(table.threadId),
-    userIdIdx: index("idx_messages_user_id").on(table.userId),
-  })
+  (table) => [
+    index("idx_messages_thread_id").on(table.threadId),
+    index("idx_messages_user_id").on(table.userId),
+  ]
 );
 
 export const translations = sqliteTable(
@@ -185,9 +239,7 @@ export const translations = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_translations_user_id").on(table.userId),
-  })
+  (table) => [index("idx_translations_user_id").on(table.userId)]
 );
 
 export const summaries = sqliteTable(
@@ -214,9 +266,7 @@ export const summaries = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_summaries_user_id").on(table.userId),
-  })
+  (table) => [index("idx_summaries_user_id").on(table.userId)]
 );
 
 export const imageThreads = sqliteTable(
@@ -238,12 +288,10 @@ export const imageThreads = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_image_threads_user_id").on(table.userId),
-    lastImageAtIdx: index("idx_image_threads_last_image_at").on(
-      table.lastImageAt
-    ),
-  })
+  (table) => [
+    index("idx_image_threads_user_id").on(table.userId),
+    index("idx_image_threads_last_image_at").on(table.lastImageAt),
+  ]
 );
 
 export const generatedImages = sqliteTable(
@@ -271,10 +319,10 @@ export const generatedImages = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    threadIdIdx: index("idx_generated_images_thread_id").on(table.threadId),
-    userIdIdx: index("idx_generated_images_user_id").on(table.userId),
-  })
+  (table) => [
+    index("idx_generated_images_thread_id").on(table.threadId),
+    index("idx_generated_images_user_id").on(table.userId),
+  ]
 );
 
 export const codeRuns = sqliteTable(
@@ -301,9 +349,7 @@ export const codeRuns = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_code_runs_user_id").on(table.userId),
-  })
+  (table) => [index("idx_code_runs_user_id").on(table.userId)]
 );
 
 export const documents = sqliteTable(
@@ -324,9 +370,7 @@ export const documents = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    userIdIdx: index("idx_documents_user_id").on(table.userId),
-  })
+  (table) => [index("idx_documents_user_id").on(table.userId)]
 );
 
 export const documentChunks = sqliteTable(
@@ -347,11 +391,7 @@ export const documentChunks = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    documentIdIdx: index("idx_document_chunks_document_id").on(
-      table.documentId
-    ),
-  })
+  (table) => [index("idx_document_chunks_document_id").on(table.documentId)]
 );
 
 export const threadDocuments = sqliteTable(
@@ -374,19 +414,17 @@ export const threadDocuments = sqliteTable(
       .notNull()
       .default(timestamp),
   },
-  (table) => ({
-    threadIdIdx: index("idx_thread_documents_thread_id").on(table.threadId),
-    documentIdIdx: index("idx_thread_documents_document_id").on(
-      table.documentId
-    ),
-  })
+  (table) => [
+    index("idx_thread_documents_thread_id").on(table.threadId),
+    index("idx_thread_documents_document_id").on(table.documentId),
+  ]
 );
 
 // ============================================================================
 // Relations
 // ============================================================================
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   chatThreads: many(chatThreads),
   messages: many(messages),
   translations: many(translations),
@@ -395,7 +433,33 @@ export const usersRelations = relations(users, ({ many }) => ({
   generatedImages: many(generatedImages),
   codeRuns: many(codeRuns),
   documents: many(documents),
+  preferences: one(userPreferences, {
+    fields: [users.id],
+    references: [userPreferences.userId],
+  }),
 }));
+
+export const userPreferencesRelations = relations(
+  userPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userPreferences.userId],
+      references: [users.id],
+    }),
+    codeModel: one(llmModels, {
+      fields: [userPreferences.codeModelId],
+      references: [llmModels.id],
+    }),
+    translationModel: one(llmModels, {
+      fields: [userPreferences.translationModelId],
+      references: [llmModels.id],
+    }),
+    summarizeModel: one(llmModels, {
+      fields: [userPreferences.summarizeModelId],
+      references: [llmModels.id],
+    }),
+  })
+);
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
   messages: many(messages),
@@ -525,6 +589,11 @@ export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences);
+export const selectUserPreferencesSchema = createSelectSchema(userPreferences);
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type SelectUserPreferences = z.infer<typeof selectUserPreferencesSchema>;
+
 export const insertLlmModelSchema = createInsertSchema(llmModels);
 export const selectLlmModelSchema = createSelectSchema(llmModels);
 export type InsertLlmModel = z.infer<typeof insertLlmModelSchema>;
@@ -596,6 +665,7 @@ export type CodeRun = SelectCodeRun;
 export type Document = SelectDocument;
 export type DocumentChunk = SelectDocumentChunk;
 export type ThreadDocument = SelectThreadDocument;
+export type UserPreferences = SelectUserPreferences;
 
 // Re-export types from types.ts
 export * from "./types";

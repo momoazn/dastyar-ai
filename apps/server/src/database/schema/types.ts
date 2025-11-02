@@ -124,3 +124,13 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 export type Json = JsonValue;
+
+// ============================================================================
+// Transcribe Types
+// ============================================================================
+
+export const transcribeEngines = ["whisperx", "whisper"] as const;
+export type TranscribeEngine = (typeof transcribeEngines)[number];
+
+export const transcribeLanguages = ["fa", "en"] as const;
+export type TranscribeLanguage = (typeof transcribeLanguages)[number];

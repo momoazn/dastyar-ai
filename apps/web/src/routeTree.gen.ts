@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TranscribeRouteImport } from './routes/transcribe'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -28,6 +29,11 @@ import { Route as ChatIdRouteImport } from './routes/chat/$id'
 const TranscribeRoute = TranscribeRouteImport.update({
   id: '/transcribe',
   path: '/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/register'
+    | '/settings'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/register'
+    | '/settings'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/register'
+    | '/settings'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   TranscribeRoute: typeof TranscribeRoute
   ChatIdRoute: typeof ChatIdRoute
   CodeRunIdRoute: typeof CodeRunIdRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/transcribe'
       fullPath: '/transcribe'
       preLoaderRoute: typeof TranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   TranscribeRoute: TranscribeRoute,
   ChatIdRoute: ChatIdRoute,
   CodeRunIdRoute: CodeRunIdRoute,
