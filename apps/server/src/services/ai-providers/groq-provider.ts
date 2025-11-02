@@ -23,7 +23,9 @@ export function listGroqModels() {
       { name: "llama-3.2-90b-vision-instruct", provider: "groq" as const },
     ];
   } catch (error) {
-    console.warn("Groq not available, skipping Groq models:", error);
+    const message =
+      error instanceof Error ? error.message : "Connection failed";
+    console.warn(`[Groq] Not available: ${message}`);
     return [];
   }
 }

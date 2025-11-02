@@ -5,6 +5,7 @@ import { env } from "@/config";
 export const lmstudioClient = new OpenAI({
   baseURL: env.LMSTUDIO_BASE_URL,
   apiKey: "",
+  timeout: 5000, // 5 second timeout
 });
 
 export const lmstudioProvider = createOpenAICompatible({
@@ -18,15 +19,23 @@ export async function listLmstudioModels() {
   }
 
   try {
-    const response = await lmstudioClient.models.list();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await lmstudioClient.models.list({
+      signal: controller.signal as AbortSignal,
+    });
+    clearTimeout(timeoutId);
+
     return response.data.map((model) => ({
       name: model.id,
       provider: "lmstudio" as const,
     }));
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Connection failed";
     console.warn(
-      "LMStudio server not available, skipping LMStudio models:",
-      error
+      `[LMStudio] Not available (${env.LMSTUDIO_BASE_URL}): ${message}`
     );
     return [];
   }

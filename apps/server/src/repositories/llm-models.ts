@@ -109,7 +109,8 @@ export async function syncModels(
   );
 
   if (modelsToCreate.length > 0) {
-    db.insert(llmModels)
+    await db
+      .insert(llmModels)
       .values(
         modelsToCreate.map((model) => ({
           identifier: model.identifier,

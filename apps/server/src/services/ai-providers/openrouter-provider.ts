@@ -27,10 +27,9 @@ export function listOpenRouterModels() {
       { name: "openai/gpt-4o", provider: "openrouter" as const },
     ];
   } catch (error) {
-    console.warn(
-      "OpenRouter not available, skipping OpenRouter models:",
-      error
-    );
+    const message =
+      error instanceof Error ? error.message : "Connection failed";
+    console.warn(`[OpenRouter] Not available: ${message}`);
     return [];
   }
 }

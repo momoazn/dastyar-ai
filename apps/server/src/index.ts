@@ -13,6 +13,7 @@ const server = serve({
   fetch: app.fetch,
   port: env.PORT,
   hostname: env.HOST,
+  idleTimeout: 200,
 });
 
 console.log(`Server listening on http://${server.hostname}:${server.port}`);

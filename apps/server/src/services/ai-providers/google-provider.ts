@@ -17,7 +17,9 @@ export function listGeminiModels() {
       { name: "gemini-2.5-pro", provider: "gemini" as const },
     ];
   } catch (error) {
-    console.warn("Gemini not available, skipping Gemini models:", error);
+    const message =
+      error instanceof Error ? error.message : "Connection failed";
+    console.warn(`[Gemini] Not available: ${message}`);
     return [];
   }
 }
