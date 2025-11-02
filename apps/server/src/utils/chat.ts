@@ -33,13 +33,14 @@ export type ModelSizeCategory =
   | "frontier";
 
 // Categorize model based on size parameter
-// Categories: <=2B (minimal), <=7B (compact), <=13B (balanced), <=70B (large), >70B (frontier)
+// Categories optimized for local models:
+// <=3B (minimal), <=8B (compact), <=14B (balanced), <=34B (large), >34B (frontier)
 export function getModelSizeCategory(
   modelSize: string | null | undefined
 ): ModelSizeCategory {
   if (!modelSize) {
-    // Default to balanced if size is unknown (conservative default)
-    return "balanced";
+    // Default to compact for unknown sizes (most common local models)
+    return "compact";
   }
 
   const normalized = modelSize.toLowerCase().trim();
@@ -47,7 +48,7 @@ export function getModelSizeCategory(
   // Extract numeric value and unit
   const match = normalized.match(MODEL_SIZE_REGEX);
   if (!match) {
-    return "balanced"; // Default to balanced if format is unknown
+    return "compact"; // Default to compact if format is unknown
   }
 
   const value = Number.parseFloat(match[1]);
@@ -60,27 +61,21 @@ export function getModelSizeCategory(
   } else if (unit === "b" || unit === "billion") {
     billions = value;
   } else {
-    return "balanced"; // Default to balanced for unknown units
+    return "compact"; // Default to compact for unknown units
   }
 
-  // Categorize based on modern model size distribution
-  if (billions <= 2) {
-    return "minimal"; // Phi, MobileLLM, etc.
+  // Categorize based on local model size distribution
+  if (billions <= 3) {
+    return "minimal"; // Phi-3, Qwen 2.5B, small models
   }
-  if (billions <= 7) {
-    return "compact"; // Llama 2 7B, Mistral 7B, etc.
+  if (billions <= 8) {
+    return "compact"; // Llama 3 8B, Mistral 7B, Gemma 7B
   }
-  if (billions <= 13) {
-    return "balanced"; // Llama 2 13B, neural-chat, etc.
+  if (billions <= 14) {
+    return "balanced"; // Qwen 14B, Llama 2 13B
   }
-  if (billions <= 70) {
-    return "large"; // Llama 2 70B, Mixtral, etc.
+  if (billions <= 34) {
+    return "large"; // Qwen 32B, Yi 34B, Mixtral 8x7B
   }
-  return "frontier"; // GPT-4, Claude, Llama 405B, etc.
-}
-
-// Legacy function for backward compatibility
-export function isSmallModel(modelSize: string | null | undefined): boolean {
-  const category = getModelSizeCategory(modelSize);
-  return category === "minimal" || category === "compact";
+  return "frontier"; // Qwen 72B, Llama 3 70B+, advanced models
 }
