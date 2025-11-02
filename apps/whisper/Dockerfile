@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
       openai-whisper==20231117
 
 # Copy application code
-COPY apps/whisper-server/whisper /app/whisper
+COPY apps/whisper/whisper /app/whisper
 
 # Default environment (can be overridden at runtime)
 ENV WHISPER_DEVICE=cpu \

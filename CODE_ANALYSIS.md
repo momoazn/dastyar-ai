@@ -787,7 +787,7 @@ class ErrorBoundary extends Component {
 ### 25. Docker Configuration
 
 #### Issues:
-- Only whisper-server has Dockerfile
+- Only whisper has Dockerfile
 - No multi-stage builds
 - No production-optimized images
 

@@ -1,5 +1,5 @@
 [project]
-name = "whisper-server"
+name = "whisper"
 version = "0.1.0"
 description = "Simple FastAPI server for Whisper transcription"
 readme = "README.md"

@@ -9,7 +9,7 @@ Requirements
 
 Quick start
 1) From repo root, start the server (uv will create a virtual environment automatically):
-   uv run --directory apps/whisper-server uvicorn whisper.main:app --host 127.0.0.1 --port 8001
+   uv run --directory apps/whisper uvicorn whisper.main:app --host 127.0.0.1 --port 8001
 
 2) Health check:
    curl http://127.0.0.1:8001/health
@@ -44,12 +44,12 @@ Notes
 Single binary build (no Docker)
 - One-command builder (cross-platform):
   - bun run build:all
-  - Result binaries in dist/: whisper-server[.exe]
+  - Result binaries in dist/: whisper[.exe]
 - Run:
-  - ./dist/whisper-server --host 0.0.0.0 --port 8001
+  - ./dist/whisper --host 0.0.0.0 --port 8001
 - ffmpeg:
   - The unified builder auto-downloads a static ffmpeg per platform (disable with FF_SKIP_FFMPEG_DOWNLOAD=1).
-  - To bundle a custom ffmpeg, place it at apps/whisper-server/bin/ before building.
+  - To bundle a custom ffmpeg, place it at apps/whisper/bin/ before building.
 - Models and cache:
   - By default, models are stored/loaded from a local folder next to the executable: ./whisper-models
   - Cache is colocated in ./.whisper-cache

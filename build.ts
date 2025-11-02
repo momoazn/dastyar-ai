@@ -8,7 +8,7 @@ const ROOT = process.cwd();
 const DIST = join(ROOT, "dist");
 const SERVER_DIR = join(ROOT, "apps", "server");
 const WEB_DIR = join(ROOT, "apps", "web");
-const WHISPER_DIR = join(ROOT, "apps", "whisper-server");
+const WHISPER_DIR = join(ROOT, "apps", "whisper");
 
 const isWindows = process.platform === "win32";
 
@@ -122,9 +122,9 @@ function buildWhisper() {
   const { py } = ensureWhisperVenv();
   const ff = ensureFfmpegInBin();
 
-  const exeName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const exeName = isWindows ? "whisper.exe" : "whisper";
   const extra = ff ? ` --add-binary "${ff}${isWindows ? ";bin" : ":bin"}"` : "";
-  const cmd = `${py} -m PyInstaller --name whisper-server --onefile --clean --noconfirm${extra} whisper/main.py`;
+  const cmd = `${py} -m PyInstaller --name whisper --onefile --clean --noconfirm${extra} whisper/main.py`;
   run(cmd, WHISPER_DIR);
 
   const outDir = join(WHISPER_DIR, "dist");
@@ -187,7 +187,7 @@ function main() {
   safeCopyFile(join(ROOT, ".env.example"), join(DIST, ".env.example"));
   safeCopyFile(join(ROOT, "config.json"), join(DIST, "config.json"));
 
-  const whisperName = isWindows ? "whisper-server.exe" : "whisper-server";
+  const whisperName = isWindows ? "whisper.exe" : "whisper";
   const serverHost = isWindows ? "dastyar-ai.exe" : "dastyar-ai";
   const outWhisper = join(DIST, whisperName);
   const outServerHost = join(DIST, serverHost);

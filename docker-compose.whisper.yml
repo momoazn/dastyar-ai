@@ -4,7 +4,7 @@ services:
   whisper:
     build:
       context: .
-      dockerfile: apps/whisper-server/Dockerfile
+      dockerfile: apps/whisper/Dockerfile
     image: dastyar-whisper:latest
     container_name: dastyar-whisper
     environment:
