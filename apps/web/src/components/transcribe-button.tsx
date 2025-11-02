@@ -24,6 +24,7 @@ type TranscribeButtonProps = {
   onError?: (error: string) => void;
   language?: "fa" | "en";
   model?: string;
+  engine?: "whisperx" | "whisper";
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
@@ -31,6 +32,7 @@ type TranscribeButtonProps = {
   showControls?: boolean;
   onLanguageChange?: (language: "fa" | "en") => void;
   onModelChange?: (model: string) => void;
+  onEngineChange?: (engine: "whisperx" | "whisper") => void;
   availableModels?: Array<{ id: string; name: string }>;
 };
 
@@ -39,6 +41,7 @@ export function TranscribeButton({
   onError,
   language = "fa",
   model = "",
+  engine = "whisperx",
   variant = "outline",
   size = "default",
   className,
@@ -46,6 +49,7 @@ export function TranscribeButton({
   showControls = false,
   onLanguageChange,
   onModelChange,
+  onEngineChange,
   availableModels = [],
 }: TranscribeButtonProps) {
   // Use mutation pending state instead of separate local state for transcribing
@@ -62,7 +66,10 @@ export function TranscribeButton({
 
   // Fetch available transcription models
   const { data: models } = useQuery(
-    orpc.transcribe.models.queryOptions({ enabled: showControls })
+    orpc.transcribe.models.queryOptions({
+      input: { engine },
+      enabled: showControls,
+    })
   );
 
   // Auto-select first model when models are loaded and no model is selected
@@ -92,21 +99,14 @@ export function TranscribeButton({
   useEffect(() => {
     if (recordedFile && recordedFile !== processedFileRef.current) {
       processedFileRef.current = recordedFile;
-      (async () => {
-        try {
-          await transcribe({
-            file: recordedFile,
-            language,
-            model: model || undefined,
-          });
-        } catch {
-          // Prevent auto-retry loop by keeping reference to the same file
-          processedFileRef.current = recordedFile;
-          onError?.("خطا در پردازش فایل صوتی. لطفاً دوباره تلاش کنید.");
-        }
-      })();
+      transcribe({
+        file: recordedFile,
+        language,
+        model: model || undefined,
+        engine,
+      });
     }
-  }, [recordedFile, language, model, onError, transcribe]);
+  }, [recordedFile, language, model, engine, onError, transcribe]);
 
   // Map recording errors to user-friendly messages
   const mapRecordingError = useCallback((error: RecordingError): string => {
@@ -170,6 +170,24 @@ export function TranscribeButton({
               }
             />
           </div>
+        )}
+
+        {/* Engine Select - only show if onEngineChange is provided */}
+        {onEngineChange && (
+          <Select
+            onValueChange={(value) =>
+              onEngineChange?.(value as "whisperx" | "whisper")
+            }
+            value={engine}
+          >
+            <SelectTrigger className="h-8 w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="whisperx">WhisperX</SelectItem>
+              <SelectItem value="whisper">Whisper</SelectItem>
+            </SelectContent>
+          </Select>
         )}
 
         {/* Model Select */}

@@ -85,10 +85,8 @@ const Schema = z.object({
   WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
   // Timeout for requests to the Whisper server (ms)
   WHISPER_TIMEOUT_MS: z.coerce.number().default(20_000),
-  WHISPER_MODELS: z.string().default("Xenova/whisper-tiny"),
-  TRANSCRIBE_DEFAULT_ENGINE: z
-    .enum(["whisperx", "whisper"])
-    .default("whisperx"),
+  WHISPER_MODELS: z.string().default("tiny"),
+  TRANSCRIBE_DEFAULT_ENGINE: z.enum(["whisperx", "whisper"]).default("whisperx"),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_ENABLED: z.coerce.boolean().default(true),
   LMSTUDIO_BASE_URL: z.string().default("http://localhost:1234/v1"),
@@ -130,8 +128,8 @@ const parseCSV = (value: string): string[] =>
 
 const whisper = parseCSV(env.WHISPER_MODELS);
 export const whisperModelIds =
-  whisper.length > 0 ? whisper : ["Xenova/whisper-tiny"];
-export const defaultWhisperModel = whisperModelIds[0];
+  whisper.length > 0 ? whisper : ["tiny"];
+export const defaultWhisperModel = "tiny";
 
 const resolveWebDistDir = (baseDir: string): string =>
   isAbsolute(env.WEB_DIST_DIR)

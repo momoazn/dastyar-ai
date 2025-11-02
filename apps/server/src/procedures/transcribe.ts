@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defaultTranscribeEngine, defaultWhisperModel } from "@/config";
+import { defaultTranscribeEngine } from "@/config";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
@@ -17,17 +17,19 @@ export const transcribeProcedures = {
     )
     .handler(async ({ input }) => {
       const engine = input?.engine ?? defaultTranscribeEngine;
-      if (engine) {
-        // Both engines share the same model id set for now.
-      }
+      // Unused engine variable for future differentiation; currently both engines share model list
+      const _ = engine;
       return await getWhisperModels();
     }),
 
   transcribe: publicProcedure
     .input(
       z.object({
-        file: z.instanceof(File),
-        language: z.string().length(2).optional(),
+        file: z
+          .instanceof(Blob)
+          .refine((blob) => blob.size > 0, "File cannot be empty")
+          .and(z.object({ name: z.string() })),
+        language: z.enum(["fa", "en"]).optional(),
         model: z.string().optional(),
         engine: z.enum(["whisperx", "whisper"]).optional(),
       })
@@ -36,10 +38,15 @@ export const transcribeProcedures = {
     .handler(({ input }) => {
       const engine = input.engine ?? defaultTranscribeEngine;
       const language = input.language ?? "fa";
-      const model =
-        input.model ?? (engine === "whisper" ? "tiny" : defaultWhisperModel);
+      const model = input.model ?? "tiny";
+
+      // Convert Blob & { name } to File for whisper service
+      const file = new File([input.file], input.file.name, {
+        type: input.file.type || "audio/webm",
+      });
+
       return whisperTranscribe({
-        file: input.file,
+        file,
         language,
         model,
         engine,

@@ -10,6 +10,8 @@ dependencies = [
   "pydantic-settings>=2.0.0",
   # Optional: helps resolve ffmpeg path when bundled; not required at runtime if ffmpeg is on PATH
   "imageio-ffmpeg>=0.4.9",
+  # Use openai-whisper instead of whisper to avoid package name collision
+  "openai-whisper>=1.1.10",
 ]
 
 [tool.uv]
