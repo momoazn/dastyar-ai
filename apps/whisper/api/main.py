@@ -29,8 +29,8 @@ def create_app() -> FastAPI:
     """
     # Initialize FastAPI app
     app = FastAPI(
-        title="Whisper Transcription Server",
-        description="FastAPI server for offline speech-to-text transcription using OpenAI's Whisper",
+        title="WhisperX Transcription Server",
+        description="FastAPI server for offline speech-to-text transcription using WhisperX",
         version=__version__,
         docs_url="/docs",
         redoc_url="/redoc",
@@ -52,7 +52,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         """Log application startup."""
-        logger.info("Starting Whisper Transcription Server")
+        logger.info("Starting WhisperX Transcription Server")
         logger.info(
             "Environment: %s", "development" if settings.RELOAD else "production"
         )
@@ -66,15 +66,3 @@ def create_app() -> FastAPI:
 
 # Create the application instance
 app = create_app()
-
-if __name__ == "__main__":  # pragma: no cover
-    import uvicorn
-
-    uvicorn.run(
-        "api.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.RELOAD,
-        workers=settings.WORKERS,
-        log_level=settings.LOG_LEVEL.lower(),
-    )

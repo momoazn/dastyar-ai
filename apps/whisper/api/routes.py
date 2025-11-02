@@ -1,12 +1,13 @@
-"""API routes for the Whisper server."""
+"""API routes for the WhisperX server."""
 
 import logging
 import tempfile
 from pathlib import Path
-import torch
+import whisperx
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import HTMLResponse
 
 from . import schemas
 from .models import load_model, resolve_model_name
@@ -28,13 +29,25 @@ async def health() -> schemas.HealthResponse:
 
 
 @router.get(
+    "/",
+    response_class=HTMLResponse,
+    summary="Index page",
+    description="Simple HTML test page for the whisper API",
+)
+async def index_page() -> HTMLResponse:
+    """Serve the HTML index page."""
+    html_content = Path(__file__).parent / "index.html"
+    return HTMLResponse(content=html_content.read_text(encoding="utf-8"))
+
+
+@router.get(
     "/models",
     response_model=list[schemas.ModelInfo],
     summary="List models",
-    description="List available Whisper models",
+    description="List available WhisperX-compatible models",
 )
 async def list_models() -> list[schemas.ModelInfo]:
-    """List available Whisper models."""
+    """List available WhisperX-compatible models."""
     from .models import get_available_models
 
     return get_available_models()
@@ -44,7 +57,7 @@ async def list_models() -> list[schemas.ModelInfo]:
     "/transcribe",
     response_model=schemas.TranscribeResponse,
     summary="Transcribe audio",
-    description="Transcribe an audio file using Whisper",
+    description="Transcribe an audio file using WhisperX",
     responses={
         400: {"model": schemas.ErrorResponse},
         413: {"model": schemas.ErrorResponse},
@@ -58,7 +71,7 @@ async def transcribe(
         None, description="ISO 639-1 language code (e.g., 'en', 'fa')"
     ),
 ) -> schemas.TranscribeResponse:
-    """Transcribe an audio file using Whisper."""
+    """Transcribe an audio file using WhisperX."""
     # Check file size
     file.file.seek(0, 2)  # Seek to end of file
     file_size = file.file.tell()
@@ -85,15 +98,23 @@ async def transcribe(
             # Load the model
             model, model_name = load_model(model_name)
 
-            # Transcribe the audio
+            # Load audio and transcribe via WhisperX
+            audio = whisperx.load_audio(temp_path)
+            # On CPU keep small batch size; allow language override if provided
             result = model.transcribe(
-                temp_path,
+                audio,
+                batch_size=8 if settings.WHISPER_DEVICE == "cpu" else 16,
                 language=language,
-                fp16=torch.cuda.is_available() and settings.WHISPER_DEVICE == "cuda",
             )
 
+            # WhisperX returns segments; build a single text for backward compatibility
+            segments = result.get("segments") or []
+            joined_text = " ".join(
+                (s.get("text") or "").strip() for s in segments
+            ).strip()
+
             return schemas.TranscribeResponse(
-                text=result["text"].strip(),
+                text=joined_text,
             )
 
         finally:

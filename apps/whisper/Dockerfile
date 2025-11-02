@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# System deps: ffmpeg required by openai-whisper
+# System deps: ffmpeg required by WhisperX
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        ffmpeg \
@@ -16,13 +16,14 @@ RUN apt-get update \
 WORKDIR /app
 
 # Install Python deps first for better layer caching
+# Note: WhisperX pulls in required libs; base image already provides torch CPU
+# fastapi[standard] includes uvicorn and fastapi-cli
 RUN pip install --no-cache-dir \
-      fastapi==0.115.0 \
-      "uvicorn[standard]"==0.30.0 \
-      openai-whisper==20231117
+      "fastapi[standard]>=0.115.0" \
+      whisperx
 
 # Copy application code
-COPY apps/whisper/whisper /app/whisper
+COPY apps/whisper/api /app/api
 
 # Default environment (can be overridden at runtime)
 ENV WHISPER_DEVICE=cpu \
@@ -31,6 +32,5 @@ ENV WHISPER_DEVICE=cpu \
 
 EXPOSE 8001
 
-# Start the API server
-CMD ["uvicorn", "whisper.main:app", "--host", "0.0.0.0", "--port", "8001"]
-
+# Start the API server using FastAPI CLI
+CMD ["fastapi", "run", "api/main:app", "--host", "0.0.0.0", "--port", "8001"]

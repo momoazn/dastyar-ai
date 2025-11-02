@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "uv run python -m uvicorn api.main:app --host 127.0.0.1 --port 8001 --reload"
+    "dev": "uv run fastapi dev api/main.py --port 8001",
+    "start": "uv run fastapi run api/main:app --port 8001 --host 0.0.0.0"
   }
 }

@@ -1,9 +1,9 @@
-"""Data models and Whisper model management."""
+"""Data models and WhisperX model management."""
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import torch
-import whisper
+import whisperx
 from pydantic import BaseModel, Field
 
 from .config import settings
@@ -30,25 +30,25 @@ _MODEL_ALIASES: Dict[str, str] = {
 
 
 def get_available_models() -> List[ModelInfo]:
-    """Get a list of available Whisper models."""
+    """Get a list of available WhisperX-compatible models."""
     return [
         ModelInfo(
             id=model_id,
-            name=f"OpenAI Whisper {model_id.replace('-', ' ').title()}",
+            name=f"WhisperX {model_id.replace('-', ' ').title()}",
         )
         for model_id in _MODEL_ALIASES
     ]
 
 
 def resolve_model_name(name: Optional[str]) -> str:
-    """Resolve a model name to a valid Whisper model name."""
+    """Resolve a model name to a valid Whisper/WhisperX model name."""
     if not name:
         return settings.WHISPER_DEFAULT_MODEL
     return _MODEL_ALIASES.get(name.lower().strip(), name)
 
 
-def load_model(name: str) -> Tuple[whisper.Whisper, str]:
-    """Load a Whisper model with the given name.
+def load_model(name: str) -> Tuple[Any, str]:
+    """Load a WhisperX model with the given name.
 
     Args:
         name: Model name or alias
@@ -68,16 +68,21 @@ def load_model(name: str) -> Tuple[whisper.Whisper, str]:
         # Ensure models directory exists
         settings.MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Load the model
+        # Load the model via WhisperX
         device = (
             "cuda"
             if torch.cuda.is_available() and settings.WHISPER_DEVICE == "cuda"
             else "cpu"
         )
-        model = whisper.load_model(
-            name=model_name,
-            download_root=str(settings.MODELS_DIR),
+        # compute_type impacts CPU performance/compat; keep safe default
+        compute_type = "float16" if device == "cuda" else "int8"
+
+        # whisperx caches models under standard HF cache; our MODELS_DIR is for legacy,
+        # but we keep directory creation above to match existing env variables.
+        model = whisperx.load_model(
+            model_name,
             device=device,
+            compute_type=compute_type,
         )
         return model, model_name
     except Exception as e:
