@@ -6,7 +6,6 @@ import {
   programmingLanguages,
   summaryModes,
   tones,
-  transcribeEngines,
   transcribeLanguages,
 } from "@/database/schema/types";
 import { logger } from "@/lib/logger";
@@ -28,7 +27,6 @@ const updatePreferencesSchema = z.object({
   summarizeMode: z.enum(summaryModes).nullable().optional(),
   summarizeTone: z.enum(tones).nullable().optional(),
   transcribeModel: z.string().nullable().optional(),
-  transcribeEngine: z.enum(transcribeEngines).nullable().optional(),
   transcribeLanguage: z.enum(transcribeLanguages).nullable().optional(),
 });
 

@@ -34,10 +34,8 @@ const translateWithStructuredOutput = async (
   const result = await generateObject({
     model,
     providerOptions: {
-      openai: { structuredOutputs: false },
       lmstudio: { structuredOutputs: false },
       ollama: { structuredOutputs: false },
-      openrouter: { structuredOutputs: false },
     },
     mode: "tool",
     system: systemPrompt,

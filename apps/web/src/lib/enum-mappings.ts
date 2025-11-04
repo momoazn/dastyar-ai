@@ -97,9 +97,6 @@ export const messageRoleToLabel: Record<MessageRole, string> = {
 export const llmModelProviderToLabel: Record<LLMModelProvider, string> = {
   ollama: "Ollama",
   lmstudio: "LM Studio",
-  openrouter: "OpenRouter",
-  groq: "Groq",
-  gemini: "Google Gemini",
 } as const;
 
 // Helper functions to create option arrays for select components
