@@ -144,6 +144,13 @@ export async function transcribe({
 export function mapTranscriptionError(message: string): Error {
   const lowerMsg = message.toLowerCase();
 
+  // Explicit timeout/abort handling so users know to adjust server config
+  if (lowerMsg.includes("timeout") || lowerMsg.includes("abort")) {
+    return new Error(
+      "زمان پردازش به پایان رسید. لطفاً فایل کوتاه‌تری ضبط کنید یا مقدار WHISPER_TIMEOUT_MS را در config.json افزایش دهید."
+    );
+  }
+
   // Payload too large (413) — prioritize this over generic server errors
   if (
     message.includes("413") ||
@@ -159,7 +166,6 @@ export function mapTranscriptionError(message: string): Error {
   // Service unavailable, timeout, or network error
   if (
     lowerMsg.includes("fetch") ||
-    lowerMsg.includes("abort") ||
     lowerMsg.includes("network") ||
     lowerMsg.includes("econnrefused") ||
     message.includes("Whisper server error")

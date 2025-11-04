@@ -93,7 +93,7 @@ const Schema = z.object({
   // Optional external Whisper server (FastAPI) used for transcription
   WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
   // Timeout for requests to the Whisper server (ms)
-  WHISPER_TIMEOUT_MS: z.coerce.number().default(20_000),
+  WHISPER_TIMEOUT_MS: z.coerce.number().default(120_000),
   WHISPER_MODELS: z.string().default("tiny"),
   TRANSCRIBE_DEFAULT_ENGINE: z
     .enum(["whisperx", "whisper"])
@@ -102,8 +102,6 @@ const Schema = z.object({
   OLLAMA_ENABLED: z.coerce.boolean().default(true),
   LMSTUDIO_BASE_URL: z.string().default("http://localhost:1234/v1"),
   LMSTUDIO_ENABLED: z.coerce.boolean().default(true),
-  OPENROUTER_API_KEY: z.string().default(""),
-  OPENROUTER_ENABLED: z.coerce.boolean().default(false),
   GROQ_API_KEY: z.string().default(""),
   GROQ_ENABLED: z.coerce.boolean().default(false),
   GEMINI_API_KEY: z.string().default(""),

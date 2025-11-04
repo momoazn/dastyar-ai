@@ -31,7 +31,7 @@ export const transcribeProcedures = {
       })
     )
     .output(z.string())
-    .handler(({ input }) => {
+    .handler(async ({ input }) => {
       const engine = input.engine ?? defaultTranscribeEngine;
       const language = input.language ?? "fa";
       const model = input.model ?? "large-v2";
@@ -41,7 +41,7 @@ export const transcribeProcedures = {
         type: input.file.type || "audio/webm",
       });
 
-      return whisperTranscribe({
+      return await whisperTranscribe({
         file,
         language,
         model,
