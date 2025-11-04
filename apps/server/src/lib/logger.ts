@@ -121,10 +121,7 @@ const formatLogEntry = (entry: LogEntry): string => {
   }
 
   if (context && Object.keys(context).length > 0) {
-    const { correlationId, requestId, ...otherContext } = context;
-    if (Object.keys(otherContext).length > 0) {
-      parts.push(`${COLORS.dim}${JSON.stringify(otherContext)}${reset}`);
-    }
+    parts.push(`${COLORS.dim}${JSON.stringify(context)}${reset}`);
   }
 
   if (error) {
@@ -135,7 +132,7 @@ const formatLogEntry = (entry: LogEntry): string => {
   }
 
   if (performance) {
-    const perfParts = [];
+    const perfParts: string[] = [];
     if (performance.duration !== undefined) {
       perfParts.push(`duration: ${performance.duration}ms`);
     }
