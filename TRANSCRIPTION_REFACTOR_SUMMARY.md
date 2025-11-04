@@ -122,7 +122,7 @@ Default settings in `config.json`:
 ```json
 {
   "WHISPER_SERVER_URL": "http://127.0.0.1:8001",
-  "WHISPER_TIMEOUT_MS": 20000,
+  "WHISPER_TIMEOUT_MS": 120000,
   "WHISPER_MODELS": "tiny",
   "TRANSCRIBE_DEFAULT_ENGINE": "whisperx"
 }

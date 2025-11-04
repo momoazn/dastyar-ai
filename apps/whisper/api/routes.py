@@ -13,7 +13,6 @@ from . import schemas
 from .models import resolve_model_name
 from .config import settings
 from .engines.whisper_engine import transcribe as whisper_transcribe
-from .engines.whisperx_engine import transcribe as whisperx_transcribe
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -46,10 +45,10 @@ async def index_page() -> HTMLResponse:
     "/models",
     response_model=list[schemas.ModelInfo],
     summary="List models",
-    description="List available WhisperX-compatible models",
+    description="List available Whisper models",
 )
 async def list_models() -> list[schemas.ModelInfo]:
-    """List available WhisperX-compatible models."""
+    """List available Whisper models."""
     from .models import get_available_models
 
     models = get_available_models()
@@ -60,7 +59,7 @@ async def list_models() -> list[schemas.ModelInfo]:
     "/transcribe",
     response_model=schemas.TranscribeResponse,
     summary="Transcribe audio",
-    description="Transcribe an audio file using WhisperX or OpenAI Whisper (selectable via 'engine')",
+    description="Transcribe an audio file using OpenAI Whisper",
     responses={
         400: {"model": schemas.ErrorResponse},
         413: {"model": schemas.ErrorResponse},
@@ -73,16 +72,12 @@ async def transcribe(
     language: Annotated[
         str | None, Form(description="ISO 639-1 language code (e.g., 'en', 'fa')")
     ] = None,
-    engine: Annotated[
-        str | None,
-        Form(description="Transcription engine: 'whisperx' (default) or 'whisper'"),
-    ] = None,
     initial_prompt: Annotated[
         str | None,
         Form(description="Optional text to guide transcription style and vocabulary"),
     ] = None,
 ) -> schemas.TranscribeResponse:
-    """Transcribe an audio file using WhisperX."""
+    """Transcribe an audio file using OpenAI Whisper."""
     # Check file size
     _ = file.file.seek(0, 2)  # Seek to end of file
     file_size = file.file.tell()
@@ -108,25 +103,16 @@ async def transcribe(
             temp_path = temp_file.name
 
         try:
-            # Select engine and transcribe
-            selected_engine = (engine or "whisperx").lower().strip()
+            # Transcribe using Whisper
             device = "cuda" if settings.WHISPER_DEVICE == "cuda" else "cpu"
 
-            if selected_engine == "whisper":
-                text = whisper_transcribe(
-                    temp_path,
-                    model_name=model_name,
-                    language=language,
-                    device=device,
-                    initial_prompt=initial_prompt,
-                )
-            else:
-                text = whisperx_transcribe(
-                    temp_path,
-                    model_name=model_name,
-                    language=language,
-                    device=device,
-                )
+            text = whisper_transcribe(
+                temp_path,
+                model_name=model_name,
+                language=language,
+                device=device,
+                initial_prompt=initial_prompt,
+            )
 
             return schemas.TranscribeResponse(text=text)
 

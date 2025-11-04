@@ -1,12 +1,12 @@
-WhisperX Server (FastAPI)
+Whisper Server (FastAPI)
 
-Offline transcription server using WhisperX, served by FastAPI. Intended to be called by the Bun backend instead of using transformers.js.
+Offline transcription server using OpenAI Whisper, served by FastAPI. Intended to be called by the Bun backend instead of using transformers.js.
 
 Requirements
 - Python 3.9+
-- ffmpeg installed and on PATH (required by WhisperX)
+- ffmpeg installed and on PATH (required by Whisper)
 - uv (https://docs.astral.sh/uv/)
-- Optional for engine=whisper: openai-whisper (pip package name), provides import whisper
+- openai-whisper (pip package name)
 
 Quick start
 
@@ -38,10 +38,7 @@ Production mode:
 3) Test the API:
    - Open http://127.0.0.1:8001/ in your browser for the interactive test page
    - Or transcribe via curl:
-     # WhisperX (default)
-     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisperx" http://127.0.0.1:8001/transcribe
-     # OpenAI Whisper (python package)
-     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisper" http://127.0.0.1:8001/transcribe
+     curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" http://127.0.0.1:8001/transcribe
 
 Config (env)
 - WHISPER_DEVICE: cpu|cuda (default cpu)
@@ -56,22 +53,20 @@ Endpoints
   - file: audio file (webm/mp4/wav)
   - model: optional whisper model name (default large-v2)
   - language: optional ISO 639-1 language code (e.g., fa, en)
-  - engine: optional transcription engine; 'whisperx' (default) or 'whisper' (OpenAI Whisper)
   - initial_prompt: optional text to guide transcription with domain-specific vocabulary (e.g., proper nouns, technical terms)
   Returns: { text: "..." }
 
 Docker (contained, no host deps)
 - Build and run with Docker (CPU-only):
-  - docker build -t whisperx-server -f apps/whisper/Dockerfile .
-  - docker run -p 8001:8001 whisperx-server
+  - docker build -t whisper-server -f apps/whisper/Dockerfile .
+  - docker run -p 8001:8001 whisper-server
   - Health: curl http://127.0.0.1:8001/health
   - Test page: http://127.0.0.1:8001/
-  - Transcribe: curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" -F "engine=whisperx" http://127.0.0.1:8001/transcribe
+  - Transcribe: curl -F "file=@./sample.wav" -F "model=tiny" -F "language=fa" http://127.0.0.1:8001/transcribe
 
 Notes
-- The container includes ffmpeg, PyTorch CPU, and whisperx; no host Python is required.
+- The container includes ffmpeg, PyTorch CPU, and openai-whisper; no host Python is required.
 - Override defaults via environment variables: WHISPER_DEVICE, WHISPER_DEFAULT_MODEL, MAX_UPLOAD_MB.
-- To use engine=whisper (OpenAI Whisper python), install pip package 'openai-whisper'. Default engine is whisperx.
 
 Single binary build (no Docker)
 - One-command builder (cross-platform):
@@ -83,6 +78,6 @@ Single binary build (no Docker)
   - The unified builder auto-downloads a static ffmpeg per platform (disable with FF_SKIP_FFMPEG_DOWNLOAD=1).
   - To bundle a custom ffmpeg, place it at apps/whisper/bin/ before building.
 - Models and cache:
-  - WhisperX downloads and caches models via Hugging Face cache by default.
+  - Whisper downloads and caches models via Hugging Face cache by default.
   - Cache is colocated in ./.whisper-cache (via XDG_CACHE_HOME).
   - Override with env: XDG_CACHE_HOME

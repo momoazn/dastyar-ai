@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { defaultTranscribeEngine } from "@/config";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
@@ -8,13 +7,7 @@ import { publicProcedure } from "./base";
 
 export const transcribeProcedures = {
   models: publicProcedure
-    .input(
-      z
-        .object({
-          engine: z.enum(["whisperx", "whisper"]).optional(),
-        })
-        .optional()
-    )
+    .input(z.object({}).optional())
     .handler(async () => await getWhisperModels()),
 
   transcribe: publicProcedure
@@ -26,13 +19,11 @@ export const transcribeProcedures = {
           .and(z.object({ name: z.string() })),
         language: z.enum(["fa", "en"]).optional(),
         model: z.string().optional(),
-        engine: z.enum(["whisperx", "whisper"]).optional(),
         initialPrompt: z.string().optional(),
       })
     )
     .output(z.string())
     .handler(async ({ input }) => {
-      const engine = input.engine ?? defaultTranscribeEngine;
       const language = input.language ?? "fa";
       const model = input.model ?? "large-v2";
 
@@ -45,7 +36,6 @@ export const transcribeProcedures = {
         file,
         language,
         model,
-        engine,
         initialPrompt: input.initialPrompt,
       });
     }),

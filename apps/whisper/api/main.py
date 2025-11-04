@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         # Log application startup
-        logger.info("Starting WhisperX Transcription Server")
+        logger.info("Starting Whisper Transcription Server")
         logger.info(
             "Environment: %s", "development" if settings.RELOAD else "production"
         )
@@ -46,8 +46,8 @@ def create_app() -> FastAPI:
         yield
 
     app = FastAPI(
-        title="WhisperX Transcription Server",
-        description="FastAPI server for offline speech-to-text transcription using WhisperX",
+        title="Whisper Transcription Server",
+        description="FastAPI server for offline speech-to-text transcription using OpenAI Whisper",
         version=__version__,
         docs_url="/docs",
         redoc_url="/redoc",

@@ -133,7 +133,6 @@ export const fa = {
       summarizeTone: "لحن پیش‌فرض خلاصه‌سازی",
       transcribe: "تبدیل صوت به متن",
       transcribeModel: "مدل پیش‌فرض Whisper",
-      transcribeEngine: "موتور پیش‌فرض تبدیل صوت",
       transcribeLanguage: "زبان پیش‌فرض تبدیل صوت",
       save: "ذخیره تنظیمات",
       saved: "تنظیمات با موفقیت ذخیره شد",
@@ -243,10 +242,6 @@ export const fa = {
     creative: "خلاقانه",
     professional: "حرفه‌ای",
     neutral: "خنثی",
-  },
-  transcribeEngines: {
-    whisperx: "WhisperX",
-    whisper: "Whisper",
   },
   transcribeLanguages: {
     fa: "فارسی",

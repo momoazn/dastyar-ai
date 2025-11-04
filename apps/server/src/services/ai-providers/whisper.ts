@@ -1,10 +1,10 @@
 /**
- * WhisperX engine client
+ * Whisper engine client
  *
- * This module integrates with the external WhisperX FastAPI server
+ * This module integrates with the external Whisper FastAPI server
  * configured by `WHISPER_SERVER_URL`. It is distinct from the official
  * OpenAI Whisper API. To use OpenAI Whisper, use the OpenAI-specific provider
- * (see `openai-whisper.ts`) and select engine "openai" at the call site.
+ * (see `openai-whisper.ts`).
  */
 import { env, whisperModelIds } from "@/config";
 
@@ -27,7 +27,7 @@ type ModelsCache = { at: number; list: ModelInfo[] } | null;
 let _modelsCache: ModelsCache = null;
 const MODELS_TTL_MS = 60_000;
 
-// Lists models from the WhisperX FastAPI server; falls back to config defaults
+// Lists models from the Whisper FastAPI server; falls back to config defaults
 export async function getWhisperModels(): Promise<ModelInfo[]> {
   const now = Date.now();
   if (_modelsCache && now - _modelsCache.at < MODELS_TTL_MS) {
@@ -69,21 +69,18 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
   return list;
 }
 
-export type SttEngine = "whisperx" | "whisper";
 export type TranscribeArgs = {
   file: File;
   language?: string;
   model?: string;
-  engine?: SttEngine;
   initialPrompt?: string;
 };
 
-// Transcribes via the WhisperX FastAPI server at WHISPER_SERVER_URL
+// Transcribes via the Whisper FastAPI server at WHISPER_SERVER_URL
 export async function transcribe({
   file,
   language,
   model,
-  engine,
   initialPrompt,
 }: TranscribeArgs): Promise<string> {
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
@@ -107,9 +104,6 @@ export async function transcribe({
   }
   if (language) {
     form.append("language", language);
-  }
-  if (engine) {
-    form.append("engine", engine);
   }
   if (initialPrompt) {
     form.append("initial_prompt", initialPrompt);
@@ -140,7 +134,7 @@ export async function transcribe({
   }
 }
 
-// Maps WhisperX network/server errors to localized user-friendly messages
+// Maps Whisper network/server errors to localized user-friendly messages
 export function mapTranscriptionError(message: string): Error {
   const lowerMsg = message.toLowerCase();
 

@@ -9,7 +9,6 @@ import type {
   ProgrammingLanguage,
   SummaryMode,
   Tone,
-  TranscribeEngine,
   TranscribeLanguage,
 } from "@/server/database/schema";
 
@@ -72,12 +71,6 @@ export const programmingLanguageToLabel: Record<ProgrammingLanguage, string> = {
   html: "HTML",
   css: "CSS",
   other: "سایر",
-} as const;
-
-// Transcribe engine to label mappings
-export const transcribeEngineToLabel: Record<TranscribeEngine, string> = {
-  whisperx: fa.transcribeEngines.whisperx,
-  whisper: fa.transcribeEngines.whisper,
 } as const;
 
 // Transcribe language to label mappings
@@ -155,12 +148,6 @@ export const createCodeModeOptions = () =>
 export const createProgrammingLanguageOptions = () =>
   Object.entries(programmingLanguageToLabel).map(([value, label]) => ({
     value: value as ProgrammingLanguage,
-    label,
-  }));
-
-export const createTranscribeEngineOptions = () =>
-  Object.entries(transcribeEngineToLabel).map(([value, label]) => ({
-    value: value as TranscribeEngine,
     label,
   }));
 

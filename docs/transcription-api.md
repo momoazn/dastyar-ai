@@ -178,7 +178,7 @@ return "Transcription failed message";
 ```json
 {
   "WHISPER_SERVER_URL": "http://127.0.0.1:8001",
-  "WHISPER_TIMEOUT_MS": 20000,
+  "WHISPER_TIMEOUT_MS": 120000,
   "WHISPER_MODELS": "tiny,base,small",
   "TRANSCRIBE_DEFAULT_ENGINE": "whisperx"
 }
@@ -187,7 +187,7 @@ return "Transcription failed message";
 ### Environment Variables
 
 - `WHISPER_SERVER_URL`: URL of the Whisper API service (default: `http://127.0.0.1:8001`)
-- `WHISPER_TIMEOUT_MS`: Request timeout in milliseconds (default: `20000`)
+- `WHISPER_TIMEOUT_MS`: Request timeout in milliseconds (default: `120000`)
 - `WHISPER_MODELS`: Comma-separated list of model IDs (default: `"tiny"`)
 - `TRANSCRIBE_DEFAULT_ENGINE`: Default engine to use (default: `"whisperx"`)
 

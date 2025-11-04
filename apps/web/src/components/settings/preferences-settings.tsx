@@ -27,7 +27,6 @@ import {
   createProgrammingLanguageOptions,
   createSummaryModeOptions,
   createToneOptions,
-  createTranscribeEngineOptions,
   createTranscribeLanguageOptions,
 } from "@/lib/enum-mappings";
 import { fa } from "@/lib/persian-texts";
@@ -103,7 +102,6 @@ const preferencesSchema = z.object({
     .nullable()
     .optional(),
   transcribeModel: z.string().nullable().optional(),
-  transcribeEngine: z.enum(["whisperx", "whisper"]).nullable().optional(),
   transcribeLanguage: z.enum(["fa", "en"]).nullable().optional(),
 });
 
@@ -134,7 +132,6 @@ export function PreferencesSettings() {
       summarizeMode: null,
       summarizeTone: null,
       transcribeModel: null,
-      transcribeEngine: null,
       transcribeLanguage: null,
     },
   });
@@ -155,7 +152,6 @@ export function PreferencesSettings() {
         summarizeMode: preferencesQuery.data.summarizeMode,
         summarizeTone: preferencesQuery.data.summarizeTone,
         transcribeModel: preferencesQuery.data.transcribeModel,
-        transcribeEngine: preferencesQuery.data.transcribeEngine,
         transcribeLanguage: preferencesQuery.data.transcribeLanguage,
       });
     }
@@ -195,7 +191,6 @@ export function PreferencesSettings() {
         summarizeMode: preferencesQuery.data.summarizeMode,
         summarizeTone: preferencesQuery.data.summarizeTone,
         transcribeModel: preferencesQuery.data.transcribeModel,
-        transcribeEngine: preferencesQuery.data.transcribeEngine,
         transcribeLanguage: preferencesQuery.data.transcribeLanguage,
       });
     }
@@ -206,7 +201,6 @@ export function PreferencesSettings() {
   const programmingLanguageOptions = createProgrammingLanguageOptions();
   const toneOptions = createToneOptions();
   const summaryModeOptions = createSummaryModeOptions();
-  const transcribeEngineOptions = createTranscribeEngineOptions();
   const transcribeLanguageOptions = createTranscribeLanguageOptions();
 
   const models = modelsQuery.data || [];
@@ -632,40 +626,6 @@ export function PreferencesSettings() {
                   <FormDescription className="text-right text-xs">
                     نام مدل Whisper (مثال: base, small, medium, large)
                   </FormDescription>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="transcribeEngine"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-right">
-                    {fa.settings.preferences.transcribeEngine}
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="text-right" dir="rtl">
-                        <SelectValue placeholder="انتخاب موتور" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent dir="rtl">
-                      {transcribeEngineOptions.map((option) => (
-                        <SelectItem
-                          className="text-right"
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage className="text-right" />
                 </FormItem>
               )}

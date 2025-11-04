@@ -1,12 +1,11 @@
 [project]
-name = "whisperx-server"
+name = "whisper-server"
 version = "0.1.0"
-description = "FastAPI server for WhisperX transcription"
+description = "FastAPI server for OpenAI Whisper transcription"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
   "fastapi[standard]>=0.115.0",
-  "whisperx",
   "pydantic-settings>=2.0.0",
   "imageio-ffmpeg>=0.4.9",
   "openai-whisper>=1.1.10",

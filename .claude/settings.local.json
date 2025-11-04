@@ -1,26 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun run:*)",
-      "Bash(gh pr view 2 --repo mohammadhmn/persian-ai-assitant --json title,body,number,url,state)",
-      "Bash(gh pr view 2 --repo mohammadhmn/persian-ai-assitant --json commits)",
-      "Bash(gh pr view 2 --repo mohammadhmn/persian-ai-assitant --json title,body,number,url,state,createdAt,author,additions,deletions,changedFiles)",
-      "Bash(gh pr diff 2 --repo mohammadhmn/persian-ai-assitant)",
-      "Bash(npx ultracite check)",
-      "Bash(bun ultracite check)",
-      "Bash(npm view react-syntax-highlighter versions --json)",
-      "Bash(bun update react-syntax-highlighter@16.1.0)",
-      "Bash(bun update vite @vitejs/plugin-react)",
-      "Bash(cat package.json)",
-      "Bash(for dep in \"streamdown\" \"next-themes\" \"tokenlens\" \"tw-animate-css\")",
-      "Bash(do echo -n \"  $dep: \")",
-      "Bash(done)",
-      "Bash(tree -L 3 /Users/mohamadhosein/Workspace/side/dastyar-ai/apps/server/src -I node_modules)",
-      "Bash(find apps/server/src -type f -name \"*.ts\" -exec grep -l \"console\\.log\\|console\\.warn\\|console\\.error\" {})",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(npx ultracite check apps/server/src/utils/chat.ts apps/server/src/lib/prompts.ts)",
-      "Bash(npx ultracite check:*)"
+      "WebSearch",
+      "Bash(npx ultracite check apps/web/src/routes/settings.tsx apps/web/src/components/settings/)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

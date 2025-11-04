@@ -124,7 +124,7 @@
 - [ ] Review `config.json` settings
 - [ ] Verify `WHISPER_SERVER_URL` is correct
 - [ ] Verify `WHISPER_MODELS` list (recommend: "tiny,base,small")
-- [ ] Check `WHISPER_TIMEOUT_MS` is appropriate (default: 20000)
+- [ ] Check `WHISPER_TIMEOUT_MS` is appropriate (default: 120000)
 - [ ] Confirm `TRANSCRIBE_DEFAULT_ENGINE` (default: "whisperx")
 
 ### Infrastructure
