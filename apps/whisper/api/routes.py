@@ -1,4 +1,4 @@
-"""API routes for the WhisperX server."""
+"""API routes for the Whisper server."""
 
 import logging
 import tempfile

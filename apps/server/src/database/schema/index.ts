@@ -12,7 +12,6 @@ import type {
   SourceType,
   SummaryMode,
   Tone,
-  TranscribeEngine,
   TranscribeLanguage,
   TranslationPayload,
   UserRole,
@@ -27,7 +26,6 @@ import {
   sourceTypes,
   summaryModes,
   tones,
-  transcribeEngines,
   transcribeLanguages,
   userRoles,
 } from "./types";
@@ -95,9 +93,6 @@ export const userPreferences = sqliteTable(
     }).$type<SummaryMode>(),
     summarizeTone: text("summarize_tone", { enum: tones }).$type<Tone>(),
     transcribeModel: text("transcribe_model"),
-    transcribeEngine: text("transcribe_engine", {
-      enum: transcribeEngines,
-    }).$type<TranscribeEngine>(),
     transcribeLanguage: text("transcribe_language", {
       enum: transcribeLanguages,
     }).$type<TranscribeLanguage>(),

@@ -40,7 +40,6 @@ type TranscribeButtonProps = {
   onError?: (error: string) => void;
   language?: "fa" | "en";
   model?: string;
-  engine?: "whisperx" | "whisper";
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
@@ -48,7 +47,6 @@ type TranscribeButtonProps = {
   showControls?: boolean;
   onLanguageChange?: (language: "fa" | "en") => void;
   onModelChange?: (model: string) => void;
-  onEngineChange?: (engine: "whisperx" | "whisper") => void;
   availableModels?: Array<{ id: string; name: string }>;
 };
 
@@ -71,7 +69,6 @@ export function TranscribeButton({
   onError,
   language = "fa",
   model = "",
-  engine = "whisperx",
   variant = "outline",
   size = "default",
   className,
@@ -79,7 +76,6 @@ export function TranscribeButton({
   showControls = false,
   onLanguageChange,
   onModelChange,
-  onEngineChange,
   availableModels = [],
 }: TranscribeButtonProps) {
   // Use mutation pending state instead of separate local state for transcribing
@@ -97,7 +93,6 @@ export function TranscribeButton({
   // Fetch available transcription models
   const { data: models } = useQuery(
     orpc.transcribe.models.queryOptions({
-      input: { engine },
       enabled: showControls,
     })
   );
@@ -133,10 +128,9 @@ export function TranscribeButton({
         file: recordedFile,
         language,
         model: model || undefined,
-        engine,
       });
     }
-  }, [recordedFile, language, model, engine, transcribe]);
+  }, [recordedFile, language, model, transcribe]);
 
   // Map recording errors to user-friendly messages
   const mapRecordingErrorCb = useCallback(mapRecordingError, []);
@@ -179,24 +173,6 @@ export function TranscribeButton({
               }
             />
           </div>
-        )}
-
-        {/* Engine Select - only show if onEngineChange is provided */}
-        {onEngineChange && (
-          <Select
-            onValueChange={(value) =>
-              onEngineChange?.(value as "whisperx" | "whisper")
-            }
-            value={engine}
-          >
-            <SelectTrigger className="h-8 w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="whisperx">WhisperX</SelectItem>
-              <SelectItem value="whisper">Whisper</SelectItem>
-            </SelectContent>
-          </Select>
         )}
 
         {/* Model Select */}

@@ -76,7 +76,6 @@ function RouteComponent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState("");
   const [language, setLanguage] = useState<"fa" | "en">("fa");
-  const [engine, setEngine] = useState<"whisperx" | "whisper">("whisperx");
   const [model, setModel] = useState<string>("tiny");
 
   const {
@@ -89,9 +88,7 @@ function RouteComponent() {
     clearRecordedFile,
   } = useVoiceRecorder();
 
-  const { data: models } = useQuery(
-    orpc.transcribe.models.queryOptions({ input: { engine } })
-  );
+  const { data: models } = useQuery(orpc.transcribe.models.queryOptions());
 
   const { transcribe, isPending: isTranscribing } = useTranscription({
     onSuccess: (data) => {
@@ -126,9 +123,9 @@ function RouteComponent() {
       processedFileRef.current = recordedFile;
       setTranscribeError(null);
       setResult("");
-      transcribe({ file: recordedFile, language, model, engine });
+      transcribe({ file: recordedFile, language, model });
     }
-  }, [recordedFile, transcribe, language, model, engine]);
+  }, [recordedFile, transcribe, language, model]);
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
@@ -180,32 +177,6 @@ function RouteComponent() {
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="grid items-end gap-3 sm:grid-cols-3">
-                  <div className="space-y-1">
-                    <Label
-                      className="text-muted-foreground text-xs"
-                      htmlFor="engine-select"
-                    >
-                      موتور
-                    </Label>
-                    <Select
-                      onValueChange={(v) =>
-                        setEngine(v as "whisperx" | "whisper")
-                      }
-                      value={engine}
-                    >
-                      <SelectTrigger
-                        className="w-full"
-                        id="engine-select"
-                        size="sm"
-                      >
-                        <SelectValue placeholder="موتور" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="whisperx">WhisperX</SelectItem>
-                        <SelectItem value="whisper">Whisper</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="space-y-1">
                     <Label
                       className="text-muted-foreground text-xs"
@@ -341,7 +312,6 @@ function RouteComponent() {
                             file: recordedFile,
                             language,
                             model,
-                            engine,
                           });
                         }}
                         type="button"

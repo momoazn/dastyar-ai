@@ -6,7 +6,6 @@ export type TranscriptionArgs = {
   file: File;
   language?: "fa" | "en";
   model?: string;
-  engine?: "whisperx" | "whisper";
 };
 
 export type UseTranscriptionHandlers = {
@@ -35,8 +34,8 @@ export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
   );
 
   const transcribe = useCallback(
-    ({ file, language, model, engine }: TranscriptionArgs) => {
-      mutate({ file, language, model, engine });
+    ({ file, language, model }: TranscriptionArgs) => {
+      mutate({ file, language, model });
     },
     [mutate]
   );
