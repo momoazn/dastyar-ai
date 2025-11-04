@@ -56,17 +56,25 @@ function ensureWhisperVenv() {
   const py = isWindows
     ? join(venvDir, "Scripts", "python.exe")
     : join(venvDir, "bin", "python");
+  try {
+    run(`${py} -m pip --version`, WHISPER_DIR);
+  } catch {
+    console.log("📦 Bootstrapping pip with ensurepip...");
+    try {
+      run(`${py} -m ensurepip --upgrade`, WHISPER_DIR);
+    } catch (err) {
+      console.error(
+        "Failed to bootstrap pip. Ensure your Python installation includes ensurepip."
+      );
+      throw err;
+    }
+  }
   console.log(
-    "📦 Installing Python deps (WhisperX, FastAPI[standard], PyInstaller)..."
+    "📦 Installing Python deps from pyproject.toml and build tooling..."
   );
   run(`${py} -m pip install --upgrade pip wheel setuptools`, WHISPER_DIR);
-  const pkgs = [
-    '"fastapi[standard]"==0.115.0',
-    "whisperx",
-    "imageio-ffmpeg==0.4.9",
-    "pyinstaller==6.4.0",
-  ];
-  run(`${py} -m pip install ${pkgs.join(" ")}`, WHISPER_DIR);
+  run(`${py} -m pip install .`, WHISPER_DIR);
+  run(`${py} -m pip install pyinstaller==6.4.0`, WHISPER_DIR);
   return { venvDir, py } as const;
 }
 
@@ -119,7 +127,7 @@ function ensureFfmpegInBin(): string | null {
 }
 
 function buildWhisper() {
-  console.log("[1/3] Building WhisperX binary...");
+  console.log("[1/3] Building Whisper binary...");
   const { py } = ensureWhisperVenv();
   const ff = ensureFfmpegInBin();
 

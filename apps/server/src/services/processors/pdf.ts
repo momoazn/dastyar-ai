@@ -1,8 +1,21 @@
 import { readFile } from "node:fs/promises";
-import { PDFParse } from "pdf-parse";
 import { logger } from "@/lib/logger";
+import { ensurePdfjsNodePolyfills } from "@/lib/pdfjs-node-polyfills";
 
 export type PdfPage = { page: number; text: string };
+
+type PdfParseModule = typeof import("pdf-parse");
+
+let pdfParseModule: Promise<PdfParseModule> | null = null;
+
+async function getPdfParse(): Promise<PdfParseModule> {
+  // Ensure required DOM-like globals exist before pdf.js initializes.
+  ensurePdfjsNodePolyfills();
+  if (!pdfParseModule) {
+    pdfParseModule = import("pdf-parse");
+  }
+  return pdfParseModule;
+}
 
 /**
  * Extract text from a PDF using pdf-parse library.
@@ -11,6 +24,7 @@ export type PdfPage = { page: number; text: string };
 export async function extractTextFromPdf(filePath: string): Promise<PdfPage[]> {
   try {
     const dataBuffer = await readFile(filePath);
+    const { PDFParse } = await getPdfParse();
     const parser = new PDFParse({ data: dataBuffer });
     const result = await parser.getText();
 
