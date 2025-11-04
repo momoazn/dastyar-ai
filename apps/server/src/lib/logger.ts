@@ -93,9 +93,48 @@ const serializeError = (error: unknown) => {
   };
 };
 
+// Write to stdout/stderr synchronously - works in both dev and compiled binaries
+const writeLog = (message: string, isError = false) => {
+  // Debug: confirm writeLog is called
+  process.stdout.write(
+    `[DEBUG-WRITELOG] Called with: ${message.substring(0, 50)}\n`
+  );
+
+  const output = `${message}\n`;
+  // Use process.stdout/stderr.write() for synchronous output
+  if (isError) {
+    process.stderr.write(output);
+  } else {
+    process.stdout.write(output);
+  }
+};
+
 const formatLogEntry = (entry: LogEntry): string => {
   const { timestamp, level, message, context, error, performance } = entry;
 
+  // Use simple format if colors aren't supported or in production
+  const useColors =
+    process.stdout.isTTY && process.env.NODE_ENV !== "production";
+
+  if (!useColors) {
+    // Simple format without colors
+    const parts = [`[${level.toUpperCase()}]`, timestamp, message];
+
+    if (context && Object.keys(context).length > 0) {
+      parts.push(JSON.stringify(context));
+    }
+
+    if (error) {
+      parts.push(`Error: ${error.message}`);
+      if (error.stack) {
+        parts.push(error.stack);
+      }
+    }
+
+    return parts.join(" ");
+  }
+
+  // Colored format for development
   const levelColors: Record<LogLevel, string> = {
     fatal: COLORS.red + COLORS.bright,
     error: COLORS.red,
@@ -202,9 +241,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.error(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), true);
     if (process.env.LOG_FORMAT === "json") {
-      console.error(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), true);
     }
   },
 
@@ -220,9 +259,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.error(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), true);
     if (process.env.LOG_FORMAT === "json") {
-      console.error(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), true);
     }
   },
 
@@ -237,9 +276,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.warn(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), false);
     if (process.env.LOG_FORMAT === "json") {
-      console.warn(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), false);
     }
   },
 
@@ -254,9 +293,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.info(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), false);
     if (process.env.LOG_FORMAT === "json") {
-      console.info(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), false);
     }
   },
 
@@ -271,9 +310,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.debug(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), false);
     if (process.env.LOG_FORMAT === "json") {
-      console.debug(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), false);
     }
   },
 
@@ -288,9 +327,9 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    console.debug(formatLogEntry(entry));
+    writeLog(formatLogEntry(entry), false);
     if (process.env.LOG_FORMAT === "json") {
-      console.debug(JSON.stringify(entry));
+      writeLog(JSON.stringify(entry), false);
     }
   },
 
