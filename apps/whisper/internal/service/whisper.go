@@ -16,17 +16,44 @@ import (
 )
 
 type WhisperService struct {
-	modelDir      string
-	defaultModel  string
-	models        map[string]whisper.Model
-	modelsMutex   sync.RWMutex
+	modelDir     string
+	defaultModel string
+	models       map[string]whisper.Model
+	modelsMutex  sync.RWMutex
+}
+
+// TranscriptionSegment mirrors OpenAI segment metadata.
+type TranscriptionSegment struct {
+	ID               int     `json:"id"`
+	Seek             int     `json:"seek"`
+	Start            float64 `json:"start"`
+	End              float64 `json:"end"`
+	Text             string  `json:"text"`
+	Tokens           []int   `json:"tokens"`
+	Temperature      float32 `json:"temperature"`
+	AvgLogprob       float32 `json:"avg_logprob"`
+	CompressionRatio float32 `json:"compression_ratio"`
+	NoSpeechProb     float32 `json:"no_speech_prob"`
 }
 
 // TranscriptionResult holds the transcription output
 type TranscriptionResult struct {
-	Text     string  `json:"text"`
-	Language string  `json:"language,omitempty"`
-	Duration float64 `json:"duration,omitempty"`
+	Text      string                 `json:"text"`
+	Language  string                 `json:"language,omitempty"`
+	Duration  float64                `json:"duration,omitempty"`
+	Segments  []TranscriptionSegment `json:"segments,omitempty"`
+	Task      string                 `json:"task,omitempty"`
+	Prompt    string                 `json:"prompt,omitempty"`
+	Translate bool                   `json:"translate,omitempty"`
+}
+
+// TranscriptionOptions configures how the audio is processed.
+type TranscriptionOptions struct {
+	Model         string
+	Language      string
+	InitialPrompt string
+	Temperature   float32
+	Translate     bool
 }
 
 // ModelInfo holds information about an available model
@@ -148,8 +175,8 @@ func (s *WhisperService) ListModels() ([]ModelInfo, error) {
 }
 
 // Transcribe transcribes an audio file and returns the text
-// If modelName is empty, uses the default model
-func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, modelName string) (*TranscriptionResult, error) {
+// If opts.Model is empty, uses the default model
+func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, opts TranscriptionOptions) (*TranscriptionResult, error) {
 	// Check if file exists
 	if _, err := os.Stat(audioPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("audio file not found: %s", audioPath)
@@ -174,12 +201,12 @@ func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, model
 	}
 
 	// Use default model if not specified
-	if modelName == "" {
-		modelName = s.defaultModel
+	if opts.Model == "" {
+		opts.Model = s.defaultModel
 	}
 
 	// Get the model (loads if not already loaded)
-	model, err := s.getModel(modelName)
+	model, err := s.getModel(opts.Model)
 	if err != nil {
 		return nil, err
 	}
@@ -196,14 +223,41 @@ func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, model
 		return nil, fmt.Errorf("failed to create context: %w", err)
 	}
 
+	if opts.Language != "" {
+		if err := context.SetLanguage(opts.Language); err != nil {
+			return nil, fmt.Errorf("failed to set language %q: %w", opts.Language, err)
+		}
+	}
+
+	if opts.InitialPrompt != "" {
+		context.SetInitialPrompt(opts.InitialPrompt)
+	}
+
+	if opts.Temperature > 0 {
+		context.SetTemperature(opts.Temperature)
+	}
+
+	if opts.Translate {
+		context.SetTranslate(true)
+	}
+
 	// Process the audio data
 	if err := context.Process(data, nil, nil, nil); err != nil {
 		return nil, fmt.Errorf("failed to process audio: %w", err)
 	}
 
 	// Collect results
-	result := &TranscriptionResult{}
+	result := &TranscriptionResult{
+		Task:      "transcribe",
+		Prompt:    opts.InitialPrompt,
+		Translate: opts.Translate,
+	}
+	if opts.Translate {
+		result.Task = "translate"
+	}
+
 	var textBuilder strings.Builder
+	var segments []TranscriptionSegment
 
 	// Iterate through segments
 	for {
@@ -215,8 +269,28 @@ func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, model
 			return nil, fmt.Errorf("failed to get segment: %w", err)
 		}
 
-		textBuilder.WriteString(strings.TrimSpace(segment.Text))
-		textBuilder.WriteString(" ")
+		segmentText := strings.TrimSpace(segment.Text)
+		if segmentText != "" {
+			textBuilder.WriteString(segmentText)
+			textBuilder.WriteString(" ")
+		}
+
+		id := len(segments)
+		ts := TranscriptionSegment{
+			ID:    id,
+			Seek:  int(segment.Start.Milliseconds()),
+			Start: segment.Start.Seconds(),
+			End:   segment.End.Seconds(),
+			Text:  segmentText,
+		}
+
+		if len(segment.Tokens) > 0 {
+			for _, token := range segment.Tokens {
+				ts.Tokens = append(ts.Tokens, token.Id)
+			}
+		}
+
+		segments = append(segments, ts)
 
 		// Track duration
 		if segment.End.Seconds() > result.Duration {
@@ -225,9 +299,8 @@ func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, model
 	}
 
 	result.Text = strings.TrimSpace(textBuilder.String())
-
-	// Get detected language
 	result.Language = context.DetectedLanguage()
+	result.Segments = segments
 
 	// If no text was extracted, return an error
 	if result.Text == "" {

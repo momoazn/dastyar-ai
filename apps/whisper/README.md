@@ -231,6 +231,61 @@ List available models with metadata.
 ]
 ```
 
+### OpenAI-Compatible API
+
+Mirror OpenAI's `/v1/audio/` namespace so OpenAI SDKs and tools can talk directly to Whisper Server.
+
+#### POST /v1/audio/transcriptions
+
+Transcribe audio using the OpenAI Whisper contract. Supports subtitles and multiple response formats.
+
+**Request:**
+- Method: `POST`
+- Content-Type: `multipart/form-data`
+- Parameters:
+  - `file` (required): Audio file to transcribe
+  - `model` (optional): Model ID (defaults to the configured model when omitted)
+  - `language` (optional): ISO 639-1 language code (defaults to `auto`)
+  - `prompt` (optional): Initial prompt string
+  - `temperature` (optional): Float between `0` and `1`
+  - `task` (optional): Use `translate` to translate the audio into English
+  - `translate` (optional): Boolean alias for `task=translate`
+  - `response_format` (optional): `json`, `verbose_json`, `text`, `srt`, or `vtt`
+
+**Responses:**
+
+- `json`/`verbose_json`: JSON body with `text`, `language`, `segments`, `duration`, `task`, and `prompt`
+- `text`: Plain text transcription
+- `srt`: SubRip subtitles
+- `vtt`: WebVTT subtitles
+
+**Example:**
+```bash
+curl -X POST \
+  -F "file=@sample.mp3" \
+  -F "model=tiny" \
+  -F "response_format=json" \
+  http://localhost:8080/v1/audio/transcriptions
+```
+
+#### GET /v1/models
+
+OpenAI-compatible model list.
+
+**Response:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tiny",
+      "object": "model",
+      "owned_by": "local"
+    }
+  ]
+}
+```
+
 ### GET /
 
 Serves the web UI for interactive audio transcription.

@@ -47,6 +47,8 @@ func main() {
 	// New versioned API endpoints
 	http.HandleFunc("/api/v1/transcribe", transcribeHandler.HandleTranscribe)
 	http.HandleFunc("/api/v1/models", transcribeHandler.HandleModels)
+	http.HandleFunc("/v1/audio/transcriptions", transcribeHandler.HandleOpenAITranscriptions)
+	http.HandleFunc("/v1/models", transcribeHandler.HandleOpenAIModels)
 
 	// Python-compatible endpoints (match Python whisper server API)
 	http.HandleFunc("/transcribe", transcribeHandler.HandleTranscribeCompat)
@@ -69,6 +71,10 @@ func main() {
 	log.Println("  Versioned API:")
 	log.Println("    POST /api/v1/transcribe - Transcribe audio file (with metadata)")
 	log.Println("    GET  /api/v1/models - List available models")
+	log.Println("")
+	log.Println("  OpenAI-compatible API:")
+	log.Println("    POST /v1/audio/transcriptions - Transcribe/translate audio")
+	log.Println("    GET  /v1/models - List available models")
 
 	// Get local IP addresses
 	log.Printf("\nAccess the web interface at:")
