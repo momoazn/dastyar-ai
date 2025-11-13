@@ -95,6 +95,17 @@ else
     echo -e "${GREEN}✓ temp directory exists${NC}"
 fi
 
+# Download ffmpeg binaries for embedding
+echo ""
+echo "Checking embedded ffmpeg binaries..."
+if [ ! -d "internal/ffmpeg/bin" ] || [ -z "$(ls -A internal/ffmpeg/bin 2>/dev/null)" ]; then
+    echo -e "${BLUE}Downloading ffmpeg binaries for embedding...${NC}"
+    ./download-ffmpeg.sh
+else
+    echo -e "${GREEN}✓ ffmpeg binaries already downloaded${NC}"
+    echo -e "${YELLOW}  Run './download-ffmpeg.sh' to re-download if needed${NC}"
+fi
+
 # Check if at least one model exists
 MODEL_COUNT=$(find models -name "*.bin" 2>/dev/null | wc -l)
 if [ "$MODEL_COUNT" -eq 0 ]; then

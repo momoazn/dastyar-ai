@@ -170,3 +170,8 @@ apps/whisper/whisper.cpp/
 dev-dist/
 
 worktrees/
+
+# Whisper embedded ffmpeg binaries (downloaded during build)
+apps/whisper/internal/ffmpeg/bin/ffmpeg-*
+# Keep the .gitkeep file to track the directory
+!apps/whisper/internal/ffmpeg/bin/.gitkeep

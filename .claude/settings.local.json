@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npx ultracite:*)",
-      "Bash(bun run build:*)"
+      "Bash(bun run build:*)",
+      "Bash(for f in ffmpeg-linux-amd64 ffmpeg-linux-arm64 ffmpeg-darwin-amd64 ffmpeg-darwin-arm64 ffmpeg-windows-amd64.exe)",
+      "Bash(do echo -n)",
+      "Bash(\"$f\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

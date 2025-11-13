@@ -5,9 +5,10 @@ A high-performance REST API for transcribing audio files using OpenAI's Whisper 
 ## Features
 
 - **🎤 Voice Recording** - Record audio directly in your browser and transcribe instantly
-- **Web UI** - Beautiful, interactive web interface with tabbed layout
+- **Web UI** - Beautiful, interactive web interface with simple layout
 - **Multi-Model Support** - Load and switch between multiple Whisper models dynamically
-- **Auto Audio Conversion** - Automatically converts audio files to the required format using ffmpeg
+- **Auto Audio Conversion** - Automatically converts audio files using embedded ffmpeg (no external dependencies!)
+- **Self-Contained Binary** - ffmpeg is embedded in the binary, no installation required
 - **Python API Compatibility** - Drop-in replacement for Python whisper-fastapi server
 - RESTful API for audio transcription
 - Support for multiple audio formats (WAV, MP3, MP4, M4A, OGG, OPUS, WEBM, FLAC, AAC, WMA)
@@ -256,30 +257,31 @@ Building locally requires several dependencies. **Docker is recommended** for mo
 
 ### Prerequisites
 
-To build and run locally, you need:
+To build locally, you need:
 
 1. **Go 1.23+**
 2. **C++ compiler** (g++/clang++)
 3. **CMake** (required for building whisper.cpp)
 4. **Git**
-5. **ffmpeg** (required for automatic audio format conversion)
+
+**Note:** ffmpeg is automatically downloaded and embedded during build - no need to install it separately!
 
 ### Install Dependencies
 
 #### Ubuntu/Debian
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake git ffmpeg
+sudo apt-get install -y build-essential cmake git
 ```
 
 #### macOS
 ```bash
-brew install cmake git ffmpeg
+brew install cmake git
 ```
 
 #### Fedora/RHEL
 ```bash
-sudo dnf install gcc-c++ cmake git ffmpeg
+sudo dnf install gcc-c++ cmake git
 ```
 
 ### Build and Run
@@ -296,12 +298,13 @@ sudo dnf install gcc-c++ cmake git ffmpeg
 ```
 
 The build script will automatically:
-1. Check for all required dependencies (Go, cmake, C++ compiler, git, ffmpeg)
+1. Check for all required dependencies (Go, cmake, C++ compiler, git)
 2. Clone whisper.cpp if not present
-3. Create models and temp directories
-4. Build whisper.cpp as a static library with optimizations
-5. Compile the Go application with CGO
-6. Link everything together into the `whisper` binary
+3. Download platform-specific ffmpeg binaries for embedding (if not already downloaded)
+4. Create models and temp directories
+5. Build whisper.cpp as a static library with optimizations
+6. Compile the Go application with CGO and embed ffmpeg
+7. Link everything together into a self-contained `whisper` binary (~90MB)
 
 You can also use Make:
 ```bash
@@ -385,14 +388,13 @@ apps/whisper/
 
 ## Supported Audio Formats
 
-The API supports common audio formats including:
-- WAV (recommended for best compatibility)
-- MP3
-- M4A
-- OGG
-- FLAC
+The API supports common audio formats with automatic conversion:
+- WAV (optimal, no conversion needed)
+- MP3, M4A, MP4 (automatically converted)
+- OGG, OPUS, WEBM (automatically converted)
+- FLAC, AAC, WMA (automatically converted)
 
-**Note:** Some formats may require additional processing. WAV files work best with the current implementation.
+**Note:** Non-WAV formats are automatically converted to 16kHz mono WAV using the embedded ffmpeg binary.
 
 ## Performance Considerations
 

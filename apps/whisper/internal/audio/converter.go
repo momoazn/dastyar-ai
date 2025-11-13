@@ -6,14 +6,34 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"whisper/internal/ffmpeg"
 )
+
+// getFFmpegPath returns the path to ffmpeg, trying embedded version first
+func getFFmpegPath() (string, error) {
+	// Try embedded ffmpeg first
+	if ffmpeg.IsEmbedded() {
+		if path, err := ffmpeg.GetFFmpegPath(); err == nil {
+			return path, nil
+		}
+	}
+
+	// Fall back to system ffmpeg
+	path, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		return "", fmt.Errorf("ffmpeg is not available: not embedded in binary and not found in PATH. Please install ffmpeg or use a build with embedded ffmpeg")
+	}
+	return path, nil
+}
 
 // ConvertToWAV converts an audio file to 16kHz mono WAV format using ffmpeg
 // Returns the path to the converted file and an error if conversion fails
 func ConvertToWAV(inputPath string) (string, error) {
-	// Check if ffmpeg is available
-	if _, err := exec.LookPath("ffmpeg"); err != nil {
-		return "", fmt.Errorf("ffmpeg is not installed or not in PATH. Please install ffmpeg to support audio format conversion")
+	// Get ffmpeg path (embedded or system)
+	ffmpegPath, err := getFFmpegPath()
+	if err != nil {
+		return "", err
 	}
 
 	// Check if input file exists
@@ -31,7 +51,7 @@ func ConvertToWAV(inputPath string) (string, error) {
 	// -ac 1: set to mono (1 channel)
 	// -y: overwrite output file if exists
 	// -loglevel error: only show errors
-	cmd := exec.Command("ffmpeg",
+	cmd := exec.Command(ffmpegPath,
 		"-i", inputPath,
 		"-ar", "16000",
 		"-ac", "1",
