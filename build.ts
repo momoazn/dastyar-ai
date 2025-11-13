@@ -59,8 +59,8 @@ function checkDependencies() {
 
   const deps = {
     bun: hasCommand("bun"),
-    python: hasCommand("python3") || hasCommand("python"),
-    uv: hasCommand("uv"),
+    go: hasCommand("go"),
+    bash: !isWindows && hasCommand("bash"),
   };
 
   if (!deps.bun) {
@@ -69,159 +69,88 @@ function checkDependencies() {
     process.exit(1);
   }
 
-  if (!deps.python) {
-    console.error("❌ Python 3 is required but not found in PATH");
-    console.error(
-      "   Install from: https://www.python.org/downloads/ (3.8 or higher)"
-    );
+  if (!deps.go) {
+    console.error("❌ Go is required but not found in PATH");
+    console.error("   Install from: https://go.dev/dl/ (1.23 or higher)");
     process.exit(1);
   }
 
   console.log("  ✓ Bun found");
-  console.log("  ✓ Python found");
+  console.log("  ✓ Go found");
 
-  if (deps.uv) {
-    console.log("  ✓ uv found (will use for Python dependencies)");
-  } else {
-    console.log(
-      "  ℹ️  uv not found (will use pip/venv instead, install uv for faster builds: https://github.com/astral-sh/uv)"
-    );
+  if (!isWindows && !deps.bash) {
+    console.warn("  ⚠️  bash not found - build script may not work correctly");
   }
 
   console.log("");
 }
 
-function ensureWhisperVenv() {
-  const venvDir = join(WHISPER_DIR, ".venv");
-  const useUv = hasCommand("uv");
-
-  if (useUv) {
-    console.log("📦 Using uv for Python dependency management...");
-    // uv will automatically create venv and install deps
-    if (!existsSync(venvDir)) {
-      console.log("📦 Creating virtual environment with uv...");
-      run("uv venv", WHISPER_DIR);
-    }
-    console.log("📦 Syncing dependencies with uv...");
-    run("uv sync", WHISPER_DIR);
-    console.log("📦 Installing PyInstaller with uv...");
-    run("uv pip install pyinstaller==6.4.0", WHISPER_DIR);
-  } else {
-    // Fallback to traditional pip/venv
-    if (!existsSync(venvDir)) {
-      console.log("📦 Creating Python venv for Whisper...");
-      if (isWindows) {
-        run("py -3 -m venv .venv", WHISPER_DIR);
-      } else {
-        run("python3 -m venv .venv", WHISPER_DIR);
-      }
-    }
-    const py = isWindows
-      ? join(venvDir, "Scripts", "python.exe")
-      : join(venvDir, "bin", "python");
-    try {
-      run(`${py} -m pip --version`, WHISPER_DIR);
-    } catch {
-      console.log("📦 Bootstrapping pip with ensurepip...");
-      try {
-        run(`${py} -m ensurepip --upgrade`, WHISPER_DIR);
-      } catch (err) {
-        console.error(
-          "Failed to bootstrap pip. Ensure your Python installation includes ensurepip."
-        );
-        throw err;
-      }
-    }
-    console.log(
-      "📦 Installing Python deps from pyproject.toml and build tooling..."
-    );
-    run(`${py} -m pip install --upgrade pip wheel setuptools`, WHISPER_DIR);
-    run(`${py} -m pip install .`, WHISPER_DIR);
-    run(`${py} -m pip install pyinstaller==6.4.0`, WHISPER_DIR);
-  }
-
-  // Return paths regardless of which method was used
-  const py = isWindows
-    ? join(venvDir, "Scripts", "python.exe")
-    : join(venvDir, "bin", "python");
-  return { venvDir, py } as const;
-}
-
-function ensureFfmpegInBin(): string | null {
-  const binDir = join(WHISPER_DIR, "bin");
-  ensureDir(binDir);
-  const exe = isWindows ? "ffmpeg.exe" : "ffmpeg";
-  const ffLocal = join(binDir, exe);
-  if (existsSync(ffLocal)) return ffLocal;
-  if (process.env.FF_SKIP_FFMPEG_DOWNLOAD === "1") return null;
-
-  console.log("📥 Fetching static ffmpeg...");
-  const os = process.platform;
-  const arch = process.arch;
-  if (os === "linux") {
-    const url =
-      arch === "arm64"
-        ? "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
-        : "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz";
-    const tmp = join(WHISPER_DIR, ".tmp.ffmpeg");
-    run(`rm -rf "${tmp}" && mkdir -p "${tmp}"`);
-    run(`curl -fsSL "${url}" -o "${tmp}/ffmpeg.tar.xz"`);
-    run(`tar -xJf "${tmp}/ffmpeg.tar.xz" -C "${tmp}"`);
-    run(
-      `install -m 0755 "$(find "${tmp}" -type f -name ffmpeg -perm -u+x | head -n1)" "${ffLocal}"`
-    );
-    run(`rm -rf "${tmp}"`);
-    return ffLocal;
-  }
-  if (os === "darwin") {
-    const ver = "6.1.1";
-    const url = `https://evermeet.cx/ffmpeg/ffmpeg-${ver}.zip`;
-    const tmp = join(WHISPER_DIR, ".tmp.ffmpeg");
-    run(`rm -rf "${tmp}" && mkdir -p "${tmp}"`);
-    run(`curl -fsSL "${url}" -o "${tmp}/ffmpeg.zip"`);
-    run(`unzip -q "${tmp}/ffmpeg.zip" -d "${tmp}"`);
-    run(`install -m 0755 "${tmp}/ffmpeg" "${ffLocal}"`);
-    run(`rm -rf "${tmp}"`);
-    return ffLocal;
-  }
-  if (os === "win32") {
-    const url =
-      "https://www.gyan.dev/ffmpeg/builds/ffmpeg-6.1.1-essentials_build.zip";
-    const pwsh = `powershell -NoProfile -Command "& { $ErrorActionPreference='Stop'; $u='${url}'; $d='${WHISPER_DIR}\\.tmp.ffmpeg'; New-Item -ItemType Directory -Force -Path $d | Out-Null; $z=Join-Path $d 'ffmpeg.zip'; Invoke-WebRequest -Uri $u -OutFile $z; Expand-Archive -Force -Path $z -DestinationPath $d; $bin=Get-ChildItem -Recurse -File -Path $d -Filter ffmpeg.exe | Select-Object -First 1; if (-not $bin) { Write-Error 'ffmpeg.exe not found in archive'; }; Copy-Item $bin.FullName '${ffLocal.replace(/\\/g, "/").replace(/\s/g, "` ")}' -Force }"`;
-    run(pwsh);
-    return ffLocal;
-  }
-  console.warn("Unsupported OS for ffmpeg bootstrap; skipping.");
-  return null;
-}
-
 function buildWhisper() {
-  console.log("[1/4] Building Whisper binary...");
-  const { py } = ensureWhisperVenv();
-  const ff = ensureFfmpegInBin();
+  console.log("[1/4] Building Whisper Go binary...");
 
-  if (!ff) {
-    console.warn(
-      "⚠️  ffmpeg not found or download skipped. Whisper binary may not work correctly without ffmpeg in PATH."
-    );
+  // Check if whisper.cpp is cloned
+  const whisperCppDir = join(WHISPER_DIR, "whisper.cpp");
+  if (!existsSync(whisperCppDir)) {
+    console.log("📥 whisper.cpp not found, cloning...");
+    run("git clone https://github.com/ggerganov/whisper.cpp.git", WHISPER_DIR);
   }
 
-  const exeName = isWindows ? "whisper.exe" : "whisper";
-  const extra = ff ? ` --add-binary "${ff}${isWindows ? ";bin" : ":bin"}"` : "";
-  const cmd = `${py} -m PyInstaller --name whisper --onefile --clean --noconfirm${extra} api/main.py`;
+  // Check if models directory exists and has at least one model
+  const modelsDir = join(WHISPER_DIR, "models");
+  if (!existsSync(modelsDir)) {
+    console.warn("⚠️  models/ directory not found, creating...");
+    ensureDir(modelsDir);
+  }
 
-  console.log(
-    "📦 Compiling Whisper with PyInstaller (this may take a few minutes)..."
-  );
-  run(cmd, WHISPER_DIR);
+  let modelCount = 0;
+  if (existsSync(modelsDir)) {
+    try {
+      const result = execSync(`find "${modelsDir}" -name "*.bin" -type f`, {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+      });
+      modelCount = result.trim().split("\n").filter(Boolean).length;
+    } catch {
+      modelCount = 0;
+    }
+  }
 
-  const outDir = join(WHISPER_DIR, "dist");
-  const src = join(outDir, exeName);
+  if (modelCount === 0) {
+    console.warn("⚠️  No Whisper models found in models/ directory");
+    console.warn("   You'll need to download at least one model before running:");
+    console.warn("   cd apps/whisper && ./download-model.sh ggml-base.bin");
+  } else {
+    console.log(`  ✓ Found ${modelCount} model(s)`);
+  }
+
+  console.log("📦 Building Whisper Go server with whisper.cpp...");
+
+  if (isWindows) {
+    console.error("❌ Windows builds for Go Whisper are not yet supported in build.ts");
+    console.error("   Please build manually on Windows using: cd apps/whisper && build.sh");
+    process.exit(1);
+  }
+
+  // Run the build script
+  run("bash build.sh", WHISPER_DIR);
+
+  const exeName = "whisper";
+  const src = join(WHISPER_DIR, exeName);
   const dest = join(DIST, exeName);
-  if (!existsSync(src)) throw new Error(`Whisper binary not found at ${src}`);
+
+  if (!existsSync(src)) {
+    throw new Error(`Whisper binary not found at ${src}`);
+  }
+
   console.log("📋 Copying Whisper binary to dist/...");
   safeCopyFile(src, dest);
-  console.log("✅ Whisper binary built successfully");
+
+  // Make executable on Unix
+  if (!isWindows) {
+    run(`chmod +x "${dest}"`);
+  }
+
+  console.log("✅ Whisper Go binary built successfully");
 }
 
 function buildWeb() {
@@ -283,7 +212,7 @@ This folder contains standalone executable binaries for Dastyar AI.
 
 ## Contents
 
-- \`${isWindows ? "whisper.exe" : "whisper"}\` - Whisper API server (transcription service)
+- \`${isWindows ? "whisper.exe" : "whisper"}\` - Whisper API server (Go-based, transcription service)
 - \`${isWindows ? "dastyar-ai.exe" : "dastyar-ai"}\` - Main API server with embedded web UI
 - \`web/\` - Static web assets (frontend)
 - \`config.json\` - Configuration file
@@ -298,7 +227,7 @@ Edit \`config.json\` to customize settings. All settings have sensible defaults.
 Important settings:
 - \`PORT\`: Server port (default: 3000)
 - \`HOST\`: Server host (default: 127.0.0.1)
-- \`WHISPER_SERVER_URL\`: Whisper API URL (default: http://127.0.0.1:8001)
+- \`WHISPER_SERVER_URL\`: Whisper API URL (default: http://127.0.0.1:8080)
 - \`JWT_SECRET\`: **IMPORTANT**: Change this for production!
 - \`OLLAMA_BASE_URL\`: Ollama API URL (default: http://localhost:11434)
 
@@ -330,10 +259,10 @@ Open your browser and navigate to: **http://localhost:3000**
 
 ## Requirements
 
-### No Runtime Dependencies Required!
+### Minimal Runtime Dependencies
 
-All binaries are self-contained:
-- ✅ Whisper: Includes Python runtime + ffmpeg
+All binaries are mostly self-contained:
+- ✅ Whisper: Go binary with whisper.cpp (requires ffmpeg in PATH for audio conversion)
 - ✅ Server: Includes Bun runtime + Node.js compatibility
 - ✅ Web UI: Pre-built static assets
 
@@ -360,20 +289,24 @@ The following directories are created automatically:
 
 ### Whisper Models
 
-Whisper supports these models (configure in \`WHISPER_MODELS\`):
-- \`tiny\` - Fastest, least accurate (~75MB)
-- \`base\` - Balanced (~142MB)
-- \`small\` - Good quality (~466MB)
-- \`medium\` - High quality (~1.5GB)
-- \`large\` - Best quality (~2.9GB)
+Whisper supports these GGML models (download manually):
+- \`ggml-tiny.bin\` - Fastest, least accurate (~75MB)
+- \`ggml-base.bin\` - Balanced (~142MB)
+- \`ggml-small.bin\` - Good quality (~466MB)
+- \`ggml-medium.bin\` - High quality (~1.5GB)
+- \`ggml-large-v3.bin\` - Best quality (~2.9GB)
 
-Models are downloaded automatically on first use.
+Download models before first use:
+\`\`\`bash
+# From the whisper directory or using download-model.sh
+curl -L -o ggml-base.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+\`\`\`
 
 ## Ports
 
 Default ports (configurable in \`config.json\`):
 - **3000** - Main server + Web UI
-- **8001** - Whisper API
+- **8080** - Whisper API
 
 ## Troubleshooting
 
@@ -481,7 +414,7 @@ function createDefaultConfig(destPath: string) {
       "your-super-secret-jwt-key-change-this-in-production-min-32-chars",
     JWT_EXPIRES_IN: 86_400,
     DATABASE_FILE: "./data.db",
-    WHISPER_SERVER_URL: "http://127.0.0.1:8001",
+    WHISPER_SERVER_URL: "http://127.0.0.1:8080",
     WHISPER_TIMEOUT_MS: 120_000,
     WHISPER_MODELS: "tiny",
     OLLAMA_BASE_URL: "http://localhost:11434",
@@ -568,10 +501,10 @@ function printBuildSummary() {
   console.log("🎉 BUILD COMPLETED SUCCESSFULLY");
   console.log("=".repeat(60));
   console.log("\nBuild artifacts in ./dist:");
-  console.log("\n📦 Binaries (standalone, no runtime dependencies):");
+  console.log("\n📦 Binaries:");
   if (existsSync(outWhisper)) {
     console.log(
-      `   - ${whisperName} (Whisper API server with embedded Python + ffmpeg)`
+      `   - ${whisperName} (Whisper API server - Go binary with whisper.cpp)`
     );
   }
   if (existsSync(outServerHost)) {
@@ -600,7 +533,7 @@ function printBuildSummary() {
 
   console.log("\n📝 Usage:");
   console.log(
-    "   1. Start Whisper API: ./dist/whisper (runs on port 8001 by default)"
+    "   1. Start Whisper API: ./dist/whisper (runs on port 8080 by default)"
   );
   console.log(
     "   2. Start main server: ./dist/dastyar-ai (runs on port 3000 by default)"
@@ -612,6 +545,9 @@ function printBuildSummary() {
   console.log(
     "   Keep the web/ folder next to the binary for the frontend to work."
   );
+  console.log(
+    "\n⚠️  Note: Whisper requires ffmpeg to be installed and available in PATH."
+  );
   console.log(`${"=".repeat(60)}\n`);
 }
 
@@ -620,7 +556,7 @@ function main() {
   console.log("🚀 BUILDING DASTYAR AI - STANDALONE BINARIES");
   console.log("=".repeat(60));
   console.log("\nThis will create:");
-  console.log("  • Whisper API binary (Python + ffmpeg bundled)");
+  console.log("  • Whisper API binary (Go + whisper.cpp)");
   console.log("  • Web frontend (static assets)");
   console.log("  • Server binary (Bun runtime + API, serves web assets)");
   console.log(`${"=".repeat(60)}\n`);
