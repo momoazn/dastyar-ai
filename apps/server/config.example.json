@@ -5,7 +5,7 @@
   "JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production-min-32-chars",
   "JWT_EXPIRES_IN": 86400,
   "DATABASE_FILE": "./data.db",
-  "WHISPER_SERVER_URL": "http://127.0.0.1:8001",
+  "WHISPER_SERVER_URL": "http://127.0.0.1:8080",
   "WHISPER_TIMEOUT_MS": 120000,
   "WHISPER_MODELS": "Xenova/whisper-tiny",
   "OLLAMA_BASE_URL": "http://localhost:11434",

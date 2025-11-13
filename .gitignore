@@ -124,6 +124,24 @@ temp/
 ehthumbs.db
 Thumbs.db
 
+# Go
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
 # Project specific
 ai-app/
 .whisper-cache/
@@ -131,6 +149,12 @@ generated-images/
 whisper-models/
 uploaded-documents/
 bundle/assets/
+
+# Whisper Go server
+apps/whisper/whisper
+apps/whisper/whisper.exe
+apps/whisper/temp/
+apps/whisper/whisper.cpp/
 
 # Database files
 *.db

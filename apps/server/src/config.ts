@@ -90,8 +90,8 @@ const Schema = z.object({
     .default("your-super-secret-jwt-key-change-this-in-production"),
   JWT_EXPIRES_IN: z.number().default(24 * 60 * 60),
   DATABASE_FILE: z.string().default("./data.db"),
-  // Optional external Whisper server (FastAPI) used for transcription
-  WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8001"),
+  // Optional external Whisper server (Go implementation) used for transcription
+  WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8080"),
   // Timeout for requests to the Whisper server (ms)
   WHISPER_TIMEOUT_MS: z.coerce.number().default(120_000),
   WHISPER_MODELS: z.string().default("tiny"),

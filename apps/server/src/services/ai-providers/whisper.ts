@@ -7,6 +7,7 @@
  * (see `openai-whisper.ts`).
  */
 import { env, whisperModelIds } from "@/config";
+import { normalizePersianText } from "@/utils/persian-normalize";
 
 export type ModelInfo = { id: string; name: string };
 
@@ -126,7 +127,12 @@ export async function transcribe({
     }
     const json = (await res.json()) as { text?: string };
     const output = (json?.text ?? "").trim();
-    return output;
+
+    // Apply Persian text normalization to improve text quality
+    // Converts Arabic chars to Persian, maps punctuation, removes tatweel
+    const normalized = normalizePersianText(output);
+
+    return normalized;
   } catch (err) {
     clearTimeout(timer);
     const message = err instanceof Error ? err.message : String(err);
