@@ -171,9 +171,18 @@ cd ..
 # Set environment variables for Go build
 echo ""
 echo "Setting up Go build environment..."
-export C_INCLUDE_PATH="$(pwd)/whisper.cpp/include:$(pwd)/whisper.cpp/ggml/include"
-export LIBRARY_PATH="$(pwd)/whisper.cpp/build_go/src:$(pwd)/whisper.cpp/build_go/ggml/src:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-metal:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-blas:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-cpu"
-export CGO_LDFLAGS="-L$(pwd)/whisper.cpp/build_go/src -L$(pwd)/whisper.cpp/build_go/ggml/src -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-metal -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-blas -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-cpu"
+
+# Base paths
+WHISPER_ROOT="$(pwd)/whisper.cpp"
+BUILD_DIR="$WHISPER_ROOT/build_go"
+GGML_SRC="$BUILD_DIR/ggml/src"
+
+# Include paths for C headers
+export C_INCLUDE_PATH="$WHISPER_ROOT/include:$WHISPER_ROOT/ggml/include"
+
+# Library search paths - include main libs and ggml backend subdirectories
+export LIBRARY_PATH="$BUILD_DIR/src:$GGML_SRC:$GGML_SRC/ggml-metal:$GGML_SRC/ggml-blas:$GGML_SRC/ggml-cpu"
+export CGO_LDFLAGS="-L$BUILD_DIR/src -L$GGML_SRC -L$GGML_SRC/ggml-metal -L$GGML_SRC/ggml-blas -L$GGML_SRC/ggml-cpu"
 
 # On macOS, add Metal framework for GPU acceleration
 if [[ "$OSTYPE" == "darwin"* ]]; then
