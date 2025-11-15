@@ -97,6 +97,7 @@ export const fa = {
     advancedSettings: "تنظیمات پیشرفته",
     account: {
       title: "حساب کاربری",
+      description: "نام کاربری و رمز عبور خود را مدیریت کنید",
       username: "نام کاربری",
       currentUsername: "نام کاربری فعلی",
       newUsername: "نام کاربری جدید",
