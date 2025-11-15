@@ -136,9 +136,7 @@ export async function upsertUserPreferences(
  */
 export async function deleteUserPreferences(userId: number): Promise<void> {
   try {
-    await db
-      .delete(userPreferences)
-      .where(eq(userPreferences.userId, userId));
+    await db.delete(userPreferences).where(eq(userPreferences.userId, userId));
     logger.info("Deleted user preferences", { userId });
   } catch (error) {
     logger.error("Error deleting user preferences", error, { userId });

@@ -63,16 +63,12 @@
       "indexes": {
         "idx_chat_threads_user_id": {
           "name": "idx_chat_threads_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_chat_threads_last_message_at": {
           "name": "idx_chat_threads_last_message_at",
-          "columns": [
-            "last_message_at"
-          ],
+          "columns": ["last_message_at"],
           "isUnique": false
         }
       },
@@ -81,12 +77,8 @@
           "name": "chat_threads_user_id_users_id_fk",
           "tableFrom": "chat_threads",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -166,9 +158,7 @@
       "indexes": {
         "idx_code_runs_user_id": {
           "name": "idx_code_runs_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -177,12 +167,8 @@
           "name": "code_runs_model_id_llm_models_id_fk",
           "tableFrom": "code_runs",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["model_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -190,12 +176,8 @@
           "name": "code_runs_user_id_users_id_fk",
           "tableFrom": "code_runs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -261,9 +243,7 @@
       "indexes": {
         "idx_document_chunks_document_id": {
           "name": "idx_document_chunks_document_id",
-          "columns": [
-            "document_id"
-          ],
+          "columns": ["document_id"],
           "isUnique": false
         }
       },
@@ -272,12 +252,8 @@
           "name": "document_chunks_document_id_documents_id_fk",
           "tableFrom": "document_chunks",
           "tableTo": "documents",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -351,9 +327,7 @@
       "indexes": {
         "idx_documents_user_id": {
           "name": "idx_documents_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -362,12 +336,8 @@
           "name": "documents_user_id_users_id_fk",
           "tableFrom": "documents",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -455,16 +425,12 @@
       "indexes": {
         "idx_generated_images_thread_id": {
           "name": "idx_generated_images_thread_id",
-          "columns": [
-            "thread_id"
-          ],
+          "columns": ["thread_id"],
           "isUnique": false
         },
         "idx_generated_images_user_id": {
           "name": "idx_generated_images_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -473,12 +439,8 @@
           "name": "generated_images_thread_id_image_threads_id_fk",
           "tableFrom": "generated_images",
           "tableTo": "image_threads",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -486,12 +448,8 @@
           "name": "generated_images_user_id_users_id_fk",
           "tableFrom": "generated_images",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -559,16 +517,12 @@
       "indexes": {
         "idx_image_threads_user_id": {
           "name": "idx_image_threads_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_image_threads_last_image_at": {
           "name": "idx_image_threads_last_image_at",
-          "columns": [
-            "last_image_at"
-          ],
+          "columns": ["last_image_at"],
           "isUnique": false
         }
       },
@@ -577,12 +531,8 @@
           "name": "image_threads_user_id_users_id_fk",
           "tableFrom": "image_threads",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -664,10 +614,7 @@
       "indexes": {
         "idx_llm_models_provider_identifier": {
           "name": "idx_llm_models_provider_identifier",
-          "columns": [
-            "provider",
-            "identifier"
-          ],
+          "columns": ["provider", "identifier"],
           "isUnique": false
         }
       },
@@ -748,16 +695,12 @@
       "indexes": {
         "idx_messages_thread_id": {
           "name": "idx_messages_thread_id",
-          "columns": [
-            "thread_id"
-          ],
+          "columns": ["thread_id"],
           "isUnique": false
         },
         "idx_messages_user_id": {
           "name": "idx_messages_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -766,12 +709,8 @@
           "name": "messages_thread_id_chat_threads_id_fk",
           "tableFrom": "messages",
           "tableTo": "chat_threads",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -779,12 +718,8 @@
           "name": "messages_model_id_llm_models_id_fk",
           "tableFrom": "messages",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["model_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -792,12 +727,8 @@
           "name": "messages_user_id_users_id_fk",
           "tableFrom": "messages",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -878,9 +809,7 @@
       "indexes": {
         "idx_summaries_user_id": {
           "name": "idx_summaries_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -889,12 +818,8 @@
           "name": "summaries_model_id_llm_models_id_fk",
           "tableFrom": "summaries",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["model_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -902,12 +827,8 @@
           "name": "summaries_user_id_users_id_fk",
           "tableFrom": "summaries",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -952,16 +873,12 @@
       "indexes": {
         "idx_thread_documents_thread_id": {
           "name": "idx_thread_documents_thread_id",
-          "columns": [
-            "thread_id"
-          ],
+          "columns": ["thread_id"],
           "isUnique": false
         },
         "idx_thread_documents_document_id": {
           "name": "idx_thread_documents_document_id",
-          "columns": [
-            "document_id"
-          ],
+          "columns": ["document_id"],
           "isUnique": false
         }
       },
@@ -970,12 +887,8 @@
           "name": "thread_documents_thread_id_chat_threads_id_fk",
           "tableFrom": "thread_documents",
           "tableTo": "chat_threads",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -983,12 +896,8 @@
           "name": "thread_documents_document_id_documents_id_fk",
           "tableFrom": "thread_documents",
           "tableTo": "documents",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1098,9 +1007,7 @@
       "indexes": {
         "idx_translations_user_id": {
           "name": "idx_translations_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -1109,12 +1016,8 @@
           "name": "translations_model_id_llm_models_id_fk",
           "tableFrom": "translations",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["model_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1122,12 +1025,8 @@
           "name": "translations_user_id_users_id_fk",
           "tableFrom": "translations",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1257,16 +1156,12 @@
       "indexes": {
         "user_preferences_user_id_unique": {
           "name": "user_preferences_user_id_unique",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": true
         },
         "idx_user_preferences_user_id": {
           "name": "idx_user_preferences_user_id",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -1275,12 +1170,8 @@
           "name": "user_preferences_user_id_users_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1288,12 +1179,8 @@
           "name": "user_preferences_code_model_id_llm_models_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "code_model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["code_model_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1301,12 +1188,8 @@
           "name": "user_preferences_translation_model_id_llm_models_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "translation_model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["translation_model_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1314,12 +1197,8 @@
           "name": "user_preferences_summarize_model_id_llm_models_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "llm_models",
-          "columnsFrom": [
-            "summarize_model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["summarize_model_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -1387,9 +1266,7 @@
       "indexes": {
         "users_username_unique": {
           "name": "users_username_unique",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": true
         }
       },

@@ -7,8 +7,8 @@ import {
   summarizeModelIdAtom,
   translationModelIdAtom,
 } from "@/atoms/model";
-import { orpc } from "@/utils/orpc";
 import { useUser } from "@/hooks/use-user";
+import { orpc } from "@/utils/orpc";
 
 type UseFeatureModelSelectionOptions = {
   threadId?: number;
