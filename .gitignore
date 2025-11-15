@@ -155,6 +155,7 @@ apps/whisper/whisper
 apps/whisper/whisper.exe
 apps/whisper/temp/
 apps/whisper/whisper.cpp/
+apps/whisper/.go-work/
 
 # Database files
 *.db

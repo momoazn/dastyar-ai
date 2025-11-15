@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Whisper Speech-to-Text API</title>
@@ -243,56 +243,61 @@
             margin-top: 8px;
         }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Whisper Speech-to-Text API</h1>
-        <p class="subtitle">Convert audio to text using OpenAI's Whisper model</p>
+      <h1>Whisper Speech-to-Text API</h1>
+      <p class="subtitle">Convert audio to text using OpenAI's Whisper model</p>
 
-        <div id="status" class="status">Checking API status...</div>
+      <div id="status" class="status">Checking API status...</div>
 
-        <form id="transcribeForm">
-            <div class="form-group">
-                <label for="audioFile">Audio File</label>
-                <input type="file" id="audioFile" accept="audio/*" required>
-                <div id="fileInfo" class="file-info"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="model">Whisper Model</label>
-                <select id="model" required>
-                    <option value="">Loading models...</option>
-                </select>
-            </div>
-
-            <button type="submit" id="submitBtn">Transcribe Audio</button>
-        </form>
-
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <span>Transcribing audio... This may take a few moments.</span>
+      <form id="transcribeForm">
+        <div class="form-group">
+          <label for="audioFile">Audio File</label>
+          <input type="file" id="audioFile" accept="audio/*" required>
+          <div id="fileInfo" class="file-info"></div>
         </div>
 
-        <div id="error" class="error"></div>
-
-        <div id="result" class="result">
-            <h3>Transcription Result</h3>
-            <div id="resultText" class="result-text"></div>
-            <div class="result-meta">
-                <span><strong>Language:</strong> <span id="resultLanguage">-</span></span>
-                <span><strong>Duration:</strong> <span id="resultDuration">-</span>s</span>
-            </div>
+        <div class="form-group">
+          <label for="model">Whisper Model</label>
+          <select id="model" required>
+            <option value="">Loading models...</option>
+          </select>
         </div>
 
-        <div class="info-section">
-            <h3>Supported Audio Formats</h3>
-            <ul>
-                <li>WAV, MP3, MP4, M4A</li>
-                <li>OGG, OPUS, WEBM</li>
-                <li>FLAC, AAC, WMA</li>
-                <li>Automatic format conversion included</li>
-            </ul>
+        <button type="submit" id="submitBtn">Transcribe Audio</button>
+      </form>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span>Transcribing audio... This may take a few moments.</span>
+      </div>
+
+      <div id="error" class="error"></div>
+
+      <div id="result" class="result">
+        <h3>Transcription Result</h3>
+        <div id="resultText" class="result-text"></div>
+        <div class="result-meta">
+          <span
+            ><strong>Language:</strong>
+            <span id="resultLanguage">-</span></span
+          >
+          <span
+            ><strong>Duration:</strong> <span id="resultDuration">-</span>s</span
+          >
         </div>
+      </div>
+
+      <div class="info-section">
+        <h3>Supported Audio Formats</h3>
+        <ul>
+          <li>WAV, MP3, MP4, M4A</li>
+          <li>OGG, OPUS, WEBM</li>
+          <li>FLAC, AAC, WMA</li>
+          <li>Automatic format conversion included</li>
+        </ul>
+      </div>
     </div>
 
     <script>
@@ -444,5 +449,5 @@
         // Refresh health status every 30 seconds
         setInterval(checkHealth, 30000);
     </script>
-</body>
+  </body>
 </html>

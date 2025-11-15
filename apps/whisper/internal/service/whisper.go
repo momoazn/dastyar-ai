@@ -9,10 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"whisper/internal/audio"
-
 	whisper "github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
-	wav "github.com/go-audio/wav"
+	"whisper/internal/audio"
 )
 
 type WhisperService struct {
@@ -312,37 +310,30 @@ func (s *WhisperService) Transcribe(ctx context.Context, audioPath string, opts 
 
 // loadAudioData loads a WAV file and converts it to the format whisper expects
 func (s *WhisperService) loadAudioData(audioPath string) ([]float32, error) {
-	// Open the file
-	fh, err := os.Open(audioPath)
-	if err != nil {
-		return nil, err
-	}
-	defer fh.Close()
-
 	// Decode the WAV file
-	dec := wav.NewDecoder(fh)
-	if !dec.IsValidFile() {
-		return nil, fmt.Errorf("invalid WAV file format")
-	}
-
-	// Load the full PCM buffer
-	buf, err := dec.FullPCMBuffer()
+	samples, sampleRate, channels, err := audio.LoadWAVMonoSamples(audioPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode WAV: %w", err)
 	}
 
 	// Check sample rate (whisper requires 16kHz)
-	if dec.SampleRate != whisper.SampleRate {
-		return nil, fmt.Errorf("audio conversion failed: sample rate is %d Hz instead of required %d Hz", dec.SampleRate, whisper.SampleRate)
+	if sampleRate != whisper.SampleRate {
+		return nil, fmt.Errorf(
+			"audio conversion failed: sample rate is %d Hz instead of required %d Hz",
+			sampleRate,
+			whisper.SampleRate,
+		)
 	}
 
 	// Check number of channels (whisper requires mono)
-	if dec.NumChans != 1 {
-		return nil, fmt.Errorf("audio conversion failed: audio has %d channels instead of required 1 (mono)", dec.NumChans)
+	if channels != 1 {
+		return nil, fmt.Errorf(
+			"audio conversion failed: audio has %d channels instead of required 1 (mono)",
+			channels,
+		)
 	}
 
-	// Convert to float32
-	return buf.AsFloat32Buffer().Data, nil
+	return samples, nil
 }
 
 // Close releases resources

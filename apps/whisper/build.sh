@@ -177,6 +177,19 @@ WHISPER_ROOT="$(pwd)/whisper.cpp"
 BUILD_DIR="$WHISPER_ROOT/build_go"
 GGML_SRC="$BUILD_DIR/ggml/src"
 
+# Keep all Go caches within the repo to avoid touching the user's home dir
+GO_WORK_DIR="$(pwd)/.go-work"
+GO_CACHE_DIR="$GO_WORK_DIR/build-cache"
+GO_MOD_CACHE_DIR="$GO_WORK_DIR/pkg/mod"
+GO_BIN_DIR="$GO_WORK_DIR/bin"
+
+mkdir -p "$GO_CACHE_DIR" "$GO_MOD_CACHE_DIR" "$GO_BIN_DIR"
+
+export GOPATH="$GO_WORK_DIR"
+export GOCACHE="$GO_CACHE_DIR"
+export GOMODCACHE="$GO_MOD_CACHE_DIR"
+export PATH="$GO_BIN_DIR:$PATH"
+
 # Include paths for C headers
 export C_INCLUDE_PATH="$WHISPER_ROOT/include:$WHISPER_ROOT/ggml/include"
 
