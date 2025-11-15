@@ -78,11 +78,12 @@ function mapPersianPunctuation(text: string): string {
     "?": "؟", // Question mark → Arabic question mark
   };
 
+  let result = text;
   for (const [latin, persian] of Object.entries(punctuationMap)) {
-    text = text.replaceAll(latin, persian);
+    result = result.replaceAll(latin, persian);
   }
 
-  return text;
+  return result;
 }
 
 /**

@@ -14,7 +14,7 @@ async function getPdfParse(): Promise<PdfParseModule> {
   if (!pdfParseModule) {
     pdfParseModule = import("pdf-parse");
   }
-  return pdfParseModule;
+  return await pdfParseModule;
 }
 
 /**

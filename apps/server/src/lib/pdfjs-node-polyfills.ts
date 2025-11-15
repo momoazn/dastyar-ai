@@ -1,3 +1,16 @@
+/**
+ * PDF.js Node.js Polyfills
+ *
+ * This file provides stub implementations of browser Canvas 2D and related APIs
+ * for use in Node.js environments. Methods are intentionally empty as they're
+ * only needed for type compatibility with PDF.js library.
+ *
+ * Linting rules are disabled via biome.jsonc for this file:
+ * - Empty blocks are intentional stubs for browser APIs
+ * - Parameter limits relaxed for Canvas 2D API compatibility
+ * - Variable shadowing patterns used in constructors for data destructuring
+ */
+
 type MatrixArray = readonly number[] | Float32Array | Float64Array | Int32Array;
 
 type MatrixLikeObject = {

@@ -109,6 +109,52 @@ const writeLog = (message: string, isError = false) => {
   }
 };
 
+const appendContextParts = (
+  parts: string[],
+  context: LogEntry["context"]
+): void => {
+  if (context?.correlationId || context?.requestId) {
+    parts.push(
+      `${COLORS.magenta}[${context.correlationId || context.requestId}]${COLORS.reset}`
+    );
+  }
+
+  if (context && Object.keys(context).length > 0) {
+    parts.push(`${COLORS.dim}${JSON.stringify(context)}${COLORS.reset}`);
+  }
+};
+
+const appendErrorParts = (
+  parts: string[],
+  error: LogEntry["error"],
+  color: string
+): void => {
+  if (error) {
+    parts.push(`${color}Error: ${error.message}${COLORS.reset}`);
+    if (error.stack) {
+      parts.push(`${COLORS.dim}${error.stack}${COLORS.reset}`);
+    }
+  }
+};
+
+const appendPerformanceParts = (
+  parts: string[],
+  performance: LogEntry["performance"]
+): void => {
+  if (performance) {
+    const perfParts: string[] = [];
+    if (performance.duration !== undefined) {
+      perfParts.push(`duration: ${performance.duration}ms`);
+    }
+    if (performance.memory) {
+      perfParts.push(
+        `memory: ${(performance.memory.used / 1024 / 1024).toFixed(2)}MB / ${(performance.memory.total / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+    parts.push(`${COLORS.dim}[${perfParts.join(", ")}]${COLORS.reset}`);
+  }
+};
+
 const formatLogEntry = (entry: LogEntry): string => {
   const { timestamp, level, message, context, error, performance } = entry;
 
@@ -153,35 +199,9 @@ const formatLogEntry = (entry: LogEntry): string => {
     message,
   ];
 
-  if (context?.correlationId || context?.requestId) {
-    parts.push(
-      `${COLORS.magenta}[${context.correlationId || context.requestId}]${reset}`
-    );
-  }
-
-  if (context && Object.keys(context).length > 0) {
-    parts.push(`${COLORS.dim}${JSON.stringify(context)}${reset}`);
-  }
-
-  if (error) {
-    parts.push(`${color}Error: ${error.message}${reset}`);
-    if (error.stack) {
-      parts.push(`${COLORS.dim}${error.stack}${reset}`);
-    }
-  }
-
-  if (performance) {
-    const perfParts: string[] = [];
-    if (performance.duration !== undefined) {
-      perfParts.push(`duration: ${performance.duration}ms`);
-    }
-    if (performance.memory) {
-      perfParts.push(
-        `memory: ${(performance.memory.used / 1024 / 1024).toFixed(2)}MB / ${(performance.memory.total / 1024 / 1024).toFixed(2)}MB`
-      );
-    }
-    parts.push(`${COLORS.dim}[${perfParts.join(", ")}]${reset}`);
-  }
+  appendContextParts(parts, context);
+  appendErrorParts(parts, error, color);
+  appendPerformanceParts(parts, performance);
 
   return parts.join(" ");
 };
