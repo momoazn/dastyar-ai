@@ -6,7 +6,8 @@
       "Bash(for f in ffmpeg-linux-amd64 ffmpeg-linux-arm64 ffmpeg-darwin-amd64 ffmpeg-darwin-arm64 ffmpeg-windows-amd64.exe)",
       "Bash(do echo -n)",
       "Bash(\"$f\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(bun build.ts:*)"
     ],
     "deny": [],
     "ask": []
