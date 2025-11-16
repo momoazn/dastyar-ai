@@ -44,16 +44,9 @@ func main() {
 		http.ServeFile(w, r, "./web/static/index.html")
 	})
 
-	// New versioned API endpoints
-	http.HandleFunc("/api/v1/transcribe", transcribeHandler.HandleTranscribe)
-	http.HandleFunc("/api/v1/models", transcribeHandler.HandleModels)
+	// OpenAI-compatible API endpoints
 	http.HandleFunc("/v1/audio/transcriptions", transcribeHandler.HandleOpenAITranscriptions)
 	http.HandleFunc("/v1/models", transcribeHandler.HandleOpenAIModels)
-
-	// Python-compatible endpoints (match Python whisper server API)
-	http.HandleFunc("/transcribe", transcribeHandler.HandleTranscribeCompat)
-	http.HandleFunc("/models", transcribeHandler.HandleModelsCompat)
-	http.HandleFunc("/health", transcribeHandler.HandleHealthCompat)
 
 	// Start server
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
@@ -62,15 +55,6 @@ func main() {
 	log.Println("")
 	log.Println("Endpoints:")
 	log.Println("  GET  / - Web UI")
-	log.Println("")
-	log.Println("  Python-compatible API:")
-	log.Println("    POST /transcribe - Transcribe audio file")
-	log.Println("    GET  /models - List available models")
-	log.Println("    GET  /health - Health check")
-	log.Println("")
-	log.Println("  Versioned API:")
-	log.Println("    POST /api/v1/transcribe - Transcribe audio file (with metadata)")
-	log.Println("    GET  /api/v1/models - List available models")
 	log.Println("")
 	log.Println("  OpenAI-compatible API:")
 	log.Println("    POST /v1/audio/transcriptions - Transcribe/translate audio")

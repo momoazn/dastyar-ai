@@ -36,7 +36,7 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
   }
 
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
-  const url = `${base}/models`;
+  const url = `${base}/v1/models`;
 
   try {
     const controller = new AbortController();
@@ -46,11 +46,11 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }
-    const data = (await res.json()) as unknown;
-    const list = Array.isArray(data)
-      ? (data as ModelInfo[]).filter(
-          (m) => m && typeof m.id === "string" && typeof m.name === "string"
-        )
+    const data = (await res.json()) as {
+      data?: { id: string; object: string; owned_by: string }[];
+    };
+    const list = Array.isArray(data.data)
+      ? data.data.map((m) => ({ id: m.id, name: m.id }))
       : [];
     if (list.length > 0) {
       _modelsCache = { at: now, list };
@@ -85,7 +85,7 @@ export async function transcribe({
   initialPrompt,
 }: TranscribeArgs): Promise<string> {
   const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
-  const url = `${base}/transcribe`;
+  const url = `${base}/v1/audio/transcriptions`;
 
   // Validate model against available list; if unknown, omit and let server default
   let forwardModel: string | undefined;
@@ -107,7 +107,7 @@ export async function transcribe({
     form.append("language", language);
   }
   if (initialPrompt) {
-    form.append("initial_prompt", initialPrompt);
+    form.append("prompt", initialPrompt);
   }
 
   const controller = new AbortController();

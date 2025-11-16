@@ -20,14 +20,6 @@ type TranscribeHandler struct {
 	tempDir        string
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
-// PythonCompatResponse matches the Python API response format
-type PythonCompatResponse struct {
-	Text string `json:"text"`
-}
 
 type openAIModel struct {
 	ID      string `json:"id"`
@@ -77,53 +69,6 @@ func (h *TranscribeHandler) persistUpload(file multipart.File, header *multipart
 	return tempFile, nil
 }
 
-// HandleTranscribe handles POST requests to transcribe audio files
-func (h *TranscribeHandler) HandleTranscribe(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Parse multipart form (max 100MB)
-	err := r.ParseMultipartForm(100 << 20)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	// Get the audio file from form
-	file, header, err := r.FormFile("audio")
-	if err != nil {
-		h.sendError(w, "No audio file provided. Use 'audio' field", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	tempFile, err := h.persistUpload(file, header)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to save file: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile)
-
-	opts := service.TranscriptionOptions{
-		Model:         strings.TrimSpace(r.FormValue("model")),
-		Language:      strings.TrimSpace(r.FormValue("language")),
-		InitialPrompt: r.FormValue("initial_prompt"),
-	}
-
-	// Transcribe the audio with specified model (or default if empty)
-	result, err := h.whisperService.Transcribe(r.Context(), tempFile, opts)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Transcription failed: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Send response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
-}
 
 // HandleOpenAITranscriptions mirrors OpenAI's /v1/audio/transcriptions endpoint
 func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r *http.Request) {
@@ -208,23 +153,6 @@ func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r 
 	}
 }
 
-// HandleModels handles GET requests to list available models
-func (h *TranscribeHandler) HandleModels(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	models, err := h.whisperService.ListModels()
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to list models: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models)
-}
 
 func (h *TranscribeHandler) HandleOpenAIModels(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -255,98 +183,9 @@ func (h *TranscribeHandler) HandleOpenAIModels(w http.ResponseWriter, r *http.Re
 	})
 }
 
-// HandleHealth handles health check requests
-func (h *TranscribeHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "healthy",
-	})
-}
 
-// HandleTranscribeCompat handles POST requests to /transcribe (Python API compatibility)
-// Accepts: multipart/form-data with 'file' field, 'model', 'language', 'initial_prompt'
-// Returns: {"text": "..."} to match Python API
-func (h *TranscribeHandler) HandleTranscribeCompat(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
-	// Parse multipart form (max 100MB to match Python's 50MB + buffer)
-	err := r.ParseMultipartForm(100 << 20)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
-		return
-	}
 
-	// Try 'file' field first (Python API), then 'audio' field (Go API)
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		file, header, err = r.FormFile("audio")
-		if err != nil {
-			h.sendError(w, "No audio file provided. Use 'file' or 'audio' field", http.StatusBadRequest)
-			return
-		}
-	}
-	defer file.Close()
-
-	// Get optional parameters
-	opts := service.TranscriptionOptions{
-		Model:         strings.TrimSpace(r.FormValue("model")),
-		Language:      strings.TrimSpace(r.FormValue("language")),
-		InitialPrompt: r.FormValue("initial_prompt"),
-	}
-
-	tempFile, err := h.persistUpload(file, header)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to save file: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile)
-
-	// Transcribe the audio with specified model (or default if empty)
-	result, err := h.whisperService.Transcribe(r.Context(), tempFile, opts)
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Transcription failed: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Return Python-compatible response format (just text field)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(PythonCompatResponse{Text: result.Text})
-}
-
-// HandleModelsCompat handles GET requests to /models (Python API compatibility)
-// Returns: [{"id": "model-name", "name": "Display Name"}]
-func (h *TranscribeHandler) HandleModelsCompat(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	models, err := h.whisperService.ListModels()
-	if err != nil {
-		h.sendError(w, fmt.Sprintf("Failed to list models: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Return models in Python-compatible format (already matches)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models)
-}
-
-// HandleHealthCompat handles GET requests to /health with Python-compatible response
-func (h *TranscribeHandler) HandleHealthCompat(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	// Python returns {"status": "ok"}
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "ok",
-	})
-}
 
 func (h *TranscribeHandler) sendOpenAIError(w http.ResponseWriter, message string, statusCode int) {
 	errType := "invalid_request_error"
@@ -439,8 +278,3 @@ func formatVTTTimestamp(seconds float64) string {
 	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, secondsPart, milliseconds)
 }
 
-func (h *TranscribeHandler) sendError(w http.ResponseWriter, message string, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(ErrorResponse{Error: message})
-}
