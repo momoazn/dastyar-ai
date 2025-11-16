@@ -107,11 +107,11 @@ function checkDependencies() {
 // Whisper Build - Dependency Management (FFmpeg & Models)
 // =============================================================================
 
-function downloadFFmpegIfNeeded(
+async function downloadFFmpegIfNeeded(
   ffmpegBinDir: string,
   ffmpegFileName: string,
   ffmpegUrl: string
-): string {
+): Promise<string> {
   const ffmpegBinPath = join(ffmpegBinDir, ffmpegFileName);
 
   if (existsSync(ffmpegBinPath)) {
@@ -126,42 +126,82 @@ function downloadFFmpegIfNeeded(
   );
   console.warn("⚠️  This requires internet connection!");
 
-  const tempDownloadScript = join(WHISPER_DIR, "download-ffmpeg-temp.sh");
-  const isZip = ffmpegUrl.endsWith(".zip");
-
-  const downloadScript = `#!/bin/bash
-set -e
-BIN_DIR="${ffmpegBinDir}"
-mkdir -p "$BIN_DIR"
-
-echo "📥 Downloading ffmpeg from ${ffmpegUrl}..."
-curl -fsSL "${ffmpegUrl}" -o "/tmp/ffmpeg-archive"
-
-cd /tmp
-if ${isZip}; then
-    unzip -q ffmpeg-archive
-    ffmpeg_bin=$(find . -type f -name "ffmpeg" -o -name "ffmpeg.exe" | grep -v ".txt" | grep -v ".md" | head -n1)
-else
-    tar -xJf ffmpeg-archive 2>/dev/null || tar -xzf ffmpeg-archive
-    ffmpeg_bin=$(find . -type f -name "ffmpeg" -perm -u+x | head -n1)
-fi
-
-if [ -z "$ffmpeg_bin" ]; then
-    echo "❌ Could not find ffmpeg binary in archive"
-    exit 1
-fi
-
-cp "$ffmpeg_bin" "$BIN_DIR/${ffmpegFileName}"
-chmod +x "$BIN_DIR/${ffmpegFileName}"
-rm -rf /tmp/ffmpeg-archive
-echo "✅ FFmpeg downloaded to $BIN_DIR/${ffmpegFileName}"
-`;
+  ensureDir(ffmpegBinDir);
 
   try {
-    Bun.write(tempDownloadScript, downloadScript);
-    run(`chmod +x "${tempDownloadScript}"`);
-    run(`bash "${tempDownloadScript}"`, WHISPER_DIR);
-    run(`rm "${tempDownloadScript}"`);
+    console.log(`  → Downloading from ${ffmpegUrl}...`);
+
+    // Download the FFmpeg archive
+    const archivePath = join(ffmpegBinDir, "ffmpeg-archive");
+    const response = await fetch(ffmpegUrl);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download FFmpeg: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("Failed to get response body reader");
+    }
+
+    const total = Number(response.headers.get("content-length")) || 0;
+    let received = 0;
+
+    // Create write stream
+    const file = Bun.file(archivePath).writer();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      received += value.length;
+      file.write(value);
+
+      if (total > 0) {
+        const percent = ((received / total) * 100).toFixed(1);
+        process.stdout.write(`\r  → Downloaded ${percent}%`);
+      }
+    }
+
+    console.log("");
+
+    // Extract the archive
+    const isZip = ffmpegUrl.endsWith(".zip");
+    const isTar =
+      ffmpegUrl.endsWith(".tar.xz") || ffmpegUrl.endsWith(".tar.gz");
+
+    if (isZip) {
+      console.log("  → Extracting ZIP archive...");
+      extractZip(archivePath, ffmpegBinDir);
+    } else if (isTar) {
+      console.log("  → Extracting TAR archive...");
+      extractTar(archivePath, ffmpegBinDir);
+    } else {
+      // Assume it's a direct binary
+      console.log("  → Copying binary...");
+      const binaryData = await Bun.file(archivePath).arrayBuffer();
+      await Bun.write(ffmpegBinPath, binaryData);
+    }
+
+    // Find the FFmpeg binary in the extracted files
+    const extractedFiles = await findFiles(
+      ffmpegBinDir,
+      isWindows ? ["ffmpeg.exe"] : ["ffmpeg"]
+    );
+    if (extractedFiles.length === 0) {
+      throw new Error("Could not find FFmpeg binary in extracted archive");
+    }
+
+    const extractedFfmpeg = extractedFiles[0];
+
+    // Copy to final location
+    const binaryData = await Bun.file(extractedFfmpeg).arrayBuffer();
+    await Bun.write(ffmpegBinPath, binaryData);
+
+    // Clean up
+    await cleanupDownload(archivePath, extractedFiles);
 
     console.log(
       `  ✓ FFmpeg for ${process.platform}-${process.arch} downloaded successfully`
@@ -174,22 +214,122 @@ echo "✅ FFmpeg downloaded to $BIN_DIR/${ffmpegFileName}"
   }
 }
 
-function countExistingModels(modelsDir: string): number {
+function extractZip(zipPath: string, extractDir: string) {
+  try {
+    // Try to use system unzip command if available
+    if (hasCommand("unzip")) {
+      run(`unzip -q "${zipPath}" -d "${extractDir}"`, extractDir);
+      return;
+    }
+
+    // Fallback: manual extraction using Node.js streams
+    // This is complex, so we'll just try to find an existing extraction
+    console.log("  ⚠️  Manual ZIP extraction not fully supported yet");
+    console.log("  💡 Consider installing 'unzip' or using Git Bash");
+    throw new Error("No unzip utility available");
+  } catch (err) {
+    console.error("ZIP extraction error:", err);
+    throw new Error(`Failed to extract ZIP: ${err.message}`);
+  }
+}
+
+function extractTar(tarPath: string, extractDir: string) {
+  try {
+    // Try to use system tar command if available
+    if (hasCommand("tar")) {
+      run(`tar -xf "${tarPath}" -C "${extractDir}"`, extractDir);
+      return;
+    }
+
+    // Fallback: throw error with helpful message
+    console.log("  ⚠️  Manual TAR extraction not fully supported yet");
+    console.log("  💡 Consider installing 'tar' or using Git Bash");
+    throw new Error("No tar utility available");
+  } catch (err) {
+    console.error("TAR extraction error:", err);
+    throw new Error(`Failed to extract TAR: ${err.message}`);
+  }
+}
+
+async function findFiles(dir: string, patterns: string[]): Promise<string[]> {
+  const results: string[] = [];
+
+  async function walk(currentDir: string): Promise<void> {
+    try {
+      const { readdir } = await import("node:fs/promises");
+
+      const items = await readdir(currentDir, { withFileTypes: true });
+
+      for (const item of items) {
+        const fullPath = join(currentDir, item.name);
+
+        if (item.isDirectory()) {
+          await walk(fullPath);
+        } else {
+          for (const pattern of patterns) {
+            if (item.name.toLowerCase().includes(pattern.toLowerCase())) {
+              results.push(fullPath);
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  await walk(dir);
+  return results;
+}
+
+async function cleanupDownload(
+  archivePath: string,
+  extractedFiles: string[]
+): Promise<void> {
+  try {
+    const { unlinkSync, rmSync } = await import("node:fs");
+
+    // Remove archive
+    try {
+      unlinkSync(archivePath);
+    } catch {
+      console.log("");
+    }
+
+    // Remove extracted directory
+    const tempDir = join(archivePath, "..");
+    try {
+      rmSync(tempDir, { recursive: true, force: true });
+    } catch {
+      console.log("");
+    }
+
+    // Remove any temporary files
+    for (const file of extractedFiles) {
+      try {
+        unlinkSync(file);
+      } catch {
+        console.log("");
+      }
+    }
+  } catch {
+    // Ignore cleanup errors
+  }
+}
+
+async function countExistingModels(modelsDir: string): Promise<number> {
   if (!existsSync(modelsDir)) return 0;
 
   try {
-    const result = execSync(`find "${modelsDir}" -name "*.bin" -type f`, {
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "ignore"],
-    });
-    return result.trim().split("\n").filter(Boolean).length;
+    const models = await findFiles(modelsDir, ["ggml", ".bin"]);
+    return models.filter((file) => file.endsWith(".bin")).length;
   } catch {
     return 0;
   }
 }
 
-function downloadBaseModelIfNeeded(modelsDir: string): number {
-  const modelCount = countExistingModels(modelsDir);
+async function downloadBaseModelIfNeeded(modelsDir: string): Promise<number> {
+  const modelCount = await countExistingModels(modelsDir);
 
   if (modelCount === 0) {
     console.log("📥 No Whisper models found, downloading ggml-base.bin...");
@@ -201,10 +341,38 @@ function downloadBaseModelIfNeeded(modelsDir: string): number {
 
     try {
       console.log("  → Downloading from HuggingFace (~142MB)...");
-      run(
-        `curl -L --progress-bar "${baseModelUrl}" -o "${baseModelPath}"`,
-        WHISPER_DIR
-      );
+
+      const response = await fetch(baseModelUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to download model: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Failed to get response body reader");
+      }
+
+      const total = Number(response.headers.get("content-length")) || 0;
+      let received = 0;
+
+      const file = Bun.file(baseModelPath).writer();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        received += value.length;
+        file.write(value);
+
+        if (total > 0) {
+          const percent = ((received / total) * 100).toFixed(1);
+          process.stdout.write(`\r  → Downloaded ${percent}%`);
+        }
+      }
+
+      console.log("");
       console.log("  ✓ ggml-base.bin downloaded successfully");
       return 1;
     } catch (err) {
@@ -269,7 +437,7 @@ function copyWhisperBinary() {
   }
 }
 
-function copyWhisperModels() {
+async function copyWhisperModels() {
   console.log("📋 Copying Whisper models to dist/models/...");
   const modelsSrc = join(WHISPER_DIR, "models");
   const modelsDest = join(DIST, "models");
@@ -285,11 +453,10 @@ function copyWhisperModels() {
   safeCopyDir(modelsSrc, modelsDest);
 
   try {
-    const copiedModels = execSync(
-      `find "${modelsDest}" -name "*.bin" -type f 2>/dev/null || echo ""`,
-      { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] }
-    );
-    const copiedCount = copiedModels.trim().split("\n").filter(Boolean).length;
+    const modelFiles = await findFiles(modelsDest, [".bin"]);
+    const copiedCount = modelFiles.filter((file) =>
+      file.endsWith(".bin")
+    ).length;
 
     if (copiedCount > 0) {
       console.log(`  ✓ Copied ${copiedCount} Whisper model(s) to dist/models/`);
@@ -332,7 +499,7 @@ function copyFFmpegBinary(ffmpegBinPath: string) {
 // Whisper Build - Orchestration
 // =============================================================================
 
-function buildWhisper() {
+async function buildWhisper() {
   console.log("[1/4] Building Whisper Go binary...");
 
   // Check if whisper.cpp is cloned
@@ -348,7 +515,7 @@ function buildWhisper() {
   ensureDir(ffmpegBinDir);
   const { fileName: ffmpegFileName, url: ffmpegUrl } =
     determinePlatformFFmpeg();
-  const ffmpegBinPath = downloadFFmpegIfNeeded(
+  const ffmpegBinPath = await downloadFFmpegIfNeeded(
     ffmpegBinDir,
     ffmpegFileName,
     ffmpegUrl
@@ -357,7 +524,7 @@ function buildWhisper() {
   // Auto-download base model if no models exist
   const modelsDir = join(WHISPER_DIR, "models");
   ensureDir(modelsDir);
-  downloadBaseModelIfNeeded(modelsDir);
+  await downloadBaseModelIfNeeded(modelsDir);
 
   console.log("📦 Building Whisper Go server with whisper.cpp...");
 
@@ -375,7 +542,7 @@ function buildWhisper() {
   run("bash build.sh", WHISPER_DIR);
 
   copyWhisperBinary();
-  copyWhisperModels();
+  await copyWhisperModels();
   copyFFmpegBinary(ffmpegBinPath);
 
   console.log("✅ Whisper Go binary built successfully");
@@ -771,7 +938,7 @@ function validateDistStructure() {
   console.log("✅ All build artifacts validated successfully");
 }
 
-function printBuildSummary() {
+async function printBuildSummary() {
   const whisperName = isWindows ? "whisper.exe" : "whisper";
   const serverHost = isWindows ? "dastyar-ai.exe" : "dastyar-ai";
   const outWhisper = join(DIST, whisperName);
@@ -807,17 +974,10 @@ function printBuildSummary() {
   const modelsPath = join(DIST, "models");
   if (existsSync(modelsPath)) {
     try {
-      const modelsResult = execSync(
-        `find "${modelsPath}" -name "*.bin" -type f 2>/dev/null || echo ""`,
-        {
-          encoding: "utf8",
-          stdio: ["pipe", "pipe", "ignore"],
-        }
-      );
-      const modelsCount = modelsResult
-        .trim()
-        .split("\n")
-        .filter(Boolean).length;
+      const modelFiles = await findFiles(modelsPath, [".bin"]);
+      const modelsCount = modelFiles.filter((file) =>
+        file.endsWith(".bin")
+      ).length;
       if (modelsCount > 0) {
         console.log(`   - models/ (${modelsCount} Whisper model(s))`);
       }
@@ -866,11 +1026,11 @@ function printBuildSummary() {
   console.log(`${"=".repeat(60)}\n`);
 
   // Print offline deployment checklist
-  printOfflineDeploymentChecklist();
+  await printOfflineDeploymentChecklist();
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Go Away
-function printOfflineDeploymentChecklist() {
+async function printOfflineDeploymentChecklist() {
   console.log(`\n${"=".repeat(60)}`);
   console.log("📋 OFFLINE WINDOWS DEPLOYMENT CHECKLIST");
   console.log("=".repeat(60));
@@ -885,14 +1045,8 @@ function printOfflineDeploymentChecklist() {
   let modelsOk = false;
   if (existsSync(modelsPath)) {
     try {
-      const result = execSync(
-        `find "${modelsPath}" -name "*.bin" -type f 2>/dev/null || echo ""`,
-        {
-          encoding: "utf8",
-          stdio: ["pipe", "pipe", "ignore"],
-        }
-      );
-      const count = result.trim().split("\n").filter(Boolean).length;
+      const modelFiles = await findFiles(modelsPath, [".bin"]);
+      const count = modelFiles.filter((file) => file.endsWith(".bin")).length;
       if (count > 0) {
         console.log(`   ✅ Whisper models: ${count} model(s) in dist/models/`);
         modelsOk = true;
@@ -1008,7 +1162,7 @@ function printOfflineDeploymentChecklist() {
 // Main Build Orchestration
 // =============================================================================
 
-function main() {
+async function main() {
   console.log(`\n${"=".repeat(60)}`);
   console.log("🚀 BUILDING DASTYAR AI - STANDALONE BINARIES");
   console.log("=".repeat(60));
@@ -1034,7 +1188,7 @@ function main() {
 
   ensureDir(DIST);
 
-  buildWhisper();
+  await buildWhisper();
   console.log("");
 
   buildWeb();
@@ -1084,7 +1238,7 @@ function main() {
 // =============================================================================
 
 try {
-  main();
+  await main();
 } catch (err) {
   console.error("❌ Build failed:", err);
   process.exit(1);
