@@ -10,6 +10,10 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
+// =============================================================================
+// Constants & Paths
+// =============================================================================
+
 const ROOT = process.cwd();
 const DIST = join(ROOT, "dist");
 const SERVER_DIR = join(ROOT, "apps", "server");
@@ -17,6 +21,10 @@ const WEB_DIR = join(ROOT, "apps", "web");
 const WHISPER_DIR = join(ROOT, "apps", "whisper");
 
 const isWindows = process.platform === "win32";
+
+// =============================================================================
+// Utility Functions
+// =============================================================================
 
 function parseWantsWindows(): boolean {
   const envPlatform = process.env.BUILD_PLATFORM?.toLowerCase();
@@ -60,6 +68,10 @@ const hasCommand = (cmd: string): boolean => {
   }
 };
 
+// =============================================================================
+// Dependency & Environment Checks
+// =============================================================================
+
 function checkDependencies() {
   console.log("🔍 Checking build dependencies...");
 
@@ -90,6 +102,10 @@ function checkDependencies() {
 
   console.log("");
 }
+
+// =============================================================================
+// Whisper Build - Dependency Management (FFmpeg & Models)
+// =============================================================================
 
 function downloadFFmpegIfNeeded(
   ffmpegBinDir: string,
@@ -233,6 +249,10 @@ function determinePlatformFFmpeg(): { fileName: string; url: string } {
   };
 }
 
+// =============================================================================
+// Whisper Build - Asset Copying
+// =============================================================================
+
 function copyWhisperBinary() {
   const src = join(WHISPER_DIR, "whisper");
   const dest = join(DIST, "whisper");
@@ -308,6 +328,10 @@ function copyFFmpegBinary(ffmpegBinPath: string) {
   );
 }
 
+// =============================================================================
+// Whisper Build - Orchestration
+// =============================================================================
+
 function buildWhisper() {
   console.log("[1/4] Building Whisper Go binary...");
 
@@ -357,6 +381,10 @@ function buildWhisper() {
   console.log("✅ Whisper Go binary built successfully");
 }
 
+// =============================================================================
+// Web Frontend Build
+// =============================================================================
+
 function buildWeb() {
   console.log("[2/4] Building web frontend to static assets...");
   console.log("📦 Running Vite build...");
@@ -373,6 +401,10 @@ function buildWeb() {
   safeCopyDir(webSrc, webDest);
   console.log("✅ Web frontend built successfully");
 }
+
+// =============================================================================
+// Server Build
+// =============================================================================
 
 function buildServer(opts: { alsoWindowsOnMac?: boolean } = {}) {
   console.log("[3/4] Building server binary with embedded Bun runtime...");
@@ -405,6 +437,10 @@ function buildServer(opts: { alsoWindowsOnMac?: boolean } = {}) {
   safeCopyDir(serverDist, DIST);
   console.log("✅ Server binary built successfully");
 }
+
+// =============================================================================
+// Distribution Package Setup
+// =============================================================================
 
 function createDistReadme(destPath: string) {
   const whisperBin = isWindows ? "whisper.exe" : "./whisper";
@@ -659,6 +695,10 @@ function createDefaultConfig(destPath: string) {
   Bun.write(destPath, content);
   console.log(`  ✓ Default config.json created at ${destPath}`);
 }
+
+// =============================================================================
+// Distribution Validation & Reporting
+// =============================================================================
 
 function validateDistStructure() {
   console.log("[4/4] Validating build artifacts...");
@@ -964,6 +1004,10 @@ function printOfflineDeploymentChecklist() {
   console.log(`${"=".repeat(60)}\n`);
 }
 
+// =============================================================================
+// Main Build Orchestration
+// =============================================================================
+
 function main() {
   console.log(`\n${"=".repeat(60)}`);
   console.log("🚀 BUILDING DASTYAR AI - STANDALONE BINARIES");
@@ -1034,6 +1078,10 @@ function main() {
 
   printBuildSummary();
 }
+
+// =============================================================================
+// Entry Point
+// =============================================================================
 
 try {
   main();
