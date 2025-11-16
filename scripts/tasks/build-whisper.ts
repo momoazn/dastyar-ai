@@ -23,16 +23,29 @@ function hasCommand(cmd: string): boolean {
 }
 
 function checkWindowsCompiler(): string | null {
-  // Check for MinGW
+  // Check for MinGW (preferred for simpler setup)
   if (hasCommand("gcc") && hasCommand("g++")) {
     console.log("  ✓ Found MinGW compiler");
     return "MinGW Makefiles";
   }
 
-  // Check for Visual Studio
+  // Check for Visual Studio and Windows SDK
   if (hasCommand("cl")) {
-    console.log("  ✓ Found Visual Studio compiler");
-    return "NMake Makefiles";
+    // Check if rc.exe (Resource Compiler from Windows SDK) is available
+    if (hasCommand("rc")) {
+      console.log("  ✓ Found Visual Studio compiler with Windows SDK");
+      return "NMake Makefiles";
+    }
+    console.log("  ⚠️  Found Visual Studio but Windows SDK is missing");
+    console.log("     Windows SDK is required for rc.exe (Resource Compiler)");
+    console.log("");
+    console.log("     Options:");
+    console.log("     1. Install Windows SDK from Visual Studio Installer");
+    console.log("     2. Or install MinGW-w64 (recommended):");
+    console.log("        winget install -e --id=MSYS2.MSYS2");
+    console.log("        Then in MSYS2: pacman -S mingw-w64-x86_64-gcc");
+    console.log("");
+    return null;
   }
 
   return null;
@@ -46,20 +59,24 @@ export async function buildWhisper(): Promise<void> {
     const generator = checkWindowsCompiler();
     if (!generator) {
       console.error("");
-      console.error("❌ No C++ compiler found!");
+      console.error("❌ No suitable C++ compiler found!");
       console.error("");
       console.error("You need to install one of the following:");
       console.error("");
-      console.error("Option 1: MinGW-w64 (Recommended)");
-      console.error("  Download: https://www.mingw-w64.org/");
-      console.error("  Or use: winget install -e --id=MSYS2.MSYS2");
-      console.error("  Then: pacman -S mingw-w64-x86_64-gcc");
+      console.error("Option 1: MinGW-w64 (Recommended - Simpler)");
+      console.error("  Install: winget install -e --id=MSYS2.MSYS2");
+      console.error("  Then in MSYS2 terminal:");
+      console.error("    pacman -S mingw-w64-x86_64-gcc");
+      console.error("    pacman -S mingw-w64-x86_64-cmake");
+      console.error("  Add to PATH: C:\\msys64\\mingw64\\bin");
       console.error("");
       console.error("Option 2: Visual Studio Build Tools");
       console.error(
         "  Download: https://visualstudio.microsoft.com/downloads/"
       );
-      console.error("  Select: Desktop development with C++");
+      console.error("  Install components:");
+      console.error("    - Desktop development with C++");
+      console.error("    - Windows SDK (includes rc.exe)");
       console.error("");
       throw new Error("C++ compiler required for building Whisper");
     }
