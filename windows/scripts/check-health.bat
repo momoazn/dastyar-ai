@@ -30,7 +30,7 @@ if !errorlevel! equ 0 (
 
 REM Check Whisper API health endpoint
 echo [3/4] Checking Whisper API health...
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8080/health' -UseBasicParsing -TimeoutSec 5; if ($response.StatusCode -eq 200) { Write-Host '  ✓ Whisper API is responding' } else { Write-Host '  ✗ Whisper API returned status' $response.StatusCode; exit 1 } } catch { Write-Host '  ✗ Whisper API is not responding'; exit 1 }" 2>NUL
+powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8080/v1/models' -UseBasicParsing -TimeoutSec 5; if ($response.StatusCode -eq 200) { Write-Host '  ✓ Whisper API is responding' } else { Write-Host '  ✗ Whisper API returned status' $response.StatusCode; exit 1 } } catch { Write-Host '  ✗ Whisper API is not responding'; exit 1 }" 2>NUL
 if !errorlevel! equ 0 (
     echo   ✓ Whisper API health check passed
 ) else (

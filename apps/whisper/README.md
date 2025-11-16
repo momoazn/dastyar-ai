@@ -9,20 +9,16 @@ A high-performance REST API for transcribing audio files using OpenAI's Whisper 
 - **Multi-Model Support** - Load and switch between multiple Whisper models dynamically
 - **Auto Audio Conversion** - Automatically converts audio files using embedded ffmpeg (no external dependencies!)
 - **Self-Contained Binary** - ffmpeg is embedded in the binary, no installation required
-- **Python API Compatibility** - Drop-in replacement for Python whisper-fastapi server
+- **OpenAI-Compatible API** - Drop-in replacement for OpenAI Whisper API
 - RESTful API for audio transcription
 - Support for multiple audio formats (WAV, MP3, MP4, M4A, OGG, OPUS, WEBM, FLAC, AAC, WMA)
 - Automatic language detection
 - Drag-and-drop file upload
 - Real-time recording with visual feedback
 - Audio preview before transcription
-- Docker support for easy deployment
 - Dynamic model selection per request
-- Health check endpoint
 
-## Quick Start with Docker (Recommended)
-
-Docker is the easiest way to get started as it includes all required dependencies.
+## Quick Start
 
 ### 1. Download a Whisper Model
 
@@ -31,6 +27,7 @@ Docker is the easiest way to get started as it includes all required dependencie
 ```
 
 Available models:
+
 - `ggml-tiny.bin` - Fastest, least accurate (~75 MB)
 - `ggml-base.bin` - Good balance (default) (~142 MB)
 - `ggml-small.bin` - Better accuracy (~466 MB)
@@ -38,33 +35,23 @@ Available models:
 - `ggml-large-v3.bin` - Best accuracy (~2.9 GB)
 
 Quantized versions (smaller, slightly less accurate):
+
 - `ggml-tiny-q5_1.bin`
 - `ggml-base-q5_1.bin`
 - `ggml-small-q5_1.bin`
 - `ggml-medium-q5_0.bin`
 - `ggml-large-v3-q5_0.bin`
 
-### 2. Build the Docker Image
+### 2. Build the Application
 
 ```bash
-docker build -t whisper-server .
+./build.sh
 ```
 
-### 3. Run the Container
+### 3. Run the Server
 
 ```bash
-docker run -d \
-  -p 8080:8080 \
-  -v $(pwd)/models:/app/models \
-  -e MODEL_NAME=ggml-base.bin \
-  --name whisper-server \
-  whisper-server
-```
-
-Or use docker-compose (recommended):
-
-```bash
-docker-compose up -d
+./whisper
 ```
 
 ### 4. Use the Application
@@ -72,11 +59,13 @@ docker-compose up -d
 **Option A: Web Interface (Recommended)**
 
 Open your browser and visit:
+
 ```
 http://localhost:8080
 ```
 
 You'll see a beautiful web interface where you can:
+
 - Drag and drop audio files
 - See real-time transcription results
 - View detected language and duration
@@ -85,13 +74,13 @@ You'll see a beautiful web interface where you can:
 **Option B: Command Line (cURL)**
 
 ```bash
-# Health check
-curl http://localhost:8080/health
+# List available models
+curl http://localhost:8080/v1/models
 
 # Transcribe an audio file
 curl -X POST \
-  -F "audio=@your-audio-file.wav" \
-  http://localhost:8080/api/v1/transcribe
+  -F "file=@your-audio-file.wav" \
+  http://localhost:8080/v1/audio/transcriptions
 ```
 
 ## Web Interface
@@ -99,6 +88,7 @@ curl -X POST \
 The application includes a modern, responsive web UI accessible at the root URL (`/`). Features include:
 
 ### 🎤 Record Tab
+
 - **One-Click Recording** - Click the record button to start/stop recording
 - **Real-time Timer** - See recording duration as you speak
 - **Visual Feedback** - Pulsing animation during recording
@@ -107,11 +97,13 @@ The application includes a modern, responsive web UI accessible at the root URL 
 - **Browser-Based** - No additional software needed
 
 ### 📁 Upload Tab
+
 - **Drag & Drop** - Simply drag audio files onto the upload area
 - **File Selection** - Or click to browse and select files
 - **Format Support** - Accepts WAV, MP3, M4A, and more
 
 ### General Features
+
 - 🎨 **Beautiful Design** - Modern gradient UI with smooth animations
 - ⚡ **Real-time Feedback** - Loading indicators and instant results
 - 📊 **Detailed Results** - View transcription text, language, and duration
@@ -121,115 +113,7 @@ The application includes a modern, responsive web UI accessible at the root URL 
 
 ## API Endpoints
 
-The server provides two API versions for compatibility:
-
-### Python-Compatible API (Recommended for existing integrations)
-
-These endpoints match the Python whisper-fastapi server API for drop-in replacement.
-
-#### POST /transcribe
-
-Transcribe an audio file to text.
-
-**Request:**
-- Method: `POST`
-- Content-Type: `multipart/form-data`
-- Parameters:
-  - `file` (required): Audio file (WAV, MP3, MP4, M4A, OGG, OPUS, WEBM, FLAC, AAC, WMA)
-  - `model` (optional): Model name to use (e.g., `ggml-base.bin`, `ggml-large-v3.bin`)
-  - `language` (optional): ISO 639-1 language code (e.g., `en`, `fa`) - auto-detected if not provided
-  - `initial_prompt` (optional): Accepted for compatibility but not used by whisper.cpp
-
-**Response:**
-```json
-{
-  "text": "Transcribed text from the audio file"
-}
-```
-
-**Example:**
-```bash
-curl -X POST \
-  -F "file=@sample.mp3" \
-  -F "model=ggml-base.bin" \
-  http://localhost:8080/transcribe
-```
-
-#### GET /models
-
-List available Whisper models.
-
-**Response:**
-```json
-[
-  {
-    "id": "ggml-base.bin",
-    "name": "Base"
-  },
-  {
-    "id": "ggml-large-v3.bin",
-    "name": "Large V3"
-  }
-]
-```
-
-#### GET /health
-
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "ok"
-}
-```
-
-### Versioned API (v1)
-
-Enhanced API with additional metadata.
-
-#### POST /api/v1/transcribe
-
-Transcribe an audio file with detailed metadata.
-
-**Request:**
-- Method: `POST`
-- Content-Type: `multipart/form-data`
-- Parameters:
-  - `audio` (required): Audio file
-  - `model` (optional): Model name to use
-
-**Response:**
-```json
-{
-  "text": "Transcribed text from the audio file",
-  "language": "en",
-  "duration": 5.2
-}
-```
-
-**Example:**
-```bash
-curl -X POST \
-  -F "audio=@sample.wav" \
-  -F "model=ggml-large-v3.bin" \
-  http://localhost:8080/api/v1/transcribe
-```
-
-#### GET /api/v1/models
-
-List available models with metadata.
-
-**Response:**
-```json
-[
-  {
-    "id": "ggml-base.bin",
-    "name": "Base",
-    "path": "/app/models/ggml-base.bin"
-  }
-]
-```
+The server provides OpenAI-compatible API endpoints for audio transcription.
 
 ### OpenAI-Compatible API
 
@@ -240,6 +124,7 @@ Mirror OpenAI's `/v1/audio/` namespace so OpenAI SDKs and tools can talk directl
 Transcribe audio using the OpenAI Whisper contract. Supports subtitles and multiple response formats.
 
 **Request:**
+
 - Method: `POST`
 - Content-Type: `multipart/form-data`
 - Parameters:
@@ -260,6 +145,7 @@ Transcribe audio using the OpenAI Whisper contract. Supports subtitles and multi
 - `vtt`: WebVTT subtitles
 
 **Example:**
+
 ```bash
 curl -X POST \
   -F "file=@sample.mp3" \
@@ -273,6 +159,7 @@ curl -X POST \
 OpenAI-compatible model list.
 
 **Response:**
+
 ```json
 {
   "object": "list",
@@ -294,21 +181,22 @@ Serves the web UI for interactive audio transcription.
 
 The application can be configured using environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `8080` |
-| `MODEL_PATH` | Directory containing model files | `./models` |
+| Variable     | Description                           | Default         |
+| ------------ | ------------------------------------- | --------------- |
+| `PORT`       | Server port                           | `8080`          |
+| `MODEL_PATH` | Directory containing model files      | `./models`      |
 | `MODEL_NAME` | Default model file to load at startup | `ggml-base.bin` |
 
 **Note on Multi-Model Support:**
+
 - The server loads the default model (`MODEL_NAME`) at startup
 - Additional models in `MODEL_PATH` are loaded on-demand when requested
 - All `.bin` files in the models directory can be selected via the API
-- Use the `/models` endpoint to see available models
+- Use the `/v1/models` endpoint to see available models
 
-## Local Development (Without Docker)
+## Local Development
 
-Building locally requires several dependencies. **Docker is recommended** for most users.
+Building locally requires several dependencies.
 
 ### Prerequisites
 
@@ -324,17 +212,20 @@ To build locally, you need:
 ### Install Dependencies
 
 #### Ubuntu/Debian
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential cmake git
 ```
 
 #### macOS
+
 ```bash
 brew install cmake git
 ```
 
 #### Fedora/RHEL
+
 ```bash
 sudo dnf install gcc-c++ cmake git
 ```
@@ -353,6 +244,7 @@ sudo dnf install gcc-c++ cmake git
 ```
 
 The build script will automatically:
+
 1. Check for all required dependencies (Go, cmake, C++ compiler, git)
 2. Clone whisper.cpp if not present
 3. Download platform-specific ffmpeg binaries for embedding (if not already downloaded)
@@ -362,6 +254,7 @@ The build script will automatically:
 7. Link everything together into a self-contained `whisper` binary (~90MB)
 
 You can also use Make:
+
 ```bash
 # Full build (builds whisper.cpp + Go server)
 make build-full
@@ -419,7 +312,7 @@ apps/whisper/
 │   ├── config/
 │   │   └── config.go          # Configuration management
 │   ├── handler/
-│   │   └── transcribe.go      # HTTP handlers (v1 + Python-compatible)
+│   │   └── transcribe.go      # HTTP handlers (OpenAI-compatible)
 │   └── service/
 │       └── whisper.go         # Whisper service with multi-model support
 ├── web/
@@ -431,8 +324,6 @@ apps/whisper/
 ├── models/                     # Model files directory (.bin files)
 ├── temp/                       # Temporary uploaded/converted files
 ├── build.sh                    # Automated build script
-├── Dockerfile                  # Docker multi-stage build
-├── docker-compose.yml          # Docker Compose configuration
 ├── Makefile                    # Build commands (make build-full, make dev, etc.)
 ├── download-model.sh           # Model download script
 ├── go.mod                      # Go module definition
@@ -444,6 +335,7 @@ apps/whisper/
 ## Supported Audio Formats
 
 The API supports common audio formats with automatic conversion:
+
 - WAV (optimal, no conversion needed)
 - MP3, M4A, MP4 (automatically converted)
 - OGG, OPUS, WEBM (automatically converted)
@@ -461,6 +353,7 @@ The API supports common audio formats with automatic conversion:
 ## Memory Requirements
 
 Approximate memory usage by model:
+
 - tiny: ~390 MB
 - base: ~500 MB
 - small: ~1.0 GB
@@ -474,20 +367,19 @@ Approximate memory usage by model:
 **Problem:** `cmake: command not found`
 
 **Solution:** Install cmake:
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install cmake
 
 # macOS
 brew install cmake
-
-# Or use Docker (recommended)
-docker-compose up --build
 ```
 
 **Problem:** `C++ compiler not found`
 
 **Solution:** Install build tools:
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install build-essential
@@ -524,11 +416,11 @@ make test
 ### Building Examples
 
 ```bash
-# Build Docker image
-make docker-build
+# Full build (builds whisper.cpp + Go server)
+make build-full
 
-# Run with docker-compose
-make docker-compose-up
+# Run in development mode
+make dev
 
 # Download a specific model
 make download-model MODEL=ggml-small.bin

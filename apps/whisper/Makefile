@@ -1,4 +1,4 @@
-.PHONY: help setup build build-full run docker-build docker-run download-model clean test
+.PHONY: help setup build build-full run download-model clean test
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -37,23 +37,6 @@ run: ## Run the application
 dev: ## Run in development mode
 	go run main.go
 
-docker-build: ## Build Docker image
-	docker build -t whisper-server .
-
-docker-run: ## Run Docker container
-	docker run -d \
-		-p 8080:8080 \
-		-v $(PWD)/models:/app/models \
-		-e MODEL_NAME=ggml-base.bin \
-		--name whisper-server \
-		whisper-server
-
-docker-compose-up: ## Start with docker-compose
-	docker-compose up -d
-
-docker-compose-down: ## Stop docker-compose
-	docker-compose down
-
 download-model: ## Download base model (use MODEL=model-name to specify)
 	./download-model.sh $(or $(MODEL),ggml-base.bin)
 
@@ -67,9 +50,3 @@ clean-all: clean ## Clean everything including whisper.cpp
 
 test: ## Run tests
 	go test -v ./...
-
-logs: ## Show docker logs
-	docker logs -f whisper-server
-
-stop: ## Stop docker container
-	docker stop whisper-server && docker rm whisper-server
