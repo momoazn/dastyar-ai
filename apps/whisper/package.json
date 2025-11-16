@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "C_INCLUDE_PATH=\"$(pwd)/whisper.cpp/include:$(pwd)/whisper.cpp/ggml/include\" LIBRARY_PATH=\"$(pwd)/whisper.cpp/build_go/src:$(pwd)/whisper.cpp/build_go/ggml/src:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-metal:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-blas:$(pwd)/whisper.cpp/build_go/ggml/src/ggml-cpu\" CGO_LDFLAGS=\"-L$(pwd)/whisper.cpp/build_go/src -L$(pwd)/whisper.cpp/build_go/ggml/src -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-metal -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-blas -L$(pwd)/whisper.cpp/build_go/ggml/src/ggml-cpu -framework Foundation -framework Metal -framework MetalKit\" go run main.go",
-    "build": "bash build.sh"
+    "download:ffmpeg": "bun download-ffmpeg.ts",
+    "download:ffmpeg:all": "bun download-ffmpeg.ts --all",
+    "download:model": "bun download-model.ts",
+    "test:api": "bun examples/test-api.ts"
   }
 }
