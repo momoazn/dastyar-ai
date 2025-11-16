@@ -91,54 +91,29 @@ function checkDependencies() {
   console.log("");
 }
 
-function buildWhisper() {
-  console.log("[1/4] Building Whisper Go binary...");
-
-  // Check if whisper.cpp is cloned
-  const whisperCppDir = join(WHISPER_DIR, "whisper.cpp");
-  if (!existsSync(whisperCppDir)) {
-    console.log("📥 whisper.cpp not found, cloning...");
-    console.warn("⚠️  This requires internet connection!");
-    run("git clone https://github.com/ggerganov/whisper.cpp.git", WHISPER_DIR);
-  }
-
-  // Auto-download FFmpeg binary for current platform if missing
-  const ffmpegBinDir = join(WHISPER_DIR, "ffmpeg-binaries");
-  ensureDir(ffmpegBinDir);
-
-  // Determine platform-specific FFmpeg binary name
-  const platform = process.platform;
-  const arch = process.arch;
-
-  let ffmpegFileName: string;
-  let ffmpegUrl: string;
-
-  if (platform === "win32") {
-    ffmpegFileName = "ffmpeg-windows-amd64.exe";
-    ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
-  } else if (platform === "darwin") {
-    ffmpegFileName = arch === "arm64" ? "ffmpeg-darwin-arm64" : "ffmpeg-darwin-amd64";
-    ffmpegUrl = "https://evermeet.cx/ffmpeg/ffmpeg-6.1.1.zip";
-  } else {
-    // Linux
-    ffmpegFileName = arch === "arm64" ? "ffmpeg-linux-arm64" : "ffmpeg-linux-amd64";
-    ffmpegUrl = arch === "arm64"
-      ? "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
-      : "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz";
-  }
-
+function downloadFFmpegIfNeeded(
+  ffmpegBinDir: string,
+  ffmpegFileName: string,
+  ffmpegUrl: string
+): string {
   const ffmpegBinPath = join(ffmpegBinDir, ffmpegFileName);
 
   if (existsSync(ffmpegBinPath)) {
-    console.log(`  ✓ FFmpeg binary found for ${platform}-${arch}`);
-  } else {
-    console.log(`📥 FFmpeg not found for ${platform}-${arch}, downloading...`);
-    console.warn("⚠️  This requires internet connection!");
-    try {
-      const tempDownloadScript = join(WHISPER_DIR, "download-ffmpeg-temp.sh");
-      const isZip = ffmpegUrl.endsWith(".zip");
+    console.log(
+      `  ✓ FFmpeg binary found for ${process.platform}-${process.arch}`
+    );
+    return ffmpegBinPath;
+  }
 
-      const downloadScript = `#!/bin/bash
+  console.log(
+    `📥 FFmpeg not found for ${process.platform}-${process.arch}, downloading...`
+  );
+  console.warn("⚠️  This requires internet connection!");
+
+  const tempDownloadScript = join(WHISPER_DIR, "download-ffmpeg-temp.sh");
+  const isZip = ffmpegUrl.endsWith(".zip");
+
+  const downloadScript = `#!/bin/bash
 set -e
 BIN_DIR="${ffmpegBinDir}"
 mkdir -p "$BIN_DIR"
@@ -166,60 +141,199 @@ rm -rf /tmp/ffmpeg-archive
 echo "✅ FFmpeg downloaded to $BIN_DIR/${ffmpegFileName}"
 `;
 
-      Bun.write(tempDownloadScript, downloadScript);
-      run(`chmod +x "${tempDownloadScript}"`);
-      run(`bash "${tempDownloadScript}"`, WHISPER_DIR);
-      run(`rm "${tempDownloadScript}"`);
+  try {
+    Bun.write(tempDownloadScript, downloadScript);
+    run(`chmod +x "${tempDownloadScript}"`);
+    run(`bash "${tempDownloadScript}"`, WHISPER_DIR);
+    run(`rm "${tempDownloadScript}"`);
 
-      console.log(`  ✓ FFmpeg for ${platform}-${arch} downloaded successfully`);
-    } catch (err) {
-      console.error("  ❌ Failed to download FFmpeg");
-      console.error("  You can manually download it to:", ffmpegBinPath);
-      throw err;
-    }
+    console.log(
+      `  ✓ FFmpeg for ${process.platform}-${process.arch} downloaded successfully`
+    );
+    return ffmpegBinPath;
+  } catch (err) {
+    console.error("  ❌ Failed to download FFmpeg");
+    console.error("  You can manually download it to:", ffmpegBinPath);
+    throw err;
   }
+}
 
-  // Store paths for copying to dist later
-  const ffmpegWindowsBin = join(ffmpegBinDir, "ffmpeg-windows-amd64.exe");
-  const ffmpegLinuxBin = join(ffmpegBinDir, "ffmpeg-linux-amd64");
-  const ffmpegDarwinBin = join(ffmpegBinDir, "ffmpeg-darwin-amd64");
+function countExistingModels(modelsDir: string): number {
+  if (!existsSync(modelsDir)) return 0;
 
-  // Auto-download base model if no models exist
-  const modelsDir = join(WHISPER_DIR, "models");
-  ensureDir(modelsDir);
-
-  let modelCount = 0;
-  if (existsSync(modelsDir)) {
-    try {
-      const result = execSync(`find "${modelsDir}" -name "*.bin" -type f`, {
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "ignore"],
-      });
-      modelCount = result.trim().split("\n").filter(Boolean).length;
-    } catch {
-      modelCount = 0;
-    }
+  try {
+    const result = execSync(`find "${modelsDir}" -name "*.bin" -type f`, {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    return result.trim().split("\n").filter(Boolean).length;
+  } catch {
+    return 0;
   }
+}
+
+function downloadBaseModelIfNeeded(modelsDir: string): number {
+  const modelCount = countExistingModels(modelsDir);
 
   if (modelCount === 0) {
     console.log("📥 No Whisper models found, downloading ggml-base.bin...");
     console.warn("⚠️  This requires internet connection!");
-    try {
-      const baseModelUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
-      const baseModelPath = join(modelsDir, "ggml-base.bin");
 
+    const baseModelUrl =
+      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
+    const baseModelPath = join(modelsDir, "ggml-base.bin");
+
+    try {
       console.log("  → Downloading from HuggingFace (~142MB)...");
-      run(`curl -L --progress-bar "${baseModelUrl}" -o "${baseModelPath}"`, WHISPER_DIR);
+      run(
+        `curl -L --progress-bar "${baseModelUrl}" -o "${baseModelPath}"`,
+        WHISPER_DIR
+      );
       console.log("  ✓ ggml-base.bin downloaded successfully");
-      modelCount = 1;
+      return 1;
     } catch (err) {
       console.error("  ❌ Failed to download base model");
-      console.error("  You can manually download it: cd apps/whisper && ./download-model.sh ggml-base.bin");
+      console.error(
+        "  You can manually download it: cd apps/whisper && ./download-model.sh ggml-base.bin"
+      );
       throw err;
     }
-  } else {
-    console.log(`  ✓ Found ${modelCount} model(s)`);
   }
+
+  console.log(`  ✓ Found ${modelCount} model(s)`);
+  return modelCount;
+}
+
+function determinePlatformFFmpeg(): { fileName: string; url: string } {
+  const platform = process.platform;
+  const arch = process.arch;
+
+  if (platform === "win32") {
+    return {
+      fileName: "ffmpeg-windows-amd64.exe",
+      url: "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    };
+  }
+
+  if (platform === "darwin") {
+    return {
+      fileName:
+        arch === "arm64" ? "ffmpeg-darwin-arm64" : "ffmpeg-darwin-amd64",
+      url: "https://evermeet.cx/ffmpeg/ffmpeg-6.1.1.zip",
+    };
+  }
+
+  // Linux
+  return {
+    fileName: arch === "arm64" ? "ffmpeg-linux-arm64" : "ffmpeg-linux-amd64",
+    url:
+      arch === "arm64"
+        ? "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
+        : "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz",
+  };
+}
+
+function copyWhisperBinary() {
+  const src = join(WHISPER_DIR, "whisper");
+  const dest = join(DIST, "whisper");
+
+  if (!existsSync(src)) {
+    throw new Error(`Whisper binary not found at ${src}`);
+  }
+
+  console.log("📋 Copying Whisper binary to dist/...");
+  safeCopyFile(src, dest);
+
+  if (!isWindows) {
+    run(`chmod +x "${dest}"`);
+  }
+}
+
+function copyWhisperModels() {
+  console.log("📋 Copying Whisper models to dist/models/...");
+  const modelsSrc = join(WHISPER_DIR, "models");
+  const modelsDest = join(DIST, "models");
+
+  if (!existsSync(modelsSrc)) {
+    console.warn("  ⚠️  No models directory found - skipping model copy");
+    console.warn(
+      "     Download models with: cd apps/whisper && ./download-model.sh ggml-base.bin"
+    );
+    return;
+  }
+
+  safeCopyDir(modelsSrc, modelsDest);
+
+  try {
+    const copiedModels = execSync(
+      `find "${modelsDest}" -name "*.bin" -type f 2>/dev/null || echo ""`,
+      { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] }
+    );
+    const copiedCount = copiedModels.trim().split("\n").filter(Boolean).length;
+
+    if (copiedCount > 0) {
+      console.log(`  ✓ Copied ${copiedCount} Whisper model(s) to dist/models/`);
+    } else {
+      console.warn("  ⚠️  No models copied - you'll need to add them manually");
+    }
+  } catch {
+    console.warn("  ⚠️  Could not verify model copy");
+  }
+}
+
+function copyFFmpegBinary(ffmpegBinPath: string) {
+  console.log("📋 Copying FFmpeg binary to dist/...");
+  const platform = process.platform;
+  const arch = process.arch;
+  const ffmpegDestName = isWindows ? "ffmpeg.exe" : "ffmpeg";
+  const ffmpegDestPath = join(DIST, ffmpegDestName);
+
+  if (!existsSync(ffmpegBinPath)) {
+    console.warn(`  ⚠️  FFmpeg binary not found at ${ffmpegBinPath}`);
+    return;
+  }
+
+  safeCopyFile(ffmpegBinPath, ffmpegDestPath);
+
+  if (!isWindows) {
+    try {
+      run(`chmod +x "${ffmpegDestPath}"`);
+    } catch {
+      // Ignore chmod errors
+    }
+  }
+
+  console.log(
+    `  ✓ Copied FFmpeg for ${platform}-${arch} to dist/${ffmpegDestName}`
+  );
+}
+
+function buildWhisper() {
+  console.log("[1/4] Building Whisper Go binary...");
+
+  // Check if whisper.cpp is cloned
+  const whisperCppDir = join(WHISPER_DIR, "whisper.cpp");
+  if (!existsSync(whisperCppDir)) {
+    console.log("📥 whisper.cpp not found, cloning...");
+    console.warn("⚠️  This requires internet connection!");
+    run("git clone https://github.com/ggerganov/whisper.cpp.git", WHISPER_DIR);
+  }
+
+  // Auto-download FFmpeg binary for current platform
+  const ffmpegBinDir = join(WHISPER_DIR, "ffmpeg-binaries");
+  ensureDir(ffmpegBinDir);
+  const { fileName: ffmpegFileName, url: ffmpegUrl } =
+    determinePlatformFFmpeg();
+  const ffmpegBinPath = downloadFFmpegIfNeeded(
+    ffmpegBinDir,
+    ffmpegFileName,
+    ffmpegUrl
+  );
+
+  // Auto-download base model if no models exist
+  const modelsDir = join(WHISPER_DIR, "models");
+  ensureDir(modelsDir);
+  downloadBaseModelIfNeeded(modelsDir);
 
   console.log("📦 Building Whisper Go server with whisper.cpp...");
 
@@ -236,85 +350,9 @@ echo "✅ FFmpeg downloaded to $BIN_DIR/${ffmpegFileName}"
   // Run the build script
   run("bash build.sh", WHISPER_DIR);
 
-  const exeName = "whisper";
-  const src = join(WHISPER_DIR, exeName);
-  const dest = join(DIST, exeName);
-
-  if (!existsSync(src)) {
-    throw new Error(`Whisper binary not found at ${src}`);
-  }
-
-  console.log("📋 Copying Whisper binary to dist/...");
-  safeCopyFile(src, dest);
-
-  // Make executable on Unix
-  if (!isWindows) {
-    run(`chmod +x "${dest}"`);
-  }
-
-  // Copy Whisper models to dist/models/
-  console.log("📋 Copying Whisper models to dist/models/...");
-  const modelsSrc = join(WHISPER_DIR, "models");
-  const modelsDest = join(DIST, "models");
-
-  if (existsSync(modelsSrc)) {
-    safeCopyDir(modelsSrc, modelsDest);
-
-    // Count copied models
-    try {
-      const copiedModels = execSync(
-        `find "${modelsDest}" -name "*.bin" -type f 2>/dev/null || echo ""`,
-        {
-          encoding: "utf8",
-          stdio: ["pipe", "pipe", "ignore"],
-        }
-      );
-      const copiedCount = copiedModels
-        .trim()
-        .split("\n")
-        .filter(Boolean).length;
-
-      if (copiedCount > 0) {
-        console.log(
-          `  ✓ Copied ${copiedCount} Whisper model(s) to dist/models/`
-        );
-      } else {
-        console.warn(
-          "  ⚠️  No models copied - you'll need to add them manually"
-        );
-      }
-    } catch {
-      console.warn("  ⚠️  Could not verify model copy");
-    }
-  } else {
-    console.warn("  ⚠️  No models directory found - skipping model copy");
-    console.warn(
-      "     Download models with: cd apps/whisper && ./download-model.sh ggml-base.bin"
-    );
-  }
-
-  // Copy FFmpeg binary for current platform to dist/
-  console.log("📋 Copying FFmpeg binary to dist/...");
-
-  const ffmpegDestName = isWindows ? "ffmpeg.exe" : "ffmpeg";
-  const ffmpegDestPath = join(DIST, ffmpegDestName);
-
-  if (existsSync(ffmpegBinPath)) {
-    safeCopyFile(ffmpegBinPath, ffmpegDestPath);
-
-    // Make executable on Unix
-    if (!isWindows) {
-      try {
-        run(`chmod +x "${ffmpegDestPath}"`);
-      } catch {
-        // Ignore chmod errors
-      }
-    }
-
-    console.log(`  ✓ Copied FFmpeg for ${platform}-${arch} to dist/${ffmpegDestName}`);
-  } else {
-    console.warn(`  ⚠️  FFmpeg binary not found at ${ffmpegBinPath}`);
-  }
+  copyWhisperBinary();
+  copyWhisperModels();
+  copyFFmpegBinary(ffmpegBinPath);
 
   console.log("✅ Whisper Go binary built successfully");
 }
