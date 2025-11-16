@@ -433,8 +433,10 @@ function determinePlatformFFmpeg(): { fileName: string; url: string } {
 // =============================================================================
 
 function copyWhisperBinary() {
-  const src = join(WHISPER_DIR, "whisper");
-  const dest = join(DIST, "whisper");
+  const srcName = isWindows ? "whisper.exe" : "whisper";
+  const destName = isWindows ? "whisper.exe" : "whisper";
+  const src = join(WHISPER_DIR, srcName);
+  const dest = join(DIST, destName);
 
   if (!existsSync(src)) {
     throw new Error(`Whisper binary not found at ${src}`);
@@ -539,18 +541,56 @@ async function buildWhisper() {
 
   console.log("📦 Building Whisper Go server with whisper.cpp...");
 
-  if (isWindows) {
-    console.error(
-      "❌ Windows builds for Go Whisper are not yet supported in build.ts"
-    );
-    console.error(
-      "   Please build manually on Windows using: cd apps/whisper && build.sh"
-    );
-    process.exit(1);
-  }
+  // Build whisper.cpp with cmake
+  const whisperCppBuildDir = join(whisperCppDir, "build_go");
+  console.log("  → Building whisper.cpp library with cmake...");
 
-  // Run the build script
-  run("bash build.sh", WHISPER_DIR);
+  // Configure cmake
+  run(
+    "cmake -S . -B build_go -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=OFF",
+    whisperCppDir
+  );
+
+  // Build with cmake
+  run(
+    "cmake --build build_go --target whisper --config Release",
+    whisperCppDir
+  );
+  console.log("  ✓ whisper.cpp library built");
+
+  // Build Go application
+  console.log("  → Building Go whisper server...");
+  const whisperRoot = whisperCppDir;
+  const buildDir = whisperCppBuildDir;
+  const ggmlSrc = join(buildDir, "ggml", "src");
+
+  // Set up Go build environment
+  const goWorkDir = join(WHISPER_DIR, ".go-work");
+  const goCacheDir = join(goWorkDir, "build-cache");
+  const goModCacheDir = join(goWorkDir, "pkg", "mod");
+
+  ensureDir(goCacheDir);
+  ensureDir(goModCacheDir);
+
+  const buildEnv = {
+    ...process.env,
+    GOPATH: goWorkDir,
+    GOCACHE: goCacheDir,
+    GOMODCACHE: goModCacheDir,
+    C_INCLUDE_PATH: `${join(whisperRoot, "include")}${isWindows ? ";" : ":"}${join(whisperRoot, "ggml", "include")}`,
+    LIBRARY_PATH: `${join(buildDir, "src")}${isWindows ? ";" : ":"}${ggmlSrc}`,
+    CGO_LDFLAGS: `-L${join(buildDir, "src")} -L${ggmlSrc}`,
+  };
+
+  // Build the Go binary
+  const outputName = isWindows ? "whisper.exe" : "whisper";
+  execSync(`go build -o ${outputName} .`, {
+    cwd: WHISPER_DIR,
+    stdio: "inherit",
+    env: buildEnv,
+  });
+
+  console.log("  ✓ Go whisper server built");
 
   copyWhisperBinary();
   await copyWhisperModels();
