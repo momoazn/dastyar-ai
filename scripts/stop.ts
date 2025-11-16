@@ -16,6 +16,10 @@ import { execSync } from "node:child_process";
 
 const isWindows = process.platform === "win32";
 
+// Regex patterns at top level for performance
+const WHITESPACE_REGEX = /\s+/;
+const NUMERIC_REGEX = /^\d+$/;
+
 const services = {
   whisper: {
     name: "Whisper API",
@@ -56,12 +60,14 @@ function killByPort(port: number): boolean {
       // Windows: Find PID and kill
       const findCmd = `netstat -ano | findstr :${port}`;
       const output = execSync(findCmd, { encoding: "utf8" });
-      const lines = output.split("\n").filter((line) => line.includes("LISTENING"));
+      const lines = output
+        .split("\n")
+        .filter((line) => line.includes("LISTENING"));
 
       for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        const pid = parts[parts.length - 1];
-        if (pid && /^\d+$/.test(pid)) {
+        const parts = line.trim().split(WHITESPACE_REGEX);
+        const pid = parts.at(-1);
+        if (pid && NUMERIC_REGEX.test(pid)) {
           execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
         }
       }
@@ -88,7 +94,7 @@ function stopService(service: ServiceName): void {
 
   // Try to kill by process name
   if (killProcess(processName)) {
-    console.log(`   ✅ Stopped by process name`);
+    console.log("   ✅ Stopped by process name");
     stopped = true;
   }
 
@@ -99,7 +105,7 @@ function stopService(service: ServiceName): void {
   }
 
   if (!stopped) {
-    console.log(`   ℹ️  Not running or already stopped`);
+    console.log("   ℹ️  Not running or already stopped");
   }
 
   console.log("");

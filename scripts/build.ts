@@ -15,10 +15,10 @@
 
 import { execSync } from "node:child_process";
 import { join } from "node:path";
-import { checkDependencies } from "./tasks/check-dependencies";
-import { buildWeb } from "./tasks/build-web";
 import { buildServer } from "./tasks/build-server";
+import { buildWeb } from "./tasks/build-web";
 import { buildWhisper } from "./tasks/build-whisper";
+import { checkDependencies } from "./tasks/check-dependencies";
 import { packageDist } from "./tasks/package-dist";
 
 const ROOT = join(import.meta.dir, "..");
@@ -78,15 +78,15 @@ async function main() {
     checkDependencies();
 
     // Step 1: Install Node dependencies
-    if (!options.skipDeps) {
+    if (options.skipDeps) {
+      console.log("⏭️  Skipping dependency installation\n");
+    } else {
       console.log("📦 Installing dependencies...");
       execSync("bun install", {
         cwd: ROOT,
         stdio: "inherit",
       });
       console.log("✅ Dependencies installed\n");
-    } else {
-      console.log("⏭️  Skipping dependency installation\n");
     }
 
     // Step 2: Build web frontend
@@ -136,9 +136,13 @@ async function main() {
     console.log("============================================================");
   } catch (error) {
     console.error("");
-    console.error("============================================================");
+    console.error(
+      "============================================================"
+    );
     console.error("❌ BUILD FAILED");
-    console.error("============================================================");
+    console.error(
+      "============================================================"
+    );
     console.error("");
     console.error("Error:", error instanceof Error ? error.message : error);
     console.error("");

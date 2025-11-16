@@ -27,32 +27,32 @@ export function checkDependencies(): void {
 
   const errors: string[] = [];
 
-  if (!deps.bun) {
-    errors.push("❌ Bun is required - Install from: https://bun.sh");
-  } else {
+  if (deps.bun) {
     console.log("  ✓ Bun found");
+  } else {
+    errors.push("❌ Bun is required - Install from: https://bun.sh");
   }
 
-  if (!deps.go) {
-    errors.push("❌ Go is required - Install from: https://go.dev/dl/");
-  } else {
+  if (deps.go) {
     console.log("  ✓ Go found");
+  } else {
+    errors.push("❌ Go is required - Install from: https://go.dev/dl/");
   }
 
-  if (!deps.cmake) {
-    errors.push("❌ CMake is required - Install from: https://cmake.org/");
-  } else {
+  if (deps.cmake) {
     console.log("  ✓ CMake found");
+  } else {
+    errors.push("❌ CMake is required - Install from: https://cmake.org/");
   }
 
-  if (!deps.git) {
-    errors.push("❌ Git is required");
-  } else {
+  if (deps.git) {
     console.log("  ✓ Git found");
+  } else {
+    errors.push("❌ Git is required");
   }
 
   if (errors.length > 0) {
-    console.error("\n" + errors.join("\n"));
+    console.error(`\n${errors.join("\n")}`);
     process.exit(1);
   }
 

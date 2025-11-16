@@ -96,8 +96,8 @@ async function startService(service: ServiceName): Promise<void> {
   if (await checkPort(port)) {
     console.log(`   ✅ Started successfully at ${url}`);
   } else {
-    console.log(`   ⚠️  Service started but not responding yet`);
-    console.log(`   Check logs for details`);
+    console.log("   ⚠️  Service started but not responding yet");
+    console.log("   Check logs for details");
   }
 
   console.log("");

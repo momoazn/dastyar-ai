@@ -49,11 +49,14 @@ export function packageDist(): void {
 
   // Copy FFmpeg
   const ffmpegBinDir = join(ROOT, "apps/whisper/ffmpeg-binaries");
-  const ffmpegName = isWindows
-    ? "ffmpeg-windows-amd64.exe"
-    : process.arch === "arm64"
-      ? `ffmpeg-${process.platform}-arm64`
-      : `ffmpeg-${process.platform}-amd64`;
+  let ffmpegName: string;
+  if (isWindows) {
+    ffmpegName = "ffmpeg-windows-amd64.exe";
+  } else if (process.arch === "arm64") {
+    ffmpegName = `ffmpeg-${process.platform}-arm64`;
+  } else {
+    ffmpegName = `ffmpeg-${process.platform}-amd64`;
+  }
   const ffmpegSrc = join(ffmpegBinDir, ffmpegName);
   const ffmpegDest = join(DIST, isWindows ? "ffmpeg.exe" : "ffmpeg");
 

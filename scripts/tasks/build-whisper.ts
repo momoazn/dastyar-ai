@@ -27,19 +27,22 @@ export async function buildWhisper(): Promise<void> {
   const ffmpegBinDir = join(WHISPER_DIR, "ffmpeg-binaries");
   mkdirSync(ffmpegBinDir, { recursive: true });
 
-  const ffmpegFileName = isWindows
-    ? "ffmpeg-windows-amd64.exe"
-    : process.arch === "arm64"
-      ? `ffmpeg-${process.platform}-arm64`
-      : `ffmpeg-${process.platform}-amd64`;
+  let ffmpegFileName: string;
+  if (isWindows) {
+    ffmpegFileName = "ffmpeg-windows-amd64.exe";
+  } else if (process.arch === "arm64") {
+    ffmpegFileName = `ffmpeg-${process.platform}-arm64`;
+  } else {
+    ffmpegFileName = `ffmpeg-${process.platform}-amd64`;
+  }
 
   const ffmpegPath = join(ffmpegBinDir, ffmpegFileName);
 
-  if (!existsSync(ffmpegPath)) {
+  if (existsSync(ffmpegPath)) {
+    console.log("  ✓ FFmpeg found");
+  } else {
     console.log("  → Downloading FFmpeg...");
     await downloadFFmpeg(ffmpegBinDir, ffmpegFileName);
-  } else {
-    console.log("  ✓ FFmpeg found");
   }
 
   // Download base model if no models exist
@@ -104,20 +107,21 @@ export async function buildWhisper(): Promise<void> {
   console.log("✅ Whisper binary built successfully\n");
 }
 
-async function downloadFFmpeg(
-  binDir: string,
-  fileName: string
-): Promise<void> {
-  const url =
-    process.platform === "win32"
-      ? "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-      : process.platform === "darwin"
-        ? "https://evermeet.cx/ffmpeg/ffmpeg-6.1.1.zip"
-        : process.arch === "arm64"
-          ? "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz"
-          : "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz";
+async function downloadFFmpeg(binDir: string, fileName: string): Promise<void> {
+  let url: string;
+  if (process.platform === "win32") {
+    url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
+  } else if (process.platform === "darwin") {
+    url = "https://evermeet.cx/ffmpeg/ffmpeg-6.1.1.zip";
+  } else if (process.arch === "arm64") {
+    url =
+      "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz";
+  } else {
+    url =
+      "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz";
+  }
 
-  const archivePath = join(binDir, `ffmpeg-archive`);
+  const archivePath = join(binDir, "ffmpeg-archive");
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -131,12 +135,9 @@ async function downloadFFmpeg(
     const zip = await new JSZip().loadAsync(zipData);
 
     let ffmpegEntry: JSZip.JSZipObject | null = null;
-    for (const fileName of Object.keys(zip.files)) {
-      if (
-        fileName.endsWith("ffmpeg.exe") ||
-        fileName.endsWith("ffmpeg")
-      ) {
-        ffmpegEntry = zip.files[fileName];
+    for (const entryName of Object.keys(zip.files)) {
+      if (entryName.endsWith("ffmpeg.exe") || entryName.endsWith("ffmpeg")) {
+        ffmpegEntry = zip.files[entryName];
         break;
       }
     }
@@ -150,7 +151,10 @@ async function downloadFFmpeg(
   }
 }
 
-async function downloadModel(modelsDir: string, modelName: string): Promise<void> {
+async function downloadModel(
+  modelsDir: string,
+  modelName: string
+): Promise<void> {
   const url = `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${modelName}`;
   const response = await fetch(url);
 
