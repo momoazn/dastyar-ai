@@ -108,6 +108,7 @@ function checkDependencies() {
 // Whisper Build - Dependency Management (FFmpeg & Models)
 // =============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Download/extract logic inherently complex
 async function downloadFFmpegIfNeeded(
   ffmpegBinDir: string,
   ffmpegFileName: string,
@@ -130,43 +131,59 @@ async function downloadFFmpegIfNeeded(
   ensureDir(ffmpegBinDir);
 
   try {
-    console.log(`  → Downloading from ${ffmpegUrl}...`);
-
-    // Download the FFmpeg archive
-    const archivePath = join(ffmpegBinDir, "ffmpeg-archive");
-    const response = await fetch(ffmpegUrl);
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to download FFmpeg: ${response.status} ${response.statusText}`
-      );
+    // Determine archive file extension and path
+    let archiveExt = ".tar.gz";
+    if (ffmpegUrl.endsWith(".zip")) {
+      archiveExt = ".zip";
+    } else if (ffmpegUrl.endsWith(".tar.xz")) {
+      archiveExt = ".tar.xz";
     }
+    const archivePath = join(
+      ffmpegBinDir,
+      `ffmpeg-${process.platform}-${process.arch}${archiveExt}`
+    );
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Failed to get response body reader");
-    }
+    // Check if archive already exists
+    if (existsSync(archivePath)) {
+      console.log("  ✓ Using cached FFmpeg archive");
+    } else {
+      console.log(`  → Downloading from ${ffmpegUrl}...`);
 
-    const total = Number(response.headers.get("content-length")) || 0;
-    let received = 0;
+      // Download the FFmpeg archive
+      const response = await fetch(ffmpegUrl);
 
-    // Create write stream
-    const file = Bun.file(archivePath).writer();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      received += value.length;
-      file.write(value);
-
-      if (total > 0) {
-        const percent = ((received / total) * 100).toFixed(1);
-        process.stdout.write(`\r  → Downloaded ${percent}%`);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to download FFmpeg: ${response.status} ${response.statusText}`
+        );
       }
-    }
 
-    console.log("");
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Failed to get response body reader");
+      }
+
+      const total = Number(response.headers.get("content-length")) || 0;
+      let received = 0;
+
+      // Create write stream
+      const file = Bun.file(archivePath).writer();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        received += value.length;
+        file.write(value);
+
+        if (total > 0) {
+          const percent = ((received / total) * 100).toFixed(1);
+          process.stdout.write(`\r  → Downloaded ${percent}%`);
+        }
+      }
+
+      console.log("");
+    }
 
     // Extract the archive
     const isZip = ffmpegUrl.endsWith(".zip");
@@ -191,16 +208,8 @@ async function downloadFFmpegIfNeeded(
       throw new Error(`FFmpeg binary not found at ${ffmpegBinPath}`);
     }
 
-    // Clean up archive
-    try {
-      const { unlinkSync } = await import("node:fs");
-      unlinkSync(archivePath);
-    } catch {
-      // Ignore cleanup errors
-    }
-
     console.log(
-      `  ✓ FFmpeg for ${process.platform}-${process.arch} downloaded successfully`
+      `  ✓ FFmpeg for ${process.platform}-${process.arch} ready (archive cached for future builds)`
     );
     return ffmpegBinPath;
   } catch (err) {
