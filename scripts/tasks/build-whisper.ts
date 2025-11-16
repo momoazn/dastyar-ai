@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import JSZip from "jszip";
 
@@ -10,6 +10,7 @@ const WHISPER_DIR = join(ROOT, "apps/whisper");
 const DIST_DIR = join(ROOT, "dist");
 
 const isWindows = process.platform === "win32";
+const CMAKE_GENERATOR_REGEX = /CMAKE_GENERATOR:INTERNAL=(.+)/;
 
 function hasCommand(cmd: string): boolean {
   try {
@@ -150,14 +151,38 @@ export async function buildWhisper(): Promise<void> {
   console.log("  → Building whisper.cpp library...");
 
   // Determine CMake generator for Windows
+  let generator: string | null = null;
+  if (isWindows) {
+    generator = checkWindowsCompiler();
+  }
+
+  // Clean build directory if generator has changed
+  const buildDir = join(whisperCppDir, "build_go");
+  const cmakeCachePath = join(buildDir, "CMakeCache.txt");
+
+  if (existsSync(cmakeCachePath) && generator) {
+    try {
+      const cacheContent = await Bun.file(cmakeCachePath).text();
+      const generatorMatch = cacheContent.match(CMAKE_GENERATOR_REGEX);
+
+      if (generatorMatch && generatorMatch[1] !== generator) {
+        console.log(
+          `  → Cleaning old build (generator changed: ${generatorMatch[1]} → ${generator})...`
+        );
+        rmSync(buildDir, { recursive: true, force: true });
+      }
+    } catch {
+      // If we can't read the cache, clean it to be safe
+      console.log("  → Cleaning build directory...");
+      rmSync(buildDir, { recursive: true, force: true });
+    }
+  }
+
   let cmakeConfigCmd =
     "cmake -S . -B build_go -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=OFF";
 
-  if (isWindows) {
-    const generator = checkWindowsCompiler();
-    if (generator) {
-      cmakeConfigCmd += ` -G "${generator}"`;
-    }
+  if (generator) {
+    cmakeConfigCmd += ` -G "${generator}"`;
   }
 
   execSync(cmakeConfigCmd, {
@@ -172,7 +197,6 @@ export async function buildWhisper(): Promise<void> {
 
   // Build Go application
   console.log("  → Building Go whisper server...");
-  const buildDir = join(whisperCppDir, "build_go");
   const ggmlSrc = join(buildDir, "ggml", "src");
 
   const goWorkDir = join(WHISPER_DIR, ".go-work");
