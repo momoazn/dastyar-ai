@@ -9,6 +9,7 @@ import {
   readFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import JSZip from "jszip";
 
 // =============================================================================
 // Constants & Paths
@@ -211,18 +212,16 @@ async function downloadFFmpegIfNeeded(
 
 async function extractZip(
   zipPath: string,
-  extractDir: string,
+  _extractDir: string,
   outputPath: string
 ): Promise<void> {
   // Use JavaScript library for cross-platform ZIP extraction
   try {
-    const JSZip = (await import("https://cdn.skypack.dev/jszip@3.10.1"))
-      .default;
     const zipData = await Bun.file(zipPath).arrayBuffer();
     const zip = await new JSZip().loadAsync(zipData);
 
     // Find ffmpeg binary in the ZIP
-    let ffmpegEntry: any = null;
+    let ffmpegEntry: JSZip.JSZipObject | null = null;
 
     // Common locations for ffmpeg in Windows builds
     const possiblePaths = [
