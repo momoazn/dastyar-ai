@@ -10,8 +10,59 @@ const WHISPER_DIR = join(ROOT, "apps/whisper");
 
 const isWindows = process.platform === "win32";
 
+function hasCommand(cmd: string): boolean {
+  try {
+    execSync(isWindows ? `where ${cmd}` : `which ${cmd}`, {
+      stdio: "ignore",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function checkWindowsCompiler(): string | null {
+  // Check for MinGW
+  if (hasCommand("gcc") && hasCommand("g++")) {
+    console.log("  ✓ Found MinGW compiler");
+    return "MinGW Makefiles";
+  }
+
+  // Check for Visual Studio
+  if (hasCommand("cl")) {
+    console.log("  ✓ Found Visual Studio compiler");
+    return "NMake Makefiles";
+  }
+
+  return null;
+}
+
 export async function buildWhisper(): Promise<void> {
   console.log("📦 Building Whisper Go binary...");
+
+  // Check for C++ compiler on Windows
+  if (isWindows) {
+    const generator = checkWindowsCompiler();
+    if (!generator) {
+      console.error("");
+      console.error("❌ No C++ compiler found!");
+      console.error("");
+      console.error("You need to install one of the following:");
+      console.error("");
+      console.error("Option 1: MinGW-w64 (Recommended)");
+      console.error("  Download: https://www.mingw-w64.org/");
+      console.error("  Or use: winget install -e --id=MSYS2.MSYS2");
+      console.error("  Then: pacman -S mingw-w64-x86_64-gcc");
+      console.error("");
+      console.error("Option 2: Visual Studio Build Tools");
+      console.error(
+        "  Download: https://visualstudio.microsoft.com/downloads/"
+      );
+      console.error("  Select: Desktop development with C++");
+      console.error("");
+      throw new Error("C++ compiler required for building Whisper");
+    }
+  }
 
   // Check if whisper.cpp is cloned
   const whisperCppDir = join(WHISPER_DIR, "whisper.cpp");
@@ -65,13 +116,22 @@ export async function buildWhisper(): Promise<void> {
 
   // Build whisper.cpp with cmake
   console.log("  → Building whisper.cpp library...");
-  execSync(
-    "cmake -S . -B build_go -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=OFF",
-    {
-      cwd: whisperCppDir,
-      stdio: "inherit",
+
+  // Determine CMake generator for Windows
+  let cmakeConfigCmd =
+    "cmake -S . -B build_go -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=OFF";
+
+  if (isWindows) {
+    const generator = checkWindowsCompiler();
+    if (generator) {
+      cmakeConfigCmd += ` -G "${generator}"`;
     }
-  );
+  }
+
+  execSync(cmakeConfigCmd, {
+    cwd: whisperCppDir,
+    stdio: "inherit",
+  });
 
   execSync("cmake --build build_go --target whisper --config Release", {
     cwd: whisperCppDir,
