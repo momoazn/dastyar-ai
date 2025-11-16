@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import JSZip from "jszip";
 
 const ROOT = join(import.meta.dir, "../..");
 const WHISPER_DIR = join(ROOT, "apps/whisper");
+const DIST_DIR = join(ROOT, "dist");
 
 const isWindows = process.platform === "win32";
 
@@ -88,9 +89,14 @@ export async function buildWhisper(): Promise<void> {
   }
 
   const ffmpegPath = join(ffmpegBinDir, ffmpegFileName);
+  const ffmpegDistPath = join(DIST_DIR, isWindows ? "ffmpeg.exe" : "ffmpeg");
 
+  // Check if FFmpeg exists in whisper dir or dist dir
   if (existsSync(ffmpegPath)) {
-    console.log("  ✓ FFmpeg found");
+    console.log("  ✓ FFmpeg found in whisper directory");
+  } else if (existsSync(ffmpegDistPath)) {
+    console.log("  ✓ FFmpeg found in dist directory, copying to whisper...");
+    cpSync(ffmpegDistPath, ffmpegPath);
   } else {
     console.log("  → Downloading FFmpeg...");
     await downloadFFmpeg(ffmpegBinDir, ffmpegFileName);
@@ -98,20 +104,29 @@ export async function buildWhisper(): Promise<void> {
 
   // Download base model if no models exist
   const modelsDir = join(WHISPER_DIR, "models");
+  const distModelsDir = join(DIST_DIR, "models");
   mkdirSync(modelsDir, { recursive: true });
 
+  // Check for models in whisper directory
   const modelFiles = existsSync(modelsDir)
-    ? Bun.file(modelsDir)
-        .toString()
-        .split("\n")
-        .filter((f) => f.endsWith(".bin"))
+    ? readdirSync(modelsDir).filter((f) => f.endsWith(".bin"))
     : [];
 
-  if (modelFiles.length === 0) {
+  // Check for models in dist directory
+  const distModelFiles = existsSync(distModelsDir)
+    ? readdirSync(distModelsDir).filter((f) => f.endsWith(".bin"))
+    : [];
+
+  if (modelFiles.length === 0 && distModelFiles.length === 0) {
     console.log("  → Downloading base model...");
     await downloadModel(modelsDir, "ggml-base.bin");
+  } else if (modelFiles.length === 0 && distModelFiles.length > 0) {
+    console.log(
+      `  ✓ Found ${distModelFiles.length} model(s) in dist, copying to whisper...`
+    );
+    cpSync(distModelsDir, modelsDir, { recursive: true });
   } else {
-    console.log(`  ✓ Found ${modelFiles.length} model(s)`);
+    console.log(`  ✓ Found ${modelFiles.length} model(s) in whisper directory`);
   }
 
   // Build whisper.cpp with cmake
