@@ -97,11 +97,3 @@ function removeTatweel(text: string): string {
 /**
  * Additional normalization: Half-width to full-width conversion for consistency
  */
-export function normalizeWidth(text: string): string {
-  // This is optional - converts half-width characters to full-width
-  // Not part of hazm but can be useful for consistency
-  return text
-    .replaceAll("\uFF0C", "،") // ， → ،
-    .replaceAll("\uFF1B", "؛") // ； → ؛
-    .replaceAll("\uFF1F", "؟"); // ？ → ؟
-}

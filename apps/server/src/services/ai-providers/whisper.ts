@@ -11,7 +11,7 @@ import { experimental_transcribe as aiTranscribe } from "ai";
 import { env, whisperModelIds } from "@/config";
 import { normalizePersianText } from "@/utils/persian-normalize";
 
-export type ModelInfo = { id: string; name: string };
+type ModelInfo = { id: string; name: string };
 
 const TRAILING_SLASH_REGEX = /\/$/;
 
@@ -79,7 +79,7 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
   return list;
 }
 
-export type TranscribeArgs = {
+type TranscribeArgs = {
   file: File;
   language?: string;
   model?: string;
@@ -143,7 +143,7 @@ export async function transcribe({
 }
 
 // Maps Whisper network/server errors to localized user-friendly messages
-export function mapTranscriptionError(message: string): Error {
+function mapTranscriptionError(message: string): Error {
   const lowerMsg = message.toLowerCase();
 
   // Explicit timeout/abort handling so users know to adjust server config

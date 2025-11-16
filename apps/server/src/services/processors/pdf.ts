@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { logger } from "@/lib/logger";
 import { ensurePdfjsNodePolyfills } from "@/lib/pdfjs-node-polyfills";
 
-export type PdfPage = { page: number; text: string };
+type PdfPage = { page: number; text: string };
 
 type PdfParseModule = typeof import("pdf-parse");
 

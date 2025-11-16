@@ -1,7 +1,13 @@
 #!/usr/bin/env bun
 
 import { execSync } from "node:child_process";
-import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+} from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -92,7 +98,18 @@ function buildWhisper() {
   const whisperCppDir = join(WHISPER_DIR, "whisper.cpp");
   if (!existsSync(whisperCppDir)) {
     console.log("📥 whisper.cpp not found, cloning...");
+    console.warn("⚠️  This requires internet connection!");
     run("git clone https://github.com/ggerganov/whisper.cpp.git", WHISPER_DIR);
+  }
+
+  // Check for embedded FFmpeg binaries (required for offline deployment)
+  const ffmpegBinDir = join(WHISPER_DIR, "internal", "ffmpeg", "bin");
+  if (!existsSync(ffmpegBinDir) || !existsSync(join(ffmpegBinDir, "ffmpeg-windows-amd64.exe"))) {
+    console.warn("⚠️  WARNING: FFmpeg binaries not found in internal/ffmpeg/bin/");
+    console.warn("   For offline Windows deployment, run: cd apps/whisper && ./download-ffmpeg.sh --all");
+    console.warn("   Current binaries will work only if FFmpeg is in system PATH");
+  } else {
+    console.log("  ✓ FFmpeg binaries found for embedding");
   }
 
   // Check if models directory exists and has at least one model
@@ -154,6 +171,35 @@ function buildWhisper() {
   // Make executable on Unix
   if (!isWindows) {
     run(`chmod +x "${dest}"`);
+  }
+
+  // Copy Whisper models to dist/models/
+  console.log("📋 Copying Whisper models to dist/models/...");
+  const modelsSrc = join(WHISPER_DIR, "models");
+  const modelsDest = join(DIST, "models");
+
+  if (existsSync(modelsSrc)) {
+    safeCopyDir(modelsSrc, modelsDest);
+
+    // Count copied models
+    try {
+      const copiedModels = execSync(`find "${modelsDest}" -name "*.bin" -type f 2>/dev/null || echo ""`, {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+      });
+      const copiedCount = copiedModels.trim().split("\n").filter(Boolean).length;
+
+      if (copiedCount > 0) {
+        console.log(`  ✓ Copied ${copiedCount} Whisper model(s) to dist/models/`);
+      } else {
+        console.warn("  ⚠️  No models copied - you'll need to add them manually");
+      }
+    } catch {
+      console.warn("  ⚠️  Could not verify model copy");
+    }
+  } else {
+    console.warn("  ⚠️  No models directory found - skipping model copy");
+    console.warn("     Download models with: cd apps/whisper && ./download-model.sh ggml-base.bin");
   }
 
   console.log("✅ Whisper Go binary built successfully");
@@ -227,6 +273,7 @@ This folder contains standalone executable binaries for Dastyar AI.
     isWindows ? "dastyar-ai.exe" : "dastyar-ai"
   }\` - Main API server with embedded web UI
 - \`web/\` - Static web assets (frontend)
+- \`models/\` - Whisper AI models (*.bin files)
 - \`config.json\` - Configuration file
 - \`.env.example\` - Environment variables example
 
@@ -301,18 +348,24 @@ The following directories are created automatically:
 
 ### Whisper Models
 
-Whisper supports these GGML models (download manually):
+The \`models/\` directory contains Whisper AI models (*.bin files).
+If no models are included, download them from HuggingFace:
+
+Available models:
 - \`ggml-tiny.bin\` - Fastest, least accurate (~75MB)
-- \`ggml-base.bin\` - Balanced (~142MB)
+- \`ggml-base.bin\` - Balanced (~142MB) - Recommended
 - \`ggml-small.bin\` - Good quality (~466MB)
 - \`ggml-medium.bin\` - High quality (~1.5GB)
 - \`ggml-large-v3.bin\` - Best quality (~2.9GB)
 
-Download models before first use:
+To add more models:
 \`\`\`bash
-# From the whisper directory or using download-model.sh
+# Download directly into the models/ directory
+cd models
 curl -L -o ggml-base.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
 \`\`\`
+
+The Whisper binary automatically detects all .bin files in the models/ directory.
 
 ## Ports
 
@@ -466,6 +519,7 @@ function validateDistStructure() {
   const optionalFiles = [
     { path: join(DIST, "config.json"), desc: "Configuration file" },
     { path: join(DIST, ".env.example"), desc: "Environment example file" },
+    { path: join(DIST, "models"), desc: "Whisper models directory" },
   ];
 
   let hasErrors = false;
@@ -535,6 +589,22 @@ function printBuildSummary() {
   console.log("\n📁 Assets:");
   console.log("   - web/ (Static frontend assets served by the server binary)");
 
+  const modelsPath = join(DIST, "models");
+  if (existsSync(modelsPath)) {
+    try {
+      const modelsResult = execSync(`find "${modelsPath}" -name "*.bin" -type f 2>/dev/null || echo ""`, {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+      });
+      const modelsCount = modelsResult.trim().split("\n").filter(Boolean).length;
+      if (modelsCount > 0) {
+        console.log(`   - models/ (${modelsCount} Whisper model(s))`);
+      }
+    } catch {
+      // Ignore count error
+    }
+  }
+
   const configPath = join(DIST, "config.json");
   const envPath = join(DIST, ".env.example");
   if (existsSync(configPath) || existsSync(envPath)) {
@@ -558,8 +628,128 @@ function printBuildSummary() {
     "   Keep the web/ folder next to the binary for the frontend to work."
   );
   console.log(
-    "\n⚠️  Note: Whisper requires ffmpeg to be installed and available in PATH."
+    "\n⚠️  Important Notes:"
   );
+  console.log("   - Whisper requires ffmpeg (either embedded or in system PATH)");
+  console.log("   - For offline deployment, ensure all models are in dist/models/");
+  console.log("   - Change JWT_SECRET in config.json before production use");
+  console.log(`${"=".repeat(60)}\n`);
+
+  // Print offline deployment checklist
+  printOfflineDeploymentChecklist();
+}
+
+function printOfflineDeploymentChecklist() {
+  console.log(`\n${"=".repeat(60)}`);
+  console.log("📋 OFFLINE WINDOWS DEPLOYMENT CHECKLIST");
+  console.log("=".repeat(60));
+
+  const modelsPath = join(DIST, "models");
+  const ffmpegBinDir = join(ROOT, "apps", "whisper", "internal", "ffmpeg", "bin");
+  const ffmpegWindowsBin = join(ffmpegBinDir, "ffmpeg-windows-amd64.exe");
+  const whisperExe = join(DIST, "whisper.exe");
+  const serverExe = join(DIST, "dastyar-ai.exe");
+
+  console.log("\n✅ Required for offline deployment:\n");
+
+  // Check Whisper models
+  let modelsOk = false;
+  if (existsSync(modelsPath)) {
+    try {
+      const result = execSync(`find "${modelsPath}" -name "*.bin" -type f 2>/dev/null || echo ""`, {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+      });
+      const count = result.trim().split("\n").filter(Boolean).length;
+      if (count > 0) {
+        console.log(`   ✅ Whisper models: ${count} model(s) in dist/models/`);
+        modelsOk = true;
+      } else {
+        console.log("   ❌ Whisper models: None found");
+      }
+    } catch {
+      console.log("   ⚠️  Whisper models: Could not verify");
+    }
+  } else {
+    console.log("   ❌ Whisper models: Directory not found");
+  }
+
+  // Check FFmpeg binaries
+  const ffmpegOk = existsSync(ffmpegWindowsBin);
+  if (ffmpegOk) {
+    console.log("   ✅ FFmpeg for Windows: Embedded in Whisper binary");
+  } else {
+    console.log("   ❌ FFmpeg for Windows: Not embedded");
+    console.log("      Run: cd apps/whisper && ./download-ffmpeg.sh --all");
+  }
+
+  // Check Windows binaries
+  const whisperWinOk = existsSync(whisperExe);
+  const serverWinOk = existsSync(serverExe);
+
+  if (whisperWinOk) {
+    console.log("   ✅ Whisper.exe: Built for Windows");
+  } else {
+    console.log("   ❌ Whisper.exe: Missing (build on Windows or cross-compile)");
+  }
+
+  if (serverWinOk) {
+    console.log("   ✅ Server.exe: Built for Windows");
+  } else {
+    console.log("   ❌ Server.exe: Missing");
+  }
+
+  // Check security
+  const configPath = join(DIST, "config.json");
+  let jwtSecure = false;
+  if (existsSync(configPath)) {
+    try {
+      const configContent = readFileSync(configPath, "utf8");
+      const config = JSON.parse(configContent) as { JWT_SECRET?: string };
+      const defaultSecret = "your-super-secret-jwt-key-change-this-in-production";
+      jwtSecure = config.JWT_SECRET !== defaultSecret && (config.JWT_SECRET?.length ?? 0) >= 32;
+
+      if (jwtSecure) {
+        console.log("   ✅ JWT_SECRET: Custom secure value set");
+      } else {
+        console.log("   ⚠️  JWT_SECRET: Using default or too short - CHANGE THIS!");
+      }
+    } catch {
+      console.log("   ⚠️  JWT_SECRET: Could not verify");
+    }
+  }
+
+  console.log("\n📝 Next steps:\n");
+
+  if (!modelsOk) {
+    console.log("   1. Download Whisper models:");
+    console.log("      cd apps/whisper && ./download-model.sh ggml-base.bin");
+    console.log("      Then rebuild: bun run build");
+  }
+
+  if (!ffmpegOk) {
+    console.log("   2. Download FFmpeg binaries:");
+    console.log("      cd apps/whisper && ./download-ffmpeg.sh --all");
+    console.log("      Then rebuild: bun run build");
+  }
+
+  if (!whisperWinOk && !isWindows) {
+    console.log("   3. Build Whisper for Windows:");
+    console.log("      (Requires building on Windows with Go, CMake, MinGW)");
+    console.log("      Or use cross-compilation if supported");
+  }
+
+  if (!jwtSecure) {
+    console.log("   4. Update JWT_SECRET in dist/config.json:");
+    console.log("      Generate: openssl rand -base64 48");
+    console.log("      Or use any secure random string (min 32 chars)");
+  }
+
+  console.log("\n💡 For complete offline deployment:");
+  console.log("   - Copy entire dist/ folder to Windows machine");
+  console.log("   - No internet connection needed after deployment");
+  console.log("   - All AI processing runs locally");
+
   console.log(`${"=".repeat(60)}\n`);
 }
 

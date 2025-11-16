@@ -130,7 +130,6 @@ const parseCSV = (value: string): string[] =>
 
 const whisper = parseCSV(env.WHISPER_MODELS);
 export const whisperModelIds = whisper.length > 0 ? whisper : ["tiny"];
-export const defaultWhisperModel = "tiny";
 
 const resolveWebDistDir = (baseDir: string): string =>
   isAbsolute(env.WEB_DIST_DIR)
@@ -165,5 +164,3 @@ export const ensureDirectoriesExist = (): void => {
 };
 
 export const runtimeBaseDir = _runtimeBaseDir;
-// Deprecated: offline model prefetch removed; keep API surface if imported elsewhere
-export const collectOfflineModelIds = (): string[] => [];
