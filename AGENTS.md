@@ -6,7 +6,36 @@ The monorepo is coordinated by Turbo and Bun workspaces. Place API logic in `app
 
 ## Build, Test, and Development Commands
 
-Install dependencies once with `bun install` at the repo root. Use `bun run dev` for the coordinated Turbo pipeline, or target individual surfaces with `bun run dev:web` and `bun run dev:server`. Produce release artifacts via `bun run build`, which executes `build.ts` to emit the Bun server binary. Cross-compile a Windows build from macOS with `bun run build:windows`, which targets `bun-windows-x64` and writes the executable into the dist tree. Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
+Install dependencies once with `bun install` at the repo root. Use `bun run dev` for the coordinated Turbo pipeline, or target individual surfaces with `bun run dev:web` and `bun run dev:server`. 
+
+### Build System
+
+The new modular build system in `scripts/` provides cross-platform build orchestration:
+
+**Main Build Commands:**
+- `bun run build` - Build for current platform (web + server + whisper)
+- `bun run build:windows` - Cross-compile Windows build from macOS/Linux
+- `bun run build:all` - Build for all platforms
+- `bun scripts/build.ts --skip-deps` - Skip dependency installation
+- `bun scripts/build.ts --skip-web` - Skip web frontend build
+- `bun scripts/build.ts --skip-server` - Skip server build
+- `bun scripts/build.ts --skip-whisper` - Skip whisper build
+
+**Service Management:**
+- `bun run start` - Start all services (whisper + server)
+- `bun run stop` - Stop all services
+- `bun run status` - Check service status
+
+**Download Utilities:**
+- `bun run download:ffmpeg` - Download FFmpeg binaries
+- `bun run download:model` - Download Whisper models
+
+**Testing:**
+- `bun run test:api` - Test Whisper API endpoints
+
+### Database & Quality
+
+Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
 
 ## Coding Style & Naming Conventions
 
