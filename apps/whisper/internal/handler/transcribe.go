@@ -20,7 +20,6 @@ type TranscribeHandler struct {
 	tempDir        string
 }
 
-
 type openAIModel struct {
 	ID      string `json:"id"`
 	Object  string `json:"object"`
@@ -68,7 +67,6 @@ func (h *TranscribeHandler) persistUpload(file multipart.File, header *multipart
 
 	return tempFile, nil
 }
-
 
 // HandleOpenAITranscriptions mirrors OpenAI's /v1/audio/transcriptions endpoint
 func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r *http.Request) {
@@ -132,10 +130,34 @@ func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r 
 	}
 
 	switch format {
-	case "json", "verbose_json":
+	case "json":
+		// OpenAI json format: only return text field
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(result)
+		json.NewEncoder(w).Encode(map[string]string{
+			"text": result.Text,
+		})
+	case "verbose_json":
+		// OpenAI verbose_json format: return full object with all fields
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Build OpenAI-compatible response structure
+		response := map[string]interface{}{
+			"text": result.Text,
+		}
+		if result.Language != "" {
+			response["language"] = result.Language
+		}
+		if result.Duration > 0 {
+			response["duration"] = result.Duration
+		}
+		if result.Task != "" {
+			response["task"] = result.Task
+		}
+		if len(result.Segments) > 0 {
+			response["segments"] = result.Segments
+		}
+		json.NewEncoder(w).Encode(response)
 	case "text":
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
@@ -152,7 +174,6 @@ func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r 
 		h.sendOpenAIError(w, fmt.Sprintf("Unsupported response_format %q", format), http.StatusBadRequest)
 	}
 }
-
 
 func (h *TranscribeHandler) HandleOpenAIModels(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -182,10 +203,6 @@ func (h *TranscribeHandler) HandleOpenAIModels(w http.ResponseWriter, r *http.Re
 		Data:   openAIModels,
 	})
 }
-
-
-
-
 
 func (h *TranscribeHandler) sendOpenAIError(w http.ResponseWriter, message string, statusCode int) {
 	errType := "invalid_request_error"
@@ -277,4 +294,3 @@ func formatVTTTimestamp(seconds float64) string {
 	milliseconds := int(d / time.Millisecond)
 	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, secondsPart, milliseconds)
 }
-

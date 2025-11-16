@@ -1,17 +1,26 @@
 /**
  * Whisper engine client
  *
- * This module integrates with the external Whisper FastAPI server
- * configured by `WHISPER_SERVER_URL`. It is distinct from the official
- * OpenAI Whisper API. To use OpenAI Whisper, use the OpenAI-specific provider
- * (see `openai-whisper.ts`).
+ * This module integrates with the external Whisper Go server
+ * configured by `WHISPER_SERVER_URL` using AI SDK transcription.
+ * The server exposes OpenAI-compatible APIs for transcription.
  */
+
+import { createOpenAI } from "@ai-sdk/openai";
+import { experimental_transcribe as aiTranscribe } from "ai";
 import { env, whisperModelIds } from "@/config";
 import { normalizePersianText } from "@/utils/persian-normalize";
 
 export type ModelInfo = { id: string; name: string };
 
 const TRAILING_SLASH_REGEX = /\/$/;
+
+// Create OpenAI provider for the Whisper server with custom baseURL
+const whisperBaseUrl = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
+const whisperProvider = createOpenAI({
+  baseURL: whisperBaseUrl,
+  apiKey: "", // Not needed for local Whisper server
+});
 
 // Static fallback model list with human-readable names
 const STATIC_MODELS: ModelInfo[] = [
@@ -28,7 +37,7 @@ type ModelsCache = { at: number; list: ModelInfo[] } | null;
 let _modelsCache: ModelsCache = null;
 const MODELS_TTL_MS = 60_000;
 
-// Lists models from the Whisper FastAPI server; falls back to config defaults
+// Lists models from the Whisper Go server; falls back to config defaults
 export async function getWhisperModels(): Promise<ModelInfo[]> {
   const now = Date.now();
   if (_modelsCache && now - _modelsCache.at < MODELS_TTL_MS) {
@@ -77,56 +86,49 @@ export type TranscribeArgs = {
   initialPrompt?: string;
 };
 
-// Transcribes via the Whisper FastAPI server at WHISPER_SERVER_URL
+// Transcribes via the Whisper Go server at WHISPER_SERVER_URL using AI SDK
 export async function transcribe({
   file,
   language,
   model,
   initialPrompt,
 }: TranscribeArgs): Promise<string> {
-  const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
-  const url = `${base}/v1/audio/transcriptions`;
-
-  // Validate model against available list; if unknown, omit and let server default
-  let forwardModel: string | undefined;
+  // Validate model against available list; if unknown, use default
+  let transcriptionModel = model ?? "base";
   try {
     const available = await getWhisperModels();
     if (model && available.some((m) => m.id === model)) {
-      forwardModel = model;
+      transcriptionModel = model;
+    } else if (!model && available.length > 0) {
+      transcriptionModel = available[0]?.id ?? "base";
     }
   } catch {
-    // ignore; use server default
+    // ignore; use default model
   }
 
-  const form = new FormData();
-  form.append("file", file as unknown as Blob, file.name);
-  if (forwardModel) {
-    form.append("model", forwardModel);
-  }
-  if (language) {
-    form.append("language", language);
-  }
-  if (initialPrompt) {
-    form.append("prompt", initialPrompt);
-  }
+  // Convert File to ArrayBuffer for AI SDK
+  const audioBuffer = await file.arrayBuffer();
+  const audioData = new Uint8Array(audioBuffer);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), env.WHISPER_TIMEOUT_MS);
+
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      body: form,
-      signal: controller.signal,
+    const result = await aiTranscribe({
+      model: whisperProvider.transcription(transcriptionModel),
+      audio: audioData,
+      providerOptions: {
+        openai: {
+          ...(language && { language }),
+          ...(initialPrompt && { prompt: initialPrompt }),
+        },
+      },
+      abortSignal: controller.signal,
     });
+
     clearTimeout(timer);
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(
-        `Whisper server error (${res.status}): ${text.slice(0, 200)}`
-      );
-    }
-    const json = (await res.json()) as { text?: string };
-    const output = (json?.text ?? "").trim();
+
+    const output = (result.text ?? "").trim();
 
     // Apply Persian text normalization to improve text quality
     // Converts Arabic chars to Persian, maps punctuation, removes tatweel
