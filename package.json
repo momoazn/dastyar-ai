@@ -23,7 +23,7 @@
     "download:ffmpeg": "bun scripts/downloads/download-ffmpeg.ts",
     "download:ffmpeg:all": "bun scripts/downloads/download-ffmpeg.ts --all",
     "download:model": "bun scripts/downloads/download-model.ts",
-    "test:api": "bun scripts/testing/test-api.ts",
+    "test:api": "bun scripts/testing/run-all-tests.ts",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
     "dev:whisper": "turbo -F whisper dev",
