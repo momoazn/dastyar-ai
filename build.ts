@@ -174,10 +174,10 @@ async function downloadFFmpegIfNeeded(
 
     if (isZip) {
       console.log("  → Extracting ZIP archive...");
-      extractZip(archivePath, ffmpegBinDir);
+      await extractZip(archivePath, ffmpegBinDir, ffmpegBinPath);
     } else if (isTar) {
       console.log("  → Extracting TAR archive...");
-      extractTar(archivePath, ffmpegBinDir);
+      await extractTar(archivePath, ffmpegBinDir);
     } else {
       // Assume it's a direct binary
       console.log("  → Copying binary...");
@@ -185,23 +185,18 @@ async function downloadFFmpegIfNeeded(
       await Bun.write(ffmpegBinPath, binaryData);
     }
 
-    // Find the FFmpeg binary in the extracted files
-    const extractedFiles = await findFiles(
-      ffmpegBinDir,
-      isWindows ? ["ffmpeg.exe"] : ["ffmpeg"]
-    );
-    if (extractedFiles.length === 0) {
-      throw new Error("Could not find FFmpeg binary in extracted archive");
+    // Verify the FFmpeg binary exists
+    if (!existsSync(ffmpegBinPath)) {
+      throw new Error(`FFmpeg binary not found at ${ffmpegBinPath}`);
     }
 
-    const extractedFfmpeg = extractedFiles[0];
-
-    // Copy to final location
-    const binaryData = await Bun.file(extractedFfmpeg).arrayBuffer();
-    await Bun.write(ffmpegBinPath, binaryData);
-
-    // Clean up
-    await cleanupDownload(archivePath, extractedFiles);
+    // Clean up archive
+    try {
+      const { unlinkSync } = await import("node:fs");
+      unlinkSync(archivePath);
+    } catch {
+      // Ignore cleanup errors
+    }
 
     console.log(
       `  ✓ FFmpeg for ${process.platform}-${process.arch} downloaded successfully`
@@ -214,19 +209,61 @@ async function downloadFFmpegIfNeeded(
   }
 }
 
-function extractZip(zipPath: string, extractDir: string) {
+async function extractZip(
+  zipPath: string,
+  extractDir: string,
+  outputPath: string
+): Promise<void> {
+  // Use JavaScript library for cross-platform ZIP extraction
   try {
-    // Try to use system unzip command if available
-    if (hasCommand("unzip")) {
-      run(`unzip -q "${zipPath}" -d "${extractDir}"`, extractDir);
-      return;
+    const JSZip = (await import("https://cdn.skypack.dev/jszip@3.10.1"))
+      .default;
+    const zipData = await Bun.file(zipPath).arrayBuffer();
+    const zip = await new JSZip().loadAsync(zipData);
+
+    // Find ffmpeg binary in the ZIP
+    let ffmpegEntry: any = null;
+
+    // Common locations for ffmpeg in Windows builds
+    const possiblePaths = [
+      "ffmpeg.exe",
+      "bin/ffmpeg.exe",
+      "ffmpeg-6.1.1-essentials_build/bin/ffmpeg.exe",
+      "ffmpeg/bin/ffmpeg.exe",
+    ];
+
+    for (const path of possiblePaths) {
+      if (zip.file(path)) {
+        ffmpegEntry = zip.file(path);
+        break;
+      }
     }
 
-    // Fallback: manual extraction using Node.js streams
-    // This is complex, so we'll just try to find an existing extraction
-    console.log("  ⚠️  Manual ZIP extraction not fully supported yet");
-    console.log("  💡 Consider installing 'unzip' or using Git Bash");
-    throw new Error("No unzip utility available");
+    if (!ffmpegEntry) {
+      // Fallback: find any file with "ffmpeg" in the name
+      const allFiles = Object.keys(zip.files);
+      const ffmpegFile = allFiles.find(
+        (name) =>
+          name.toLowerCase().includes("ffmpeg") &&
+          !name.endsWith(".txt") &&
+          !name.endsWith(".md") &&
+          !name.endsWith("/")
+      );
+
+      if (ffmpegFile) {
+        ffmpegEntry = zip.file(ffmpegFile);
+      }
+    }
+
+    if (!ffmpegEntry) {
+      throw new Error("Could not find ffmpeg.exe in ZIP archive");
+    }
+
+    // Extract the binary directly to final location
+    const binaryData = await ffmpegEntry.async("arraybuffer");
+    await Bun.write(outputPath, binaryData);
+
+    console.log(`  ✓ FFmpeg extracted to ${outputPath}`);
   } catch (err) {
     console.error("ZIP extraction error:", err);
     throw new Error(`Failed to extract ZIP: ${err.message}`);
@@ -234,16 +271,17 @@ function extractZip(zipPath: string, extractDir: string) {
 }
 
 function extractTar(tarPath: string, extractDir: string) {
+  // For TAR files, we'll try to use the tar command
   try {
-    // Try to use system tar command if available
     if (hasCommand("tar")) {
       run(`tar -xf "${tarPath}" -C "${extractDir}"`, extractDir);
       return;
     }
 
-    // Fallback: throw error with helpful message
-    console.log("  ⚠️  Manual TAR extraction not fully supported yet");
-    console.log("  💡 Consider installing 'tar' or using Git Bash");
+    // If tar is not available, provide helpful error
+    console.log("  ⚠️  TAR extraction requires 'tar' command");
+    console.log("  💡 On macOS/Linux: tar is usually pre-installed");
+    console.log("  💡 On Windows: Install Git Bash or WSL");
     throw new Error("No tar utility available");
   } catch (err) {
     console.error("TAR extraction error:", err);
@@ -280,41 +318,6 @@ async function findFiles(dir: string, patterns: string[]): Promise<string[]> {
 
   await walk(dir);
   return results;
-}
-
-async function cleanupDownload(
-  archivePath: string,
-  extractedFiles: string[]
-): Promise<void> {
-  try {
-    const { unlinkSync, rmSync } = await import("node:fs");
-
-    // Remove archive
-    try {
-      unlinkSync(archivePath);
-    } catch {
-      console.log("");
-    }
-
-    // Remove extracted directory
-    const tempDir = join(archivePath, "..");
-    try {
-      rmSync(tempDir, { recursive: true, force: true });
-    } catch {
-      console.log("");
-    }
-
-    // Remove any temporary files
-    for (const file of extractedFiles) {
-      try {
-        unlinkSync(file);
-      } catch {
-        console.log("");
-      }
-    }
-  } catch {
-    // Ignore cleanup errors
-  }
 }
 
 async function countExistingModels(modelsDir: string): Promise<number> {
