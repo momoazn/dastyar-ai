@@ -1,6 +1,0 @@
-# This directory contains embedded ffmpeg binaries
-#
-# Run `./download-ffmpeg.sh` from the apps/whisper directory to download
-# platform-specific ffmpeg binaries that will be embedded in the Go binary.
-#
-# The build script (build.sh) will automatically download these if missing.

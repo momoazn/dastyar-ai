@@ -31,4 +31,13 @@ go.work.sum
 # .idea/
 # .vscode/
 
+# Whisper models
 models/
+
+# FFmpeg binaries (downloaded during build)
+ffmpeg-binaries/
+
+# Temporary files
+temp/
+*.wav
+*_converted.wav

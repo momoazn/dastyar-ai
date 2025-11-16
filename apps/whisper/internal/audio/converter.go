@@ -6,23 +6,26 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"whisper/internal/ffmpeg"
 )
 
-// getFFmpegPath returns the path to ffmpeg, trying embedded version first
+// getFFmpegPath returns the path to ffmpeg, trying multiple sources in order
 func getFFmpegPath() (string, error) {
-	// Try embedded ffmpeg first
-	if ffmpeg.IsEmbedded() {
-		if path, err := ffmpeg.GetFFmpegPath(); err == nil {
-			return path, nil
-		}
+	// 1. Try current directory first (for standalone deployment)
+	currentDirFFmpeg := "./ffmpeg"
+	if _, err := os.Stat(currentDirFFmpeg); err == nil {
+		return currentDirFFmpeg, nil
 	}
 
-	// Fall back to system ffmpeg
+	// Windows executable in current directory
+	currentDirFFmpegExe := "./ffmpeg.exe"
+	if _, err := os.Stat(currentDirFFmpegExe); err == nil {
+		return currentDirFFmpegExe, nil
+	}
+
+	// 2. Fall back to system ffmpeg in PATH
 	path, err := exec.LookPath("ffmpeg")
 	if err != nil {
-		return "", fmt.Errorf("ffmpeg is not available: not embedded in binary and not found in PATH. Please install ffmpeg or use a build with embedded ffmpeg")
+		return "", fmt.Errorf("ffmpeg is not available: not found in current directory (./ffmpeg or ./ffmpeg.exe) and not found in system PATH. Please ensure ffmpeg is bundled or installed")
 	}
 	return path, nil
 }
