@@ -10,6 +10,65 @@ import {
 import { useUser } from "@/hooks/use-user";
 import { orpc } from "@/utils/orpc";
 
+type PreferenceKey = "summarizeModelId" | "translationModelId" | "codeModelId";
+type ModelAtom = typeof summarizeModelIdAtom;
+
+function usePreferenceBackedModelSelection(
+  atom: ModelAtom,
+  preferenceKey: PreferenceKey,
+  enabled = true
+) {
+  const [modelId, setModelId] = useAtom(atom);
+  const { data: user } = useUser();
+
+  const modelsQuery = useQuery(
+    orpc.models.list.queryOptions({
+      input: { isEnabled: true, sync: true },
+      enabled,
+    })
+  );
+
+  const preferencesQuery = useQuery({
+    ...orpc.settings.getPreferences.queryOptions(),
+    enabled: enabled && !!user,
+  });
+
+  useEffect(() => {
+    if (!(enabled && modelsQuery.data)) {
+      return;
+    }
+    if (modelId) {
+      return;
+    }
+
+    const preferredId = preferencesQuery.data?.[preferenceKey];
+    if (preferredId) {
+      setModelId(preferredId);
+      return;
+    }
+
+    if (modelsQuery.data.length > 0) {
+      setModelId(modelsQuery.data[0].id);
+    }
+  }, [
+    enabled,
+    modelId,
+    modelsQuery.data,
+    preferenceKey,
+    preferencesQuery.data,
+    setModelId,
+  ]);
+
+  return {
+    modelId,
+    setModelId,
+    models: modelsQuery.data || [],
+    isLoading: modelsQuery.isLoading || preferencesQuery.isLoading,
+    error: modelsQuery.error || preferencesQuery.error,
+    refetch: modelsQuery.refetch,
+  };
+}
+
 type UseFeatureModelSelectionOptions = {
   threadId?: number;
   enabled?: boolean;
@@ -96,49 +155,11 @@ export function useSummarizeModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  const [modelId, setModelId] = useAtom(summarizeModelIdAtom);
-  const { data: user } = useUser();
-
-  const modelsQuery = useQuery(
-    orpc.models.list.queryOptions({
-      input: { isEnabled: true, sync: true },
-      enabled,
-    })
+  return usePreferenceBackedModelSelection(
+    summarizeModelIdAtom,
+    "summarizeModelId",
+    enabled
   );
-
-  const preferencesQuery = useQuery({
-    ...orpc.settings.getPreferences.queryOptions(),
-    enabled: enabled && !!user,
-  });
-
-  useEffect(() => {
-    if (!(enabled && modelsQuery.data)) {
-      return;
-    }
-
-    // If no model is selected, set a default based on priority
-    if (!modelId) {
-      // Priority 1: User preference
-      if (preferencesQuery.data?.summarizeModelId) {
-        setModelId(preferencesQuery.data.summarizeModelId);
-        return;
-      }
-
-      // Priority 2: First available model
-      if (modelsQuery.data.length > 0) {
-        setModelId(modelsQuery.data[0].id);
-      }
-    }
-  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
-
-  return {
-    modelId,
-    setModelId,
-    models: modelsQuery.data || [],
-    isLoading: modelsQuery.isLoading,
-    error: modelsQuery.error,
-    refetch: modelsQuery.refetch,
-  };
 }
 
 // Translation model selection hook
@@ -147,49 +168,11 @@ export function useTranslationModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  const [modelId, setModelId] = useAtom(translationModelIdAtom);
-  const { data: user } = useUser();
-
-  const modelsQuery = useQuery(
-    orpc.models.list.queryOptions({
-      input: { isEnabled: true, sync: true },
-      enabled,
-    })
+  return usePreferenceBackedModelSelection(
+    translationModelIdAtom,
+    "translationModelId",
+    enabled
   );
-
-  const preferencesQuery = useQuery({
-    ...orpc.settings.getPreferences.queryOptions(),
-    enabled: enabled && !!user,
-  });
-
-  useEffect(() => {
-    if (!(enabled && modelsQuery.data)) {
-      return;
-    }
-
-    // If no model is selected, set a default based on priority
-    if (!modelId) {
-      // Priority 1: User preference
-      if (preferencesQuery.data?.translationModelId) {
-        setModelId(preferencesQuery.data.translationModelId);
-        return;
-      }
-
-      // Priority 2: First available model
-      if (modelsQuery.data.length > 0) {
-        setModelId(modelsQuery.data[0].id);
-      }
-    }
-  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
-
-  return {
-    modelId,
-    setModelId,
-    models: modelsQuery.data || [],
-    isLoading: modelsQuery.isLoading,
-    error: modelsQuery.error,
-    refetch: modelsQuery.refetch,
-  };
 }
 
 // Code model selection hook
@@ -198,47 +181,9 @@ export function useCodeModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  const [modelId, setModelId] = useAtom(codeModelIdAtom);
-  const { data: user } = useUser();
-
-  const modelsQuery = useQuery(
-    orpc.models.list.queryOptions({
-      input: { isEnabled: true, sync: true },
-      enabled,
-    })
+  return usePreferenceBackedModelSelection(
+    codeModelIdAtom,
+    "codeModelId",
+    enabled
   );
-
-  const preferencesQuery = useQuery({
-    ...orpc.settings.getPreferences.queryOptions(),
-    enabled: enabled && !!user,
-  });
-
-  useEffect(() => {
-    if (!(enabled && modelsQuery.data)) {
-      return;
-    }
-
-    // If no model is selected, set a default based on priority
-    if (!modelId) {
-      // Priority 1: User preference
-      if (preferencesQuery.data?.codeModelId) {
-        setModelId(preferencesQuery.data.codeModelId);
-        return;
-      }
-
-      // Priority 2: First available model
-      if (modelsQuery.data.length > 0) {
-        setModelId(modelsQuery.data[0].id);
-      }
-    }
-  }, [modelsQuery.data, modelId, setModelId, enabled, preferencesQuery.data]);
-
-  return {
-    modelId,
-    setModelId,
-    models: modelsQuery.data || [],
-    isLoading: modelsQuery.isLoading,
-    error: modelsQuery.error,
-    refetch: modelsQuery.refetch,
-  };
 }
