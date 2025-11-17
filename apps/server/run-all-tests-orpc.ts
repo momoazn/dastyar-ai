@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
 
+export {};
+
 console.log("===========================================");
 console.log("Running All API Tests (ORPC Client)");
 console.log("===========================================");
@@ -41,7 +43,7 @@ const tests = [
 ];
 
 let passedTests = 0;
-let totalTests = tests.length;
+const totalTests = tests.length;
 
 for (const test of tests) {
   console.log(`\n🧪 Running: ${test.name}`);
