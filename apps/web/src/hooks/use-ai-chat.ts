@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { tokenAtom } from "@/atoms/auth";
 import type { MyUIMessage } from "@/server/utils/chat";
 import { orpc } from "@/utils/orpc";
@@ -25,15 +25,19 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
     })
   );
 
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      }),
+    [token]
+  );
+
   const { messages, status, stop, sendMessage, setMessages } =
     useChat<MyUIMessage>({
       id: threadId.toString(),
-      transport: new DefaultChatTransport({
-        api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
+      transport,
       onFinish: () => {
         messagesQuery.refetch();
         onFinish?.();

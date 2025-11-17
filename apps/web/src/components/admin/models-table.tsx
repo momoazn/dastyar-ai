@@ -31,7 +31,7 @@ export function ModelsTable() {
         });
         toast.success(fa.admin.models.messages.statusUpdated);
       },
-      onError: (_err) => {
+      onError: () => {
         toast.error(fa.admin.models.messages.errorUpdatingStatus);
       },
     })

@@ -1,6 +1,7 @@
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { MessageCircleIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   Conversation,
   ConversationContent,
@@ -53,7 +54,7 @@ function RouteComponent() {
       hasSentInitialPromptRef.current = true;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
-        // Error silently handled - errors are already propagated from handleSendPrompt
+        toast.error("ارسال پیام اولیه ناموفق بود");
       });
     }
   }, [search, messages.length, handleSendPrompt]);

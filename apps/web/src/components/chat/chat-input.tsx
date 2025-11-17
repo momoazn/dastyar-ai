@@ -56,6 +56,7 @@ export const ChatInput = ({
   };
 
   const handleTranscriptionError = (error: string) => {
+    toast.error("تبدیل صدا به متن موفق نبود.");
     setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
   };
 

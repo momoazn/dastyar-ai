@@ -34,14 +34,20 @@ export function useChatThread() {
     if (!trimmed) {
       return;
     }
-    await client.threads.rename({
-      id: threadId,
-      title: trimmed.slice(0, 10),
-    });
 
-    await queryClient.invalidateQueries({
-      queryKey: orpc.threads.list.queryKey(),
-    });
+    try {
+      await client.threads.rename({
+        id: threadId,
+        title: trimmed.slice(0, 10),
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: orpc.threads.list.queryKey(),
+      });
+    } catch (error) {
+      toast.error("خطا در تغییر عنوان گفتگو");
+      throw error;
+    }
   }, []);
 
   const validatePrompt = useCallback((prompt: string) => prompt.trim(), []);

@@ -48,7 +48,7 @@ export function UsersTable() {
         toast.success(fa.admin.users.messages.roleUpdated);
         setChangeRoleDialogOpen(false);
       },
-      onError: (_err) => {
+      onError: () => {
         toast.error(fa.admin.users.messages.errorUpdatingRole);
       },
     })
@@ -60,7 +60,7 @@ export function UsersTable() {
         toast.success(fa.admin.users.messages.passwordUpdated);
         setResetPasswordDialogOpen(false);
       },
-      onError: (_err) => {
+      onError: () => {
         toast.error(fa.admin.users.messages.errorUpdatingPassword);
       },
     })

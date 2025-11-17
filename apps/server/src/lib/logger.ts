@@ -94,14 +94,13 @@ const serializeError = (error: unknown) => {
 };
 
 // Write to stdout/stderr synchronously - works in both dev and compiled binaries
-const writeLog = (message: string, isError = false) => {
-  const output = `${message}\n`;
-  // Use process.stdout/stderr.write() for synchronous output
-  if (isError) {
-    process.stderr.write(output);
-  } else {
-    process.stdout.write(output);
-  }
+const writeStructuredLog = (entry: LogEntry, isError = false) => {
+  const line =
+    process.env.LOG_FORMAT === "json"
+      ? JSON.stringify(entry)
+      : formatLogEntry(entry);
+  const target = isError ? process.stderr : process.stdout;
+  target.write(`${line}\n`);
 };
 
 const appendContextParts = (
@@ -256,10 +255,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), true);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), true);
-    }
+    writeStructuredLog(entry, true);
   },
 
   error: (message: string, error?: unknown, context?: LogContext) => {
@@ -274,10 +270,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), true);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), true);
-    }
+    writeStructuredLog(entry, true);
   },
 
   warn: (message: string, context?: LogContext) => {
@@ -291,10 +284,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), false);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), false);
-    }
+    writeStructuredLog(entry, false);
   },
 
   info: (message: string, context?: LogContext) => {
@@ -308,10 +298,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), false);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), false);
-    }
+    writeStructuredLog(entry, false);
   },
 
   debug: (message: string, context?: LogContext) => {
@@ -325,10 +312,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), false);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), false);
-    }
+    writeStructuredLog(entry, false);
   },
 
   trace: (message: string, context?: LogContext) => {
@@ -342,10 +326,7 @@ export const logger = {
       performance: { memory: getMemoryInfo() },
     };
 
-    writeLog(formatLogEntry(entry), false);
-    if (process.env.LOG_FORMAT === "json") {
-      writeLog(JSON.stringify(entry), false);
-    }
+    writeStructuredLog(entry, false);
   },
 
   withPerformance: async <T>(

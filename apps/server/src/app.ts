@@ -122,7 +122,6 @@ export function createApp() {
   });
 
   // 404 handler
-  app.notFound((c) => c.json({ error: "Not Found" }, 404));
   app.notFound((c) => {
     const isGet = c.req.method === "GET";
     const path = c.req.path;

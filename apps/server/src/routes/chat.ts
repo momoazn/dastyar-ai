@@ -13,7 +13,11 @@ import { logger } from "@/lib/logger";
 import { chatSystemPrompt } from "@/lib/prompts";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
-import { createMessage, updateMessage } from "@/repositories/messages";
+import {
+  appendMessageParts,
+  createMessage,
+  updateMessage,
+} from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
 import { getProviderForModel } from "@/services/ai-providers";
 import {
@@ -73,6 +77,15 @@ const app = new Hono<AuthEnv>()
           status: 404,
           code: "MODEL_NOT_FOUND",
           message: "No model exists with the provided id",
+          details: { modelId },
+        });
+      }
+
+      if (!llmModel.isEnabled) {
+        return sendError(c, {
+          status: 403,
+          code: "MODEL_DISABLED",
+          message: "The selected model is disabled",
           details: { modelId },
         });
       }
@@ -170,6 +183,36 @@ const app = new Hono<AuthEnv>()
       let accumulatedReasoning = "";
       let lastPersistTime = 0;
       let inFlightPersist: Promise<void> | null = null;
+      const flushPartialParts = () => {
+        if (!(accumulatedText || accumulatedReasoning)) {
+          return;
+        }
+
+        const partialParts: JsonValue[] = [];
+        if (accumulatedReasoning) {
+          partialParts.push({
+            type: "reasoning",
+            text: accumulatedReasoning,
+          } as JsonValue);
+          accumulatedReasoning = "";
+        }
+        if (accumulatedText) {
+          partialParts.push({
+            type: "text",
+            text: accumulatedText,
+          } as JsonValue);
+          accumulatedText = "";
+        }
+
+        const persistPromise = appendMessageParts({
+          id: assistantMessage.id,
+          parts: partialParts,
+          status: "streaming",
+        });
+        inFlightPersist = persistPromise.catch(() => {
+          inFlightPersist = null;
+        });
+      };
 
       const result = streamText({
         model: wrapLanguageModel({
@@ -192,27 +235,7 @@ const app = new Hono<AuthEnv>()
           const now = Date.now();
           if (now - lastPersistTime >= throttledUpdateIntervalMs) {
             lastPersistTime = now;
-
-            const partialParts: unknown[] = [];
-            if (accumulatedReasoning) {
-              partialParts.push({
-                type: "reasoning",
-                text: accumulatedReasoning,
-              });
-            }
-            if (accumulatedText) {
-              partialParts.push({ type: "text", text: accumulatedText });
-            }
-
-            const persistPromise = updateMessage({
-              id: assistantMessage.id,
-              parts: partialParts as JsonValue,
-              status: "streaming",
-            });
-            inFlightPersist = persistPromise.catch(() => {
-              // On transient failure we drop this update and wait for next tick
-              inFlightPersist = null;
-            });
+            flushPartialParts();
           }
         },
       });
@@ -225,6 +248,7 @@ const app = new Hono<AuthEnv>()
         sendReasoning: true,
         onFinish: async ({ responseMessage }) => {
           try {
+            flushPartialParts();
             if (inFlightPersist) {
               await inFlightPersist;
             }
