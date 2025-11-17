@@ -185,6 +185,12 @@ export async function buildWhisper(): Promise<void> {
     cmakeConfigCmd += ` -G "${generator}"`;
   }
 
+  // Add MinGW compiler paths for Windows
+  if (isWindows && generator === "MinGW Makefiles") {
+    const mingwPath = "C:\\msys64\\mingw64\\bin";
+    cmakeConfigCmd += ` -DCMAKE_C_COMPILER=${mingwPath}\\gcc.exe -DCMAKE_CXX_COMPILER=${mingwPath}\\g++.exe`;
+  }
+
   execSync(cmakeConfigCmd, {
     cwd: whisperCppDir,
     stdio: "inherit",
@@ -210,7 +216,7 @@ export async function buildWhisper(): Promise<void> {
     GOMODCACHE: join(goWorkDir, "pkg/mod"),
     C_INCLUDE_PATH: `${join(whisperCppDir, "include")}${isWindows ? ";" : ":"}${join(whisperCppDir, "ggml", "include")}`,
     LIBRARY_PATH: `${join(buildDir, "src")}${isWindows ? ";" : ":"}${ggmlSrc}`,
-    CGO_LDFLAGS: `-L${join(buildDir, "src")} -L${ggmlSrc}`,
+    CGO_LDFLAGS: `-L${join(buildDir, "src")} -L${ggmlSrc}${isWindows ? " -lgomp" : " -fopenmp"}`,
   };
 
   const outputName = isWindows ? "whisper.exe" : "whisper";
