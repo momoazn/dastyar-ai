@@ -35,7 +35,10 @@
     "db:generate": "turbo -F server db:generate",
     "db:migrate": "turbo -F server db:migrate",
     "lint:fix": "bun ultracite fix",
-    "lint:check": "bun ultracite check"
+    "lint:check": "bun ultracite check",
+    "clean": "bun run clean:deps && bun run clean:build",
+    "clean:deps": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
+    "clean:build": "rm -rf apps/*/dist apps/*/build apps/*/.vite apps/*/.turbo whisper/dist"
   },
   "workspaces": [
     "apps/*",
