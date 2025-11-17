@@ -76,7 +76,7 @@ function RouteComponent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [result, setResult] = useState("");
   const [language, setLanguage] = useState<"fa" | "en">("fa");
-  const [model, setModel] = useState<string>("tiny");
+  const [model, setModel] = useState<string>("ggml-base.bin");
 
   const {
     isRecording,

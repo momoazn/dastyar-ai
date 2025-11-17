@@ -1,4 +1,6 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
@@ -13,30 +15,91 @@ export const transcribeProcedures = {
   transcribe: publicProcedure
     .input(
       z.object({
-        file: z
-          .instanceof(Blob)
-          .refine((blob) => blob.size > 0, "File cannot be empty")
-          .and(z.object({ name: z.string() })),
+        file: z.preprocess(
+          (val) => {
+            // If it's already a File, return it
+            if (val instanceof File) {
+              return val;
+            }
+            // If it's a Blob-like object, try to convert it to File
+            if (val && typeof val === "object" && "size" in val) {
+              const blob = val as Blob;
+              return new File(
+                [blob],
+                (val as { name?: string }).name || "audio.webm",
+                {
+                  type: blob.type || "audio/webm",
+                }
+              );
+            }
+            return val;
+          },
+          z
+            .instanceof(File)
+            .refine((file) => file.size > 0, "File cannot be empty")
+        ),
         language: z.enum(["fa", "en"]).optional(),
         model: z.string().optional(),
         initialPrompt: z.string().optional(),
       })
     )
     .output(z.string())
-    .handler(async ({ input }) => {
-      const language = input.language ?? "fa";
-      const model = input.model ?? "large-v2";
+    .handler(async ({ input, context }) => {
+      try {
+        const language = input.language ?? "fa";
+        const model = input.model ?? "ggml-base.bin";
 
-      // Convert Blob & { name } to File for whisper service
-      const file = new File([input.file], input.file.name, {
-        type: input.file.type || "audio/webm",
-      });
+        logger.info("start of transcribe procedure, args", {
+          fileType: typeof input.file,
+          fileConstructor: input.file?.constructor?.name,
+          fileIsFile: input.file instanceof File,
+          fileIsBlob: input.file instanceof Blob,
+          fileName: input.file?.name,
+          fileSize: input.file?.size,
+          contentType: context.req?.header("content-type") ?? null,
+          language,
+          model,
+          initialPrompt: input.initialPrompt,
+        });
 
-      return await whisperTranscribe({
-        file,
-        language,
-        model,
-        initialPrompt: input.initialPrompt,
-      });
+        const file = input.file;
+
+        if (!(file instanceof File)) {
+          const fileAny = file as unknown;
+          logger.error("File validation failed", undefined, {
+            receivedType: typeof fileAny,
+            constructor: (fileAny as { constructor?: { name?: string } })
+              ?.constructor?.name,
+            isFile: fileAny instanceof File,
+            isBlob: fileAny instanceof Blob,
+          });
+          throw new Error(
+            `Expected File instance, received ${typeof fileAny} (${
+              (fileAny as { constructor?: { name?: string } })?.constructor
+                ?.name ?? "unknown"
+            })`
+          );
+        }
+
+        return await whisperTranscribe({
+          file,
+          language,
+          model,
+          initialPrompt: input.initialPrompt,
+        });
+      } catch (error) {
+        const err =
+          error instanceof Error ? error : new Error(String(error ?? "Error"));
+        logger.error("Transcribe procedure error", err, {
+          inputType: typeof input,
+          fileType: typeof input?.file,
+          fileConstructor: (input?.file as { constructor?: { name?: string } })
+            ?.constructor?.name,
+        });
+        throw new ORPCError("TRANSCRIBE_FAILED", {
+          status: 500,
+          message: err.message,
+        });
+      }
     }),
 };

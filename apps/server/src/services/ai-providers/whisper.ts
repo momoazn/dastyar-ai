@@ -9,28 +9,34 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { experimental_transcribe as aiTranscribe } from "ai";
 import { env, whisperModelIds } from "@/config";
+import { logger } from "@/lib/logger";
 import { normalizePersianText } from "@/utils/persian-normalize";
 
 type ModelInfo = { id: string; name: string };
 
+const DEFAULT_MODEL = "ggml-base.bin";
 const TRAILING_SLASH_REGEX = /\/$/;
 
 // Create OpenAI provider for the Whisper server with custom baseURL
-const whisperBaseUrl = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
+const configuredWhisperBase = env.WHISPER_SERVER_URL.replace(
+  TRAILING_SLASH_REGEX,
+  ""
+);
+const whisperApiBaseUrl = configuredWhisperBase.endsWith("/v1")
+  ? configuredWhisperBase
+  : `${configuredWhisperBase}/v1`;
 const whisperProvider = createOpenAI({
-  baseURL: whisperBaseUrl,
+  baseURL: whisperApiBaseUrl,
   apiKey: "", // Not needed for local Whisper server
 });
 
 // Static fallback model list with human-readable names
 const STATIC_MODELS: ModelInfo[] = [
-  { id: "tiny", name: "Tiny" },
-  { id: "base", name: "Base" },
-  { id: "small", name: "Small" },
-  { id: "medium", name: "Medium" },
-  { id: "large", name: "Large" },
-  { id: "large-v2", name: "Large V2" },
-  { id: "large-v3", name: "Large V3" },
+  { id: "ggml-tiny.bin", name: "Tiny" },
+  { id: "ggml-base.bin", name: "Base" },
+  { id: "ggml-small.bin", name: "Small" },
+  { id: "ggml-medium.bin", name: "Medium" },
+  { id: "ggml-large-v3.bin", name: "Large V3" },
 ];
 
 type ModelsCache = { at: number; list: ModelInfo[] } | null;
@@ -44,8 +50,7 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
     return _modelsCache.list;
   }
 
-  const base = env.WHISPER_SERVER_URL.replace(TRAILING_SLASH_REGEX, "");
-  const url = `${base}/v1/models`;
+  const url = `${whisperApiBaseUrl}/models`;
 
   try {
     const controller = new AbortController();
@@ -93,21 +98,49 @@ export async function transcribe({
   model,
   initialPrompt,
 }: TranscribeArgs): Promise<string> {
+  logger.info("start of transcribe args", {
+    fileType: typeof file,
+    fileConstructor: file?.constructor?.name,
+    fileIsFile: file instanceof File,
+    fileIsBlob: file instanceof Blob,
+    fileName: file?.name,
+    fileSize: file?.size,
+    fileTypeProp: file?.type,
+    language,
+    model,
+    initialPrompt,
+  });
+
   // Validate model against available list; if unknown, use default
-  let transcriptionModel = model ?? "base";
+  let transcriptionModel = model ?? DEFAULT_MODEL;
   try {
     const available = await getWhisperModels();
     if (model && available.some((m) => m.id === model)) {
       transcriptionModel = model;
     } else if (!model && available.length > 0) {
-      transcriptionModel = available[0]?.id ?? "base";
+      transcriptionModel = available[0]?.id ?? DEFAULT_MODEL;
     }
   } catch {
     // ignore; use default model
   }
 
   // Convert File to ArrayBuffer for AI SDK
-  const audioBuffer = await file.arrayBuffer();
+  let audioBuffer: ArrayBuffer;
+  try {
+    audioBuffer = await file.arrayBuffer();
+  } catch (err) {
+    logger.error("Failed to convert file to ArrayBuffer", err, {
+      fileType: typeof file,
+      fileConstructor: file?.constructor?.name,
+      fileIsFile: file instanceof File,
+      fileIsBlob: file instanceof Blob,
+      fileName: file?.name,
+      fileSize: file?.size,
+    });
+    throw new Error(
+      `Failed to read file: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
   const audioData = new Uint8Array(audioBuffer);
 
   const controller = new AbortController();
@@ -137,8 +170,19 @@ export async function transcribe({
     return normalized;
   } catch (err) {
     clearTimeout(timer);
-    const message = err instanceof Error ? err.message : String(err);
-    throw mapTranscriptionError(message);
+    const error =
+      err instanceof Error ? err : new Error(String(err ?? "Unknown error"));
+    logger.error("Whisper transcription request failed", error, {
+      providerBaseUrl: whisperApiBaseUrl,
+      model: transcriptionModel,
+      language,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+    });
+    const mapped = mapTranscriptionError(error.message);
+    (mapped as { cause?: unknown }).cause = error;
+    throw mapped;
   }
 }
 
