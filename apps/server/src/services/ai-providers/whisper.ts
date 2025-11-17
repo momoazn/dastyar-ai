@@ -98,19 +98,6 @@ export async function transcribe({
   model,
   initialPrompt,
 }: TranscribeArgs): Promise<string> {
-  logger.info("start of transcribe args", {
-    fileType: typeof file,
-    fileConstructor: file?.constructor?.name,
-    fileIsFile: file instanceof File,
-    fileIsBlob: file instanceof Blob,
-    fileName: file?.name,
-    fileSize: file?.size,
-    fileTypeProp: file?.type,
-    language,
-    model,
-    initialPrompt,
-  });
-
   // Validate model against available list; if unknown, use default
   let transcriptionModel = model ?? DEFAULT_MODEL;
   try {
