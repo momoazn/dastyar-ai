@@ -95,11 +95,6 @@ const serializeError = (error: unknown) => {
 
 // Write to stdout/stderr synchronously - works in both dev and compiled binaries
 const writeLog = (message: string, isError = false) => {
-  // Debug: confirm writeLog is called
-  process.stdout.write(
-    `[DEBUG-WRITELOG] Called with: ${message.substring(0, 50)}\n`
-  );
-
   const output = `${message}\n`;
   // Use process.stdout/stderr.write() for synchronous output
   if (isError) {

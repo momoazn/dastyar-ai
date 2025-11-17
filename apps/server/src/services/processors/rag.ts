@@ -172,11 +172,11 @@ export function buildContextFromChunks(
   lines.push(
     "You have access to the following user documents. Use them to answer accurately. Cite titles and page numbers when useful.\n"
   );
-  chunks.forEach((c, i) => {
+  for (const [i, c] of chunks.entries()) {
     const header = `[${i + 1}] ${c.title}${c.page ? ` (p.${c.page})` : ""}`;
     lines.push(header);
     lines.push(c.content);
     lines.push("");
-  });
+  }
   return lines.join("\n");
 }
