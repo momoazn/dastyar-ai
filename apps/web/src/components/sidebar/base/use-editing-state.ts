@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 
 export type EditingState = {
   editingId: string | null;
@@ -48,8 +49,8 @@ export function useEditingState<
       await onRename(id, trimmedValue);
       cancelEditing();
       return true;
-    } catch (error) {
-      console.error("Failed to rename item:", error);
+    } catch {
+      toast.error("خطا در تغییر نام مورد انتخابی");
       return false;
     }
   };
