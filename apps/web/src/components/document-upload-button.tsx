@@ -1,5 +1,5 @@
 import { FileText, Upload } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import {
   Button,
@@ -36,9 +36,9 @@ async function processFileContent(file: File): Promise<{
   } else if (file.type === "application/pdf") {
     try {
       pages = await extractPdfPages(file);
-    } catch (error) {
+    } catch {
       // If parsing fails, continue without pages; server may still index via fallback
-      console.warn("PDF.js extraction failed; continuing without pages", error);
+      toast.warning("استخراج صفحات PDF ناموفق بود، از متن کامل استفاده می‌شود.");
     }
   }
 
@@ -79,7 +79,6 @@ function showUploadSuccess(
 }
 
 function handleUploadError(err: unknown) {
-  console.error("Failed to upload document", err);
   const message = err instanceof Error ? err.message : "خطای ناشناخته";
   toast.error(`خطا در آپلود فایل: ${message}`);
 }
@@ -90,6 +89,7 @@ export function DocumentUploadButton({
   onStatusChange,
 }: Props) {
   const [isUploading, setUploading] = useState(false);
+  const inputId = useId();
 
   const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,7 +136,7 @@ export function DocumentUploadButton({
             <input
               accept=".pdf,.txt,.md"
               className="hidden"
-              id="doc-upload-input"
+              id={inputId}
               onChange={handleSelect}
               type="file"
             />
@@ -147,7 +147,7 @@ export function DocumentUploadButton({
               size="icon"
               variant="outline"
             >
-              <label className="cursor-pointer" htmlFor="doc-upload-input">
+              <label className="cursor-pointer" htmlFor={inputId}>
                 {isUploading ? (
                   <Upload className="size-4 animate-pulse" />
                 ) : (

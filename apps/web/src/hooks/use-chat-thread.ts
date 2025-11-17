@@ -24,7 +24,6 @@ export function useChatThread() {
 
       return created;
     } catch (error) {
-      console.error("Failed to create thread", error);
       toast.error(fa.chat.newChatError);
       throw error;
     }
@@ -46,7 +45,7 @@ export function useChatThread() {
         queryKey: orpc.threads.list.queryKey(),
       });
     } catch (error) {
-      console.error("Failed to rename thread", error);
+      toast.error("خطا در تغییر عنوان گفتگو");
       throw error;
     }
   }, []);
