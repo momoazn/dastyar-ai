@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "./whisper.exe"
+    "dev": "go run ."
   }
 }

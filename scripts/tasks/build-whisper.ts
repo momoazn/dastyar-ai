@@ -210,10 +210,42 @@ export async function buildWhisper(): Promise<void> {
   // Build Go application
   console.log("  → Building Go whisper server...");
   const ggmlSrc = join(buildDir, "ggml", "src");
+  const ggmlBlasPath = join(ggmlSrc, "ggml-blas");
+  const ggmlMetalPath = join(ggmlSrc, "ggml-metal");
 
   const goWorkDir = join(WHISPER_DIR, ".go-work");
   mkdirSync(join(goWorkDir, "build-cache"), { recursive: true });
   mkdirSync(join(goWorkDir, "pkg/mod"), { recursive: true });
+
+  // Determine OpenMP flags based on platform
+  // On macOS, clang doesn't support -fopenmp by default and OpenMP is often not available
+  // On Windows with MinGW, use -lgomp
+  // On Linux, use -fopenmp if available
+  let openmpFlags = "";
+  if (isWindows) {
+    openmpFlags = " -lgomp";
+  } else if (process.platform === "linux") {
+    // On Linux, try to use OpenMP if available
+    openmpFlags = " -fopenmp";
+  }
+  // On macOS (darwin), don't add OpenMP flags since it's not supported by default clang
+
+  // Build library paths - include subdirectories where BLAS and Metal libraries are located
+  const pathSeparator = isWindows ? ";" : ":";
+  const libraryPath = [
+    join(buildDir, "src"),
+    ggmlSrc,
+    ggmlBlasPath,
+    ggmlMetalPath,
+  ].join(pathSeparator);
+
+  const ldFlags =
+    [
+      `-L${join(buildDir, "src")}`,
+      `-L${ggmlSrc}`,
+      `-L${ggmlBlasPath}`,
+      `-L${ggmlMetalPath}`,
+    ].join(" ") + openmpFlags;
 
   const buildEnv = {
     ...process.env,
@@ -221,8 +253,8 @@ export async function buildWhisper(): Promise<void> {
     GOCACHE: join(goWorkDir, "build-cache"),
     GOMODCACHE: join(goWorkDir, "pkg/mod"),
     C_INCLUDE_PATH: `${join(whisperCppDir, "include")}${isWindows ? ";" : ":"}${join(whisperCppDir, "ggml", "include")}`,
-    LIBRARY_PATH: `${join(buildDir, "src")}${isWindows ? ";" : ":"}${ggmlSrc}`,
-    CGO_LDFLAGS: `-L${join(buildDir, "src")} -L${ggmlSrc}${isWindows ? " -lgomp" : " -fopenmp"}`,
+    LIBRARY_PATH: libraryPath,
+    CGO_LDFLAGS: ldFlags,
   };
 
   const outputName = isWindows ? "whisper.exe" : "whisper";
