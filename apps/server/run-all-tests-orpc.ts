@@ -85,7 +85,7 @@ for (const test of tests) {
   }
 }
 
-console.log("\n" + "=".repeat(50));
+console.log(`\n${"=".repeat(50)}`);
 console.log(`Test Results: ${passedTests}/${totalTests} tests passed`);
 console.log("=".repeat(50));
 
