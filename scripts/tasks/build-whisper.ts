@@ -52,6 +52,7 @@ function checkWindowsCompiler(): string | null {
   return null;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Go
 export async function buildWhisper(): Promise<void> {
   console.log("📦 Building Whisper Go binary...");
 
@@ -187,8 +188,13 @@ export async function buildWhisper(): Promise<void> {
 
   // Add MinGW compiler paths for Windows
   if (isWindows && generator === "MinGW Makefiles") {
-    const mingwPath = "C:\\msys64\\mingw64\\bin";
-    cmakeConfigCmd += ` -DCMAKE_C_COMPILER=${mingwPath}\\gcc.exe -DCMAKE_CXX_COMPILER=${mingwPath}\\g++.exe`;
+    // Try to detect MinGW path from environment or use default
+    const mingwPath =
+      process.env.MINGW_PREFIX ||
+      process.env.MSYSTEM_PREFIX ||
+      "C:\\msys64\\mingw64";
+    const binPath = `${mingwPath}\\bin`;
+    cmakeConfigCmd += ` -DCMAKE_C_COMPILER=${binPath}\\gcc.exe -DCMAKE_CXX_COMPILER=${binPath}\\g++.exe`;
   }
 
   execSync(cmakeConfigCmd, {
