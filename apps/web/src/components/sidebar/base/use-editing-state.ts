@@ -48,8 +48,7 @@ export function useEditingState<
       await onRename(id, trimmedValue);
       cancelEditing();
       return true;
-    } catch (error) {
-      console.error("Failed to rename item:", error);
+    } catch (_error) {
       return false;
     }
   };

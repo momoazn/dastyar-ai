@@ -43,8 +43,8 @@ export function useChatInput({
             });
           }
         }
-      } catch (error) {
-        console.error("Failed to handle prompt", error);
+      } catch (_error) {
+        // Error silently handled - errors are already propagated from createThread/renameThread
       } finally {
         setIsGenerating(false);
       }
