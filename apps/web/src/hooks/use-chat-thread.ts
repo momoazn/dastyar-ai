@@ -24,7 +24,6 @@ export function useChatThread() {
 
       return created;
     } catch (error) {
-      console.error("Failed to create thread", error);
       toast.error(fa.chat.newChatError);
       throw error;
     }
@@ -35,20 +34,14 @@ export function useChatThread() {
     if (!trimmed) {
       return;
     }
+    await client.threads.rename({
+      id: threadId,
+      title: trimmed.slice(0, 10),
+    });
 
-    try {
-      await client.threads.rename({
-        id: threadId,
-        title: trimmed.slice(0, 10),
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: orpc.threads.list.queryKey(),
-      });
-    } catch (error) {
-      console.error("Failed to rename thread", error);
-      throw error;
-    }
+    await queryClient.invalidateQueries({
+      queryKey: orpc.threads.list.queryKey(),
+    });
   }, []);
 
   const validatePrompt = useCallback((prompt: string) => prompt.trim(), []);

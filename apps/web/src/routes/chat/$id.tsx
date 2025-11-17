@@ -53,7 +53,7 @@ function RouteComponent() {
       hasSentInitialPromptRef.current = true;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
-        console.error("Failed to send initial prompt", p);
+        // Error silently handled - errors are already propagated from handleSendPrompt
       });
     }
   }, [search, messages.length, handleSendPrompt]);

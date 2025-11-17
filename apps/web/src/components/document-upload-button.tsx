@@ -36,9 +36,8 @@ async function processFileContent(file: File): Promise<{
   } else if (file.type === "application/pdf") {
     try {
       pages = await extractPdfPages(file);
-    } catch (error) {
+    } catch (_error) {
       // If parsing fails, continue without pages; server may still index via fallback
-      console.warn("PDF.js extraction failed; continuing without pages", error);
     }
   }
 
@@ -79,7 +78,6 @@ function showUploadSuccess(
 }
 
 function handleUploadError(err: unknown) {
-  console.error("Failed to upload document", err);
   const message = err instanceof Error ? err.message : "خطای ناشناخته";
   toast.error(`خطا در آپلود فایل: ${message}`);
 }

@@ -54,6 +54,6 @@ try {
     stdio: "inherit",
     env,
   });
-} catch (error) {
+} catch (_error) {
   process.exit(1);
 }

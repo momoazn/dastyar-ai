@@ -31,8 +31,7 @@ export function ModelsTable() {
         });
         toast.success(fa.admin.models.messages.statusUpdated);
       },
-      onError: (err) => {
-        console.error("Error toggling model status:", err);
+      onError: (_err) => {
         toast.error(fa.admin.models.messages.errorUpdatingStatus);
       },
     })

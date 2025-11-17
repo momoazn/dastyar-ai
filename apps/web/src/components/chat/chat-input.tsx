@@ -56,7 +56,6 @@ export const ChatInput = ({
   };
 
   const handleTranscriptionError = (error: string) => {
-    console.error("Transcription failed:", error);
     setTranscriptionError(`خطا در تبدیل صدا به متن: ${error}`);
   };
 
