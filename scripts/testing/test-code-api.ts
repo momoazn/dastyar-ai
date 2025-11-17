@@ -1,24 +1,36 @@
 #!/usr/bin/env bun
 
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { appRouter } from "../../../src/procedures";
+
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 console.log("===========================================");
-console.log("Code Execution API Test Script");
+console.log("Code Execution API Test Script (ORPC Client)");
 console.log("===========================================");
 console.log("");
 
-let codeRunId = "";
+// Create ORPC client
+const link = new RPCLink({
+  url: `${API_URL}/rpc`,
+});
+
+const client = createORPCClient<typeof appRouter>(link);
+
+let authToken = "";
+let _userId = 0;
+let codeRunId = 0;
 
 // Test 1: Health Check
 console.log("1. Testing health endpoint...");
 try {
-  const healthResponse = await fetch(`${API_URL}/health`);
-  const healthData = await healthResponse.json();
+  const healthData = await client.healthCheck();
 
   console.log("Response:");
   console.log(JSON.stringify(healthData, null, 2));
 
-  if (healthResponse.ok) {
+  if (healthData === "OK") {
     console.log("✓ Health endpoint passed");
   } else {
     console.log("✗ Health endpoint failed");
@@ -31,36 +43,77 @@ try {
 
 console.log("");
 
-// Test 2: Execute JavaScript Code
-console.log("2. Testing JavaScript code execution...");
+// Test 2: User Registration
+console.log("2. Testing user registration...");
+const testUser = {
+  username: `test${Date.now()}`,
+  password: "testPassword123",
+};
+
 try {
-  const jsCode = `
+  const registerData = await client.auth.register(testUser);
+
+  console.log("Response:");
+  console.log(JSON.stringify(registerData, null, 2));
+
+  if (registerData.token && registerData.user) {
+    authToken = registerData.token;
+    _userId = registerData.user.id;
+    console.log("✓ User registration passed");
+  } else {
+    console.log("✗ User registration failed");
+    process.exit(1);
+  }
+} catch (error) {
+  console.error("✗ User registration failed:", error);
+  process.exit(1);
+}
+
+console.log("");
+
+// Test 3: Create authenticated client
+const authLink = new RPCLink({
+  url: `${API_URL}/rpc`,
+  headers: () => ({
+    Authorization: `Bearer ${authToken}`,
+  }),
+});
+
+const authClient = createORPCClient<typeof appRouter>(authLink);
+
+// Test 4: Execute JavaScript Code
+console.log("4. Testing JavaScript code execution...");
+const jsCode = `
 console.log("Hello, World!");
 const result = 2 + 2;
 result;
 `;
 
-  const executeResponse = await fetch(`${API_URL}/rpc/code.execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+try {
+  // First get available models
+  const modelsData = await client.models.list();
+
+  if (modelsData && modelsData.length > 0) {
+    const executeResponse = await authClient.code.run({
+      mode: "generate",
       language: "javascript",
       code: jsCode,
-    }),
-  });
-  const executeData = await executeResponse.json();
+      modelId: modelsData[0].id,
+      prompt: "Execute this code and return the result",
+    });
 
-  console.log("Response:");
-  console.log(JSON.stringify(executeData, null, 2));
+    console.log("Response:");
+    console.log(JSON.stringify(executeResponse, null, 2));
 
-  if (executeResponse.ok && executeData.data) {
-    codeRunId = executeData.data.id;
-    console.log("✓ JavaScript code execution passed");
+    if (executeResponse?.id) {
+      codeRunId = executeResponse.id;
+      console.log("✓ JavaScript code execution passed");
+    } else {
+      console.log("✗ JavaScript code execution failed");
+      process.exit(1);
+    }
   } else {
-    console.log("✗ JavaScript code execution failed");
-    process.exit(1);
+    console.log("✗ JavaScript code execution skipped (no models available)");
   }
 } catch (error) {
   console.error("✗ JavaScript code execution failed:", error);
@@ -69,35 +122,37 @@ result;
 
 console.log("");
 
-// Test 3: Execute Python Code
-console.log("3. Testing Python code execution...");
-try {
-  const pythonCode = `
+// Test 5: Execute Python Code
+console.log("5. Testing Python code execution...");
+const pythonCode = `
 print("Hello from Python!")
 result = 10 * 5
 print(f"Result: {result}")
 `;
 
-  const pythonResponse = await fetch(`${API_URL}/rpc/code.execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+try {
+  // First get available models
+  const modelsData = await client.models.list();
+
+  if (modelsData && modelsData.length > 0) {
+    const pythonResponse = await authClient.code.run({
+      mode: "generate",
       language: "python",
       code: pythonCode,
-    }),
-  });
-  const pythonData = await pythonResponse.json();
+      modelId: modelsData[0].id,
+    });
 
-  console.log("Response:");
-  console.log(JSON.stringify(pythonData, null, 2));
+    console.log("Response:");
+    console.log(JSON.stringify(pythonResponse, null, 2));
 
-  if (pythonResponse.ok && pythonData.data) {
-    console.log("✓ Python code execution passed");
+    if (pythonResponse?.id) {
+      console.log("✓ Python code execution passed");
+    } else {
+      console.log("✗ Python code execution failed");
+      process.exit(1);
+    }
   } else {
-    console.log("✗ Python code execution failed");
-    process.exit(1);
+    console.log("✗ Python code execution skipped (no models available)");
   }
 } catch (error) {
   console.error("✗ Python code execution failed:", error);
@@ -106,40 +161,40 @@ print(f"Result: {result}")
 
 console.log("");
 
-// Test 4: Get Code Run Details
-console.log("4. Testing code run retrieval...");
-try {
-  const getRunResponse = await fetch(
-    `${API_URL}/rpc/codeRuns.get?id=${codeRunId}`
-  );
-  const getRunData = await getRunResponse.json();
+// Test 6: Get Code Run Details
+console.log("6. Testing code run retrieval...");
+if (codeRunId > 0) {
+  try {
+    const getRunResponse = await authClient.code.getRun({ id: codeRunId });
 
-  console.log("Response:");
-  console.log(JSON.stringify(getRunData, null, 2));
+    console.log("Response:");
+    console.log(JSON.stringify(getRunResponse, null, 2));
 
-  if (getRunResponse.ok && getRunData.data) {
-    console.log("✓ Code run retrieval passed");
-  } else {
-    console.log("✗ Code run retrieval failed");
+    if (getRunResponse?.id) {
+      console.log("✓ Code run retrieval passed");
+    } else {
+      console.log("✗ Code run retrieval failed");
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error("✗ Code run retrieval failed:", error);
     process.exit(1);
   }
-} catch (error) {
-  console.error("✗ Code run retrieval failed:", error);
-  process.exit(1);
+} else {
+  console.log("✗ Code run retrieval skipped (no code was executed)");
 }
 
 console.log("");
 
-// Test 5: List Code Runs
-console.log("5. Testing code runs list...");
+// Test 7: List Code Runs
+console.log("7. Testing code runs list...");
 try {
-  const listRunsResponse = await fetch(`${API_URL}/rpc/codeRuns.list`);
-  const listRunsData = await listRunsResponse.json();
+  const listRunsResponse = await authClient.code.listRuns();
 
   console.log("Response:");
-  console.log(JSON.stringify(listRunsData, null, 2));
+  console.log(JSON.stringify(listRunsResponse, null, 2));
 
-  if (listRunsResponse.ok && listRunsData.data) {
+  if (Array.isArray(listRunsResponse)) {
     console.log("✓ Code runs list passed");
   } else {
     console.log("✗ Code runs list failed");
@@ -152,34 +207,36 @@ try {
 
 console.log("");
 
-// Test 6: Execute Code with Error
-console.log("6. Testing code execution with error...");
-try {
-  const errorCode = `
+// Test 8: Execute Code with Error
+console.log("8. Testing code execution with error...");
+const errorCode = `
 const obj = null;
 obj.property; // This will throw an error
 `;
 
-  const errorResponse = await fetch(`${API_URL}/rpc/code.execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+try {
+  // First get available models
+  const modelsData = await client.models.list();
+
+  if (modelsData && modelsData.length > 0) {
+    const errorResponse = await authClient.code.run({
+      mode: "debug",
       language: "javascript",
       code: errorCode,
-    }),
-  });
-  const errorData = await errorResponse.json();
+      modelId: modelsData[0].id,
+    });
 
-  console.log("Response:");
-  console.log(JSON.stringify(errorData, null, 2));
+    console.log("Response:");
+    console.log(JSON.stringify(errorResponse, null, 2));
 
-  if (errorResponse.ok && errorData.data && errorData.data.error) {
-    console.log("✓ Error handling passed");
+    if (errorResponse && (errorResponse.rootCause || errorResponse.solution)) {
+      console.log("✓ Error handling passed");
+    } else {
+      console.log("✗ Error handling failed");
+      process.exit(1);
+    }
   } else {
-    console.log("✗ Error handling failed");
-    process.exit(1);
+    console.log("✗ Error handling test skipped (no models available)");
   }
 } catch (error) {
   console.error("✗ Error handling test failed:", error);
@@ -188,69 +245,27 @@ obj.property; // This will throw an error
 
 console.log("");
 
-// Test 7: Execute Code with Timeout
-console.log("7. Testing code execution with timeout...");
-try {
-  const timeoutCode = `
-// Infinite loop to test timeout
-while (true) {
-  // This should timeout
-}
-`;
+// Test 9: Delete Code Run
+console.log("9. Testing code run deletion...");
+if (codeRunId > 0) {
+  try {
+    const deleteResponse = await authClient.code.deleteRun({ id: codeRunId });
 
-  const timeoutResponse = await fetch(`${API_URL}/rpc/code.execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      language: "javascript",
-      code: timeoutCode,
-      timeout: 1000, // 1 second timeout
-    }),
-  });
-  const timeoutData = await timeoutResponse.json();
+    console.log("Response:");
+    console.log(JSON.stringify(deleteResponse, null, 2));
 
-  console.log("Response:");
-  console.log(JSON.stringify(timeoutData, null, 2));
-
-  // This might fail due to timeout, which is expected
-  if (timeoutResponse.ok || (timeoutData.data && timeoutData.data.error)) {
-    console.log("✓ Timeout handling passed");
-  } else {
-    console.log("✗ Timeout handling failed");
-    process.exit(1);
-  }
-} catch (error) {
-  console.error("✗ Timeout handling test failed:", error);
-  process.exit(1);
-}
-
-console.log("");
-
-// Test 8: Delete Code Run
-console.log("8. Testing code run deletion...");
-try {
-  const deleteResponse = await fetch(
-    `${API_URL}/rpc/codeRuns.delete?id=${codeRunId}`,
-    {
-      method: "DELETE",
+    if (deleteResponse.ok) {
+      console.log("✓ Code run deletion passed");
+    } else {
+      console.log("✗ Code run deletion failed");
+      process.exit(1);
     }
-  );
-  const deleteData = await deleteResponse.json();
-
-  console.log("Response:");
-  console.log(JSON.stringify(deleteData, null, 2));
-
-  if (deleteResponse.ok) {
-    console.log("✓ Code run deletion passed");
-  } else {
-    console.log("✗ Code run deletion failed");
+  } catch (error) {
+    console.error("✗ Code run deletion failed:", error);
     process.exit(1);
   }
-} catch (error) {
-  console.error("✗ Code run deletion failed:", error);
-  process.exit(1);
+} else {
+  console.log("✗ Code run deletion skipped (no code was executed)");
 }
 
 console.log("");

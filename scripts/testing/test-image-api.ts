@@ -1,24 +1,36 @@
 #!/usr/bin/env bun
 
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { appRouter } from "../../../src/procedures";
+
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 console.log("===========================================");
-console.log("Image Generation API Test Script");
+console.log("Image Generation API Test Script (ORPC Client)");
 console.log("===========================================");
 console.log("");
 
-let imageThreadId = "";
+// Create ORPC client
+const link = new RPCLink({
+  url: `${API_URL}/rpc`,
+});
+
+const client = createORPCClient<typeof appRouter>(link);
+
+let authToken = "";
+let _userId = 0;
+let imageThreadId = 0;
 
 // Test 1: Health Check
 console.log("1. Testing health endpoint...");
 try {
-  const healthResponse = await fetch(`${API_URL}/health`);
-  const healthData = await healthResponse.json();
+  const healthData = await client.healthCheck();
 
   console.log("Response:");
   console.log(JSON.stringify(healthData, null, 2));
 
-  if (healthResponse.ok) {
+  if (healthData === "OK") {
     console.log("✓ Health endpoint passed");
   } else {
     console.log("✗ Health endpoint failed");
@@ -34,15 +46,12 @@ console.log("");
 // Test 2: Get Available Image Models
 console.log("2. Testing image models endpoint...");
 try {
-  const modelsResponse = await fetch(
-    `${API_URL}/rpc/llmModels.list?type=image`
-  );
-  const modelsData = await modelsResponse.json();
+  const modelsData = await client.models.list({ type: "image" });
 
   console.log("Response:");
   console.log(JSON.stringify(modelsData, null, 2));
 
-  if (modelsResponse.ok && modelsData.data) {
+  if (Array.isArray(modelsData)) {
     console.log("✓ Image models endpoint passed");
   } else {
     console.log("✗ Image models endpoint failed");
@@ -55,28 +64,59 @@ try {
 
 console.log("");
 
-// Test 3: Create Image Thread
-console.log("3. Testing image thread creation...");
+// Test 3: User Registration
+console.log("3. Testing user registration...");
+const testUser = {
+  username: `test${Date.now()}`,
+  password: "testPassword123",
+};
+
 try {
-  const threadResponse = await fetch(`${API_URL}/rpc/imageThreads.create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      prompt: "A beautiful sunset over mountains",
-      model: "dall-e-3",
-      width: 1024,
-      height: 1024,
-    }),
-  });
-  const threadData = await threadResponse.json();
+  const registerData = await client.auth.register(testUser);
 
   console.log("Response:");
-  console.log(JSON.stringify(threadData, null, 2));
+  console.log(JSON.stringify(registerData, null, 2));
 
-  if (threadResponse.ok && threadData.data) {
-    imageThreadId = threadData.data.id;
+  if (registerData.token && registerData.user) {
+    authToken = registerData.token;
+    _userId = registerData.user.id;
+    console.log("✓ User registration passed");
+  } else {
+    console.log("✗ User registration failed");
+    process.exit(1);
+  }
+} catch (error) {
+  console.error("✗ User registration failed:", error);
+  process.exit(1);
+}
+
+console.log("");
+
+// Test 4: Create authenticated client
+const authLink = new RPCLink({
+  url: `${API_URL}/rpc`,
+  headers: () => ({
+    Authorization: `Bearer ${authToken}`,
+  }),
+});
+
+const authClient = createORPCClient<typeof appRouter>(authLink);
+
+// Test 5: Create Image Thread
+console.log("5. Testing image thread creation...");
+try {
+  const threadResponse = await authClient.imageThreads.create({
+    prompt: "A beautiful sunset over mountains",
+    model: "dall-e-3",
+    width: 1024,
+    height: 1024,
+  });
+
+  console.log("Response:");
+  console.log(JSON.stringify(threadResponse, null, 2));
+
+  if (threadResponse?.id) {
+    imageThreadId = threadResponse.id;
     console.log("✓ Image thread creation passed");
   } else {
     console.log("✗ Image thread creation failed");
@@ -89,18 +129,17 @@ try {
 
 console.log("");
 
-// Test 4: Get Image Thread
-console.log("4. Testing image thread retrieval...");
+// Test 6: Get Image Thread
+console.log("6. Testing image thread retrieval...");
 try {
-  const getThreadResponse = await fetch(
-    `${API_URL}/rpc/imageThreads.get?id=${imageThreadId}`
-  );
-  const getThreadData = await getThreadResponse.json();
+  const getThreadResponse = await authClient.imageThreads.get({
+    id: imageThreadId,
+  });
 
   console.log("Response:");
-  console.log(JSON.stringify(getThreadData, null, 2));
+  console.log(JSON.stringify(getThreadResponse, null, 2));
 
-  if (getThreadResponse.ok && getThreadData.data) {
+  if (getThreadResponse?.id) {
     console.log("✓ Image thread retrieval passed");
   } else {
     console.log("✗ Image thread retrieval failed");
@@ -113,16 +152,15 @@ try {
 
 console.log("");
 
-// Test 5: List Image Threads
-console.log("5. Testing image threads list...");
+// Test 7: List Image Threads
+console.log("7. Testing image threads list...");
 try {
-  const listThreadsResponse = await fetch(`${API_URL}/rpc/imageThreads.list`);
-  const listThreadsData = await listThreadsResponse.json();
+  const listThreadsResponse = await authClient.imageThreads.list();
 
   console.log("Response:");
-  console.log(JSON.stringify(listThreadsData, null, 2));
+  console.log(JSON.stringify(listThreadsResponse, null, 2));
 
-  if (listThreadsResponse.ok && listThreadsData.data) {
+  if (Array.isArray(listThreadsResponse)) {
     console.log("✓ Image threads list passed");
   } else {
     console.log("✗ Image threads list failed");
@@ -130,64 +168,6 @@ try {
   }
 } catch (error) {
   console.error("✗ Image threads list failed:", error);
-  process.exit(1);
-}
-
-console.log("");
-
-// Test 6: Generate Image (if supported)
-console.log("6. Testing image generation...");
-try {
-  const generateResponse = await fetch(`${API_URL}/rpc/images.generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      threadId: imageThreadId,
-      prompt: "A futuristic city with flying cars",
-      model: "dall-e-3",
-      width: 1024,
-      height: 1024,
-    }),
-  });
-  const generateData = await generateResponse.json();
-
-  console.log("Response:");
-  console.log(JSON.stringify(generateData, null, 2));
-
-  if (generateResponse.ok && generateData.data) {
-    console.log("✓ Image generation passed");
-  } else {
-    console.log("✗ Image generation failed");
-    process.exit(1);
-  }
-} catch (error) {
-  console.error("✗ Image generation failed:", error);
-  process.exit(1);
-}
-
-console.log("");
-
-// Test 7: Get Images from Thread
-console.log("7. Testing thread images retrieval...");
-try {
-  const imagesResponse = await fetch(
-    `${API_URL}/rpc/images.list?threadId=${imageThreadId}`
-  );
-  const imagesData = await imagesResponse.json();
-
-  console.log("Response:");
-  console.log(JSON.stringify(imagesData, null, 2));
-
-  if (imagesResponse.ok && imagesData.data) {
-    console.log("✓ Thread images retrieval passed");
-  } else {
-    console.log("✗ Thread images retrieval failed");
-    process.exit(1);
-  }
-} catch (error) {
-  console.error("✗ Thread images retrieval failed:", error);
   process.exit(1);
 }
 

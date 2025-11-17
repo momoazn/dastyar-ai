@@ -1,20 +1,42 @@
 #!/usr/bin/env bun
 
 console.log("===========================================");
-console.log("Running All API Tests");
+console.log("Running All API Tests (ORPC Client)");
 console.log("===========================================");
 console.log("");
 
 const tests = [
   {
     name: "Whisper API Test",
-    command: "bun run scripts/testing/test-whisper-api.ts",
-    cwd: "/Users/mohamadhosein/Workspace/side/dastyar-ai",
+    command: "test-whisper-api.ts",
   },
   {
-    name: "Complete API Test (ORPC)",
-    command: "bun run test-complete-api.ts",
-    cwd: "/Users/mohamadhosein/Workspace/side/dastyar-ai/apps/server",
+    name: "Authentication API Test (ORPC)",
+    command: "test-auth-api.ts",
+  },
+  {
+    name: "Chat API Test (ORPC)",
+    command: "test-chat-api.ts",
+  },
+  {
+    name: "Image Generation API Test (ORPC)",
+    command: "test-image-api.ts",
+  },
+  {
+    name: "Document Processing API Test (ORPC)",
+    command: "test-document-api.ts",
+  },
+  {
+    name: "Code Execution API Test (ORPC)",
+    command: "test-code-api.ts",
+  },
+  {
+    name: "Translation API Test (ORPC)",
+    command: "test-translation-api.ts",
+  },
+  {
+    name: "Summary API Test (ORPC)",
+    command: "test-summary-api.ts",
   },
 ];
 
@@ -26,15 +48,26 @@ for (const test of tests) {
   console.log("─".repeat(50));
 
   try {
+    // Read the test script file and execute it in the current context
+    const scriptPath = `../../scripts/testing/${test.command}`;
+    const scriptContent = await Bun.file(scriptPath).text();
+
+    // Create a temporary file in the current directory
+    const tempFileName = `temp-${Date.now()}-${test.command}`;
+    await Bun.write(tempFileName, scriptContent);
+
     const result = Bun.spawn({
-      cmd: ["bun", "run", test.command.split(" ").slice(2).join(" ")],
-      cwd: test.cwd,
+      cmd: ["bun", "run", tempFileName],
+      cwd: ".",
       stdout: "pipe",
       stderr: "pipe",
     });
 
     const text = await new Response(result.stdout).text();
     const errorText = await new Response(result.stderr).text();
+
+    // Clean up temporary file
+    await Bun.file(tempFileName).delete();
 
     if ((await result.exited) === 0) {
       console.log(text);

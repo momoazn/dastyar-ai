@@ -6,17 +6,12 @@ const isWindows = process.platform === "win32";
 
 export function hasCommand(cmd: string): boolean {
   try {
-    // Special handling for CMake on Windows
-    if (isWindows && cmd === "cmake") {
-      execSync(`where cmake`, { stdio: "ignore" });
-      return true;
-    }
     execSync(isWindows ? `where ${cmd}` : `which ${cmd}`, {
       stdio: "ignore",
     });
     return true;
   } catch {
-    // Fallback: check if CMake is installed in the default location
+    // Fallback: check if CMake is installed in the default location on Windows
     if (isWindows && cmd === "cmake") {
       try {
         execSync(`"C:\\Program Files\\CMake\\bin\\cmake" --version`, {

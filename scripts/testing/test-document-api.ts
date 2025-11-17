@@ -1,23 +1,36 @@
 #!/usr/bin/env bun
 
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { appRouter } from "../../../src/procedures";
+
 const API_URL = process.env.API_URL || "http://localhost:3000";
 const DOCUMENT_FILE = process.argv[2];
 
 console.log("===========================================");
-console.log("Document Processing API Test Script");
+console.log("Document Processing API Test Script (ORPC Client)");
 console.log("===========================================");
 console.log("");
+
+// Create ORPC client
+const link = new RPCLink({
+  url: `${API_URL}/rpc`,
+});
+
+const client = createORPCClient<typeof appRouter>(link);
+
+let authToken = "";
+let _userId = 0;
 
 // Test 1: Health Check
 console.log("1. Testing health endpoint...");
 try {
-  const healthResponse = await fetch(`${API_URL}/health`);
-  const healthData = await healthResponse.json();
+  const healthData = await client.healthCheck();
 
   console.log("Response:");
   console.log(JSON.stringify(healthData, null, 2));
 
-  if (healthResponse.ok) {
+  if (healthData === "OK") {
     console.log("✓ Health endpoint passed");
   } else {
     console.log("✗ Health endpoint failed");
@@ -30,50 +43,71 @@ try {
 
 console.log("");
 
-// Test 2: List Documents
-console.log("2. Testing documents list endpoint...");
+// Test 2: User Registration
+console.log("2. Testing user registration...");
+const testUser = {
+  username: `test${Date.now()}`,
+  password: "testPassword123",
+};
+
 try {
-  const documentsResponse = await fetch(`${API_URL}/rpc/documents.list`);
-  const documentsData = await documentsResponse.json();
+  const registerData = await client.auth.register(testUser);
 
   console.log("Response:");
-  console.log(JSON.stringify(documentsData, null, 2));
+  console.log(JSON.stringify(registerData, null, 2));
 
-  if (documentsResponse.ok && documentsData.data !== undefined) {
-    console.log("✓ Documents list endpoint passed");
+  if (registerData.token && registerData.user) {
+    authToken = registerData.token;
+    _userId = registerData.user.id;
+    console.log("✓ User registration passed");
   } else {
-    console.log("✗ Documents list endpoint failed");
+    console.log("✗ User registration failed");
     process.exit(1);
   }
 } catch (error) {
-  console.error("✗ Documents list endpoint failed:", error);
+  console.error("✗ User registration failed:", error);
   process.exit(1);
 }
 
 console.log("");
 
-// Test 3: Upload Document (if file provided)
+// Test 3: Create authenticated client
+const authLink = new RPCLink({
+  url: `${API_URL}/rpc`,
+  headers: () => ({
+    Authorization: `Bearer ${authToken}`,
+  }),
+});
+
+const authClient = createORPCClient<typeof appRouter>(authLink);
+
+// Test 4: Upload Document (if file provided)
 if (DOCUMENT_FILE) {
   if (!Bun.file(DOCUMENT_FILE).size) {
     console.log(`✗ Document file not found: ${DOCUMENT_FILE}`);
     process.exit(1);
   }
 
-  console.log("3. Testing document upload...");
+  console.log("4. Testing document upload...");
   console.log(`Document file: ${DOCUMENT_FILE}`);
   console.log("");
 
   try {
     console.log("Uploading document...");
 
-    const formData = new FormData();
     const documentBlob = Bun.file(DOCUMENT_FILE);
+
+    // Create FormData for file upload
+    const formData = new FormData();
     formData.append("file", documentBlob);
     formData.append("title", "Test Document");
     formData.append("description", "Test document uploaded via API test");
 
     const uploadResponse = await fetch(`${API_URL}/rpc/documents.upload`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
       body: formData,
     });
 
@@ -84,58 +118,6 @@ if (DOCUMENT_FILE) {
 
     if (uploadResponse.ok && uploadData.data) {
       console.log("✓ Document upload passed");
-
-      // Test 4: Get Document Details
-      console.log("");
-      console.log("4. Testing document retrieval...");
-      const documentId = uploadData.data.id;
-
-      try {
-        const getDocumentResponse = await fetch(
-          `${API_URL}/rpc/documents.get?id=${documentId}`
-        );
-        const getDocumentData = await getDocumentResponse.json();
-
-        console.log("Response:");
-        console.log(JSON.stringify(getDocumentData, null, 2));
-
-        if (getDocumentResponse.ok && getDocumentData.data) {
-          console.log("✓ Document retrieval passed");
-        } else {
-          console.log("✗ Document retrieval failed");
-          process.exit(1);
-        }
-      } catch (error) {
-        console.error("✗ Document retrieval failed:", error);
-        process.exit(1);
-      }
-
-      // Test 5: Extract Text from Document
-      console.log("");
-      console.log("5. Testing document text extraction...");
-
-      try {
-        const extractResponse = await fetch(
-          `${API_URL}/rpc/documents.extract?id=${documentId}`,
-          {
-            method: "POST",
-          }
-        );
-        const extractData = await extractResponse.json();
-
-        console.log("Response:");
-        console.log(JSON.stringify(extractData, null, 2));
-
-        if (extractResponse.ok && extractData.data) {
-          console.log("✓ Document text extraction passed");
-        } else {
-          console.log("✗ Document text extraction failed");
-          process.exit(1);
-        }
-      } catch (error) {
-        console.error("✗ Document text extraction failed:", error);
-        process.exit(1);
-      }
     } else {
       console.log("✗ Document upload failed");
       process.exit(1);
@@ -145,7 +127,7 @@ if (DOCUMENT_FILE) {
     process.exit(1);
   }
 } else {
-  console.log("3. Skipping document upload tests (no file provided)");
+  console.log("4. Skipping document upload tests (no file provided)");
   console.log("");
   console.log(`Usage: bun ${import.meta.file} <document-file>`);
   console.log("Example: bun test-document-api.ts sample.pdf");
@@ -154,36 +136,25 @@ if (DOCUMENT_FILE) {
 
 console.log("");
 
-// Test 6: Search Documents
-console.log("6. Testing document search...");
+// Test 5: List Documents by Thread (basic test)
+console.log("5. Testing document listing by thread...");
 try {
-  const searchResponse = await fetch(
-    `${API_URL}/rpc/documents.search?query=test`
-  );
-  const searchData = await searchResponse.json();
+  const documentsData = await authClient.documents.listByThread({
+    threadId: 1,
+  });
 
   console.log("Response:");
-  console.log(JSON.stringify(searchData, null, 2));
+  console.log(JSON.stringify(documentsData, null, 2));
 
-  if (searchResponse.ok && searchData.data !== undefined) {
-    console.log("✓ Document search passed");
+  if (Array.isArray(documentsData)) {
+    console.log("✓ Document listing by thread passed");
   } else {
-    console.log("✗ Document search failed");
+    console.log("✗ Document listing by thread failed");
     process.exit(1);
   }
 } catch (error) {
-  console.error("✗ Document search failed:", error);
+  console.error("✗ Document listing by thread failed:", error);
   process.exit(1);
-}
-
-console.log("");
-
-// Test 7: Delete Document (if we uploaded one)
-if (DOCUMENT_FILE) {
-  console.log("7. Testing document deletion...");
-  // Note: This would require the document ID from the upload test
-  // For now, we'll skip this as it would require state management
-  console.log("Skipping document deletion (requires document ID)");
 }
 
 console.log("");

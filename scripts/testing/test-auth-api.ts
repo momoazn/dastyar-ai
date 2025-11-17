@@ -1,25 +1,35 @@
 #!/usr/bin/env bun
 
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { appRouter } from "../../../src/procedures";
+
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 console.log("===========================================");
-console.log("Authentication API Test Script");
+console.log("Authentication API Test Script (ORPC Client)");
 console.log("===========================================");
 console.log("");
 
+// Create ORPC client
+const link = new RPCLink({
+  url: `${API_URL}/rpc`,
+});
+
+const client = createORPCClient<typeof appRouter>(link);
+
 let authToken = "";
-let userId = "";
+let userId = 0;
 
 // Test 1: Health Check
 console.log("1. Testing health endpoint...");
 try {
-  const healthResponse = await fetch(`${API_URL}/health`);
-  const healthData = await healthResponse.json();
+  const healthData = await client.healthCheck();
 
   console.log("Response:");
   console.log(JSON.stringify(healthData, null, 2));
 
-  if (healthResponse.ok) {
+  if (healthData === "OK") {
     console.log("✓ Health endpoint passed");
   } else {
     console.log("✗ Health endpoint failed");
@@ -35,26 +45,19 @@ console.log("");
 // Test 2: User Registration
 console.log("2. Testing user registration...");
 const testUser = {
-  email: `test${Date.now()}@example.com`,
-  password: "testPassword123!",
-  name: "Test User",
+  username: `test${Date.now()}`,
+  password: "testPassword123",
 };
 
 try {
-  const registerResponse = await fetch(`${API_URL}/rpc/auth.register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(testUser),
-  });
-  const registerData = await registerResponse.json();
+  const registerData = await client.auth.register(testUser);
 
   console.log("Response:");
   console.log(JSON.stringify(registerData, null, 2));
 
-  if (registerResponse.ok && registerData.data) {
-    userId = registerData.data.user.id;
+  if (registerData.token && registerData.user) {
+    authToken = registerData.token;
+    userId = registerData.user.id;
     console.log("✓ User registration passed");
   } else {
     console.log("✗ User registration failed");
@@ -67,52 +70,25 @@ try {
 
 console.log("");
 
-// Test 3: User Login
-console.log("3. Testing user login...");
-try {
-  const loginResponse = await fetch(`${API_URL}/rpc/auth.login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: testUser.email,
-      password: testUser.password,
-    }),
-  });
-  const loginData = await loginResponse.json();
+// Test 3: Create authenticated client
+const authLink = new RPCLink({
+  url: `${API_URL}/rpc`,
+  headers: () => ({
+    Authorization: `Bearer ${authToken}`,
+  }),
+});
 
-  console.log("Response:");
-  console.log(JSON.stringify(loginData, null, 2));
-
-  if (loginResponse.ok && loginData.data && loginData.data.token) {
-    authToken = loginData.data.token;
-    console.log("✓ User login passed");
-  } else {
-    console.log("✗ User login failed");
-    process.exit(1);
-  }
-} catch (error) {
-  console.error("✗ User login failed:", error);
-  process.exit(1);
-}
-
-console.log("");
+const authClient = createORPCClient<typeof appRouter>(authLink);
 
 // Test 4: Get Current User
 console.log("4. Testing current user retrieval...");
 try {
-  const userResponse = await fetch(`${API_URL}/rpc/auth.me`, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
-  const userData = await userResponse.json();
+  const userData = await authClient.auth.me();
 
   console.log("Response:");
   console.log(JSON.stringify(userData, null, 2));
 
-  if (userResponse.ok && userData.data && userData.data.id === userId) {
+  if (userData.id === userId) {
     console.log("✓ Current user retrieval passed");
   } else {
     console.log("✗ Current user retrieval failed");
@@ -125,118 +101,65 @@ try {
 
 console.log("");
 
-// Test 5: Update User Profile
-console.log("5. Testing user profile update...");
+// Test 5: Update Username
+console.log("5. Testing username update...");
 try {
-  const updateResponse = await fetch(`${API_URL}/rpc/auth.update`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-    body: JSON.stringify({
-      name: "Updated Test User",
-    }),
+  const updateData = await authClient.auth.updateUsername({
+    newUsername: `updated${testUser.username}`,
   });
-  const updateData = await updateResponse.json();
 
   console.log("Response:");
   console.log(JSON.stringify(updateData, null, 2));
 
-  if (updateResponse.ok && updateData.data) {
-    console.log("✓ User profile update passed");
+  if (updateData.token && updateData.user) {
+    console.log("✓ Username update passed");
   } else {
-    console.log("✗ User profile update failed");
+    console.log("✗ Username update failed");
     process.exit(1);
   }
 } catch (error) {
-  console.error("✗ User profile update failed:", error);
+  console.error("✗ Username update failed:", error);
   process.exit(1);
 }
 
 console.log("");
 
-// Test 6: Change Password
-console.log("6. Testing password change...");
+// Test 6: Update Password
+console.log("6. Testing password update...");
 try {
-  const changePasswordResponse = await fetch(
-    `${API_URL}/rpc/auth.changePassword`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        currentPassword: testUser.password,
-        newPassword: "newPassword123!",
-      }),
-    }
-  );
-  const changePasswordData = await changePasswordResponse.json();
-
-  console.log("Response:");
-  console.log(JSON.stringify(changePasswordData, null, 2));
-
-  if (changePasswordResponse.ok) {
-    console.log("✓ Password change passed");
-  } else {
-    console.log("✗ Password change failed");
-    process.exit(1);
-  }
-} catch (error) {
-  console.error("✗ Password change failed:", error);
-  process.exit(1);
-}
-
-console.log("");
-
-// Test 7: Logout
-console.log("7. Testing user logout...");
-try {
-  const logoutResponse = await fetch(`${API_URL}/rpc/auth.logout`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
+  const passwordData = await authClient.auth.updatePassword({
+    currentPassword: testUser.password,
+    newPassword: "newPassword123",
   });
-  const logoutData = await logoutResponse.json();
 
   console.log("Response:");
-  console.log(JSON.stringify(logoutData, null, 2));
+  console.log(JSON.stringify(passwordData, null, 2));
 
-  if (logoutResponse.ok) {
-    console.log("✓ User logout passed");
+  if (passwordData.success) {
+    console.log("✓ Password update passed");
   } else {
-    console.log("✗ User logout failed");
+    console.log("✗ Password update failed");
     process.exit(1);
   }
 } catch (error) {
-  console.error("✗ User logout failed:", error);
+  console.error("✗ Password update failed:", error);
   process.exit(1);
 }
 
 console.log("");
 
-// Test 8: Login with new password
-console.log("8. Testing login with new password...");
+// Test7: Login with new password
+console.log("7. Testing login with new password...");
 try {
-  const newLoginResponse = await fetch(`${API_URL}/rpc/auth.login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: testUser.email,
-      password: "newPassword123!",
-    }),
+  const loginData = await client.auth.login({
+    username: `updated${testUser.username}`,
+    password: "newPassword123",
   });
-  const newLoginData = await newLoginResponse.json();
 
   console.log("Response:");
-  console.log(JSON.stringify(newLoginData, null, 2));
+  console.log(JSON.stringify(loginData, null, 2));
 
-  if (newLoginResponse.ok && newLoginData.data && newLoginData.data.token) {
+  if (loginData.token && loginData.user) {
     console.log("✓ Login with new password passed");
   } else {
     console.log("✗ Login with new password failed");
