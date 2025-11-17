@@ -23,6 +23,20 @@ const features = [
     color: "text-primary",
   },
   {
+    icon: <Image className="size-12" />,
+    title: fa.index.imageTitle,
+    description: fa.index.imageDescription,
+    link: "/image",
+    color: "text-accent-foreground",
+  },
+  {
+    icon: <Code className="size-12" />,
+    title: fa.index.codeTitle,
+    description: fa.index.codeDescription,
+    link: "/code",
+    color: "text-purple-600",
+  },
+  {
     icon: <MessageCircle className="size-12" />,
     title: fa.index.translationTitle,
     description: fa.index.translationDescription,
@@ -42,20 +56,6 @@ const features = [
     description: fa.transcribe.description,
     link: "/transcribe",
     color: "text-green-600",
-  },
-  {
-    icon: <Image className="size-12" />,
-    title: fa.index.imageTitle,
-    description: fa.index.imageDescription,
-    link: "/image",
-    color: "text-accent-foreground",
-  },
-  {
-    icon: <Code className="size-12" />,
-    title: fa.index.codeTitle,
-    description: fa.index.codeDescription,
-    link: "/code",
-    color: "text-purple-600",
   },
 ] as const;
 
