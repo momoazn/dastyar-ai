@@ -210,8 +210,6 @@ export async function buildWhisper(): Promise<void> {
   // Build Go application
   console.log("  → Building Go whisper server...");
   const ggmlSrc = join(buildDir, "ggml", "src");
-  const ggmlBlasPath = join(ggmlSrc, "ggml-blas");
-  const ggmlMetalPath = join(ggmlSrc, "ggml-metal");
 
   const goWorkDir = join(WHISPER_DIR, ".go-work");
   mkdirSync(join(goWorkDir, "build-cache"), { recursive: true });
@@ -230,22 +228,21 @@ export async function buildWhisper(): Promise<void> {
   }
   // On macOS (darwin), don't add OpenMP flags since it's not supported by default clang
 
-  // Build library paths - include subdirectories where BLAS and Metal libraries are located
+  // Build library paths - include platform-specific subdirectories
   const pathSeparator = isWindows ? ";" : ":";
-  const libraryPath = [
-    join(buildDir, "src"),
-    ggmlSrc,
-    ggmlBlasPath,
-    ggmlMetalPath,
-  ].join(pathSeparator);
+  const libraryPaths = [join(buildDir, "src"), ggmlSrc];
+  const ldFlagPaths = [`-L${join(buildDir, "src")}`, `-L${ggmlSrc}`];
 
-  const ldFlags =
-    [
-      `-L${join(buildDir, "src")}`,
-      `-L${ggmlSrc}`,
-      `-L${ggmlBlasPath}`,
-      `-L${ggmlMetalPath}`,
-    ].join(" ") + openmpFlags;
+  // Add BLAS and Metal paths only on macOS (darwin)
+  if (process.platform === "darwin") {
+    const ggmlBlasPath = join(ggmlSrc, "ggml-blas");
+    const ggmlMetalPath = join(ggmlSrc, "ggml-metal");
+    libraryPaths.push(ggmlBlasPath, ggmlMetalPath);
+    ldFlagPaths.push(`-L${ggmlBlasPath}`, `-L${ggmlMetalPath}`);
+  }
+
+  const libraryPath = libraryPaths.join(pathSeparator);
+  const ldFlags = ldFlagPaths.join(" ") + openmpFlags;
 
   const buildEnv = {
     ...process.env,
