@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FileValidationError, validateUploadedFile } from "@/lib/file-validation";
 import { logger } from "@/lib/logger";
 import {
   attachDocumentToThread,
@@ -33,6 +34,24 @@ export const documentProcedures = {
     .handler(async ({ input, context }) => {
       const { file, title, threadId, textContent, pages } = input;
       const userId = context.user.id;
+
+      // Validate the uploaded file
+      try {
+        await validateUploadedFile(file);
+      } catch (error) {
+        if (error instanceof FileValidationError) {
+          logger.warn("File validation failed", {
+            filename: file.name,
+            size: file.size,
+            error: error.message,
+            code: error.code,
+            userId,
+          });
+          throw new Error(`File validation failed: ${error.message}`);
+        }
+        throw error;
+      }
+
       const stored = await saveDocumentFromFile(file, file.name);
       const doc = await createDocument({
         title: title || file.name,
