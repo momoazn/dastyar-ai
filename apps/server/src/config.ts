@@ -61,6 +61,40 @@ const loadJson = (p?: string): Record<string, unknown> => {
   }
 };
 
+/**
+ * Merge configuration from multiple sources
+ * Priority: Environment Variables > config.json > defaults
+ * For secrets, environment variables MUST be used in production
+ */
+const mergeConfig = (jsonConfig: Record<string, unknown>): Record<string, unknown> => {
+  // Sensitive fields that should ONLY come from environment variables in production
+  const SENSITIVE_FIELDS = ['JWT_SECRET', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
+
+  const merged: Record<string, unknown> = { ...jsonConfig };
+
+  // Override with environment variables if present
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined && value !== '') {
+      merged[key] = value;
+    }
+  }
+
+  // In production, ensure sensitive fields come from environment variables
+  if (isProduction()) {
+    for (const field of SENSITIVE_FIELDS) {
+      if (!process.env[field] && jsonConfig[field]) {
+        logger.warn(
+          `Sensitive field '${field}' found in config.json in production mode. ` +
+          'Please use environment variables for secrets in production.',
+          { field }
+        );
+      }
+    }
+  }
+
+  return merged;
+};
+
 const Schema = z.object({
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default("127.0.0.1"),
@@ -115,12 +149,78 @@ type Env = z.infer<typeof Schema>;
 
 const _runtimeBaseDir = getRuntimeBaseDir();
 const configPath = findConfigPath(_runtimeBaseDir);
-const parsed = Schema.safeParse(loadJson(configPath));
+const jsonConfig = loadJson(configPath);
+const mergedConfig = mergeConfig(jsonConfig);
+const parsed = Schema.safeParse(mergedConfig);
+
 if (!parsed.success) {
   logger.error("Invalid configuration", parsed.error);
   process.exit(1);
 }
+
 export const env: Env = parsed.data;
+
+/**
+ * Validate secrets in production
+ * Ensures that default/example secrets are not used in production
+ */
+const validateProductionSecrets = (): void => {
+  if (!isProduction()) {
+    return;
+  }
+
+  const issues: string[] = [];
+
+  // Check JWT_SECRET
+  const UNSAFE_JWT_SECRETS = [
+    'your-super-secret-jwt-key-change-this-in-production',
+    '***REMOVED***',
+  ];
+
+  if (UNSAFE_JWT_SECRETS.includes(env.JWT_SECRET)) {
+    issues.push(
+      'JWT_SECRET is using a default/example value. ' +
+      'Generate a new secret with: openssl rand -base64 48'
+    );
+  }
+
+  // Check API keys if services are enabled
+  if (env.GROQ_ENABLED && (!env.GROQ_API_KEY || env.GROQ_API_KEY === '')) {
+    issues.push('GROQ is enabled but GROQ_API_KEY is not set');
+  }
+
+  if (env.GEMINI_ENABLED && (!env.GEMINI_API_KEY || env.GEMINI_API_KEY === '')) {
+    issues.push('GEMINI is enabled but GEMINI_API_KEY is not set');
+  }
+
+  // Check CORS origin
+  if (
+    Array.isArray(env.CORS_ORIGIN) &&
+    (env.CORS_ORIGIN.includes('*') ||
+      env.CORS_ORIGIN.some((origin) => origin.includes('localhost')))
+  ) {
+    issues.push(
+      'CORS_ORIGIN contains wildcard or localhost in production. ' +
+      'Please specify exact production domains.'
+    );
+  }
+
+  if (issues.length > 0) {
+    logger.error('Production security configuration issues detected:', {
+      issues,
+    });
+    logger.error(
+      'CRITICAL: Fix these security issues before deploying to production!'
+    );
+    // In production, fail fast if security is compromised
+    process.exit(1);
+  }
+
+  logger.info('Production secrets validation passed');
+};
+
+// Validate secrets in production mode
+validateProductionSecrets();
 
 const parseCSV = (value: string): string[] =>
   value
