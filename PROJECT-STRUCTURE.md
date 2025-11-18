@@ -25,11 +25,6 @@ dastyar-ai/
 ├── scripts/                     # Build and utility scripts
 │   └── build/                   # TypeScript build scripts
 │
-├── windows/                     # Windows deployment files
-│   ├── README.md               # Windows directory overview
-│   ├── scripts/                # Windows batch scripts
-│   └── docs/                   # Windows documentation
-│
 ├── docs/                        # General documentation
 ├── dist/                        # Build output (gitignored)
 └── node_modules/               # Dependencies (gitignored)
@@ -109,49 +104,6 @@ apps/whisper/
 
 ---
 
-## 🪟 Windows Directory (`windows/`)
-
-All Windows deployment files are organized here.
-
-### Scripts (`windows/scripts/`)
-
-Batch scripts for building and managing the application.
-
-**Build Scripts:**
-```
-windows/scripts/
-├── check-build-prerequisites.bat  # Verify build environment
-├── build-all-windows.bat          # Build entire application
-└── dist-windows.bat               # Assemble distribution package
-```
-
-**User Scripts:**
-```
-windows/scripts/
-├── start-dastyar-ai.bat           # Launch application
-├── stop-dastyar-ai.bat            # Stop services
-├── check-health.bat               # Health check
-├── configure.bat                  # Configuration helper
-├── download-whisper-models.bat    # Download Whisper models
-└── verify-installation.bat        # Verify installation
-```
-
-### Documentation (`windows/docs/`)
-
-Comprehensive Windows deployment documentation.
-
-```
-windows/docs/
-├── WINDOWS-DEPLOYMENT-GUIDE.md    # Complete deployment guide
-├── DEPLOYMENT-CHECKLIST.md        # Step-by-step checklist
-├── WINDOWS-BUILD.md               # Technical build details
-├── WINDOWS-README.md              # End-user guide
-├── WINDOWS-QUICK-START.txt        # Quick reference
-└── WINDOWS-DEPLOYMENT-SUMMARY.md  # Overview and status
-```
-
----
-
 ## 🔨 Build Scripts (`scripts/build/`)
 
 TypeScript build orchestration scripts.
@@ -189,7 +141,7 @@ dist/
 ├── configure.bat              # Configuration helper
 ├── download-whisper-models.bat # Model downloader
 ├── verify-installation.bat    # Installation checker
-├── README.md                  # User guide (from WINDOWS-README.md)
+├── README.md                  # User guide
 ├── QUICK-START.txt           # Quick reference
 └── BUILD.md                  # Build instructions (optional)
 ```
@@ -202,23 +154,18 @@ dist/
 
 - **README.md** - Main project documentation
   - Quick start for developers and users
-  - Links to Windows-specific docs
   - Development instructions
   - Project overview
-
-### Windows Documentation (`windows/docs/`)
-
-- **WINDOWS-DEPLOYMENT-GUIDE.md** - For developers building the app
-  - Complete guide with prerequisites, build steps, troubleshooting
-- **DEPLOYMENT-CHECKLIST.md** - Step-by-step checklist for deployment
-- **WINDOWS-BUILD.md** - Technical build details
-- **WINDOWS-README.md** - For end users using the app
-- **WINDOWS-QUICK-START.txt** - Quick reference card
-- **WINDOWS-DEPLOYMENT-SUMMARY.md** - Overview and status
+- **CLAUDE.md** - Project guidelines and conventions
+- **TASKS.md** - Production readiness task list
 
 ### General Documentation (`docs/`)
 
-Project-wide documentation (non-Windows specific).
+Project-wide documentation including:
+
+- **SECRETS.md** - Secrets management and security guide
+- **API documentation** - API endpoints and usage
+- **Architecture documentation** - System design and architecture
 
 ---
 
@@ -257,23 +204,20 @@ bun run check-types     # Type checking
 bun run lint:fix        # Fix linting issues
 ```
 
-### Windows Build
+### Build and Deployment
 
-```cmd
-# From project root
-cd windows\scripts
-check-build-prerequisites.bat  # Verify prerequisites
-build-all-windows.bat          # Build everything
-dist-windows.bat               # Package distribution
-```
+```bash
+# Build for current platform
+bun run build           # Build web + server + whisper
 
-### Windows Deployment
+# Cross-platform builds
+bun run build:windows   # Build for Windows from macOS/Linux
+bun run build:all       # Build for all platforms
 
-```cmd
-# In extracted distribution
-start-dastyar-ai.bat           # Launch app
-check-health.bat               # Verify services
-configure.bat                  # Configure settings
+# Service management
+bun run start           # Start all services
+bun run stop            # Stop all services
+bun run status          # Check service status
 ```
 
 ---
@@ -295,8 +239,8 @@ configure.bat                  # Configure settings
 
 **Looking for...**
 
-- **Build scripts?** → `windows/scripts/` or `scripts/build/`
-- **Documentation?** → `windows/docs/` or root README.md
+- **Build scripts?** → `scripts/` or root build files
+- **Documentation?** → `docs/` or root README.md
 - **API code?** → `apps/server/src/`
 - **Web UI code?** → `apps/web/src/`
 - **Whisper code?** → `apps/whisper/`
@@ -310,7 +254,6 @@ configure.bat                  # Configure settings
 - `apps/server/` - ~50MB (with node_modules: ~200MB)
 - `apps/web/` - ~30MB (with node_modules: ~400MB)
 - `apps/whisper/` - ~20MB (with whisper.cpp: ~500MB)
-- `windows/` - ~200KB (docs and scripts)
 - `dist/` - ~140-200MB (without models)
 - `dist/` - ~280-340MB (with base model)
 
@@ -322,8 +265,8 @@ When adding new directories or reorganizing:
 
 1. Update this document
 2. Update root README.md links
-3. Update windows/README.md links
-4. Update batch script paths if needed
+3. Update CLAUDE.md if guidelines change
+4. Update script paths in build scripts if needed
 
 ---
 

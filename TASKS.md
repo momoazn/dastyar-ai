@@ -1,9 +1,9 @@
 # Dastyar AI - Production Readiness Task List
 
 **Total Tasks:** 61
-**✅ Completed:** 5 (8.2%)
+**✅ Completed:** 6 (9.8%)
 **🚧 In Progress:** 1 (1.6%) - Task 6: React Component Tests (25% complete)
-**⏭️ Remaining:** 55 (90.2%)
+**⏭️ Remaining:** 54 (88.5%)
 
 **Last Updated:** 2025-11-18
 
@@ -31,6 +31,15 @@
 - AI Orchestration: Message conversion, model categorization, LLM JSON parsing
 - Document Processing: Text extraction, Persian normalization, PDF processing
 - 83% pass rate with remaining tests requiring database setup and mocking improvements
+
+### 📚 Documentation Tasks (1/1 - 100% Complete)
+6. ✅ **Remove /windows/ Directory References** - Cleaned up README.md and PROJECT-STRUCTURE.md
+
+**Impact:** Documentation now accurately reflects the project structure:
+- Removed confusing references to non-existent windows/ directory
+- Updated project structure diagrams to match reality
+- Replaced outdated sections with links to actual documentation
+- All platform-specific references (build:windows, executables) remain correct
 
 ---
 
@@ -191,12 +200,18 @@
 
 ## 📚 DOCUMENTATION (Priority: ⚡ HIGH)
 
-### Task 9: ⏭️ Remove References to Non-Existent /windows/ Directory
+### Task 9: ✅ Remove References to Non-Existent /windows/ Directory
 - **Priority:** ⚡ HIGH
 - **Estimate:** 1 hour
 - **Description:** Clean up README.md and PROJECT-STRUCTURE.md to remove references to missing files
 - **Files:** `README.md`, `PROJECT-STRUCTURE.md`
-- **Status:** Pending
+- **Status:** ✅ **Completed**
+- **Completed:** 2025-11-18
+- **Notes:** Removed all references to the non-existent `/windows/` directory from documentation:
+  - Updated README.md: Removed Windows-specific sections, updated project structure, replaced with actual documentation links
+  - Updated PROJECT-STRUCTURE.md: Removed entire "Windows Directory" section, updated diagrams, removed outdated references
+  - Verified all remaining "windows" references are platform-specific (build:windows command, file types) and correct
+  - No broken links remain in either file
 
 ### Task 10: ⏭️ Create Actual Deployment Guide
 - **Priority:** 🔥 CRITICAL

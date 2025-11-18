@@ -13,61 +13,37 @@ Dastyar AI is a comprehensive, offline-capable AI platform featuring:
 
 ## 🚀 Quick Start
 
-### For Windows Users
+### Development Mode
 
-**Want to USE the application?**
-→ See **[windows/docs/WINDOWS-README.md](windows/docs/WINDOWS-README.md)** - User guide
-
-**Want to BUILD/DEPLOY the application?**
-→ See **[windows/docs/WINDOWS-DEPLOYMENT-GUIDE.md](windows/docs/WINDOWS-DEPLOYMENT-GUIDE.md)** - Complete deployment guide
-
-**Quick reference?**
-→ See **[windows/docs/WINDOWS-QUICK-START.txt](windows/docs/WINDOWS-QUICK-START.txt)** - Quick start card
-
-### For Developers
-
-**Development mode**:
+**Start all services**:
 ```bash
 bun install
 bun run dev
 ```
 
-**Building on Windows**:
-```cmd
-cd windows/scripts
-check-build-prerequisites.bat
-build-all-windows.bat
+Access the application at `http://localhost:5173`
+
+### Production Build
+
+**Build for current platform**:
+```bash
+# Build all components
+bun run build
+
+# Start services
+bun run start
 ```
 
----
+**Cross-platform builds**:
+```bash
+# Build for Windows from Linux/macOS
+bun run build:windows
 
-## 📦 Windows Deployment
-
-### Quick Build (3 Commands)
-
-```cmd
-# 1. Verify prerequisites
-cd windows\scripts
-check-build-prerequisites.bat
-
-# 2. Build everything
-build-all-windows.bat
-
-# 3. Test the build
-cd ..\..\dist
-..\windows\scripts\verify-installation.bat
-..\windows\scripts\start-dastyar-ai.bat
+# Build for all platforms
+bun run build:all
 ```
 
-### Distribution Package
-
-**Self-contained Windows application** with:
-- ✅ No internet required (after setup)
-- ✅ No external dependencies
-- ✅ ~140-200MB (without models)
-- ✅ Portable - copy and run
-
-See **[windows/docs/](windows/docs/)** for complete documentation.
+See [CLAUDE.md](CLAUDE.md) for detailed build instructions and project guidelines.
 
 ---
 
@@ -131,46 +107,43 @@ dastyar-ai/
 │   ├── server/          # Bun/Hono API server
 │   ├── web/             # React 19 frontend
 │   └── whisper/         # Go Whisper server
-├── scripts/             # Build scripts
-├── windows/             # Windows-specific files
-│   ├── scripts/         # Windows batch scripts
-│   └── docs/            # Windows documentation
-├── docs/                # General documentation
+├── scripts/             # Build & utility scripts
+├── docs/                # Documentation
 ├── dist/                # Build output (gitignored)
-└── README.md           # This file
+├── CLAUDE.md            # Project guidelines
+└── README.md            # This file
 ```
+
+See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for complete directory structure.
 
 ---
 
 ## 📚 Documentation
 
-### Windows Deployment
+### Available Documentation
 
-Located in **[windows/docs/](windows/docs/)**:
+- **[CLAUDE.md](CLAUDE.md)** - Project guidelines, structure, and coding conventions
+- **[PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)** - Detailed directory structure
+- **[TASKS.md](TASKS.md)** - Production readiness task list
+- **[docs/SECRETS.md](docs/SECRETS.md)** - Secrets management guide
 
-- **[WINDOWS-DEPLOYMENT-GUIDE.md](windows/docs/WINDOWS-DEPLOYMENT-GUIDE.md)** - Complete deployment guide
-- **[DEPLOYMENT-CHECKLIST.md](windows/docs/DEPLOYMENT-CHECKLIST.md)** - Step-by-step checklist
-- **[WINDOWS-BUILD.md](windows/docs/WINDOWS-BUILD.md)** - Technical build details
-- **[WINDOWS-README.md](windows/docs/WINDOWS-README.md)** - End-user guide
-- **[WINDOWS-QUICK-START.txt](windows/docs/WINDOWS-QUICK-START.txt)** - Quick reference
-- **[WINDOWS-DEPLOYMENT-SUMMARY.md](windows/docs/WINDOWS-DEPLOYMENT-SUMMARY.md)** - Overview
+### Build Scripts
 
-### Windows Scripts
+Located in **[scripts/](scripts/)**:
 
-Located in **[windows/scripts/](windows/scripts/)**:
+**Core Scripts:**
+- `build.ts` - Main build orchestrator (cross-platform)
+- `start.ts` - Start all services
+- `stop.ts` - Stop all services
+- `status.ts` - Check service status
 
-**Build Scripts:**
-- `check-build-prerequisites.bat` - Verify build environment
-- `build-all-windows.bat` - Build entire application
-- `dist-windows.bat` - Assemble distribution package
+**Download Utilities:**
+- `downloads/download-ffmpeg.ts` - Download FFmpeg binaries
+- `downloads/download-model.ts` - Download Whisper models
 
-**User Scripts:**
-- `start-dastyar-ai.bat` - Launch application
-- `stop-dastyar-ai.bat` - Stop services
-- `check-health.bat` - Health check
-- `configure.bat` - Configuration helper
-- `download-whisper-models.bat` - Download Whisper models
-- `verify-installation.bat` - Verify installation
+**Testing:**
+- See `apps/server/src/**/*.test.ts` for server tests
+- See `apps/web/src/**/*.test.ts` for web tests
 
 ---
 
@@ -184,12 +157,13 @@ Located in **[windows/scripts/](windows/scripts/)**:
 
 ### Production Recommendations
 
-1. **Change JWT_SECRET**: Use `configure.bat` to set a strong secret (32+ characters)
-2. **Use HTTPS**: Deploy behind a reverse proxy
-3. **Configure Firewall**: Only expose necessary ports
-4. **Regular Updates**: Keep components up to date
+1. **Change JWT_SECRET**: Generate a strong secret (64+ characters recommended)
+2. **Use Environment Variables**: Store secrets in environment variables (see [docs/SECRETS.md](docs/SECRETS.md))
+3. **Use HTTPS**: Deploy behind a reverse proxy
+4. **Configure Firewall**: Only expose necessary ports
+5. **Regular Updates**: Keep components up to date
 
-See [windows/docs/WINDOWS-README.md](windows/docs/WINDOWS-README.md#security-considerations) for details.
+See [docs/SECRETS.md](docs/SECRETS.md) for comprehensive security guidelines and secrets management.
 
 ---
 
@@ -234,9 +208,10 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Documentation**: [windows/docs/](windows/docs/)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/dastyar-ai/issues)
-- **Troubleshooting**: [WINDOWS-DEPLOYMENT-GUIDE.md](windows/docs/WINDOWS-DEPLOYMENT-GUIDE.md#troubleshooting)
+- **Documentation**: [docs/](docs/) and root documentation files
+- **Project Guidelines**: [CLAUDE.md](CLAUDE.md)
+- **Tasks & Roadmap**: [TASKS.md](TASKS.md)
+- **Issues**: [GitHub Issues](https://github.com/mohammadhmn/persian-ai-assistant/issues)
 
 ---
 
