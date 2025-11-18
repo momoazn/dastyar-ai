@@ -1,9 +1,9 @@
 # Dastyar AI - Production Readiness Task List
 
 **Total Tasks:** 61
-**Completed:** 3
+**Completed:** 4
 **In Progress:** 0
-**Remaining:** 58
+**Remaining:** 57
 
 **Last Updated:** 2025-11-18
 
@@ -77,12 +77,27 @@
   - .env files already in .gitignore
   - Safe to deploy - secrets must be in environment variables for production
 
-### Task 4: ⏭️ Add User-Specific Rate Limiting
+### Task 4: ✅ Add User-Specific Rate Limiting
 - **Priority:** ⚡ HIGH
 - **Estimate:** 2 hours
 - **Description:** Implement per-user rate limiting (beyond global limits) for API endpoints
 - **Files:** `apps/server/src/middleware/`, rate limiting logic
-- **Status:** Pending
+- **Status:** ✅ **Completed**
+- **Completed:** 2025-11-18
+- **Notes:** Implemented comprehensive user-specific rate limiting:
+  - Created userRateLimiter() middleware for authenticated users
+  - Separate tracking stores for IP-based and user-based limits
+  - Enhanced IP limiter with better headers and logging
+  - Rate limit tiers by endpoint type:
+    * /rpc/*: 500 requests/15min per user (100/15min per IP)
+    * /api/chat/*: 300 requests/15min per user
+    * /api/images/*: 50 requests/hour per user (expensive operations)
+  - Standard HTTP headers: X-RateLimit-*, Retry-After
+  - User-specific headers: X-RateLimit-User-*
+  - Detailed logging of rate limit violations
+  - Helper functions: getRateLimitStatus(), resetRateLimit(), getRateLimitStats()
+  - Graceful handling: skips if no user context (IP limits still apply)
+  - Both limiters work together (IP + User) for defense in depth
 
 ---
 
