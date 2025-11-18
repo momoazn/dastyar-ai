@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { env, resolveConfiguredPath } from "@/config";
+import { sanitizeFilename } from "@/lib/file-validation";
 
 const DATA_URL_PREFIX_REGEX = /^data:application\/[a-zA-Z0-9.+-]+;base64,/;
 
@@ -26,7 +27,9 @@ function generateFileName(originalName?: string): string {
   if (!originalName) {
     return `${base}.bin`;
   }
-  const ext = path.extname(originalName) || ".bin";
+  // Sanitize the original filename and extract extension
+  const sanitized = sanitizeFilename(originalName);
+  const ext = path.extname(sanitized) || ".bin";
   return `${base}${ext}`;
 }
 

@@ -7,7 +7,7 @@ import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { env, webDistDir } from "./config";
 import { logger } from "./lib/logger";
-import { rateLimiter } from "./middlewares/rate-limiter";
+import { rateLimiter, userRateLimiter } from "./middlewares/rate-limiter";
 import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
@@ -52,7 +52,8 @@ export function createApp() {
     })
   );
 
-  // Rate limiting for API routes
+  // Global IP-based rate limiting for all API routes
+  // This applies to all users, authenticated or not
   app.use(
     "/api/*",
     rateLimiter({
@@ -65,6 +66,36 @@ export function createApp() {
     rateLimiter({
       windowMs: 15 * 60 * 1000, // 15 minutes
       maxRequests: 100, // Limit each IP to 100 requests per window
+    })
+  );
+
+  // User-specific rate limiting for RPC routes
+  // This applies only to authenticated users (has user context)
+  // Limits are more generous than IP limits but tracked per user
+  app.use(
+    "/rpc/*",
+    userRateLimiter({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxRequests: 500, // Limit each authenticated user to 500 requests per window
+      message: "You have exceeded your request quota",
+    })
+  );
+
+  // User-specific rate limiting for streaming API routes
+  app.use(
+    "/api/chat/*",
+    userRateLimiter({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      maxRequests: 300, // Streaming endpoints get lower limit
+      message: "You have exceeded your chat request quota",
+    })
+  );
+  app.use(
+    "/api/images/*",
+    userRateLimiter({
+      windowMs: 60 * 60 * 1000, // 1 hour for image generation
+      maxRequests: 50, // Image generation is expensive, lower limit
+      message: "You have exceeded your image generation quota",
     })
   );
 
