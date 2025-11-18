@@ -1,9 +1,9 @@
 # Dastyar AI - Production Readiness Task List
 
 **Total Tasks:** 61
-**✅ Completed:** 8 (13.1%)
+**✅ Completed:** 9 (14.8%)
 **🚧 In Progress:** 1 (1.6%) - Task 6: React Component Tests (25% complete)
-**⏭️ Remaining:** 52 (85.2%)
+**⏭️ Remaining:** 51 (83.6%)
 
 **Last Updated:** 2025-11-18
 
@@ -23,14 +23,17 @@
 - Secure secret handling for production
 - Defense-in-depth rate limiting (IP + User)
 
-### 🧪 Testing Tasks (1/4 - 25% Complete)
+### 🧪 Testing Tasks (2/4 - 50% Complete)
 5. ✅ **Unit Tests for Critical Functions** - 175 tests (145 passing) covering authentication, AI orchestration, document processing
+6. ✅ **Test Coverage Reporting** - Configured Bun test coverage with detailed reporting
 
 **Impact:** Comprehensive test coverage for critical business logic:
 - Authentication: JWT tokens, password hashing, user management
 - AI Orchestration: Message conversion, model categorization, LLM JSON parsing
 - Document Processing: Text extraction, Persian normalization, PDF processing
 - 83% pass rate with remaining tests requiring database setup and mocking improvements
+- Coverage reporting shows function and line coverage with uncovered line numbers
+- Available commands: `bun run test`, `bun run test:coverage` (root and per-app)
 
 ### 📚 Documentation Tasks (1/1 - 100% Complete)
 6. ✅ **Remove /windows/ Directory References** - Cleaned up README.md and PROJECT-STRUCTURE.md
@@ -210,12 +213,21 @@
 - **Files:** Create `tests/e2e/` directory with test files
 - **Status:** Pending
 
-### Task 8: ⏭️ Set Up Test Coverage Reporting
+### Task 8: ✅ Set Up Test Coverage Reporting
 - **Priority:** ⚡ HIGH
 - **Estimate:** 2 hours
 - **Description:** Configure test coverage reporting tools and CI integration
 - **Files:** `package.json`, add coverage scripts
-- **Status:** Pending
+- **Status:** ✅ **Completed**
+- **Completed:** 2025-11-18
+- **Notes:** Configured Bun test coverage reporting across all apps:
+  - Added `test` and `test:coverage` scripts to root package.json
+  - Added test scripts to apps/server/package.json and apps/web/package.json
+  - Bun's built-in coverage with `--coverage` flag provides detailed reports
+  - Coverage shows function % and line % with uncovered line numbers
+  - Example output: error-boundary.tsx 100% coverage, utils.ts 25% funcs/18.64% lines
+  - Commands available: `bun test`, `bun test --coverage` (in root or per-app)
+  - No additional dependencies required - uses Bun's built-in coverage
 
 ---
 
