@@ -1,11 +1,17 @@
-import { describe, expect, it } from "bun:test";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "bun:test";
+import { cleanup, render, screen } from "@testing-library/react";
 import { Button } from "./button";
+
+// Clean up after each test
+afterEach(() => {
+  cleanup();
+});
 
 describe("Button Component", () => {
   it("should render button with text", () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole("button")).toHaveTextContent("Click me");
+    const button = screen.getByRole("button");
+    expect(button.textContent).toBe("Click me");
   });
 
   it("should apply default variant", () => {
@@ -65,12 +71,15 @@ describe("Button Component", () => {
   it("should be disabled when disabled prop is true", () => {
     render(<Button disabled>Disabled</Button>);
     const button = screen.getByRole("button");
-    expect(button).toBeDisabled();
+    expect(button.hasAttribute("disabled")).toBe(true);
   });
 
-  it("should handle onClick event", async () => {
+  it("should handle onClick event", () => {
     let clicked = false;
-    render(<Button onClick={() => (clicked = true)}>Click</Button>);
+    const handleClick = () => {
+      clicked = true;
+    };
+    render(<Button onClick={handleClick}>Click</Button>);
     const button = screen.getByRole("button");
     button.click();
     expect(clicked).toBe(true);
