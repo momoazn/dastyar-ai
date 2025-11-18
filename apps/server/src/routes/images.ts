@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { type AuthEnv, authMiddlewareHeaderOrQuery } from "@/middlewares/auth";
 import { getGeneratedImageByUser } from "@/repositories/images";
@@ -18,83 +19,60 @@ const getContentType = (fileName: string): string => {
   return "application/octet-stream";
 };
 
+async function streamImage(
+  c: Context<AuthEnv>,
+  disposition: "inline" | "attachment"
+) {
+  const { id: idParam } = c.req.param();
+  const parsedId = Number.parseInt(idParam, 10);
+  if (Number.isNaN(parsedId)) {
+    return c.json({ error: "Invalid image id" }, 400);
+  }
+
+  const user = c.get("user");
+
+  try {
+    const image = await getGeneratedImageByUser(parsedId, user.id);
+    if (!image) {
+      return c.json({ error: "Image not found" }, 404);
+    }
+
+    let stat: fs.Stats;
+    try {
+      stat = await fs.promises.stat(image.filePath);
+    } catch {
+      return c.json({ error: "Image file not found on disk" }, 404);
+    }
+
+    const headers = new Headers();
+    const file = Bun.file(image.filePath);
+    headers.set(
+      "Content-Type",
+      disposition === "inline"
+        ? getContentType(image.fileName)
+        : "application/octet-stream"
+    );
+    headers.set(
+      "Content-Disposition",
+      `${disposition}; filename="${image.fileName}"`
+    );
+    headers.set("Content-Length", stat.size.toString());
+    if (disposition === "inline") {
+      headers.set("Cache-Control", "public, max-age=31536000");
+    }
+
+    return new Response(file.stream(), {
+      status: 200,
+      headers,
+    });
+  } catch {
+    return c.json({ error: "Internal server error" }, 500);
+  }
+}
+
 const app = new Hono<AuthEnv>()
   .use(authMiddlewareHeaderOrQuery)
-  // Serve image file
-  .get("/:id/file", async (c) => {
-    const { id } = c.req.param();
-    const user = c.get("user");
-
-    try {
-      const image = await getGeneratedImageByUser(
-        Number.parseInt(id, 10),
-        user.id
-      );
-      if (!image) {
-        return c.json({ error: "Image not found" }, 404);
-      }
-
-      try {
-        await fs.promises.access(image.filePath, fs.constants.F_OK);
-      } catch {
-        return c.json({ error: "Image file not found on disk" }, 404);
-      }
-
-      const stat = await fs.promises.stat(image.filePath);
-      const fileStream = fs.createReadStream(image.filePath);
-
-      c.header("Content-Type", getContentType(image.fileName));
-      c.header("Content-Disposition", `inline; filename="${image.fileName}"`);
-      c.header("Content-Length", stat.size.toString());
-      c.header("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
-
-      return new Response(fileStream as unknown as ReadableStream, {
-        status: 200,
-        headers: c.res.headers,
-      });
-    } catch {
-      return c.json({ error: "Internal server error" }, 500);
-    }
-  })
-
-  // Download image with proper headers
-  .get("/:id/download", async (c) => {
-    const { id } = c.req.param();
-    const user = c.get("user");
-
-    try {
-      const image = await getGeneratedImageByUser(
-        Number.parseInt(id, 10),
-        user.id
-      );
-      if (!image) {
-        return c.json({ error: "Image not found" }, 404);
-      }
-
-      try {
-        await fs.promises.access(image.filePath, fs.constants.F_OK);
-      } catch {
-        return c.json({ error: "Image file not found on disk" }, 404);
-      }
-
-      const stat = await fs.promises.stat(image.filePath);
-      const fileStream = fs.createReadStream(image.filePath);
-
-      // Set download headers
-      c.header("Content-Type", "application/octet-stream");
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${image.fileName}"`
-      );
-      c.header("Content-Length", stat.size.toString());
-
-      return new Response(fileStream as unknown as ReadableStream, {
-        status: 200,
-        headers: c.res.headers,
-      });
-    } catch {
-      return c.json({ error: "Internal server error" }, 500);
-    }
-  });
+  .get("/:id/file", (c) => streamImage(c, "inline"))
+  .get("/:id/download", (c) => streamImage(c, "attachment"));
 
 export default app;

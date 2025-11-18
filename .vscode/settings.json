@@ -1,0 +1,70 @@
+{
+  // Editor Settings
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+
+  // TypeScript Settings
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+
+  // File Settings
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // Language-Specific Settings
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+
+  // Tailwind CSS
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+
+  // Explorer
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx",
+    "package.json": "package-lock.json, bun.lockb, bun.lock, yarn.lock, pnpm-lock.yaml"
+  },
+
+  // Search
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/generated-images": true,
+    "**/uploaded-documents": true,
+    "**/*.db": true
+  },
+
+  // Git
+  "git.ignoreLimitWarning": true
+}

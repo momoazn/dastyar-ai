@@ -1,0 +1,46 @@
+{
+  "recommendations": [
+    // Code Quality & Formatting
+    "biomejs.biome",
+
+    // TypeScript & JavaScript
+    "dbaeumer.vscode-eslint",
+
+    // CSS & Styling
+    "bradlc.vscode-tailwindcss",
+
+    // Database
+    "qwtel.sqlite-viewer",
+
+    // Go (for Whisper service)
+    "golang.go",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Markdown
+    "yzhang.markdown-all-in-one",
+
+    // JSON
+    "ZainChen.json",
+
+    // Rest Client (for API testing)
+    "humao.rest-client",
+
+    // Path Intellisense
+    "christian-kohler.path-intellisense",
+
+    // Auto Rename Tag
+    "formulahendry.auto-rename-tag",
+
+    // Better Comments
+    "aaron-bond.better-comments",
+
+    // Error Lens
+    "usernamehw.errorlens"
+  ],
+  "unwantedRecommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint"
+  ]
+}

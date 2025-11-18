@@ -10,8 +10,12 @@ import {
 import { env } from "@/config";
 
 const MAX_RETRIES = 3;
+const HEALTH_CACHE_MS = 5000;
+const MODEL_ID_CACHE_MS = 60_000;
 
 let provider: Automatic1111Provider | null = null;
+let cachedHealth: { at: number; ok: boolean } | null = null;
+let cachedModelId: { at: number; id: string } | null = null;
 
 function getProvider(): Automatic1111Provider {
   if (!provider) {
@@ -50,13 +54,20 @@ export type Progress = {
 };
 
 export async function ping(): Promise<boolean> {
+  const now = Date.now();
+  if (cachedHealth && now - cachedHealth.at < HEALTH_CACHE_MS) {
+    return cachedHealth.ok;
+  }
+
   try {
     const response = await fetch(`${env.STABLE_DIFFUSION_URL}/internal/ping`, {
       method: "GET",
       signal: AbortSignal.timeout(5000),
     });
+    cachedHealth = { at: now, ok: response.ok };
     return response.ok;
   } catch {
+    cachedHealth = { at: now, ok: false };
     return false;
   }
 }
@@ -76,6 +87,11 @@ export async function getSamplers(): Promise<string[]> {
 }
 
 async function getModelId(): Promise<string> {
+  const now = Date.now();
+  if (cachedModelId && now - cachedModelId.at < MODEL_ID_CACHE_MS) {
+    return cachedModelId.id;
+  }
+
   const response = await fetch(`${env.STABLE_DIFFUSION_URL}/sdapi/v1/options`, {
     signal: AbortSignal.timeout(10_000),
   }).catch(() => null);
@@ -86,10 +102,13 @@ async function getModelId(): Promise<string> {
     };
     const model = options.sd_model_checkpoint;
     if (typeof model === "string" && model.length > 0) {
+      cachedModelId = { at: now, id: model };
       return model;
     }
   }
-  return "v1-5-pruned-emaonly";
+  const fallback = "v1-5-pruned-emaonly";
+  cachedModelId = { at: now, id: fallback };
+  return fallback;
 }
 
 export async function generate(params: GenerateParams): Promise<string> {

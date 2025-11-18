@@ -34,7 +34,19 @@ export const queryClient = new QueryClient({
 export const link = new RPCLink({
   url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
   headers: () => {
-    const token = JSON.parse(localStorage.getItem(LS_TOKEN_KEY) || "null");
+    const rawValue = localStorage.getItem(LS_TOKEN_KEY);
+    if (!rawValue) {
+      return {};
+    }
+
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(rawValue);
+    } catch {
+      parsed = rawValue;
+    }
+
+    const token = typeof parsed === "string" ? parsed : null;
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 });

@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { useChatThread } from "./use-chat-thread";
 
 type UseChatInputOptions = {
@@ -43,8 +44,8 @@ export function useChatInput({
             });
           }
         }
-      } catch (error) {
-        console.error("Failed to handle prompt", error);
+      } catch {
+        toast.error("ارسال پیام ناموفق بود. دوباره تلاش کنید.");
       } finally {
         setIsGenerating(false);
       }

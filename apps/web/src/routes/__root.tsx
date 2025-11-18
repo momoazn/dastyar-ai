@@ -1,9 +1,6 @@
 import "@fontsource-variable/vazirmatn";
 import "../index.css";
 
-import { createORPCClient } from "@orpc/client";
-import type { RouterClient } from "@orpc/server";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { QueryClient } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
@@ -13,7 +10,6 @@ import {
   useLocation,
   useRouterState,
 } from "@tanstack/react-router";
-import { useState } from "react";
 // import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
@@ -26,8 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { fa } from "@/lib/persian-texts";
-import type { appRouter } from "@/server/procedures";
-import { link, type orpc } from "@/utils/orpc";
+import type { orpc } from "@/utils/orpc";
 
 export type RouterAppContext = {
   orpc: typeof orpc;
@@ -57,11 +52,6 @@ function RootComponent() {
   const isFetching = useRouterState({
     select: (s) => s.isLoading,
   });
-
-  const [client] = useState<RouterClient<typeof appRouter>>(() =>
-    createORPCClient(link)
-  );
-  const [_orpcUtils] = useState(() => createTanstackQueryUtils(client));
 
   return (
     <>

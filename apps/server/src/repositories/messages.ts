@@ -1,6 +1,7 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import {
   db,
+  type JsonValue,
   llmModels,
   messages as messagesTable,
   type SelectLlmModel,
@@ -19,6 +20,44 @@ export type UpdateMessageParams = Pick<
   SelectMessage,
   "id" | "parts" | "status"
 >;
+
+export async function appendMessageParts(params: {
+  id: number;
+  parts: JsonValue[];
+  status?: SelectMessage["status"];
+}): Promise<void> {
+  if (params.parts.length === 0) {
+    return;
+  }
+
+  try {
+    const fragments = params.parts.map(
+      (part) => sql`, '$[#]', json(${JSON.stringify(part)})`
+    );
+
+    await db.run(
+      sql`
+        UPDATE ${messagesTable}
+        SET
+          parts = json_insert(
+            CASE
+              WHEN json_valid(${messagesTable.parts}) = 1 AND json_type(${messagesTable.parts}) = 'array' THEN ${messagesTable.parts}
+              ELSE json('[]')
+            END
+            ${sql.join(fragments, sql.raw(""))}
+          ),
+          status = ${params.status ?? "streaming"},
+          updated_at = ${new Date()}
+        WHERE ${eq(messagesTable.id, params.id)}
+      `
+    );
+  } catch (error) {
+    logger.error("Failed to append message parts", error, {
+      messageId: params.id,
+    });
+    throw new Error("Unable to append message parts");
+  }
+}
 
 export async function createMessage(
   params: CreateMessageParams
