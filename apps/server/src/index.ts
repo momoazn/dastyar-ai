@@ -1,18 +1,64 @@
 import { serve } from "bun";
 import { createApp } from "./app";
-import { ensureDirectoriesExist, env } from "./config";
+import {
+  ensureDirectoriesExist,
+  env,
+  isProduction,
+  resolveConfiguredPath,
+} from "./config";
 import { initializeDatabase } from "./database";
 import { logger } from "./lib/logger";
 
+function getEnabledServices(): string[] {
+  const services: string[] = [];
+  if (env.OLLAMA_ENABLED) services.push("Ollama");
+  if (env.LMSTUDIO_ENABLED) services.push("LM Studio");
+  if (env.GROQ_ENABLED) services.push("Groq");
+  if (env.GEMINI_ENABLED) services.push("Gemini");
+  if (env.STABLE_DIFFUSION_ENABLED) services.push("Stable Diffusion");
+  return services;
+}
+
+function logStartupInfo(): void {
+  const mode = isProduction() ? "production" : "development";
+  const bunVersion = typeof Bun !== "undefined" ? Bun.version : "unknown";
+  const enabledServices = getEnabledServices();
+
+  logger.info("=".repeat(60));
+  logger.info("🚀 Dastyar AI Server Starting");
+  logger.info("=".repeat(60));
+  logger.info("Environment", {
+    mode,
+    nodeEnv: process.env.NODE_ENV || "development",
+    bunVersion,
+  });
+  logger.info("Server Configuration", {
+    host: env.HOST,
+    port: env.PORT,
+    url: `http://${env.HOST}:${env.PORT}`,
+  });
+  logger.info("Database", {
+    path: resolveConfiguredPath(env.DATABASE_FILE),
+  });
+  logger.info("Directories", {
+    images: resolveConfiguredPath(env.IMAGES_DIR),
+    documents: resolveConfiguredPath(env.DOCUMENTS_DIR),
+  });
+  logger.info("AI Services", {
+    enabled: enabledServices.length > 0 ? enabledServices.join(", ") : "none",
+    whisper: env.WHISPER_SERVER_URL,
+    whisperModels: env.WHISPER_MODELS,
+  });
+  logger.info("=".repeat(60));
+}
+
 async function startServer() {
   try {
-    // Direct stdout test - this proves process.stdout.write() works
-    process.stdout.write(`[DEBUG] Binary: ${process.argv[0]}\n`);
-    process.stdout.write("[INFO] Starting Dastyar AI Server...\n");
+    logStartupInfo();
 
-    logger.info("Starting Dastyar AI Server...");
     logger.info("Ensuring required directories exist...");
     ensureDirectoriesExist();
+    logger.info("Directories verified");
 
     logger.info("Initializing database...");
     await initializeDatabase();
@@ -20,6 +66,7 @@ async function startServer() {
 
     logger.info("Creating application...");
     const app = createApp();
+    logger.info("Application created");
 
     logger.info(`Starting HTTP server on ${env.HOST}:${env.PORT}...`);
     const server = serve({
@@ -29,10 +76,11 @@ async function startServer() {
       idleTimeout: 200,
     });
 
+    logger.info("=".repeat(60));
     logger.info(
-      `🚀 Server listening on http://${server.hostname}:${server.port}`
+      `✅ Server listening on http://${server.hostname}:${server.port}`
     );
-    logger.info("Server started successfully!");
+    logger.info("=".repeat(60));
   } catch (error) {
     logger.fatal("Failed to start server", error);
 
