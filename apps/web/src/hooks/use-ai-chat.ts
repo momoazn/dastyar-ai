@@ -12,6 +12,16 @@ type UseAIChatOptions = {
   onFinish?: () => void;
 };
 
+// Construct absolute URL from relative path using current origin
+// Works in both dev (Vite proxy) and prod (same origin)
+const getApiUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api/chat`;
+  }
+  // Fallback for SSR (shouldn't happen in this app)
+  return "/api/chat";
+};
+
 /**
  * Hook for managing AI chat functionality within a thread
  */
@@ -28,7 +38,7 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: `${import.meta.env.VITE_SERVER_URL}/api/chat`,
+        api: getApiUrl(),
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       }),
     [token]

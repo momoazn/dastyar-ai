@@ -31,11 +31,12 @@ export function createApp() {
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
+        fontSrc: ["'self'", "data:"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
       },
+      crossOriginOpenerPolicy: false, // Disable COOP for non-HTTPS origins (allows network access)
       xFrameOptions: "DENY",
       xContentTypeOptions: "nosniff",
       referrerPolicy: "strict-origin-when-cross-origin",

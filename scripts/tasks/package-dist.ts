@@ -83,8 +83,8 @@ export function packageDist(): void {
 function createDefaultConfig(path: string): void {
   const config = {
     PORT: 3000,
-    HOST: "127.0.0.1",
-    CORS_ORIGIN: "http://localhost:3000,http://localhost:5173",
+    HOST: "0.0.0.0",
+    CORS_ORIGIN: "*",
     JWT_SECRET:
       "your-super-secret-jwt-key-change-this-in-production-min-32-chars",
     JWT_EXPIRES_IN: 86_400,

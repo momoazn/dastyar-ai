@@ -71,6 +71,8 @@ const Schema = z.object({
     .string()
     .transform((val) => {
       // If "*" is specified, return it as-is for allow-all
+      // Safe to use "*" since frontend uses relative URLs (same origin in production)
+      // and Vite proxy handles CORS in development mode
       if (val.trim() === "*") {
         return "*";
       }

@@ -31,12 +31,10 @@ export function formatSizeValue(width: number, height: number): string {
  * Builds a complete image source URL with authentication token
  */
 export function buildSrc(url: string, token: string | null): string {
-  const server = (import.meta.env.VITE_SERVER_URL || "").replace(
-    TRAILING_SLASH_RE,
-    ""
-  );
-  const absolute = url.startsWith("http") ? url : `${server}${url}`;
-  return token ? `${absolute}?token=${encodeURIComponent(token)}` : absolute;
+  // Use URL as-is (relative URLs work since frontend and API are same origin)
+  // If URL is already absolute (starts with http), it will be used as-is
+  const finalUrl = url;
+  return token ? `${finalUrl}?token=${encodeURIComponent(token)}` : finalUrl;
 }
 
 /**

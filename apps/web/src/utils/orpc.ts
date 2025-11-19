@@ -31,8 +31,18 @@ export const queryClient = new QueryClient({
   },
 });
 
+// Construct absolute URL from relative path using current origin
+// Works in both dev (Vite proxy) and prod (same origin)
+const getRpcUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/rpc`;
+  }
+  // Fallback for SSR (shouldn't happen in this app)
+  return "/rpc";
+};
+
 export const link = new RPCLink({
-  url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
+  url: getRpcUrl(),
   headers: () => {
     const rawValue = localStorage.getItem(LS_TOKEN_KEY);
     if (!rawValue) {
