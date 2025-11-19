@@ -107,8 +107,24 @@ const Schema = z.object({
 
 type Env = z.infer<typeof Schema>;
 
+// Write immediate message to ensure visibility in production binaries
+process.stdout.write(
+  "═══════════════════════════════════════════════════════════\n"
+);
+process.stdout.write("🚀 Dastyar AI Server - Starting...\n");
+process.stdout.write(
+  "═══════════════════════════════════════════════════════════\n"
+);
+
 const _runtimeBaseDir = getRuntimeBaseDir();
 const configPath = findConfigPath(_runtimeBaseDir);
+
+if (configPath) {
+  process.stdout.write(`📄 Config file: ${configPath}\n`);
+} else {
+  process.stdout.write("⚠️  Config file: Not found, using defaults\n");
+}
+
 const jsonConfig = loadJson(configPath);
 const parsed = Schema.safeParse(jsonConfig);
 
@@ -121,6 +137,29 @@ if (!parsed.success) {
 }
 
 export const env: Env = parsed.data;
+
+// Write key configuration immediately for visibility
+process.stdout.write(`🌐 Host: ${env.HOST}\n`);
+process.stdout.write(`🔌 Port: ${env.PORT}\n`);
+const displayUrl =
+  env.HOST === "0.0.0.0"
+    ? `http://localhost:${env.PORT}`
+    : `http://${env.HOST}:${env.PORT}`;
+process.stdout.write(`🔗 URL: ${displayUrl}\n`);
+process.stdout.write(`💾 Database: ${env.DATABASE_FILE}\n`);
+
+// Show enabled AI services
+const enabledServices: string[] = [];
+if (env.OLLAMA_ENABLED) enabledServices.push("Ollama");
+if (env.LMSTUDIO_ENABLED) enabledServices.push("LM Studio");
+if (env.GROQ_ENABLED) enabledServices.push("Groq");
+if (env.GEMINI_ENABLED) enabledServices.push("Gemini");
+if (env.STABLE_DIFFUSION_ENABLED) enabledServices.push("Stable Diffusion");
+if (enabledServices.length > 0) {
+  process.stdout.write(`🤖 AI Services: ${enabledServices.join(", ")}\n`);
+} else {
+  process.stdout.write("🤖 AI Services: None enabled\n");
+}
 
 /**
  * Validate secrets in production
@@ -184,7 +223,12 @@ const validateProductionSecrets = (): void => {
 };
 
 // Validate secrets in production mode
+process.stdout.write("🔒 Validating security configuration...\n");
 validateProductionSecrets();
+process.stdout.write("✅ Configuration validated successfully\n");
+process.stdout.write(
+  "═══════════════════════════════════════════════════════════\n"
+);
 
 const parseCSV = (value: string): string[] =>
   value

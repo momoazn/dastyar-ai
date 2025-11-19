@@ -100,7 +100,14 @@ const writeStructuredLog = (entry: LogEntry, isError = false) => {
       ? JSON.stringify(entry)
       : formatLogEntry(entry);
   const target = isError ? process.stderr : process.stdout;
+  // Use sync write and ensure it's flushed immediately
   target.write(`${line}\n`);
+  // Force flush in production binaries where buffering might occur
+  if (target === process.stdout) {
+    process.stdout.flush?.();
+  } else if (target === process.stderr) {
+    process.stderr.flush?.();
+  }
 };
 
 const appendContextParts = (

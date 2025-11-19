@@ -9,6 +9,8 @@ import {
 import { initializeDatabase } from "./database";
 import { logger } from "./lib/logger";
 
+// Config already loaded and logged above, now starting server initialization
+
 function getEnabledServices(): string[] {
   const services: string[] = [];
   if (env.OLLAMA_ENABLED) services.push("Ollama");
@@ -54,6 +56,8 @@ function logStartupInfo(): void {
 
 async function startServer() {
   try {
+    // Write immediate status before detailed logs
+    process.stdout.write("📦 Initializing server components...\n");
     logStartupInfo();
 
     logger.info("Ensuring required directories exist...");
@@ -75,6 +79,21 @@ async function startServer() {
       hostname: env.HOST,
       idleTimeout: 200,
     });
+
+    // Write immediate success message
+    const serverUrl = `http://${server.hostname === "0.0.0.0" ? "localhost" : server.hostname}:${server.port}`;
+    const networkUrl = `http://${server.hostname}:${server.port}`;
+    process.stdout.write("\n");
+    process.stdout.write(
+      "═══════════════════════════════════════════════════════════\n"
+    );
+    process.stdout.write("✅ Server is running!\n");
+    process.stdout.write(`🌐 Listening on: ${serverUrl}\n`);
+    process.stdout.write(`📡 Network: ${networkUrl}\n`);
+    process.stdout.write(
+      "═══════════════════════════════════════════════════════════\n"
+    );
+    process.stdout.write("\n");
 
     logger.info("=".repeat(60));
     logger.info(
