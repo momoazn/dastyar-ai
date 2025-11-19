@@ -4,8 +4,8 @@ import {
   buildSrc,
   formatSizeValue,
   getMergedSettings,
-  parseSizeValue,
   parseSearchParams,
+  parseSizeValue,
 } from "./image-generation-utils";
 
 describe("Image Generation Utils", () => {
@@ -21,7 +21,10 @@ describe("Image Generation Utils", () => {
     });
 
     it("should handle different separators", () => {
-      expect(parseSizeValue("1920x1080")).toEqual({ width: 1920, height: 1080 });
+      expect(parseSizeValue("1920x1080")).toEqual({
+        width: 1920,
+        height: 1080,
+      });
     });
 
     it("should handle string numbers", () => {

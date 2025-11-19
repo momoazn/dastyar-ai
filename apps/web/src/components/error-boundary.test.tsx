@@ -1,6 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, mock } from "bun:test";
+import { afterEach, describe, expect, it, mock } from "bun:test";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ErrorBoundary } from "./error-boundary";
+
+// Clean up after each test
+afterEach(() => {
+  cleanup();
+});
+
+// Regex pattern for reset button text (moved to module level for performance)
+const RESET_BUTTON_PATTERN = /بازنشانی صفحه/i;
 
 // Component that throws an error for testing
 function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
@@ -24,7 +32,9 @@ describe("ErrorBoundary", () => {
   it("should catch errors and display fallback UI", () => {
     // Suppress console.error for this test
     const originalError = console.error;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     render(
       <ErrorBoundary>
@@ -35,7 +45,9 @@ describe("ErrorBoundary", () => {
     // Check for Persian error message
     expect(screen.getByText("خطای غیرمنتظره")).toBeTruthy();
     expect(
-      screen.getByText("متأسفیم، مشکلی پیش آمده است. لطفاً صفحه را بازنشانی کنید.")
+      screen.getByText(
+        "متأسفیم، مشکلی پیش آمده است. لطفاً صفحه را بازنشانی کنید."
+      )
     ).toBeTruthy();
 
     // Restore console.error
@@ -44,7 +56,9 @@ describe("ErrorBoundary", () => {
 
   it("should display reset button in error state", () => {
     const originalError = console.error;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     render(
       <ErrorBoundary>
@@ -52,7 +66,9 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>
     );
 
-    const resetButton = screen.getByRole("button", { name: /بازنشانی صفحه/i });
+    const resetButton = screen.getByRole("button", {
+      name: RESET_BUTTON_PATTERN,
+    });
     expect(resetButton).toBeTruthy();
 
     console.error = originalError;
@@ -61,8 +77,12 @@ describe("ErrorBoundary", () => {
   it("should reload page when reset button is clicked", () => {
     const originalError = console.error;
     const originalReload = window.location.reload;
-    console.error = mock(() => {});
-    window.location.reload = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
+    window.location.reload = mock(() => {
+      // Intentionally empty to mock reload
+    });
 
     render(
       <ErrorBoundary>
@@ -70,7 +90,9 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>
     );
 
-    const resetButton = screen.getByRole("button", { name: /بازنشانی صفحه/i });
+    const resetButton = screen.getByRole("button", {
+      name: RESET_BUTTON_PATTERN,
+    });
     fireEvent.click(resetButton);
 
     expect(window.location.reload).toHaveBeenCalled();
@@ -81,7 +103,9 @@ describe("ErrorBoundary", () => {
 
   it("should render custom fallback when provided", () => {
     const originalError = console.error;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     const customFallback = <div>Custom error fallback</div>;
 
@@ -100,7 +124,9 @@ describe("ErrorBoundary", () => {
   it("should display error message in development mode", () => {
     const originalError = console.error;
     const originalEnv = import.meta.env.DEV;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     // Force dev mode
     // @ts-expect-error - Mocking environment
@@ -121,7 +147,9 @@ describe("ErrorBoundary", () => {
 
   it("should display alert triangle icon in error state", () => {
     const originalError = console.error;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     const { container } = render(
       <ErrorBoundary>
@@ -138,7 +166,9 @@ describe("ErrorBoundary", () => {
 
   it("should not display error when error is fixed", () => {
     const originalError = console.error;
-    console.error = mock(() => {});
+    console.error = mock(() => {
+      // Intentionally empty to suppress error output
+    });
 
     const { rerender } = render(
       <ErrorBoundary>

@@ -9,3 +9,4 @@ global.navigator = window.navigator as Navigator;
 global.HTMLElement = window.HTMLElement as typeof HTMLElement;
 global.Element = window.Element as typeof Element;
 global.Node = window.Node as typeof Node;
+global.DocumentFragment = window.DocumentFragment as typeof DocumentFragment;
