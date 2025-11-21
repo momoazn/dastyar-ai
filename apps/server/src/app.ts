@@ -5,7 +5,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { env, webDistDir } from "./config";
+import { env, rateLimitConfig, webDistDir } from "./config";
 import { logger } from "./lib/logger";
 import { rateLimiter, userRateLimiter } from "./middlewares/rate-limiter";
 import chatHandler from "./routes/chat";
@@ -55,50 +55,56 @@ export function createApp() {
 
   // Global IP-based rate limiting for all API routes
   // This applies to all users, authenticated or not
-  app.use(
-    "/api/*",
-    rateLimiter({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      maxRequests: 100, // Limit each IP to 100 requests per window
-    })
-  );
-  app.use(
-    "/rpc/*",
-    rateLimiter({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      maxRequests: 100, // Limit each IP to 100 requests per window
-    })
-  );
+  if (rateLimitConfig.enabled) {
+    app.use(
+      "/api/*",
+      rateLimiter({
+        windowMs: rateLimitConfig.ip.windowMs,
+        maxRequests: rateLimitConfig.ip.maxRequests,
+      })
+    );
+    app.use(
+      "/rpc/*",
+      rateLimiter({
+        windowMs: rateLimitConfig.ip.windowMs,
+        maxRequests: rateLimitConfig.ip.maxRequests,
+      })
+    );
+  }
 
   // User-specific rate limiting for RPC routes
   // This applies only to authenticated users (has user context)
   // Limits are more generous than IP limits but tracked per user
-  app.use(
-    "/rpc/*",
-    userRateLimiter({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      maxRequests: 500, // Limit each authenticated user to 500 requests per window
-      message: "You have exceeded your request quota",
-    })
-  );
+  if (rateLimitConfig.enabled) {
+    app.use(
+      "/rpc/*",
+      userRateLimiter({
+        windowMs: rateLimitConfig.user.windowMs,
+        maxRequests: rateLimitConfig.user.maxRequests,
+        message: "You have exceeded your request quota",
+      })
+    );
+  }
 
   // User-specific rate limiting for streaming API routes
-  app.use(
-    "/api/chat/*",
-    userRateLimiter({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      maxRequests: 300, // Streaming endpoints get lower limit
-      message: "You have exceeded your chat request quota",
-    })
-  );
-  app.use(
-    "/api/images/*",
-    userRateLimiter({
-      windowMs: 60 * 60 * 1000, // 1 hour for image generation
-      maxRequests: 50, // Image generation is expensive, lower limit
-      message: "You have exceeded your image generation quota",
-    })
-  );
+  if (rateLimitConfig.enabled) {
+    app.use(
+      "/api/chat/*",
+      userRateLimiter({
+        windowMs: rateLimitConfig.chat.windowMs,
+        maxRequests: rateLimitConfig.chat.maxRequests,
+        message: "You have exceeded your chat request quota",
+      })
+    );
+    app.use(
+      "/api/images/*",
+      userRateLimiter({
+        windowMs: rateLimitConfig.images.windowMs,
+        maxRequests: rateLimitConfig.images.maxRequests,
+        message: "You have exceeded your image generation quota",
+      })
+    );
+  }
 
   // API routes
   app.route("/rpc", orpcHandler);
