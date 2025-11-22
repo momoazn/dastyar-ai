@@ -222,7 +222,8 @@ export async function buildWhisper(): Promise<void> {
   let openmpFlags = "";
   if (isWindows) {
     // Static linking flags for Windows to create a standalone executable
-    openmpFlags = " -lgomp -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic";
+    // Use -static to statically link all libraries including C++ runtime
+    openmpFlags = " -static -lgomp -lpthread";
   } else if (process.platform === "linux") {
     // On Linux, try to use OpenMP if available
     openmpFlags = " -fopenmp";
