@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { serve } from "bun";
 import { createApp } from "./app";
 import {
@@ -11,6 +12,16 @@ import { logger } from "./lib/logger";
 
 // Config already loaded and logged above, now starting server initialization
 
+/**
+ * Get the protocol (http or https) based on SSL configuration
+ */
+function getProtocol(): string {
+  return env.SSL_ENABLED ? "https" : "http";
+}
+
+/**
+ * Get list of enabled AI services
+ */
 function getEnabledServices(): string[] {
   const services: string[] = [];
   if (env.OLLAMA_ENABLED) services.push("Ollama");
@@ -21,10 +32,39 @@ function getEnabledServices(): string[] {
   return services;
 }
 
+/**
+ * Load SSL certificate and key files
+ */
+function loadSSLCredentials(): { cert: string; key: string } | undefined {
+  if (!env.SSL_ENABLED) {
+    return;
+  }
+
+  try {
+    const certPath = resolveConfiguredPath(env.SSL_CERT_PATH);
+    const keyPath = resolveConfiguredPath(env.SSL_KEY_PATH);
+
+    logger.info("Loading SSL certificates...", { certPath, keyPath });
+
+    const cert = readFileSync(certPath, "utf8");
+    const key = readFileSync(keyPath, "utf8");
+
+    logger.info("SSL certificates loaded successfully");
+    return { cert, key };
+  } catch (error) {
+    logger.error("Failed to load SSL certificates", error);
+    throw error;
+  }
+}
+
+/**
+ * Log startup information
+ */
 function logStartupInfo(): void {
   const mode = isProduction() ? "production" : "development";
   const bunVersion = typeof Bun !== "undefined" ? Bun.version : "unknown";
   const enabledServices = getEnabledServices();
+  const protocol = getProtocol();
 
   logger.info("=".repeat(60));
   logger.info("🚀 Dastyar AI Server Starting");
@@ -37,7 +77,8 @@ function logStartupInfo(): void {
   logger.info("Server Configuration", {
     host: env.HOST,
     port: env.PORT,
-    url: `http://${env.HOST}:${env.PORT}`,
+    url: `${protocol}://${env.HOST}:${env.PORT}`,
+    ssl: env.SSL_ENABLED ? "enabled" : "disabled",
   });
   logger.info("Database", {
     path: resolveConfiguredPath(env.DATABASE_FILE),
@@ -72,17 +113,27 @@ async function startServer() {
     const app = createApp();
     logger.info("Application created");
 
-    logger.info(`Starting HTTP server on ${env.HOST}:${env.PORT}...`);
-    const server = serve({
+    const protocol = getProtocol().toUpperCase();
+    logger.info(`Starting ${protocol} server on ${env.HOST}:${env.PORT}...`);
+
+    // Load SSL credentials if enabled
+    const sslCredentials = loadSSLCredentials();
+
+    // Build server options with or without TLS
+    const serverOptions = {
       fetch: app.fetch,
       port: env.PORT,
       hostname: env.HOST,
       idleTimeout: 200,
-    });
+      ...(sslCredentials && { tls: sslCredentials }),
+    };
 
-    // Write immediate success message
-    const serverUrl = `http://${server.hostname === "0.0.0.0" ? "localhost" : server.hostname}:${server.port}`;
-    const networkUrl = `http://${server.hostname}:${server.port}`;
+    const server = serve(serverOptions);
+
+    // Build server URLs
+    const urlProtocol = getProtocol();
+    const serverUrl = `${urlProtocol}://${server.hostname === "0.0.0.0" ? "localhost" : server.hostname}:${server.port}`;
+    const networkUrl = `${urlProtocol}://${server.hostname}:${server.port}`;
     process.stdout.write("\n");
     process.stdout.write(
       "═══════════════════════════════════════════════════════════\n"
@@ -97,7 +148,7 @@ async function startServer() {
 
     logger.info("=".repeat(60));
     logger.info(
-      `✅ Server listening on http://${server.hostname}:${server.port}`
+      `✅ Server listening on ${urlProtocol}://${server.hostname}:${server.port}`
     );
     logger.info("=".repeat(60));
   } catch (error) {

@@ -115,6 +115,10 @@ const Schema = z.object({
   RATE_LIMIT_CHAT_MAX_REQUESTS: z.coerce.number().default(300),
   RATE_LIMIT_IMAGES_WINDOW_MS: z.coerce.number().default(60 * 60 * 1000), // 1 hour
   RATE_LIMIT_IMAGES_MAX_REQUESTS: z.coerce.number().default(50),
+  // SSL/TLS configuration
+  SSL_ENABLED: z.coerce.boolean().default(false),
+  SSL_CERT_PATH: z.string().default(""),
+  SSL_KEY_PATH: z.string().default(""),
 });
 
 type Env = z.infer<typeof Schema>;
@@ -153,11 +157,15 @@ export const env: Env = parsed.data;
 // Write key configuration immediately for visibility
 process.stdout.write(`🌐 Host: ${env.HOST}\n`);
 process.stdout.write(`🔌 Port: ${env.PORT}\n`);
+const protocol = env.SSL_ENABLED ? "https" : "http";
 const displayUrl =
   env.HOST === "0.0.0.0"
-    ? `http://localhost:${env.PORT}`
-    : `http://${env.HOST}:${env.PORT}`;
+    ? `${protocol}://localhost:${env.PORT}`
+    : `${protocol}://${env.HOST}:${env.PORT}`;
 process.stdout.write(`🔗 URL: ${displayUrl}\n`);
+if (env.SSL_ENABLED) {
+  process.stdout.write("🔒 SSL: Enabled\n");
+}
 process.stdout.write(`💾 Database: ${env.DATABASE_FILE}\n`);
 
 // Show enabled AI services
@@ -207,6 +215,16 @@ const validateProductionSecrets = (): void => {
     (!env.GEMINI_API_KEY || env.GEMINI_API_KEY === "")
   ) {
     issues.push("GEMINI is enabled but GEMINI_API_KEY is not set");
+  }
+
+  // Check SSL configuration
+  if (env.SSL_ENABLED) {
+    if (!env.SSL_CERT_PATH || env.SSL_CERT_PATH === "") {
+      issues.push("SSL is enabled but SSL_CERT_PATH is not set");
+    }
+    if (!env.SSL_KEY_PATH || env.SSL_KEY_PATH === "") {
+      issues.push("SSL is enabled but SSL_KEY_PATH is not set");
+    }
   }
 
   if (issues.length > 0) {
