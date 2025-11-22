@@ -123,69 +123,25 @@ const Schema = z.object({
 
 type Env = z.infer<typeof Schema>;
 
-// Write immediate message to ensure visibility in production binaries
-process.stdout.write(
-  "═══════════════════════════════════════════════════════════\n"
-);
-process.stdout.write("🚀 Dastyar AI Server - Starting...\n");
-process.stdout.write(
-  "═══════════════════════════════════════════════════════════\n"
-);
-
 const _runtimeBaseDir = getRuntimeBaseDir();
 const configPath = findConfigPath(_runtimeBaseDir);
-
-if (configPath) {
-  process.stdout.write(`📄 Config file: ${configPath}\n`);
-} else {
-  process.stdout.write("⚠️  Config file: Not found, using defaults\n");
-}
 
 const jsonConfig = loadJson(configPath);
 const parsed = Schema.safeParse(jsonConfig);
 
 if (!parsed.success) {
   logger.error("Invalid configuration", parsed.error);
-  // Ensure logs are flushed before exiting
-  process.stdout.write("\n");
-  process.stderr.write("\n");
   process.exit(1);
 }
 
 export const env: Env = parsed.data;
-
-// Write key configuration immediately for visibility
-process.stdout.write(`🌐 Host: ${env.HOST}\n`);
-process.stdout.write(`🔌 Port: ${env.PORT}\n`);
-const protocol = env.SSL_ENABLED ? "https" : "http";
-const displayUrl =
-  env.HOST === "0.0.0.0"
-    ? `${protocol}://localhost:${env.PORT}`
-    : `${protocol}://${env.HOST}:${env.PORT}`;
-process.stdout.write(`🔗 URL: ${displayUrl}\n`);
-if (env.SSL_ENABLED) {
-  process.stdout.write("🔒 SSL: Enabled\n");
-}
-process.stdout.write(`💾 Database: ${env.DATABASE_FILE}\n`);
-
-// Show enabled AI services
-const enabledServices: string[] = [];
-if (env.OLLAMA_ENABLED) enabledServices.push("Ollama");
-if (env.LMSTUDIO_ENABLED) enabledServices.push("LM Studio");
-if (env.GROQ_ENABLED) enabledServices.push("Groq");
-if (env.GEMINI_ENABLED) enabledServices.push("Gemini");
-if (env.STABLE_DIFFUSION_ENABLED) enabledServices.push("Stable Diffusion");
-if (enabledServices.length > 0) {
-  process.stdout.write(`🤖 AI Services: ${enabledServices.join(", ")}\n`);
-} else {
-  process.stdout.write("🤖 AI Services: None enabled\n");
-}
+export const configFilePath = configPath;
 
 /**
  * Validate secrets in production
  * Ensures that default/example secrets are not used in production
  */
-const validateProductionSecrets = (): void => {
+export const validateProductionSecrets = (): void => {
   if (!isProduction()) {
     return;
   }
@@ -200,65 +156,41 @@ const validateProductionSecrets = (): void => {
 
   if (UNSAFE_JWT_SECRETS.includes(env.JWT_SECRET)) {
     issues.push(
-      "JWT_SECRET is using a default/example value. " +
-        "Generate a new secret with: openssl rand -base64 48"
+      "JWT_SECRET is using a default/example value. Generate a new secret with: openssl rand -base64 48"
     );
   }
 
   // Check API keys if services are enabled
-  if (env.GROQ_ENABLED && (!env.GROQ_API_KEY || env.GROQ_API_KEY === "")) {
+  if (env.GROQ_ENABLED && !env.GROQ_API_KEY) {
     issues.push("GROQ is enabled but GROQ_API_KEY is not set");
   }
 
-  if (
-    env.GEMINI_ENABLED &&
-    (!env.GEMINI_API_KEY || env.GEMINI_API_KEY === "")
-  ) {
+  if (env.GEMINI_ENABLED && !env.GEMINI_API_KEY) {
     issues.push("GEMINI is enabled but GEMINI_API_KEY is not set");
   }
 
   // Check SSL configuration
   if (env.SSL_ENABLED) {
-    if (!env.SSL_CERT_PATH || env.SSL_CERT_PATH === "") {
+    if (!env.SSL_CERT_PATH) {
       issues.push("SSL is enabled but SSL_CERT_PATH is not set");
     }
-    if (!env.SSL_KEY_PATH || env.SSL_KEY_PATH === "") {
+    if (!env.SSL_KEY_PATH) {
       issues.push("SSL is enabled but SSL_KEY_PATH is not set");
     }
   }
 
   if (issues.length > 0) {
-    // Use console.error as fallback to ensure visibility
-    console.error("\n❌ Production security configuration issues detected:");
+    logger.fatal("Production security configuration issues detected:", {
+      issues,
+    });
+    console.error("\n❌ Production security configuration issues:");
     for (const issue of issues) {
       console.error(`  - ${issue}`);
     }
-    console.error(
-      "\nCRITICAL: Fix these security issues before deploying to production!\n"
-    );
-    logger.error("Production security configuration issues detected:", {
-      issues,
-    });
-    logger.error(
-      "CRITICAL: Fix these security issues before deploying to production!"
-    );
-    // Ensure logs are flushed before exiting
-    process.stdout.write("\n");
-    process.stderr.write("\n");
-    // In production, fail fast if security is compromised
+    console.error("\nCRITICAL: Fix these issues before deploying!\n");
     process.exit(1);
   }
-
-  logger.info("Production secrets validation passed");
 };
-
-// Validate secrets in production mode
-process.stdout.write("🔒 Validating security configuration...\n");
-validateProductionSecrets();
-process.stdout.write("✅ Configuration validated successfully\n");
-process.stdout.write(
-  "═══════════════════════════════════════════════════════════\n"
-);
 
 const parseCSV = (value: string): string[] =>
   value
