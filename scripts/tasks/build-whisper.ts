@@ -217,11 +217,12 @@ export async function buildWhisper(): Promise<void> {
 
   // Determine OpenMP flags based on platform
   // On macOS, clang doesn't support -fopenmp by default and OpenMP is often not available
-  // On Windows with MinGW, use -lgomp
+  // On Windows with MinGW, statically link OpenMP and C++ runtime to avoid DLL dependencies
   // On Linux, use -fopenmp if available
   let openmpFlags = "";
   if (isWindows) {
-    openmpFlags = " -lgomp";
+    // Static linking flags for Windows to create a standalone executable
+    openmpFlags = " -lgomp -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic";
   } else if (process.platform === "linux") {
     // On Linux, try to use OpenMP if available
     openmpFlags = " -fopenmp";
