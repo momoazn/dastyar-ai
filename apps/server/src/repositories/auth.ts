@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, type SelectUser, type UserRole, users } from "@/database";
 import { logger } from "@/lib/logger";
 
@@ -46,6 +46,11 @@ export async function usernameExists(username: string): Promise<boolean> {
     .where(eq(users.username, username))
     .limit(1);
   return user.length > 0;
+}
+
+export async function countUsers(): Promise<number> {
+  const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+  return result[0]?.count ?? 0;
 }
 
 export async function verifyUserCredentials({

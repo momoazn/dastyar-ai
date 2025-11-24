@@ -19,7 +19,8 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:bundle": "bun run src/scripts/bundle-migrations.ts"
+    "db:bundle": "bun run src/scripts/bundle-migrations.ts",
+    "make-admin": "bun run src/scripts/make-user-admin.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.67",

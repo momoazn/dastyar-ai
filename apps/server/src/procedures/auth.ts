@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SelectUser } from "@/database";
 import { logger } from "@/lib/logger";
 import {
+  countUsers,
   createUser,
   hashPassword,
   updateUsername as updateUsernameRepo,
@@ -76,13 +77,17 @@ export const authProcedures = {
     const hashedPassword = await hashPassword(password);
     logEvent("auth.register.hashed_password.created", { username });
 
+    // Check if this is the first user
+    const userCount = await countUsers();
+    const role = userCount === 0 ? "admin" : "user";
+
     let user: SelectUser;
     try {
       user = await createUser({
         username,
         password: hashedPassword,
         salt: "", // bcrypt handles salt internally
-        role: "user",
+        role,
       });
       logEvent("auth.register.user.created", {
         userId: user.id,

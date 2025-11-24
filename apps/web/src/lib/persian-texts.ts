@@ -50,6 +50,7 @@ export const fa = {
       login: "ورود",
       usernameExists: "نام کاربری قبلاً استفاده شده است",
       registrationFailed: "ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید",
+      firstUserAdmin: "شما به عنوان اولین کاربر، مدیر سیستم هستید.",
     },
     loginForm: {
       title: "ورود به حساب کاربری",

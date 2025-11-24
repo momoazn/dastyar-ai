@@ -10,6 +10,15 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,6 +48,7 @@ function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/register" }) as { redirect?: string };
@@ -47,8 +57,12 @@ function RegisterPage() {
     orpc.auth.register.mutationOptions({
       onSuccess: (result) => {
         setToken(result.token);
-        // Redirect to the intended page or home
-        navigate({ to: search.redirect || "/" });
+        if (result.user.role === "admin") {
+          setShowAdminDialog(true);
+        } else {
+          // Redirect to the intended page or home
+          navigate({ to: search.redirect || "/" });
+        }
       },
     })
   );
@@ -177,6 +191,24 @@ function RegisterPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog onOpenChange={setShowAdminDialog} open={showAdminDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{fa.general.success}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {fa.auth.registerForm.firstUserAdmin}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => navigate({ to: search.redirect || "/" })}
+            >
+              {fa.admin.users.actions.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
