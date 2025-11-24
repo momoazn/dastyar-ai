@@ -5,6 +5,7 @@ import {
   type LLMModelProvider,
   llmModels,
 } from "@/database";
+import { ORPCError } from "@orpc/client";
 
 type ModelFilter = Partial<{
   id: number;
@@ -47,6 +48,51 @@ export async function getModels(where: ModelFilter = {}): Promise<LLMModel[]> {
   }
 
   return await query.where(and(...conditions));
+}
+
+export async function addModel(
+  identifier: string,
+  provider: LLMModelProvider,
+  options?: {
+    creator?: string;
+    family?: string;
+    size?: string;
+  }
+): Promise<LLMModel> {
+  // Check if model with same identifier and provider already exists
+  const existing = await getModels({
+    identifier,
+    provider,
+  });
+
+  if (existing.length > 0) {
+    throw new ORPCError("CONFLICT", {
+      message: `Model with identifier "${identifier}" already exists for provider "${provider}"`,
+      status: 409,
+    });
+  }
+
+  // Insert new model
+  await db
+    .insert(llmModels)
+    .values({
+      identifier,
+      provider,
+      creator: options?.creator,
+      family: options?.family,
+      size: options?.size,
+      isEnabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .run();
+
+  // Fetch and return the newly created model
+  const newModels = await getModels({ identifier, provider });
+  if (newModels.length === 0) {
+    throw new Error("Unable to load model after creation");
+  }
+  return newModels[0];
 }
 
 export async function updateModel(

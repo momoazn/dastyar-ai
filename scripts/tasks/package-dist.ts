@@ -65,9 +65,13 @@ export function packageDist(): void {
     cpSync(ffmpegSrc, ffmpegDest);
   }
 
-  // Create default config
+  // Copy config.json from root
+  const configSrc = join(ROOT, "config.json");
   const configPath = join(DIST, "config.json");
-  if (!existsSync(configPath)) {
+  if (existsSync(configSrc)) {
+    console.log("  → Copying config.json...");
+    cpSync(configSrc, configPath, { force: true });
+  } else if (!existsSync(configPath)) {
     console.log("  → Creating default config...");
     createDefaultConfig(configPath);
   }

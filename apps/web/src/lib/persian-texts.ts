@@ -546,6 +546,52 @@ export const fa = {
         modelNotFound: "مدل یافت نشد",
       },
     },
+    settings: {
+      title: "تنظیمات سیستم",
+      subtitle: "مدیریت تنظیمات و پیکربندی برنامه",
+      general: {
+        title: "تنظیمات عمومی",
+        appName: "نام برنامه",
+        appDescription: "شرح برنامه",
+      },
+      security: {
+        title: "تنظیمات امنیتی",
+        tokenExpiration: "انقضای توکن (ساعت)",
+        sessionTimeout: "زمان انقضای جلسه (دقیقه)",
+        passwordMinLength: "حداقل طول رمز عبور",
+        requireSpecialChars: "نیاز به کاراکترهای خاص",
+        requireNumbers: "نیاز به اعداد",
+        requireUppercase: "نیاز به حروف بزرگ",
+      },
+      fileManagement: {
+        title: "مدیریت فایل",
+        maxFileSize: "حداکثر اندازه فایل (مگابایت)",
+        allowedTypes: "نوع‌های فایل مجاز",
+      },
+      aiModels: {
+        title: "تنظیمات مدل‌های هوش مصنوعی",
+        responseTimeout: "زمان انتظار پاسخ (ثانیه)",
+        enableTranscription: "فعال کردن رونویسی",
+        enableTranslation: "فعال کردن ترجمه",
+        enableCodeExecution: "فعال کردن اجرای کد",
+        enableImageGeneration: "فعال کردن تولید تصویر",
+      },
+      rateLimit: {
+        title: "محدودیت نرخ درخواست",
+        enabled: "فعال کردن محدودیت نرخ",
+        requestsPerMinute: "درخواست‌های مجاز در دقیقه",
+      },
+      messages: {
+        saved: "تنظیمات با موفقیت ذخیره شد",
+        error: "خطا در ذخیره تنظیمات",
+        loading: "در حال بارگذاری تنظیمات...",
+      },
+      actions: {
+        save: "ذخیره تغییرات",
+        cancel: "لغو",
+        reset: "بازنشانی به پیش‌فرض",
+      },
+    },
     navigation: {
       backToApp: "بازگشت به برنامه",
       logout: "خروج",

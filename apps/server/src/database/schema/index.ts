@@ -415,6 +415,19 @@ export const threadDocuments = sqliteTable(
   ]
 );
 
+export const systemSettings = sqliteTable("system_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  value: text("value", { mode: "json" }).notNull(),
+  description: text("description"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(timestamp),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(timestamp),
+});
+
 // ============================================================================
 // Relations
 // ============================================================================
@@ -644,6 +657,11 @@ export const selectThreadDocumentSchema = createSelectSchema(threadDocuments);
 export type InsertThreadDocument = z.infer<typeof insertThreadDocumentSchema>;
 export type SelectThreadDocument = z.infer<typeof selectThreadDocumentSchema>;
 
+export const insertSystemSettingSchema = createInsertSchema(systemSettings);
+export const selectSystemSettingSchema = createSelectSchema(systemSettings);
+export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
+export type SelectSystemSetting = z.infer<typeof selectSystemSettingSchema>;
+
 // ============================================================================
 // Type Aliases (for backwards compatibility)
 // ============================================================================
@@ -661,6 +679,7 @@ export type Document = SelectDocument;
 export type DocumentChunk = SelectDocumentChunk;
 export type ThreadDocument = SelectThreadDocument;
 export type UserPreferences = SelectUserPreferences;
+export type SystemSetting = SelectSystemSetting;
 
 // Re-export types from types.ts
 export * from "./types";
