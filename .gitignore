@@ -176,3 +176,6 @@ worktrees/
 apps/whisper/internal/ffmpeg/bin/ffmpeg-*
 # Keep the .gitkeep file to track the directory
 !apps/whisper/internal/ffmpeg/bin/.gitkeep
+
+
+*.pem
