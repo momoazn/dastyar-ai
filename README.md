@@ -114,7 +114,7 @@ dastyar-ai/
 └── README.md            # This file
 ```
 
-See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for complete directory structure.
+See [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) for complete directory structure.
 
 ---
 
@@ -123,8 +123,8 @@ See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for complete directory structur
 ### Available Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - Project guidelines, structure, and coding conventions
-- **[PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)** - Detailed directory structure
-- **[TASKS.md](TASKS.md)** - Production readiness task list
+- **[docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)** - Detailed directory structure
+- **[docs/TASKS.md](docs/TASKS.md)** - Production readiness task list
 - **[docs/SECRETS.md](docs/SECRETS.md)** - Secrets management guide
 
 ### Build Scripts
@@ -208,9 +208,9 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Documentation**: [docs/](docs/) and root documentation files
+- **Documentation**: [docs/](docs/)
 - **Project Guidelines**: [CLAUDE.md](CLAUDE.md)
-- **Tasks & Roadmap**: [TASKS.md](TASKS.md)
+- **Tasks & Roadmap**: [docs/TASKS.md](docs/TASKS.md)
 - **Issues**: [GitHub Issues](https://github.com/mohammadhmn/persian-ai-assistant/issues)
 
 ---
