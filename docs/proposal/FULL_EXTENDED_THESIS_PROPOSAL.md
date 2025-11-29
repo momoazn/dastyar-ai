@@ -6,6 +6,23 @@
 
 دستیارهای هوشمند امروزی نظیر ChatGPT، Claude، Siri و Google Assistant، با بهره‌گیری از قدرت پردازشی عظیم سرورهای ابری، قابلیت‌هایی فراتر از دستورات ساده صوتی را ارائه می‌دهند. آن‌ها می‌توانند در نقش یک مشاور، نویسنده، برنامه‌نویس و حتی تحلیل‌گر داده ظاهر شوند. با این حال، معماری غالب بر این سیستم‌ها، معماری «مبتنی بر ابر» (Cloud-based Architecture) است. در این معماری، دستگاه کاربر (لپ‌تاپ، موبایل یا تبلت) تنها به عنوان یک درگاه ورودی/خروجی عمل می‌کند و تمامی پردازش‌های سنگین هوش مصنوعی در مراکز داده دوردست انجام می‌شود.
 
+---
+**[محل قرارگیری تصویر ۱-۱: مقایسه معماری ابری و محلی]**
+> **شرح تصویر:** این تصویر باید تفاوت بنیادین بین مدل ابری (که داده‌ها به سرور مرکزی می‌روند) و مدل محلی (که همه چیز در دستگاه کاربر می‌ماند) را نشان دهد.
+>
+> **Image Generation Prompt:**
+> A clean, flat-style split-screen infographic comparing "Cloud AI" vs "Local AI".
+> **Left Side (Cloud AI):** Shows many users (laptops/phones) sending data packets (documents, voice) to a central "Cloud Server" icon. Red warning icons indicate "Privacy Risk" and "Latency".
+> **Right Side (Local AI):** Shows a single powerful laptop with a glowing shield around it. All processing happens inside the shield. Green checkmarks indicate "Secure" and "Fast".
+> **Style:** Modern, corporate tech, blue and white color palette.
+> **Persian Text Labels to Overlay:**
+> *   Top Left: هوش مصنوعی ابری (Cloud AI)
+> *   Top Right: هوش مصنوعی محلی (Local AI)
+> *   Center Cloud: سرورهای خارجی (External Servers)
+> *   Arrows: انتقال داده (Data Transfer)
+> *   Shield: حریم خصوصی امن (Secure Privacy)
+---
+
 اگرچه این رویکرد متمرکز مزایای انکارناپذیری همچون قدرت پردازشی نامحدود و به‌روزرسانی آنی را به همراه دارد، اما وابستگی ذاتی آن به زیرساخت شبکه اینترنت و ارسال مداوم داده‌های کاربر به سرورهای شخص ثالث، چالش‌های بنیادینی را به وجود آورده است. در بسیاری از نقاط جهان، دسترسی به اینترنت پرسرعت، پایدار و با تاخیر پایین (Low Latency) همچنان یک معضل حل نشده است. علاوه بر این، افزایش آگاهی عمومی نسبت به مقوله «حریم خصوصی دیجیتال» (Digital Privacy) و تصویب قوانین سخت‌گیرانه حفاظت از داده‌ها (مانند GDPR در اروپا)، اعتماد به سرویس‌های ابری را که داده‌های کاربران را جمع‌آوری و تحلیل می‌کنند، با تردید مواجه کرده است.
 
 از سوی دیگر، زبان فارسی به عنوان یکی از زبان‌های هندواروپایی با ساختار، رسم‌الخط و ظرافت‌های آوایی منحصر‌به‌فرد، در بسیاری از مدل‌های هوش مصنوعی تجاری و عمومی، مورد کم‌توجهی قرار گرفته است. سیستم‌های موجود اغلب در تشخیص گفتار محاوره فارسی، درک متون تخصصی و تولید پاسخ‌های سلیس و روان، دچار ضعف‌های مشهود هستند. این شکاف تکنولوژیک، نیاز به توسعه سیستم‌های بومی‌سازی شده و بهینه‌سازی شده برای اکوسیستم زبان فارسی را بیش از پیش برجسته می‌سازد.
@@ -29,6 +46,21 @@
 
 **د) پراکندگی ابزارها و عدم یکپارچگی:**
 کاربران برای رفع نیازهای مختلف خود مجبور به استفاده از ابزارهای گسسته هستند: یک ابزار برای تبدیل گفتار به متن، ابزاری دیگر برای اصلاح گرامری، سرویسی مجزا برای خلاصه‌سازی متون و پلتفرمی دیگر برای تولید تصویر. این پراکندگی (Fragmentation) باعث کاهش بهره‌وری و پیچیدگی گردش کار می‌شود. نبود یک پلتفرم واحد که بتواند تمامی این قابلیت‌ها را در یک محیط یکپارچه و با رابط کاربری منسجم ارائه دهد، یکی دیگر از ابعاد مسئله است.
+
+---
+**[محل قرارگیری تصویر ۱-۲: مشکل پراکندگی ابزارها]**
+> **شرح تصویر:** تصویری که نشان‌دهنده سردرگمی کاربر در استفاده از چندین ابزار جداگانه است، در مقابل راهکار یکپارچه ما.
+>
+> **Image Generation Prompt:**
+> A conceptual diagram showing "Tool Fragmentation" vs "Unified Platform".
+> **Before:** A confused user surrounded by floating disconnected icons: a microphone (Speech-to-text), a document (PDF Tools), a robot head (Chatbot), and a paintbrush (Image Gen). The user looks overwhelmed.
+> **After:** The same icons are neatly integrated into a single, sleek dashboard application on a laptop screen. The user looks happy/productive.
+> **Style:** Isometric vector art, clean lines.
+> **Persian Text Labels to Overlay:**
+> *   Chaos side: پراکندگی ابزارها (Tool Fragmentation)
+> *   Order side: پلتفرم یکپارچه دستیار (Unified Dastyar Platform)
+> *   Icons: تبدیل صدا (Speech), چت هوشمند (Smart Chat), اسناد (Docs)
+---
 
 بنابراین، سوال اساسی این است: **چگونه می‌توان یک معماری نرم‌افزاری طراحی کرد که با تلفیق مدل‌های هوش مصنوعی متن‌باز، تکنیک‌های فشرده‌سازی و رابط کاربری مدرن وب، یک دستیار هوشمند جامع، امن، آفلاین و متناسب با زبان فارسی را بر روی سخت‌افزارهای شخصی پیاده‌سازی نمود؟**
 
@@ -198,6 +230,25 @@ $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right
 
 $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O $$
 
+---
+**[محل قرارگیری تصویر ۲-۱: معماری ترنسفورمر]**
+> **شرح تصویر:** دیاگرام کلاسیک معماری ترنسفورمر شامل انکودر و دیکودر، لایه‌های توجه (Attention) و شبکه Feed Forward.
+>
+> **Image Generation Prompt:**
+> A high-quality technical diagram of the Transformer Architecture (based on "Attention Is All You Need" paper).
+> **Left Column:** Encoder stack with "Multi-Head Attention" and "Feed Forward" layers.
+> **Right Column:** Decoder stack with "Masked Multi-Head Attention", "Multi-Head Attention", and "Feed Forward" layers.
+> **Connections:** Arrows showing data flow including residual connections (Add & Norm).
+> **Style:** Scientific textbook illustration, wireframe style, distinct colors for different layer types.
+> **Persian Text Labels to Overlay:**
+> *   Encoder: رمزگذار (Encoder)
+> *   Decoder: رمزگشا (Decoder)
+> *   Attention: توجه چند-سره (Multi-Head Attention)
+> *   Feed Forward: شبکه پیش‌خور (Feed Forward)
+> *   Input: ورودی (Input)
+> *   Output: خروجی (Output)
+---
+
 ## ۲-۴ مدل‌های زبانی بزرگ (LLMs)
 
 مدل‌های زبانی بزرگ، شبکه‌های عصبی ترنسفورمری با میلیاردها پارامتر هستند که بر روی حجم وسیعی از متون اینترنت (Corpus) آموزش دیده‌اند. هدف اصلی آموزش این مدل‌ها، پیش‌بینی کلمه بعدی (Next Token Prediction) است.
@@ -228,6 +279,23 @@ $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W
 $$ Q = \text{round}(S \cdot W) $$
 $$ \hat{W} = Q / S $$
 که در آن $W$ وزن اصلی، $S$ فاکتور مقیاس (Scale Factor) و $Q$ مقدار کوانتیده شده است.
+
+---
+**[محل قرارگیری تصویر ۲-۲: مفهوم کوانتیزاسیون و فشرده‌سازی مدل]**
+> **شرح تصویر:** نمایشی بصری از چگونگی کاهش حجم حافظه با کاهش دقت بیت‌ها، بدون تغییر ساختار شبکه.
+>
+> **Image Generation Prompt:**
+> A comparative visual explanation of "Model Quantization".
+> **Top Row (FP16 - Original):** Shows a large memory block labeled "16GB VRAM". Inside, numbers are complex (e.g., 0.12345678). High detail, bulky.
+> **Bottom Row (INT4 - Quantized):** Shows a much smaller memory block labeled "4GB VRAM". Inside, numbers are simple integers (e.g., 12, -5). Compact, efficient.
+> **Arrow:** A transformation arrow pointing from Top to Bottom labeled "Quantization".
+> **Style:** 3D abstract tech visualization, showing "compression" without loss of structure.
+> **Persian Text Labels to Overlay:**
+> *   Top: مدل اصلی - دقت ۱۶ بیت (FP16 Model)
+> *   Bottom: مدل فشرده - دقت ۴ بیت (INT4 Model)
+> *   Arrow: کوانتیزاسیون (Quantization)
+> *   Memory: حافظه مصرفی (Memory Usage)
+---
 
 ### ۲-۵-۲ فرمت GGUF
 فرمت GGUF (GPT-Generated Unified Format) یک استاندارد فایل باینری است که برای ذخیره‌سازی و بارگذاری سریع مدل‌های کوانتیده شده بر روی CPU و GPU طراحی شده است. این فرمت که توسط پروژه `llama.cpp` معرفی شد، نقش کلیدی در این پژوهش ایفا می‌کند زیرا:
@@ -268,6 +336,26 @@ Whisper از یک معماری ترنسفورمر استاندارد Encoder-Dec
 1.  **پیش‌پردازش صوتی:** صدای ورودی (با نرخ نمونه‌برداری ۱۶ کیلوهرتز) به قطعات ۳۰ ثانیه‌ای تقسیم می‌شود. سپس تبدیل Log-Mel Spectrogram روی آن اعمال می‌شود تا ویژگی‌های طیفی صدا استخراج گردد.
 2.  **رمزگذار (Encoder):** اسپکتروگرام حاصله توسط دو لایه کانولوشن (Conv1D) پردازش می‌شود تا ویژگی‌های مکانی/زمانی استخراج شوند. سپس خروجی به مجموعه‌ای از بلوک‌های ترنسفورمر داده می‌شود که شامل لایه‌های Self-Attention هستند. انکودر در نهایت یک نمایش برداری غنی از محتوای صوتی تولید می‌کند.
 3.  **رمزگشا (Decoder):** دیکودر وظیفه تولید توکن‌های متنی را بر عهده دارد. این بخش علاوه بر توجه به توکن‌های تولید شده قبلی (Masked Self-Attention)، به خروجی انکودر نیز توجه می‌کند (Cross-Attention).
+
+---
+**[محل قرارگیری تصویر ۲-۳: خط لوله پردازش مدل Whisper]**
+> **شرح تصویر:** جریان داده در مدل Whisper از فایل صوتی خام تا تولید متن نهایی.
+>
+> **Image Generation Prompt:**
+> A flowchart diagram illustrating the "Whisper Model Pipeline".
+> **Step 1:** Audio Waveform icon input.
+> **Step 2:** "Log-Mel Spectrogram" transformation (shows a heat map of audio frequencies).
+> **Step 3:** "Encoder" block (stack of layers).
+> **Step 4:** "Decoder" block, receiving input from Encoder and "Special Tokens" (Language, Task).
+> **Step 5:** Output Text "سلام دنیا" (Hello World in Persian).
+> **Style:** Clean engineering flowchart, blue and purple gradient theme (OpenAI Whisper style).
+> **Persian Text Labels to Overlay:**
+> *   Input: موج صوتی (Audio Waveform)
+> *   Process: اسپکتروگرام (Spectrogram)
+> *   Encoder: رمزگذار (Encoder)
+> *   Decoder: رمزگشا (Decoder)
+> *   Output: متن فارسی (Persian Text)
+---
 
 ### ۲-۷-۲ استراتژی آموزش چندوظیفه‌ای (Multitask Training)
 یکی از نوآوری‌های کلیدی Whisper، تعریف توکن‌های کنترلی ویژه است که به مدل اجازه می‌دهد چندین وظیفه مختلف را با یک معماری واحد انجام دهد. دیکودر همواره با یک توکن `<|startoftranscript|>` آغاز می‌شود. سپس توکن‌های بعدی نوع وظیفه را مشخص می‌کنند:
@@ -332,6 +420,23 @@ Whisper بر روی ۶۸۰,۰۰۰ ساعت داده صوتی جمع‌آوری �
 3.  **تزریق زمینه (Context Injection):** قطعات بازیابی شده به عنوان «زمینه» (Context) به پرامپت سیستم اضافه می‌شوند.
 4.  **تولید پاسخ:** مدل زبانی با دریافت سوال و زمینه، پاسخ نهایی را تولید می‌کند.
 
+---
+**[محل قرارگیری تصویر ۲-۴: چرخه حیات سیستم RAG]**
+> **شرح تصویر:** نمایش دو فاز اصلی RAG: آماده‌سازی داده‌ها (Indexing) و پرسش و پاسخ (Retrieval).
+>
+> **Image Generation Prompt:**
+> A split-process diagram showing "RAG Architecture".
+> **Top Half (Indexing):** Documents (PDF/TXT) -> Chunking -> Embedding Model -> Vector Database.
+> **Bottom Half (Retrieval):** User Question -> Embedding Model -> Vector Search (finding nearest chunks) -> LLM + Context -> Answer.
+> **Style:** Modern SaaS architecture diagram, icons for Database, AI Chip, Documents.
+> **Persian Text Labels to Overlay:**
+> *   Phase 1: نمایه‌سازی (Indexing)
+> *   Phase 2: بازیابی و تولید (Retrieval & Gen)
+> *   DB: دیتابیس برداری (Vector DB)
+> *   LLM: مدل زبانی (LLM)
+> *   User: پرسش کاربر (User Query)
+---
+
 ### ۲-۱۰-۲ ریاضیات جستجوی برداری
 قلب تپنده RAG، الگوریتم محاسبه شباهت است. رایج‌ترین معیار، **شباهت کسینوسی (Cosine Similarity)** است که کسینوس زاویه بین دو بردار غیرصفر را اندازه‌گیری می‌کند:
 
@@ -351,6 +456,21 @@ $$ \text{similarity}(A, B) = \cos(\theta) = \frac{A \cdot B}{\|A\| \|B\|} = \fra
 *   **معماری داخلی:** برخلاف Node که با C++ نوشته شده، Bun با زبان مدرن **Zig** توسعه یافته که کنترل دستی حافظه و فقدان جریان‌های پنهان (Hidden Control Flow)، آن را بسیار سریع‌تر کرده است.
 *   **مدیریت پکیج:** Bun از یک فایل `lock` باینری استفاده می‌کند و نصب پکیج‌ها را تا ۳۰ برابر سریع‌تر از npm انجام می‌دهد. در پروژه‌هایی با وابستگی‌های سنگین (مانند کتابخانه‌های پردازش متن)، این ویژگی زمان توسعه را کاهش می‌دهد.
 *   **پشتیبانی بومی از TypeScript:** در Bun نیازی به مرحله Transpilation نیست و فایل‌های `.ts` مستقیماً اجرا می‌شوند، که فرآیند بیلد و دیباگ را ساده‌تر می‌کند.
+
+---
+**[محل قرارگیری تصویر ۲-۵: مقایسه معماری Node.js و Bun]**
+> **شرح تصویر:** مقایسه ساختار داخلی این دو ران‌تایم.
+>
+> **Image Generation Prompt:**
+> A technical comparison chart: "Node.js Architecture" vs "Bun Architecture".
+> **Node.js Side:** Shows "V8 Engine" (JS) + "Libuv" (C++) + separate tools (npm, jest, webpack). Looks fragmented.
+> **Bun Side:** Shows "JavaScriptCore" (Zig optimized) + Integrated Toolchain (Bundler, Test Runner, Package Manager all in one box). Looks unified and fast.
+> **Style:** Schematic block diagram, contrasting colors (Green for Node, Orange/Pink for Bun).
+> **Persian Text Labels to Overlay:**
+> *   Node: معماری چندتکه (Fragmented Arch)
+> *   Bun: معماری یکپارچه (Unified Arch)
+> *   Performance: سرعت و کارایی (Performance)
+---
 
 ### ۲-۱۱-۲ فریم‌ورک رابط کاربری: React 19
 نسخه ۱۹ ری‌اکت با تغییرات بنیادین در هسته خود (React Core) معرفی شده است:
@@ -416,6 +536,20 @@ $$ \text{Swish}_\beta(x) = x \sigma(\beta x) $$
 $$ f_{q,k}(x_m, m) = R^d_\Theta, m x_m $$
 که در آن $R$ ماتریس چرخش است. ویژگی کلیدی RoPE این است که ضرب داخلی دو بردار $q$ و $k$ تنها به فاصله نسبی آن‌ها $(m-n)$ بستگی دارد، نه موقعیت مطلقشان. این ویژگی حیاتی است زیرا به ما اجازه می‌دهد طول پنجره زمینه (Context Window) را در زمان استنتاج افزایش دهیم (Extrapolation) که برای قابلیت RAG و پردازش اسناد طولانی در این پروژه ضروری است.
 
+---
+**[محل قرارگیری تصویر ۲-۶: مفهوم کدگذاری موقعیتی چرخشی (RoPE)]**
+> **شرح تصویر:** نمایش هندسی چرخش بردارها در فضای دوبعدی برای کدگذاری فاصله نسبی.
+>
+> **Image Generation Prompt:**
+> A mathematical visualization of "Rotary Positional Embeddings (RoPE)".
+> **Visual:** Two vectors on a 2D plane (circle) rotating by an angle theta. The angle between them represents their relative position in the sentence.
+> **Style:** Abstract geometric math art, grids, angles, vectors.
+> **Persian Text Labels to Overlay:**
+> *   Vectors: بردارهای کلمات (Word Vectors)
+> *   Rotation: چرخش موقعیتی (Positional Rotation)
+> *   Relative Distance: فاصله نسبی (Relative Distance)
+---
+
 ### ۲-۱۳-۴ توجه کوئری گروه‌بندی شده (GQA - Grouped-Query Attention)
 در مدل‌های بزرگ، بارگذاری ماتریس‌های Key و Value حافظه زیادی مصرف می‌کند (KV Cache bottleneck). روش GQA میان‌گینی بین Multi-Head Attention (کیفیت بالا، حافظه زیاد) و Multi-Query Attention (کیفیت متوسط، حافظه کم) است.
 در GQA، چندین «سر» کوئری (Query Heads) یک جفت Key-Value مشترک را به اشتراک می‌گذارند. این تکنیک باعث می‌شود:
@@ -436,6 +570,21 @@ $$ X(m, \omega) = \sum_{n=-\infty}^{\infty} x[n] w[n-m] e^{-j\omega n} $$
 گوش انسان تغییرات فرکانس را به صورت خطی درک نمی‌کند. حساسیت ما در فرکانس‌های پایین بسیار بیشتر از فرکانس‌های بالاست. مقیاس Mel این رفتار را شبیه‌سازی می‌کند:
 
 $$ m = 2595 \log_{10}\left(1 + \frac{f}{700}\right) $$
+
+---
+**[محل قرارگیری تصویر ۲-۷: مقیاس Mel در برابر فرکانس خطی]**
+> **شرح تصویر:** نموداری که نشان می‌دهد چگونه گوش انسان فرکانس‌های پایین را با دقت بیشتر و فرکانس‌های بالا را با دقت کمتر می‌شنود.
+>
+> **Image Generation Prompt:**
+> A graph plotting "Mel Scale" (Y-axis) vs "Hertz" (X-axis).
+> **Curve:** The curve rises steeply at low frequencies (0-1000Hz) and flattens out at high frequencies (logarithmic behavior).
+> **Annotation:** Icons of a human ear focusing on the low-frequency part.
+> **Style:** Scientific graph, grid lines, clear axis labels.
+> **Persian Text Labels to Overlay:**
+> *   X-axis: فرکانس (Hz)
+> *   Y-axis: مقیاس Mel
+> *   Curve Label: درک شنوایی انسان (Human Hearing Perception)
+---
 
 در مدل Whisper، خروجی STFT با استفاده از بانک فیلترهای Mel (معمولاً ۸۰ فیلتر) فشرده می‌شود. نتیجه یک تصویر (Spectrogram) است که محور افقی آن زمان و محور عمودی آن فرکانس‌های درک‌شده توسط انسان است. شبکه عصبی کانولوشنی (CNN) در ابتدای Whisper، این تصویر را پردازش می‌کند.
 **چرا این مهم است؟** استفاده از ۸۰ کانال Mel باعث می‌شود حجم داده ورودی به مدل کاهش یابد و مدل نسبت به تغییرات جزئی در زیر و بمی صدا (Pitch) مقاوم‌تر باشد که برای تشخیص گفتار گویندگان مختلف (مرد/زن/کودک) ضروری است.
@@ -492,6 +641,24 @@ Cross-Encoder برخلاف مدل‌های Embedding که دو بردار جدا
 *   **لایه منطق تجاری (Business Logic Layer):** سرور اصلی (Main Server) مبتنی بر Bun و Hono که وظیفه مدیریت کاربران، دیتابیس و هماهنگی درخواست‌ها را دارد.
 *   **لایه محاسباتی (Compute Layer):** سرویس‌های تخصصی هوش مصنوعی (Whisper Service, LLM Service) که محاسبات سنگین تانسوری را انجام می‌دهند.
 
+---
+**[محل قرارگیری تصویر ۳-۱: معماری کلان سیستم]**
+> **شرح تصویر:** دیاگرام بلوکی نشان‌دهنده ارتباط سه لایه اصلی: Frontend (React), Backend (Hono/Bun), AI Services (Whisper/Llama).
+>
+> **Image Generation Prompt:**
+> A detailed "System Architecture Diagram" for a local AI app.
+> **Top Layer:** "Frontend" (React 19 UI) running in Browser.
+> **Middle Layer:** "Main Server" (Hono + Bun + SQLite). API Gateway logic.
+> **Bottom Layer:** "AI Workers" (Whisper.cpp Process, LLM Runner Process).
+> **Arrows:** Show HTTP/WebSocket requests going down, and SSE/Stream responses going up.
+> **Style:** Professional software architecture diagram, white background, shadow effects on boxes.
+> **Persian Text Labels to Overlay:**
+> *   Frontend: رابط کاربری (React)
+> *   Backend: سرور مرکزی (Bun/Hono)
+> *   AI Engine: موتور هوش مصنوعی (AI Engine)
+> *   Database: پایگاه داده (SQLite)
+---
+
 ## ۳-۴ طراحی و پیاده‌سازی بخش سرور (Backend)
 
 قلب تپنده سیستم، سرور مرکزی است که با استفاده از ران‌تایم **Bun** و فریم‌ورک **Hono** توسعه می‌یابد.
@@ -514,6 +681,26 @@ Cross-Encoder برخلاف مدل‌های Embedding که دو بردار جدا
 5.  **Embeddings:** این جدول برای سیستم RAG حیاتی است. برخلاف جداول عادی، این جدول شامل یک ستون باینری برای ذخیره بردارها (مثلاً آرایه‌ای از ۱۰۲۴ عدد اعشاری) است.
 
 برای مدیریت این جداول، از **Drizzle ORM** استفاده می‌کنیم. فایل پیکربندی `schema.ts` به عنوان منبع حقیقت (Source of Truth) عمل می‌کند و تمامی تغییرات دیتابیس (Migrations) از روی آن تولید می‌شوند.
+
+---
+**[محل قرارگیری تصویر ۳-۲: نمودار رابطه موجودیت‌ها (ERD)]**
+> **شرح تصویر:** نمایش جداول دیتابیس و روابط بین آن‌ها (Users -> Threads -> Messages).
+>
+> **Image Generation Prompt:**
+> A standard "Entity Relationship Diagram (ERD)" for a chat application.
+> **Tables:**
+> 1.  `Users` (ID, Name, Settings)
+> 2.  `Threads` (ID, UserID, Title, CreatedAt)
+> 3.  `Messages` (ID, ThreadID, Role, Content, TokenUsage)
+> 4.  `Documents` (ID, UserID, FilePath, VectorStatus)
+> **Relationships:** One-to-Many lines connecting Users->Threads, Threads->Messages.
+> **Style:** Clean database schema visualization, Crow's foot notation.
+> **Persian Text Labels to Overlay:**
+> *   Users: کاربران
+> *   Threads: گفتگوها
+> *   Messages: پیام‌ها
+> *   Documents: اسناد
+---
 
 ### ۳-۴-۴ سیستم صف و مدیریت وظایف (Task Queue)
 پردازش‌های هوش مصنوعی زمان‌بر هستند (مثلاً تولید یک تصویر ممکن است ۱۰ ثانیه طول بکشد). برای جلوگیری از مسدود شدن (Blocking) سرور اصلی، یک سیستم صف داخلی پیاده‌سازی می‌شود.
@@ -625,6 +812,25 @@ $$ WER = \frac{S + D + I}{N} $$
 
 این ماژول به صورت یک کتابخانه مستقل TypeScript توسعه یافته است تا هم در سمت کلاینت (هنگام تایپ کاربر) و هم در سمت سرور (هنگام پردازش فایل‌ها) قابل استفاده باشد. تست‌های واحد گسترده‌ای با پوشش ۱۰۰٪ برای این ماژول نوشته شده تا از صحت عملکرد آن در تمام حالات مرزی (Edge Cases) اطمینان حاصل شود.
 
+---
+**[محل قرارگیری تصویر ۳-۳: فلوچارت نرمال‌سازی متن فارسی]**
+> **شرح تصویر:** مراحل تمیزکاری متن ورودی قبل از پردازش.
+>
+> **Image Generation Prompt:**
+> A logical flowchart showing "Text Normalization Pipeline".
+> **Input:** Raw Text with messy Arabic/Persian mix ("ي", "ك", "123").
+> **Step 1:** Character Unification (Standardizing 'Yeh' and 'Keh').
+> **Step 2:** ZWNJ Injection (Smart spacing for suffixes).
+> **Step 3:** Cleaning (Removing control chars).
+> **Output:** Clean Standard Persian Text.
+> **Style:** Algorithm flowchart, step-by-step progression.
+> **Persian Text Labels to Overlay:**
+> *   Input: متن خام (Raw Text)
+> *   Step 1: یکسان‌سازی کاراکترها (Char Unification)
+> *   Step 2: اصلاح نیم‌فاصله (ZWNJ Fix)
+> *   Output: متن استاندارد (Standard Text)
+---
+
 ## ۳-۱۰ الگوی ارکستراسیون ناهمگام (Asynchronous Orchestration Pattern)
 
 در یک سیستم هوش مصنوعی محلی، منابع سخت‌افزاری (CPU/RAM) محدود هستند. اگر چندین کاربر (یا حتی یک کاربر با چندین تب باز) همزمان درخواست تولید متن یا تصویر دهند، سیستم ممکن است دچار قفل‌شدگی (Deadlock) یا کمبود حافظه (OOM) شود. برای مدیریت این وضعیت، ما از الگوی «صف وظایف» (Task Queue) با معماری Producer-Consumer استفاده می‌کنیم.
@@ -643,6 +849,24 @@ $$ WER = \frac{S + D + I}{N} $$
 *   پس از اتمام پردازش، نتیجه در یک نگاشت (Map) موقت ذخیره شده و از طریق `EventEmitter` به کلاینت مربوطه اطلاع داده می‌شود.
 
 این معماری تضمین می‌کند که حتی اگر ۱۰۰ درخواست همزمان ارسال شود، سیستم آن‌ها را به ترتیب و بدون کرش کردن پردازش می‌کند (Backpressure Handling).
+
+---
+**[محل قرارگیری تصویر ۳-۴: معماری صف وظایف]**
+> **شرح تصویر:** نمایش نحوه مدیریت درخواست‌های همزمان توسط صف و کارگرها.
+>
+> **Image Generation Prompt:**
+> A "Producer-Consumer" architecture diagram for a Job Queue.
+> **Left (Producers):** Multiple User Requests (Chat, Audio, Image) entering a funnel.
+> **Center (Queue):** A priority queue sorting tasks (High Priority on top).
+> **Right (Consumer/Worker):** A single "Worker" process taking one task at a time and sending it to the "AI Model".
+> **Feedback:** An arrow going back to the User labeled "SSE Update".
+> **Style:** Server architecture diagram, queue visualization.
+> **Persian Text Labels to Overlay:**
+> *   Requests: درخواست‌های کاربران (Requests)
+> *   Priority Queue: صف اولویت‌دار (Priority Queue)
+> *   Worker: کارگر پردازشی (Worker)
+> *   AI Model: مدل هوش مصنوعی (AI Model)
+---
 
 ## ۳-۱۱ معماری امنیت و حفاظت (Security Architecture)
 
@@ -732,6 +956,23 @@ Node.js از کتابخانه `libuv` استفاده می‌کند که یک Thr
 | **پیاده‌سازی RAG** | | | | | ██ | |
 | **تست و دیباگ** | | | | | ██ | ██ |
 | **مستندسازی و نگارش** | | | | | | ██ |
+
+---
+**[محل قرارگیری تصویر ۴-۱: نمودار گانت پروژه]**
+> **شرح تصویر:** نمایش گرافیکی زمان‌بندی پروژه در طول ۶ ماه.
+>
+> **Image Generation Prompt:**
+> A professional "Gantt Chart" timeline for a 6-month software project.
+> **Y-Axis (Tasks):** Research, Backend Dev, Frontend Dev, RAG Impl, Testing, Docs.
+> **X-Axis (Time):** Month 1 to Month 6.
+> **Bars:** Horizontal bars showing the duration of each task, with dependencies (cascading style).
+> **Style:** Project management tool screenshot style (like Jira/Asana), clean and modern.
+> **Persian Text Labels to Overlay:**
+> *   Month 1-6: ماه اول تا ششم
+> *   Research: تحقیقات (Research)
+> *   Development: توسعه فنی (Development)
+> *   Testing: تست و ارزیابی (Testing)
+---
 
 ## ۴-۴ مدیریت ریسک‌ها و چالش‌ها
 

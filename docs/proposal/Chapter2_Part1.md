@@ -48,6 +48,25 @@ $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right
 
 $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O $$
 
+---
+**[محل قرارگیری تصویر ۲-۱: معماری ترنسفورمر]**
+> **شرح تصویر:** دیاگرام کلاسیک معماری ترنسفورمر شامل انکودر و دیکودر، لایه‌های توجه (Attention) و شبکه Feed Forward.
+>
+> **Image Generation Prompt:**
+> A high-quality technical diagram of the Transformer Architecture (based on "Attention Is All You Need" paper).
+> **Left Column:** Encoder stack with "Multi-Head Attention" and "Feed Forward" layers.
+> **Right Column:** Decoder stack with "Masked Multi-Head Attention", "Multi-Head Attention", and "Feed Forward" layers.
+> **Connections:** Arrows showing data flow including residual connections (Add & Norm).
+> **Style:** Scientific textbook illustration, wireframe style, distinct colors for different layer types.
+> **Persian Text Labels to Overlay:**
+> *   Encoder: رمزگذار (Encoder)
+> *   Decoder: رمزگشا (Decoder)
+> *   Attention: توجه چند-سره (Multi-Head Attention)
+> *   Feed Forward: شبکه پیش‌خور (Feed Forward)
+> *   Input: ورودی (Input)
+> *   Output: خروجی (Output)
+---
+
 ## ۲-۴ مدل‌های زبانی بزرگ (LLMs)
 
 مدل‌های زبانی بزرگ، شبکه‌های عصبی ترنسفورمری با میلیاردها پارامتر هستند که بر روی حجم وسیعی از متون اینترنت (Corpus) آموزش دیده‌اند. هدف اصلی آموزش این مدل‌ها، پیش‌بینی کلمه بعدی (Next Token Prediction) است.
@@ -78,6 +97,23 @@ $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W
 $$ Q = \text{round}(S \cdot W) $$
 $$ \hat{W} = Q / S $$
 که در آن $W$ وزن اصلی، $S$ فاکتور مقیاس (Scale Factor) و $Q$ مقدار کوانتیده شده است.
+
+---
+**[محل قرارگیری تصویر ۲-۲: مفهوم کوانتیزاسیون و فشرده‌سازی مدل]**
+> **شرح تصویر:** نمایشی بصری از چگونگی کاهش حجم حافظه با کاهش دقت بیت‌ها، بدون تغییر ساختار شبکه.
+>
+> **Image Generation Prompt:**
+> A comparative visual explanation of "Model Quantization".
+> **Top Row (FP16 - Original):** Shows a large memory block labeled "16GB VRAM". Inside, numbers are complex (e.g., 0.12345678). High detail, bulky.
+> **Bottom Row (INT4 - Quantized):** Shows a much smaller memory block labeled "4GB VRAM". Inside, numbers are simple integers (e.g., 12, -5). Compact, efficient.
+> **Arrow:** A transformation arrow pointing from Top to Bottom labeled "Quantization".
+> **Style:** 3D abstract tech visualization, showing "compression" without loss of structure.
+> **Persian Text Labels to Overlay:**
+> *   Top: مدل اصلی - دقت ۱۶ بیت (FP16 Model)
+> *   Bottom: مدل فشرده - دقت ۴ بیت (INT4 Model)
+> *   Arrow: کوانتیزاسیون (Quantization)
+> *   Memory: حافظه مصرفی (Memory Usage)
+---
 
 ### ۲-۵-۲ فرمت GGUF
 فرمت GGUF (GPT-Generated Unified Format) یک استاندارد فایل باینری است که برای ذخیره‌سازی و بارگذاری سریع مدل‌های کوانتیده شده بر روی CPU و GPU طراحی شده است. این فرمت که توسط پروژه `llama.cpp` معرفی شد، نقش کلیدی در این پژوهش ایفا می‌کند زیرا:

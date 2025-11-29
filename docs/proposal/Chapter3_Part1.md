@@ -27,6 +27,24 @@
 *   **لایه منطق تجاری (Business Logic Layer):** سرور اصلی (Main Server) مبتنی بر Bun و Hono که وظیفه مدیریت کاربران، دیتابیس و هماهنگی درخواست‌ها را دارد.
 *   **لایه محاسباتی (Compute Layer):** سرویس‌های تخصصی هوش مصنوعی (Whisper Service, LLM Service) که محاسبات سنگین تانسوری را انجام می‌دهند.
 
+---
+**[محل قرارگیری تصویر ۳-۱: معماری کلان سیستم]**
+> **شرح تصویر:** دیاگرام بلوکی نشان‌دهنده ارتباط سه لایه اصلی: Frontend (React), Backend (Hono/Bun), AI Services (Whisper/Llama).
+>
+> **Image Generation Prompt:**
+> A detailed "System Architecture Diagram" for a local AI app.
+> **Top Layer:** "Frontend" (React 19 UI) running in Browser.
+> **Middle Layer:** "Main Server" (Hono + Bun + SQLite). API Gateway logic.
+> **Bottom Layer:** "AI Workers" (Whisper.cpp Process, LLM Runner Process).
+> **Arrows:** Show HTTP/WebSocket requests going down, and SSE/Stream responses going up.
+> **Style:** Professional software architecture diagram, white background, shadow effects on boxes.
+> **Persian Text Labels to Overlay:**
+> *   Frontend: رابط کاربری (React)
+> *   Backend: سرور مرکزی (Bun/Hono)
+> *   AI Engine: موتور هوش مصنوعی (AI Engine)
+> *   Database: پایگاه داده (SQLite)
+---
+
 ## ۳-۴ طراحی و پیاده‌سازی بخش سرور (Backend)
 
 قلب تپنده سیستم، سرور مرکزی است که با استفاده از ران‌تایم **Bun** و فریم‌ورک **Hono** توسعه می‌یابد.
@@ -49,6 +67,26 @@
 5.  **Embeddings:** این جدول برای سیستم RAG حیاتی است. برخلاف جداول عادی، این جدول شامل یک ستون باینری برای ذخیره بردارها (مثلاً آرایه‌ای از ۱۰۲۴ عدد اعشاری) است.
 
 برای مدیریت این جداول، از **Drizzle ORM** استفاده می‌کنیم. فایل پیکربندی `schema.ts` به عنوان منبع حقیقت (Source of Truth) عمل می‌کند و تمامی تغییرات دیتابیس (Migrations) از روی آن تولید می‌شوند.
+
+---
+**[محل قرارگیری تصویر ۳-۲: نمودار رابطه موجودیت‌ها (ERD)]**
+> **شرح تصویر:** نمایش جداول دیتابیس و روابط بین آن‌ها (Users -> Threads -> Messages).
+>
+> **Image Generation Prompt:**
+> A standard "Entity Relationship Diagram (ERD)" for a chat application.
+> **Tables:**
+> 1.  `Users` (ID, Name, Settings)
+> 2.  `Threads` (ID, UserID, Title, CreatedAt)
+> 3.  `Messages` (ID, ThreadID, Role, Content, TokenUsage)
+> 4.  `Documents` (ID, UserID, FilePath, VectorStatus)
+> **Relationships:** One-to-Many lines connecting Users->Threads, Threads->Messages.
+> **Style:** Clean database schema visualization, Crow's foot notation.
+> **Persian Text Labels to Overlay:**
+> *   Users: کاربران
+> *   Threads: گفتگوها
+> *   Messages: پیام‌ها
+> *   Documents: اسناد
+---
 
 ### ۳-۴-۴ سیستم صف و مدیریت وظایف (Task Queue)
 پردازش‌های هوش مصنوعی زمان‌بر هستند (مثلاً تولید یک تصویر ممکن است ۱۰ ثانیه طول بکشد). برای جلوگیری از مسدود شدن (Blocking) سرور اصلی، یک سیستم صف داخلی پیاده‌سازی می‌شود.

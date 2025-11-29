@@ -19,6 +19,23 @@
 3.  **تزریق زمینه (Context Injection):** قطعات بازیابی شده به عنوان «زمینه» (Context) به پرامپت سیستم اضافه می‌شوند.
 4.  **تولید پاسخ:** مدل زبانی با دریافت سوال و زمینه، پاسخ نهایی را تولید می‌کند.
 
+---
+**[محل قرارگیری تصویر ۲-۴: چرخه حیات سیستم RAG]**
+> **شرح تصویر:** نمایش دو فاز اصلی RAG: آماده‌سازی داده‌ها (Indexing) و پرسش و پاسخ (Retrieval).
+>
+> **Image Generation Prompt:**
+> A split-process diagram showing "RAG Architecture".
+> **Top Half (Indexing):** Documents (PDF/TXT) -> Chunking -> Embedding Model -> Vector Database.
+> **Bottom Half (Retrieval):** User Question -> Embedding Model -> Vector Search (finding nearest chunks) -> LLM + Context -> Answer.
+> **Style:** Modern SaaS architecture diagram, icons for Database, AI Chip, Documents.
+> **Persian Text Labels to Overlay:**
+> *   Phase 1: نمایه‌سازی (Indexing)
+> *   Phase 2: بازیابی و تولید (Retrieval & Gen)
+> *   DB: دیتابیس برداری (Vector DB)
+> *   LLM: مدل زبانی (LLM)
+> *   User: پرسش کاربر (User Query)
+---
+
 ### ۲-۱۰-۲ ریاضیات جستجوی برداری
 قلب تپنده RAG، الگوریتم محاسبه شباهت است. رایج‌ترین معیار، **شباهت کسینوسی (Cosine Similarity)** است که کسینوس زاویه بین دو بردار غیرصفر را اندازه‌گیری می‌کند:
 
@@ -38,6 +55,21 @@ $$ \text{similarity}(A, B) = \cos(\theta) = \frac{A \cdot B}{\|A\| \|B\|} = \fra
 *   **معماری داخلی:** برخلاف Node که با C++ نوشته شده، Bun با زبان مدرن **Zig** توسعه یافته که کنترل دستی حافظه و فقدان جریان‌های پنهان (Hidden Control Flow)، آن را بسیار سریع‌تر کرده است.
 *   **مدیریت پکیج:** Bun از یک فایل `lock` باینری استفاده می‌کند و نصب پکیج‌ها را تا ۳۰ برابر سریع‌تر از npm انجام می‌دهد. در پروژه‌هایی با وابستگی‌های سنگین (مانند کتابخانه‌های پردازش متن)، این ویژگی زمان توسعه را کاهش می‌دهد.
 *   **پشتیبانی بومی از TypeScript:** در Bun نیازی به مرحله Transpilation نیست و فایل‌های `.ts` مستقیماً اجرا می‌شوند، که فرآیند بیلد و دیباگ را ساده‌تر می‌کند.
+
+---
+**[محل قرارگیری تصویر ۲-۵: مقایسه معماری Node.js و Bun]**
+> **شرح تصویر:** مقایسه ساختار داخلی این دو ران‌تایم.
+>
+> **Image Generation Prompt:**
+> A technical comparison chart: "Node.js Architecture" vs "Bun Architecture".
+> **Node.js Side:** Shows "V8 Engine" (JS) + "Libuv" (C++) + separate tools (npm, jest, webpack). Looks fragmented.
+> **Bun Side:** Shows "JavaScriptCore" (Zig optimized) + Integrated Toolchain (Bundler, Test Runner, Package Manager all in one box). Looks unified and fast.
+> **Style:** Schematic block diagram, contrasting colors (Green for Node, Orange/Pink for Bun).
+> **Persian Text Labels to Overlay:**
+> *   Node: معماری چندتکه (Fragmented Arch)
+> *   Bun: معماری یکپارچه (Unified Arch)
+> *   Performance: سرعت و کارایی (Performance)
+---
 
 ### ۲-۱۱-۲ فریم‌ورک رابط کاربری: React 19
 نسخه ۱۹ ری‌اکت با تغییرات بنیادین در هسته خود (React Core) معرفی شده است:

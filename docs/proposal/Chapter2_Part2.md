@@ -28,6 +28,26 @@ Whisper از یک معماری ترنسفورمر استاندارد Encoder-Dec
 2.  **رمزگذار (Encoder):** اسپکتروگرام حاصله توسط دو لایه کانولوشن (Conv1D) پردازش می‌شود تا ویژگی‌های مکانی/زمانی استخراج شوند. سپس خروجی به مجموعه‌ای از بلوک‌های ترنسفورمر داده می‌شود که شامل لایه‌های Self-Attention هستند. انکودر در نهایت یک نمایش برداری غنی از محتوای صوتی تولید می‌کند.
 3.  **رمزگشا (Decoder):** دیکودر وظیفه تولید توکن‌های متنی را بر عهده دارد. این بخش علاوه بر توجه به توکن‌های تولید شده قبلی (Masked Self-Attention)، به خروجی انکودر نیز توجه می‌کند (Cross-Attention).
 
+---
+**[محل قرارگیری تصویر ۲-۳: خط لوله پردازش مدل Whisper]**
+> **شرح تصویر:** جریان داده در مدل Whisper از فایل صوتی خام تا تولید متن نهایی.
+>
+> **Image Generation Prompt:**
+> A flowchart diagram illustrating the "Whisper Model Pipeline".
+> **Step 1:** Audio Waveform icon input.
+> **Step 2:** "Log-Mel Spectrogram" transformation (shows a heat map of audio frequencies).
+> **Step 3:** "Encoder" block (stack of layers).
+> **Step 4:** "Decoder" block, receiving input from Encoder and "Special Tokens" (Language, Task).
+> **Step 5:** Output Text "سلام دنیا" (Hello World in Persian).
+> **Style:** Clean engineering flowchart, blue and purple gradient theme (OpenAI Whisper style).
+> **Persian Text Labels to Overlay:**
+> *   Input: موج صوتی (Audio Waveform)
+> *   Process: اسپکتروگرام (Spectrogram)
+> *   Encoder: رمزگذار (Encoder)
+> *   Decoder: رمزگشا (Decoder)
+> *   Output: متن فارسی (Persian Text)
+---
+
 ### ۲-۷-۲ استراتژی آموزش چندوظیفه‌ای (Multitask Training)
 یکی از نوآوری‌های کلیدی Whisper، تعریف توکن‌های کنترلی ویژه است که به مدل اجازه می‌دهد چندین وظیفه مختلف را با یک معماری واحد انجام دهد. دیکودر همواره با یک توکن `<|startoftranscript|>` آغاز می‌شود. سپس توکن‌های بعدی نوع وظیفه را مشخص می‌کنند:
 *   `<|lang|>`: تشخیص زبان گفتار (مثلاً `<|fa|>`).

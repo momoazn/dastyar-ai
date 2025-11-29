@@ -55,6 +55,23 @@
 | **تست و دیباگ** | | | | | ██ | ██ |
 | **مستندسازی و نگارش** | | | | | | ██ |
 
+---
+**[محل قرارگیری تصویر ۴-۱: نمودار گانت پروژه]**
+> **شرح تصویر:** نمایش گرافیکی زمان‌بندی پروژه در طول ۶ ماه.
+>
+> **Image Generation Prompt:**
+> A professional "Gantt Chart" timeline for a 6-month software project.
+> **Y-Axis (Tasks):** Research, Backend Dev, Frontend Dev, RAG Impl, Testing, Docs.
+> **X-Axis (Time):** Month 1 to Month 6.
+> **Bars:** Horizontal bars showing the duration of each task, with dependencies (cascading style).
+> **Style:** Project management tool screenshot style (like Jira/Asana), clean and modern.
+> **Persian Text Labels to Overlay:**
+> *   Month 1-6: ماه اول تا ششم
+> *   Research: تحقیقات (Research)
+> *   Development: توسعه فنی (Development)
+> *   Testing: تست و ارزیابی (Testing)
+---
+
 ## ۴-۴ مدیریت ریسک‌ها و چالش‌ها
 
 در مسیر اجرای این پروژه، چالش‌های زیر محتمل است:

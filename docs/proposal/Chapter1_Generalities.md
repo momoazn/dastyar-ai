@@ -6,6 +6,23 @@
 
 دستیارهای هوشمند امروزی نظیر ChatGPT، Claude، Siri و Google Assistant، با بهره‌گیری از قدرت پردازشی عظیم سرورهای ابری، قابلیت‌هایی فراتر از دستورات ساده صوتی را ارائه می‌دهند. آن‌ها می‌توانند در نقش یک مشاور، نویسنده، برنامه‌نویس و حتی تحلیل‌گر داده ظاهر شوند. با این حال، معماری غالب بر این سیستم‌ها، معماری «مبتنی بر ابر» (Cloud-based Architecture) است. در این معماری، دستگاه کاربر (لپ‌تاپ، موبایل یا تبلت) تنها به عنوان یک درگاه ورودی/خروجی عمل می‌کند و تمامی پردازش‌های سنگین هوش مصنوعی در مراکز داده دوردست انجام می‌شود.
 
+---
+**[محل قرارگیری تصویر ۱-۱: مقایسه معماری ابری و محلی]**
+> **شرح تصویر:** این تصویر باید تفاوت بنیادین بین مدل ابری (که داده‌ها به سرور مرکزی می‌روند) و مدل محلی (که همه چیز در دستگاه کاربر می‌ماند) را نشان دهد.
+>
+> **Image Generation Prompt:**
+> A clean, flat-style split-screen infographic comparing "Cloud AI" vs "Local AI".
+> **Left Side (Cloud AI):** Shows many users (laptops/phones) sending data packets (documents, voice) to a central "Cloud Server" icon. Red warning icons indicate "Privacy Risk" and "Latency".
+> **Right Side (Local AI):** Shows a single powerful laptop with a glowing shield around it. All processing happens inside the shield. Green checkmarks indicate "Secure" and "Fast".
+> **Style:** Modern, corporate tech, blue and white color palette.
+> **Persian Text Labels to Overlay:**
+> *   Top Left: هوش مصنوعی ابری (Cloud AI)
+> *   Top Right: هوش مصنوعی محلی (Local AI)
+> *   Center Cloud: سرورهای خارجی (External Servers)
+> *   Arrows: انتقال داده (Data Transfer)
+> *   Shield: حریم خصوصی امن (Secure Privacy)
+---
+
 اگرچه این رویکرد متمرکز مزایای انکارناپذیری همچون قدرت پردازشی نامحدود و به‌روزرسانی آنی را به همراه دارد، اما وابستگی ذاتی آن به زیرساخت شبکه اینترنت و ارسال مداوم داده‌های کاربر به سرورهای شخص ثالث، چالش‌های بنیادینی را به وجود آورده است. در بسیاری از نقاط جهان، دسترسی به اینترنت پرسرعت، پایدار و با تاخیر پایین (Low Latency) همچنان یک معضل حل نشده است. علاوه بر این، افزایش آگاهی عمومی نسبت به مقوله «حریم خصوصی دیجیتال» (Digital Privacy) و تصویب قوانین سخت‌گیرانه حفاظت از داده‌ها (مانند GDPR در اروپا)، اعتماد به سرویس‌های ابری را که داده‌های کاربران را جمع‌آوری و تحلیل می‌کنند، با تردید مواجه کرده است.
 
 از سوی دیگر، زبان فارسی به عنوان یکی از زبان‌های هندواروپایی با ساختار، رسم‌الخط و ظرافت‌های آوایی منحصر‌به‌فرد، در بسیاری از مدل‌های هوش مصنوعی تجاری و عمومی، مورد کم‌توجهی قرار گرفته است. سیستم‌های موجود اغلب در تشخیص گفتار محاوره فارسی، درک متون تخصصی و تولید پاسخ‌های سلیس و روان، دچار ضعف‌های مشهود هستند. این شکاف تکنولوژیک، نیاز به توسعه سیستم‌های بومی‌سازی شده و بهینه‌سازی شده برای اکوسیستم زبان فارسی را بیش از پیش برجسته می‌سازد.
@@ -29,6 +46,21 @@
 
 **د) پراکندگی ابزارها و عدم یکپارچگی:**
 کاربران برای رفع نیازهای مختلف خود مجبور به استفاده از ابزارهای گسسته هستند: یک ابزار برای تبدیل گفتار به متن، ابزاری دیگر برای اصلاح گرامری، سرویسی مجزا برای خلاصه‌سازی متون و پلتفرمی دیگر برای تولید تصویر. این پراکندگی (Fragmentation) باعث کاهش بهره‌وری و پیچیدگی گردش کار می‌شود. نبود یک پلتفرم واحد که بتواند تمامی این قابلیت‌ها را در یک محیط یکپارچه و با رابط کاربری منسجم ارائه دهد، یکی دیگر از ابعاد مسئله است.
+
+---
+**[محل قرارگیری تصویر ۱-۲: مشکل پراکندگی ابزارها]**
+> **شرح تصویر:** تصویری که نشان‌دهنده سردرگمی کاربر در استفاده از چندین ابزار جداگانه است، در مقابل راهکار یکپارچه ما.
+>
+> **Image Generation Prompt:**
+> A conceptual diagram showing "Tool Fragmentation" vs "Unified Platform".
+> **Before:** A confused user surrounded by floating disconnected icons: a microphone (Speech-to-text), a document (PDF Tools), a robot head (Chatbot), and a paintbrush (Image Gen). The user looks overwhelmed.
+> **After:** The same icons are neatly integrated into a single, sleek dashboard application on a laptop screen. The user looks happy/productive.
+> **Style:** Isometric vector art, clean lines.
+> **Persian Text Labels to Overlay:**
+> *   Chaos side: پراکندگی ابزارها (Tool Fragmentation)
+> *   Order side: پلتفرم یکپارچه دستیار (Unified Dastyar Platform)
+> *   Icons: تبدیل صدا (Speech), چت هوشمند (Smart Chat), اسناد (Docs)
+---
 
 بنابراین، سوال اساسی این است: **چگونه می‌توان یک معماری نرم‌افزاری طراحی کرد که با تلفیق مدل‌های هوش مصنوعی متن‌باز، تکنیک‌های فشرده‌سازی و رابط کاربری مدرن وب، یک دستیار هوشمند جامع، امن، آفلاین و متناسب با زبان فارسی را بر روی سخت‌افزارهای شخصی پیاده‌سازی نمود؟**
 

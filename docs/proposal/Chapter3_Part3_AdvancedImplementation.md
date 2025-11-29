@@ -21,6 +21,25 @@
 
 این ماژول به صورت یک کتابخانه مستقل TypeScript توسعه یافته است تا هم در سمت کلاینت (هنگام تایپ کاربر) و هم در سمت سرور (هنگام پردازش فایل‌ها) قابل استفاده باشد. تست‌های واحد گسترده‌ای با پوشش ۱۰۰٪ برای این ماژول نوشته شده تا از صحت عملکرد آن در تمام حالات مرزی (Edge Cases) اطمینان حاصل شود.
 
+---
+**[محل قرارگیری تصویر ۳-۳: فلوچارت نرمال‌سازی متن فارسی]**
+> **شرح تصویر:** مراحل تمیزکاری متن ورودی قبل از پردازش.
+>
+> **Image Generation Prompt:**
+> A logical flowchart showing "Text Normalization Pipeline".
+> **Input:** Raw Text with messy Arabic/Persian mix ("ي", "ك", "123").
+> **Step 1:** Character Unification (Standardizing 'Yeh' and 'Keh').
+> **Step 2:** ZWNJ Injection (Smart spacing for suffixes).
+> **Step 3:** Cleaning (Removing control chars).
+> **Output:** Clean Standard Persian Text.
+> **Style:** Algorithm flowchart, step-by-step progression.
+> **Persian Text Labels to Overlay:**
+> *   Input: متن خام (Raw Text)
+> *   Step 1: یکسان‌سازی کاراکترها (Char Unification)
+> *   Step 2: اصلاح نیم‌فاصله (ZWNJ Fix)
+> *   Output: متن استاندارد (Standard Text)
+---
+
 ## ۳-۱۰ الگوی ارکستراسیون ناهمگام (Asynchronous Orchestration Pattern)
 
 در یک سیستم هوش مصنوعی محلی، منابع سخت‌افزاری (CPU/RAM) محدود هستند. اگر چندین کاربر (یا حتی یک کاربر با چندین تب باز) همزمان درخواست تولید متن یا تصویر دهند، سیستم ممکن است دچار قفل‌شدگی (Deadlock) یا کمبود حافظه (OOM) شود. برای مدیریت این وضعیت، ما از الگوی «صف وظایف» (Task Queue) با معماری Producer-Consumer استفاده می‌کنیم.
@@ -39,6 +58,24 @@
 *   پس از اتمام پردازش، نتیجه در یک نگاشت (Map) موقت ذخیره شده و از طریق `EventEmitter` به کلاینت مربوطه اطلاع داده می‌شود.
 
 این معماری تضمین می‌کند که حتی اگر ۱۰۰ درخواست همزمان ارسال شود، سیستم آن‌ها را به ترتیب و بدون کرش کردن پردازش می‌کند (Backpressure Handling).
+
+---
+**[محل قرارگیری تصویر ۳-۴: معماری صف وظایف]**
+> **شرح تصویر:** نمایش نحوه مدیریت درخواست‌های همزمان توسط صف و کارگرها.
+>
+> **Image Generation Prompt:**
+> A "Producer-Consumer" architecture diagram for a Job Queue.
+> **Left (Producers):** Multiple User Requests (Chat, Audio, Image) entering a funnel.
+> **Center (Queue):** A priority queue sorting tasks (High Priority on top).
+> **Right (Consumer/Worker):** A single "Worker" process taking one task at a time and sending it to the "AI Model".
+> **Feedback:** An arrow going back to the User labeled "SSE Update".
+> **Style:** Server architecture diagram, queue visualization.
+> **Persian Text Labels to Overlay:**
+> *   Requests: درخواست‌های کاربران (Requests)
+> *   Priority Queue: صف اولویت‌دار (Priority Queue)
+> *   Worker: کارگر پردازشی (Worker)
+> *   AI Model: مدل هوش مصنوعی (AI Model)
+---
 
 ## ۳-۱۱ معماری امنیت و حفاظت (Security Architecture)
 

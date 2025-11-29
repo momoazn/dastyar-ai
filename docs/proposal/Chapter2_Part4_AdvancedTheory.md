@@ -26,6 +26,20 @@ $$ \text{Swish}_\beta(x) = x \sigma(\beta x) $$
 $$ f_{q,k}(x_m, m) = R^d_\Theta, m x_m $$
 که در آن $R$ ماتریس چرخش است. ویژگی کلیدی RoPE این است که ضرب داخلی دو بردار $q$ و $k$ تنها به فاصله نسبی آن‌ها $(m-n)$ بستگی دارد، نه موقعیت مطلقشان. این ویژگی حیاتی است زیرا به ما اجازه می‌دهد طول پنجره زمینه (Context Window) را در زمان استنتاج افزایش دهیم (Extrapolation) که برای قابلیت RAG و پردازش اسناد طولانی در این پروژه ضروری است.
 
+---
+**[محل قرارگیری تصویر ۲-۶: مفهوم کدگذاری موقعیتی چرخشی (RoPE)]**
+> **شرح تصویر:** نمایش هندسی چرخش بردارها در فضای دوبعدی برای کدگذاری فاصله نسبی.
+>
+> **Image Generation Prompt:**
+> A mathematical visualization of "Rotary Positional Embeddings (RoPE)".
+> **Visual:** Two vectors on a 2D plane (circle) rotating by an angle theta. The angle between them represents their relative position in the sentence.
+> **Style:** Abstract geometric math art, grids, angles, vectors.
+> **Persian Text Labels to Overlay:**
+> *   Vectors: بردارهای کلمات (Word Vectors)
+> *   Rotation: چرخش موقعیتی (Positional Rotation)
+> *   Relative Distance: فاصله نسبی (Relative Distance)
+---
+
 ### ۲-۱۳-۴ توجه کوئری گروه‌بندی شده (GQA - Grouped-Query Attention)
 در مدل‌های بزرگ، بارگذاری ماتریس‌های Key و Value حافظه زیادی مصرف می‌کند (KV Cache bottleneck). روش GQA میان‌گینی بین Multi-Head Attention (کیفیت بالا، حافظه زیاد) و Multi-Query Attention (کیفیت متوسط، حافظه کم) است.
 در GQA، چندین «سر» کوئری (Query Heads) یک جفت Key-Value مشترک را به اشتراک می‌گذارند. این تکنیک باعث می‌شود:
@@ -46,6 +60,21 @@ $$ X(m, \omega) = \sum_{n=-\infty}^{\infty} x[n] w[n-m] e^{-j\omega n} $$
 گوش انسان تغییرات فرکانس را به صورت خطی درک نمی‌کند. حساسیت ما در فرکانس‌های پایین بسیار بیشتر از فرکانس‌های بالاست. مقیاس Mel این رفتار را شبیه‌سازی می‌کند:
 
 $$ m = 2595 \log_{10}\left(1 + \frac{f}{700}\right) $$
+
+---
+**[محل قرارگیری تصویر ۲-۷: مقیاس Mel در برابر فرکانس خطی]**
+> **شرح تصویر:** نموداری که نشان می‌دهد چگونه گوش انسان فرکانس‌های پایین را با دقت بیشتر و فرکانس‌های بالا را با دقت کمتر می‌شنود.
+>
+> **Image Generation Prompt:**
+> A graph plotting "Mel Scale" (Y-axis) vs "Hertz" (X-axis).
+> **Curve:** The curve rises steeply at low frequencies (0-1000Hz) and flattens out at high frequencies (logarithmic behavior).
+> **Annotation:** Icons of a human ear focusing on the low-frequency part.
+> **Style:** Scientific graph, grid lines, clear axis labels.
+> **Persian Text Labels to Overlay:**
+> *   X-axis: فرکانس (Hz)
+> *   Y-axis: مقیاس Mel
+> *   Curve Label: درک شنوایی انسان (Human Hearing Perception)
+---
 
 در مدل Whisper، خروجی STFT با استفاده از بانک فیلترهای Mel (معمولاً ۸۰ فیلتر) فشرده می‌شود. نتیجه یک تصویر (Spectrogram) است که محور افقی آن زمان و محور عمودی آن فرکانس‌های درک‌شده توسط انسان است. شبکه عصبی کانولوشنی (CNN) در ابتدای Whisper، این تصویر را پردازش می‌کند.
 **چرا این مهم است؟** استفاده از ۸۰ کانال Mel باعث می‌شود حجم داده ورودی به مدل کاهش یابد و مدل نسبت به تغییرات جزئی در زیر و بمی صدا (Pitch) مقاوم‌تر باشد که برای تشخیص گفتار گویندگان مختلف (مرد/زن/کودک) ضروری است.
