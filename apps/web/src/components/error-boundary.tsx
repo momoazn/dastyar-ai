@@ -1,5 +1,8 @@
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { formatErrorForUser } from "@/lib/error-utils";
+import { logger } from "@/lib/logger";
+import { fa } from "@/lib/persian-texts";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
@@ -13,23 +16,42 @@ type State = {
   error: Error | null;
 };
 
+/**
+ * Error Boundary component for catching React errors
+ * Provides fallback UI and error logging
+ *
+ * @example
+ * ```tsx
+ * <ErrorBoundary>
+ *   <App />
+ * </ErrorBoundary>
+ * ```
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: unknown): State {
+    // Normalize error to Error instance
+    const normalizedError =
+      error instanceof Error
+        ? error
+        : new Error(String(error ?? "Unknown error"));
+    return { hasError: true, error: normalizedError };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // You can log the error to an error reporting service here
-    // For now, we'll just log to console in development
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.error("Error caught by boundary:", error, errorInfo);
-    }
+  componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+    // Normalize error to Error instance for logging
+    const normalizedError =
+      error instanceof Error
+        ? error
+        : new Error(String(error ?? "Unknown error"));
+    // Log error to error reporting service
+    logger.error("Error caught by boundary", normalizedError, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   handleReset = () => {
@@ -53,9 +75,20 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
 
               <div className="space-y-2">
-                <h2 className="font-semibold text-xl">خطای غیرمنتظره</h2>
+                <h2 className="font-semibold text-xl">
+                  {fa.errors.unexpected}
+                </h2>
                 <p className="text-muted-foreground text-sm">
-                  متأسفیم، مشکلی پیش آمده است. لطفاً صفحه را بازنشانی کنید.
+                  {this.state.error
+                    ? formatErrorForUser(this.state.error, fa.errors.unknown, {
+                        unknown: fa.errors.unknown,
+                        networkError: fa.errors.networkError,
+                        unauthorized: fa.errors.unauthorized,
+                        forbidden: fa.errors.forbidden,
+                        notFound: fa.errors.notFound,
+                        serverError: fa.errors.serverError,
+                      })
+                    : fa.errors.unexpectedMessage}
                 </p>
               </div>
 
@@ -64,13 +97,18 @@ export class ErrorBoundary extends Component<Props, State> {
                   <p className="font-mono text-destructive text-xs">
                     {this.state.error.message}
                   </p>
+                  {this.state.error.stack && (
+                    <pre className="mt-2 overflow-auto text-xs">
+                      {this.state.error.stack}
+                    </pre>
+                  )}
                 </div>
               )}
 
               <div className="flex gap-2">
                 <Button onClick={this.handleReset} size="sm">
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  بازنشانی صفحه
+                  {fa.errors.resetPage}
                 </Button>
               </div>
             </div>
