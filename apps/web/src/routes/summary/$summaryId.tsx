@@ -116,7 +116,7 @@ function SummaryHistoryView() {
                 type="button"
                 variant="outline"
               >
-                <span className="text-sm">کپی به جدید</span>
+                <span className="text-sm">{fa.summarize.copyToNew}</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -160,7 +160,7 @@ function SummaryHistoryView() {
                   <span className="font-semibold text-foreground text-sm">
                     {fa.summarize.sourceText}
                   </span>
-                  <Badge variant="secondary">فقط خواندنی</Badge>
+                  <Badge variant="secondary">{fa.summarize.readOnly}</Badge>
                 </div>
               </div>
               <div className="flex-1 p-4">

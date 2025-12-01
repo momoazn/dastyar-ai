@@ -124,7 +124,7 @@ function TranslationHistoryView() {
                 type="button"
                 variant="outline"
               >
-                <span className="text-sm">کپی به جدید</span>
+                <span className="text-sm">{fa.translation.copyToNew}</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -163,9 +163,9 @@ function TranslationHistoryView() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">نوع</div>
+              <div className="font-medium text-sm">{fa.translation.type}</div>
               <div className="rounded-md border bg-muted px-3 py-2 text-right text-sm">
-                {isPdfMode ? "PDF" : "متن"}
+                {isPdfMode ? "PDF" : fa.translation.text}
               </div>
             </div>
           </div>
@@ -182,7 +182,7 @@ function TranslationHistoryView() {
                   <span className="font-semibold text-foreground text-sm">
                     {fa.translation.sourceLanguage}
                   </span>
-                  <Badge variant="secondary">فقط خواندنی</Badge>
+                  <Badge variant="secondary">{fa.translation.readOnly}</Badge>
                 </div>
               </div>
               <div className="flex-1 p-4">

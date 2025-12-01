@@ -159,7 +159,7 @@ function CodeHistoryView() {
                 type="button"
                 variant="outline"
               >
-                <span className="text-sm">کپی به جدید</span>
+                <span className="text-sm">{fa.codeAssistant.copyToNew}</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -210,7 +210,7 @@ function CodeHistoryView() {
                       ? fa.codeAssistant.labels.codeRequest
                       : fa.codeAssistant.labels.inputCode}
                   </span>
-                  <Badge variant="secondary">فقط خواندنی</Badge>
+                  <Badge variant="secondary">{fa.codeAssistant.readOnly}</Badge>
                 </div>
               </div>
               <div className="flex-1 p-4">
@@ -256,7 +256,9 @@ function CodeHistoryView() {
                         variant={isCopied ? "default" : "ghost"}
                       >
                         <Copy className="h-4 w-4" />
-                        {isCopied ? "کپی شد" : "کپی"}
+                        {isCopied
+                          ? fa.codeAssistant.copied
+                          : fa.codeAssistant.copy}
                       </Button>
                     )}
                   </div>

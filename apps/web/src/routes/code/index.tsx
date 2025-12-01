@@ -253,7 +253,7 @@ function RouteComponent() {
         <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
-            <h1 className="font-bold text-2xl">دستیار کد</h1>
+            <h1 className="font-bold text-2xl">{fa.codeAssistant.title}</h1>
           </div>
 
           {/* Options Section */}
@@ -439,7 +439,9 @@ function RouteComponent() {
                         variant={isCopied ? "default" : "ghost"}
                       >
                         <Copy className="h-4 w-4" />
-                        {isCopied ? "کپی شد" : "کپی"}
+                        {isCopied
+                          ? fa.codeAssistant.copied
+                          : fa.codeAssistant.copy}
                       </Button>
                     )}
                   </div>
