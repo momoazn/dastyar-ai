@@ -19,4 +19,11 @@ export const transcribe = {
   },
   transcriptionError: "خطا در تبدیل صدا به متن",
   modelDescription: "نام مدل Whisper (مثال: base, small, medium, large)",
+  smartActions: {
+    title: "اقدامات هوشمند",
+    summarize: "خلاصه سریع",
+    actionItems: "استخراج وظایف",
+    meetingNotes: "تنظیم صورت‌جلسه",
+    processing: "در حال پردازش...",
+  },
 } as const;

@@ -71,7 +71,13 @@ export type TranslationPayload = {
 // Summary Types
 // ============================================================================
 
-export const summaryModes = ["concise", "standard", "detailed"] as const;
+export const summaryModes = [
+  "concise",
+  "standard",
+  "detailed",
+  "action-items",
+  "meeting-notes",
+] as const;
 export type SummaryMode = (typeof summaryModes)[number];
 
 // ============================================================================

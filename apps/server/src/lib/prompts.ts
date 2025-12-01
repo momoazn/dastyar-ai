@@ -113,6 +113,10 @@ export const summaryModePrompts: Record<SummaryMode, string> = {
     "Summarize the user's text in a single concise paragraph. Include the main points and key details.",
   detailed:
     "Summarize with multiple paragraphs. Include key points, important details, and main takeaways where appropriate.",
+  "action-items":
+    "Extract all action items, tasks, and next steps from the text. Return them as a clear bulleted list.",
+  "meeting-notes":
+    "Create a comprehensive meeting report. Structure it with: 1. A brief executive summary. 2. Key discussion points (bulleted). 3. Decisions made. 4. Action items and next steps.",
 } as const;
 
 // Summary prompt builder
