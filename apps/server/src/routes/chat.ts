@@ -24,6 +24,8 @@ import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
 } from "@/services/processors";
+import type { MessagePart } from "@/types/messages";
+import { extractTextFromParts } from "@/types/messages";
 import { getModelSizeCategory, type MyUIMessage } from "@/utils/chat";
 
 export function sendError(
@@ -32,12 +34,33 @@ export function sendError(
     status: ContentfulStatusCode;
     code: string;
     message: string;
-    details?: unknown;
+    details?: Record<string, unknown>;
   }
 ) {
   const { status, code, message, details } = params;
   return c.json({ error: { code, message, details } }, status);
 }
+
+const MessagePartSchema = z.union([
+  z.object({ type: z.literal("text"), text: z.string() }),
+  z.object({
+    type: z.literal("image"),
+    image: z.string(),
+    mimeType: z.string().optional(),
+  }),
+  z.object({ type: z.literal("reasoning"), text: z.string() }),
+  z.object({
+    type: z.literal("tool-call"),
+    toolCallId: z.string(),
+    toolName: z.string(),
+    args: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal("tool-result"),
+    toolCallId: z.string(),
+    result: z.unknown(),
+  }),
+]);
 
 const ChatRequestSchema = z.object({
   messages: z
@@ -45,7 +68,7 @@ const ChatRequestSchema = z.object({
       z.object({
         id: z.string(),
         role: z.enum(["user", "assistant", "system"]),
-        parts: z.array(z.unknown()).min(1),
+        parts: z.array(MessagePartSchema).min(1),
         metadata: z.unknown().optional(),
       })
     )
@@ -117,34 +140,13 @@ const app = new Hono<AuthEnv>()
       const modelMessages = convertToModelMessages(uiMessages);
 
       // Build RAG context from any documents attached to this thread
-      // 1) Extract plain text from the last user message to use as the retrieval query
-      const extractTextFromParts = (parts: unknown[]): string => {
-        try {
-          let text = "";
-          for (const p of parts as unknown[]) {
-            if (!p || typeof p !== "object") {
-              continue;
-            }
-            const candidate = p as Record<string, unknown>;
-            const typeVal = candidate.type as unknown;
-            const textVal = candidate.text as unknown;
-            if (typeVal === "text" && typeof textVal === "string") {
-              text += textVal;
-            }
-          }
-          return text;
-        } catch {
-          return "";
-        }
-      };
-
+      // Extract plain text from the last user message to use as the retrieval query
       const sizeCategory = getModelSizeCategory(llmModel.size);
       let ragSystem = chatSystemPrompt({ sizeCategory });
       try {
-        const userQuery = extractTextFromParts(last.parts as unknown[]).slice(
-          0,
-          2000
-        );
+        const userQuery = extractTextFromParts(
+          last.parts as MessagePart[]
+        ).slice(0, 2000);
         if (userQuery && threadId) {
           const results = await retrieveRelevantChunksForThread({
             userId: user.id,
@@ -264,10 +266,16 @@ const app = new Hono<AuthEnv>()
         },
       });
     } catch (error) {
-      const message =
-        error && typeof error === "object" && "message" in error
-          ? String((error as { message?: unknown }).message)
-          : "An unexpected error occurred";
+      let message = "An unexpected error occurred";
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error
+      ) {
+        message = String((error as { message: unknown }).message);
+      }
       return sendError(c, {
         status: 500,
         code: "INTERNAL_SERVER_ERROR",

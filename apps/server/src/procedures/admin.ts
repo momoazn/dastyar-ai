@@ -58,7 +58,13 @@ const addModelSchema = z.object({
 
 const upsertSettingSchema = z.object({
   key: z.string().min(1, "Setting key is required"),
-  value: z.unknown(),
+  value: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.string()),
+    z.null(),
+  ]),
   description: z.string().optional(),
 });
 

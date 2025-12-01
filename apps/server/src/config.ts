@@ -3,6 +3,7 @@ import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { logger } from "./lib/logger";
+import type { ConfigMap } from "./types/config";
 
 const CONFIG_FILE = "config.json";
 const serverRootDir = fileURLToPath(new URL("..", import.meta.url));
@@ -48,13 +49,13 @@ const findConfigPath = (baseDir: string): string | undefined => {
   return candidates.find((p) => existsSync(p));
 };
 
-const loadJson = (p?: string): Record<string, unknown> => {
+const loadJson = (p?: string): ConfigMap => {
   if (!p) {
     logger.warn("No config.json found; using defaults", { path: p });
     return {};
   }
   try {
-    return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>;
+    return JSON.parse(readFileSync(p, "utf8")) as ConfigMap;
   } catch (err) {
     logger.error("Failed to read/parse config file", err, { path: p });
     // Ensure logs are flushed before exiting

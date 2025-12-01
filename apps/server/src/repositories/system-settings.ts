@@ -5,6 +5,7 @@ import {
   type SystemSetting,
   systemSettings,
 } from "@/database/schema";
+import type { ConfigValue } from "@/types/config";
 
 /**
  * Get all system settings
@@ -48,11 +49,11 @@ export async function getSettingsByKeys(
  */
 export async function getSettingValue(
   key: string,
-  defaultValue?: unknown
-): Promise<unknown> {
+  defaultValue?: ConfigValue
+): Promise<ConfigValue | undefined> {
   const setting = await getSetting(key);
   if (!setting) return defaultValue;
-  return setting.value;
+  return setting.value as ConfigValue;
 }
 
 /**
@@ -60,7 +61,7 @@ export async function getSettingValue(
  */
 export async function upsertSetting(
   key: string,
-  value: unknown,
+  value: ConfigValue,
   description?: string
 ): Promise<SystemSetting> {
   const existing = await getSetting(key);
@@ -107,7 +108,7 @@ export async function deleteSetting(key: string): Promise<boolean> {
  * Initialize default settings if they don't exist
  */
 export async function initializeDefaultSettings(): Promise<void> {
-  const defaults: Record<string, unknown> = {
+  const defaults: Record<string, ConfigValue> = {
     app_name: "Dastyar AI",
     app_description: "Persian AI Assistant",
     max_file_size_mb: 50,

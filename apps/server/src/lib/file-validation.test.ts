@@ -56,7 +56,7 @@ describe("File Validation", () => {
       content?: Uint8Array
     ): File => {
       const buffer = content || new Uint8Array(size);
-      const blob = new Blob([buffer] as any, { type });
+      const blob = new Blob([buffer] as BlobPart[], { type });
       return new File([blob], name, { type });
     };
 
