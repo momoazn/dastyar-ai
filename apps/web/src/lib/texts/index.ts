@@ -2,6 +2,7 @@ import { admin } from "./admin";
 import { auth } from "./auth";
 import { chat, imageChat } from "./chat";
 import {
+  documents as commonDocuments,
   general,
   invalidThreadId,
   languages,
@@ -12,6 +13,7 @@ import {
   userProfile,
 } from "./common";
 import { codeAssistant } from "./features/code";
+import { documents } from "./features/documents";
 import { imageGeneration } from "./features/image";
 import { summarize } from "./features/summary";
 import { transcribe } from "./features/transcribe";
@@ -58,6 +60,7 @@ export const fa = {
   imageGeneration,
   imageChat,
   codeAssistant,
+  documents: { ...documents, ...commonDocuments },
   admin,
   invalidThreadId,
 } as const;

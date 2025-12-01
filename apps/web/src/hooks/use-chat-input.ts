@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { fa } from "@/lib/persian-texts";
 import { useChatThread } from "./use-chat-thread";
 
 type UseChatInputOptions = {
@@ -45,7 +46,7 @@ export function useChatInput({
           }
         }
       } catch {
-        toast.error("ارسال پیام ناموفق بود. دوباره تلاش کنید.");
+        toast.error(fa.chat.sendMessageError);
       } finally {
         setIsGenerating(false);
       }

@@ -29,6 +29,8 @@ export const chat = {
   newChatHint: "می‌توانید هر زمان خواستید عنوان گفتگو را تغییر دهید.",
   newChatDefaultTitle: "گفتگوی جدید",
   newChatError: "خطا در ساخت گفتگوی جدید",
+  renameError: "خطا در تغییر عنوان گفتگو",
+  sendMessageError: "ارسال پیام ناموفق بود. دوباره تلاش کنید.",
 } as const;
 
 export const imageChat = {

@@ -261,10 +261,10 @@ function TranslationHistoryView() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-sm">
-                          ترجمه تکمیل شده
+                          {fa.translation.translationCompleted}
                         </div>
                         <div className="text-green-600/80 text-xs">
-                          {pdfResult.page_count} صفحه ترجمه شده
+                          {fa.translation.pagesTranslated(pdfResult.page_count)}
                         </div>
                       </div>
                     </div>

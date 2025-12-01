@@ -17,4 +17,6 @@ export const transcribe = {
     transcribeFailed: "تبدیل گفتار به متن با خطا مواجه شد. دوباره تلاش کنید.",
     fileTooLarge: "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.",
   },
+  transcriptionError: "خطا در تبدیل صدا به متن",
+  modelDescription: "نام مدل Whisper (مثال: base, small, medium, large)",
 } as const;

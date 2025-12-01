@@ -46,7 +46,7 @@ export function TranscribePreferences() {
               />
             </FormControl>
             <FormDescription className="text-right text-xs">
-              نام مدل Whisper (مثال: base, small, medium, large)
+              {fa.transcribe.modelDescription}
             </FormDescription>
             <FormMessage className="text-right" />
           </FormItem>

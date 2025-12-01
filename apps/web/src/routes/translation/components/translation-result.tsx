@@ -46,13 +46,13 @@ export function TranslationResult({
       </div>
       <div className="flex-1 p-4">
         {translatedText ? (
-          <div className="h-full whitespace-pre-wrap break-words text-base">
+          <div className="wrap-break-word h-full whitespace-pre-wrap text-base">
             {translatedText}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <span className="text-sm">
-              {fa.translation.translatedText} اینجا نمایش داده می‌شود...
+              {fa.translation.translatedText} {fa.translation.resultPlaceholder}
             </span>
           </div>
         )}

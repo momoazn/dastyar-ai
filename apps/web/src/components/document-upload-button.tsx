@@ -10,6 +10,7 @@ import {
 } from "@/components/ui";
 import { getErrorMessage } from "@/lib/error-utils";
 import { extractPdfPages } from "@/lib/pdf";
+import { fa } from "@/lib/persian-texts";
 import { client, queryClient } from "@/utils/orpc";
 
 type Props = {
@@ -39,7 +40,7 @@ async function processFileContent(file: File): Promise<{
       pages = await extractPdfPages(file);
     } catch {
       // If parsing fails, continue without pages; server may still index via fallback
-      toast.warning("استخراج صفحات PDF ناموفق بود، از متن کامل استفاده می‌شود.");
+      toast.warning(fa.documents.pdfExtractionFailed);
     }
   }
 
@@ -68,20 +69,20 @@ function showUploadSuccess(
 ) {
   if (fileType === "application/pdf") {
     if (indexed > 0) {
-      toast.success(`«${fileName}» بارگذاری و ایندکس شد (${indexed} قطعه).`);
+      toast.success(fa.documents.uploadSuccess(fileName, indexed));
     } else {
-      toast.success(`فایل «${fileName}» بارگذاری شد. (ایندکس PDF انجام نشد)`);
+      toast.success(fa.documents.uploadSuccessPdfNoIndex(fileName));
     }
   } else if (indexed > 0) {
-    toast.success(`«${fileName}» بارگذاری و ایندکس شد (${indexed} قطعه).`);
+    toast.success(fa.documents.uploadSuccess(fileName, indexed));
   } else {
-    toast.success(`فایل «${fileName}» بارگذاری شد.`);
+    toast.success(fa.documents.uploadSuccessNoIndex(fileName));
   }
 }
 
 function handleUploadError(err: unknown) {
-  const message = getErrorMessage(err, "خطای ناشناخته");
-  toast.error(`خطا در آپلود فایل: ${message}`);
+  const message = getErrorMessage(err, fa.general.unknownError);
+  toast.error(`${fa.documents.uploadError}: ${message}`);
 }
 
 export function DocumentUploadButton({
@@ -159,7 +160,7 @@ export function DocumentUploadButton({
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>پیوست سند (PDF, TXT, MD)</p>
+          <p>{fa.documents.attachmentLabel}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

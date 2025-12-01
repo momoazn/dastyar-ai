@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getErrorMessage } from "@/lib/error-utils";
+import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
 type AddModelDialogProps = {
@@ -42,12 +43,15 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
         queryClient.invalidateQueries({
           queryKey: orpc.admin.listAllModels.queryKey(),
         });
-        toast.success("مدل با موفقیت اضافه شد");
+        toast.success(fa.admin.models.messages.modelAdded);
         handleReset();
         onOpenChange(false);
       },
       onError: (error) => {
-        const errorMessage = getErrorMessage(error, "خطا در اضافه کردن مدل");
+        const errorMessage = getErrorMessage(
+          error,
+          fa.admin.models.messages.errorAddingModel
+        );
         toast.error(errorMessage);
       },
     })
@@ -65,7 +69,7 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
     e.preventDefault();
 
     if (!identifier.trim()) {
-      toast.error("لطفاً نام مدل را وارد کنید");
+      toast.error(fa.admin.models.messages.modelNameRequired);
       return;
     }
 
@@ -89,21 +93,23 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>افزودن مدل جدید</DialogTitle>
+          <DialogTitle>{fa.admin.models.addDialog.title}</DialogTitle>
           <DialogDescription>
-            مدل جدید را برای استفاده در سیستم ثبت کنید
+            {fa.admin.models.addDialog.description}
           </DialogDescription>
         </DialogHeader>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Identifier */}
           <div className="space-y-2">
-            <Label htmlFor="identifier">نام مدل *</Label>
+            <Label htmlFor="identifier">
+              {fa.admin.models.addDialog.modelName}
+            </Label>
             <Input
               disabled={addModelMutation.isPending}
               id="identifier"
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="مثال: llama2, mistral-7b"
+              placeholder={fa.admin.models.addDialog.modelNamePlaceholder}
               value={identifier}
             />
           </div>
@@ -132,36 +138,36 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
 
           {/* Creator */}
           <div className="space-y-2">
-            <Label htmlFor="creator">سازنده</Label>
+            <Label htmlFor="creator">{fa.admin.models.addDialog.creator}</Label>
             <Input
               disabled={addModelMutation.isPending}
               id="creator"
               onChange={(e) => setCreator(e.target.value)}
-              placeholder="مثال: Meta, Mistral"
+              placeholder={fa.admin.models.addDialog.creatorPlaceholder}
               value={creator}
             />
           </div>
 
           {/* Family */}
           <div className="space-y-2">
-            <Label htmlFor="family">خانواده</Label>
+            <Label htmlFor="family">{fa.admin.models.addDialog.family}</Label>
             <Input
               disabled={addModelMutation.isPending}
               id="family"
               onChange={(e) => setFamily(e.target.value)}
-              placeholder="مثال: Llama, Mistral"
+              placeholder={fa.admin.models.addDialog.familyPlaceholder}
               value={family}
             />
           </div>
 
           {/* Size */}
           <div className="space-y-2">
-            <Label htmlFor="size">حجم</Label>
+            <Label htmlFor="size">{fa.admin.models.addDialog.size}</Label>
             <Input
               disabled={addModelMutation.isPending}
               id="size"
               onChange={(e) => setSize(e.target.value)}
-              placeholder="مثال: 7B, 13B, 70B"
+              placeholder={fa.admin.models.addDialog.sizePlaceholder}
               value={size}
             />
           </div>
@@ -174,12 +180,12 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
               type="button"
               variant="outline"
             >
-              لغو
+              {fa.admin.models.addDialog.cancel}
             </Button>
             <Button disabled={addModelMutation.isPending} type="submit">
               {addModelMutation.isPending
-                ? "در حال اضافه کردن..."
-                : "اضافه کردن مدل"}
+                ? fa.admin.models.addDialog.adding
+                : fa.admin.models.addDialog.add}
             </Button>
           </div>
         </form>

@@ -71,3 +71,7 @@ export const userProfile = {
 } as const;
 
 export const invalidThreadId = "شناسه گفتگوی نامعتبر";
+
+export const documents = {
+  attachmentLabel: "پیوست سند (PDF, TXT, MD)",
+} as const;

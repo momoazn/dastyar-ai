@@ -116,14 +116,16 @@ export function PdfUploadArea({
         </div>
         <div className="flex flex-col gap-2">
           <span className="font-medium text-sm">
-            {isDragging ? "رها کنید برای آپلود" : fa.translation.selectPdf}
+            {isDragging
+              ? fa.translation.dropToUpload
+              : fa.translation.selectPdf}
           </span>
           <span className="text-muted-foreground text-xs">
             {fa.translation.pdfHint}
           </span>
         </div>
         <div className="mt-2 inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 font-medium text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
-          انتخاب فایل
+          {fa.translation.selectFileButton}
         </div>
       </label>
     </div>

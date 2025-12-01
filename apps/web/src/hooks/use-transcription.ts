@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { getErrorMessage } from "@/lib/error-utils";
+import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
 export type TranscriptionArgs = {
@@ -27,7 +28,10 @@ export const useTranscription = (handlers?: UseTranscriptionHandlers) => {
         handlersRef.current?.onSuccess?.(text);
       },
       onError: (error) => {
-        const message = getErrorMessage(error, "خطا در تبدیل صدا به متن");
+        const message = getErrorMessage(
+          error,
+          fa.transcribe.transcriptionError
+        );
         handlersRef.current?.onError?.(message);
       },
     })

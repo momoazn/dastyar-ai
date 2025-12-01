@@ -34,4 +34,10 @@ export const translation = {
   pdfPageLabel: (page: number) => `صفحه ${page}`,
   pdfAwaitingUpload: "برای مشاهده نتیجه، فایل PDF را انتخاب و ترجمه کنید.",
   pdfInvalidFile: "لطفاً یک فایل PDF معتبر انتخاب کنید.",
+  dropToUpload: "رها کنید برای آپلود",
+  selectFileButton: "انتخاب فایل",
+  translationCompleted: "ترجمه تکمیل شده",
+  pagesTranslated: (count: number) => `${count} صفحه ترجمه شده`,
+  selectPdfToStart: "فایل PDF خود را انتخاب کنید تا ترجمه شروع شود",
+  resultPlaceholder: "اینجا نمایش داده می‌شود...",
 } as const;

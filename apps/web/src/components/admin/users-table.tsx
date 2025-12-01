@@ -122,11 +122,14 @@ export function UsersTable() {
             },
           }),
         });
-        toast.success("کاربر با موفقیت حذف شد");
+        toast.success(fa.admin.users.messages.userDeleted);
         setDeleteUserDialogOpen(false);
       },
       onError: (deleteError) => {
-        const errorMessage = getErrorMessage(deleteError, "خطا در حذف کاربر");
+        const errorMessage = getErrorMessage(
+          deleteError,
+          fa.admin.users.messages.errorDeletingUser
+        );
         toast.error(errorMessage);
       },
     })
@@ -195,7 +198,7 @@ export function UsersTable() {
       <Card className="p-6">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-          <p className="text-muted-foreground">در حال بارگذاری کاربران...</p>
+          <p className="text-muted-foreground">{fa.admin.users.loading}</p>
         </div>
       </Card>
     );
@@ -215,7 +218,7 @@ export function UsersTable() {
     return (
       <Card className="p-6">
         <div className="text-center text-muted-foreground">
-          <p>هیچ کاربری یافت نشد</p>
+          <p>{fa.admin.users.notFound}</p>
         </div>
       </Card>
     );
@@ -229,7 +232,9 @@ export function UsersTable() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg">{fa.admin.users.title}</h3>
-            <Badge variant="secondary">{usersResponse?.total ?? 0} کاربر</Badge>
+            <Badge variant="secondary">
+              {fa.admin.users.userCount(usersResponse?.total ?? 0)}
+            </Badge>
           </div>
 
           {/* Filters and Search */}
@@ -243,7 +248,7 @@ export function UsersTable() {
                     setSearchQuery(e.target.value);
                     setPage(1);
                   }}
-                  placeholder="جستجو بر اساس نام کاربری..."
+                  placeholder={fa.admin.users.searchPlaceholder}
                   value={searchQuery}
                 />
               </div>
@@ -258,12 +263,16 @@ export function UsersTable() {
               value={roleFilter ?? "all"}
             >
               <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="فیلتر بر اساس نقش" />
+                <SelectValue placeholder={fa.admin.users.filterByRole} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">تمام کاربران</SelectItem>
-                <SelectItem value="admin">مدیران</SelectItem>
-                <SelectItem value="user">کاربران عادی</SelectItem>
+                <SelectItem value="all">{fa.admin.users.filterAll}</SelectItem>
+                <SelectItem value="admin">
+                  {fa.admin.users.filterAdmins}
+                </SelectItem>
+                <SelectItem value="user">
+                  {fa.admin.users.filterRegularUsers}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -314,7 +323,7 @@ export function UsersTable() {
                             onClick={() => handleShowDetails(user)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
-                            مشاهده جزئیات
+                            {fa.admin.users.viewDetails}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={updateRoleMutation.isPending}
@@ -336,7 +345,7 @@ export function UsersTable() {
                             onClick={() => handleDeleteUser(user)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            حذف کاربر
+                            {fa.admin.users.deleteUser}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -384,11 +393,13 @@ export function UsersTable() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-muted-foreground text-sm">در هر صفحه</span>
+              <span className="text-muted-foreground text-sm">
+                {fa.admin.users.perPage}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">
-                صفحه {page} از {totalPages}
+                {fa.admin.users.pageInfo(page, totalPages)}
               </span>
               <Button
                 disabled={page === 1}

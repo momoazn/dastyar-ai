@@ -79,4 +79,13 @@ export const imageGeneration = {
   unknownError: "خطای ناشناخته",
   threadIdRequired: "شناسه گفتگو الزامی است",
   serviceUnavailable: "سرویس Stable Diffusion در دسترس نیست",
+  generationError: "خطا در تولید تصویر",
+  threadCreated: "گفتگوی تصویری جدید ایجاد شد",
+  threadCreateError: "خطا در ایجاد گفتگوی تصویری",
+  threadRenamed: "عنوان گفتگو تغییر کرد",
+  threadRenameError: "خطا در تغییر عنوان گفتگو",
+  threadArchived: "گفتگو بایگانی شد",
+  threadArchiveError: "خطا در بایگانی گفتگو",
+  threadDeleted: "گفتگو حذف شد",
+  threadDeleteError: "خطا در حذف گفتگو",
 } as const;

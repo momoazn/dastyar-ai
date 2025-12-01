@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
 export function useImageThreads() {
@@ -9,10 +10,10 @@ export function useImageThreads() {
     orpc.imageThreads.create.mutationOptions({
       onSuccess: () => {
         list.refetch();
-        toast.success("گفتگوی تصویری جدید ایجاد شد");
+        toast.success(fa.imageGeneration.threadCreated);
       },
       onError: () => {
-        toast.error("خطا در ایجاد گفتگوی تصویری");
+        toast.error(fa.imageGeneration.threadCreateError);
       },
     })
   );
@@ -21,10 +22,10 @@ export function useImageThreads() {
     orpc.imageThreads.rename.mutationOptions({
       onSuccess: () => {
         list.refetch();
-        toast.success("عنوان گفتگو تغییر کرد");
+        toast.success(fa.imageGeneration.threadRenamed);
       },
       onError: () => {
-        toast.error("خطا در تغییر عنوان گفتگو");
+        toast.error(fa.imageGeneration.threadRenameError);
       },
     })
   );
@@ -33,10 +34,10 @@ export function useImageThreads() {
     orpc.imageThreads.archive.mutationOptions({
       onSuccess: () => {
         list.refetch();
-        toast.success("گفتگو بایگانی شد");
+        toast.success(fa.imageGeneration.threadArchived);
       },
       onError: () => {
-        toast.error("خطا در بایگانی گفتگو");
+        toast.error(fa.imageGeneration.threadArchiveError);
       },
     })
   );
@@ -45,10 +46,10 @@ export function useImageThreads() {
     orpc.imageThreads.delete.mutationOptions({
       onSuccess: () => {
         list.refetch();
-        toast.success("گفتگو حذف شد");
+        toast.success(fa.imageGeneration.threadDeleted);
       },
       onError: () => {
-        toast.error("خطا در حذف گفتگو");
+        toast.error(fa.imageGeneration.threadDeleteError);
       },
     })
   );

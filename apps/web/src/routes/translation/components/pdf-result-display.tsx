@@ -43,9 +43,11 @@ export function PdfResultDisplay({
             <FileText className="h-6 w-6 text-green-600" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-sm">ترجمه تکمیل شده</div>
+            <div className="font-medium text-sm">
+              {fa.translation.translationCompleted}
+            </div>
             <div className="text-green-600/80 text-xs">
-              {pdfResult.page_count} صفحه ترجمه شده
+              {fa.translation.pagesTranslated(pdfResult.page_count)}
             </div>
           </div>
         </div>
@@ -71,9 +73,11 @@ export function PdfResultDisplay({
             <FileText className="h-6 w-6 text-green-600" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-sm">ترجمه تکمیل شده</div>
+            <div className="font-medium text-sm">
+              {fa.translation.translationCompleted}
+            </div>
             <div className="text-green-600/80 text-xs">
-              {pdfResult.page_count} صفحه ترجمه شده
+              {fa.translation.pagesTranslated(pdfResult.page_count)}
             </div>
           </div>
         </div>
@@ -112,7 +116,7 @@ export function PdfResultDisplay({
             {fa.translation.pdfAwaitingUpload}
           </span>
           <span className="text-muted-foreground text-xs">
-            فایل PDF خود را انتخاب کنید تا ترجمه شروع شود
+            {fa.translation.selectPdfToStart}
           </span>
         </div>
       </div>

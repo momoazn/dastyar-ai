@@ -45,7 +45,7 @@ export function useChatThread() {
         queryKey: orpc.threads.list.queryKey(),
       });
     } catch (error) {
-      toast.error("خطا در تغییر عنوان گفتگو");
+      toast.error(fa.chat.renameError);
       throw error;
     }
   }, []);

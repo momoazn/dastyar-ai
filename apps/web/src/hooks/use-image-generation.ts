@@ -81,7 +81,7 @@ export function useImageGeneration({
           error,
           fa.imageGeneration.unknownError
         );
-        toast.error(`خطا در تولید تصویر: ${errorMessage}`);
+        toast.error(`${fa.imageGeneration.generationError}: ${errorMessage}`);
       },
     })
   );

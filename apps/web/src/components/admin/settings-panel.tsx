@@ -416,7 +416,7 @@ export function SettingsPanel() {
           onClick={handleSave}
         >
           {upsertMutation.isPending
-            ? "در حال ذخیره..."
+            ? fa.admin.settings.saving
             : fa.admin.settings.actions.save}
         </Button>
       </div>
