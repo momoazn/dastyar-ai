@@ -97,6 +97,8 @@ export const messageRoleToLabel: Record<MessageRole, string> = {
 export const llmModelProviderToLabel: Record<LLMModelProvider, string> = {
   ollama: "Ollama",
   lmstudio: "LM Studio",
+  "stable-diffusion": "Stable Diffusion",
+  whisper: "Whisper",
 } as const;
 
 // Helper functions to create option arrays for select components

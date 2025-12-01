@@ -1,17 +1,17 @@
 import bcrypt from "bcryptjs";
 import { count, desc, eq, like } from "drizzle-orm";
 import {
+  chatThreads,
+  codeRuns,
   db,
+  documents,
+  generatedImages,
+  messages,
+  summaries,
+  translations,
   type User,
   type UserRole,
   users,
-  chatThreads,
-  messages,
-  documents,
-  generatedImages,
-  translations,
-  summaries,
-  codeRuns,
 } from "@/database";
 
 export type UserWithoutSensitiveData = Omit<User, "password" | "salt">;
@@ -26,13 +26,13 @@ export interface UserWithStats extends UserWithoutSensitiveData {
   threadCount: number;
 }
 
-export interface UserListResponse {
+export type UserListResponse = {
   users: UserWithoutSensitiveData[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
-}
+};
 
 export async function getAllUsers(): Promise<UserWithoutSensitiveData[]> {
   const rows = await db
@@ -50,8 +50,8 @@ export async function getAllUsers(): Promise<UserWithoutSensitiveData[]> {
 }
 
 export async function getUsersWithPagination(
-  page: number = 1,
-  pageSize: number = 10,
+  page = 1,
+  pageSize = 10,
   search?: string,
   role?: UserRole
 ): Promise<UserListResponse> {
@@ -74,10 +74,7 @@ export async function getUsersWithPagination(
     query = query.where(eq(users.role, role));
   }
 
-  const countQuery = db
-    .select({ value: count() })
-    .from(users)
-    .$dynamic();
+  const countQuery = db.select({ value: count() }).from(users).$dynamic();
 
   if (search) {
     countQuery.where(like(users.username, `%${search}%`));

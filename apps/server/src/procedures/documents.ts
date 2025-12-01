@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { FileValidationError, validateUploadedFile } from "@/lib/file-validation";
+import {
+  FileValidationError,
+  validateUploadedFile,
+} from "@/lib/file-validation";
 import { logger } from "@/lib/logger";
 import {
   attachDocumentToThread,

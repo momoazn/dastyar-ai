@@ -142,8 +142,8 @@ describe("Utils", () => {
 
     it("should pass arguments correctly", async () => {
       let lastArg: string | undefined;
-      const debouncedFn = debounce((arg: string) => {
-        lastArg = arg;
+      const debouncedFn = debounce((...args: unknown[]) => {
+        lastArg = args[0] as string;
       }, 50);
 
       debouncedFn("test");
@@ -153,8 +153,8 @@ describe("Utils", () => {
 
     it("should handle multiple arguments", async () => {
       let sum = 0;
-      const debouncedFn = debounce((a: number, b: number) => {
-        sum = a + b;
+      const debouncedFn = debounce((...args: unknown[]) => {
+        sum = (args[0] as number) + (args[1] as number);
       }, 50);
 
       debouncedFn(5, 10);
@@ -195,8 +195,8 @@ describe("Utils", () => {
 
     it("should pass arguments correctly", () => {
       let lastArg: string | undefined;
-      const throttledFn = throttle((arg: string) => {
-        lastArg = arg;
+      const throttledFn = throttle((...args: unknown[]) => {
+        lastArg = args[0] as string;
       }, 100);
 
       throttledFn("test");
@@ -205,8 +205,8 @@ describe("Utils", () => {
 
     it("should handle multiple arguments", () => {
       let result = 0;
-      const throttledFn = throttle((a: number, b: number) => {
-        result = a * b;
+      const throttledFn = throttle((...args: unknown[]) => {
+        result = (args[0] as number) * (args[1] as number);
       }, 100);
 
       throttledFn(5, 10);

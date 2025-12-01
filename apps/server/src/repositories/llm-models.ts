@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client";
 import { and, eq } from "drizzle-orm";
 import {
   db,
@@ -5,7 +6,6 @@ import {
   type LLMModelProvider,
   llmModels,
 } from "@/database";
-import { ORPCError } from "@orpc/client";
 
 type ModelFilter = Partial<{
   id: number;

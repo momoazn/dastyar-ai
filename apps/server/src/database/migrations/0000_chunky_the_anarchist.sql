@@ -126,6 +126,16 @@ CREATE TABLE `summaries` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_summaries_user_id` ON `summaries` (`user_id`);--> statement-breakpoint
+CREATE TABLE `system_settings` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`key` text NOT NULL,
+	`value` text NOT NULL,
+	`description` text,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `system_settings_key_unique` ON `system_settings` (`key`);--> statement-breakpoint
 CREATE TABLE `thread_documents` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`thread_id` integer NOT NULL,

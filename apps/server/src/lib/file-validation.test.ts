@@ -11,10 +11,8 @@ describe("File Validation", () => {
   describe("sanitizeFilename", () => {
     it("should sanitize unsafe characters", () => {
       expect(sanitizeFilename("test file.pdf")).toBe("test_file.pdf");
-      expect(sanitizeFilename("../../../etc/passwd")).toBe(
-        "__._._etc_passwd"
-      );
-      expect(sanitizeFilename("test<>:\"|?*.pdf")).toBe("test_______.pdf");
+      expect(sanitizeFilename("../../../etc/passwd")).toBe("__._._etc_passwd");
+      expect(sanitizeFilename('test<>:"|?*.pdf')).toBe("test_______.pdf");
     });
 
     it("should handle leading dots", () => {
@@ -22,7 +20,7 @@ describe("File Validation", () => {
     });
 
     it("should truncate long filenames", () => {
-      const longName = "a".repeat(300) + ".pdf";
+      const longName = `${"a".repeat(300)}.pdf`;
       const sanitized = sanitizeFilename(longName);
       expect(sanitized.length).toBeLessThanOrEqual(
         FILE_VALIDATION_CONFIG.MAX_FILENAME_LENGTH
@@ -58,7 +56,7 @@ describe("File Validation", () => {
       content?: Uint8Array
     ): File => {
       const buffer = content || new Uint8Array(size);
-      const blob = new Blob([buffer], { type });
+      const blob = new Blob([buffer] as any, { type });
       return new File([blob], name, { type });
     };
 
@@ -95,13 +93,15 @@ describe("File Validation", () => {
     });
 
     it("should reject files with blocked extensions", async () => {
-      const file = createMockFile("malware.exe", 1024, "application/x-msdownload");
+      const file = createMockFile(
+        "malware.exe",
+        1024,
+        "application/x-msdownload"
+      );
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
-      await expect(validateUploadedFile(file)).rejects.toThrow(
-        "not allowed"
-      );
+      await expect(validateUploadedFile(file)).rejects.toThrow("not allowed");
     });
 
     it("should reject files with invalid MIME types", async () => {
@@ -131,8 +131,17 @@ describe("File Validation", () => {
 
     it("should reject executable signatures", async () => {
       // MZ executable signature
-      const mzSignature = new Uint8Array([0x4d, 0x5a, ...new Array(1022).fill(0)]);
-      const file = createMockFile("fake.pdf", 1024, "application/pdf", mzSignature);
+      const mzSignature = new Uint8Array([
+        0x4d,
+        0x5a,
+        ...new Array(1022).fill(0),
+      ]);
+      const file = createMockFile(
+        "fake.pdf",
+        1024,
+        "application/pdf",
+        mzSignature
+      );
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
@@ -156,8 +165,17 @@ describe("File Validation", () => {
     });
 
     it("should skip content validation when requested", async () => {
-      const mzSignature = new Uint8Array([0x4d, 0x5a, ...new Array(1022).fill(0)]);
-      const file = createMockFile("fake.pdf", 1024, "application/pdf", mzSignature);
+      const mzSignature = new Uint8Array([
+        0x4d,
+        0x5a,
+        ...new Array(1022).fill(0),
+      ]);
+      const file = createMockFile(
+        "fake.pdf",
+        1024,
+        "application/pdf",
+        mzSignature
+      );
       // This should NOT throw when content validation is skipped
       await expect(
         validateUploadedFile(file, { skipContentValidation: true })
@@ -171,11 +189,9 @@ describe("File Validation", () => {
 
   describe("FileValidationError", () => {
     it("should create error with code", () => {
-      const error = new FileValidationError(
-        "Test error",
-        "TEST_CODE",
-        { foo: "bar" }
-      );
+      const error = new FileValidationError("Test error", "TEST_CODE", {
+        foo: "bar",
+      });
       expect(error.message).toBe("Test error");
       expect(error.code).toBe("TEST_CODE");
       expect(error.details).toEqual({ foo: "bar" });

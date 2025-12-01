@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,10 +20,10 @@ import {
 } from "@/components/ui/select";
 import { orpc } from "@/utils/orpc";
 
-interface AddModelDialogProps {
+type AddModelDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 type LLMModelProvider = "ollama" | "lmstudio" | "stable-diffusion" | "whisper";
 
@@ -63,7 +63,7 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
     setSize("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!identifier.trim()) {
@@ -88,7 +88,7 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>افزودن مدل جدید</DialogTitle>
@@ -97,16 +97,16 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Identifier */}
           <div className="space-y-2">
             <Label htmlFor="identifier">نام مدل *</Label>
             <Input
+              disabled={addModelMutation.isPending}
               id="identifier"
+              onChange={(e) => setIdentifier(e.target.value)}
               placeholder="مثال: llama2, mistral-7b"
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              disabled={addModelMutation.isPending}
             />
           </div>
 
@@ -114,9 +114,9 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="provider">ارائه‌دهنده *</Label>
             <Select
-              value={provider}
-              onValueChange={(value) => setProvider(value as LLMModelProvider)}
               disabled={addModelMutation.isPending}
+              onValueChange={(value) => setProvider(value as LLMModelProvider)}
+              value={provider}
             >
               <SelectTrigger id="provider">
                 <SelectValue />
@@ -124,7 +124,9 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
               <SelectContent>
                 <SelectItem value="ollama">Ollama</SelectItem>
                 <SelectItem value="lmstudio">LM Studio</SelectItem>
-                <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+                <SelectItem value="stable-diffusion">
+                  Stable Diffusion
+                </SelectItem>
                 <SelectItem value="whisper">Whisper</SelectItem>
               </SelectContent>
             </Select>
@@ -134,11 +136,11 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="creator">سازنده</Label>
             <Input
+              disabled={addModelMutation.isPending}
               id="creator"
+              onChange={(e) => setCreator(e.target.value)}
               placeholder="مثال: Meta, Mistral"
               value={creator}
-              onChange={(e) => setCreator(e.target.value)}
-              disabled={addModelMutation.isPending}
             />
           </div>
 
@@ -146,11 +148,11 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="family">خانواده</Label>
             <Input
+              disabled={addModelMutation.isPending}
               id="family"
+              onChange={(e) => setFamily(e.target.value)}
               placeholder="مثال: Llama, Mistral"
               value={family}
-              onChange={(e) => setFamily(e.target.value)}
-              disabled={addModelMutation.isPending}
             />
           </div>
 
@@ -158,29 +160,28 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="size">حجم</Label>
             <Input
+              disabled={addModelMutation.isPending}
               id="size"
+              onChange={(e) => setSize(e.target.value)}
               placeholder="مثال: 7B, 13B, 70B"
               value={size}
-              onChange={(e) => setSize(e.target.value)}
-              disabled={addModelMutation.isPending}
             />
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 justify-end pt-4">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
+              disabled={addModelMutation.isPending}
+              onClick={() => handleOpenChange(false)}
               type="button"
               variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={addModelMutation.isPending}
             >
               لغو
             </Button>
-            <Button
-              type="submit"
-              disabled={addModelMutation.isPending}
-            >
-              {addModelMutation.isPending ? "در حال اضافه کردن..." : "اضافه کردن مدل"}
+            <Button disabled={addModelMutation.isPending} type="submit">
+              {addModelMutation.isPending
+                ? "در حال اضافه کردن..."
+                : "اضافه کردن مدل"}
             </Button>
           </div>
         </form>

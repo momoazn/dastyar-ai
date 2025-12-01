@@ -106,7 +106,8 @@ describe("Persian Text Normalization", () => {
     });
 
     it("should handle Persian poetry with proper formatting", () => {
-      const poetry = "دل می‌رود ز دستم، صاحب‌دلان خدا را\nدردا که راز پنهان، خواهد شد آشکارا";
+      const poetry =
+        "دل می‌رود ز دستم، صاحب‌دلان خدا را\nدردا که راز پنهان، خواهد شد آشکارا";
       const result = normalizePersianText(poetry);
       expect(result).toContain("\n"); // Preserve line breaks
       expect(result).toContain("،"); // Persian comma

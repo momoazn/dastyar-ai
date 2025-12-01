@@ -1,6 +1,6 @@
 import type { GenerationSettings } from "@/server/procedures/images";
 
-const TRAILING_SLASH_RE = /\/$/;
+const _TRAILING_SLASH_RE = /\/$/;
 
 /**
  * Parse a size value string into width and height

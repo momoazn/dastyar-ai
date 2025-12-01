@@ -151,7 +151,7 @@ describe("useIsMobile Hook", () => {
   });
 
   test("handles matchMedia addEventListener", () => {
-    let changeHandler: (() => void) | null = null;
+    let changeHandler: EventListener | null = null;
 
     Object.defineProperty(window, "innerWidth", {
       writable: true,
@@ -159,24 +159,30 @@ describe("useIsMobile Hook", () => {
       value: 1024,
     });
 
-    window.matchMedia = (query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: () => {
-        // Mock implementation
-      },
-      removeListener: () => {
-        // Mock implementation
-      },
-      addEventListener: (_event: string, handler: () => void) => {
-        changeHandler = handler;
-      },
-      removeEventListener: () => {
-        // Mock implementation
-      },
-      dispatchEvent: () => true,
-    });
+    window.matchMedia = (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {
+          // Mock implementation
+        },
+        removeListener: () => {
+          // Mock implementation
+        },
+        addEventListener: (
+          _event: string,
+          listener: EventListenerOrEventListenerObject
+        ) => {
+          if (typeof listener === "function") {
+            changeHandler = listener;
+          }
+        },
+        removeEventListener: () => {
+          // Mock implementation
+        },
+        dispatchEvent: () => true,
+      }) as MediaQueryList;
 
     renderHook(() => useIsMobile());
     expect(changeHandler).toBeTruthy();

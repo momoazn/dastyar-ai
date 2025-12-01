@@ -9,7 +9,12 @@ export type UserRole = (typeof userRoles)[number];
 // LLM Model Types
 // ============================================================================
 
-export const llmModelProviders = ["ollama", "lmstudio"] as const;
+export const llmModelProviders = [
+  "ollama",
+  "lmstudio",
+  "stable-diffusion",
+  "whisper",
+] as const;
 export type LLMModelProvider = (typeof llmModelProviders)[number];
 
 // ============================================================================

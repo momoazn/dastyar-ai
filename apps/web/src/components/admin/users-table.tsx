@@ -77,19 +77,19 @@ export function UsersTable() {
   const updateRoleMutation = useMutation(
     orpc.admin.updateUserRole.mutationOptions({
       onSuccess: () => {
-         queryClient.invalidateQueries({
-           queryKey: orpc.admin.listUsersWithPagination.queryKey({
-             input: {
-               page,
-               pageSize,
-               search: searchQuery || undefined,
-               role: roleFilter,
-             },
-           }),
-         });
-         toast.success(fa.admin.users.messages.roleUpdated);
-         setChangeRoleDialogOpen(false);
-       },
+        queryClient.invalidateQueries({
+          queryKey: orpc.admin.listUsersWithPagination.queryKey({
+            input: {
+              page,
+              pageSize,
+              search: searchQuery || undefined,
+              role: roleFilter,
+            },
+          }),
+        });
+        toast.success(fa.admin.users.messages.roleUpdated);
+        setChangeRoleDialogOpen(false);
+      },
       onError: () => {
         toast.error(fa.admin.users.messages.errorUpdatingRole);
       },
@@ -111,19 +111,19 @@ export function UsersTable() {
   const deleteUserMutation = useMutation(
     orpc.admin.deleteUser.mutationOptions({
       onSuccess: () => {
-         queryClient.invalidateQueries({
-           queryKey: orpc.admin.listUsersWithPagination.queryKey({
-             input: {
-               page,
-               pageSize,
-               search: searchQuery || undefined,
-               role: roleFilter,
-             },
-           }),
-         });
-         toast.success("کاربر با موفقیت حذف شد");
-         setDeleteUserDialogOpen(false);
-       },
+        queryClient.invalidateQueries({
+          queryKey: orpc.admin.listUsersWithPagination.queryKey({
+            input: {
+              page,
+              pageSize,
+              search: searchQuery || undefined,
+              role: roleFilter,
+            },
+          }),
+        });
+        toast.success("کاربر با موفقیت حذف شد");
+        setDeleteUserDialogOpen(false);
+      },
       onError: (deleteError) => {
         if (deleteError instanceof Error) {
           toast.error(deleteError.message);

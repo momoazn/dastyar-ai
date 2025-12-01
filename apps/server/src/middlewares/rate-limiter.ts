@@ -54,7 +54,7 @@ export const rateLimiter = (config: RateLimitConfig): MiddlewareHandler => {
     keyPrefix = "ip",
   } = config;
 
-  return async (c, next) => {
+  return (c, next) => {
     // Use IP address as identifier
     const ip =
       c.req.header("x-forwarded-for") ||
@@ -102,10 +102,7 @@ export const rateLimiter = (config: RateLimitConfig): MiddlewareHandler => {
 
     // Add rate limit info headers
     c.header("X-RateLimit-Limit", maxRequests.toString());
-    c.header(
-      "X-RateLimit-Remaining",
-      (maxRequests - record.count).toString()
-    );
+    c.header("X-RateLimit-Remaining", (maxRequests - record.count).toString());
     c.header("X-RateLimit-Reset", record.resetTime.toString());
 
     return next();
@@ -117,20 +114,18 @@ export const rateLimiter = (config: RateLimitConfig): MiddlewareHandler => {
  * Limits requests per authenticated user
  * Requires authentication context (c.get('user'))
  */
-export const userRateLimiter = (
-  config: RateLimitConfig
-): MiddlewareHandler => {
+export const userRateLimiter = (config: RateLimitConfig): MiddlewareHandler => {
   const {
     windowMs,
     maxRequests,
     message = "You have exceeded your request quota. Please try again later.",
   } = config;
 
-  return async (c, next) => {
+  return (c, next) => {
     // Get user from context (set by authentication middleware)
     const user = c.get("user");
 
-    if (!user || !user.id) {
+    if (!user?.id) {
       // No user context - skip user rate limiting
       // IP-based rate limiting should still apply
       return next();
@@ -194,13 +189,8 @@ export const userRateLimiter = (
  * Get current rate limit status for an identifier
  * Useful for monitoring and debugging
  */
-export const getRateLimitStatus = (
-  identifier: string
-): RequestRecord | null => {
-  return (
-    store.get(identifier) || userStore.get(`user:${identifier}`) || null
-  );
-};
+export const getRateLimitStatus = (identifier: string): RequestRecord | null =>
+  store.get(identifier) || userStore.get(`user:${identifier}`) || null;
 
 /**
  * Reset rate limit for a specific identifier
@@ -223,10 +213,8 @@ export const getRateLimitStats = (): {
   ipLimitedCount: number;
   userLimitedCount: number;
   totalTracked: number;
-} => {
-  return {
-    ipLimitedCount: store.size,
-    userLimitedCount: userStore.size,
-    totalTracked: store.size + userStore.size,
-  };
-};
+} => ({
+  ipLimitedCount: store.size,
+  userLimitedCount: userStore.size,
+  totalTracked: store.size + userStore.size,
+});

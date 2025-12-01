@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import type { User } from "@/database";
-import * as authRepo from "@/repositories/auth";
+import { findUserById } from "@/repositories/auth";
 import {
   generateJwtToken,
   validateAuthHeader,
@@ -9,8 +9,8 @@ import {
   verifyJwtToken,
 } from "./auth";
 
-// Mock the auth repository
-const mockFindUserById = mock(authRepo.findUserById);
+// Mock the auth repository function
+const mockFindUserById = mock(findUserById);
 
 // Mock user data for testing
 const mockUser: User = {

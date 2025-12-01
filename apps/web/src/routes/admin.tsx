@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ModelsTable } from "@/components/admin/models-table";
-import { UsersTable } from "@/components/admin/users-table";
 import { SettingsPanel } from "@/components/admin/settings-panel";
+import { UsersTable } from "@/components/admin/users-table";
 import { Card } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminLayout from "@/layouts/admin";

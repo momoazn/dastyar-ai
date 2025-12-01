@@ -117,9 +117,7 @@ describe("Text Extractor", () => {
 
       const result = extractTextFromParts(message);
       // Final result is trimmed
-      expect(result.content).toBe(
-        "Text with spaces  \n\nText with newlines"
-      );
+      expect(result.content).toBe("Text with spaces  \n\nText with newlines");
     });
 
     it("should return null for empty reasoning", () => {

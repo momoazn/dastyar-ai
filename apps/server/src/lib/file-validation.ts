@@ -1,5 +1,10 @@
 import { logger } from "./logger";
 
+// Regex constants for performance
+// biome-ignore lint/suspicious/noControlCharactersInRegex: Needed for security validation
+const CONTROL_CHARACTERS_REGEX = /[\x00-\x1F\x7F]/;
+const LEADING_DOT_REGEX = /^\./;
+
 /**
  * File validation configuration
  */
@@ -65,13 +70,14 @@ export const FILE_VALIDATION_CONFIG = {
  * File validation error types
  */
 export class FileValidationError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public details?: unknown
-  ) {
+  code: string;
+  details?: unknown;
+
+  constructor(message: string, code: string, details?: unknown) {
     super(message);
     this.name = "FileValidationError";
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -80,7 +86,7 @@ export class FileValidationError extends Error {
  */
 function getFileExtension(filename: string): string {
   const parts = filename.toLowerCase().split(".");
-  return parts.length > 1 ? parts[parts.length - 1] : "";
+  return parts.length > 1 ? (parts.at(-1) ?? "") : "";
 }
 
 /**
@@ -131,7 +137,11 @@ function validateFilename(filename: string): void {
   }
 
   // Check for path traversal attempts
-  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+  if (
+    filename.includes("..") ||
+    filename.includes("/") ||
+    filename.includes("\\")
+  ) {
     throw new FileValidationError(
       "Filename contains path traversal characters",
       "PATH_TRAVERSAL_ATTEMPT"
@@ -140,15 +150,11 @@ function validateFilename(filename: string): void {
 
   // Check for empty filename
   if (filename.trim().length === 0) {
-    throw new FileValidationError(
-      "Filename cannot be empty",
-      "EMPTY_FILENAME"
-    );
+    throw new FileValidationError("Filename cannot be empty", "EMPTY_FILENAME");
   }
 
   // Check for control characters
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: Needed for security validation
-  if (/[\x00-\x1F\x7F]/.test(filename)) {
+  if (CONTROL_CHARACTERS_REGEX.test(filename)) {
     throw new FileValidationError(
       "Filename contains control characters",
       "INVALID_FILENAME"
@@ -213,11 +219,8 @@ export async function validateUploadedFile(
   } = options;
 
   // Validate file object
-  if (!file || !(file instanceof File)) {
-    throw new FileValidationError(
-      "Invalid file object",
-      "INVALID_FILE_OBJECT"
-    );
+  if (!(file && file instanceof File)) {
+    throw new FileValidationError("Invalid file object", "INVALID_FILE_OBJECT");
   }
 
   // Validate filename
@@ -288,7 +291,7 @@ export function sanitizeFilename(filename: string): string {
   return filename
     .replace(/[^a-zA-Z0-9._-]/g, "_") // Replace unsafe chars with underscore
     .replace(/\.{2,}/g, ".") // Replace multiple dots with single dot
-    .replace(/^\./, "_") // Replace leading dot
+    .replace(LEADING_DOT_REGEX, "_") // Replace leading dot
     .slice(0, FILE_VALIDATION_CONFIG.MAX_FILENAME_LENGTH); // Trim to max length
 }
 

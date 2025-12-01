@@ -1,30 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquare, FileText, Image, Globe, Zap, Code, MessageCircle, X } from "lucide-react";
+import {
+  Code,
+  FileText,
+  Globe,
+  Image,
+  MessageCircle,
+  MessageSquare,
+  X,
+  Zap,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
 
 type UserType = Omit<User, "password" | "salt">;
 
-interface UserDetailDialogProps {
+type UserDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: UserType | null;
-}
+};
 
-interface ActivityStat {
+type ActivityStat = {
   icon: React.ReactNode;
   label: string;
   value: number;
-}
+};
 
 export function UserDetailDialog({
   open,
@@ -32,9 +41,10 @@ export function UserDetailDialog({
   user,
 }: UserDetailDialogProps) {
   const { data: userDetails, isLoading } = useQuery(
-    user
-      ? orpc.admin.getUserDetails.queryOptions({ userId: user.id })
-      : { queryKey: ["disabled"], enabled: false }
+    orpc.admin.getUserDetails.queryOptions({
+      input: { userId: user?.id ?? 0 },
+      enabled: !!user,
+    })
   );
 
   if (!user) {
@@ -82,97 +92,113 @@ export function UserDetailDialog({
     : [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-2xl">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>جزئیات کاربر</DialogTitle>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
             className="h-6 w-6 p-0"
+            onClick={() => onOpenChange(false)}
+            size="icon"
+            variant="ghost"
           >
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-          </div>
-        ) : userDetails ? (
-          <div className="space-y-6">
-            {/* User Info */}
-            <Card className="p-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    نام کاربری
-                  </span>
-                  <span className="font-medium">{userDetails.username}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    نقش
-                  </span>
-                  <Badge
-                    variant={
-                      userDetails.role === "admin" ? "default" : "secondary"
-                    }
-                  >
-                    {userDetails.role === "admin" ? "مدیر" : "کاربر"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    تاریخ ایجاد
-                  </span>
-                  <span className="text-sm">
-                    {new Date(userDetails.createdAt).toLocaleDateString("fa-IR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    آخرین به‌روزرسانی
-                  </span>
-                  <span className="text-sm">
-                    {new Date(userDetails.updatedAt).toLocaleDateString("fa-IR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="flex justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
               </div>
-            </Card>
+            );
+          }
+          if (userDetails) {
+            return (
+              <div className="space-y-6">
+                {/* User Info */}
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-muted-foreground text-sm">
+                        نام کاربری
+                      </span>
+                      <span className="font-medium">
+                        {userDetails.username}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-muted-foreground text-sm">
+                        نقش
+                      </span>
+                      <Badge
+                        variant={
+                          userDetails.role === "admin" ? "default" : "secondary"
+                        }
+                      >
+                        {userDetails.role === "admin" ? "مدیر" : "کاربر"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-muted-foreground text-sm">
+                        تاریخ ایجاد
+                      </span>
+                      <span className="text-sm">
+                        {new Date(userDetails.createdAt).toLocaleDateString(
+                          "fa-IR",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-muted-foreground text-sm">
+                        آخرین به‌روزرسانی
+                      </span>
+                      <span className="text-sm">
+                        {new Date(userDetails.updatedAt).toLocaleDateString(
+                          "fa-IR",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
 
-            {/* Activity Stats */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-sm">فعالیت</h3>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {activityStats.map((stat) => (
-                  <Card key={stat.label} className="p-3 text-center">
-                    <div className="flex justify-center mb-2 text-muted-foreground">
-                      {stat.icon}
-                    </div>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {stat.label}
-                    </div>
-                  </Card>
-                ))}
+                {/* Activity Stats */}
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">فعالیت</h3>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {activityStats.map((stat) => (
+                      <Card className="p-3 text-center" key={stat.label}>
+                        <div className="mb-2 flex justify-center text-muted-foreground">
+                          {stat.icon}
+                        </div>
+                        <div className="font-bold text-2xl">{stat.value}</div>
+                        <div className="mt-1 text-muted-foreground text-xs">
+                          {stat.label}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ) : null}
+            );
+          }
+          return null;
+        })()}
       </DialogContent>
     </Dialog>
   );

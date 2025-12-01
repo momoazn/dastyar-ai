@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { extractTextFromPdf } from "./pdf";
@@ -71,7 +71,7 @@ describe("PDF Processor", () => {
     });
 
     it("should handle very long file paths", async () => {
-      const longName = "a".repeat(100) + ".pdf";
+      const longName = `${"a".repeat(100)}.pdf`;
       const longPath = join(TEST_DIR, longName);
       await writeFile(longPath, "Not a PDF");
 

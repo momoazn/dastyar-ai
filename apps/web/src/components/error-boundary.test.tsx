@@ -129,7 +129,6 @@ describe("ErrorBoundary", () => {
     });
 
     // Force dev mode
-    // @ts-expect-error - Mocking environment
     import.meta.env.DEV = true;
 
     render(
@@ -141,7 +140,6 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Test error message")).toBeTruthy();
 
     console.error = originalError;
-    // @ts-expect-error - Restoring environment
     import.meta.env.DEV = originalEnv;
   });
 

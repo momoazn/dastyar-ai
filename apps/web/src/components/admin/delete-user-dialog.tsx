@@ -1,6 +1,5 @@
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,13 +13,13 @@ import type { UserWithoutSensitiveData as User } from "@/server/repositories/adm
 
 type UserType = Omit<User, "password" | "salt">;
 
-interface DeleteUserDialogProps {
+type DeleteUserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: UserType | null;
   isLoading: boolean;
   onConfirm: () => void;
-}
+};
 
 export function DeleteUserDialog({
   open,
@@ -38,15 +37,14 @@ export function DeleteUserDialog({
     onOpenChange(newOpen);
   };
 
-  const isConfirmValid =
-    confirmText === "DELETE" || confirmText === "حذف";
+  const isConfirmValid = confirmText === "DELETE" || confirmText === "حذف";
 
   if (!user) {
     return null;
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+    <AlertDialog onOpenChange={handleOpenChange} open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-2">
@@ -58,34 +56,34 @@ export function DeleteUserDialog({
               آیا مطمئن هستید که می‌خواهید کاربر <strong>{user.username}</strong>{" "}
               را حذف کنید؟
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               این عمل قابل بازگشت نیست و تمام داده‌های کاربر (پیام‌ها، اسناد،
               تصاویر و غیره) حذف خواهد شد.
             </p>
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                برای تایید، عبارت <code className="bg-muted px-2 py-1">DELETE</code> یا{" "}
+              <label className="font-medium text-sm" htmlFor="confirmText">
+                برای تایید، عبارت{" "}
+                <code className="bg-muted px-2 py-1">DELETE</code> یا{" "}
                 <code className="bg-muted px-2 py-1">حذف</code> را وارد کنید:
               </label>
               <input
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                disabled={isLoading}
+                id="confirmText"
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="DELETE"
                 type="text"
                 value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder="DELETE"
-                disabled={isLoading}
               />
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex gap-3 justify-end">
-          <AlertDialogCancel disabled={isLoading}>
-            لغو
-          </AlertDialogCancel>
+        <div className="flex justify-end gap-3">
+          <AlertDialogCancel disabled={isLoading}>لغو</AlertDialogCancel>
           <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
             disabled={!isConfirmValid || isLoading}
             onClick={onConfirm}
-            className="bg-destructive hover:bg-destructive/90"
           >
             {isLoading ? "در حال حذف..." : "حذف کاربر"}
           </AlertDialogAction>

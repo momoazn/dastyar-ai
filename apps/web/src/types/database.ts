@@ -1,24 +1,24 @@
 // Database types - exported from server schema
 // These types are used in the frontend for type safety
 
-export interface SelectSystemSetting {
+export type SelectSystemSetting = {
   id: number;
   key: string;
   value: unknown;
   description?: string | null;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface SelectUser {
+export type SelectUser = {
   id: number;
   username: string;
   role: "admin" | "user";
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface SelectLlmModel {
+export type SelectLlmModel = {
   id: number;
   identifier: string;
   provider: "ollama" | "lmstudio" | "stable-diffusion" | "whisper";
@@ -28,4 +28,4 @@ export interface SelectLlmModel {
   size?: string | null;
   createdAt: Date;
   updatedAt: Date;
-}
+};

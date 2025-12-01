@@ -156,7 +156,7 @@ describe("Auth Repository", () => {
     });
 
     it("should return null for non-existent id", async () => {
-      const found = await findUserById(99999);
+      const found = await findUserById(99_999);
       expect(found).toBeNull();
     });
   });
@@ -312,7 +312,7 @@ describe("Auth Repository", () => {
     });
 
     it("should throw error for non-existent user", async () => {
-      await expect(updateUsername(99999, "newname")).rejects.toThrow(
+      await expect(updateUsername(99_999, "newname")).rejects.toThrow(
         "Failed to update username"
       );
     });
@@ -367,7 +367,7 @@ describe("Auth Repository", () => {
 
     it("should throw error for non-existent user", async () => {
       await expect(
-        updateUserPassword(99999, "oldpass", "newpass")
+        updateUserPassword(99_999, "oldpass", "newpass")
       ).rejects.toThrow("User not found");
     });
 

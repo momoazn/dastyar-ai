@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/database";
 import {
-  systemSettings,
   type InsertSystemSetting,
   type SystemSetting,
+  systemSettings,
 } from "@/database/schema";
 
 /**
@@ -29,7 +29,9 @@ export async function getSetting(key: string): Promise<SystemSetting | null> {
 /**
  * Get multiple settings by keys
  */
-export async function getSettingsByKeys(keys: string[]): Promise<SystemSetting[]> {
+export async function getSettingsByKeys(
+  keys: string[]
+): Promise<SystemSetting[]> {
   if (keys.length === 0) return [];
   const result = await db
     .select()
@@ -73,7 +75,10 @@ export async function upsertSetting(
       })
       .where(eq(systemSettings.key, key))
       .returning();
-    return updated[0]! as SystemSetting;
+    if (!updated[0]) {
+      throw new Error(`Failed to update system setting with key: ${key}`);
+    }
+    return updated[0] as SystemSetting;
   }
 
   const created = await db
@@ -84,16 +89,17 @@ export async function upsertSetting(
       description,
     })
     .returning();
-  return created[0]! as SystemSetting;
+  if (!created[0]) {
+    throw new Error(`Failed to create system setting with key: ${key}`);
+  }
+  return created[0] as SystemSetting;
 }
 
 /**
  * Delete a setting
  */
 export async function deleteSetting(key: string): Promise<boolean> {
-  await db
-    .delete(systemSettings)
-    .where(eq(systemSettings.key, key));
+  await db.delete(systemSettings).where(eq(systemSettings.key, key));
   return true;
 }
 

@@ -1225,14 +1225,14 @@ $$ M \approx (P \times B / 8) + K + C $$
 > **شرح تصویر:** نمایش گرافیکی زمان‌بندی پروژه در طول ۶ ماه.
 >
 > **Image Generation Prompt:**
-> A professional "Gantt Chart" timeline for a 6-month software project.
+> A professional "Gantt Chart" timeline for a 16-month software project.
 > **Y-Axis (Tasks):** Research, Backend Dev, Frontend Dev, RAG Impl, Testing, Docs.
-> **X-Axis (Time):** Month 1 to Month 6.
+> **X-Axis (Time):** Month 1 to Month 16.
 > **Bars:** Horizontal bars showing the duration of each task, with dependencies (cascading style).
 > **Style:** Project management tool screenshot style (like Jira/Asana), clean and modern.
 > **Persian Text Labels to Overlay:**
 >
-> - Month 1-6: ماه اول تا ششم
+> - Month 1-16: ماه اول تا ششم
 > - Research: تحقیقات (Research)
 > - Development: توسعه فنی (Development)
 > - Testing: تست و ارزیابی (Testing)

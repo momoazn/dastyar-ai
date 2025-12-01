@@ -2,23 +2,23 @@ import { ORPCError } from "@orpc/client";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import {
+  deleteUser,
   getAllUsers,
   getUserById,
-  updateUserPassword,
-  updateUserRole,
-  deleteUser,
   getUsersWithPagination,
   getUserWithStats,
   type UserListResponse,
   type UserWithStats,
+  updateUserPassword,
+  updateUserRole,
 } from "@/repositories/admin";
-import { getModels, updateModel, addModel } from "@/repositories/llm-models";
+import { addModel, getModels, updateModel } from "@/repositories/llm-models";
 import {
+  deleteSetting,
   getAllSettings,
   getSetting,
-  upsertSetting,
-  deleteSetting,
   initializeDefaultSettings,
+  upsertSetting,
 } from "@/repositories/system-settings";
 import { adminProcedure } from "./base";
 
@@ -250,29 +250,27 @@ export const adminProcedures = {
     }),
 
   // Model Management
-  addModel: adminProcedure
-    .input(addModelSchema)
-    .handler(async ({ input }) => {
-      try {
-        const { identifier, provider, creator, family, size } = input;
+  addModel: adminProcedure.input(addModelSchema).handler(async ({ input }) => {
+    try {
+      const { identifier, provider, creator, family, size } = input;
 
-        const newModel = await addModel(identifier, provider, {
-          creator,
-          family,
-          size,
-        });
-        return newModel;
-      } catch (error) {
-        logger.error("Error adding model:", error, { function: "admin" });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to add model",
-          status: 500,
-        });
+      const newModel = await addModel(identifier, provider, {
+        creator,
+        family,
+        size,
+      });
+      return newModel;
+    } catch (error) {
+      logger.error("Error adding model:", error, { function: "admin" });
+      if (error instanceof ORPCError) {
+        throw error;
       }
-    }),
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: "Failed to add model",
+        status: 500,
+      });
+    }
+  }),
 
   // System Settings Management
   getAllSettings: adminProcedure.handler(async () => {
@@ -357,7 +355,9 @@ export const adminProcedures = {
       await initializeDefaultSettings();
       return { success: true };
     } catch (error) {
-      logger.error("Error initializing settings:", error, { function: "admin" });
+      logger.error("Error initializing settings:", error, {
+        function: "admin",
+      });
       throw new ORPCError("INTERNAL_ERROR", {
         message: "Failed to initialize settings",
         status: 500,

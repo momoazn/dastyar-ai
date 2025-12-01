@@ -1,15 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import type { MessageWithModel } from "@/repositories/threads";
-import {
-  convertDbMessagesToUiMessages,
-  getModelSizeCategory,
-  type MyUIMessage,
-} from "./chat";
+import { convertDbMessagesToUiMessages, getModelSizeCategory } from "./chat";
 
 describe("Chat Utilities", () => {
   describe("convertDbMessagesToUiMessages", () => {
     it("should convert database messages to UI messages", () => {
-      // @ts-expect-error - Test data doesn't perfectly match DB types
       const dbMessages: MessageWithModel[] = [
         {
           id: 1,
@@ -17,17 +12,13 @@ describe("Chat Utilities", () => {
           modelId: 5,
           role: "user",
           parts: [{ type: "text", text: "Hello" }],
+          status: "finished",
+          userId: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
           model: {
-            id: 5,
             identifier: "llama3",
             provider: "ollama",
-            creator: null,
-            family: null,
-            size: null,
-            isEnabled: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           },
         },
         {
@@ -36,17 +27,13 @@ describe("Chat Utilities", () => {
           modelId: 5,
           role: "assistant",
           parts: [{ type: "text", text: "Hi there!" }],
+          status: "finished",
+          userId: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
           model: {
-            id: 5,
             identifier: "llama3",
             provider: "ollama",
-            creator: null,
-            family: null,
-            size: null,
-            isEnabled: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           },
         },
       ];
@@ -54,36 +41,53 @@ describe("Chat Utilities", () => {
       const uiMessages = convertDbMessagesToUiMessages(dbMessages);
 
       expect(uiMessages).toHaveLength(2);
-      expect(uiMessages[0]!.id).toBe("1");
-      expect(uiMessages[0]!.role).toBe("user");
-      expect(uiMessages[0]!.parts).toEqual([{ type: "text", text: "Hello" }]);
-      expect(uiMessages[0]!.metadata.modelId).toBe(5);
-      expect(uiMessages[0]!.metadata.threadId).toBe(10);
-      expect(uiMessages[0]!.metadata.modelName).toBe("llama3");
 
-      expect(uiMessages[1]!.id).toBe("2");
-      expect(uiMessages[1]!.role).toBe("assistant");
-      expect(uiMessages[1]!.parts).toEqual([{ type: "text", text: "Hi there!" }]);
+      // Assert first message
+      const firstMessage = uiMessages[0];
+      expect(firstMessage).toBeDefined();
+      expect(firstMessage?.id).toBe("1");
+      expect(firstMessage?.role).toBe("user");
+      expect(firstMessage?.parts).toEqual([{ type: "text", text: "Hello" }]);
+      const firstMetadata = firstMessage?.metadata;
+      expect(firstMetadata).toBeDefined();
+      expect(firstMetadata?.modelId).toBe(5);
+      expect(firstMetadata?.threadId).toBe(10);
+      expect(firstMetadata?.modelName).toBe("llama3");
+
+      // Assert second message
+      const secondMessage = uiMessages[1];
+      expect(secondMessage).toBeDefined();
+      expect(secondMessage?.id).toBe("2");
+      expect(secondMessage?.role).toBe("assistant");
+      expect(secondMessage?.parts).toEqual([
+        { type: "text", text: "Hi there!" },
+      ]);
     });
 
     it("should handle messages without model", () => {
-      // @ts-expect-error - Testing null model case
-      const dbMessages: MessageWithModel[] = [
+      const dbMessages = [
         {
           id: 1,
           threadId: 10,
           modelId: 5,
           role: "user",
           parts: [{ type: "text", text: "Hello" }],
+          status: "finished",
+          userId: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
           model: undefined,
         },
-      ];
+      ] as unknown as MessageWithModel[];
 
       const uiMessages = convertDbMessagesToUiMessages(dbMessages);
 
       expect(uiMessages).toHaveLength(1);
-      expect(uiMessages[0]!.metadata.modelName).toBeUndefined();
+      const firstMessage = uiMessages[0];
+      expect(firstMessage).toBeDefined();
+      const firstMetadata = firstMessage?.metadata;
+      expect(firstMetadata).toBeDefined();
+      expect(firstMetadata?.modelName).toBeUndefined();
     });
 
     it("should handle empty message array", () => {
@@ -92,8 +96,7 @@ describe("Chat Utilities", () => {
     });
 
     it("should handle messages with multiple parts", () => {
-      // @ts-expect-error - Testing null model case
-      const dbMessages: MessageWithModel[] = [
+      const dbMessages = [
         {
           id: 1,
           threadId: 10,
@@ -103,16 +106,24 @@ describe("Chat Utilities", () => {
             { type: "text", text: "First part" },
             { type: "text", text: "Second part" },
           ],
+          status: "finished",
+          userId: 1,
           createdAt: new Date(),
+          updatedAt: new Date(),
           model: undefined,
         },
-      ];
+      ] as unknown as MessageWithModel[];
 
       const uiMessages = convertDbMessagesToUiMessages(dbMessages);
 
-      expect(uiMessages[0]!.parts).toHaveLength(2);
-      expect(uiMessages[0]!.parts[0]).toEqual({ type: "text", text: "First part" });
-      expect(uiMessages[0]!.parts[1]).toEqual({
+      const firstMessage = uiMessages[0];
+      expect(firstMessage).toBeDefined();
+      expect(firstMessage?.parts).toHaveLength(2);
+      expect(firstMessage?.parts[0]).toEqual({
+        type: "text",
+        text: "First part",
+      });
+      expect(firstMessage?.parts[1]).toEqual({
         type: "text",
         text: "Second part",
       });

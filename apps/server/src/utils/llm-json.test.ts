@@ -58,7 +58,8 @@ describe("LLM JSON Utilities", () => {
     });
 
     it("should handle JSON with nested objects", () => {
-      const output = '{"data": {"title": "Nested Title"}, "title": "Top Level"}';
+      const output =
+        '{"data": {"title": "Nested Title"}, "title": "Top Level"}';
       // The regex matches the outer object which includes nested objects
       const result = extractJsonField(output, "title");
       expect(result).toBeTruthy(); // Should find title field
@@ -86,8 +87,7 @@ describe("LLM JSON Utilities", () => {
     });
 
     it("should handle mixed text and JSON", () => {
-      const output =
-        'Here is the result: {"title": "Test"} Hope this helps!';
+      const output = 'Here is the result: {"title": "Test"} Hope this helps!';
       expect(extractJsonField(output, "title")).toBe("Test");
     });
 
@@ -98,7 +98,8 @@ describe("LLM JSON Utilities", () => {
     });
 
     it("should handle JSON with special characters", () => {
-      const output = '{"title": "Test \\"Quote\\"", "newline": "Line1\\nLine2"}';
+      const output =
+        '{"title": "Test \\"Quote\\"", "newline": "Line1\\nLine2"}';
       const parsed = JSON.parse(output);
       expect(extractJsonField(output, "title")).toBe(parsed.title);
     });
@@ -220,7 +221,8 @@ describe("LLM JSON Utilities", () => {
     });
 
     it("should prefer the last valid JSON object", () => {
-      const output = '{"title": "First", "count": 1}{"title": "Second", "count": 2}';
+      const output =
+        '{"title": "First", "count": 1}{"title": "Second", "count": 2}';
       const result = extractJsonObject(output, testSchema);
       expect(result).toEqual({ title: "Second", count: 2 });
     });
