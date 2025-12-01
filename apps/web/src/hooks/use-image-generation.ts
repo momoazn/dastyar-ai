@@ -25,7 +25,7 @@ export type GeneratedImage = Awaited<
 type UseImageGenerationProps = {
   threadId?: number;
   initialSettings?: Partial<GenerationSettings>;
-  onSuccess?: (result: unknown) => void;
+  onSuccess?: (result: GeneratedImage) => void;
 };
 
 export function useImageGeneration({
@@ -107,7 +107,7 @@ export function useImageGeneration({
 
       try {
         const result = await generateMutation.mutateAsync(input);
-        return result as unknown as GeneratedImage;
+        return result as GeneratedImage;
       } catch {
         // Error toast is handled in onError
         return null;
@@ -213,7 +213,7 @@ export function useImageGeneration({
 
   // NEW: Unified initialization method
   const initializeFromSearch = useCallback(
-    (search: Record<string, unknown>) => {
+    (search: Record<string, string | number | boolean | null>) => {
       const { settings: parsedSettings, initialPrompt } =
         parseSearchParams(search);
       if (Object.keys(parsedSettings).length > 0) {

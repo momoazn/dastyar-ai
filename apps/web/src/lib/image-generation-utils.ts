@@ -61,7 +61,9 @@ export function getMergedSettings(
 /**
  * Parse search parameters into settings and initial prompt
  */
-export function parseSearchParams(search: Record<string, unknown>): {
+export function parseSearchParams(
+  search: Record<string, string | number | boolean | null>
+): {
   settings: Partial<GenerationSettings>;
   initialPrompt: string | null;
 } {
