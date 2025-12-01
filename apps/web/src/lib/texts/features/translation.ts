@@ -40,4 +40,8 @@ export const translation = {
   pagesTranslated: (count: number) => `${count} صفحه ترجمه شده`,
   selectPdfToStart: "فایل PDF خود را انتخاب کنید تا ترجمه شروع شود",
   resultPlaceholder: "اینجا نمایش داده می‌شود...",
+  copyToNew: "کپی به جدید",
+  type: "نوع",
+  text: "متن",
+  readOnly: "فقط خواندنی",
 } as const;

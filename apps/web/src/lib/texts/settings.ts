@@ -63,4 +63,10 @@ export const settings = {
     preferences: "تنظیمات پیش‌فرض",
     admin: "مدیریت",
   },
+  placeholders: {
+    selectLanguage: "انتخاب زبان",
+    selectMode: "انتخاب حالت",
+    selectTone: "انتخاب لحن",
+    confirmPassword: "تکرار رمز عبور جدید",
+  },
 } as const;

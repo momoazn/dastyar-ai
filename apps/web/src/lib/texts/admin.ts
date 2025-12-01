@@ -3,6 +3,25 @@ export const admin = {
   subtitle: "مدیریت کاربران و مدل‌های هوش مصنوعی",
   accessDenied: "دسترسی غیرمجاز",
   accessDeniedMessage: "فقط مدیران می‌توانند به این بخش دسترسی داشته باشند",
+  userDetails: {
+    title: "جزئیات کاربر",
+    activity: "فعالیت",
+    stats: {
+      messages: "پیام‌ها",
+      documents: "اسناد",
+      images: "تصاویر",
+      translations: "ترجمه‌ها",
+      summaries: "خلاصه‌ها",
+      codeRuns: "کدهای اجرا شده",
+      threads: "گفتگوها",
+    },
+    fields: {
+      username: "نام کاربری",
+      role: "نقش",
+      createdAt: "تاریخ ایجاد",
+      updatedAt: "آخرین به‌روزرسانی",
+    },
+  },
   users: {
     title: "مدیریت کاربران",
     table: {
@@ -18,6 +37,14 @@ export const admin = {
       changeRole: "تغییر نقش",
       resetPassword: "بازنشانی رمز عبور",
       confirmRoleChange: "تغییر نقش کاربر",
+      deleteUser: "حذف کاربر",
+      deleting: "در حال حذف...",
+      confirmDeleteUser: "حذف کاربر",
+      confirmDeleteUserMessage: (username: string) =>
+        `آیا مطمئن هستید که می‌خواهید کاربر ${username} را حذف کنید؟`,
+      confirmDeleteUserWarning:
+        "این عمل قابل بازگشت نیست و تمام داده‌های کاربر (پیام‌ها، اسناد، تصاویر و غیره) حذف خواهد شد.",
+      confirmDeleteUserHint: "برای تایید، عبارت DELETE یا حذف را وارد کنید:",
       confirmRoleChangeMessage:
         "آیا مطمئن هستید که می‌خواهید نقش کاربر را تغییر دهید؟",
       confirmPasswordReset: "بازنشانی رمز عبور",
@@ -41,6 +68,7 @@ export const admin = {
     loading: "در حال بارگذاری کاربران...",
     errorLoading: "خطا در بارگذاری کاربران",
     notFound: "هیچ کاربری یافت نشد",
+    show: "نمایش",
     userCount: (count: number) => `${count} کاربر`,
     searchPlaceholder: "جستجو بر اساس نام کاربری...",
     filterByRole: "فیلتر بر اساس نقش",
@@ -49,24 +77,37 @@ export const admin = {
     filterRegularUsers: "کاربران عادی",
     viewDetails: "مشاهده جزئیات",
     deleteUser: "حذف کاربر",
-    show: "نمایش",
     perPage: "در هر صفحه",
     pageInfo: (page: number, total: number) => `صفحه ${page} از ${total}`,
   },
   models: {
     title: "مدیریت مدل‌ها",
+    providers: {
+      ollama: "Ollama",
+      lmstudio: "LM Studio",
+      allProviders: "تمام ارائه‌دهندگان",
+    },
+    statuses: {
+      all: "تمام وضعیت‌ها",
+      enabled: "فعال",
+      disabled: "غیرفعال",
+    },
+    loading: "در حال بارگذاری مدل‌ها...",
+    errorLoading: "خطا در بارگذاری مدل‌ها",
+    notFound: "هیچ مدلی یافت نشد",
+    addModel: "افزودن مدل",
+    modelCount: (count: number) => `${count} مدل`,
     table: {
       id: "شناسه",
       name: "نام",
       provider: "ارائه‌دهنده",
+      providerLabel: "ارائه‌دهنده *",
       status: "وضعیت",
       enabled: "فعال",
       disabled: "غیرفعال",
       toggle: "تغییر وضعیت",
-    },
-    providers: {
-      ollama: "Ollama",
-      lmstudio: "LM Studio",
+      filterByProvider: "فیلتر بر اساس ارائه‌دهنده",
+      filterByStatus: "فیلتر بر اساس وضعیت",
     },
     messages: {
       statusUpdated: "وضعیت مدل با موفقیت تغییر یافت",
@@ -138,6 +179,10 @@ export const admin = {
       save: "ذخیره تغییرات",
       cancel: "لغو",
       reset: "بازنشانی به پیش‌فرض",
+    },
+    unsavedChanges: {
+      badge: "تغییرات ذخیره‌نشده",
+      message: "شما تغییراتی انجام داده‌اید که هنوز ذخیره نشده‌اند",
     },
   },
   navigation: {

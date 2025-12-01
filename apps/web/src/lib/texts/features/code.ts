@@ -72,4 +72,9 @@ export const codeAssistant = {
   },
   charCount: (count: number) => `${count} کاراکتر`,
   newSessionTitle: (modeLabel: string) => `کد ${modeLabel}`,
+  title: "دستیار کد",
+  copyToNew: "کپی به جدید",
+  readOnly: "فقط خواندنی",
+  copy: "کپی",
+  copied: "کپی شد",
 } as const;

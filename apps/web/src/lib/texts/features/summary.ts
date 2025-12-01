@@ -23,6 +23,8 @@ export const summarize = {
   sourceText: "متن اصلی",
   summaryPlaceholder: "خلاصه اینجا نمایش داده می‌شود...",
   keyboardHint: "برای خلاصه‌سازی از ⌘/Ctrl+Enter استفاده کنید",
+  copyToNew: "کپی به جدید",
+  readOnly: "فقط خواندنی",
   errors: {
     modelNotFound: "مدل یافت نشد",
     requestFailed: "درخواست ناموفق بود",

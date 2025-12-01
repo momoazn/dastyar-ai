@@ -1,16 +1,20 @@
 export const general = {
   loading: "در حال بارگذاری",
+  loadingWithDots: "در حال بارگذاری…",
+  loadingWithEllipsis: "در حال بارگذاری...",
   error: "خطا",
   success: "موفقیت",
   unknownError: "خطای نامشخص",
   untitled: "بدون عنوان",
   retry: "تلاش مجدد",
-  unknown: "نامشخص",
+  unknown: "نامشخص" as const,
   charCount: (count: number) => `${count} کاراکتر`,
   download: "دانلود",
   loadingModels: "در حال بارگذاری مدل‌ها...",
   selectModel: "انتخاب مدل",
   history: "تاریخچه",
+  noItems: "موردی موجود نیست",
+  startNew: "شروع جدید",
 } as const;
 
 export const languages = {

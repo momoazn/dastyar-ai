@@ -12,6 +12,7 @@ import {
   ui,
   userProfile,
 } from "./common";
+import { errors } from "./errors";
 import { codeAssistant } from "./features/code";
 import { documents } from "./features/documents";
 import { imageGeneration } from "./features/image";
@@ -20,6 +21,7 @@ import { transcribe } from "./features/transcribe";
 import { translation } from "./features/translation";
 import { navigation } from "./navigation";
 import { settings } from "./settings";
+import { sidebar } from "./sidebar";
 
 export const fa = {
   index: {
@@ -62,5 +64,7 @@ export const fa = {
   codeAssistant,
   documents: { ...documents, ...commonDocuments },
   admin,
+  sidebar,
+  errors,
   invalidThreadId,
 } as const;
