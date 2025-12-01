@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
+import type { SystemSettingsMap } from "@/types/settings";
 import { orpc, queryClient } from "@/utils/orpc";
 
 export function SettingsPanel() {
-  const [settings, setSettings] = useState<Record<string, unknown>>({});
+  const [settings, setSettings] = useState<SystemSettingsMap>({});
   const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch all settings
@@ -22,9 +23,9 @@ export function SettingsPanel() {
   // Initialize settings when data loads
   useEffect(() => {
     if (allSettings) {
-      const settingsMap: Record<string, unknown> = {};
+      const settingsMap: SystemSettingsMap = {};
       for (const setting of allSettings) {
-        settingsMap[setting.key] = setting.value;
+        settingsMap[setting.key] = setting.value as SystemSettingsMap[string];
       }
       setSettings(settingsMap);
       setHasChanges(false);
@@ -53,7 +54,7 @@ export function SettingsPanel() {
   );
 
   const handleUpsertSettings = useCallback(
-    async (updates: Record<string, unknown>) => {
+    async (updates: SystemSettingsMap) => {
       // Execute all mutations in parallel for better performance
       await Promise.all(
         Object.entries(updates).map(([key, value]) =>
@@ -67,7 +68,10 @@ export function SettingsPanel() {
     [upsertMutation]
   );
 
-  const handleSettingChange = (key: string, value: unknown) => {
+  const handleSettingChange = (
+    key: string,
+    value: SystemSettingsMap[string]
+  ) => {
     setSettings((prev) => ({
       ...prev,
       [key]: value,
@@ -86,9 +90,9 @@ export function SettingsPanel() {
   const handleCancel = useCallback(() => {
     // Reload settings from server
     if (allSettings) {
-      const settingsMap: Record<string, unknown> = {};
+      const settingsMap: SystemSettingsMap = {};
       for (const setting of allSettings) {
-        settingsMap[setting.key] = setting.value;
+        settingsMap[setting.key] = setting.value as SystemSettingsMap[string];
       }
       setSettings(settingsMap);
       setHasChanges(false);
@@ -393,9 +397,11 @@ export function SettingsPanel() {
         <Card className="border-yellow-200 bg-yellow-50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">تغییرات ذخیره‌نشده</Badge>
+              <Badge variant="secondary">
+                {fa.admin.settings.unsavedChanges.badge}
+              </Badge>
               <span className="text-gray-600 text-sm">
-                شما تغییراتی انجام داده‌اید که هنوز ذخیره نشده‌اند
+                {fa.admin.settings.unsavedChanges.message}
               </span>
             </div>
           </div>

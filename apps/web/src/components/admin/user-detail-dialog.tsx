@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
 
@@ -55,37 +56,37 @@ export function UserDetailDialog({
     ? [
         {
           icon: <MessageSquare className="h-4 w-4" />,
-          label: "پیام‌ها",
+          label: fa.admin.userDetails.stats.messages,
           value: userDetails.messageCount,
         },
         {
           icon: <FileText className="h-4 w-4" />,
-          label: "اسناد",
+          label: fa.admin.userDetails.stats.documents,
           value: userDetails.documentCount,
         },
         {
           icon: <Image className="h-4 w-4" />,
-          label: "تصاویر",
+          label: fa.admin.userDetails.stats.images,
           value: userDetails.imageCount,
         },
         {
           icon: <Globe className="h-4 w-4" />,
-          label: "ترجمه‌ها",
+          label: fa.admin.userDetails.stats.translations,
           value: userDetails.translationCount,
         },
         {
           icon: <Zap className="h-4 w-4" />,
-          label: "خلاصه‌ها",
+          label: fa.admin.userDetails.stats.summaries,
           value: userDetails.summaryCount,
         },
         {
           icon: <Code className="h-4 w-4" />,
-          label: "کدهای اجرا شده",
+          label: fa.admin.userDetails.stats.codeRuns,
           value: userDetails.codeRunCount,
         },
         {
           icon: <MessageCircle className="h-4 w-4" />,
-          label: "گفتگوها",
+          label: fa.admin.userDetails.stats.threads,
           value: userDetails.threadCount,
         },
       ]
@@ -95,7 +96,7 @@ export function UserDetailDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-2xl">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>جزئیات کاربر</DialogTitle>
+          <DialogTitle>{fa.admin.userDetails.title}</DialogTitle>
           <Button
             className="h-6 w-6 p-0"
             onClick={() => onOpenChange(false)}
@@ -122,7 +123,7 @@ export function UserDetailDialog({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-muted-foreground text-sm">
-                        نام کاربری
+                        {fa.admin.userDetails.fields.username}
                       </span>
                       <span className="font-medium">
                         {userDetails.username}
@@ -130,19 +131,21 @@ export function UserDetailDialog({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-muted-foreground text-sm">
-                        نقش
+                        {fa.admin.userDetails.fields.role}
                       </span>
                       <Badge
                         variant={
                           userDetails.role === "admin" ? "default" : "secondary"
                         }
                       >
-                        {userDetails.role === "admin" ? "مدیر" : "کاربر"}
+                        {userDetails.role === "admin"
+                          ? fa.admin.users.table.admin
+                          : fa.admin.users.table.user}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-muted-foreground text-sm">
-                        تاریخ ایجاد
+                        {fa.admin.userDetails.fields.createdAt}
                       </span>
                       <span className="text-sm">
                         {new Date(userDetails.createdAt).toLocaleDateString(
@@ -159,7 +162,7 @@ export function UserDetailDialog({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-muted-foreground text-sm">
-                        آخرین به‌روزرسانی
+                        {fa.admin.userDetails.fields.updatedAt}
                       </span>
                       <span className="text-sm">
                         {new Date(userDetails.updatedAt).toLocaleDateString(
@@ -179,7 +182,9 @@ export function UserDetailDialog({
 
                 {/* Activity Stats */}
                 <div className="space-y-2">
-                  <h3 className="font-semibold text-sm">فعالیت</h3>
+                  <h3 className="font-semibold text-sm">
+                    {fa.admin.userDetails.activity}
+                  </h3>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {activityStats.map((stat) => (
                       <Card className="p-3 text-center" key={stat.label}>

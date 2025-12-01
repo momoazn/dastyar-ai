@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 
 type UserType = Omit<User, "password" | "salt">;
@@ -37,7 +38,8 @@ export function DeleteUserDialog({
     onOpenChange(newOpen);
   };
 
-  const isConfirmValid = confirmText === "DELETE" || confirmText === "حذف";
+  const isConfirmValid =
+    confirmText === "DELETE" || confirmText === fa.sidebar.actions.delete;
 
   if (!user) {
     return null;
@@ -49,22 +51,20 @@ export function DeleteUserDialog({
         <AlertDialogHeader>
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            <AlertDialogTitle>حذف کاربر</AlertDialogTitle>
+            <AlertDialogTitle>
+              {fa.admin.users.actions.confirmDeleteUser}
+            </AlertDialogTitle>
           </div>
           <AlertDialogDescription className="space-y-3">
             <p>
-              آیا مطمئن هستید که می‌خواهید کاربر <strong>{user.username}</strong>{" "}
-              را حذف کنید؟
+              {fa.admin.users.actions.confirmDeleteUserMessage(user.username)}
             </p>
             <p className="text-muted-foreground text-sm">
-              این عمل قابل بازگشت نیست و تمام داده‌های کاربر (پیام‌ها، اسناد،
-              تصاویر و غیره) حذف خواهد شد.
+              {fa.admin.users.actions.confirmDeleteUserWarning}
             </p>
             <div className="space-y-2">
               <label className="font-medium text-sm" htmlFor="confirmText">
-                برای تایید، عبارت{" "}
-                <code className="bg-muted px-2 py-1">DELETE</code> یا{" "}
-                <code className="bg-muted px-2 py-1">حذف</code> را وارد کنید:
+                {fa.admin.users.actions.confirmDeleteUserHint}
               </label>
               <input
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -79,13 +79,17 @@ export function DeleteUserDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex justify-end gap-3">
-          <AlertDialogCancel disabled={isLoading}>لغو</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>
+            {fa.admin.users.actions.cancel}
+          </AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive hover:bg-destructive/90"
             disabled={!isConfirmValid || isLoading}
             onClick={onConfirm}
           >
-            {isLoading ? "در حال حذف..." : "حذف کاربر"}
+            {isLoading
+              ? fa.admin.users.actions.deleting
+              : fa.admin.users.actions.deleteUser}
           </AlertDialogAction>
         </div>
       </AlertDialogContent>

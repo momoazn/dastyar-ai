@@ -116,7 +116,9 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
 
           {/* Provider */}
           <div className="space-y-2">
-            <Label htmlFor="provider">ارائه‌دهنده *</Label>
+            <Label htmlFor="provider">
+              {fa.admin.models.table.providerLabel}
+            </Label>
             <Select
               disabled={addModelMutation.isPending}
               onValueChange={(value) => setProvider(value as LLMModelProvider)}

@@ -92,7 +92,7 @@ export function ModelsTable() {
       <Card className="p-6">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-          <p className="text-muted-foreground">در حال بارگذاری مدل‌ها...</p>
+          <p className="text-muted-foreground">{fa.admin.models.loading}</p>
         </div>
       </Card>
     );
@@ -102,7 +102,7 @@ export function ModelsTable() {
     return (
       <Card className="p-6">
         <div className="text-center text-destructive">
-          <p>خطا در بارگذاری مدل‌ها</p>
+          <p>{fa.admin.models.errorLoading}</p>
         </div>
       </Card>
     );
@@ -112,7 +112,7 @@ export function ModelsTable() {
     return (
       <Card className="p-6">
         <div className="text-center text-muted-foreground">
-          <p>هیچ مدلی یافت نشد</p>
+          <p>{fa.admin.models.notFound}</p>
         </div>
       </Card>
     );
@@ -125,10 +125,12 @@ export function ModelsTable() {
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg">{fa.admin.models.title}</h3>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">{models.length} مدل</Badge>
+              <Badge variant="secondary">
+                {fa.admin.models.modelCount(models.length)}
+              </Badge>
               <Button onClick={() => setAddModelDialogOpen(true)} size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                افزودن مدل
+                {fa.admin.models.addModel}
               </Button>
             </div>
           </div>
@@ -143,10 +145,14 @@ export function ModelsTable() {
             >
               <SelectTrigger className="w-full sm:w-40">
                 <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="فیلتر بر اساس ارائه‌دهنده" />
+                <SelectValue
+                  placeholder={fa.admin.models.table.filterByProvider}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">تمام ارائه‌دهندگان</SelectItem>
+                <SelectItem value="all">
+                  {fa.admin.models.providers.allProviders}
+                </SelectItem>
                 <SelectItem value="ollama">Ollama</SelectItem>
                 <SelectItem value="lmstudio">LM Studio</SelectItem>
                 <SelectItem value="stable-diffusion">
@@ -162,12 +168,20 @@ export function ModelsTable() {
               value={statusFilter}
             >
               <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="فیلتر بر اساس وضعیت" />
+                <SelectValue
+                  placeholder={fa.admin.models.table.filterByStatus}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">تمام وضعیت‌ها</SelectItem>
-                <SelectItem value="enabled">فعال</SelectItem>
-                <SelectItem value="disabled">غیرفعال</SelectItem>
+                <SelectItem value="all">
+                  {fa.admin.models.statuses.all}
+                </SelectItem>
+                <SelectItem value="enabled">
+                  {fa.admin.models.statuses.enabled}
+                </SelectItem>
+                <SelectItem value="disabled">
+                  {fa.admin.models.statuses.disabled}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

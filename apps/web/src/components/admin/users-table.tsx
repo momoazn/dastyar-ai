@@ -208,7 +208,7 @@ export function UsersTable() {
     return (
       <Card className="p-6">
         <div className="text-center text-destructive">
-          <p>خطا در بارگذاری کاربران</p>
+          <p>{fa.admin.users.errorLoading}</p>
         </div>
       </Card>
     );
@@ -379,7 +379,9 @@ export function UsersTable() {
           {/* Pagination */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">نمایش</span>
+              <span className="text-muted-foreground text-sm">
+                {fa.admin.users.show}
+              </span>
               <Select
                 onValueChange={handlePageSizeChange}
                 value={pageSize.toString()}
