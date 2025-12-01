@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Archive, Download, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { fa } from "@/lib/persian-texts";
 import { cn } from "@/lib/utils";
 
 export type SidebarItemAction = {
@@ -115,7 +116,7 @@ export function SidebarItem({
                         onEditingCancel?.();
                       }
                     }}
-                    placeholder="بدون عنوان"
+                    placeholder={fa.general.untitled}
                     value={editingValue}
                   />
                 ) : (
@@ -126,7 +127,7 @@ export function SidebarItem({
                         isActive && "text-primary"
                       )}
                     >
-                      {title || "بدون عنوان"}
+                      {title || fa.general.untitled}
                     </div>
                     {hasContent && (
                       <div className="mt-0.5 flex items-center gap-1 text-sidebar-foreground/60 text-xs">

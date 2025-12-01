@@ -1,8 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
-import { SidebarItem, useEditingState, useThreadMutations } from "./base";
+import {
+  SidebarItem,
+  useEditingState,
+  useSidebarList,
+  useThreadMutations,
+} from "./base";
 import { ChatEmptyState } from "./empty-state";
 
 export function ChatThreadsList() {
@@ -32,13 +37,21 @@ export function ChatThreadsList() {
     await mutations.rename.mutateAsync({ id, title });
   };
 
-  const listQuery = useQuery({
-    ...orpc.threads.list.queryOptions({ includeArchived: false }),
+  const listResult = useSidebarList({
+    queryOptions: orpc.threads.list.queryOptions({
+      includeArchived: false,
+    }) as UseQueryOptions<
+      { id: number; title?: string }[],
+      Error,
+      { id: number; title?: string }[],
+      readonly unknown[]
+    >,
     enabled: isChatPage,
+    emptyState: <ChatEmptyState />,
   });
 
   const editingState = useEditingState(
-    (listQuery.data as { id: number | string; title?: string }[]) || [],
+    (listResult.data as { id: number | string; title?: string }[]) || [],
     handleRename as (id: number | string, title: string) => Promise<void>
   );
 
@@ -46,40 +59,38 @@ export function ChatThreadsList() {
     return null;
   }
 
-  if (listQuery.isPending) {
-    return (
-      <div className="mt-4 flex h-full items-center justify-center">
-        <p className="text-muted-foreground text-sm">
-          {fa.navigation.loadingThreads}
-        </p>
-      </div>
-    );
+  if (listResult.isLoading && listResult.loadingComponent) {
+    return listResult.loadingComponent;
   }
 
-  if (!listQuery.data?.length) {
-    return <ChatEmptyState />;
+  if (listResult.isEmpty && listResult.emptyComponent) {
+    return listResult.emptyComponent;
+  }
+
+  if (!listResult.data) {
+    return null;
   }
 
   return (
     <>
-      {listQuery.data.map((thread) => (
+      {(listResult.data as { id: number; title?: string }[]).map((thread) => (
         <SidebarItem
           actions={[
             {
               type: "edit",
               onClick: () =>
                 editingState.startEditing(thread.id, thread.title || ""),
-              title: "ویرایش",
+              title: fa.sidebar.actions.edit,
             },
             {
               type: "archive",
               onClick: () => handleArchive(thread.id),
-              title: "بایگانی",
+              title: fa.sidebar.actions.archive,
             },
             {
               type: "delete",
               onClick: () => handleDelete(thread.id),
-              title: "حذف",
+              title: fa.sidebar.actions.delete,
             },
           ]}
           editingValue={editingState.editingValue}
@@ -91,7 +102,7 @@ export function ChatThreadsList() {
             editingState.commitEditing(thread.id, editingState.editingValue)
           }
           params={{ id: thread.id.toString() }}
-          title={thread.title || "بدون عنوان"}
+          title={thread.title || fa.general.untitled}
           to="/chat/$id"
         />
       ))}

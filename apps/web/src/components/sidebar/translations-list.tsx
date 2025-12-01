@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
-import { SidebarItem, useTranslationMutations } from "./base";
+import { SidebarItem, useSidebarList, useTranslationMutations } from "./base";
 import { TranslationEmptyState } from "./empty-state";
 
 export function TranslationsList() {
@@ -11,9 +10,10 @@ export function TranslationsList() {
 
   const mutations = useTranslationMutations();
 
-  const listQuery = useQuery({
-    ...orpc.translations.list.queryOptions(),
+  const listResult = useSidebarList({
+    queryOptions: orpc.translations.list.queryOptions(),
     enabled: isTranslationPage,
+    emptyState: <TranslationEmptyState />,
   });
 
   const handleDelete = (id: number) => {
@@ -24,19 +24,27 @@ export function TranslationsList() {
     return null;
   }
 
-  if (!listQuery.data?.length) {
-    return <TranslationEmptyState />;
+  if (listResult.isLoading && listResult.loadingComponent) {
+    return listResult.loadingComponent;
+  }
+
+  if (listResult.isEmpty && listResult.emptyComponent) {
+    return listResult.emptyComponent;
+  }
+
+  if (!listResult.data) {
+    return null;
   }
 
   return (
     <>
-      {listQuery.data.map((translation) => (
+      {listResult.data.map((translation) => (
         <SidebarItem
           actions={[
             {
               type: "delete",
               onClick: () => handleDelete(translation.id),
-              title: "حذف",
+              title: fa.sidebar.actions.delete,
             },
           ]}
           key={translation.id}

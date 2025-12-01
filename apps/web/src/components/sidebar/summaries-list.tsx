@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
-import { SidebarItem, useSummaryMutations } from "./base";
+import { SidebarItem, useSidebarList, useSummaryMutations } from "./base";
 import { SummaryEmptyState } from "./empty-state";
 
 export function SummariesList() {
@@ -11,11 +10,11 @@ export function SummariesList() {
 
   const mutations = useSummaryMutations();
 
-  const listQuery = useQuery(
-    orpc.summarize.list.queryOptions({
-      enabled: isSummarizePage,
-    })
-  );
+  const listResult = useSidebarList({
+    queryOptions: orpc.summarize.list.queryOptions(),
+    enabled: isSummarizePage,
+    emptyState: <SummaryEmptyState />,
+  });
 
   const handleDelete = (id: number) => {
     mutations.delete.mutate(id);
@@ -25,19 +24,27 @@ export function SummariesList() {
     return null;
   }
 
-  if (!listQuery.data?.length) {
-    return <SummaryEmptyState />;
+  if (listResult.isLoading && listResult.loadingComponent) {
+    return listResult.loadingComponent;
+  }
+
+  if (listResult.isEmpty && listResult.emptyComponent) {
+    return listResult.emptyComponent;
+  }
+
+  if (!listResult.data) {
+    return null;
   }
 
   return (
     <>
-      {listQuery.data.map((summary) => (
+      {listResult.data.map((summary) => (
         <SidebarItem
           actions={[
             {
               type: "delete",
               onClick: () => handleDelete(summary.id),
-              title: "حذف",
+              title: fa.sidebar.actions.delete,
             },
           ]}
           key={summary.id}

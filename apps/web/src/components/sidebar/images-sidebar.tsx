@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import { useImageThreads } from "@/hooks/use-image-threads";
+import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
-import { SidebarItem } from "./base";
+import { SidebarItem, useSidebarList } from "./base";
 import { ImageEmptyState } from "./empty-state";
 
 export function ImagesSidebar() {
@@ -15,9 +15,11 @@ export function ImagesSidebar() {
     del.mutate({ id });
   };
 
-  const listQuery = useQuery({
-    ...orpc.imageThreads.list.queryOptions(),
+  const listResult = useSidebarList({
+    queryOptions: orpc.imageThreads.list.queryOptions(),
     enabled: isImagePage,
+    emptyState: <ImageEmptyState />,
+    loadingMessage: fa.general.loadingWithEllipsis,
   });
 
   const formatDate = (dateOrStr: string | Date | null) => {
@@ -38,29 +40,27 @@ export function ImagesSidebar() {
     return null;
   }
 
-  if (listQuery.isLoading) {
-    return (
-      <div className="mt-4 flex h-full items-center justify-center">
-        <p className="text-muted-foreground text-sm">در حال بارگذاری...</p>
-      </div>
-    );
+  if (listResult.isLoading && listResult.loadingComponent) {
+    return listResult.loadingComponent;
   }
 
-  const threads = Array.isArray(listQuery.data) ? listQuery.data : [];
+  if (listResult.isEmpty && listResult.emptyComponent) {
+    return listResult.emptyComponent;
+  }
 
-  if (!threads.length) {
-    return <ImageEmptyState />;
+  if (!listResult.data) {
+    return null;
   }
 
   return (
     <>
-      {threads.map((thread) => (
+      {listResult.data.map((thread) => (
         <SidebarItem
           actions={[
             {
               type: "delete",
               onClick: () => handleDelete(thread.id),
-              title: "حذف",
+              title: fa.sidebar.actions.delete,
             },
           ]}
           date={formatDate(thread.lastImageAt ?? thread.updatedAt)}
