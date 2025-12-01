@@ -30,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AuthLayout from "@/layouts/auth";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
@@ -153,9 +154,10 @@ function RegisterPage() {
                 <Alert variant="destructive">
                   <AlertDescription>
                     {localError ||
-                      (registerMutation.error instanceof Error
-                        ? registerMutation.error.message
-                        : fa.auth.registerForm.unknownError)}
+                      getErrorMessage(
+                        registerMutation.error,
+                        fa.auth.registerForm.unknownError
+                      )}
                   </AlertDescription>
                 </Alert>
               )}

@@ -8,7 +8,13 @@ const WEB_PORT = 3001;
 const SERVER_PORT = Number(process.env.SERVER_PORT) || 3000;
 const SERVER_HOST = process.env.SERVER_HOST || "127.0.0.1";
 
-console.log(`Proxying API requests to: https://${SERVER_HOST}:${SERVER_PORT}`);
+const isDev = process.env.NODE_ENV !== "production";
+
+if (isDev) {
+  console.log(
+    `Proxying API requests to: https://${SERVER_HOST}:${SERVER_PORT}`
+  );
+}
 
 export default defineConfig({
   plugins: [tailwindcss(), tanstackRouter(), react()],
@@ -22,19 +28,25 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
-          proxy.on("error", (err, _req, _res) => {
-            console.log("proxy error", err);
-          });
-          proxy.on("proxyReq", (_proxyReq, req, _res) => {
-            console.log("Sending Request to the Target:", req.method, req.url);
-          });
-          proxy.on("proxyRes", (proxyRes, req, _res) => {
-            console.log(
-              "Received Response from the Target:",
-              proxyRes.statusCode,
-              req.url
-            );
-          });
+          if (isDev) {
+            proxy.on("error", (err, _req, _res) => {
+              console.log("proxy error", err);
+            });
+            proxy.on("proxyReq", (_proxyReq, req, _res) => {
+              console.log(
+                "Sending Request to the Target:",
+                req.method,
+                req.url
+              );
+            });
+            proxy.on("proxyRes", (proxyRes, req, _res) => {
+              console.log(
+                "Received Response from the Target:",
+                proxyRes.statusCode,
+                req.url
+              );
+            });
+          }
         },
       },
       // Proxy API endpoints to backend server

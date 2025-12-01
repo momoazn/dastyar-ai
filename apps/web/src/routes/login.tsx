@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AuthLayout from "@/layouts/auth";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 
@@ -54,8 +55,10 @@ function LoginPage() {
     loginMutation.mutate({ username, password });
   };
 
-  const localError =
-    loginMutation.error?.message ?? fa.auth.loginForm.unknownError;
+  const localError = getErrorMessage(
+    loginMutation.error,
+    fa.auth.loginForm.unknownError
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-gray-900">

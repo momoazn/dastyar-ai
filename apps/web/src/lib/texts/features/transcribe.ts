@@ -1,0 +1,20 @@
+export const transcribe = {
+  title: "تبدیل گفتار به متن",
+  description: "یک پیام کوتاه ضبط کنید تا آن را برای شما تبدیل کنیم.",
+  idle: "بیکار",
+  recordingPrefix: "در حال ضبط",
+  transcribing: "در حال تبدیل...",
+  recordStart: "شروع ضبط",
+  recordStop: "پایان ضبط",
+  copy: "کپی",
+  clear: "پاک کردن",
+  resultPlaceholder: "مثال: فایل صوتی شما اینجا تبدیل به متن خواهد شد...",
+  elapsedLabel: "زمان ضبط",
+  errors: {
+    noAudio: "هیچ صدایی ضبط نشد.",
+    processFailed: "پردازش فایل صوتی ناموفق بود.",
+    micAccess: "عدم دسترسی به میکروفون یا عدم پشتیبانی مرورگر.",
+    transcribeFailed: "تبدیل گفتار به متن با خطا مواجه شد. دوباره تلاش کنید.",
+    fileTooLarge: "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.",
+  },
+} as const;

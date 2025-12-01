@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getErrorMessage } from "@/lib/error-utils";
 import { orpc } from "@/utils/orpc";
 
 type AddModelDialogProps = {
@@ -46,11 +47,8 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
         onOpenChange(false);
       },
       onError: (error) => {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("خطا در اضافه کردن مدل");
-        }
+        const errorMessage = getErrorMessage(error, "خطا در اضافه کردن مدل");
+        toast.error(errorMessage);
       },
     })
   );

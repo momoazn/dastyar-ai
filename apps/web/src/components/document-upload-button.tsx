@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui";
+import { getErrorMessage } from "@/lib/error-utils";
 import { extractPdfPages } from "@/lib/pdf";
 import { client, queryClient } from "@/utils/orpc";
 
@@ -79,7 +80,7 @@ function showUploadSuccess(
 }
 
 function handleUploadError(err: unknown) {
-  const message = err instanceof Error ? err.message : "خطای ناشناخته";
+  const message = getErrorMessage(err, "خطای ناشناخته");
   toast.error(`خطا در آپلود فایل: ${message}`);
 }
 

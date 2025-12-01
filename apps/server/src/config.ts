@@ -183,11 +183,6 @@ export const validateProductionSecrets = (): void => {
     logger.fatal("Production security configuration issues detected:", {
       issues,
     });
-    console.error("\n❌ Production security configuration issues:");
-    for (const issue of issues) {
-      console.error(`  - ${issue}`);
-    }
-    console.error("\nCRITICAL: Fix these issues before deploying!\n");
     process.exit(1);
   }
 };

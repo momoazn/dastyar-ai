@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
@@ -125,11 +126,8 @@ export function UsersTable() {
         setDeleteUserDialogOpen(false);
       },
       onError: (deleteError) => {
-        if (deleteError instanceof Error) {
-          toast.error(deleteError.message);
-        } else {
-          toast.error("خطا در حذف کاربر");
-        }
+        const errorMessage = getErrorMessage(deleteError, "خطا در حذف کاربر");
+        toast.error(errorMessage);
       },
     })
   );

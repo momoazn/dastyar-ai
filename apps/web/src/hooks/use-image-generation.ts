@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-utils";
 import {
   DEFAULT_NEGATIVE_PROMPT,
   DEFAULT_SETTINGS,
@@ -76,10 +77,10 @@ export function useImageGeneration({
         refetchImages();
       },
       onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : fa.imageGeneration.unknownError;
+        const errorMessage = getErrorMessage(
+          error,
+          fa.imageGeneration.unknownError
+        );
         toast.error(`خطا در تولید تصویر: ${errorMessage}`);
       },
     })

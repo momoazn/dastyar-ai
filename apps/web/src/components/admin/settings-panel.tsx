@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import { orpc, queryClient } from "@/utils/orpc";
 
@@ -42,10 +43,10 @@ export function SettingsPanel() {
         setHasChanges(false);
       },
       onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : fa.admin.settings.messages.error;
+        const errorMessage = getErrorMessage(
+          error,
+          fa.admin.settings.messages.error
+        );
         toast.error(errorMessage);
       },
     })
@@ -414,7 +415,9 @@ export function SettingsPanel() {
           disabled={!hasChanges || upsertMutation.isPending}
           onClick={handleSave}
         >
-          {upsertMutation.isPending ? "در حال ذخیره..." : fa.admin.settings.actions.save}
+          {upsertMutation.isPending
+            ? "در حال ذخیره..."
+            : fa.admin.settings.actions.save}
         </Button>
       </div>
     </div>

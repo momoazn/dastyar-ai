@@ -49,15 +49,15 @@ export const link = new RPCLink({
       return {};
     }
 
-    let parsed: unknown = null;
+    let parsed: string | null = null;
     try {
-      parsed = JSON.parse(rawValue);
+      const jsonParsed = JSON.parse(rawValue);
+      parsed = typeof jsonParsed === "string" ? jsonParsed : null;
     } catch {
       parsed = rawValue;
     }
 
-    const token = typeof parsed === "string" ? parsed : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return parsed ? { Authorization: `Bearer ${parsed}` } : {};
   },
 });
 

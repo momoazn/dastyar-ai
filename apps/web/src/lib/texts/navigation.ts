@@ -1,0 +1,16 @@
+export const navigation = {
+  home: "خانه",
+  chat: "گفتگو",
+  imageGeneration: "تولید تصویر",
+  translation: "ترجمه",
+  transcribe: "تبدیل صوت به متن",
+  summarize: "خلاصه‌سازی",
+  codeAssistant: "دستیار کد",
+  appTitle: "دستیار هوشمند",
+  newChat: "گفتگوی جدید",
+  newImageChat: "گفتگوی تصویری جدید",
+  newTranslation: "ترجمه جدید",
+  new: "جدید",
+  noChatThreads: "هیچ گفتگویی وجود ندارد",
+  loadingThreads: "در حال بارگذاری گفتگوها...",
+} as const;

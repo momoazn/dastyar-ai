@@ -1,0 +1,111 @@
+export const admin = {
+  title: "پنل مدیریت",
+  subtitle: "مدیریت کاربران و مدل‌های هوش مصنوعی",
+  accessDenied: "دسترسی غیرمجاز",
+  accessDeniedMessage: "فقط مدیران می‌توانند به این بخش دسترسی داشته باشند",
+  users: {
+    title: "مدیریت کاربران",
+    table: {
+      id: "شناسه",
+      username: "نام کاربری",
+      role: "نقش",
+      createdAt: "تاریخ ایجاد",
+      actions: "عملیات",
+      admin: "مدیر",
+      user: "کاربر",
+    },
+    actions: {
+      changeRole: "تغییر نقش",
+      resetPassword: "بازنشانی رمز عبور",
+      confirmRoleChange: "تغییر نقش کاربر",
+      confirmRoleChangeMessage:
+        "آیا مطمئن هستید که می‌خواهید نقش کاربر را تغییر دهید؟",
+      confirmPasswordReset: "بازنشانی رمز عبور",
+      confirmPasswordResetMessage:
+        "آیا مطمئن هستید که می‌خواهید رمز عبور کاربر را بازنشانی کنید؟",
+      newPassword: "رمز عبور جدید",
+      newPasswordPlaceholder: "رمز عبور جدید را وارد کنید",
+      cancel: "لغو",
+      confirm: "تأیید",
+      save: "ذخیره",
+    },
+    messages: {
+      roleUpdated: "نقش کاربر با موفقیت تغییر یافت",
+      passwordUpdated: "رمز عبور کاربر با موفقیت بازنشانی شد",
+      errorUpdatingRole: "خطا در تغییر نقش کاربر",
+      errorUpdatingPassword: "خطا در بازنشانی رمز عبور",
+      userNotFound: "کاربر یافت نشد",
+    },
+  },
+  models: {
+    title: "مدیریت مدل‌ها",
+    table: {
+      id: "شناسه",
+      name: "نام",
+      provider: "ارائه‌دهنده",
+      status: "وضعیت",
+      enabled: "فعال",
+      disabled: "غیرفعال",
+      toggle: "تغییر وضعیت",
+    },
+    providers: {
+      ollama: "Ollama",
+      lmstudio: "LM Studio",
+    },
+    messages: {
+      statusUpdated: "وضعیت مدل با موفقیت تغییر یافت",
+      errorUpdatingStatus: "خطا در تغییر وضعیت مدل",
+      modelNotFound: "مدل یافت نشد",
+    },
+  },
+  settings: {
+    title: "تنظیمات سیستم",
+    subtitle: "مدیریت تنظیمات و پیکربندی برنامه",
+    general: {
+      title: "تنظیمات عمومی",
+      appName: "نام برنامه",
+      appDescription: "شرح برنامه",
+    },
+    security: {
+      title: "تنظیمات امنیتی",
+      tokenExpiration: "انقضای توکن (ساعت)",
+      sessionTimeout: "زمان انقضای جلسه (دقیقه)",
+      passwordMinLength: "حداقل طول رمز عبور",
+      requireSpecialChars: "نیاز به کاراکترهای خاص",
+      requireNumbers: "نیاز به اعداد",
+      requireUppercase: "نیاز به حروف بزرگ",
+    },
+    fileManagement: {
+      title: "مدیریت فایل",
+      maxFileSize: "حداکثر اندازه فایل (مگابایت)",
+      allowedTypes: "نوع‌های فایل مجاز",
+    },
+    aiModels: {
+      title: "تنظیمات مدل‌های هوش مصنوعی",
+      responseTimeout: "زمان انتظار پاسخ (ثانیه)",
+      enableTranscription: "فعال کردن رونویسی",
+      enableTranslation: "فعال کردن ترجمه",
+      enableCodeExecution: "فعال کردن اجرای کد",
+      enableImageGeneration: "فعال کردن تولید تصویر",
+    },
+    rateLimit: {
+      title: "محدودیت نرخ درخواست",
+      enabled: "فعال کردن محدودیت نرخ",
+      requestsPerMinute: "درخواست‌های مجاز در دقیقه",
+    },
+    messages: {
+      saved: "تنظیمات با موفقیت ذخیره شد",
+      error: "خطا در ذخیره تنظیمات",
+      loading: "در حال بارگذاری تنظیمات...",
+    },
+    actions: {
+      save: "ذخیره تغییرات",
+      cancel: "لغو",
+      reset: "بازنشانی به پیش‌فرض",
+    },
+  },
+  navigation: {
+    backToApp: "بازگشت به برنامه",
+    logout: "خروج",
+  },
+} as const;
