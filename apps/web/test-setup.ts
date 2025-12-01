@@ -3,12 +3,24 @@ import { Window } from "happy-dom";
 
 // Create a happy-dom window instance and assign it to global
 const window = new Window();
-// biome-ignore lint/suspicious/noExplicitAny: Test setup requires type casting for happy-dom compatibility
-global.window = window as any;
-global.document = window.document as unknown as Document;
-global.navigator = window.navigator as unknown as Navigator;
-global.HTMLElement = window.HTMLElement as unknown as typeof HTMLElement;
-global.Element = window.Element as unknown as typeof Element;
-global.Node = window.Node as unknown as typeof Node;
-global.DocumentFragment =
-  window.DocumentFragment as unknown as typeof DocumentFragment;
+
+// Type-safe assignments for happy-dom test environment
+// These are necessary because happy-dom types don't perfectly match DOM types
+type HappyDOMWindow = typeof window & {
+  document: Document;
+  HTMLElement: typeof HTMLElement;
+  Element: typeof Element;
+  Node: typeof Node;
+  DocumentFragment: typeof DocumentFragment;
+  navigator: Navigator;
+};
+
+const happyWindow = window as unknown as HappyDOMWindow;
+
+global.window = happyWindow as unknown as typeof globalThis.window;
+global.document = happyWindow.document;
+global.navigator = happyWindow.navigator as unknown as Navigator;
+global.HTMLElement = happyWindow.HTMLElement;
+global.Element = happyWindow.Element;
+global.Node = happyWindow.Node;
+global.DocumentFragment = happyWindow.DocumentFragment;

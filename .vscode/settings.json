@@ -6,8 +6,7 @@
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.fixAll.biome": "explicit"
   },
 
   // TypeScript Settings
@@ -66,5 +65,25 @@
   },
 
   // Git
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#ceace7",
+    "activityBar.background": "#ceace7",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#94682b",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#15202b99",
+    "sash.hoverBorder": "#ceace7",
+    "statusBar.background": "#b684dc",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#9e5cd1",
+    "statusBarItem.remoteBackground": "#b684dc",
+    "statusBarItem.remoteForeground": "#15202b",
+    "titleBar.activeBackground": "#b684dc",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#b684dc99",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#b684dc"
 }
