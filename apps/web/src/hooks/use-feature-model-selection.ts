@@ -144,6 +144,7 @@ export function useChatModelSelection({
     setModelId,
     models: modelsQuery.data || [],
     isLoading: modelsQuery.isLoading,
+    isFetching: modelsQuery.isFetching,
     error: modelsQuery.error,
     refetch: modelsQuery.refetch,
   };

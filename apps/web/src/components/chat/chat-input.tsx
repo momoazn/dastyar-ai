@@ -40,7 +40,14 @@ export const ChatInput = ({
     null
   );
 
-  const { modelId, setModelId, models, refetch } = useChatModelSelection({
+  const {
+    modelId,
+    setModelId,
+    models,
+    refetch,
+    isLoading: isModelsLoading,
+    isFetching: isModelsFetching,
+  } = useChatModelSelection({
     threadId,
   });
 
@@ -128,6 +135,8 @@ export const ChatInput = ({
     [prompt]
   );
 
+  const isRefreshingModels = isModelsLoading || isModelsFetching;
+
   return (
     <div
       className="mx-auto flex max-w-4xl flex-col gap-3 px-4 pt-3 pb-6"
@@ -166,8 +175,15 @@ export const ChatInput = ({
                   ))}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
-              <PromptInputButton onClick={() => refetch()} variant="outline">
-                <RefreshCcw className="size-4" />
+              <PromptInputButton
+                onClick={() => refetch()}
+                variant="outline"
+              >
+                <RefreshCcw
+                  className={
+                    isRefreshingModels ? "size-4 animate-spin" : "size-4"
+                  }
+                />
               </PromptInputButton>
             </>
           }

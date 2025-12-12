@@ -49,6 +49,9 @@ const MessagePartSchema = z.union([
     mimeType: z.string().optional(),
   }),
   z.object({ type: z.literal("reasoning"), text: z.string() }),
+  // AI SDK emits step markers for multi-stage responses (e.g., reasoning/tool calls)
+  // Allow them through validation so subsequent messages aren't rejected
+  z.object({ type: z.literal("step-start") }),
   z.object({
     type: z.literal("tool-call"),
     toolCallId: z.string(),
