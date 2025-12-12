@@ -43,7 +43,6 @@
     "clean:build": "rm -rf apps/*/dist apps/*/build apps/*/.vite apps/*/.turbo whisper/dist"
   },
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ]
 }
