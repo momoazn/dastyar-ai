@@ -135,10 +135,24 @@ function applyBundledMigrations(migrationData: MigrationData): void {
     logger.info(`[migrate] Applying migration: ${migrationTag}...`);
 
     const statements = parseSqlStatements(sqlContent);
-    executeMigrationStatements(statements, migrationTag);
-    recordMigration(migrationTag);
 
-    logger.info(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
+    try {
+      executeMigrationStatements(statements, migrationTag);
+      recordMigration(migrationTag);
+      logger.info(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("already exists")) {
+        logger.warn(
+          `[migrate] Skipping migration ${migrationTag} because objects already exist`,
+          { migrationTag, error: message }
+        );
+        recordMigration(migrationTag);
+        continue;
+      }
+
+      throw error;
+    }
   }
 }
 
