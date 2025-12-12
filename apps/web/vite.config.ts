@@ -7,6 +7,7 @@ import { defineConfig } from "vite";
 const WEB_PORT = 3001;
 const SERVER_PORT = Number(process.env.SERVER_PORT) || 3000;
 const SERVER_HOST = process.env.SERVER_HOST || "127.0.0.1";
+const SERVER_PROTOCOL = process.env.SERVER_PROTOCOL || "http";
 
 export default defineConfig({
   plugins: [tailwindcss(), tanstackRouter(), react()],
@@ -16,7 +17,7 @@ export default defineConfig({
     proxy: {
       // Proxy RPC endpoints to backend server
       "/rpc": {
-        target: `https://${SERVER_HOST}:${SERVER_PORT}`,
+        target: `${SERVER_PROTOCOL}://${SERVER_HOST}:${SERVER_PORT}`,
         changeOrigin: true,
         secure: false,
         configure: (_proxy, _options) => {
@@ -26,7 +27,7 @@ export default defineConfig({
       },
       // Proxy API endpoints to backend server
       "/api": {
-        target: `https://${SERVER_HOST}:${SERVER_PORT}`,
+        target: `${SERVER_PROTOCOL}://${SERVER_HOST}:${SERVER_PORT}`,
         changeOrigin: true,
         secure: false,
       },
