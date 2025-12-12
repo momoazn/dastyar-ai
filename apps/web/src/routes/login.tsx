@@ -6,7 +6,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -36,6 +36,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/login" }) as { redirect?: string };
@@ -83,9 +84,11 @@ function LoginPage() {
                 </Label>
                 <Input
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  dir="ltr"
                   disabled={loginMutation.isPending}
                   id="username"
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder={fa.auth.loginForm.usernamePlaceholder}
                   required
                   type="text"
                   value={username}
@@ -98,15 +101,43 @@ function LoginPage() {
                 >
                   {fa.auth.loginForm.passwordLabel}
                 </Label>
-                <Input
-                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
-                  disabled={loginMutation.isPending}
-                  id="password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  type="password"
-                  value={password}
-                />
+                <div className="relative">
+                  <Input
+                    className="border-gray-300 bg-white pr-12 text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                    dir="ltr"
+                    disabled={loginMutation.isPending}
+                    id="password"
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={fa.auth.loginForm.passwordPlaceholder}
+                    required
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                  />
+                  <Button
+                    aria-label={
+                      showPassword
+                        ? fa.auth.loginForm.hidePassword
+                        : fa.auth.loginForm.showPassword
+                    }
+                    className="-translate-y-1/2 absolute top-1/2 right-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                    disabled={loginMutation.isPending}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword
+                        ? fa.auth.loginForm.hidePassword
+                        : fa.auth.loginForm.showPassword}
+                    </span>
+                  </Button>
+                </div>
               </div>
               {loginMutation.error && (
                 <Alert variant="destructive">
@@ -114,7 +145,7 @@ function LoginPage() {
                 </Alert>
               )}
               <Button
-                className="w-full bg-blue-600 font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                className="w-full bg-blue-600 font-medium text-white hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
                 disabled={loginMutation.isPending}
                 type="submit"
               >
