@@ -9,6 +9,20 @@ import {
 import { listAllModels } from "@/services/ai-providers";
 import { publicProcedure } from "./base";
 
+const dedupeModels = <T extends { identifier: string; provider: string }>(
+  models: T[]
+): T[] => {
+  const seen = new Set<string>();
+  return models.filter((model) => {
+    const key = `${model.identifier}::${model.provider}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+};
+
 export const llmModelProcedures = {
   list: publicProcedure
     .input(
@@ -29,14 +43,18 @@ export const llmModelProcedures = {
         if (sync) {
           const availableModels = await listAllModels();
           const allModels = await syncModels(availableModels, { isEnabled });
-          return allModels.filter(
+          const nonEmbeds = allModels.filter(
             (model) => !model.identifier.includes("embed")
           );
+          return dedupeModels(nonEmbeds);
         }
 
         // Return models without syncing
         const models = await getModels({ isEnabled });
-        return models.filter((model) => !model.identifier.includes("embed"));
+        const nonEmbeds = models.filter(
+          (model) => !model.identifier.includes("embed")
+        );
+        return dedupeModels(nonEmbeds);
       } catch (error) {
         logger.error("Error listing models", error);
         throw error;

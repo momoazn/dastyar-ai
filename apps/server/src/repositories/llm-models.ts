@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/client";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   db,
   type LLMModel,
@@ -134,8 +134,13 @@ export async function syncModels(
   modelsList: { name: string; provider: LLMModelProvider }[],
   where: ModelFilter = {}
 ): Promise<LLMModel[]> {
+  await pruneDuplicateModels();
+  const dedupedIncoming = dedupeByKey(
+    modelsList,
+    (model) => `${model.provider}::${model.name}`
+  );
   const existingModels = await getModels();
-  const modelsWithInfo = modelsList.map((model) => {
+  const modelsWithInfo = dedupedIncoming.map((model) => {
     const parsedInfo = parseModelName(model.name);
     return {
       identifier: model.name,
@@ -173,12 +178,37 @@ export async function syncModels(
   return await getModels(where);
 }
 
+async function pruneDuplicateModels(): Promise<void> {
+  await db.run(sql`
+    DELETE FROM ${llmModels}
+    WHERE id NOT IN (
+      SELECT MIN(id)
+      FROM ${llmModels}
+      GROUP BY ${llmModels.provider}, ${llmModels.identifier}
+    )
+  `);
+}
+
 type ModelInfo = {
   creator?: string;
   size?: string;
   familyName: string;
   rawName: string;
 };
+
+function dedupeByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const item of items) {
+    const key = keyFn(item);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(item);
+  }
+  return result;
+}
 
 function parseModelName(rawName: string): ModelInfo {
   // Split by '/' to check for creator
