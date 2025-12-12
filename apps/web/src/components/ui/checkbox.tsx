@@ -4,10 +4,7 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
 
-function Checkbox({
-  className,
-  ...props
-}: ComponentProps<typeof Root>) {
+function Checkbox({ className, ...props }: ComponentProps<typeof Root>) {
   return (
     <Root
       className={cn(

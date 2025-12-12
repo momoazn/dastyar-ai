@@ -4,6 +4,11 @@ import { Copy, Loader2, SendIcon } from "lucide-react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { PdfResultDisplay } from "@/components/translation/pdf-result-display";
+import { PdfUploadArea } from "@/components/translation/pdf-upload-area";
+import { TranslationResult } from "@/components/translation/translation-result";
+import { TranslationSettings } from "@/components/translation/translation-settings";
+import { TranslationTextInput } from "@/components/translation/translation-text-input";
 import { Alert, Button, Card } from "@/components/ui";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
@@ -16,11 +21,6 @@ import type {
   TranslationPayload,
 } from "@/server/database/schema";
 import { orpc, queryClient } from "@/utils/orpc";
-import { PdfResultDisplay } from "./components/pdf-result-display";
-import { PdfUploadArea } from "./components/pdf-upload-area";
-import { TranslationResult } from "./components/translation-result";
-import { TranslationSettings } from "./components/translation-settings";
-import { TranslationTextInput } from "./components/translation-text-input";
 
 // Search params shape for this route
 type TranslationSearch = { fromId?: number | string };
@@ -53,7 +53,6 @@ export const Route = createFileRoute("/translation/")({
   ),
 });
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI composition with conditional rendering and state management
 function RouteComponent() {
   const search = useSearch({ from: "/translation/" }) as TranslationSearch;
   const [sourceText, setSourceText] = useState("");
