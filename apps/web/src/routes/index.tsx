@@ -61,14 +61,14 @@ const features = [
 
 function HomeComponent() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       <div className="flex flex-col items-center justify-center p-4 pt-16 md:p-8 md:pt-24">
         <section className="w-full max-w-6xl space-y-12">
           {/* Hero Section */}
           <header className="space-y-8 text-center">
             <div className="space-y-6">
               <div className="relative">
-                <h1 className="fade-in slide-in-from-top-4 animate-in bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text font-bold text-5xl text-transparent duration-1000 md:text-6xl lg:text-7xl">
+                <h1 className="fade-in slide-in-from-top-4 animate-in bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text font-bold text-5xl text-transparent duration-1000 md:text-6xl lg:text-7xl">
                   {fa.index.appTitle}
                 </h1>
                 {/* Decorative elements */}
@@ -101,7 +101,7 @@ function HomeComponent() {
                   }}
                 >
                   {/* Animated gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100" />
 
                   {/* Floating particles effect */}
                   <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
@@ -136,9 +136,9 @@ function HomeComponent() {
           </main>
 
           {/* Call to Action */}
-          <div className="fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 text-center delay-700 duration-1000">
+          <div className="fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden rounded-md border border-primary/20 bg-linear-to-r from-primary/10 via-primary/5 to-primary/10 p-8 text-center delay-700 duration-1000">
             {/* Background decoration */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-50" />
+            <div className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-50" />
             <div className="absolute top-0 left-0 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
             <div className="absolute right-0 bottom-0 h-24 w-24 rounded-full bg-primary/5 blur-2xl" />
 
