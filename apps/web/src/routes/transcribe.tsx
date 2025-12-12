@@ -146,13 +146,16 @@ function RouteComponent() {
       case "concise":
         title = fa.transcribe.smartActions.summarize;
         break;
+      default:
+        title = fa.transcribe.smartActions.summarize;
+        break;
     }
     setSmartActionTitle(title);
     setSmartResult(null);
 
     summarize({
       text: result,
-      mode: mode,
+      mode,
       tone: "professional",
       modelId: selectedModelId,
     });
@@ -361,16 +364,16 @@ function RouteComponent() {
 
                   {/* Smart Actions Toolbar */}
                   {result && !isRecording && !isTranscribing && (
-                    <div className="animate-in fade-in slide-in-from-top-2 pt-4">
+                    <div className="fade-in slide-in-from-top-2 animate-in pt-4">
                       <Label className="mb-3 block font-medium text-muted-foreground text-sm">
                         {fa.transcribe.smartActions.title}
                       </Label>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <Button
-                          variant="outline"
                           className="h-auto flex-col gap-2 py-3"
-                          onClick={() => handleSmartAction("concise")}
                           disabled={isSummarizing}
+                          onClick={() => handleSmartAction("concise")}
+                          variant="outline"
                         >
                           <Sparkles className="size-4 text-amber-500" />
                           <span className="text-xs">
@@ -378,10 +381,10 @@ function RouteComponent() {
                           </span>
                         </Button>
                         <Button
-                          variant="outline"
                           className="h-auto flex-col gap-2 py-3"
-                          onClick={() => handleSmartAction("action-items")}
                           disabled={isSummarizing}
+                          onClick={() => handleSmartAction("action-items")}
+                          variant="outline"
                         >
                           <ListChecks className="size-4 text-blue-500" />
                           <span className="text-xs">
@@ -389,10 +392,10 @@ function RouteComponent() {
                           </span>
                         </Button>
                         <Button
-                          variant="outline"
                           className="h-auto flex-col gap-2 py-3"
-                          onClick={() => handleSmartAction("meeting-notes")}
                           disabled={isSummarizing}
+                          onClick={() => handleSmartAction("meeting-notes")}
+                          variant="outline"
                         >
                           <FileText className="size-4 text-green-500" />
                           <span className="text-xs">
@@ -465,7 +468,7 @@ function RouteComponent() {
 
           {/* Smart Action Result Card */}
           {(smartResult || isSummarizing) && (
-            <Card className="w-full animate-in fade-in slide-in-from-bottom-4">
+            <Card className="fade-in slide-in-from-bottom-4 w-full animate-in">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -474,9 +477,9 @@ function RouteComponent() {
                   </div>
                   {smartResult && (
                     <Button
+                      onClick={() => handleCopy(smartResult)}
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleCopy(smartResult)}
                     >
                       <CopyIcon className="mr-2 size-4" />
                       {fa.transcribe.copy}

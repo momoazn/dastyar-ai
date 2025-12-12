@@ -65,7 +65,7 @@ const preferencesSchema = z.object({
     .optional(),
   summarizeModelId: z.number().nullable().optional(),
   summarizeMode: z
-    .enum(["concise", "standard", "detailed"])
+    .enum(["concise", "standard", "detailed", "action-items", "meeting-notes"])
     .nullable()
     .optional(),
   summarizeTone: z

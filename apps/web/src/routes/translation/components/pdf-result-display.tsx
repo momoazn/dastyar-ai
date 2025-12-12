@@ -16,8 +16,8 @@ export function PdfResultDisplay({
   translatedText,
   pdfResult,
   isTranslating,
-  isCopied,
-  onCopy,
+  isCopied: _isCopied,
+  onCopy: _onCopy,
 }: PdfResultDisplayProps) {
   if (isTranslating) {
     return (

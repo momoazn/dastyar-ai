@@ -39,6 +39,8 @@ export const summaryModeToLabel: Record<SummaryMode, string> = {
   concise: fa.summarize.modes.concise,
   standard: fa.summarize.modes.standard,
   detailed: fa.summarize.modes.detailed,
+  "action-items": fa.transcribe.smartActions.actionItems,
+  "meeting-notes": fa.transcribe.smartActions.meetingNotes,
 } as const;
 
 // Code mode to label mappings
