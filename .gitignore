@@ -179,3 +179,10 @@ apps/whisper/internal/ffmpeg/bin/ffmpeg-*
 
 
 *.pem
+
+# Configuration files with secrets
+/config.json
+/server.log
+
+# Turbo logs (override wildcard)
+.turbo/**/*.log
