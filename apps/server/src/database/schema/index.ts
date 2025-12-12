@@ -44,7 +44,6 @@ export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  salt: text("salt").notNull(),
   role: text("role", { enum: userRoles })
     .$type<UserRole>()
     .notNull()

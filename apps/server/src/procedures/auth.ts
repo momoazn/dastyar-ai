@@ -86,7 +86,6 @@ export const authProcedures = {
       user = await createUser({
         username,
         password: hashedPassword,
-        salt: "", // bcrypt handles salt internally
         role,
       });
       logEvent("auth.register.user.created", {

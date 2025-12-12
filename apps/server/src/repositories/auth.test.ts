@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it } from "bun:test";
-import { db, users } from "@/database";
+import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { db, initializeDatabase, users } from "@/database";
 import {
+  countUsers,
   createUser,
+  ensureDefaultAdminUser,
   findUserById,
   findUserByUsername,
   hashPassword,
@@ -21,6 +23,10 @@ async function cleanupTestUsers() {
 }
 
 describe("Auth Repository", () => {
+  beforeAll(async () => {
+    await initializeDatabase();
+  });
+
   beforeEach(async () => {
     // Clean up before each test
     await cleanupTestUsers();
@@ -58,7 +64,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "newuser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -76,7 +81,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "adminuser",
         password: hashedPassword,
-        salt: "",
         role: "admin",
       });
 
@@ -88,7 +92,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "duplicate",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -97,7 +100,6 @@ describe("Auth Repository", () => {
         createUser({
           username: "duplicate",
           password: hashedPassword,
-          salt: "",
           role: "user",
         })
       ).rejects.toThrow();
@@ -110,7 +112,6 @@ describe("Auth Repository", () => {
       const created = await createUser({
         username: "findme",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -130,7 +131,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "CaseSensitive",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -145,7 +145,6 @@ describe("Auth Repository", () => {
       const created = await createUser({
         username: "findbyid",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -167,7 +166,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "existinguser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -185,12 +183,43 @@ describe("Auth Repository", () => {
       await createUser({
         username: "TestUser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
       const exists = await usernameExists("testuser");
       expect(exists).toBe(false);
+    });
+  });
+
+  describe("ensureDefaultAdminUser", () => {
+    it("should create default admin when no users exist", async () => {
+      await ensureDefaultAdminUser();
+
+      const adminUser = await findUserByUsername("admin");
+      expect(adminUser?.username).toBe("admin");
+      expect(adminUser?.role).toBe("admin");
+
+      const verified = await verifyUserCredentials({
+        username: "admin",
+        password: "admin12345",
+      });
+      expect(verified?.username).toBe("admin");
+    });
+
+    it("should not create admin when users already exist", async () => {
+      const hashedPassword = await hashPassword("existinguser");
+      await createUser({
+        username: "existing",
+        password: hashedPassword,
+        role: "user",
+      });
+
+      await ensureDefaultAdminUser();
+
+      const totalUsers = await countUsers();
+      expect(totalUsers).toBe(1);
+      const adminUser = await findUserByUsername("admin");
+      expect(adminUser).toBeNull();
     });
   });
 
@@ -201,7 +230,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "verifyuser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -219,7 +247,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "verifyuser2",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -245,7 +272,6 @@ describe("Auth Repository", () => {
       await createUser({
         username: "verifyuser3",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -264,7 +290,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "oldusername",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -281,14 +306,12 @@ describe("Auth Repository", () => {
       await createUser({
         username: "existing",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
       const user2 = await createUser({
         username: "user2",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -302,7 +325,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "sameuser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -327,7 +349,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "passworduser",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -356,7 +377,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "passworduser2",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 
@@ -378,7 +398,6 @@ describe("Auth Repository", () => {
       const user = await createUser({
         username: "passworduser3",
         password: hashedPassword,
-        salt: "",
         role: "user",
       });
 

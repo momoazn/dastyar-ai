@@ -20,14 +20,13 @@ export async function findUserById(id: number): Promise<SelectUser | null> {
 }
 
 export async function createUser(
-  userData: Pick<SelectUser, "username" | "password" | "salt" | "role">
+  userData: Pick<SelectUser, "username" | "password" | "role">
 ): Promise<SelectUser> {
   const result = await db
     .insert(users)
     .values({
       username: userData.username,
       password: userData.password,
-      salt: userData.salt,
       role: (userData.role as UserRole) ?? ("user" as UserRole),
     })
     .returning();
@@ -51,6 +50,32 @@ export async function usernameExists(username: string): Promise<boolean> {
 export async function countUsers(): Promise<number> {
   const result = await db.select({ count: sql<number>`count(*)` }).from(users);
   return result[0]?.count ?? 0;
+}
+
+export async function ensureDefaultAdminUser(): Promise<void> {
+  const totalUsers = await countUsers();
+
+  if (totalUsers > 0) {
+    logger.debug("Skipping default admin creation because users exist", {
+      totalUsers,
+    });
+    return;
+  }
+
+  try {
+    const hashedPassword = await hashPassword("admin12345");
+
+    await createUser({
+      username: "admin",
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    logger.info("Default admin user created", { username: "admin" });
+  } catch (error) {
+    logger.error("Failed to create default admin user", error);
+    throw error;
+  }
 }
 
 export async function verifyUserCredentials({

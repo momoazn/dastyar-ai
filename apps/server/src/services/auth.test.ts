@@ -17,7 +17,6 @@ const mockUser: User = {
   id: 1,
   username: "testuser",
   password: "hashedpassword",
-  salt: "",
   role: "user",
   createdAt: new Date(),
   updatedAt: new Date(),

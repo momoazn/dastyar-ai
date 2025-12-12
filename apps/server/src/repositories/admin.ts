@@ -14,7 +14,7 @@ import {
   users,
 } from "@/database";
 
-export type UserWithoutSensitiveData = Omit<User, "password" | "salt">;
+export type UserWithoutSensitiveData = Omit<User, "password">;
 
 export interface UserWithStats extends UserWithoutSensitiveData {
   messageCount: number;

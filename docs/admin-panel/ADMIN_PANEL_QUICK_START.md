@@ -3,15 +3,18 @@
 ## What's Been Implemented
 
 ### Phase 1 ✅ Core User Management
+
 Complete user management system with advanced features:
 
 **Backend Features:**
+
 - Paginated user listing with search and filtering
 - User statistics collection (messages, documents, images, etc.)
 - Safe user deletion with admin count validation
 - Type-safe API endpoints with Zod validation
 
 **Frontend Features:**
+
 - Advanced users table with:
   - Pagination (10, 25, 50 items per page)
   - Search by username
@@ -26,14 +29,17 @@ Complete user management system with advanced features:
 - Reset password dialog
 
 ### Phase 2 🆕 Model Management Enhancement
+
 Enhanced model management system:
 
 **Backend Features:**
+
 - Add new models with metadata (creator, family, size)
 - Duplicate model detection
 - Type-safe model creation
 
 **Frontend Features:**
+
 - Add Model dialog with form validation
 - Enhanced models table with:
   - Provider filter (Ollama, LM Studio, Stable Diffusion, Whisper)
@@ -47,35 +53,41 @@ Enhanced model management system:
 ## How to Use the Admin Panel
 
 ### Accessing the Admin Panel
+
 1. Navigate to `/admin` route (requires admin role)
 2. Two main tabs: Users and Models
 
 ### Managing Users
 
 #### View User List
+
 - See all users in paginated table
 - Search by username using search box
 - Filter by role
 - Change pagination size
 
 #### View User Details
+
 1. Click the three-dot menu on any user
 2. Select "مشاهده جزئیات" (View Details)
 3. See user profile and activity metrics
 
 #### Change User Role
+
 1. Click the three-dot menu on any user
 2. Select "تغییر نقش" (Change Role)
 3. Choose new role (admin/user)
 4. Confirm
 
 #### Reset User Password
+
 1. Click the three-dot menu on any user
 2. Select "تنظیم مجدد رمز عبور" (Reset Password)
 3. Enter new password
 4. Confirm
 
 #### Delete User
+
 1. Click the three-dot menu on any user
 2. Select "حذف کاربر" (Delete User)
 3. Type "DELETE" or "حذف" to confirm
@@ -87,15 +99,18 @@ Enhanced model management system:
 ### Managing Models
 
 #### View All Models
+
 - See all available LLM models
 - Check enabled/disabled status
 - View provider information
 
 #### Filter Models
+
 - **By Provider:** Ollama, LM Studio, Stable Diffusion, Whisper
 - **By Status:** Enabled or Disabled
 
 #### Add New Model
+
 1. Click "+ افزودن مدل" (Add Model) button
 2. Fill in model details:
    - **نام مدل** (Model Name) - Required
@@ -106,11 +121,13 @@ Enhanced model management system:
 3. Click "اضافه کردن مدل" button
 
 **Validation:**
+
 - Model names must be unique per provider
 - Cannot add duplicate models
 - Error message if model already exists
 
 #### Enable/Disable Model
+
 1. Toggle the switch next to any model
 2. Status updates immediately
 3. Disabled models won't be available to users
@@ -120,6 +137,7 @@ Enhanced model management system:
 ## API Endpoints Reference
 
 ### User Management
+
 ```
 POST /admin/listUsersWithPagination
 Input: { page: number, pageSize: number, search?: string, role?: "admin"|"user" }
@@ -143,6 +161,7 @@ Returns: { success: boolean }
 ```
 
 ### Model Management
+
 ```
 POST /admin/listAllModels
 Returns: Array of all LLM models
@@ -161,6 +180,7 @@ Returns: Updated model object
 ## File Structure
 
 ### New Components
+
 ```
 apps/web/src/components/admin/
 ├── users-table.tsx                 (Enhanced)
@@ -176,6 +196,7 @@ apps/web/src/components/admin/
 ```
 
 ### Backend Files
+
 ```
 apps/server/src/
 ├── repositories/
@@ -207,16 +228,19 @@ apps/server/src/
 ## Security Features
 
 1. **Admin-Only Access**
+
    - All endpoints require `adminProcedure` middleware
    - Backend verification on every request
    - No client-side role checking only
 
 2. **Data Protection**
+
    - Passwords never exposed in responses
    - User deletion cascades to all related data
    - Sensitive data redacted from logs
 
 3. **Validation**
+
    - All inputs validated with Zod schemas
    - Duplicate model detection
    - Cannot delete only admin user
@@ -231,16 +255,19 @@ apps/server/src/
 ## Troubleshooting
 
 ### Models Not Loading
+
 - Check database connection
 - Verify models exist in database
 - Check browser console for errors
 
 ### User Deletion Fails
+
 - Verify user is not the only admin
 - Check database permissions
 - Review server logs
 
 ### Add Model Dialog Issues
+
 - Check model identifier is unique per provider
 - Verify all required fields filled
 - Check error message in toast notification
@@ -261,21 +288,24 @@ apps/server/src/
 ## Accessing the Admin Panel
 
 ### Prerequisites
+
 - Admin role assigned to user account
 - Database with users table
 
 ### URL
+
 ```
 http://localhost:5173/admin
 ```
 
 ### First Admin Setup
+
 If no admin exists, you need to manually create one:
 
 ```sql
 -- Insert admin user directly (replace with actual values)
-INSERT INTO users (username, password, salt, role, created_at, updated_at)
-VALUES ('admin', '[hashed_password]', '[salt]', 'admin', datetime('now'), datetime('now'));
+INSERT INTO users (username, password, role, created_at, updated_at)
+VALUES ('admin', '[hashed_password]', 'admin', datetime('now'), datetime('now'));
 ```
 
 ---
@@ -283,6 +313,7 @@ VALUES ('admin', '[hashed_password]', '[salt]', 'admin', datetime('now'), dateti
 ## Support & Issues
 
 For issues or questions:
+
 1. Check server logs: `server.log`
 2. Check browser console (F12)
 3. Review this guide again

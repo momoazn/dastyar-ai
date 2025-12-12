@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "054c7133-1b62-4494-9808-1bcd22d0c82a",
+  "id": "62569164-0763-48d3-9970-aefec0b5203d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "chat_threads": {
@@ -1286,13 +1286,6 @@
         },
         "password": {
           "name": "password",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "salt": {
-          "name": "salt",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
