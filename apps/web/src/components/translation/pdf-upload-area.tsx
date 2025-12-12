@@ -79,7 +79,7 @@ export function PdfUploadArea({
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag handlers require div for drag-and-drop functionality
     <div
       className={cn(
-        "flex h-full max-h-[400px] min-h-[300px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+        "flex h-full max-h-[360px] min-h-[240px] flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors md:min-h-[280px]",
         isDragging
           ? "border-primary bg-primary/5"
           : "border-muted-foreground/25 bg-muted/30"
@@ -100,7 +100,7 @@ export function PdfUploadArea({
         type="file"
       />
       <label
-        className="flex cursor-pointer flex-col items-center gap-4 p-6 text-center"
+        className="flex cursor-pointer flex-col items-center gap-3 p-6 text-center"
         htmlFor="pdf-upload"
       >
         <div

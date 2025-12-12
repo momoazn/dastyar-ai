@@ -85,7 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {activeItem.title}
                 </h3>
                 <Button
-                  className="h-6 w-6 rounded-md bg-primary/10 transition-all duration-200 hover:scale-105 hover:bg-primary hover:text-primary-foreground"
+                  className="h-6 w-6 rounded-md bg-primary/10 transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={handleNew}
                   size="icon"
                   variant="ghost"

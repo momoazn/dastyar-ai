@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Button, Form } from "@/components/ui";
+import { Button, Form, SurfaceStatus } from "@/components/ui";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 import { CodePreferences } from "./preferences-sections/code-preferences";
@@ -196,26 +196,24 @@ export function PreferencesSettings() {
           <TranscribePreferences />
 
           {/* Sticky Action Bar */}
-          <div className="-mx-6 -mb-6 sticky bottom-0 z-10 border-t bg-background/80 px-6 py-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-            <div className="flex items-center justify-between gap-2">
-              <Button
-                disabled={updatePreferencesMutation.isPending}
-                onClick={resetToServer}
-                type="button"
-                variant="ghost"
-              >
-                {fa.settings.preferences.reset}
-              </Button>
-              <Button
-                disabled={updatePreferencesMutation.isPending}
-                type="submit"
-              >
-                {updatePreferencesMutation.isPending
-                  ? fa.general.loading
-                  : fa.settings.preferences.save}
-              </Button>
-            </div>
-          </div>
+          <SurfaceStatus className="sticky bottom-0 z-10 justify-between bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
+            <Button
+              disabled={updatePreferencesMutation.isPending}
+              onClick={resetToServer}
+              type="button"
+              variant="ghost"
+            >
+              {fa.settings.preferences.reset}
+            </Button>
+            <Button
+              disabled={updatePreferencesMutation.isPending}
+              type="submit"
+            >
+              {updatePreferencesMutation.isPending
+                ? fa.general.loading
+                : fa.settings.preferences.save}
+            </Button>
+          </SurfaceStatus>
         </form>
       </Form>
     </div>

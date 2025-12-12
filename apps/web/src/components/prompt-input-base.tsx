@@ -47,12 +47,13 @@ export function PromptInputBase({
   );
 
   const disabledDefault = isGenerating || !value.trim();
-  const submit = () => {
+  const handleSubmit = () => {
     if (isGenerating) {
       onStop?.();
       return;
     }
-    if (!value.trim()) {
+    const trimmed = value.trim();
+    if (!trimmed) {
       return;
     }
     onSubmit();
@@ -62,18 +63,12 @@ export function PromptInputBase({
     <PromptInput
       onSubmit={(e) => {
         e.preventDefault();
-        submit();
+        handleSubmit();
       }}
     >
       <PromptInputTextarea
         dir={textDirection}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submit();
-          }
-        }}
         placeholder={placeholder}
         value={value}
       />

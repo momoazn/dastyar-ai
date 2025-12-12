@@ -251,14 +251,14 @@ function RouteComponent() {
                     isTranscribing={isTranscribing}
                     onStart={handleStartRecording}
                     onStop={stopRecording}
-                  />
-
-                  {result && !isRecording && !isTranscribing && (
-                    <SmartActionsToolbar
-                      disabled={isSummarizing}
-                      onAction={handleSmartAction}
-                    />
-                  )}
+                  >
+                    {result && !isRecording && !isTranscribing ? (
+                      <SmartActionsToolbar
+                        disabled={isSummarizing}
+                        onAction={handleSmartAction}
+                      />
+                    ) : null}
+                  </RecordingControls>
                 </div>
 
                 <div className="flex flex-col space-y-3">

@@ -12,7 +12,7 @@ import {
 import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 
-type UserType = Omit<User, "password" | "salt">;
+type UserType = Omit<User, "password">;
 
 type DeleteUserDialogProps = {
   open: boolean;

@@ -1,3 +1,4 @@
+export * from "./classes";
 export * from "./sidebar-item";
 export * from "./sidebar-loading-state";
 export * from "./use-editing-state";

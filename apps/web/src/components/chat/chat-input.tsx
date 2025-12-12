@@ -129,7 +129,10 @@ export const ChatInput = ({
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-4" dir="rtl">
+    <div
+      className="mx-auto flex max-w-4xl flex-col gap-3 px-4 pt-3 pb-6"
+      dir="rtl"
+    >
       {typeof threadId === "number" && (
         <ChatAttachments
           className="px-1"
@@ -147,7 +150,7 @@ export const ChatInput = ({
                 onValueChange={(value) => setModelId(Number(value))}
                 value={modelId?.toString()}
               >
-                <PromptInputModelSelectTrigger className="h-9 w-80 cursor-pointer gap-2">
+                <PromptInputModelSelectTrigger className="h-9 w-64 cursor-pointer gap-2 md:w-80">
                   <PromptInputModelSelectValue
                     placeholder={fa.modelSelection.selectChatModel}
                   />
@@ -195,7 +198,7 @@ export const ChatInput = ({
             </>
           }
           submitProps={{
-            disabled: !(isGenerating || (prompt.trim() && modelId)),
+            disabled: isGenerating ? false : !(prompt.trim() && modelId),
             status: isGenerating ? "streaming" : undefined,
             variant: isGenerating ? "destructive" : "default",
           }}

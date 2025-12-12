@@ -84,7 +84,11 @@ export function ImageGenerationInput({
             onValueChange={handleSizeChange}
             value={getSizeValue()}
           />
-          <PromptInputButton onClick={onResetSettings} variant="outline">
+          <PromptInputButton
+            onClick={onResetSettings}
+            size="sm"
+            variant="outline"
+          >
             <RotateCcw className="size-4" />
             {fa.imageGeneration.resetButton}
           </PromptInputButton>
@@ -97,6 +101,7 @@ export function ImageGenerationInput({
         <>
           <PromptInputButton
             onClick={() => setAdvancedSettingsOpen(!advancedSettingsOpen)}
+            size="sm"
             variant="outline"
           >
             <Settings2 className="size-4" />

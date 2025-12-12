@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 
-type UserType = Omit<User, "password" | "salt">;
+type UserType = Omit<User, "password">;
 
 type ResetPasswordDialogProps = {
   open: boolean;

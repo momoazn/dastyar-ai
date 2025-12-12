@@ -36,10 +36,12 @@ export type PromptInputTextareaProps = ComponentProps<typeof Textarea> & {
 
 export const PromptInputTextarea = ({
   onChange,
+  onKeyDown,
   className,
   placeholder = "What would you like to know?",
   minHeight = 48,
   maxHeight = 164,
+  style,
   ...props
 }: PromptInputTextareaProps) => {
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
@@ -61,6 +63,8 @@ export const PromptInputTextarea = ({
         form.requestSubmit();
       }
     }
+
+    onKeyDown?.(e);
   };
 
   return (
@@ -77,6 +81,11 @@ export const PromptInputTextarea = ({
       }}
       onKeyDown={handleKeyDown}
       placeholder={placeholder}
+      style={{
+        minHeight,
+        maxHeight,
+        ...style,
+      }}
       {...props}
     />
   );

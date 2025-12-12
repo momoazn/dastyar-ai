@@ -24,6 +24,7 @@ export function SmartActionsToolbar({
           className="h-auto flex-col gap-2 py-3"
           disabled={disabled}
           onClick={() => onAction("concise")}
+          size="sm"
           variant="outline"
         >
           <Sparkles className="size-4 text-amber-500" />
@@ -35,6 +36,7 @@ export function SmartActionsToolbar({
           className="h-auto flex-col gap-2 py-3"
           disabled={disabled}
           onClick={() => onAction("action-items")}
+          size="sm"
           variant="outline"
         >
           <ListChecks className="size-4 text-blue-500" />
@@ -46,6 +48,7 @@ export function SmartActionsToolbar({
           className="h-auto flex-col gap-2 py-3"
           disabled={disabled}
           onClick={() => onAction("meeting-notes")}
+          size="sm"
           variant="outline"
         >
           <FileText className="size-4 text-green-500" />

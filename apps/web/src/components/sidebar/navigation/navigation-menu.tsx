@@ -20,7 +20,13 @@ export function NavigationMenu({
       <div className={className}>
         {navMain.map((item) => (
           <Link
-            className="flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            aria-current={activeItem?.url === item.url ? "page" : undefined}
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              activeItem?.url === item.url
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
             key={item.title}
             onClick={() => setOpen(true)}
             to={item.url}
@@ -36,8 +42,9 @@ export function NavigationMenu({
     <div className={className}>
       {navMain.map((item) => (
         <Link
+          aria-current={activeItem?.url === item.url ? "page" : undefined}
           className={cn(
-            "my-1 flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-sm",
+            "my-1 flex h-9 items-center gap-2 rounded-md px-2.5 font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             activeItem?.url === item.url
               ? "bg-sidebar-accent text-sidebar-accent-foreground"
               : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

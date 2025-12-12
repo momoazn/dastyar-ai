@@ -1,5 +1,13 @@
 import { Mic, Square } from "lucide-react";
-import { Badge, Button, Progress } from "@/components/ui";
+import type * as React from "react";
+import {
+  Badge,
+  Button,
+  Progress,
+  Surface,
+  SurfaceContent,
+  SurfaceStatus,
+} from "@/components/ui";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatElapsed } from "@/hooks/use-voice-recorder";
 import { fa } from "@/lib/persian-texts";
@@ -12,6 +20,7 @@ type RecordingControlsProps = {
   elapsedMs: number;
   onStart: () => void;
   onStop: () => void;
+  children?: React.ReactNode;
 };
 
 const getBadgeVariant = (
@@ -41,14 +50,15 @@ export function RecordingControls({
   elapsedMs,
   onStart,
   onStop,
+  children,
 }: RecordingControlsProps) {
   const statusText = getStatusText(isRecording, isTranscribing, elapsedMs);
   const badgeVariant = getBadgeVariant(isRecording, isTranscribing);
   const progressValue = Math.min(100, (elapsedMs / MAX_DURATION_MS) * 100);
 
   return (
-    <>
-      <div className="flex items-center justify-between">
+    <Surface padded={false}>
+      <SurfaceStatus className="justify-between">
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           {isTranscribing ? (
             <LoadingSpinner className="size-4" />
@@ -68,16 +78,16 @@ export function RecordingControls({
             ? `${fa.transcribe.elapsedLabel}: ${formatElapsed(elapsedMs)}`
             : ""}
         </div>
-      </div>
+      </SurfaceStatus>
 
-      <div className="rounded-md border p-4">
+      <SurfaceContent className="space-y-3">
         <div className="flex items-center justify-center">
           <Button
             aria-label={
               isRecording ? fa.transcribe.recordStop : fa.transcribe.recordStart
             }
             aria-pressed={isRecording}
-            className={`gap-2 ${isRecording ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}`}
+            className="gap-2"
             disabled={isTranscribing}
             onClick={isRecording ? onStop : onStart}
             size="default"
@@ -97,10 +107,9 @@ export function RecordingControls({
             )}
           </Button>
         </div>
-        <div className="mt-4">
-          <Progress value={isRecording ? progressValue : 0} />
-        </div>
-      </div>
-    </>
+        <Progress value={isRecording ? progressValue : 0} />
+        {children ? <div className="border-t pt-2">{children}</div> : null}
+      </SurfaceContent>
+    </Surface>
   );
 }

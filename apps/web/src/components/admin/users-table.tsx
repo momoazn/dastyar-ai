@@ -12,7 +12,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +41,10 @@ import { orpc } from "@/utils/orpc";
 import { ChangeRoleDialog } from "./change-role-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { ResetPasswordDialog } from "./reset-password-dialog";
+import { AdminTableShell } from "./table-shell";
 import { UserDetailDialog } from "./user-detail-dialog";
 
-type UserType = Omit<User, "password" | "salt">;
+type UserType = Omit<User, "password">;
 
 export function UsersTable() {
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
@@ -74,6 +74,7 @@ export function UsersTable() {
   );
 
   const users = usersResponse?.users ?? [];
+  const isEmpty = !(isLoading || error) && users.length === 0;
 
   const updateRoleMutation = useMutation(
     orpc.admin.updateUserRole.mutationOptions({
@@ -193,52 +194,21 @@ export function UsersTable() {
     setPage(1);
   };
 
-  if (isLoading) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-          <p className="text-muted-foreground">{fa.admin.users.loading}</p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-destructive">
-          <p>{fa.admin.users.errorLoading}</p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (!users || users.length === 0) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-muted-foreground">
-          <p>{fa.admin.users.notFound}</p>
-        </div>
-      </Card>
-    );
-  }
-
   const totalPages = usersResponse?.totalPages ?? 1;
 
   return (
     <>
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">{fa.admin.users.title}</h3>
-            <Badge variant="secondary">
-              {fa.admin.users.userCount(usersResponse?.total ?? 0)}
-            </Badge>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="flex flex-col gap-3 sm:flex-row">
+      <AdminTableShell
+        actions={null}
+        badge={
+          <Badge variant="secondary">
+            {fa.admin.users.userCount(usersResponse?.total ?? 0)}
+          </Badge>
+        }
+        emptyMessage={fa.admin.users.notFound}
+        errorMessage={fa.admin.users.errorLoading}
+        filters={
+          <>
             <div className="flex-1">
               <div className="relative">
                 <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
@@ -275,109 +245,10 @@ export function UsersTable() {
                 </SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">
-                    {fa.admin.users.table.actions}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.users.table.createdAt}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.users.table.role}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.users.table.username}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.users.table.id}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            disabled={
-                              updateRoleMutation.isPending ||
-                              updatePasswordMutation.isPending ||
-                              deleteUserMutation.isPending
-                            }
-                            size="sm"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            disabled={updateRoleMutation.isPending}
-                            onClick={() => handleShowDetails(user)}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            {fa.admin.users.viewDetails}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={updateRoleMutation.isPending}
-                            onClick={() => handleChangeRole(user)}
-                          >
-                            <Settings className="mr-2 h-4 w-4" />
-                            {fa.admin.users.actions.changeRole}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={updatePasswordMutation.isPending}
-                            onClick={() => handleResetPassword(user)}
-                          >
-                            <Settings className="mr-2 h-4 w-4" />
-                            {fa.admin.users.actions.resetPassword}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            disabled={deleteUserMutation.isPending}
-                            onClick={() => handleDeleteUser(user)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {fa.admin.users.deleteUser}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {new Date(user.createdAt).toLocaleDateString("fa-IR")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        variant={
-                          user.role === "admin" ? "default" : "secondary"
-                        }
-                      >
-                        {user.role === "admin"
-                          ? fa.admin.users.table.admin
-                          : fa.admin.users.table.user}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {user.username}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {user.id}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between gap-2">
+          </>
+        }
+        footer={
+          <div className="flex w-full items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">
                 {fa.admin.users.show}
@@ -421,8 +292,107 @@ export function UsersTable() {
               </Button>
             </div>
           </div>
+        }
+        isEmpty={isEmpty}
+        isError={Boolean(error)}
+        isLoading={isLoading}
+        loadingMessage={fa.admin.users.loading}
+        title={fa.admin.users.title}
+      >
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.actions}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.createdAt}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.role}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.username}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.id}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          disabled={
+                            updateRoleMutation.isPending ||
+                            updatePasswordMutation.isPending ||
+                            deleteUserMutation.isPending
+                          }
+                          size="sm"
+                          variant="ghost"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          disabled={updateRoleMutation.isPending}
+                          onClick={() => handleShowDetails(user)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          {fa.admin.users.viewDetails}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={updateRoleMutation.isPending}
+                          onClick={() => handleChangeRole(user)}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          {fa.admin.users.actions.changeRole}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={updatePasswordMutation.isPending}
+                          onClick={() => handleResetPassword(user)}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          {fa.admin.users.actions.resetPassword}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={deleteUserMutation.isPending}
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {fa.admin.users.deleteUser}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                    >
+                      {user.role === "admin"
+                        ? fa.admin.users.table.admin
+                        : fa.admin.users.table.user}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{user.username}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {user.id}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </Card>
+      </AdminTableShell>
 
       <ChangeRoleDialog
         isLoading={updateRoleMutation.isPending}

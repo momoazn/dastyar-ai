@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -24,6 +23,7 @@ import {
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
 import { AddModelDialog } from "./add-model-dialog";
+import { AdminTableShell } from "./table-shell";
 
 type LLMModelProvider = "ollama" | "lmstudio" | "stable-diffusion" | "whisper";
 
@@ -87,56 +87,26 @@ export function ModelsTable() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-          <p className="text-muted-foreground">{fa.admin.models.loading}</p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-destructive">
-          <p>{fa.admin.models.errorLoading}</p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (!models || models.length === 0) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-muted-foreground">
-          <p>{fa.admin.models.notFound}</p>
-        </div>
-      </Card>
-    );
-  }
+  const isEmpty = !(isLoading || error) && (!models || models.length === 0);
 
   return (
     <>
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">{fa.admin.models.title}</h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {fa.admin.models.modelCount(models.length)}
-              </Badge>
-              <Button onClick={() => setAddModelDialogOpen(true)} size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                {fa.admin.models.addModel}
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-col gap-3 sm:flex-row">
+      <AdminTableShell
+        actions={
+          <Button onClick={() => setAddModelDialogOpen(true)} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            {fa.admin.models.addModel}
+          </Button>
+        }
+        badge={
+          <Badge variant="secondary">
+            {fa.admin.models.modelCount(models.length)}
+          </Badge>
+        }
+        emptyMessage={fa.admin.models.notFound}
+        errorMessage={fa.admin.models.errorLoading}
+        filters={
+          <>
             <Select
               onValueChange={(value) =>
                 setProviderFilter(value as LLMModelProvider | "all")
@@ -184,68 +154,71 @@ export function ModelsTable() {
                 </SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">
-                    {fa.admin.models.table.toggle}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.models.table.status}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.models.table.provider}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.models.table.name}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {fa.admin.models.table.id}
-                  </TableHead>
+          </>
+        }
+        isEmpty={isEmpty}
+        isError={Boolean(error)}
+        isLoading={isLoading}
+        loadingMessage={fa.admin.models.loading}
+        title={fa.admin.models.title}
+      >
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.toggle}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.status}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.provider}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.name}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.id}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {models?.map((model) => (
+                <TableRow key={model.id}>
+                  <TableCell className="text-right">
+                    <Switch
+                      checked={model.isEnabled}
+                      disabled={toggleModelMutation.isPending}
+                      onCheckedChange={() =>
+                        handleToggleModel(model.id, model.isEnabled)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={model.isEnabled ? "default" : "secondary"}>
+                      {model.isEnabled
+                        ? fa.admin.models.table.enabled
+                        : fa.admin.models.table.disabled}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="outline">
+                      {getProviderLabel(model.provider)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {model.identifier}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {model.id}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {models.map((model) => (
-                  <TableRow key={model.id}>
-                    <TableCell className="text-right">
-                      <Switch
-                        checked={model.isEnabled}
-                        disabled={toggleModelMutation.isPending}
-                        onCheckedChange={() =>
-                          handleToggleModel(model.id, model.isEnabled)
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        variant={model.isEnabled ? "default" : "secondary"}
-                      >
-                        {model.isEnabled
-                          ? fa.admin.models.table.enabled
-                          : fa.admin.models.table.disabled}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="outline">
-                        {getProviderLabel(model.provider)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {model.identifier}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {model.id}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </Card>
+      </AdminTableShell>
 
       <AddModelDialog
         onOpenChange={setAddModelDialogOpen}

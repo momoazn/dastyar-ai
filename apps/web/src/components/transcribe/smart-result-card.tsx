@@ -1,10 +1,10 @@
 import { CopyIcon, Sparkles } from "lucide-react";
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+  Surface,
+  SurfaceContent,
+  SurfaceHeader,
+  SurfaceTitle,
 } from "@/components/ui";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { fa } from "@/lib/persian-texts";
@@ -27,22 +27,23 @@ export function SmartResultCard({
   }
 
   return (
-    <Card className="fade-in slide-in-from-bottom-4 w-full animate-in">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-5 text-primary" />
-            <CardTitle>{title}</CardTitle>
-          </div>
-          {result && (
-            <Button onClick={() => onCopy(result)} size="sm" variant="ghost">
-              <CopyIcon className="mr-2 size-4" />
-              {fa.transcribe.copy}
-            </Button>
-          )}
+    <Surface
+      className="fade-in slide-in-from-bottom-4 w-full animate-in"
+      padded={false}
+    >
+      <SurfaceHeader className="justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-5 text-primary" />
+          <SurfaceTitle>{title}</SurfaceTitle>
         </div>
-      </CardHeader>
-      <CardContent>
+        {result && (
+          <Button onClick={() => onCopy(result)} size="sm" variant="ghost">
+            <CopyIcon className="mr-2 size-4" />
+            {fa.transcribe.copy}
+          </Button>
+        )}
+      </SurfaceHeader>
+      <SurfaceContent>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <LoadingSpinner className="mb-4 size-8" />
@@ -56,7 +57,7 @@ export function SmartResultCard({
             <pre className="whitespace-pre-wrap font-sans">{result}</pre>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </SurfaceContent>
+    </Surface>
   );
 }
