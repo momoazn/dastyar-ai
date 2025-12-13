@@ -57,7 +57,7 @@ export const llmModelProcedures = {
         }
 
         await updateModel(input.id, { isEnabled: true });
-        return await getModels({ isEnabled: true });
+        return getModels({ isEnabled: true });
       } catch (error) {
         logger.error("Error enabling model", error, { modelId: input.id });
         throw error;
@@ -74,7 +74,7 @@ export const llmModelProcedures = {
         }
 
         await updateModel(input.id, { isEnabled: false });
-        return await getModels({ isEnabled: true });
+        return getModels({ isEnabled: true });
       } catch (error) {
         logger.error("Error disabling model", error, { modelId: input.id });
         throw error;

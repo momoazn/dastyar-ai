@@ -65,8 +65,8 @@ export function UsersTable() {
       input: {
         page,
         pageSize,
-        search: searchQuery || undefined,
-        role: roleFilter,
+        ...(searchQuery && { search: searchQuery }),
+        ...(roleFilter && { role: roleFilter }),
       },
     })
   );
@@ -77,16 +77,7 @@ export function UsersTable() {
   const deleteUserMutation = useMutation(
     orpc.admin.deleteUser.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listUsers.queryKey({
-            input: {
-              page,
-              pageSize,
-              search: searchQuery || undefined,
-              role: roleFilter,
-            },
-          }),
-        });
+        invalidateUserList();
         toast.success(fa.admin.users.messages.userDeleted);
         setDeleteUserDialogOpen(false);
       },
@@ -100,50 +91,23 @@ export function UsersTable() {
     })
   );
 
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setEditUserDialogOpen(true);
-  };
-
-  const handleShowDetails = (user: User) => {
-    setSelectedUser(user);
-    setUserDetailDialogOpen(true);
-  };
-
-  const handleDeleteUser = (user: User) => {
-    setSelectedUser(user);
-    setDeleteUserDialogOpen(true);
-  };
-
-  const handleEditSuccess = () => {
+  const invalidateUserList = () => {
     queryClient.invalidateQueries({
       queryKey: orpc.admin.listUsers.queryKey({
         input: {
           page,
           pageSize,
-          search: searchQuery || undefined,
-          role: roleFilter,
+          ...(searchQuery && { search: searchQuery }),
+          ...(roleFilter && { role: roleFilter }),
         },
       }),
     });
   };
 
   const handleConfirmDeleteUser = () => {
-    if (!selectedUser) {
-      return;
+    if (selectedUser) {
+      deleteUserMutation.mutate({ userId: selectedUser.id });
     }
-    deleteUserMutation.mutate({
-      userId: selectedUser.id,
-    });
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handlePageSizeChange = (newSize: string) => {
-    setPageSize(Number.parseInt(newSize, 10));
-    setPage(1);
   };
 
   const totalPages = usersResponse?.totalPages ?? 1;
@@ -211,7 +175,10 @@ export function UsersTable() {
                 {fa.admin.users.show}
               </span>
               <Select
-                onValueChange={handlePageSizeChange}
+                onValueChange={(value) => {
+                  setPageSize(Number.parseInt(value, 10));
+                  setPage(1);
+                }}
                 value={pageSize.toString()}
               >
                 <SelectTrigger className="w-16">
@@ -233,7 +200,7 @@ export function UsersTable() {
               </span>
               <Button
                 disabled={page === 1}
-                onClick={() => handlePageChange(page - 1)}
+                onClick={() => setPage(page - 1)}
                 size="icon"
                 variant="outline"
               >
@@ -241,7 +208,7 @@ export function UsersTable() {
               </Button>
               <Button
                 disabled={page === totalPages}
-                onClick={() => handlePageChange(page + 1)}
+                onClick={() => setPage(page + 1)}
                 size="icon"
                 variant="outline"
               >
@@ -251,7 +218,7 @@ export function UsersTable() {
           </div>
         }
         isEmpty={isEmpty}
-        isError={Boolean(error)}
+        isError={!!error}
         isLoading={isLoading}
         loadingMessage={fa.admin.users.loading}
         title={fa.admin.users.title}
@@ -293,19 +260,30 @@ export function UsersTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" side="left">
                         <DropdownMenuItem
-                          onClick={() => handleShowDetails(user)}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setUserDetailDialogOpen(true);
+                          }}
                         >
                           <Eye className="ml-2 h-4 w-4" />
                           {fa.admin.users.viewDetails}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setEditUserDialogOpen(true);
+                          }}
+                        >
                           <Settings className="ml-2 h-4 w-4" />
                           {fa.admin.users.actions.editUser}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           disabled={deleteUserMutation.isPending}
-                          onClick={() => handleDeleteUser(user)}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setDeleteUserDialogOpen(true);
+                          }}
                         >
                           <Trash2 className="ml-2 h-4 w-4" />
                           {fa.admin.users.deleteUser}
@@ -357,7 +335,7 @@ export function UsersTable() {
 
       <UserDialog
         onOpenChange={setEditUserDialogOpen}
-        onSuccess={handleEditSuccess}
+        onSuccess={invalidateUserList}
         open={editUserDialogOpen}
         user={selectedUser}
       />

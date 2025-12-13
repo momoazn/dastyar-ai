@@ -75,40 +75,22 @@ const getSettingSchema = z.object({
 
 export const adminProcedures = {
   // User Management
-  listUsers: adminProcedure
-    .input(listUsersSchema)
-    .handler(async ({ input }): Promise<UserListResponse> => {
-      try {
-        const result = await listUsers({
-          page: input.page,
-          pageSize: input.pageSize,
-          search: input.search,
-          role: input.role,
-        });
-        return result;
-      } catch (error) {
-        logger.error("Error listing users", error);
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to fetch users",
-          status: 500,
-        });
-      }
-    }),
+  listUsers: adminProcedure.input(listUsersSchema).handler(
+    async ({ input }): Promise<UserListResponse> =>
+      listUsers({
+        page: input.page,
+        pageSize: input.pageSize,
+        search: input.search,
+        role: input.role,
+      })
+  ),
 
   getUserDetails: adminProcedure
     .input(z.object({ userId: z.number().int().positive() }))
-    .handler(async ({ input }): Promise<UserWithStats | null> => {
-      try {
-        const userWithStats = await getUserWithStats(input.userId);
-        return userWithStats;
-      } catch (error) {
-        logger.error("Error fetching user details", error);
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to fetch user details",
-          status: 500,
-        });
-      }
-    }),
+    .handler(
+      async ({ input }): Promise<UserWithStats | null> =>
+        getUserWithStats(input.userId)
+    ),
 
   updateUser: adminProcedure
     .input(updateUserSchema)
@@ -243,7 +225,7 @@ export const adminProcedures = {
 
         // Prevent deleting if it's the only admin
         if (user.role === "admin") {
-          const allUsers = await listUsers();
+          const allUsers = await listUsers({ page: 1, pageSize: 1000 });
           const adminCount = allUsers.users.filter(
             (u) => u.role === "admin"
           ).length;

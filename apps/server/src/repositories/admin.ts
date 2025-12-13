@@ -40,9 +40,7 @@ export async function listUsers(options?: {
   search?: string;
   role?: UserRole;
 }): Promise<UserListResponse> {
-  const { search, role } = options ?? {};
-  const page = options?.page ?? 1;
-  const pageSize = options?.pageSize ?? 10;
+  const { search, role, page = 1, pageSize = 10 } = options ?? {};
 
   const conditions: Array<ReturnType<typeof like> | ReturnType<typeof eq>> = [];
   if (search) {
@@ -52,20 +50,25 @@ export async function listUsers(options?: {
     conditions.push(eq(users.role, role));
   }
 
+  const whereClause = (() => {
+    if (conditions.length === 0) {
+      return;
+    }
+    if (conditions.length === 1) {
+      return conditions[0];
+    }
+    return and(...conditions);
+  })();
+
   // Count query
-  const countBase = db.select({ value: count() }).from(users);
-  let totalResult: Array<{ value: number }>;
-  if (conditions.length === 0) {
-    totalResult = await countBase;
-  } else if (conditions.length === 1) {
-    totalResult = await countBase.where(conditions[0]);
-  } else {
-    totalResult = await countBase.where(and(...conditions));
-  }
-  const total = totalResult[0]?.value ?? 0;
+  const countQuery = db.select({ value: count() }).from(users);
+  const totalResult = whereClause
+    ? await countQuery.where(whereClause)
+    : await countQuery;
+  const total = totalResult.at(0)?.value ?? 0;
 
   // Data query
-  const dataBase = db
+  const dataQuery = db
     .select({
       id: users.id,
       username: users.username,
@@ -76,19 +79,10 @@ export async function listUsers(options?: {
     .from(users)
     .orderBy(desc(users.createdAt));
 
-  const getDataQuery = () => {
-    if (conditions.length === 0) {
-      return dataBase;
-    }
-    if (conditions.length === 1) {
-      return dataBase.where(conditions[0]);
-    }
-    return dataBase.where(and(...conditions));
-  };
-
-  // Always apply pagination
   const offset = (page - 1) * pageSize;
-  const rows = await getDataQuery().limit(pageSize).offset(offset);
+  const rows = whereClause
+    ? await dataQuery.where(whereClause).limit(pageSize).offset(offset)
+    : await dataQuery.limit(pageSize).offset(offset);
 
   return {
     users: rows,
@@ -97,6 +91,24 @@ export async function listUsers(options?: {
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   };
+}
+
+async function countByUserId(
+  table:
+    | typeof messages
+    | typeof documents
+    | typeof generatedImages
+    | typeof translations
+    | typeof summaries
+    | typeof codeRuns
+    | typeof chatThreads,
+  userId: number
+): Promise<number> {
+  const result = await db
+    .select({ value: count() })
+    .from(table)
+    .where(eq((table as typeof messages).userId, userId));
+  return result.at(0)?.value ?? 0;
 }
 
 export async function getUserWithStats(
@@ -108,53 +120,32 @@ export async function getUserWithStats(
   }
 
   const [
-    messageCountResult,
-    documentCountResult,
-    imageCountResult,
-    translationCountResult,
-    summaryCountResult,
-    codeRunCountResult,
-    threadCountResult,
+    messageCount,
+    documentCount,
+    imageCount,
+    translationCount,
+    summaryCount,
+    codeRunCount,
+    threadCount,
   ] = await Promise.all([
-    db
-      .select({ value: count() })
-      .from(messages)
-      .where(eq(messages.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(documents)
-      .where(eq(documents.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(generatedImages)
-      .where(eq(generatedImages.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(translations)
-      .where(eq(translations.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(summaries)
-      .where(eq(summaries.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(codeRuns)
-      .where(eq(codeRuns.userId, userId)),
-    db
-      .select({ value: count() })
-      .from(chatThreads)
-      .where(eq(chatThreads.userId, userId)),
+    countByUserId(messages, userId),
+    countByUserId(documents, userId),
+    countByUserId(generatedImages, userId),
+    countByUserId(translations, userId),
+    countByUserId(summaries, userId),
+    countByUserId(codeRuns, userId),
+    countByUserId(chatThreads, userId),
   ]);
 
   return {
     ...user,
-    messageCount: messageCountResult[0]?.value ?? 0,
-    documentCount: documentCountResult[0]?.value ?? 0,
-    imageCount: imageCountResult[0]?.value ?? 0,
-    translationCount: translationCountResult[0]?.value ?? 0,
-    summaryCount: summaryCountResult[0]?.value ?? 0,
-    codeRunCount: codeRunCountResult[0]?.value ?? 0,
-    threadCount: threadCountResult[0]?.value ?? 0,
+    messageCount,
+    documentCount,
+    imageCount,
+    translationCount,
+    summaryCount,
+    codeRunCount,
+    threadCount,
   };
 }
 
@@ -167,15 +158,11 @@ export async function updateUser(
 ): Promise<UserWithoutSensitiveData> {
   const updateData: { role?: UserRole; password?: string; updatedAt: Date } = {
     updatedAt: new Date(),
+    ...(updates.role !== undefined && { role: updates.role }),
+    ...(updates.password !== undefined && {
+      password: await hashPassword(updates.password),
+    }),
   };
-
-  if (updates.role !== undefined) {
-    updateData.role = updates.role;
-  }
-
-  if (updates.password !== undefined) {
-    updateData.password = await hashPassword(updates.password);
-  }
 
   await db.update(users).set(updateData).where(eq(users.id, userId)).run();
 

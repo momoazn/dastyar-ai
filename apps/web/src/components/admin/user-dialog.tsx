@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,13 +30,46 @@ type UserDialogProps = {
   onSuccess?: () => void;
 };
 
+type PasswordFieldProps = {
+  label: string;
+  placeholder: string;
+  id: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+};
+
+function PasswordField({
+  label,
+  placeholder,
+  id,
+  value,
+  onChange,
+  disabled = false,
+}: PasswordFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        autoComplete="new-password"
+        disabled={disabled}
+        id={id}
+        onChange={onChange}
+        placeholder={placeholder}
+        type="password"
+        value={value}
+      />
+    </div>
+  );
+}
+
 export function UserDialog({
   open,
   onOpenChange,
   user,
   onSuccess,
 }: UserDialogProps) {
-  const isEditMode = Boolean(user);
+  const isEditMode = !!user;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,13 +77,13 @@ export function UserDialog({
   const [changePassword, setChangePassword] = useState(false);
   const queryClient = useQueryClient();
 
-  const handleReset = useCallback(() => {
+  const resetForm = () => {
     setUsername("");
     setPassword("");
     setConfirmPassword("");
     setRole("user");
     setChangePassword(false);
-  }, []);
+  };
 
   useEffect(() => {
     if (user) {
@@ -60,31 +93,42 @@ export function UserDialog({
       setConfirmPassword("");
       setChangePassword(false);
     } else {
-      handleReset();
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
+      setRole("user");
+      setChangePassword(false);
     }
-  }, [user, handleReset]);
+  }, [user]);
+
+  const invalidateUserList = () => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.admin.listUsers
+        .queryKey({
+          input: { page: 1, pageSize: 10 },
+        })
+        .slice(0, 2),
+      exact: false,
+    });
+  };
+
+  const handleMutationSuccess = (message: string, callback?: () => void) => {
+    invalidateUserList();
+    toast.success(message);
+    resetForm();
+    onOpenChange(false);
+    callback?.();
+  };
 
   const createUserMutation = useMutation(
     orpc.admin.createUser.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listUsers
-            .queryKey({
-              input: { page: 1, pageSize: 10 },
-            })
-            .slice(0, 2),
-          exact: false,
-        });
-        toast.success(fa.admin.users.messages.userCreated);
-        handleReset();
-        onOpenChange(false);
+        handleMutationSuccess(fa.admin.users.messages.userCreated);
       },
       onError: (error) => {
-        const errorMessage = getErrorMessage(
-          error,
-          fa.admin.users.messages.errorCreatingUser
+        toast.error(
+          getErrorMessage(error, fa.admin.users.messages.errorCreatingUser)
         );
-        toast.error(errorMessage);
       },
     })
   );
@@ -92,47 +136,40 @@ export function UserDialog({
   const updateUserMutation = useMutation(
     orpc.admin.updateUser.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listUsers
-            .queryKey({
-              input: { page: 1, pageSize: 10 },
-            })
-            .slice(0, 2),
-          exact: false,
-        });
-        toast.success(fa.admin.users.messages.userUpdated);
-        handleReset();
-        onOpenChange(false);
-        onSuccess?.();
+        handleMutationSuccess(fa.admin.users.messages.userUpdated, onSuccess);
       },
       onError: (error) => {
-        const errorMessage = getErrorMessage(
-          error,
-          fa.admin.users.messages.errorUpdatingUser
+        toast.error(
+          getErrorMessage(error, fa.admin.users.messages.errorUpdatingUser)
         );
-        toast.error(errorMessage);
       },
     })
   );
 
+  const validatePassword = (pwd: string): boolean => {
+    if (pwd.length < 6) {
+      toast.error(fa.admin.users.messages.passwordMinLength);
+      return false;
+    }
+    return true;
+  };
+
   const handleAddUser = () => {
-    if (!username.trim()) {
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
       toast.error(fa.admin.users.messages.usernameRequired);
       return;
     }
-
     if (!password.trim()) {
       toast.error(fa.admin.users.messages.passwordRequired);
       return;
     }
-
-    if (password.length < 6) {
-      toast.error(fa.admin.users.messages.passwordMinLength);
+    if (!validatePassword(password)) {
       return;
     }
 
     createUserMutation.mutate({
-      username: username.trim(),
+      username: trimmedUsername,
       password,
       role,
     });
@@ -144,43 +181,28 @@ export function UserDialog({
     }
 
     const roleChanged = role !== user.role;
-    const passwordChanged = changePassword && password.trim() !== "";
+    const passwordChanged = changePassword && password.trim().length > 0;
     const hasChanges = roleChanged || passwordChanged;
-
     if (!hasChanges) {
       onOpenChange(false);
       return;
     }
 
     if (passwordChanged) {
-      if (password.length < 6) {
-        toast.error(fa.admin.users.messages.passwordMinLength);
+      if (!validatePassword(password)) {
         return;
       }
-
       if (password !== confirmPassword) {
         toast.error(fa.admin.users.actions.passwordMismatch);
         return;
       }
     }
 
-    const updates: {
-      userId: number;
-      role?: "admin" | "user";
-      password?: string;
-    } = {
+    updateUserMutation.mutate({
       userId: user.id,
-    };
-
-    if (roleChanged) {
-      updates.role = role;
-    }
-
-    if (passwordChanged) {
-      updates.password = password;
-    }
-
-    updateUserMutation.mutate(updates);
+      ...(roleChanged && { role }),
+      ...(passwordChanged && { password }),
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -195,7 +217,7 @@ export function UserDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      handleReset();
+      resetForm();
     }
     onOpenChange(newOpen);
   };
@@ -260,56 +282,36 @@ export function UserDialog({
               </div>
               {changePassword && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">
-                      {fa.admin.users.actions.newPassword}
-                    </Label>
-                    <Input
-                      autoComplete="new-password"
-                      disabled={isPending}
-                      id="password"
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={
-                        fa.admin.users.actions.newPasswordPlaceholder
-                      }
-                      type="password"
-                      value={password}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">
-                      {fa.admin.users.actions.confirmPassword}
-                    </Label>
-                    <Input
-                      autoComplete="new-password"
-                      disabled={isPending}
-                      id="confirmPassword"
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder={
-                        fa.admin.users.actions.confirmPasswordPlaceholder
-                      }
-                      type="password"
-                      value={confirmPassword}
-                    />
-                  </div>
+                  <PasswordField
+                    disabled={isPending}
+                    id="password"
+                    label={fa.admin.users.actions.newPassword}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={fa.admin.users.actions.newPasswordPlaceholder}
+                    value={password}
+                  />
+                  <PasswordField
+                    disabled={isPending}
+                    id="confirmPassword"
+                    label={fa.admin.users.actions.confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={
+                      fa.admin.users.actions.confirmPasswordPlaceholder
+                    }
+                    value={confirmPassword}
+                  />
                 </>
               )}
             </>
           ) : (
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                {fa.admin.users.addDialog.password}
-              </Label>
-              <Input
-                autoComplete="new-password"
-                disabled={isPending}
-                id="password"
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={fa.admin.users.addDialog.passwordPlaceholder}
-                type="password"
-                value={password}
-              />
-            </div>
+            <PasswordField
+              disabled={isPending}
+              id="password"
+              label={fa.admin.users.addDialog.password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={fa.admin.users.addDialog.passwordPlaceholder}
+              value={password}
+            />
           )}
 
           {/* Role */}

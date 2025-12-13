@@ -62,10 +62,8 @@ export const transcribeProcedures = {
           initialPrompt: input.initialPrompt,
         });
 
-        const file = input.file;
-
-        if (!(file instanceof File)) {
-          const fileAny = file as unknown;
+        if (!(input.file instanceof File)) {
+          const fileAny = input.file as unknown;
           logger.error("File validation failed", undefined, {
             receivedType: typeof fileAny,
             constructor: (fileAny as { constructor?: { name?: string } })
@@ -82,7 +80,7 @@ export const transcribeProcedures = {
         }
 
         return await whisperTranscribe({
-          file,
+          file: input.file,
           language,
           model,
           initialPrompt: input.initialPrompt,
