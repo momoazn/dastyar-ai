@@ -45,9 +45,16 @@ export const admin = {
       confirmDeleteUserHint: "برای تایید، عبارت DELETE یا حذف را وارد کنید:",
       newPassword: "رمز عبور جدید",
       newPasswordPlaceholder: "رمز عبور جدید را وارد کنید",
+      confirmPassword: "تکرار رمز عبور",
+      confirmPasswordPlaceholder: "تکرار رمز عبور جدید",
+      passwordMismatch: "رمز عبور و تکرار آن مطابقت ندارند",
       cancel: "لغو",
       confirm: "تأیید",
       save: "ذخیره",
+      saving: "در حال ذخیره...",
+      editUser: "ویرایش کاربر",
+      editUserDescription: (username: string) =>
+        `ویرایش اطلاعات کاربر ${username}`,
     },
     messages: {
       userUpdated: "کاربر با موفقیت به‌روزرسانی شد",

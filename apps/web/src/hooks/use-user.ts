@@ -1,13 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { logoutAtom, tokenAtom } from "@/atoms/auth";
+import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
-
-export type User = {
-  id: number;
-  username: string;
-  role: "admin" | "user";
-};
 
 export function useUser() {
   const token = useAtomValue(tokenAtom);

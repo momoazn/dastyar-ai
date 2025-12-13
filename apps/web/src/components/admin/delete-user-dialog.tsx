@@ -10,14 +10,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { fa } from "@/lib/persian-texts";
-import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
-
-type UserType = Omit<User, "password">;
+import type { User } from "@/types/database";
 
 type DeleteUserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: UserType | null;
+  user: User | null;
   isLoading: boolean;
   onConfirm: () => void;
 };

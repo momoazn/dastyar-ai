@@ -18,6 +18,9 @@ export type SelectUser = {
   updatedAt: Date;
 };
 
+// User type without sensitive data (password)
+export type User = SelectUser;
+
 export type SelectLlmModel = {
   id: number;
   identifier: string;

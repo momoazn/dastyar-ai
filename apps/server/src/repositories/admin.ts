@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { and, count, desc, eq, like } from "drizzle-orm";
 import {
   chatThreads,
@@ -13,6 +12,7 @@ import {
   type UserRole,
   users,
 } from "@/database";
+import { hashPassword } from "./auth";
 
 export type UserWithoutSensitiveData = Omit<User, "password">;
 
@@ -184,10 +184,6 @@ export async function updateUser(
     throw new Error("User not found after update");
   }
   return updatedUser;
-}
-
-export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 12);
 }
 
 export async function getUserById(

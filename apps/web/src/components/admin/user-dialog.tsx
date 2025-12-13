@@ -20,15 +20,13 @@ import {
 } from "@/components/ui/select";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
-import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
+import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
-
-type UserType = Omit<User, "password">;
 
 type UserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user?: UserType | null;
+  user?: User | null;
   onSuccess?: () => void;
 };
 
@@ -69,13 +67,12 @@ export function UserDialog({
   const createUserMutation = useMutation(
     orpc.admin.createUser.mutationOptions({
       onSuccess: () => {
-        const queryKey = orpc.admin.listUsers
-          .queryKey({
-            input: { page: 1, pageSize: 10 },
-          })
-          .slice(0, 2);
         queryClient.invalidateQueries({
-          queryKey,
+          queryKey: orpc.admin.listUsers
+            .queryKey({
+              input: { page: 1, pageSize: 10 },
+            })
+            .slice(0, 2),
           exact: false,
         });
         toast.success(fa.admin.users.messages.userCreated);
@@ -95,14 +92,12 @@ export function UserDialog({
   const updateUserMutation = useMutation(
     orpc.admin.updateUser.mutationOptions({
       onSuccess: () => {
-        // Invalidate all user list queries - onSuccess callback handles specific invalidation
-        const queryKey = orpc.admin.listUsers
-          .queryKey({
-            input: { page: 1, pageSize: 10 },
-          })
-          .slice(0, 2);
         queryClient.invalidateQueries({
-          queryKey,
+          queryKey: orpc.admin.listUsers
+            .queryKey({
+              input: { page: 1, pageSize: 10 },
+            })
+            .slice(0, 2),
           exact: false,
         });
         toast.success(fa.admin.users.messages.userUpdated);
@@ -110,8 +105,12 @@ export function UserDialog({
         onOpenChange(false);
         onSuccess?.();
       },
-      onError: () => {
-        toast.error(fa.admin.users.messages.errorUpdatingUser);
+      onError: (error) => {
+        const errorMessage = getErrorMessage(
+          error,
+          fa.admin.users.messages.errorUpdatingUser
+        );
+        toast.error(errorMessage);
       },
     })
   );
@@ -160,7 +159,7 @@ export function UserDialog({
       }
 
       if (password !== confirmPassword) {
-        toast.error("رمز عبور و تکرار آن مطابقت ندارند");
+        toast.error(fa.admin.users.actions.passwordMismatch);
         return;
       }
     }
@@ -209,11 +208,13 @@ export function UserDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader className="text-right">
           <DialogTitle>
-            {isEditMode ? "ویرایش کاربر" : fa.admin.users.addDialog.title}
+            {isEditMode
+              ? fa.admin.users.actions.editUser
+              : fa.admin.users.addDialog.title}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? `ویرایش اطلاعات کاربر ${user?.username}`
+              ? fa.admin.users.actions.editUserDescription(user?.username ?? "")
               : fa.admin.users.addDialog.description}
           </DialogDescription>
         </DialogHeader>
@@ -276,13 +277,17 @@ export function UserDialog({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">تکرار رمز عبور</Label>
+                    <Label htmlFor="confirmPassword">
+                      {fa.admin.users.actions.confirmPassword}
+                    </Label>
                     <Input
                       autoComplete="new-password"
                       disabled={isPending}
                       id="confirmPassword"
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="تکرار رمز عبور جدید"
+                      placeholder={
+                        fa.admin.users.actions.confirmPasswordPlaceholder
+                      }
                       type="password"
                       value={confirmPassword}
                     />
@@ -343,7 +348,7 @@ export function UserDialog({
               {(() => {
                 if (isPending) {
                   return isEditMode
-                    ? "در حال ذخیره..."
+                    ? fa.admin.users.actions.saving
                     : fa.admin.users.addDialog.creating;
                 }
                 return isEditMode

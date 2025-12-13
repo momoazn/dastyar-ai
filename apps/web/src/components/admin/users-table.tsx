@@ -37,17 +37,15 @@ import {
 } from "@/components/ui/table";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
-import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
+import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { AdminTableShell } from "./table-shell";
 import { UserDetailDialog } from "./user-detail-dialog";
 import { UserDialog } from "./user-dialog";
 
-type UserType = Omit<User, "password">;
-
 export function UsersTable() {
-  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
   const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
@@ -102,17 +100,17 @@ export function UsersTable() {
     })
   );
 
-  const handleEditUser = (user: UserType) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setEditUserDialogOpen(true);
   };
 
-  const handleShowDetails = (user: UserType) => {
+  const handleShowDetails = (user: User) => {
     setSelectedUser(user);
     setUserDetailDialogOpen(true);
   };
 
-  const handleDeleteUser = (user: UserType) => {
+  const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setDeleteUserDialogOpen(true);
   };
@@ -302,7 +300,7 @@ export function UsersTable() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEditUser(user)}>
                           <Settings className="ml-2 h-4 w-4" />
-                          ویرایش کاربر
+                          {fa.admin.users.actions.editUser}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"

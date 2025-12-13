@@ -17,15 +17,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { fa } from "@/lib/persian-texts";
-import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
+import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
-
-type UserType = Omit<User, "password">;
 
 type UserDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: UserType | null;
+  user: User | null;
 };
 
 type ActivityStat = {
