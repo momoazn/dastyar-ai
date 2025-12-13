@@ -101,7 +101,7 @@ export function AdminTableShell({
       </SurfaceHeader>
 
       {filters ? (
-        <div className="border-b bg-muted/30 px-4 py-3">
+        <div className="border-b bg-muted/30 px-4 py-3" dir="rtl">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             {filters}
           </div>

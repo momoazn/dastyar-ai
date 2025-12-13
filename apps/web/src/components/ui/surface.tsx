@@ -38,7 +38,7 @@ type SurfaceTitleProps = React.ComponentProps<"div">;
 export function SurfaceTitle({ className, ...props }: SurfaceTitleProps) {
   return (
     <div
-      className={cn("leading-6", "font-semibold", "text-base", className)}
+      className={cn("leading-6", "font-semibold", "text-base", "text-right", className)}
       {...props}
     />
   );
