@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Eye,
   MoreHorizontal,
+  Plus,
   Search,
   Settings,
   Trash2,
@@ -38,6 +39,7 @@ import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
+import { AddUserDialog } from "./add-user-dialog";
 import { ChangeRoleDialog } from "./change-role-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { ResetPasswordDialog } from "./reset-password-dialog";
@@ -48,6 +50,7 @@ type UserType = Omit<User, "password">;
 
 export function UsersTable() {
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
@@ -199,7 +202,12 @@ export function UsersTable() {
   return (
     <>
       <AdminTableShell
-        actions={null}
+        actions={
+          <Button onClick={() => setAddUserDialogOpen(true)} size="sm">
+            <Plus className="ml-2 h-4 w-4" />
+            {fa.admin.users.addUser}
+          </Button>
+        }
         badge={
           <Badge variant="secondary">
             {fa.admin.users.userCount(usersResponse?.total ?? 0)}
@@ -422,6 +430,11 @@ export function UsersTable() {
         onOpenChange={setUserDetailDialogOpen}
         open={userDetailDialogOpen}
         user={selectedUser}
+      />
+
+      <AddUserDialog
+        onOpenChange={setAddUserDialogOpen}
+        open={addUserDialogOpen}
       />
     </>
   );

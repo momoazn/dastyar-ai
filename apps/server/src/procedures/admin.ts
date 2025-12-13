@@ -12,6 +12,7 @@ import {
   updateUserPassword,
   updateUserRole,
 } from "@/repositories/admin";
+import { createUser, hashPassword, usernameExists } from "@/repositories/auth";
 import { addModel, getModels, updateModel } from "@/repositories/llm-models";
 import {
   deleteSetting,
@@ -46,6 +47,12 @@ const getUsersWithPaginationSchema = z.object({
 
 const deleteUserSchema = z.object({
   userId: z.number().int().positive(),
+});
+
+const createUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["admin", "user"]).default("user"),
 });
 
 const addModelSchema = z.object({
@@ -176,6 +183,49 @@ export const adminProcedures = {
         }
         throw new ORPCError("INTERNAL_ERROR", {
           message: "Failed to update user password",
+          status: 500,
+        });
+      }
+    }),
+
+  createUser: adminProcedure
+    .input(createUserSchema)
+    .handler(async ({ input }) => {
+      try {
+        const { username, password, role } = input;
+
+        // Check if username already exists
+        const exists = await usernameExists(username);
+        if (exists) {
+          throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+            message: "نام کاربری قبلاً استفاده شده است",
+            status: 400,
+          });
+        }
+
+        // Hash password
+        const hashedPassword = await hashPassword(password);
+
+        // Create user
+        const newUser = await createUser({
+          username,
+          password: hashedPassword,
+          role: role ?? "user",
+        });
+
+        return {
+          id: newUser.id,
+          username: newUser.username,
+          role: newUser.role,
+          createdAt: newUser.createdAt,
+        };
+      } catch (error) {
+        logger.error("Error creating user:", error, { function: "admin" });
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to create user",
           status: 500,
         });
       }
