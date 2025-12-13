@@ -15,6 +15,9 @@ export const general = {
   history: "تاریخچه",
   noItems: "موردی موجود نیست",
   startNew: "شروع جدید",
+  save: "ذخیره",
+  cancel: "لغو",
+  edit: "ویرایش",
 } as const;
 
 export const languages = {
