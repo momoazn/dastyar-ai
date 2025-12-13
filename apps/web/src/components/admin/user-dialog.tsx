@@ -25,19 +25,19 @@ import { orpc } from "@/utils/orpc";
 
 type UserType = Omit<User, "password">;
 
-type AddUserDialogProps = {
+type UserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user?: UserType | null;
   onSuccess?: () => void;
 };
 
-export function AddUserDialog({
+export function UserDialog({
   open,
   onOpenChange,
   user,
   onSuccess,
-}: AddUserDialogProps) {
+}: UserDialogProps) {
   const isEditMode = Boolean(user);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

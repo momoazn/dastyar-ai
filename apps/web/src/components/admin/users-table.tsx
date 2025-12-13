@@ -39,10 +39,10 @@ import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
-import { AddUserDialog } from "./add-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import { AdminTableShell } from "./table-shell";
 import { UserDetailDialog } from "./user-detail-dialog";
+import { UserDialog } from "./user-dialog";
 
 type UserType = Omit<User, "password">;
 
@@ -352,12 +352,12 @@ export function UsersTable() {
         user={selectedUser}
       />
 
-      <AddUserDialog
+      <UserDialog
         onOpenChange={setAddUserDialogOpen}
         open={addUserDialogOpen}
       />
 
-      <AddUserDialog
+      <UserDialog
         onOpenChange={setEditUserDialogOpen}
         onSuccess={handleEditSuccess}
         open={editUserDialogOpen}
