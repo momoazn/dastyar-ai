@@ -9,8 +9,7 @@ import {
   getUserWithStats,
   type UserListResponse,
   type UserWithStats,
-  updateUserPassword,
-  updateUserRole,
+  updateUser,
 } from "@/repositories/admin";
 import { createUser, hashPassword, usernameExists } from "@/repositories/auth";
 import { addModel, getModels, updateModel } from "@/repositories/llm-models";
@@ -23,14 +22,10 @@ import {
 } from "@/repositories/system-settings";
 import { adminProcedure } from "./base";
 
-const updateUserRoleSchema = z.object({
+const updateUserSchema = z.object({
   userId: z.number().int().positive(),
-  newRole: z.enum(["admin", "user"]),
-});
-
-const updateUserPasswordSchema = z.object({
-  userId: z.number().int().positive(),
-  newPassword: z.string().min(6),
+  role: z.enum(["admin", "user"]).optional(),
+  password: z.string().min(6).optional(),
 });
 
 const toggleModelStatusSchema = z.object({
@@ -129,11 +124,12 @@ export const adminProcedures = {
       }
     }),
 
-  updateUserRole: adminProcedure
-    .input(updateUserRoleSchema)
+  updateUser: adminProcedure
+    .input(updateUserSchema)
     .handler(async ({ input }) => {
-      const { userId, newRole } = input;
       try {
+        const { userId, role, password } = input;
+
         // Check if user exists
         const user = await getUserById(userId);
         if (!user) {
@@ -143,46 +139,26 @@ export const adminProcedures = {
           });
         }
 
-        const updatedUser = await updateUserRole(userId, newRole);
+        // At least one field must be provided
+        if (role === undefined && password === undefined) {
+          throw new ORPCError("INVALID_INPUT", {
+            message: "At least one field (role or password) must be provided",
+            status: 400,
+          });
+        }
+
+        const updatedUser = await updateUser(userId, {
+          role,
+          password,
+        });
         return updatedUser;
       } catch (error) {
-        logger.error("Error updating user role", error, { userId, newRole });
+        logger.error("Error updating user", error, { userId: input.userId });
         if (error instanceof ORPCError) {
           throw error;
         }
         throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update user role",
-          status: 500,
-        });
-      }
-    }),
-
-  updateUserPassword: adminProcedure
-    .input(updateUserPasswordSchema)
-    .handler(async ({ input }) => {
-      try {
-        const { userId, newPassword } = input;
-
-        // Check if user exists
-        const user = await getUserById(userId);
-        if (!user) {
-          throw new ORPCError("USER_NOT_FOUND", {
-            message: "User not found",
-            status: 404,
-          });
-        }
-
-        await updateUserPassword(userId, newPassword);
-        return { success: true };
-      } catch (error) {
-        logger.error("Error updating user password:", error, {
-          function: "admin",
-        });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update user password",
+          message: "Failed to update user",
           status: 500,
         });
       }

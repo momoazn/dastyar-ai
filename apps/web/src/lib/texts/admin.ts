@@ -34,9 +34,7 @@ export const admin = {
       user: "کاربر",
     },
     actions: {
-      changeRole: "تغییر نقش",
       resetPassword: "بازنشانی رمز عبور",
-      confirmRoleChange: "تغییر نقش کاربر",
       deleteUser: "حذف کاربر",
       deleting: "در حال حذف...",
       confirmDeleteUser: "حذف کاربر",
@@ -45,11 +43,6 @@ export const admin = {
       confirmDeleteUserWarning:
         "این عمل قابل بازگشت نیست و تمام داده‌های کاربر (پیام‌ها، اسناد، تصاویر و غیره) حذف خواهد شد.",
       confirmDeleteUserHint: "برای تایید، عبارت DELETE یا حذف را وارد کنید:",
-      confirmRoleChangeMessage:
-        "آیا مطمئن هستید که می‌خواهید نقش کاربر را تغییر دهید؟",
-      confirmPasswordReset: "بازنشانی رمز عبور",
-      confirmPasswordResetMessage:
-        "آیا مطمئن هستید که می‌خواهید رمز عبور کاربر را بازنشانی کنید؟",
       newPassword: "رمز عبور جدید",
       newPasswordPlaceholder: "رمز عبور جدید را وارد کنید",
       cancel: "لغو",
@@ -57,10 +50,8 @@ export const admin = {
       save: "ذخیره",
     },
     messages: {
-      roleUpdated: "نقش کاربر با موفقیت تغییر یافت",
-      passwordUpdated: "رمز عبور کاربر با موفقیت بازنشانی شد",
-      errorUpdatingRole: "خطا در تغییر نقش کاربر",
-      errorUpdatingPassword: "خطا در بازنشانی رمز عبور",
+      userUpdated: "کاربر با موفقیت به‌روزرسانی شد",
+      errorUpdatingUser: "خطا در به‌روزرسانی کاربر",
       userNotFound: "کاربر یافت نشد",
       userDeleted: "کاربر با موفقیت حذف شد",
       errorDeletingUser: "خطا در حذف کاربر",

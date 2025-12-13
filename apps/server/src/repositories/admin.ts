@@ -161,42 +161,32 @@ export async function getUserWithStats(
   };
 }
 
-export async function updateUserRole(
+export async function updateUser(
   userId: number,
-  newRole: UserRole
+  updates: {
+    role?: UserRole;
+    password?: string;
+  }
 ): Promise<UserWithoutSensitiveData> {
-  await db
-    .update(users)
-    .set({
-      role: newRole,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId))
-    .run();
+  const updateData: { role?: UserRole; password?: string; updatedAt: Date } = {
+    updatedAt: new Date(),
+  };
+
+  if (updates.role !== undefined) {
+    updateData.role = updates.role;
+  }
+
+  if (updates.password !== undefined) {
+    updateData.password = await hashPassword(updates.password);
+  }
+
+  await db.update(users).set(updateData).where(eq(users.id, userId)).run();
 
   const updatedUser = await getUserById(userId);
   if (!updatedUser) {
-    throw new Error("User not found after role update");
+    throw new Error("User not found after update");
   }
   return updatedUser;
-}
-
-export async function updateUserPassword(
-  userId: number,
-  newPassword: string
-): Promise<{ success: boolean }> {
-  const hashedPassword = await hashPassword(newPassword);
-
-  await db
-    .update(users)
-    .set({
-      password: hashedPassword,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId))
-    .run();
-
-  return { success: true };
 }
 
 export async function hashPassword(password: string): Promise<string> {

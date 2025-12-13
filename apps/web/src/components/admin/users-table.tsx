@@ -40,9 +40,7 @@ import { fa } from "@/lib/persian-texts";
 import type { UserWithoutSensitiveData as User } from "@/server/repositories/admin";
 import { orpc } from "@/utils/orpc";
 import { AddUserDialog } from "./add-user-dialog";
-import { ChangeRoleDialog } from "./change-role-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
-import { ResetPasswordDialog } from "./reset-password-dialog";
 import { AdminTableShell } from "./table-shell";
 import { UserDetailDialog } from "./user-detail-dialog";
 
@@ -51,8 +49,7 @@ type UserType = Omit<User, "password">;
 export function UsersTable() {
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
-  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
-  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
   const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -78,40 +75,6 @@ export function UsersTable() {
 
   const users = usersResponse?.users ?? [];
   const isEmpty = !(isLoading || error) && users.length === 0;
-
-  const updateRoleMutation = useMutation(
-    orpc.admin.updateUserRole.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listUsersWithPagination.queryKey({
-            input: {
-              page,
-              pageSize,
-              search: searchQuery || undefined,
-              role: roleFilter,
-            },
-          }),
-        });
-        toast.success(fa.admin.users.messages.roleUpdated);
-        setChangeRoleDialogOpen(false);
-      },
-      onError: () => {
-        toast.error(fa.admin.users.messages.errorUpdatingRole);
-      },
-    })
-  );
-
-  const updatePasswordMutation = useMutation(
-    orpc.admin.updateUserPassword.mutationOptions({
-      onSuccess: () => {
-        toast.success(fa.admin.users.messages.passwordUpdated);
-        setResetPasswordDialogOpen(false);
-      },
-      onError: () => {
-        toast.error(fa.admin.users.messages.errorUpdatingPassword);
-      },
-    })
-  );
 
   const deleteUserMutation = useMutation(
     orpc.admin.deleteUser.mutationOptions({
@@ -139,14 +102,9 @@ export function UsersTable() {
     })
   );
 
-  const handleChangeRole = (user: UserType) => {
+  const handleEditUser = (user: UserType) => {
     setSelectedUser(user);
-    setChangeRoleDialogOpen(true);
-  };
-
-  const handleResetPassword = (user: UserType) => {
-    setSelectedUser(user);
-    setResetPasswordDialogOpen(true);
+    setEditUserDialogOpen(true);
   };
 
   const handleShowDetails = (user: UserType) => {
@@ -159,23 +117,16 @@ export function UsersTable() {
     setDeleteUserDialogOpen(true);
   };
 
-  const handleRoleChange = (newRole: "admin" | "user") => {
-    if (!selectedUser) {
-      return;
-    }
-    updateRoleMutation.mutate({
-      userId: selectedUser.id,
-      newRole,
-    });
-  };
-
-  const handlePasswordReset = (newPassword: string) => {
-    if (!selectedUser) {
-      return;
-    }
-    updatePasswordMutation.mutate({
-      userId: selectedUser.id,
-      newPassword,
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.admin.listUsersWithPagination.queryKey({
+        input: {
+          page,
+          pageSize,
+          search: searchQuery || undefined,
+          role: roleFilter,
+        },
+      }),
     });
   };
 
@@ -335,11 +286,7 @@ export function UsersTable() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          disabled={
-                            updateRoleMutation.isPending ||
-                            updatePasswordMutation.isPending ||
-                            deleteUserMutation.isPending
-                          }
+                          disabled={deleteUserMutation.isPending}
                           size="sm"
                           variant="ghost"
                         >
@@ -348,25 +295,14 @@ export function UsersTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" side="left">
                         <DropdownMenuItem
-                          disabled={updateRoleMutation.isPending}
                           onClick={() => handleShowDetails(user)}
                         >
                           <Eye className="ml-2 h-4 w-4" />
                           {fa.admin.users.viewDetails}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={updateRoleMutation.isPending}
-                          onClick={() => handleChangeRole(user)}
-                        >
+                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
                           <Settings className="ml-2 h-4 w-4" />
-                          {fa.admin.users.actions.changeRole}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={updatePasswordMutation.isPending}
-                          onClick={() => handleResetPassword(user)}
-                        >
-                          <Settings className="ml-2 h-4 w-4" />
-                          {fa.admin.users.actions.resetPassword}
+                          ویرایش کاربر
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
@@ -402,22 +338,6 @@ export function UsersTable() {
         </div>
       </AdminTableShell>
 
-      <ChangeRoleDialog
-        isLoading={updateRoleMutation.isPending}
-        onOpenChange={setChangeRoleDialogOpen}
-        onRoleChange={handleRoleChange}
-        open={changeRoleDialogOpen}
-        user={selectedUser}
-      />
-
-      <ResetPasswordDialog
-        isLoading={updatePasswordMutation.isPending}
-        onOpenChange={setResetPasswordDialogOpen}
-        onPasswordReset={handlePasswordReset}
-        open={resetPasswordDialogOpen}
-        user={selectedUser}
-      />
-
       <DeleteUserDialog
         isLoading={deleteUserMutation.isPending}
         onConfirm={handleConfirmDeleteUser}
@@ -435,6 +355,13 @@ export function UsersTable() {
       <AddUserDialog
         onOpenChange={setAddUserDialogOpen}
         open={addUserDialogOpen}
+      />
+
+      <AddUserDialog
+        onOpenChange={setEditUserDialogOpen}
+        onSuccess={handleEditSuccess}
+        open={editUserDialogOpen}
+        user={selectedUser}
       />
     </>
   );
