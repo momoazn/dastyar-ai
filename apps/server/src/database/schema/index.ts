@@ -12,7 +12,6 @@ import type {
   SourceType,
   SummaryMode,
   Tone,
-  TranscribeLanguage,
   TranslationPayload,
   UserRole,
 } from "./types";
@@ -26,7 +25,6 @@ import {
   sourceTypes,
   summaryModes,
   tones,
-  transcribeLanguages,
   userRoles,
 } from "./types";
 
@@ -55,55 +53,6 @@ export const users = sqliteTable("users", {
     .notNull()
     .default(timestamp),
 });
-
-export const userPreferences = sqliteTable(
-  "user_preferences",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("user_id")
-      .notNull()
-      .unique()
-      .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    codeModelId: integer("code_model_id").references(() => llmModels.id, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
-    codeMode: text("code_mode", { enum: codeModes }).$type<CodeMode>(),
-    codeLanguage: text("code_language", {
-      enum: programmingLanguages,
-    }).$type<ProgrammingLanguage>(),
-    translationModelId: integer("translation_model_id").references(
-      () => llmModels.id,
-      { onDelete: "set null", onUpdate: "cascade" }
-    ),
-    translationSourceLanguage: text("translation_source_language", {
-      enum: languageCodes,
-    }).$type<LanguageCode>(),
-    translationTargetLanguage: text("translation_target_language", {
-      enum: languageCodes,
-    }).$type<LanguageCode>(),
-    translationTone: text("translation_tone", { enum: tones }).$type<Tone>(),
-    summarizeModelId: integer("summarize_model_id").references(
-      () => llmModels.id,
-      { onDelete: "set null", onUpdate: "cascade" }
-    ),
-    summarizeMode: text("summarize_mode", {
-      enum: summaryModes,
-    }).$type<SummaryMode>(),
-    summarizeTone: text("summarize_tone", { enum: tones }).$type<Tone>(),
-    transcribeModel: text("transcribe_model"),
-    transcribeLanguage: text("transcribe_language", {
-      enum: transcribeLanguages,
-    }).$type<TranscribeLanguage>(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .default(timestamp),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .default(timestamp),
-  },
-  (table) => [index("idx_user_preferences_user_id").on(table.userId)]
-);
 
 export const llmModels = sqliteTable(
   "llm_models",
@@ -431,7 +380,7 @@ export const systemSettings = sqliteTable("system_settings", {
 // Relations
 // ============================================================================
 
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   chatThreads: many(chatThreads),
   messages: many(messages),
   translations: many(translations),
@@ -440,33 +389,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   generatedImages: many(generatedImages),
   codeRuns: many(codeRuns),
   documents: many(documents),
-  preferences: one(userPreferences, {
-    fields: [users.id],
-    references: [userPreferences.userId],
-  }),
 }));
-
-export const userPreferencesRelations = relations(
-  userPreferences,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [userPreferences.userId],
-      references: [users.id],
-    }),
-    codeModel: one(llmModels, {
-      fields: [userPreferences.codeModelId],
-      references: [llmModels.id],
-    }),
-    translationModel: one(llmModels, {
-      fields: [userPreferences.translationModelId],
-      references: [llmModels.id],
-    }),
-    summarizeModel: one(llmModels, {
-      fields: [userPreferences.summarizeModelId],
-      references: [llmModels.id],
-    }),
-  })
-);
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
   messages: many(messages),
@@ -596,11 +519,6 @@ export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
-export const insertUserPreferencesSchema = createInsertSchema(userPreferences);
-export const selectUserPreferencesSchema = createSelectSchema(userPreferences);
-export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
-export type SelectUserPreferences = z.infer<typeof selectUserPreferencesSchema>;
-
 export const insertLlmModelSchema = createInsertSchema(llmModels);
 export const selectLlmModelSchema = createSelectSchema(llmModels);
 export type InsertLlmModel = z.infer<typeof insertLlmModelSchema>;
@@ -677,7 +595,6 @@ export type CodeRun = SelectCodeRun;
 export type Document = SelectDocument;
 export type DocumentChunk = SelectDocumentChunk;
 export type ThreadDocument = SelectThreadDocument;
-export type UserPreferences = SelectUserPreferences;
 export type SystemSetting = SelectSystemSetting;
 
 // Re-export types from types.ts

@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Shield, SlidersHorizontal, User, Users } from "lucide-react";
+import { Bot, Shield, User, Users } from "lucide-react";
 import { ModelsTable } from "@/components/admin/models-table";
 import { SettingsPanel } from "@/components/admin/settings-panel";
 import { UsersTable } from "@/components/admin/users-table";
 import { AccountSettings } from "@/components/settings/account-settings";
-import { PreferencesSettings } from "@/components/settings/preferences-settings";
 import { Card } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
@@ -16,15 +15,8 @@ export const Route = createFileRoute("/settings")({
   validateSearch: (search: { tab?: string }) => ({
     tab:
       typeof search.tab === "string" &&
-      ["account", "preferences", "users", "models", "system"].includes(
-        search.tab
-      )
-        ? (search.tab as
-            | "account"
-            | "preferences"
-            | "users"
-            | "models"
-            | "system")
+      ["account", "users", "models", "system"].includes(search.tab)
+        ? (search.tab as "account" | "users" | "models" | "system")
         : "account",
   }),
 });
@@ -44,8 +36,6 @@ function SettingsComponent() {
           fa.settings.account.description ||
           "تنظیمات حساب کاربری خود را مدیریت کنید"
         );
-      case "preferences":
-        return fa.settings.preferences.description;
       case "users":
         return fa.admin.users.title;
       case "models":
@@ -71,20 +61,10 @@ function SettingsComponent() {
               navigate({
                 replace: true,
                 search: (prev: {
-                  tab:
-                    | "account"
-                    | "preferences"
-                    | "users"
-                    | "models"
-                    | "system";
+                  tab: "account" | "users" | "models" | "system";
                 }) => ({
                   ...prev,
-                  tab: value as
-                    | "account"
-                    | "preferences"
-                    | "users"
-                    | "models"
-                    | "system",
+                  tab: value as "account" | "users" | "models" | "system",
                 }),
               })
             }
@@ -92,7 +72,7 @@ function SettingsComponent() {
           >
             <TabsList
               className={`sticky top-0 z-20 grid w-full bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 ${
-                isAdmin ? "grid-cols-5" : "grid-cols-2"
+                isAdmin ? "grid-cols-4" : "grid-cols-1"
               }`}
               dir="rtl"
             >
@@ -102,13 +82,6 @@ function SettingsComponent() {
               >
                 <User aria-hidden="true" className="h-4 w-4" />
                 {fa.settings.tabs.account}
-              </TabsTrigger>
-              <TabsTrigger
-                className="inline-flex items-center justify-center gap-2 text-right"
-                value="preferences"
-              >
-                <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
-                {fa.settings.tabs.preferences}
               </TabsTrigger>
               {isAdmin && (
                 <>
@@ -139,10 +112,6 @@ function SettingsComponent() {
 
             <TabsContent className="mt-6" value="account">
               <AccountSettings />
-            </TabsContent>
-
-            <TabsContent className="mt-6" value="preferences">
-              <PreferencesSettings />
             </TabsContent>
 
             {isAdmin && (

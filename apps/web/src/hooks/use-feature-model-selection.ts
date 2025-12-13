@@ -7,19 +7,12 @@ import {
   summarizeModelIdAtom,
   translationModelIdAtom,
 } from "@/atoms/model";
-import { useUser } from "@/hooks/use-user";
 import { orpc } from "@/utils/orpc";
 
-type PreferenceKey = "summarizeModelId" | "translationModelId" | "codeModelId";
 type ModelAtom = typeof summarizeModelIdAtom;
 
-function usePreferenceBackedModelSelection(
-  atom: ModelAtom,
-  preferenceKey: PreferenceKey,
-  enabled = true
-) {
+function useModelSelection(atom: ModelAtom, enabled = true) {
   const [modelId, setModelId] = useAtom(atom);
-  const { data: user } = useUser();
 
   const modelsQuery = useQuery(
     orpc.models.list.queryOptions({
@@ -27,11 +20,6 @@ function usePreferenceBackedModelSelection(
       enabled,
     })
   );
-
-  const preferencesQuery = useQuery({
-    ...orpc.settings.getPreferences.queryOptions(),
-    enabled: enabled && !!user,
-  });
 
   useEffect(() => {
     if (!(enabled && modelsQuery.data)) {
@@ -41,30 +29,17 @@ function usePreferenceBackedModelSelection(
       return;
     }
 
-    const preferredId = preferencesQuery.data?.[preferenceKey];
-    if (preferredId) {
-      setModelId(preferredId);
-      return;
-    }
-
     if (modelsQuery.data.length > 0) {
       setModelId(modelsQuery.data[0].id);
     }
-  }, [
-    enabled,
-    modelId,
-    modelsQuery.data,
-    preferenceKey,
-    preferencesQuery.data,
-    setModelId,
-  ]);
+  }, [enabled, modelId, modelsQuery.data, setModelId]);
 
   return {
     modelId,
     setModelId,
     models: modelsQuery.data || [],
-    isLoading: modelsQuery.isLoading || preferencesQuery.isLoading,
-    error: modelsQuery.error || preferencesQuery.error,
+    isLoading: modelsQuery.isLoading,
+    error: modelsQuery.error,
     refetch: modelsQuery.refetch,
   };
 }
@@ -156,11 +131,7 @@ export function useSummarizeModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  return usePreferenceBackedModelSelection(
-    summarizeModelIdAtom,
-    "summarizeModelId",
-    enabled
-  );
+  return useModelSelection(summarizeModelIdAtom, enabled);
 }
 
 // Translation model selection hook
@@ -169,11 +140,7 @@ export function useTranslationModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  return usePreferenceBackedModelSelection(
-    translationModelIdAtom,
-    "translationModelId",
-    enabled
-  );
+  return useModelSelection(translationModelIdAtom, enabled);
 }
 
 // Code model selection hook
@@ -182,9 +149,5 @@ export function useCodeModelSelection({
 }: {
   enabled?: boolean;
 } = {}) {
-  return usePreferenceBackedModelSelection(
-    codeModelIdAtom,
-    "codeModelId",
-    enabled
-  );
+  return useModelSelection(codeModelIdAtom, enabled);
 }

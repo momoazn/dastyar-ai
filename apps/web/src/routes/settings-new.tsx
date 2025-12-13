@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileSection } from "@/components/settings/profile-section";
-import { QuickSettings } from "@/components/settings/quick-settings";
 import { SecuritySection } from "@/components/settings/security-section";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import ProtectedLayout from "@/layouts/protected";
@@ -22,7 +21,6 @@ function NewSettingsComponent() {
         <div className="space-y-4" dir="rtl">
           <ProfileSection />
           <SecuritySection />
-          <QuickSettings />
         </div>
       </div>
     </ProtectedLayout>

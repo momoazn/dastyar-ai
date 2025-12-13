@@ -304,41 +304,25 @@ export function UsersTable() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">
-                  {fa.admin.users.table.id}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.username}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.role}
+                  {fa.admin.users.table.actions}
                 </TableHead>
                 <TableHead className="text-right">
                   {fa.admin.users.table.createdAt}
                 </TableHead>
                 <TableHead className="text-right">
-                  {fa.admin.users.table.actions}
+                  {fa.admin.users.table.role}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.username}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.id}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="text-right font-medium">
-                    {user.id}
-                  </TableCell>
-                  <TableCell className="text-right">{user.username}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={user.role === "admin" ? "default" : "secondary"}
-                    >
-                      {user.role === "admin"
-                        ? fa.admin.users.table.admin
-                        : fa.admin.users.table.user}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
-                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -386,6 +370,22 @@ export function UsersTable() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                    >
+                      {user.role === "admin"
+                        ? fa.admin.users.table.admin
+                        : fa.admin.users.table.user}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{user.username}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {user.id}
                   </TableCell>
                 </TableRow>
               ))}
