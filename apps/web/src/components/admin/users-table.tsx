@@ -112,6 +112,13 @@ export function UsersTable() {
 
   const totalPages = usersResponse?.totalPages ?? 1;
 
+  const currentPaginationParams = {
+    page,
+    pageSize,
+    ...(searchQuery && { search: searchQuery }),
+    ...(roleFilter && { role: roleFilter }),
+  };
+
   return (
     <>
       <AdminTableShell
@@ -331,12 +338,14 @@ export function UsersTable() {
       <UserDialog
         onOpenChange={setAddUserDialogOpen}
         open={addUserDialogOpen}
+        paginationParams={currentPaginationParams}
       />
 
       <UserDialog
         onOpenChange={setEditUserDialogOpen}
         onSuccess={invalidateUserList}
         open={editUserDialogOpen}
+        paginationParams={currentPaginationParams}
         user={selectedUser}
       />
     </>

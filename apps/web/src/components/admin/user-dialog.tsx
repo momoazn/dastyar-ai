@@ -28,6 +28,12 @@ type UserDialogProps = {
   onOpenChange: (open: boolean) => void;
   user?: User | null;
   onSuccess?: () => void;
+  paginationParams?: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    role?: "admin" | "user";
+  };
 };
 
 type PasswordFieldProps = {
@@ -68,6 +74,7 @@ export function UserDialog({
   onOpenChange,
   user,
   onSuccess,
+  paginationParams,
 }: UserDialogProps) {
   const isEditMode = !!user;
   const [username, setUsername] = useState("");
@@ -102,14 +109,26 @@ export function UserDialog({
   }, [user]);
 
   const invalidateUserList = () => {
-    queryClient.invalidateQueries({
-      queryKey: orpc.admin.listUsers
-        .queryKey({
-          input: { page: 1, pageSize: 10 },
-        })
-        .slice(0, 2),
-      exact: false,
-    });
+    if (paginationParams) {
+      const input = {
+        page: paginationParams.page,
+        pageSize: paginationParams.pageSize,
+        ...(paginationParams.search && { search: paginationParams.search }),
+        ...(paginationParams.role && { role: paginationParams.role }),
+      };
+      queryClient.invalidateQueries({
+        queryKey: orpc.admin.listUsers.queryKey({ input }),
+      });
+    } else {
+      // Fallback: invalidate all listUsers queries if pagination params not provided
+      const baseQueryKey = orpc.admin.listUsers.queryKey({
+        input: { page: 1, pageSize: 10 },
+      });
+      queryClient.invalidateQueries({
+        queryKey: baseQueryKey.slice(0, 2),
+        exact: false,
+      });
+    }
   };
 
   const handleMutationSuccess = (message: string, callback?: () => void) => {
