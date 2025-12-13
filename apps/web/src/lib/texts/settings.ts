@@ -61,7 +61,9 @@ export const settings = {
   tabs: {
     account: "حساب کاربری",
     preferences: "تنظیمات پیش‌فرض",
-    admin: "مدیریت",
+    users: "مدیریت کاربران",
+    models: "مدیریت مدل‌ها",
+    system: "تنظیمات سیستم",
   },
   placeholders: {
     selectLanguage: "انتخاب زبان",

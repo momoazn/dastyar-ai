@@ -48,7 +48,7 @@ export function DeleteUserDialog({
   return (
     <AlertDialog onOpenChange={handleOpenChange} open={open}>
       <AlertDialogContent>
-        <AlertDialogHeader>
+        <AlertDialogHeader className="text-right">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
             <AlertDialogTitle>
@@ -78,7 +78,7 @@ export function DeleteUserDialog({
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-start gap-3">
           <AlertDialogCancel disabled={isLoading}>
             {fa.admin.users.actions.cancel}
           </AlertDialogCancel>

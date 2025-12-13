@@ -92,7 +92,7 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+        <DialogHeader className="text-right">
           <DialogTitle>{fa.admin.models.addDialog.title}</DialogTitle>
           <DialogDescription>
             {fa.admin.models.addDialog.description}
@@ -175,7 +175,7 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-start gap-3 pt-4">
             <Button
               disabled={addModelMutation.isPending}
               onClick={() => handleOpenChange(false)}

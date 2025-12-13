@@ -110,7 +110,7 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* General Settings */}
       <Card className="p-6">
         <h3 className="mb-4 font-semibold text-lg">
@@ -409,7 +409,7 @@ export function SettingsPanel() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-row-reverse justify-start gap-3">
         <Button
           disabled={!hasChanges || upsertMutation.isPending}
           onClick={handleCancel}

@@ -95,7 +95,7 @@ export function AdminTableShell({
       </SurfaceHeader>
 
       {filters ? (
-        <div className="border-b px-4 py-3">
+        <div className="border-b bg-muted/30 px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             {filters}
           </div>
@@ -107,7 +107,9 @@ export function AdminTableShell({
       </SurfaceContent>
 
       {footer ? (
-        <SurfaceStatus className="justify-end">{footer}</SurfaceStatus>
+        <SurfaceStatus className="justify-start bg-muted/20 px-4 py-2">
+          {footer}
+        </SurfaceStatus>
       ) : null}
     </Surface>
   );

@@ -106,7 +106,7 @@ export function ModelsTable() {
         emptyMessage={fa.admin.models.notFound}
         errorMessage={fa.admin.models.errorLoading}
         filters={
-          <>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Select
               onValueChange={(value) =>
                 setProviderFilter(value as LLMModelProvider | "all")
@@ -114,7 +114,7 @@ export function ModelsTable() {
               value={providerFilter}
             >
               <SelectTrigger className="w-full sm:w-40">
-                <Filter className="mr-2 h-4 w-4" />
+                <Filter className="ml-2 h-4 w-4" />
                 <SelectValue
                   placeholder={fa.admin.models.table.filterByProvider}
                 />
@@ -154,7 +154,7 @@ export function ModelsTable() {
                 </SelectItem>
               </SelectContent>
             </Select>
-          </>
+          </div>
         }
         isEmpty={isEmpty}
         isError={Boolean(error)}
@@ -167,33 +167,35 @@ export function ModelsTable() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">
-                  {fa.admin.models.table.toggle}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.status}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.provider}
+                  {fa.admin.models.table.id}
                 </TableHead>
                 <TableHead className="text-right">
                   {fa.admin.models.table.name}
                 </TableHead>
                 <TableHead className="text-right">
-                  {fa.admin.models.table.id}
+                  {fa.admin.models.table.provider}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.status}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.toggle}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {models?.map((model) => (
                 <TableRow key={model.id}>
+                  <TableCell className="text-right font-medium">
+                    {model.id}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {model.identifier}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Switch
-                      checked={model.isEnabled}
-                      disabled={toggleModelMutation.isPending}
-                      onCheckedChange={() =>
-                        handleToggleModel(model.id, model.isEnabled)
-                      }
-                    />
+                    <Badge variant="outline">
+                      {getProviderLabel(model.provider)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant={model.isEnabled ? "default" : "secondary"}>
@@ -203,15 +205,13 @@ export function ModelsTable() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="outline">
-                      {getProviderLabel(model.provider)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {model.identifier}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {model.id}
+                    <Switch
+                      checked={model.isEnabled}
+                      disabled={toggleModelMutation.isPending}
+                      onCheckedChange={() =>
+                        handleToggleModel(model.id, model.isEnabled)
+                      }
+                    />
                   </TableCell>
                 </TableRow>
               ))}

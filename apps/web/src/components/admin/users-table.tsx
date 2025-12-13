@@ -211,9 +211,9 @@ export function UsersTable() {
           <>
             <div className="flex-1">
               <div className="relative">
-                <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+                <Search className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  className="pl-10"
+                  className="pr-10"
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setPage(1);
@@ -248,8 +248,8 @@ export function UsersTable() {
           </>
         }
         footer={
-          <div className="flex w-full items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <span className="text-muted-foreground text-sm">
                 {fa.admin.users.show}
               </span>
@@ -280,7 +280,7 @@ export function UsersTable() {
                 size="icon"
                 variant="outline"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 rotate-180" />
               </Button>
               <Button
                 disabled={page === totalPages}
@@ -288,7 +288,7 @@ export function UsersTable() {
                 size="icon"
                 variant="outline"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 rotate-180" />
               </Button>
             </div>
           </div>
@@ -304,25 +304,41 @@ export function UsersTable() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">
-                  {fa.admin.users.table.actions}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.createdAt}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.role}
+                  {fa.admin.users.table.id}
                 </TableHead>
                 <TableHead className="text-right">
                   {fa.admin.users.table.username}
                 </TableHead>
                 <TableHead className="text-right">
-                  {fa.admin.users.table.id}
+                  {fa.admin.users.table.role}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.createdAt}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.users.table.actions}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell className="text-right font-medium">
+                    {user.id}
+                  </TableCell>
+                  <TableCell className="text-right">{user.username}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                    >
+                      {user.role === "admin"
+                        ? fa.admin.users.table.admin
+                        : fa.admin.users.table.user}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -338,26 +354,26 @@ export function UsersTable() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="start" side="left">
                         <DropdownMenuItem
                           disabled={updateRoleMutation.isPending}
                           onClick={() => handleShowDetails(user)}
                         >
-                          <Eye className="mr-2 h-4 w-4" />
+                          <Eye className="ml-2 h-4 w-4" />
                           {fa.admin.users.viewDetails}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={updateRoleMutation.isPending}
                           onClick={() => handleChangeRole(user)}
                         >
-                          <Settings className="mr-2 h-4 w-4" />
+                          <Settings className="ml-2 h-4 w-4" />
                           {fa.admin.users.actions.changeRole}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={updatePasswordMutation.isPending}
                           onClick={() => handleResetPassword(user)}
                         >
-                          <Settings className="mr-2 h-4 w-4" />
+                          <Settings className="ml-2 h-4 w-4" />
                           {fa.admin.users.actions.resetPassword}
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -365,27 +381,11 @@ export function UsersTable() {
                           disabled={deleteUserMutation.isPending}
                           onClick={() => handleDeleteUser(user)}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" />
+                          <Trash2 className="ml-2 h-4 w-4" />
                           {fa.admin.users.deleteUser}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={user.role === "admin" ? "default" : "secondary"}
-                    >
-                      {user.role === "admin"
-                        ? fa.admin.users.table.admin
-                        : fa.admin.users.table.user}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{user.username}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {user.id}
                   </TableCell>
                 </TableRow>
               ))}

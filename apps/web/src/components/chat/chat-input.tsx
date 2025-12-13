@@ -175,10 +175,7 @@ export const ChatInput = ({
                   ))}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
-              <PromptInputButton
-                onClick={() => refetch()}
-                variant="outline"
-              >
+              <PromptInputButton onClick={() => refetch()} variant="outline">
                 <RefreshCcw
                   className={
                     isRefreshingModels ? "size-4 animate-spin" : "size-4"

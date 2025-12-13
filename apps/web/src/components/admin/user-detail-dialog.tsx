@@ -6,11 +6,9 @@ import {
   Image,
   MessageCircle,
   MessageSquare,
-  X,
   Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -95,16 +93,8 @@ export function UserDetailDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader className="text-right">
           <DialogTitle>{fa.admin.userDetails.title}</DialogTitle>
-          <Button
-            className="h-6 w-6 p-0"
-            onClick={() => onOpenChange(false)}
-            size="icon"
-            variant="ghost"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         {(() => {
@@ -185,7 +175,7 @@ export function UserDetailDialog({
                   <h3 className="font-semibold text-sm">
                     {fa.admin.userDetails.activity}
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                     {activityStats.map((stat) => (
                       <Card className="p-3 text-center" key={stat.label}>
                         <div className="mb-2 flex justify-center text-muted-foreground">

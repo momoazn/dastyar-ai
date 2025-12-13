@@ -78,7 +78,7 @@ export function ResetPasswordDialog({
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="text-right">
           <DialogTitle>
             {fa.admin.users.actions.confirmPasswordReset}
           </DialogTitle>

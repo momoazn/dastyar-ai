@@ -38,7 +38,7 @@ export function ChangeRoleDialog({
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent>
-        <AlertDialogHeader>
+        <AlertDialogHeader className="text-right">
           <AlertDialogTitle>
             {fa.admin.users.actions.confirmRoleChange}
           </AlertDialogTitle>
