@@ -3,10 +3,9 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 import {
   deleteUser,
-  getAllUsers,
   getUserById,
-  getUsersWithPagination,
   getUserWithStats,
+  listUsers,
   type UserListResponse,
   type UserWithStats,
   updateUser,
@@ -33,7 +32,7 @@ const toggleModelStatusSchema = z.object({
   isEnabled: z.boolean(),
 });
 
-const getUsersWithPaginationSchema = z.object({
+const listUsersSchema = z.object({
   page: z.number().int().positive().default(1),
   pageSize: z.number().int().positive().max(100).default(10),
   search: z.string().optional(),
@@ -76,32 +75,19 @@ const getSettingSchema = z.object({
 
 export const adminProcedures = {
   // User Management
-  listUsers: adminProcedure.handler(async () => {
-    try {
-      const users = await getAllUsers();
-      return users;
-    } catch (error) {
-      logger.error("Error listing users", error);
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to fetch users",
-        status: 500,
-      });
-    }
-  }),
-
-  listUsersWithPagination: adminProcedure
-    .input(getUsersWithPaginationSchema)
+  listUsers: adminProcedure
+    .input(listUsersSchema)
     .handler(async ({ input }): Promise<UserListResponse> => {
       try {
-        const result = await getUsersWithPagination(
-          input.page,
-          input.pageSize,
-          input.search,
-          input.role
-        );
+        const result = await listUsers({
+          page: input.page,
+          pageSize: input.pageSize,
+          search: input.search,
+          role: input.role,
+        });
         return result;
       } catch (error) {
-        logger.error("Error listing users with pagination", error);
+        logger.error("Error listing users", error);
         throw new ORPCError("INTERNAL_ERROR", {
           message: "Failed to fetch users",
           status: 500,
@@ -257,8 +243,10 @@ export const adminProcedures = {
 
         // Prevent deleting if it's the only admin
         if (user.role === "admin") {
-          const users = await getAllUsers();
-          const adminCount = users.filter((u) => u.role === "admin").length;
+          const allUsers = await listUsers();
+          const adminCount = allUsers.users.filter(
+            (u) => u.role === "admin"
+          ).length;
           if (adminCount === 1) {
             throw new ORPCError("FORBIDDEN", {
               message: "Cannot delete the only admin user",

@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { count, desc, eq, like } from "drizzle-orm";
+import { and, count, desc, eq, like } from "drizzle-orm";
 import {
   chatThreads,
   codeRuns,
@@ -34,8 +34,38 @@ export type UserListResponse = {
   totalPages: number;
 };
 
-export async function getAllUsers(): Promise<UserWithoutSensitiveData[]> {
-  const rows = await db
+export async function listUsers(options?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  role?: UserRole;
+}): Promise<UserListResponse> {
+  const { search, role } = options ?? {};
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 10;
+
+  const conditions: Array<ReturnType<typeof like> | ReturnType<typeof eq>> = [];
+  if (search) {
+    conditions.push(like(users.username, `%${search}%`));
+  }
+  if (role) {
+    conditions.push(eq(users.role, role));
+  }
+
+  // Count query
+  const countBase = db.select({ value: count() }).from(users);
+  let totalResult: Array<{ value: number }>;
+  if (conditions.length === 0) {
+    totalResult = await countBase;
+  } else if (conditions.length === 1) {
+    totalResult = await countBase.where(conditions[0]);
+  } else {
+    totalResult = await countBase.where(and(...conditions));
+  }
+  const total = totalResult[0]?.value ?? 0;
+
+  // Data query
+  const dataBase = db
     .select({
       id: users.id,
       username: users.username,
@@ -46,52 +76,19 @@ export async function getAllUsers(): Promise<UserWithoutSensitiveData[]> {
     .from(users)
     .orderBy(desc(users.createdAt));
 
-  return rows;
-}
+  const getDataQuery = () => {
+    if (conditions.length === 0) {
+      return dataBase;
+    }
+    if (conditions.length === 1) {
+      return dataBase.where(conditions[0]);
+    }
+    return dataBase.where(and(...conditions));
+  };
 
-export async function getUsersWithPagination(
-  page = 1,
-  pageSize = 10,
-  search?: string,
-  role?: UserRole
-): Promise<UserListResponse> {
-  let query = db
-    .select({
-      id: users.id,
-      username: users.username,
-      role: users.role,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-    })
-    .from(users)
-    .$dynamic();
-
-  if (search) {
-    query = query.where(like(users.username, `%${search}%`));
-  }
-
-  if (role) {
-    query = query.where(eq(users.role, role));
-  }
-
-  const countQuery = db.select({ value: count() }).from(users).$dynamic();
-
-  if (search) {
-    countQuery.where(like(users.username, `%${search}%`));
-  }
-
-  if (role) {
-    countQuery.where(eq(users.role, role));
-  }
-
-  const totalResult = await countQuery;
-  const total = totalResult[0]?.value ?? 0;
-
+  // Always apply pagination
   const offset = (page - 1) * pageSize;
-  const rows = await query
-    .orderBy(desc(users.createdAt))
-    .limit(pageSize)
-    .offset(offset);
+  const rows = await getDataQuery().limit(pageSize).offset(offset);
 
   return {
     users: rows,

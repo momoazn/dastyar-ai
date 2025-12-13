@@ -63,7 +63,7 @@ export function UsersTable() {
     isLoading,
     error,
   } = useQuery(
-    orpc.admin.listUsersWithPagination.queryOptions({
+    orpc.admin.listUsers.queryOptions({
       input: {
         page,
         pageSize,
@@ -80,7 +80,7 @@ export function UsersTable() {
     orpc.admin.deleteUser.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.admin.listUsersWithPagination.queryKey({
+          queryKey: orpc.admin.listUsers.queryKey({
             input: {
               page,
               pageSize,
@@ -119,7 +119,7 @@ export function UsersTable() {
 
   const handleEditSuccess = () => {
     queryClient.invalidateQueries({
-      queryKey: orpc.admin.listUsersWithPagination.queryKey({
+      queryKey: orpc.admin.listUsers.queryKey({
         input: {
           page,
           pageSize,

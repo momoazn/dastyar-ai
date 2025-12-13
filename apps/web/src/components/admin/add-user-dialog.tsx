@@ -69,7 +69,7 @@ export function AddUserDialog({
   const createUserMutation = useMutation(
     orpc.admin.createUser.mutationOptions({
       onSuccess: () => {
-        const queryKey = orpc.admin.listUsersWithPagination
+        const queryKey = orpc.admin.listUsers
           .queryKey({
             input: { page: 1, pageSize: 10 },
           })
@@ -96,7 +96,7 @@ export function AddUserDialog({
     orpc.admin.updateUser.mutationOptions({
       onSuccess: () => {
         // Invalidate all user list queries - onSuccess callback handles specific invalidation
-        const queryKey = orpc.admin.listUsersWithPagination
+        const queryKey = orpc.admin.listUsers
           .queryKey({
             input: { page: 1, pageSize: 10 },
           })
