@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Filter, Plus } from "lucide-react";
+import { Filter } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -22,13 +21,11 @@ import {
 } from "@/components/ui/table";
 import { fa } from "@/lib/persian-texts";
 import { orpc } from "@/utils/orpc";
-import { AddModelDialog } from "./add-model-dialog";
 import { AdminTableShell } from "./table-shell";
 
 type LLMModelProvider = "ollama" | "lmstudio" | "stable-diffusion" | "whisper";
 
 export function ModelsTable() {
-  const [addModelDialogOpen, setAddModelDialogOpen] = useState(false);
   const [providerFilter, setProviderFilter] = useState<
     LLMModelProvider | "all"
   >("all");
@@ -92,12 +89,7 @@ export function ModelsTable() {
   return (
     <>
       <AdminTableShell
-        actions={
-          <Button onClick={() => setAddModelDialogOpen(true)} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            {fa.admin.models.addModel}
-          </Button>
-        }
+        actions={null}
         badge={
           <Badge variant="secondary">
             {fa.admin.models.modelCount(models.length)}
@@ -220,10 +212,6 @@ export function ModelsTable() {
         </div>
       </AdminTableShell>
 
-      <AddModelDialog
-        onOpenChange={setAddModelDialogOpen}
-        open={addModelDialogOpen}
-      />
     </>
   );
 }

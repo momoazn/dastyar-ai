@@ -42,9 +42,11 @@ export function AdminTableShell({
   if (isLoading) {
     return (
       <Surface padded={false}>
-        <SurfaceHeader className="justify-between">
-          <SurfaceTitle>{title}</SurfaceTitle>
-          {badge}
+        <SurfaceHeader className="justify-between" dir="rtl">
+          <div className="flex items-center gap-2">
+            <SurfaceTitle>{title}</SurfaceTitle>
+            {badge}
+          </div>
         </SurfaceHeader>
         <SurfaceContent className="flex items-center justify-center py-10 text-muted-foreground">
           <div className="flex flex-col items-center gap-3">
@@ -59,9 +61,11 @@ export function AdminTableShell({
   if (isError) {
     return (
       <Surface padded={false}>
-        <SurfaceHeader className="justify-between">
-          <SurfaceTitle>{title}</SurfaceTitle>
-          {badge}
+        <SurfaceHeader className="justify-between" dir="rtl">
+          <div className="flex items-center gap-2">
+            <SurfaceTitle>{title}</SurfaceTitle>
+            {badge}
+          </div>
         </SurfaceHeader>
         <SurfaceContent className="py-8 text-center text-destructive">
           <p className="text-sm">{errorMessage}</p>
@@ -73,9 +77,11 @@ export function AdminTableShell({
   if (isEmpty) {
     return (
       <Surface padded={false}>
-        <SurfaceHeader className="justify-between">
-          <SurfaceTitle>{title}</SurfaceTitle>
-          {badge}
+        <SurfaceHeader className="justify-between" dir="rtl">
+          <div className="flex items-center gap-2">
+            <SurfaceTitle>{title}</SurfaceTitle>
+            {badge}
+          </div>
         </SurfaceHeader>
         <SurfaceContent className="py-8 text-center text-muted-foreground">
           <p className="text-sm">{emptyMessage}</p>
@@ -86,7 +92,7 @@ export function AdminTableShell({
 
   return (
     <Surface padded={false}>
-      <SurfaceHeader className="justify-between">
+      <SurfaceHeader className="justify-between" dir="rtl">
         <div className="flex items-center gap-2">
           <SurfaceTitle>{title}</SurfaceTitle>
           {badge}
