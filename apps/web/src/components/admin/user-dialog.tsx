@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -55,9 +56,13 @@ function PasswordField({
 }: PasswordFieldProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label className="text-right" htmlFor={id}>
+        {label}
+      </Label>
       <Input
         autoComplete="new-password"
+        className="text-right"
+        dir="rtl"
         disabled={disabled}
         id={id}
         onChange={onChange}
@@ -246,28 +251,30 @@ export function UserDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader className="text-right">
-          <DialogTitle>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="space-y-3 text-right">
+          <DialogTitle className="text-right">
             {isEditMode
               ? fa.admin.users.actions.editUser
               : fa.admin.users.addDialog.title}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-right text-sm">
             {isEditMode
               ? fa.admin.users.actions.editUserDescription(user?.username ?? "")
               : fa.admin.users.addDialog.description}
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-6" dir="rtl" onSubmit={handleSubmit}>
           {/* Username */}
           <div className="space-y-2">
-            <Label htmlFor="username">
+            <Label className="text-right" htmlFor="username">
               {fa.admin.users.addDialog.username}
             </Label>
             <Input
               autoComplete="username"
+              className="text-right"
+              dir="rtl"
               disabled={isPending || isEditMode}
               id="username"
               onChange={(e) => setUsername(e.target.value)}
@@ -278,29 +285,29 @@ export function UserDialog({
 
           {/* Password - required for add, optional for edit */}
           {isEditMode ? (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    checked={changePassword}
-                    className="h-4 w-4"
-                    id="changePassword"
-                    onChange={(e) => {
-                      setChangePassword(e.target.checked);
-                      if (!e.target.checked) {
-                        setPassword("");
-                        setConfirmPassword("");
-                      }
-                    }}
-                    type="checkbox"
-                  />
-                  <Label htmlFor="changePassword">
-                    {fa.admin.users.actions.resetPassword}
-                  </Label>
-                </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50">
+                <Checkbox
+                  checked={changePassword}
+                  id="changePassword"
+                  onCheckedChange={(checked) => {
+                    const isChecked = checked === true;
+                    setChangePassword(isChecked);
+                    if (!isChecked) {
+                      setPassword("");
+                      setConfirmPassword("");
+                    }
+                  }}
+                />
+                <Label
+                  className="cursor-pointer text-right font-normal"
+                  htmlFor="changePassword"
+                >
+                  {fa.admin.users.actions.resetPassword}
+                </Label>
               </div>
               {changePassword && (
-                <>
+                <div className="space-y-4 rounded-md border border-border bg-muted/20 p-4 transition-all">
                   <PasswordField
                     disabled={isPending}
                     id="password"
@@ -319,9 +326,9 @@ export function UserDialog({
                     }
                     value={confirmPassword}
                   />
-                </>
+                </div>
               )}
-            </>
+            </div>
           ) : (
             <PasswordField
               disabled={isPending}
@@ -335,20 +342,22 @@ export function UserDialog({
 
           {/* Role */}
           <div className="space-y-2">
-            <Label htmlFor="role">{fa.admin.users.addDialog.role}</Label>
+            <Label className="text-right" htmlFor="role">
+              {fa.admin.users.addDialog.role}
+            </Label>
             <Select
               disabled={isPending}
               onValueChange={(value) => setRole(value as "admin" | "user")}
               value={role}
             >
-              <SelectTrigger id="role">
+              <SelectTrigger className="w-full text-right" dir="rtl" id="role">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">
+              <SelectContent className="text-right" dir="rtl">
+                <SelectItem className="text-right" value="user">
                   {fa.admin.users.table.user}
                 </SelectItem>
-                <SelectItem value="admin">
+                <SelectItem className="text-right" value="admin">
                   {fa.admin.users.table.admin}
                 </SelectItem>
               </SelectContent>
@@ -356,15 +365,7 @@ export function UserDialog({
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-start gap-3 pt-4">
-            <Button
-              disabled={isPending}
-              onClick={() => handleOpenChange(false)}
-              type="button"
-              variant="outline"
-            >
-              {fa.admin.users.addDialog.cancel}
-            </Button>
+          <div className="flex flex-row-reverse gap-3 border-border border-t pt-6">
             <Button disabled={isPending} type="submit">
               {(() => {
                 if (isPending) {
@@ -376,6 +377,14 @@ export function UserDialog({
                   ? fa.admin.users.actions.save
                   : fa.admin.users.addDialog.create;
               })()}
+            </Button>
+            <Button
+              disabled={isPending}
+              onClick={() => handleOpenChange(false)}
+              type="button"
+              variant="outline"
+            >
+              {fa.admin.users.addDialog.cancel}
             </Button>
           </div>
         </form>
