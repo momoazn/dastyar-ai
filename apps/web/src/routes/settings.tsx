@@ -71,7 +71,7 @@ function SettingsComponent() {
             value={currentTab}
           >
             <TabsList
-              className={`sticky top-0 z-20 grid w-full bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 ${
+              className={`sticky top-0 z-20 grid w-full bg-muted/80 p-[3px] backdrop-blur supports-backdrop-filter:bg-muted/60 ${
                 isAdmin ? "grid-cols-4" : "grid-cols-1"
               }`}
               dir="rtl"
