@@ -113,6 +113,7 @@ export const admin = {
     notFound: "هیچ مدلی یافت نشد",
     addModel: "افزودن مدل",
     modelCount: (count: number) => `${count} مدل`,
+    searchPlaceholder: "جستجو بر اساس نام یا شناسه مدل...",
     table: {
       id: "شناسه",
       name: "نام",

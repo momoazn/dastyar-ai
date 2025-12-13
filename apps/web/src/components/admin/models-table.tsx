@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Filter } from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ export function ModelsTable() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "enabled" | "disabled"
   >("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
   const {
@@ -40,7 +42,7 @@ export function ModelsTable() {
     error,
   } = useQuery(orpc.admin.listAllModels.queryOptions());
 
-  // Filter models based on selected filters
+  // Filter models based on selected filters and search query
   const models =
     allModels?.filter((model) => {
       const providerMatch =
@@ -49,7 +51,11 @@ export function ModelsTable() {
         statusFilter === "all" ||
         (statusFilter === "enabled" && model.isEnabled) ||
         (statusFilter === "disabled" && !model.isEnabled);
-      return providerMatch && statusMatch;
+      const searchMatch =
+        !searchQuery.trim() ||
+        model.identifier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        model.id.toString().includes(searchQuery);
+      return providerMatch && statusMatch && searchMatch;
     }) ?? [];
 
   const toggleModelMutation = useMutation(
@@ -87,131 +93,136 @@ export function ModelsTable() {
   const isEmpty = !(isLoading || error) && (!models || models.length === 0);
 
   return (
-    <>
-      <AdminTableShell
-        actions={null}
-        badge={
-          <Badge variant="secondary">
-            {fa.admin.models.modelCount(models.length)}
-          </Badge>
-        }
-        emptyMessage={fa.admin.models.notFound}
-        errorMessage={fa.admin.models.errorLoading}
-        filters={
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <Select
-              onValueChange={(value) =>
-                setProviderFilter(value as LLMModelProvider | "all")
-              }
-              value={providerFilter}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <Filter className="ml-2 h-4 w-4" />
-                <SelectValue
-                  placeholder={fa.admin.models.table.filterByProvider}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {fa.admin.models.providers.allProviders}
-                </SelectItem>
-                <SelectItem value="ollama">Ollama</SelectItem>
-                <SelectItem value="lmstudio">LM Studio</SelectItem>
-                <SelectItem value="stable-diffusion">
-                  Stable Diffusion
-                </SelectItem>
-                <SelectItem value="whisper">Whisper</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              onValueChange={(value) =>
-                setStatusFilter(value as "all" | "enabled" | "disabled")
-              }
-              value={statusFilter}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue
-                  placeholder={fa.admin.models.table.filterByStatus}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {fa.admin.models.statuses.all}
-                </SelectItem>
-                <SelectItem value="enabled">
-                  {fa.admin.models.statuses.enabled}
-                </SelectItem>
-                <SelectItem value="disabled">
-                  {fa.admin.models.statuses.disabled}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+    <AdminTableShell
+      actions={null}
+      badge={
+        <Badge variant="secondary">
+          {fa.admin.models.modelCount(models.length)}
+        </Badge>
+      }
+      emptyMessage={fa.admin.models.notFound}
+      errorMessage={fa.admin.models.errorLoading}
+      filters={
+        <>
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="-translate-y-1/2 absolute top-1/2 right-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pr-10 text-right"
+                dir="rtl"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={fa.admin.models.searchPlaceholder}
+                value={searchQuery}
+              />
+            </div>
           </div>
-        }
-        isEmpty={isEmpty}
-        isError={Boolean(error)}
-        isLoading={isLoading}
-        loadingMessage={fa.admin.models.loading}
-        title={fa.admin.models.title}
-      >
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.toggle}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.status}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.provider}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.name}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.id}
-                </TableHead>
+          <Select
+            onValueChange={(value) =>
+              setProviderFilter(value as LLMModelProvider | "all")
+            }
+            value={providerFilter}
+          >
+            <SelectTrigger className="w-full sm:w-40">
+              <Filter className="ml-2 h-4 w-4" />
+              <SelectValue
+                placeholder={fa.admin.models.table.filterByProvider}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {fa.admin.models.providers.allProviders}
+              </SelectItem>
+              <SelectItem value="ollama">Ollama</SelectItem>
+              <SelectItem value="lmstudio">LM Studio</SelectItem>
+              <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+              <SelectItem value="whisper">Whisper</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            onValueChange={(value) =>
+              setStatusFilter(value as "all" | "enabled" | "disabled")
+            }
+            value={statusFilter}
+          >
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder={fa.admin.models.table.filterByStatus} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {fa.admin.models.statuses.all}
+              </SelectItem>
+              <SelectItem value="enabled">
+                {fa.admin.models.statuses.enabled}
+              </SelectItem>
+              <SelectItem value="disabled">
+                {fa.admin.models.statuses.disabled}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </>
+      }
+      isEmpty={isEmpty}
+      isError={Boolean(error)}
+      isLoading={isLoading}
+      loadingMessage={fa.admin.models.loading}
+      title={fa.admin.models.title}
+    >
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-right">
+                {fa.admin.models.table.toggle}
+              </TableHead>
+              <TableHead className="text-right">
+                {fa.admin.models.table.status}
+              </TableHead>
+              <TableHead className="text-right">
+                {fa.admin.models.table.provider}
+              </TableHead>
+              <TableHead className="text-right">
+                {fa.admin.models.table.name}
+              </TableHead>
+              <TableHead className="text-right">
+                {fa.admin.models.table.id}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {models?.map((model) => (
+              <TableRow key={model.id}>
+                <TableCell className="text-right">
+                  <Switch
+                    checked={model.isEnabled}
+                    disabled={toggleModelMutation.isPending}
+                    onCheckedChange={() =>
+                      handleToggleModel(model.id, model.isEnabled)
+                    }
+                  />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Badge variant={model.isEnabled ? "default" : "secondary"}>
+                    {model.isEnabled
+                      ? fa.admin.models.table.enabled
+                      : fa.admin.models.table.disabled}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Badge variant="outline">
+                    {getProviderLabel(model.provider)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {model.identifier}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {model.id}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {models?.map((model) => (
-                <TableRow key={model.id}>
-                  <TableCell className="text-right">
-                    <Switch
-                      checked={model.isEnabled}
-                      disabled={toggleModelMutation.isPending}
-                      onCheckedChange={() =>
-                        handleToggleModel(model.id, model.isEnabled)
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant={model.isEnabled ? "default" : "secondary"}>
-                      {model.isEnabled
-                        ? fa.admin.models.table.enabled
-                        : fa.admin.models.table.disabled}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant="outline">
-                      {getProviderLabel(model.provider)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {model.identifier}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {model.id}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </AdminTableShell>
-
-    </>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </AdminTableShell>
   );
 }
