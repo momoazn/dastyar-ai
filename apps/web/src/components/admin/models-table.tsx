@@ -167,35 +167,33 @@ export function ModelsTable() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">
-                  {fa.admin.models.table.id}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.name}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.models.table.provider}
+                  {fa.admin.models.table.toggle}
                 </TableHead>
                 <TableHead className="text-right">
                   {fa.admin.models.table.status}
                 </TableHead>
                 <TableHead className="text-right">
-                  {fa.admin.models.table.toggle}
+                  {fa.admin.models.table.provider}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.name}
+                </TableHead>
+                <TableHead className="text-right">
+                  {fa.admin.models.table.id}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {models?.map((model) => (
                 <TableRow key={model.id}>
-                  <TableCell className="text-right font-medium">
-                    {model.id}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {model.identifier}
-                  </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="outline">
-                      {getProviderLabel(model.provider)}
-                    </Badge>
+                    <Switch
+                      checked={model.isEnabled}
+                      disabled={toggleModelMutation.isPending}
+                      onCheckedChange={() =>
+                        handleToggleModel(model.id, model.isEnabled)
+                      }
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant={model.isEnabled ? "default" : "secondary"}>
@@ -205,13 +203,15 @@ export function ModelsTable() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Switch
-                      checked={model.isEnabled}
-                      disabled={toggleModelMutation.isPending}
-                      onCheckedChange={() =>
-                        handleToggleModel(model.id, model.isEnabled)
-                      }
-                    />
+                    <Badge variant="outline">
+                      {getProviderLabel(model.provider)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {model.identifier}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {model.id}
                   </TableCell>
                 </TableRow>
               ))}
