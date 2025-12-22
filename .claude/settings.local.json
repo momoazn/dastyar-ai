@@ -9,7 +9,11 @@
       "Bash(done)",
       "Bash(bun build.ts:*)",
       "Bash(bun run check-types:*)",
-      "Bash(bun:*)"
+      "Bash(bun:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
