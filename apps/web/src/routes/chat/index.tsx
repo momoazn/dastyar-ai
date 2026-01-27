@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ChatInput } from "@/components/chat";
 import { useChatInput } from "@/hooks/use-chat-input";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/chat/")({
   component: () => (

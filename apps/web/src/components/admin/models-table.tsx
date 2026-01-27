@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { AdminTableShell } from "./table-shell";
 

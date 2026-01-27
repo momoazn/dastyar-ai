@@ -14,7 +14,7 @@ import { useAIChat } from "@/hooks/use-ai-chat";
 import { useChatInput } from "@/hooks/use-chat-input";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/chat/$id")({
   component: () => (

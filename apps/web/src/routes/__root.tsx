@@ -21,7 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { orpc } from "@/utils/orpc";
 
 export type RouterAppContext = {

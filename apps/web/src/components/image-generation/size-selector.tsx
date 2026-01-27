@@ -6,7 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui";
 import { IMAGE_SIZES } from "@/lib/image-generation-constants";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 type SizeSelectorProps = {
   value: string;

@@ -15,7 +15,7 @@ import {
   Input,
 } from "@/components/ui";
 import { useUser } from "@/hooks/use-user";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";

@@ -18,7 +18,7 @@ import { PromptInputBase } from "@/components/prompt-input-base";
 import { TranscribeButton } from "@/components/transcribe-button";
 import { Alert, AlertDescription } from "@/components/ui";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 
 type ChatInputProps = {

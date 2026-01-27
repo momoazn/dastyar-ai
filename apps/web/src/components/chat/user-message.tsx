@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 
 export type UserMessageProps = {

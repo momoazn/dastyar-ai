@@ -45,14 +45,3 @@ export type MessagePart =
   | ReasoningPart
   | ToolCallPart
   | ToolResultPart;
-
-export function isTextPart(part: MessagePart): part is TextPart {
-  return part.type === "text";
-}
-
-export function extractTextFromParts(parts: MessagePart[]): string {
-  return parts
-    .filter(isTextPart)
-    .map((p) => p.text)
-    .join("");
-}

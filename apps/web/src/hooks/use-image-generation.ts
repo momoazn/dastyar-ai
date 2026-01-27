@@ -11,7 +11,7 @@ import {
   parseSearchParams,
   parseSizeValue,
 } from "@/lib/image-generation-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type {
   GenerateInput,
   GenerationSettings,

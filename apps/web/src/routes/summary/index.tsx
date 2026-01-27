@@ -21,7 +21,7 @@ import {
   createSummaryModeOptions,
   createToneOptions,
 } from "@/lib/enum-mappings";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { SummaryMode, Tone } from "@/server/database/schema";
 import { orpc, queryClient } from "@/utils/orpc";

@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/image/")({
   component: () => (

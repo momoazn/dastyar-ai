@@ -7,7 +7,7 @@ import {
   SurfaceTitle,
   Textarea,
 } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 
 type TranslationTextInputProps = {

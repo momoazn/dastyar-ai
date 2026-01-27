@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
 

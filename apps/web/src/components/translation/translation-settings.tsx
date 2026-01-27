@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { LanguageCode, Tone } from "@/server/database/schema";
 import type { SelectLlmModel } from "@/types/database";
 

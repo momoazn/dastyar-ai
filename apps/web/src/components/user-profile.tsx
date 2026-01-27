@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 function getRoleInPersian(role: string): string {
   return (

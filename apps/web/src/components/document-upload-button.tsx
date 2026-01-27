@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import { getErrorMessage } from "@/lib/error-utils";
 import { extractPdfPages } from "@/lib/pdf";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { client, queryClient } from "@/utils/orpc";
 
 type Props = {

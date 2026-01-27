@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme();

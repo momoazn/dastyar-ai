@@ -5,7 +5,7 @@ import { logoutAtom, tokenAtom } from "@/atoms/auth";
 import { Button, Card } from "@/components/ui";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useUser } from "@/hooks/use-user";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export default function AdminLayout({
   children,

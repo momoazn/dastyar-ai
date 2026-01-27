@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**

@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { User } from "@/types/database";
 
 type DeleteUserDialogProps = {

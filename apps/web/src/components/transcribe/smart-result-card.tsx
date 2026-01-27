@@ -7,7 +7,7 @@ import {
   SurfaceTitle,
 } from "@/components/ui";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 type SmartResultCardProps = {
   title: string | null;

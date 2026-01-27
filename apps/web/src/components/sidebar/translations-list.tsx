@@ -1,5 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SidebarItem, useSidebarList, useTranslationMutations } from "./base";
 import { TranslationEmptyState } from "./empty-state";

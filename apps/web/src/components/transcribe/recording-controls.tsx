@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatElapsed } from "@/hooks/use-voice-recorder";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 const MAX_DURATION_MS = 60_000;
 

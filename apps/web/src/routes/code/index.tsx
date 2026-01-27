@@ -17,7 +17,7 @@ import {
 } from "@/components/ui";
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { orpc, queryClient } from "@/utils/orpc";
 

@@ -14,7 +14,7 @@ import {
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { createLanguageOptions, createToneOptions } from "@/lib/enum-mappings";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { TranslationPayload } from "@/server/database/schema";
 import { orpc } from "@/utils/orpc";

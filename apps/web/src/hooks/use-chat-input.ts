@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { useChatThread } from "./use-chat-thread";
 
 type UseChatInputOptions = {

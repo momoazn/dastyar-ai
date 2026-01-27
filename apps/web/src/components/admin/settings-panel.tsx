@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { SystemSettingsMap } from "@/types/settings";
 import { orpc, queryClient } from "@/utils/orpc";
 

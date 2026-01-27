@@ -16,7 +16,7 @@ import {
   type RecordingError,
   useVoiceRecorder,
 } from "@/hooks/use-voice-recorder";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 export function mapRecordingError(error: RecordingError): string {

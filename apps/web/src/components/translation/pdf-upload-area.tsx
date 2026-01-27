@@ -1,7 +1,7 @@
 import { FileIcon, Upload, X } from "lucide-react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { Button } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { cn } from "@/lib/utils";
 
 type PdfUploadAreaProps = {

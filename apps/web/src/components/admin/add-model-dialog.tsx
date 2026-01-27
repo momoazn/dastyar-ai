@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getErrorMessage } from "@/lib/error-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 type AddModelDialogProps = {

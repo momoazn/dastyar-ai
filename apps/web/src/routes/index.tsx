@@ -8,7 +8,7 @@ import {
   Mic,
 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,

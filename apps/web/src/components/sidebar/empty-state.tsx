@@ -1,4 +1,4 @@
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 type EmptyStateProps = {
   title: string;

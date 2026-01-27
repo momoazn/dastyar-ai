@@ -21,7 +21,7 @@ import {
   FormMessage,
   Input,
 } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";

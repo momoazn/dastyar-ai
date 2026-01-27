@@ -1,6 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { useImageThreads } from "@/hooks/use-image-threads";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SidebarItem, useSidebarList } from "./base";
 import { ImageEmptyState } from "./empty-state";

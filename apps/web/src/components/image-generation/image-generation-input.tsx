@@ -2,7 +2,7 @@ import { RotateCcw, Settings2 } from "lucide-react";
 import { PromptInputButton } from "@/components/ai-elements/prompt-input";
 import { PromptInputBase } from "@/components/prompt-input-base";
 import { TranscribeButton } from "@/components/transcribe-button";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { GenerationSettings } from "@/server/procedures/images";
 import { AdvancedSettings } from "./advanced-settings";

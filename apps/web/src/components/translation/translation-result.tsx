@@ -1,6 +1,6 @@
 import { Copy, Loader2 } from "lucide-react";
 import { Badge, Button, Card } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 type TranslationResultProps = {
   translatedText: string;

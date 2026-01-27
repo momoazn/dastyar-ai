@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Archive, Download, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { cn } from "@/lib/utils";
 import {
   sidebarActionGroup,

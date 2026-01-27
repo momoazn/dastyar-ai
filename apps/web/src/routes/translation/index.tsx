@@ -14,7 +14,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { getErrorMessage as extractErrorMessage } from "@/lib/error-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type {
   LanguageCode,
   Tone,

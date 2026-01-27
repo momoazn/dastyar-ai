@@ -1,6 +1,6 @@
 import { FileText, Loader2 } from "lucide-react";
 import { Badge, Card, ScrollArea } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { TranslationPayload } from "@/server/database/schema";
 

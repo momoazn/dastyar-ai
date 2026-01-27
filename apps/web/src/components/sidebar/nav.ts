@@ -8,7 +8,7 @@ import {
   Mic,
 } from "lucide-react";
 import type React from "react";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 const TRAILING_SLASH_RE = /\/$/;
 

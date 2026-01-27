@@ -1,7 +1,7 @@
 import { FileText, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Label } from "@/components/ui/label";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 type SmartActionMode = "action-items" | "meeting-notes" | "concise";
 

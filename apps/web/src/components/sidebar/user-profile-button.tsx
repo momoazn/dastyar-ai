@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useAtom } from "jotai";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, Shield, User } from "lucide-react";
 import { logoutAtom, tokenAtom } from "@/atoms/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { useUser } from "@/hooks/use-user";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 
 export function UserProfileButton() {
   const [token] = useAtom(tokenAtom);
@@ -114,6 +114,15 @@ export function UserProfileButton() {
             <Settings className="mr-2 h-4 w-4" />
             <span>{fa.settings.title}</span>
           </DropdownMenuItem>
+          {user?.role === "admin" && (
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => navigate({ to: "/admin" })}
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              <span>{fa.admin.title}</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />

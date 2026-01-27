@@ -13,7 +13,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from "@/components/ui";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { ChatThreadsList } from "./chat-threads-list";
 import { CodeRunsList } from "./code-runs-list";
 import { ImagesSidebar } from "./images-sidebar";

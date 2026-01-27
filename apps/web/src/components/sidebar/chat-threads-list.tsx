@@ -1,6 +1,6 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import {
   SidebarItem,

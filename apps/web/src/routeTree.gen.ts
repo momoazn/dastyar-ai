@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TranscribeRouteImport } from './routes/transcribe'
-import { Route as SettingsNewRouteImport } from './routes/settings-new'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TranslationIndexRouteImport } from './routes/translation/index'
 import { Route as SummaryIndexRouteImport } from './routes/summary/index'
@@ -31,11 +31,6 @@ const TranscribeRoute = TranscribeRouteImport.update({
   path: '/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsNewRoute = SettingsNewRouteImport.update({
-  id: '/settings-new',
-  path: '/settings-new',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -49,6 +44,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -110,10 +110,10 @@ const ChatIdRoute = ChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/settings-new': typeof SettingsNewRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -128,10 +128,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/settings-new': typeof SettingsNewRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -147,10 +147,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/settings-new': typeof SettingsNewRoute
   '/transcribe': typeof TranscribeRoute
   '/chat/$id': typeof ChatIdRoute
   '/code/$runId': typeof CodeRunIdRoute
@@ -167,10 +167,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/register'
     | '/settings'
-    | '/settings-new'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -185,10 +185,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/login'
     | '/register'
     | '/settings'
-    | '/settings-new'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -203,10 +203,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/login'
     | '/register'
     | '/settings'
-    | '/settings-new'
     | '/transcribe'
     | '/chat/$id'
     | '/code/$runId'
@@ -222,10 +222,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
-  SettingsNewRoute: typeof SettingsNewRoute
   TranscribeRoute: typeof TranscribeRoute
   ChatIdRoute: typeof ChatIdRoute
   CodeRunIdRoute: typeof CodeRunIdRoute
@@ -248,13 +248,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings-new': {
-      id: '/settings-new'
-      path: '/settings-new'
-      fullPath: '/settings-new'
-      preLoaderRoute: typeof SettingsNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -274,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -358,10 +358,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
-  SettingsNewRoute: SettingsNewRoute,
   TranscribeRoute: TranscribeRoute,
   ChatIdRoute: ChatIdRoute,
   CodeRunIdRoute: CodeRunIdRoute,

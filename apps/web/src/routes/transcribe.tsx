@@ -33,7 +33,7 @@ import {
   useVoiceRecorder,
 } from "@/hooks/use-voice-recorder";
 import ProtectedLayout from "@/layouts/protected";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/transcribe")({

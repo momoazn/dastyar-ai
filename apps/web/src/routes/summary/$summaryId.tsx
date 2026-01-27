@@ -10,7 +10,7 @@ import {
   createSummaryModeOptions,
   createToneOptions,
 } from "@/lib/enum-mappings";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 

@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { getErrorMessage } from "@/lib/error-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 export type TranscriptionArgs = {

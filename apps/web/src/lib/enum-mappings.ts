@@ -1,4 +1,4 @@
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 // Directly import database schema types
 import type {
   CodeMode,

@@ -28,7 +28,7 @@ import { useImageGeneration } from "@/hooks/use-image-generation";
 import { useImageThreads } from "@/hooks/use-image-threads";
 import ProtectedLayout from "@/layouts/protected";
 import { buildSrc, getMergedSettings } from "@/lib/image-generation-utils";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import type { GenerationSettings } from "@/server/procedures/images";
 
 export const Route = createFileRoute("/image/$id")({

@@ -24,9 +24,8 @@ import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
 } from "@/services/processors";
-import type { MessagePart } from "@/types/messages";
-import { extractTextFromParts } from "@/types/messages";
 import { getModelSizeCategory, type MyUIMessage } from "@/utils/chat";
+import { extractTextFromParts } from "@/utils/text-extractor";
 
 export function sendError(
   c: Context<AuthEnv>,
@@ -147,9 +146,7 @@ const app = new Hono<AuthEnv>()
       const sizeCategory = getModelSizeCategory(llmModel.size);
       let ragSystem = chatSystemPrompt({ sizeCategory });
       try {
-        const userQuery = extractTextFromParts(
-          last.parts as MessagePart[]
-        ).slice(0, 2000);
+        const userQuery = extractTextFromParts(last).content.slice(0, 2000);
         if (userQuery && threadId) {
           const results = await retrieveRelevantChunksForThread({
             userId: user.id,

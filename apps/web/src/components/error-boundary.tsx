@@ -2,7 +2,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { formatErrorForUser } from "@/lib/error-utils";
 import { logger } from "@/lib/logger";
-import { fa } from "@/lib/persian-texts";
+import { fa } from "@/lib/texts";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
