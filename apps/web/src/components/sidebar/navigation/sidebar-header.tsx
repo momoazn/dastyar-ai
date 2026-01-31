@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Command } from "lucide-react";
+import { Bot } from "lucide-react";
 import {
   SidebarHeader,
   SidebarMenu,
@@ -25,7 +25,7 @@ export function AppSidebarHeader({
             <SidebarMenuButton asChild className="md:h-8 md:p-0" size="lg">
               <Link to="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                  <Bot className="size-4" />
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -37,19 +37,22 @@ export function AppSidebarHeader({
 
   return (
     <SidebarHeader
-      className={`flex h-14 flex-row items-center bg-sidebar backdrop-blur-md ${className}`}
+      className={`flex h-16 flex-row items-center bg-sidebar backdrop-blur-md ${className}`}
     >
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            className="h-10 hover:bg-sidebar-accent/50"
+            className="h-10 hover:bg-sidebar-accent/50 data-[state=open]:bg-sidebar-accent/50"
             size="default"
           >
             <Link to="/">
-              <h1 className="bg-gradient-to-l from-primary to-primary/70 bg-clip-text font-bold text-lg text-transparent tracking-tight">
-                {fa.navigation.appTitle}
-              </h1>
+              <div className="flex items-center gap-2">
+                <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <h1 className="font-medium text-gray-900 text-lg dark:text-gray-100">
+                  {fa.navigation.appTitle}
+                </h1>
+              </div>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
