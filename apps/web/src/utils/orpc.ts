@@ -44,20 +44,18 @@ const getRpcUrl = (): string => {
 export const link = new RPCLink({
   url: getRpcUrl(),
   headers: () => {
-    const rawValue = localStorage.getItem(LS_TOKEN_KEY);
-    if (!rawValue) {
+    const token = localStorage.getItem(LS_TOKEN_KEY);
+    if (!token) {
       return {};
     }
 
-    let parsed: string | null = null;
+    // atomWithStorage stores as JSON string, parse it
     try {
-      const jsonParsed = JSON.parse(rawValue);
-      parsed = typeof jsonParsed === "string" ? jsonParsed : null;
+      const parsed = JSON.parse(token);
+      return { Authorization: `Bearer ${parsed}` };
     } catch {
-      parsed = rawValue;
+      return {};
     }
-
-    return parsed ? { Authorization: `Bearer ${parsed}` } : {};
   },
 });
 

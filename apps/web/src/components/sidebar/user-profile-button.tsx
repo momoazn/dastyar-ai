@@ -77,7 +77,7 @@ export function UserProfileButton() {
     : "U";
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="cursor-pointer">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton

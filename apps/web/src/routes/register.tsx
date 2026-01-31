@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import AuthLayout from "@/layouts/auth";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
@@ -86,7 +87,7 @@ function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-gray-900">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
         <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader>
@@ -108,9 +109,11 @@ function RegisterPage() {
                 </Label>
                 <Input
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  dir="ltr"
                   disabled={registerMutation.isPending}
                   id="username"
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder={fa.auth.registerForm.usernamePlaceholder}
                   required
                   type="text"
                   value={username}
@@ -123,13 +126,16 @@ function RegisterPage() {
                 >
                   {fa.auth.registerForm.passwordLabel}
                 </Label>
-                <Input
+                <PasswordInput
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  dir="ltr"
                   disabled={registerMutation.isPending}
+                  hidePasswordAriaLabel={fa.auth.loginForm.hidePassword}
                   id="password"
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder={fa.auth.registerForm.passwordPlaceholder}
                   required
-                  type="password"
+                  showPasswordAriaLabel={fa.auth.loginForm.showPassword}
                   value={password}
                 />
               </div>
@@ -140,13 +146,16 @@ function RegisterPage() {
                 >
                   {fa.auth.registerForm.confirmPasswordLabel}
                 </Label>
-                <Input
+                <PasswordInput
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  dir="ltr"
                   disabled={registerMutation.isPending}
+                  hidePasswordAriaLabel={fa.auth.loginForm.hidePassword}
                   id="confirmPassword"
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={fa.auth.registerForm.confirmPasswordPlaceholder}
                   required
-                  type="password"
+                  showPasswordAriaLabel={fa.auth.loginForm.showPassword}
                   value={confirmPassword}
                 />
               </div>

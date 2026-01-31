@@ -73,12 +73,17 @@ function RootComponent() {
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-
-  if (
+  const isAuthPage =
     location.pathname.startsWith("/login") ||
-    location.pathname.startsWith("/register")
-  ) {
-    return children;
+    location.pathname.startsWith("/register");
+
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen bg-sidebar">
+        <Header showAuthLinks />
+        <div className="container mx-auto">{children}</div>
+      </div>
+    );
   }
 
   return (

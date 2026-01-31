@@ -6,7 +6,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import AuthLayout from "@/layouts/auth";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
@@ -36,7 +37,6 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/login" }) as { redirect?: string };
@@ -45,7 +45,6 @@ function LoginPage() {
     orpc.auth.login.mutationOptions({
       onSuccess: (result) => {
         setToken(result.token);
-        // Redirect to the intended page or home
         navigate({ to: search.redirect || "/" });
       },
     })
@@ -62,7 +61,7 @@ function LoginPage() {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-gray-900">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
         <Card className="mx-auto w-full max-w-md shadow-lg">
           <CardHeader>
@@ -101,43 +100,18 @@ function LoginPage() {
                 >
                   {fa.auth.loginForm.passwordLabel}
                 </Label>
-                <div className="relative">
-                  <Input
-                    className="border-gray-300 bg-white pr-12 text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
-                    dir="ltr"
-                    disabled={loginMutation.isPending}
-                    id="password"
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={fa.auth.loginForm.passwordPlaceholder}
-                    required
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                  />
-                  <Button
-                    aria-label={
-                      showPassword
-                        ? fa.auth.loginForm.hidePassword
-                        : fa.auth.loginForm.showPassword
-                    }
-                    className="-translate-y-1/2 absolute top-1/2 right-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
-                    disabled={loginMutation.isPending}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">
-                      {showPassword
-                        ? fa.auth.loginForm.hidePassword
-                        : fa.auth.loginForm.showPassword}
-                    </span>
-                  </Button>
-                </div>
+                <PasswordInput
+                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  dir="ltr"
+                  disabled={loginMutation.isPending}
+                  hidePasswordAriaLabel={fa.auth.loginForm.hidePassword}
+                  id="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={fa.auth.loginForm.passwordPlaceholder}
+                  required
+                  showPasswordAriaLabel={fa.auth.loginForm.showPassword}
+                  value={password}
+                />
               </div>
               {loginMutation.error && (
                 <Alert variant="destructive">
