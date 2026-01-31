@@ -31,7 +31,7 @@ export async function createUser(
     })
     .returning();
 
-  const created = await findUserById(Number(result.at(0)?.id));
+  const created = result[0];
   if (!created) {
     throw new Error("Unable to create user");
   }
@@ -50,32 +50,6 @@ export async function usernameExists(username: string): Promise<boolean> {
 export async function countUsers(): Promise<number> {
   const result = await db.select({ count: sql<number>`count(*)` }).from(users);
   return result[0]?.count ?? 0;
-}
-
-export async function ensureDefaultAdminUser(): Promise<void> {
-  const totalUsers = await countUsers();
-
-  if (totalUsers > 0) {
-    logger.debug("Skipping default admin creation because users exist", {
-      totalUsers,
-    });
-    return;
-  }
-
-  try {
-    const hashedPassword = await hashPassword("admin12345");
-
-    await createUser({
-      username: "admin",
-      password: hashedPassword,
-      role: "admin",
-    });
-
-    logger.info("Default admin user created", { username: "admin" });
-  } catch (error) {
-    logger.error("Failed to create default admin user", error);
-    throw error;
-  }
 }
 
 export async function verifyUserCredentials({

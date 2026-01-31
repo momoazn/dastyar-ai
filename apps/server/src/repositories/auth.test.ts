@@ -1,9 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
 import { db, initializeDatabase, users } from "@/database";
 import {
-  countUsers,
   createUser,
-  ensureDefaultAdminUser,
   findUserById,
   findUserByUsername,
   hashPassword,
@@ -188,38 +186,6 @@ describe("Auth Repository", () => {
 
       const exists = await usernameExists("testuser");
       expect(exists).toBe(false);
-    });
-  });
-
-  describe("ensureDefaultAdminUser", () => {
-    it("should create default admin when no users exist", async () => {
-      await ensureDefaultAdminUser();
-
-      const adminUser = await findUserByUsername("admin");
-      expect(adminUser?.username).toBe("admin");
-      expect(adminUser?.role).toBe("admin");
-
-      const verified = await verifyUserCredentials({
-        username: "admin",
-        password: "admin12345",
-      });
-      expect(verified?.username).toBe("admin");
-    });
-
-    it("should not create admin when users already exist", async () => {
-      const hashedPassword = await hashPassword("existinguser");
-      await createUser({
-        username: "existing",
-        password: hashedPassword,
-        role: "user",
-      });
-
-      await ensureDefaultAdminUser();
-
-      const totalUsers = await countUsers();
-      expect(totalUsers).toBe(1);
-      const adminUser = await findUserByUsername("admin");
-      expect(adminUser).toBeNull();
     });
   });
 

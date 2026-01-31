@@ -10,10 +10,8 @@ export const dbProvider = o.middleware(({ context, next }) =>
   next({ context: { db: context.db } })
 );
 
-// Auth middleware to validate JWT and add user to context
-export const authMiddleware = o.middleware(async ({ context, next }) => {
-  const authHeader = context.req?.header("Authorization");
-
+// Helper function to validate auth and extract user
+async function validateAndGetUser(authHeader: string | undefined) {
   const authResult = await validateAuthHeader(authHeader);
 
   if (!authResult.success) {
@@ -26,10 +24,18 @@ export const authMiddleware = o.middleware(async ({ context, next }) => {
     throw new Error("Authentication failed: User not found");
   }
 
+  return authResult.user;
+}
+
+// Auth middleware to validate JWT and add user to context
+export const authMiddleware = o.middleware(async ({ context, next }) => {
+  const authHeader = context.req?.header("Authorization");
+  const user = await validateAndGetUser(authHeader);
+
   return next({
     context: {
       ...context,
-      user: authResult.user,
+      user,
     },
   });
 });
@@ -37,28 +43,16 @@ export const authMiddleware = o.middleware(async ({ context, next }) => {
 // Admin middleware that requires authentication AND admin role
 export const adminMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header("Authorization");
+  const user = await validateAndGetUser(authHeader);
 
-  const authResult = await validateAuthHeader(authHeader);
-
-  if (!authResult.success) {
-    throw new Error(
-      `Authentication failed: ${authResult.error?.message ?? "Unknown error"}`
-    );
-  }
-
-  if (!authResult.user) {
-    throw new Error("Authentication failed: User not found");
-  }
-
-  // Check if user has admin role
-  if (authResult.user.role !== "admin") {
+  if (user.role !== "admin") {
     throw new Error("Access denied: Admin role required");
   }
 
   return next({
     context: {
       ...context,
-      user: authResult.user,
+      user,
     },
   });
 });

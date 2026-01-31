@@ -18,7 +18,6 @@ import {
   displayStartupInfo,
   getProtocol,
 } from "./lib/startup";
-import { ensureDefaultAdminUser } from "./repositories/auth";
 
 /**
  * Load SSL certificate and key files
@@ -79,10 +78,6 @@ export async function startServer(): Promise<void> {
 
     displayInitProgress("Setting up database");
     await initializeDatabase();
-    displayInitProgress("", true);
-
-    displayInitProgress("Ensuring default admin user");
-    await ensureDefaultAdminUser();
     displayInitProgress("", true);
 
     displayInitProgress("Creating application");
