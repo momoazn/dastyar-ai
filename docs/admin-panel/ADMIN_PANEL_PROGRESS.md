@@ -177,8 +177,6 @@
 - `password_require_special_chars`: false
 - `password_require_numbers`: false
 - `password_require_uppercase`: false
-- `rate_limit_enabled`: true
-- `rate_limit_requests_per_minute`: 100
 - `model_response_timeout_seconds`: 300
 - `enable_transcription`: true
 - `enable_translation`: true

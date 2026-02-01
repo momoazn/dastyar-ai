@@ -82,7 +82,6 @@ initializeDefaultSettings()   // Initialize defaults
 - Security: token_expiration_hours, session_timeout_minutes, password_min_length, password requirements
 - File Management: max_file_size_mb, allowed_file_types
 - AI Models: model_response_timeout_seconds, feature toggles (transcription, translation, code execution, image generation)
-- Rate Limiting: rate_limit_enabled, rate_limit_requests_per_minute
 
 ### Frontend Component
 
@@ -98,7 +97,6 @@ Comprehensive settings UI component with the following features:
   - Security Settings
   - File Management Settings
   - AI Model Settings
-  - Rate Limiting Settings
 - **Type-Aware Inputs:** Appropriate input types for each setting:
   - Text inputs for strings
   - Number inputs for integers
@@ -131,9 +129,6 @@ Comprehensive settings UI component with the following features:
      - Enable/disable code execution
      - Enable/disable image generation
 
-5. **Rate Limiting Settings**
-   - Enable/disable rate limiting
-   - Requests per minute threshold (dynamic visibility based on enabled status)
 
 #### Actions
 - **Save Changes:** Saves all modified settings to server

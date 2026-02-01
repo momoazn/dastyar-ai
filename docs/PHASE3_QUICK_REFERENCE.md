@@ -134,8 +134,6 @@ if (fileSize > maxFileSize * 1024 * 1024) {
 | `password_require_special_chars` | boolean | false | Require special chars in password |
 | `password_require_numbers` | boolean | false | Require numbers in password |
 | `password_require_uppercase` | boolean | false | Require uppercase in password |
-| `rate_limit_enabled` | boolean | true | Enable request rate limiting |
-| `rate_limit_requests_per_minute` | number | 100 | Requests allowed per minute |
 | `model_response_timeout_seconds` | number | 300 | Model response timeout |
 | `enable_transcription` | boolean | true | Enable transcription feature |
 | `enable_translation` | boolean | true | Enable translation feature |
