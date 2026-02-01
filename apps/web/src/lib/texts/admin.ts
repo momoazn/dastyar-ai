@@ -181,11 +181,6 @@ export const admin = {
       enableCodeExecution: "فعال کردن اجرای کد",
       enableImageGeneration: "فعال کردن تولید تصویر",
     },
-    rateLimit: {
-      title: "محدودیت نرخ درخواست",
-      enabled: "فعال کردن محدودیت نرخ",
-      requestsPerMinute: "درخواست‌های مجاز در دقیقه",
-    },
     messages: {
       saved: "تنظیمات با موفقیت ذخیره شد",
       error: "خطا در ذخیره تنظیمات",

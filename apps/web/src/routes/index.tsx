@@ -61,8 +61,8 @@ const features = [
 
 function HomeComponent() {
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center bg-linear-to-br from-background via-background to-muted/20 overflow-hidden">
-      <div className="flex flex-col items-center justify-center px-4 md:px-8 w-full max-w-6xl">
+    <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden bg-linear-to-br from-background via-background to-muted/20">
+      <div className="flex w-full max-w-6xl flex-col items-center justify-center px-4 md:px-8">
         <section className="w-full space-y-6">
           {/* Hero Section */}
           <header className="space-y-4 text-center">
@@ -74,7 +74,7 @@ function HomeComponent() {
               <div className="-top-3 -right-3 absolute h-6 w-6 animate-pulse rounded-full bg-primary/20" />
               <div className="-bottom-2 -left-3 absolute h-5 w-5 animate-pulse rounded-full bg-primary/15 delay-500" />
             </div>
-            <p className="fade-in slide-in-from-bottom-4 mx-auto max-w-xl animate-in text-muted-foreground text-lg delay-300 duration-1000">
+            <p className="fade-in slide-in-from-bottom-4 mx-auto max-w-xl animate-in text-lg text-muted-foreground delay-300 duration-1000">
               {fa.index.description}
             </p>
           </header>
@@ -88,7 +88,7 @@ function HomeComponent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <Card
-                  className="group fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden border bg-card/80 p-4 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/20"
+                  className="group fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden border bg-card/80 p-4 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-primary/30 hover:shadow-primary/20 hover:shadow-xl"
                   key={feature.link}
                   style={{
                     animationDelay: `${index * 100}ms`,
@@ -96,7 +96,9 @@ function HomeComponent() {
                   }}
                 >
                   <div className="relative z-10">
-                    <div className={`${feature.color} mb-3 transition-all duration-500 group-hover:scale-110`}>
+                    <div
+                      className={`${feature.color} mb-3 transition-all duration-500 group-hover:scale-110`}
+                    >
                       {feature.icon}
                     </div>
                     <h3 className="mb-2 font-semibold text-lg transition-colors duration-300 group-hover:text-primary">

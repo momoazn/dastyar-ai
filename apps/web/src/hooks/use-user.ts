@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { logoutAtom, tokenAtom } from "@/atoms/auth";
-import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
 
 export function useUser() {

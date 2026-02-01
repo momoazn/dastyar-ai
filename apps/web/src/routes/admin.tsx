@@ -22,7 +22,9 @@ function AdminRouteComponent() {
           <div className="space-y-6">
             <UserProfile />
             <div className="rounded-lg border bg-card p-6 text-right">
-              <h2 className="font-semibold text-lg">{fa.admin.settings.title}</h2>
+              <h2 className="font-semibold text-lg">
+                {fa.admin.settings.title}
+              </h2>
               <p className="text-muted-foreground text-sm">
                 {fa.admin.settings.subtitle}
               </p>

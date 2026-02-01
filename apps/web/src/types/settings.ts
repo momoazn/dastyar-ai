@@ -18,8 +18,6 @@ export type SystemSettingKey =
   | "password_require_special_chars"
   | "password_require_numbers"
   | "password_require_uppercase"
-  | "rate_limit_enabled"
-  | "rate_limit_requests_per_minute"
   | "model_response_timeout_seconds"
   | "enable_transcription"
   | "enable_translation"

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/settings")({
 function SettingsComponent() {
   return (
     <ProtectedLayout>
-      <div className="mx-auto w-full max-w-4xl space-y-6 px-4 md:px-6">
+      <div className="mx-auto w-full max-w-4xl space-y-4 px-4 md:px-6">
         <SettingsHeader
           description={fa.settings.profile.description}
           title={fa.settings.title}
