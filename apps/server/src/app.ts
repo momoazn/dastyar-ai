@@ -5,9 +5,8 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { env, rateLimitConfig, webDistDir } from "./config";
+import { env, webDistDir } from "./config";
 import { logger } from "./lib/logger";
-import { rateLimiter, userRateLimiter } from "./middlewares/rate-limiter";
 import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
@@ -52,59 +51,6 @@ export function createApp() {
       allowMethods: ["GET", "POST", "OPTIONS"],
     })
   );
-
-  // Global IP-based rate limiting for all API routes
-  // This applies to all users, authenticated or not
-  if (rateLimitConfig.enabled) {
-    app.use(
-      "/api/*",
-      rateLimiter({
-        windowMs: rateLimitConfig.ip.windowMs,
-        maxRequests: rateLimitConfig.ip.maxRequests,
-      })
-    );
-    app.use(
-      "/rpc/*",
-      rateLimiter({
-        windowMs: rateLimitConfig.ip.windowMs,
-        maxRequests: rateLimitConfig.ip.maxRequests,
-      })
-    );
-  }
-
-  // User-specific rate limiting for RPC routes
-  // This applies only to authenticated users (has user context)
-  // Limits are more generous than IP limits but tracked per user
-  if (rateLimitConfig.enabled) {
-    app.use(
-      "/rpc/*",
-      userRateLimiter({
-        windowMs: rateLimitConfig.user.windowMs,
-        maxRequests: rateLimitConfig.user.maxRequests,
-        message: "You have exceeded your request quota",
-      })
-    );
-  }
-
-  // User-specific rate limiting for streaming API routes
-  if (rateLimitConfig.enabled) {
-    app.use(
-      "/api/chat/*",
-      userRateLimiter({
-        windowMs: rateLimitConfig.chat.windowMs,
-        maxRequests: rateLimitConfig.chat.maxRequests,
-        message: "You have exceeded your chat request quota",
-      })
-    );
-    app.use(
-      "/api/images/*",
-      userRateLimiter({
-        windowMs: rateLimitConfig.images.windowMs,
-        maxRequests: rateLimitConfig.images.maxRequests,
-        message: "You have exceeded your image generation quota",
-      })
-    );
-  }
 
   // API routes
   app.route("/rpc", orpcHandler);

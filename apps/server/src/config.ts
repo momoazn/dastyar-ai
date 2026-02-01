@@ -106,16 +106,6 @@ const Schema = z.object({
   DOCUMENTS_DIR: z.string().default("./uploaded-documents"),
   EMBEDDING_MODEL: z.string().default("nomic-embed-text"),
   WEB_DIST_DIR: z.string().default("./web"),
-  // Rate limiting configuration
-  RATE_LIMIT_ENABLED: z.coerce.boolean().default(true),
-  RATE_LIMIT_IP_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000), // 15 minutes
-  RATE_LIMIT_IP_MAX_REQUESTS: z.coerce.number().default(100),
-  RATE_LIMIT_USER_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000), // 15 minutes
-  RATE_LIMIT_USER_MAX_REQUESTS: z.coerce.number().default(500),
-  RATE_LIMIT_CHAT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000), // 15 minutes
-  RATE_LIMIT_CHAT_MAX_REQUESTS: z.coerce.number().default(300),
-  RATE_LIMIT_IMAGES_WINDOW_MS: z.coerce.number().default(60 * 60 * 1000), // 1 hour
-  RATE_LIMIT_IMAGES_MAX_REQUESTS: z.coerce.number().default(50),
   // SSL/TLS configuration
   SSL_ENABLED: z.coerce.boolean().default(false),
   SSL_CERT_PATH: z.string().default(""),
@@ -230,27 +220,3 @@ export const ensureDirectoriesExist = (): void => {
 };
 
 export const runtimeBaseDir = _runtimeBaseDir;
-
-/**
- * Rate limiter configuration
- * Conditionally enabled based on RATE_LIMIT_ENABLED setting
- */
-export const rateLimitConfig = {
-  enabled: env.RATE_LIMIT_ENABLED,
-  ip: {
-    windowMs: env.RATE_LIMIT_IP_WINDOW_MS,
-    maxRequests: env.RATE_LIMIT_IP_MAX_REQUESTS,
-  },
-  user: {
-    windowMs: env.RATE_LIMIT_USER_WINDOW_MS,
-    maxRequests: env.RATE_LIMIT_USER_MAX_REQUESTS,
-  },
-  chat: {
-    windowMs: env.RATE_LIMIT_CHAT_WINDOW_MS,
-    maxRequests: env.RATE_LIMIT_CHAT_MAX_REQUESTS,
-  },
-  images: {
-    windowMs: env.RATE_LIMIT_IMAGES_WINDOW_MS,
-    maxRequests: env.RATE_LIMIT_IMAGES_MAX_REQUESTS,
-  },
-};
