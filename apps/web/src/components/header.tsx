@@ -22,7 +22,7 @@ export function Header({
             to="/"
           >
             <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <span className="hidden sm:inline text-lg">
+            <span className="hidden text-lg sm:inline">
               {fa.navigation.appTitle}
             </span>
           </Link>
@@ -33,13 +33,13 @@ export function Header({
         {showAuthLinks && (
           <>
             <Link
-              className="text-gray-700 text-sm font-medium transition-colors hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+              className="font-medium text-gray-700 text-sm transition-colors hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
               to="/login"
             >
               {fa.auth.loginForm.login}
             </Link>
             <Link
-              className="bg-blue-600 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              className="rounded-md bg-blue-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
               to="/register"
             >
               {fa.auth.registerForm.register}

@@ -111,42 +111,6 @@ export function SettingsPanel() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* General Settings */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.general.title}
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block font-medium text-sm" htmlFor="appName">
-              {fa.admin.settings.general.appName}
-            </label>
-            <Input
-              className="mt-1"
-              id="appName"
-              onChange={(e) => handleSettingChange("app_name", e.target.value)}
-              value={(settings.app_name as string) || ""}
-            />
-          </div>
-          <div>
-            <label
-              className="block font-medium text-sm"
-              htmlFor="appDescription"
-            >
-              {fa.admin.settings.general.appDescription}
-            </label>
-            <Textarea
-              className="mt-1"
-              id="appDescription"
-              onChange={(e) =>
-                handleSettingChange("app_description", e.target.value)
-              }
-              value={(settings.app_description as string) || ""}
-            />
-          </div>
-        </div>
-      </Card>
-
       {/* Security Settings */}
       <Card className="p-6">
         <h3 className="mb-4 font-semibold text-lg">
@@ -344,51 +308,6 @@ export function SettingsPanel() {
               </span>
             </label>
           </div>
-        </div>
-      </Card>
-
-      {/* Rate Limiting Settings */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.rateLimit.title}
-        </h3>
-        <div className="space-y-4">
-          <label className="flex items-center gap-2">
-            <input
-              checked={settings.rate_limit_enabled as boolean}
-              onChange={(e) =>
-                handleSettingChange("rate_limit_enabled", e.target.checked)
-              }
-              type="checkbox"
-            />
-            <span className="font-medium text-sm">
-              {fa.admin.settings.rateLimit.enabled}
-            </span>
-          </label>
-          {(settings.rate_limit_enabled as boolean) && (
-            <div>
-              <label
-                className="block font-medium text-sm"
-                htmlFor="requestsPerMinute"
-              >
-                {fa.admin.settings.rateLimit.requestsPerMinute}
-              </label>
-              <Input
-                className="mt-1"
-                id="requestsPerMinute"
-                onChange={(e) =>
-                  handleSettingChange(
-                    "rate_limit_requests_per_minute",
-                    Number.parseInt(e.target.value, 10)
-                  )
-                }
-                type="number"
-                value={
-                  (settings.rate_limit_requests_per_minute as number) || 100
-                }
-              />
-            </div>
-          )}
         </div>
       </Card>
 

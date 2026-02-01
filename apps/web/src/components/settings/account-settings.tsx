@@ -110,7 +110,7 @@ export function AccountSettings() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Username Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export function AccountSettings() {
       </div>
 
       {/* Divider */}
-      <div className="border-t" />
+      <div className="my-6 border-t" />
 
       {/* Password Section */}
       <div className="space-y-4">

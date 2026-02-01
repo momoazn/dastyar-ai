@@ -70,7 +70,7 @@ export function ProfileSection() {
           {isEditingUsername ? (
             <Form {...usernameForm}>
               <form
-                className="flex items-center gap-2"
+                className="flex items-center gap-3"
                 onSubmit={usernameForm.handleSubmit(onUsernameSubmit)}
               >
                 <FormField
@@ -114,7 +114,7 @@ export function ProfileSection() {
               </form>
             </Form>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-sm">{user?.username}</span>
               <Button
                 onClick={() => setIsEditingUsername(true)}

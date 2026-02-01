@@ -46,13 +46,13 @@ export function SettingsSection({
         </div>
         <ChevronLeft
           className={cn(
-            "h-4 w-4 transition-transform",
+            "h-4 w-4 shrink-0 transition-transform",
             isOpen ? "rotate-0" : "rotate-180"
           )}
         />
       </Button>
 
-      {isOpen && <div className="border-t bg-muted/20 p-4">{children}</div>}
+      {isOpen && <div className="border-t bg-muted/20 p-5">{children}</div>}
     </div>
   );
 }
