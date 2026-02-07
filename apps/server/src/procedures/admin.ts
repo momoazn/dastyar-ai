@@ -105,6 +105,33 @@ const getSettingSchema = z.object({
   key: z.string().min(1, "Setting key is required"),
 });
 
+const hasSqliteUniqueConstraint = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message.toUpperCase();
+  return message.includes("UNIQUE");
+};
+
+const rethrowAdminError = (
+  operation: string,
+  error: unknown,
+  internalMessage: string,
+  context?: Record<string, unknown>
+): never => {
+  logger.error(operation, error, {
+    function: "admin",
+    ...context,
+  });
+  if (error instanceof ORPCError) {
+    throw error;
+  }
+  throw new ORPCError("INTERNAL_ERROR", {
+    message: internalMessage,
+    status: 500,
+  });
+};
+
 export const adminProcedures = {
   // User Management
   listUsers: adminProcedure.input(listUsersSchema).handler(
@@ -220,11 +247,11 @@ export const adminProcedures = {
             : 0,
       }));
     } catch (error) {
-      logger.error("Error listing all models:", error, { function: "admin" });
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to fetch models",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error listing all models",
+        error,
+        "Failed to fetch models"
+      );
     }
   }),
 
@@ -237,13 +264,11 @@ export const adminProcedures = {
         const updatedModel = await updateModel(modelId, { isEnabled });
         return updatedModel;
       } catch (error) {
-        logger.error("Error toggling model status:", error, {
-          function: "admin",
-        });
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update model status",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error toggling model status",
+          error,
+          "Failed to update model status"
+        );
       }
     }),
 
@@ -317,13 +342,11 @@ export const adminProcedures = {
         },
       }));
     } catch (error) {
-      logger.error("Error listing Ollama servers:", error, {
-        function: "admin",
-      });
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to fetch Ollama servers",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error listing Ollama servers",
+        error,
+        "Failed to fetch Ollama servers"
+      );
     }
   }),
 
@@ -335,22 +358,18 @@ export const adminProcedures = {
         await syncOllamaModelsForServer(server);
         return server;
       } catch (error) {
-        logger.error("Error creating Ollama server:", error, {
-          function: "admin",
-          input,
-        });
-        const message =
-          error instanceof Error ? error.message : "Failed to create server";
-        if (message.includes("UNIQUE")) {
+        if (hasSqliteUniqueConstraint(error)) {
           throw new ORPCError("CONFLICT", {
             message: "Server base URL already exists",
             status: 409,
           });
         }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to create Ollama server",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error creating Ollama server",
+          error,
+          "Failed to create Ollama server",
+          { input }
+        );
       }
     }),
 
@@ -378,25 +397,18 @@ export const adminProcedures = {
 
         return updated;
       } catch (error) {
-        logger.error("Error updating Ollama server:", error, {
-          function: "admin",
-          input,
-        });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        const message =
-          error instanceof Error ? error.message : "Failed to update server";
-        if (message.includes("UNIQUE")) {
+        if (hasSqliteUniqueConstraint(error)) {
           throw new ORPCError("CONFLICT", {
             message: "Server base URL already exists",
             status: 409,
           });
         }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update Ollama server",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error updating Ollama server",
+          error,
+          "Failed to update Ollama server",
+          { input }
+        );
       }
     }),
 
@@ -415,17 +427,12 @@ export const adminProcedures = {
         await deleteOllamaServer(input.id);
         return { success: true };
       } catch (error) {
-        logger.error("Error deleting Ollama server:", error, {
-          function: "admin",
-          input,
-        });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to delete Ollama server",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error deleting Ollama server",
+          error,
+          "Failed to delete Ollama server",
+          { input }
+        );
       }
     }),
 
@@ -443,17 +450,12 @@ export const adminProcedures = {
         const models = await syncOllamaModelsForServer(existing);
         return { success: true, modelCount: models.length };
       } catch (error) {
-        logger.error("Error syncing Ollama server models:", error, {
-          function: "admin",
-          input,
-        });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to sync Ollama server models",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error syncing Ollama server models",
+          error,
+          "Failed to sync Ollama server models",
+          { input }
+        );
       }
     }),
 
@@ -462,13 +464,11 @@ export const adminProcedures = {
       const models = await syncAllOllamaServerModels();
       return { success: true, modelCount: models.length };
     } catch (error) {
-      logger.error("Error syncing all Ollama server models:", error, {
-        function: "admin",
-      });
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to sync Ollama server models",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error syncing all Ollama server models",
+        error,
+        "Failed to sync Ollama server models"
+      );
     }
   }),
 
@@ -485,17 +485,12 @@ export const adminProcedures = {
         }
         return await testOllamaServerConnection(existing.baseUrl);
       } catch (error) {
-        logger.error("Error testing Ollama server:", error, {
-          function: "admin",
-          input,
-        });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to test Ollama server",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error testing Ollama server",
+          error,
+          "Failed to test Ollama server",
+          { input }
+        );
       }
     }),
 
@@ -511,14 +506,11 @@ export const adminProcedures = {
       });
       return newModel;
     } catch (error) {
-      logger.error("Error adding model:", error, { function: "admin" });
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to add model",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error adding model",
+        error,
+        "Failed to add model"
+      );
     }
   }),
 
@@ -528,11 +520,11 @@ export const adminProcedures = {
       const settings = await getAllSettings();
       return settings;
     } catch (error) {
-      logger.error("Error getting settings:", error, { function: "admin" });
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to get settings",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error getting settings",
+        error,
+        "Failed to get settings"
+      );
     }
   }),
 
@@ -549,14 +541,11 @@ export const adminProcedures = {
         }
         return setting;
       } catch (error) {
-        logger.error("Error getting setting:", error, { function: "admin" });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to get setting",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error getting setting",
+          error,
+          "Failed to get setting"
+        );
       }
     }),
 
@@ -568,11 +557,11 @@ export const adminProcedures = {
         const setting = await upsertSetting(key, value, description);
         return setting;
       } catch (error) {
-        logger.error("Error upserting setting:", error, { function: "admin" });
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update setting",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error upserting setting",
+          error,
+          "Failed to update setting"
+        );
       }
     }),
 
@@ -589,14 +578,11 @@ export const adminProcedures = {
         }
         return { success: true };
       } catch (error) {
-        logger.error("Error deleting setting:", error, { function: "admin" });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to delete setting",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error deleting setting",
+          error,
+          "Failed to delete setting"
+        );
       }
     }),
 
@@ -605,13 +591,11 @@ export const adminProcedures = {
       await initializeDefaultSettings();
       return { success: true };
     } catch (error) {
-      logger.error("Error initializing settings:", error, {
-        function: "admin",
-      });
-      throw new ORPCError("INTERNAL_ERROR", {
-        message: "Failed to initialize settings",
-        status: 500,
-      });
+      return rethrowAdminError(
+        "Error initializing settings",
+        error,
+        "Failed to initialize settings"
+      );
     }
   }),
 };

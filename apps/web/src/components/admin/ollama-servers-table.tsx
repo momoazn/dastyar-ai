@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/table";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
+import {
+  invalidateAdminModels,
+  invalidateAdminOllamaServers,
+} from "./query-utils";
 import { AdminTableShell } from "./table-shell";
 
 type FormState = {
@@ -46,74 +50,64 @@ export function OllamaServersTable() {
 
   const invalidateData = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: orpc.admin.listOllamaServers.queryKey(),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: orpc.admin.listAllModels.queryKey(),
-      }),
+      invalidateAdminOllamaServers(queryClient),
+      invalidateAdminModels(queryClient),
     ]);
+  };
+
+  const showServerError = () => {
+    toast.error(fa.admin.ollamaServers.messages.error);
+  };
+
+  const onServerMutationSuccess = async (message: string) => {
+    await invalidateData();
+    toast.success(message);
   };
 
   const createMutation = useMutation(
     orpc.admin.createOllamaServer.mutationOptions({
       onSuccess: async () => {
-        await invalidateData();
-        toast.success(fa.admin.ollamaServers.messages.created);
+        await onServerMutationSuccess(fa.admin.ollamaServers.messages.created);
         resetForm();
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 
   const updateMutation = useMutation(
     orpc.admin.updateOllamaServer.mutationOptions({
       onSuccess: async () => {
-        await invalidateData();
-        toast.success(fa.admin.ollamaServers.messages.updated);
+        await onServerMutationSuccess(fa.admin.ollamaServers.messages.updated);
         resetForm();
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 
   const deleteMutation = useMutation(
     orpc.admin.deleteOllamaServer.mutationOptions({
       onSuccess: async () => {
-        await invalidateData();
-        toast.success(fa.admin.ollamaServers.messages.deleted);
+        await onServerMutationSuccess(fa.admin.ollamaServers.messages.deleted);
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 
   const syncMutation = useMutation(
     orpc.admin.syncOllamaServerModels.mutationOptions({
       onSuccess: async () => {
-        await invalidateData();
-        toast.success(fa.admin.ollamaServers.messages.synced);
+        await onServerMutationSuccess(fa.admin.ollamaServers.messages.synced);
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 
   const syncAllMutation = useMutation(
     orpc.admin.syncAllOllamaServersModels.mutationOptions({
       onSuccess: async () => {
-        await invalidateData();
-        toast.success(fa.admin.ollamaServers.messages.synced);
+        await onServerMutationSuccess(fa.admin.ollamaServers.messages.synced);
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 
@@ -128,9 +122,7 @@ export function OllamaServersTable() {
           `${fa.admin.ollamaServers.messages.testedFailed}: ${result.error}`
         );
       },
-      onError: () => {
-        toast.error(fa.admin.ollamaServers.messages.error);
-      },
+      onError: showServerError,
     })
   );
 

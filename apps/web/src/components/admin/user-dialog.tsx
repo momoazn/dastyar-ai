@@ -23,6 +23,7 @@ import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
+import { invalidateAdminUsers } from "./query-utils";
 
 type UserDialogProps = {
   open: boolean;
@@ -113,31 +114,21 @@ export function UserDialog({
     }
   }, [user]);
 
-  const invalidateUserList = () => {
-    if (paginationParams) {
-      const input = {
-        page: paginationParams.page,
-        pageSize: paginationParams.pageSize,
-        ...(paginationParams.search && { search: paginationParams.search }),
-        ...(paginationParams.role && { role: paginationParams.role }),
-      };
-      queryClient.invalidateQueries({
-        queryKey: orpc.admin.listUsers.queryKey({ input }),
-      });
-    } else {
-      // Fallback: invalidate all listUsers queries if pagination params not provided
-      const baseQueryKey = orpc.admin.listUsers.queryKey({
-        input: { page: 1, pageSize: 10 },
-      });
-      queryClient.invalidateQueries({
-        queryKey: baseQueryKey.slice(0, 2),
-        exact: false,
-      });
-    }
-  };
-
-  const handleMutationSuccess = (message: string, callback?: () => void) => {
-    invalidateUserList();
+  const handleMutationSuccess = async (
+    message: string,
+    callback?: () => void
+  ) => {
+    await invalidateAdminUsers(
+      queryClient,
+      paginationParams
+        ? {
+            page: paginationParams.page,
+            pageSize: paginationParams.pageSize,
+            search: paginationParams.search,
+            role: paginationParams.role,
+          }
+        : undefined
+    );
     toast.success(message);
     resetForm();
     onOpenChange(false);
@@ -146,8 +137,8 @@ export function UserDialog({
 
   const createUserMutation = useMutation(
     orpc.admin.createUser.mutationOptions({
-      onSuccess: () => {
-        handleMutationSuccess(fa.admin.users.messages.userCreated);
+      onSuccess: async () => {
+        await handleMutationSuccess(fa.admin.users.messages.userCreated);
       },
       onError: (error) => {
         toast.error(
@@ -159,8 +150,11 @@ export function UserDialog({
 
   const updateUserMutation = useMutation(
     orpc.admin.updateUser.mutationOptions({
-      onSuccess: () => {
-        handleMutationSuccess(fa.admin.users.messages.userUpdated, onSuccess);
+      onSuccess: async () => {
+        await handleMutationSuccess(
+          fa.admin.users.messages.userUpdated,
+          onSuccess
+        );
       },
       onError: (error) => {
         toast.error(

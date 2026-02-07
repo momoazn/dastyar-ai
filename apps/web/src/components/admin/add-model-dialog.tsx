@@ -21,6 +21,7 @@ import {
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
+import { invalidateAdminModels } from "./query-utils";
 
 type AddModelDialogProps = {
   open: boolean;
@@ -39,10 +40,8 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
 
   const addModelMutation = useMutation(
     orpc.admin.addModel.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listAllModels.queryKey(),
-        });
+      onSuccess: async () => {
+        await invalidateAdminModels(queryClient);
         toast.success(fa.admin.models.messages.modelAdded);
         handleReset();
         onOpenChange(false);

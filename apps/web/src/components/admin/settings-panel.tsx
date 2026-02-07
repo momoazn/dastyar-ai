@@ -11,6 +11,19 @@ import { fa } from "@/lib/texts";
 import type { SystemSettingsMap } from "@/types/settings";
 import { orpc, queryClient } from "@/utils/orpc";
 
+const buildSettingsMap = (
+  source: Array<{ key: string; value: unknown }> | undefined
+): SystemSettingsMap => {
+  const map: SystemSettingsMap = {};
+  if (!source) {
+    return map;
+  }
+  for (const setting of source) {
+    map[setting.key] = setting.value as SystemSettingsMap[string];
+  }
+  return map;
+};
+
 export function SettingsPanel() {
   const [settings, setSettings] = useState<SystemSettingsMap>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -23,11 +36,7 @@ export function SettingsPanel() {
   // Initialize settings when data loads
   useEffect(() => {
     if (allSettings) {
-      const settingsMap: SystemSettingsMap = {};
-      for (const setting of allSettings) {
-        settingsMap[setting.key] = setting.value as SystemSettingsMap[string];
-      }
-      setSettings(settingsMap);
+      setSettings(buildSettingsMap(allSettings));
       setHasChanges(false);
     }
   }, [allSettings]);
@@ -35,14 +44,6 @@ export function SettingsPanel() {
   // Upsert settings mutation
   const upsertMutation = useMutation(
     orpc.admin.upsertSetting.mutationOptions({
-      onSuccess: () => {
-        // Invalidate settings query to refetch latest values
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.getAllSettings.queryKey(),
-        });
-        toast.success(fa.admin.settings.messages.saved);
-        setHasChanges(false);
-      },
       onError: (error) => {
         const errorMessage = getErrorMessage(
           error,
@@ -64,6 +65,11 @@ export function SettingsPanel() {
           })
         )
       );
+      await queryClient.invalidateQueries({
+        queryKey: orpc.admin.getAllSettings.queryKey(),
+      });
+      toast.success(fa.admin.settings.messages.saved);
+      setHasChanges(false);
     },
     [upsertMutation]
   );
@@ -90,11 +96,7 @@ export function SettingsPanel() {
   const handleCancel = useCallback(() => {
     // Reload settings from server
     if (allSettings) {
-      const settingsMap: SystemSettingsMap = {};
-      for (const setting of allSettings) {
-        settingsMap[setting.key] = setting.value as SystemSettingsMap[string];
-      }
-      setSettings(settingsMap);
+      setSettings(buildSettingsMap(allSettings));
       setHasChanges(false);
     }
   }, [allSettings]);

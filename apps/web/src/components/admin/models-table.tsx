@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
+import { invalidateAdminModels } from "./query-utils";
 import { AdminTableShell } from "./table-shell";
 
 type LLMModelProvider = "ollama" | "lmstudio" | "stable-diffusion" | "whisper";
@@ -60,10 +61,8 @@ export function ModelsTable() {
 
   const toggleModelMutation = useMutation(
     orpc.admin.toggleModelStatus.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.admin.listAllModels.queryKey(),
-        });
+      onSuccess: async () => {
+        await invalidateAdminModels(queryClient);
         toast.success(fa.admin.models.messages.statusUpdated);
       },
       onError: () => {

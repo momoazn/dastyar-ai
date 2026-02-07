@@ -40,6 +40,7 @@ import { fa } from "@/lib/texts";
 import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
 import { DeleteUserDialog } from "./delete-user-dialog";
+import { invalidateAdminUsers } from "./query-utils";
 import { AdminTableShell } from "./table-shell";
 import { UserDetailDialog } from "./user-detail-dialog";
 import { UserDialog } from "./user-dialog";
@@ -76,8 +77,13 @@ export function UsersTable() {
 
   const deleteUserMutation = useMutation(
     orpc.admin.deleteUser.mutationOptions({
-      onSuccess: () => {
-        invalidateUserList();
+      onSuccess: async () => {
+        await invalidateAdminUsers(queryClient, {
+          page,
+          pageSize,
+          search: searchQuery || undefined,
+          role: roleFilter,
+        });
         toast.success(fa.admin.users.messages.userDeleted);
         setDeleteUserDialogOpen(false);
       },
@@ -90,19 +96,6 @@ export function UsersTable() {
       },
     })
   );
-
-  const invalidateUserList = () => {
-    queryClient.invalidateQueries({
-      queryKey: orpc.admin.listUsers.queryKey({
-        input: {
-          page,
-          pageSize,
-          ...(searchQuery && { search: searchQuery }),
-          ...(roleFilter && { role: roleFilter }),
-        },
-      }),
-    });
-  };
 
   const handleConfirmDeleteUser = () => {
     if (selectedUser) {
@@ -343,7 +336,14 @@ export function UsersTable() {
 
       <UserDialog
         onOpenChange={setEditUserDialogOpen}
-        onSuccess={invalidateUserList}
+        onSuccess={async () =>
+          await invalidateAdminUsers(queryClient, {
+            page,
+            pageSize,
+            search: searchQuery || undefined,
+            role: roleFilter,
+          })
+        }
         open={editUserDialogOpen}
         paginationParams={currentPaginationParams}
         user={selectedUser}
