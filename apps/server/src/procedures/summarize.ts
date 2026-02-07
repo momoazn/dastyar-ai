@@ -1,4 +1,3 @@
-import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
 import { summarySystemPrompt } from "@/lib/prompts";
@@ -10,46 +9,54 @@ import {
   listSummaries,
 } from "@/repositories/summaries";
 import { acquireProviderForModel } from "@/services/ai-providers";
-import { extractJsonField } from "@/utils/llm-json";
+import { generateWithStructuredJsonFallback } from "@/services/ai-providers/llm-generation";
 import { protectedProcedure } from "./base";
 
-const summarizeWithStructuredOutput = async (
-  model: LanguageModel,
-  systemPrompt: string,
-  inputText: string
-) => {
-  const result = await generateObject({
-    model,
-    providerOptions: {
-      lmstudio: { structuredOutputs: false },
-      ollama: { structuredOutputs: false },
-    },
-    mode: "tool",
-    system: systemPrompt,
-    schema: z.object({
-      summaryText: z
-        .string()
-        .optional()
-        .describe("Only the summary text. No extra commentary."),
-    }),
-    prompt: inputText,
-    temperature: 0.1,
-  });
-  return result.object.summaryText ?? null;
-};
+const SUMMARY_TEXT_SCHEMA = z.object({
+  summaryText: z
+    .string()
+    .optional()
+    .describe("Only the summary text. No extra commentary."),
+});
 
-const summarizeWithPlainJson = async (
-  model: LanguageModel,
-  systemPrompt: string,
-  inputText: string
-) => {
-  const { text: rawOutput } = await generateText({
+const summarizeTextWithModel = async (params: {
+  model: Parameters<typeof generateWithStructuredJsonFallback>[0]["model"];
+  text: string;
+  mode: SummaryMode;
+  tone: Tone;
+}): Promise<string> => {
+  const { model, text, mode, tone } = params;
+  const summaryText = await generateWithStructuredJsonFallback({
     model,
-    system: systemPrompt,
-    prompt: inputText,
+    schema: SUMMARY_TEXT_SCHEMA,
+    structuredSystem: summarySystemPrompt({ mode, tone, format: "structured" }),
+    jsonSystem: summarySystemPrompt({ mode, tone, format: "json" }),
+    prompt: text,
+    jsonField: "summaryText",
+    readStructured: (result) => {
+      if (
+        !(
+          typeof result === "object" &&
+          result !== null &&
+          "summaryText" in result
+        )
+      ) {
+        return null;
+      }
+      const structuredSummaryText = (result as { summaryText?: unknown })
+        .summaryText;
+      return typeof structuredSummaryText === "string"
+        ? structuredSummaryText
+        : null;
+    },
     temperature: 0.1,
   });
-  return extractJsonField(rawOutput, "summaryText") ?? rawOutput.trim();
+
+  if (!summaryText) {
+    throw new Error("Failed to summarize text");
+  }
+
+  return summaryText;
 };
 
 export const summarizeProcedures = {
@@ -94,38 +101,16 @@ export const summarizeProcedures = {
         model.provider
       );
 
-      const systemPrompt = summarySystemPrompt({
-        mode,
-        tone,
-        format: "structured",
-      });
-
-      let summaryText: string | null = null;
+      let summaryText = "";
       try {
-        try {
-          summaryText = await summarizeWithStructuredOutput(
-            providerLease.model,
-            systemPrompt,
-            input.text
-          );
-        } catch {
-          // ignore and fallback silently
-        }
-
-        if (!summaryText) {
-          // fallback to plain json
-          summaryText = await summarizeWithPlainJson(
-            providerLease.model,
-            summarySystemPrompt({ mode, tone, format: "json" }),
-            input.text
-          );
-        }
+        summaryText = await summarizeTextWithModel({
+          model: providerLease.model,
+          text: input.text,
+          mode,
+          tone,
+        });
       } finally {
         providerLease.release();
-      }
-
-      if (!summaryText) {
-        throw new Error("Failed to summarize text");
       }
 
       const summary = await createSummary({

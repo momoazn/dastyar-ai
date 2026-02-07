@@ -1,5 +1,4 @@
 import { ORPCError } from "@orpc/client";
-import { generateObject, generateText, type LanguageModel } from "ai";
 import { z } from "zod";
 import {
   type LanguageCode,
@@ -17,56 +16,25 @@ import {
   listTranslations,
 } from "@/repositories/translations";
 import { acquireProviderForModel } from "@/services/ai-providers";
+import { generateWithStructuredJsonFallback } from "@/services/ai-providers/llm-generation";
 import { extractTextFromPdf } from "@/services/processors";
 import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
-import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
 const STORAGE_TEXT_LIMIT = 12_000;
 const TRANSLATION_CHUNK_LIMIT = 2800;
 const DOUBLE_NEWLINE_RE = /\n{2,}/u;
-
-const translateWithStructuredOutput = async (
-  model: LanguageModel,
-  systemPrompt: string,
-  inputText: string
-): Promise<string | null> => {
-  const result = await generateObject({
-    model,
-    providerOptions: {
-      lmstudio: { structuredOutputs: false },
-      ollama: { structuredOutputs: false },
-    },
-    mode: "tool",
-    system: systemPrompt,
-    schema: z.object({
-      translatedText: z
-        .string()
-        .optional()
-        .describe("Only the translated text. No extra commentary."),
-    }),
-    prompt: inputText,
-  });
-  return result.object.translatedText ?? null;
-};
-
-const translateWithPlainJson = async (
-  model: LanguageModel,
-  systemPrompt: string,
-  inputText: string
-): Promise<string> => {
-  const { text: rawOutput } = await generateText({
-    model,
-    system: systemPrompt,
-    prompt: inputText,
-  });
-  return extractJsonField(rawOutput, "translatedText") ?? rawOutput.trim();
-};
+const TRANSLATED_TEXT_SCHEMA = z.object({
+  translatedText: z
+    .string()
+    .optional()
+    .describe("Only the translated text. No extra commentary."),
+});
 
 // Prompts defined centrally in @/prompts
 
 type TranslateTextParams = {
-  model: LanguageModel;
+  model: Parameters<typeof generateWithStructuredJsonFallback>[0]["model"];
   text: string;
   sourceLanguage: LanguageCode;
   targetLanguage: LanguageCode;
@@ -80,52 +48,85 @@ const translateTextWithModel = async ({
   targetLanguage,
   tone,
 }: TranslateTextParams): Promise<string> => {
-  let translatedText: string | null = null;
-
   try {
-    translatedText = await translateWithStructuredOutput(
+    const translatedText = await generateWithStructuredJsonFallback({
       model,
-      translationSystemPrompt({
+      schema: TRANSLATED_TEXT_SCHEMA,
+      structuredSystem: translationSystemPrompt({
         sourceLanguage,
         targetLanguage,
         tone,
         format: "structured",
       }),
-      text
-    );
-  } catch {
-    translatedText = null;
-  }
+      jsonSystem: translationSystemPrompt({
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        format: "json",
+      }),
+      prompt: text,
+      jsonField: "translatedText",
+      readStructured: (result) => {
+        if (
+          !(
+            typeof result === "object" &&
+            result !== null &&
+            "translatedText" in result
+          )
+        ) {
+          return null;
+        }
+        const structuredTranslatedText = (
+          result as { translatedText?: unknown }
+        ).translatedText;
+        return typeof structuredTranslatedText === "string"
+          ? structuredTranslatedText
+          : null;
+      },
+    });
 
-  if (!translatedText) {
-    try {
-      translatedText = await translateWithPlainJson(
-        model,
-        translationSystemPrompt({
-          sourceLanguage,
-          targetLanguage,
-          tone,
-          format: "json",
-        }),
-        text
-      );
-    } catch {
-      throw new ORPCError("TRANSLATION_FAILED", {
-        message:
-          "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
-        status: 502,
+    if (!translatedText) {
+      throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
+        message: "پاسخی از مدل دریافت نشد",
+        status: 500,
       });
     }
-  }
 
-  if (!translatedText) {
-    throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
-      message: "پاسخی از مدل دریافت نشد",
+    return translatedText;
+  } catch (error) {
+    if (error instanceof ORPCError) {
+      throw error;
+    }
+    throw new ORPCError("TRANSLATION_FAILED", {
+      message:
+        "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
+      status: 502,
+    });
+  }
+};
+
+const getTranslationModelOrThrow = async (modelId: number) => {
+  const model = await getModelById(modelId);
+  if (!model) {
+    throw new ORPCError("MODEL_NOT_FOUND", {
+      message: "مدل مورد نظر پیدا نشد",
+      status: 400,
+    });
+  }
+  return model;
+};
+
+const saveTranslationOrThrow = async (
+  params: Parameters<typeof createTranslation>[0]
+) => {
+  try {
+    return await createTranslation(params);
+  } catch {
+    throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
+      message: "ذخیره‌سازی ترجمه ناموفق بود",
       status: 500,
     });
   }
-
-  return translatedText;
 };
 
 const splitOversizeParagraph = (paragraph: string): string[] => {
@@ -232,13 +233,7 @@ export const translationProcedures = {
       })
     )
     .handler(async ({ input, context }) => {
-      const model = await getModelById(input.modelId);
-      if (!model) {
-        throw new ORPCError("MODEL_NOT_FOUND", {
-          message: "مدل مورد نظر پیدا نشد",
-          status: 400,
-        });
-      }
+      const model = await getTranslationModelOrThrow(input.modelId);
 
       const providerLease = await acquireProviderForModel(
         model.identifier,
@@ -261,25 +256,17 @@ export const translationProcedures = {
         providerLease.release();
       }
 
-      try {
-        const created = await createTranslation({
-          sourceText: input.text,
-          translatedText,
-          sourceLanguage,
-          targetLanguage,
-          tone,
-          modelId: input.modelId,
-          userId: context.user.id,
-          sourceType: "text",
-          payload: null,
-        });
-        return created;
-      } catch {
-        throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
-          message: "ذخیره‌سازی ترجمه ناموفق بود",
-          status: 500,
-        });
-      }
+      return await saveTranslationOrThrow({
+        sourceText: input.text,
+        translatedText,
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        modelId: input.modelId,
+        userId: context.user.id,
+        sourceType: "text",
+        payload: null,
+      });
     }),
   translatePdf: protectedProcedure
     .input(
@@ -296,13 +283,7 @@ export const translationProcedures = {
       })
     )
     .handler(async ({ input, context }) => {
-      const model = await getModelById(input.modelId);
-      if (!model) {
-        throw new ORPCError("MODEL_NOT_FOUND", {
-          message: "مدل مورد نظر پیدا نشد",
-          status: 400,
-        });
-      }
+      const model = await getTranslationModelOrThrow(input.modelId);
 
       const providerLease = await acquireProviderForModel(
         model.identifier,
@@ -388,25 +369,17 @@ export const translationProcedures = {
         "translated_text"
       );
 
-      try {
-        const created = await createTranslation({
-          sourceText: truncateForStorage(aggregatedSource),
-          translatedText: truncateForStorage(aggregatedTranslation),
-          sourceLanguage,
-          targetLanguage,
-          tone,
-          modelId: input.modelId,
-          userId: context.user.id,
-          sourceType: "pdf",
-          sourceFileName: input.file.name,
-          payload,
-        });
-        return created;
-      } catch {
-        throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
-          message: "ذخیره‌سازی ترجمه ناموفق بود",
-          status: 500,
-        });
-      }
+      return await saveTranslationOrThrow({
+        sourceText: truncateForStorage(aggregatedSource),
+        translatedText: truncateForStorage(aggregatedTranslation),
+        sourceLanguage,
+        targetLanguage,
+        tone,
+        modelId: input.modelId,
+        userId: context.user.id,
+        sourceType: "pdf",
+        sourceFileName: input.file.name,
+        payload,
+      });
     }),
 };
