@@ -184,6 +184,9 @@ export function ModelsTable() {
                 {fa.admin.models.table.name}
               </TableHead>
               <TableHead className="text-right">
+                {fa.admin.models.table.servers}
+              </TableHead>
+              <TableHead className="text-right">
                 {fa.admin.models.table.id}
               </TableHead>
             </TableRow>
@@ -214,6 +217,17 @@ export function ModelsTable() {
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {model.identifier}
+                </TableCell>
+                <TableCell className="text-right">
+                  {model.provider === "ollama" ? (
+                    <Badge variant="secondary">
+                      {fa.admin.models.serverCoverage(
+                        model.serverCoverage ?? 0
+                      )}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">-</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {model.id}

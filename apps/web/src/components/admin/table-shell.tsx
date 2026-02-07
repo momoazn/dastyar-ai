@@ -39,6 +39,30 @@ export function AdminTableShell({
   errorMessage,
   loadingMessage,
 }: AdminTableShellProps) {
+  let content: React.ReactNode = children;
+  if (isLoading) {
+    content = (
+      <div className="flex items-center justify-center py-10 text-muted-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <LoadingSpinner className="size-8" />
+          <span className="text-sm">{loadingMessage}</span>
+        </div>
+      </div>
+    );
+  } else if (isError) {
+    content = (
+      <div className="py-8 text-center text-destructive">
+        <p className="text-sm">{errorMessage}</p>
+      </div>
+    );
+  } else if (isEmpty) {
+    content = (
+      <div className="py-8 text-center text-muted-foreground">
+        <p className="text-sm">{emptyMessage}</p>
+      </div>
+    );
+  }
+
   return (
     <Surface padded={false}>
       <SurfaceHeader className="justify-between" dir="rtl">
@@ -58,24 +82,7 @@ export function AdminTableShell({
       ) : null}
 
       <SurfaceContent className={cn("p-0", filters && "pt-0")}>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-10 text-muted-foreground">
-            <div className="flex flex-col items-center gap-3">
-              <LoadingSpinner className="size-8" />
-              <span className="text-sm">{loadingMessage}</span>
-            </div>
-          </div>
-        ) : isError ? (
-          <div className="py-8 text-center text-destructive">
-            <p className="text-sm">{errorMessage}</p>
-          </div>
-        ) : isEmpty ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">{emptyMessage}</p>
-          </div>
-        ) : (
-          children
-        )}
+        {content}
       </SurfaceContent>
 
       {footer ? (

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ModelsTable } from "@/components/admin/models-table";
+import { OllamaServersTable } from "@/components/admin/ollama-servers-table";
 import { SettingsPanel } from "@/components/admin/settings-panel";
 import { UsersTable } from "@/components/admin/users-table";
 import { UserProfile } from "@/components/user-profile";
@@ -18,6 +19,7 @@ function AdminRouteComponent() {
           <div className="space-y-6">
             <UsersTable />
             <ModelsTable />
+            <OllamaServersTable />
           </div>
           <div className="space-y-6">
             <UserProfile />
