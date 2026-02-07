@@ -9,7 +9,7 @@ import {
   getSummary,
   listSummaries,
 } from "@/repositories/summaries";
-import { getProviderForModel } from "@/services/ai-providers";
+import { acquireProviderForModel } from "@/services/ai-providers";
 import { extractJsonField } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
 
@@ -89,7 +89,7 @@ export const summarizeProcedures = {
       if (!model) {
         throw new Error("Model not found");
       }
-      const providerModel = getProviderForModel(
+      const providerLease = await acquireProviderForModel(
         model.identifier,
         model.provider
       );
@@ -102,22 +102,26 @@ export const summarizeProcedures = {
 
       let summaryText: string | null = null;
       try {
-        summaryText = await summarizeWithStructuredOutput(
-          providerModel,
-          systemPrompt,
-          input.text
-        );
-      } catch {
-        // ignore and fallback silently
-      }
+        try {
+          summaryText = await summarizeWithStructuredOutput(
+            providerLease.model,
+            systemPrompt,
+            input.text
+          );
+        } catch {
+          // ignore and fallback silently
+        }
 
-      if (!summaryText) {
-        // fallback to plain json
-        summaryText = await summarizeWithPlainJson(
-          providerModel,
-          summarySystemPrompt({ mode, tone, format: "json" }),
-          input.text
-        );
+        if (!summaryText) {
+          // fallback to plain json
+          summaryText = await summarizeWithPlainJson(
+            providerLease.model,
+            summarySystemPrompt({ mode, tone, format: "json" }),
+            input.text
+          );
+        }
+      } finally {
+        providerLease.release();
       }
 
       if (!summaryText) {

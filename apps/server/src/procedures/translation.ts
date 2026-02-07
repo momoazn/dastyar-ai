@@ -16,7 +16,7 @@ import {
   getTranslation,
   listTranslations,
 } from "@/repositories/translations";
-import { getProviderForModel } from "@/services/ai-providers";
+import { acquireProviderForModel } from "@/services/ai-providers";
 import { extractTextFromPdf } from "@/services/processors";
 import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { extractJsonField } from "@/utils/llm-json";
@@ -240,7 +240,7 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(
+      const providerLease = await acquireProviderForModel(
         model.identifier,
         model.provider
       );
@@ -248,13 +248,18 @@ export const translationProcedures = {
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
 
-      const translatedText = await translateTextWithModel({
-        model: providerModel,
-        text: input.text,
-        sourceLanguage,
-        targetLanguage,
-        tone,
-      });
+      let translatedText = "";
+      try {
+        translatedText = await translateTextWithModel({
+          model: providerLease.model,
+          text: input.text,
+          sourceLanguage,
+          targetLanguage,
+          tone,
+        });
+      } finally {
+        providerLease.release();
+      }
 
       try {
         const created = await createTranslation({
@@ -299,7 +304,7 @@ export const translationProcedures = {
         });
       }
 
-      const providerModel = getProviderForModel(
+      const providerLease = await acquireProviderForModel(
         model.identifier,
         model.provider
       );
@@ -324,41 +329,45 @@ export const translationProcedures = {
       }
 
       const translatedPages: TranslationPayload["pages"] = [];
-      for (const page of pdfPages) {
-        const chunks = chunkPageText(page.text);
-        if (chunks.length === 0) {
-          continue;
-        }
-        const translatedChunks: string[] = [];
-        for (const chunk of chunks) {
-          try {
-            const chunkTranslation = await translateTextWithModel({
-              model: providerModel,
-              text: chunk,
-              sourceLanguage,
-              targetLanguage,
-              tone,
-            });
-            translatedChunks.push(chunkTranslation);
-          } catch (error) {
-            if (error instanceof ORPCError) {
-              throw new ORPCError(error.code, {
-                message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
-                status: error.status,
-                data: error.data,
-              });
-            }
-            throw error;
+      try {
+        for (const page of pdfPages) {
+          const chunks = chunkPageText(page.text);
+          if (chunks.length === 0) {
+            continue;
           }
+          const translatedChunks: string[] = [];
+          for (const chunk of chunks) {
+            try {
+              const chunkTranslation = await translateTextWithModel({
+                model: providerLease.model,
+                text: chunk,
+                sourceLanguage,
+                targetLanguage,
+                tone,
+              });
+              translatedChunks.push(chunkTranslation);
+            } catch (error) {
+              if (error instanceof ORPCError) {
+                throw new ORPCError(error.code, {
+                  message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
+                  status: error.status,
+                  data: error.data,
+                });
+              }
+              throw error;
+            }
+          }
+          if (translatedChunks.length === 0) {
+            continue;
+          }
+          translatedPages.push({
+            page: page.page,
+            source_text: page.text,
+            translated_text: translatedChunks.join("\n\n"),
+          });
         }
-        if (translatedChunks.length === 0) {
-          continue;
-        }
-        translatedPages.push({
-          page: page.page,
-          source_text: page.text,
-          translated_text: translatedChunks.join("\n\n"),
-        });
+      } finally {
+        providerLease.release();
       }
 
       if (translatedPages.length === 0) {

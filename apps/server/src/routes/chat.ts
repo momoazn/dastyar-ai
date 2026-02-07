@@ -19,7 +19,7 @@ import {
   updateMessage,
 } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
-import { getProviderForModel } from "@/services/ai-providers";
+import { acquireProviderForModel } from "@/services/ai-providers";
 import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
@@ -82,6 +82,7 @@ const ChatRequestSchema = z.object({
 const app = new Hono<AuthEnv>()
   .use(authMiddleware)
   .post("/", zValidator("json", ChatRequestSchema), async (c) => {
+    let releaseProvider: (() => void) | null = null;
     try {
       const { messages, modelId, threadId } = c.req.valid("json");
       const uiMessages = messages as unknown as MyUIMessage[];
@@ -115,10 +116,12 @@ const app = new Hono<AuthEnv>()
         });
       }
 
-      const providerModel = getProviderForModel(
+      const providerLease = await acquireProviderForModel(
         llmModel.identifier,
         llmModel.provider
       );
+      const providerModel = providerLease.model;
+      releaseProvider = providerLease.release;
 
       // Persist user message (last)
       try {
@@ -260,12 +263,18 @@ const app = new Hono<AuthEnv>()
               status: "finished",
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());
+            releaseProvider?.();
+            releaseProvider = null;
           } catch {
+            releaseProvider?.();
+            releaseProvider = null;
             return;
           }
         },
       });
     } catch (error) {
+      releaseProvider?.();
+      releaseProvider = null;
       let message = "An unexpected error occurred";
       if (error instanceof Error) {
         message = error.message;

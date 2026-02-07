@@ -1,5 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
 import type {
@@ -79,6 +85,56 @@ export const llmModels = sqliteTable(
     index("idx_llm_models_provider_identifier").on(
       table.provider,
       table.identifier
+    ),
+  ]
+);
+
+export const ollamaServers = sqliteTable(
+  "ollama_servers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    baseUrl: text("base_url").notNull().unique(),
+    isEnabled: integer("is_enabled", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => [index("idx_ollama_servers_enabled").on(table.isEnabled)]
+);
+
+export const ollamaServerModels = sqliteTable(
+  "ollama_server_models",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    serverId: integer("server_id")
+      .notNull()
+      .references(() => ollamaServers.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    modelIdentifier: text("model_identifier").notNull(),
+    lastSeenAt: integer("last_seen_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => [
+    index("idx_ollama_server_models_server_id").on(table.serverId),
+    index("idx_ollama_server_models_identifier").on(table.modelIdentifier),
+    uniqueIndex("uidx_ollama_server_models_server_identifier").on(
+      table.serverId,
+      table.modelIdentifier
     ),
   ]
 );
@@ -398,6 +454,20 @@ export const llmModelsRelations = relations(llmModels, ({ many }) => ({
   codeRuns: many(codeRuns),
 }));
 
+export const ollamaServersRelations = relations(ollamaServers, ({ many }) => ({
+  models: many(ollamaServerModels),
+}));
+
+export const ollamaServerModelsRelations = relations(
+  ollamaServerModels,
+  ({ one }) => ({
+    server: one(ollamaServers, {
+      fields: [ollamaServerModels.serverId],
+      references: [ollamaServers.id],
+    }),
+  })
+);
+
 export const chatThreadsRelations = relations(chatThreads, ({ one, many }) => ({
   user: one(users, {
     fields: [chatThreads.userId],
@@ -524,6 +594,22 @@ export const selectLlmModelSchema = createSelectSchema(llmModels);
 export type InsertLlmModel = z.infer<typeof insertLlmModelSchema>;
 export type SelectLlmModel = z.infer<typeof selectLlmModelSchema>;
 
+export const insertOllamaServerSchema = createInsertSchema(ollamaServers);
+export const selectOllamaServerSchema = createSelectSchema(ollamaServers);
+export type InsertOllamaServer = z.infer<typeof insertOllamaServerSchema>;
+export type SelectOllamaServer = z.infer<typeof selectOllamaServerSchema>;
+
+export const insertOllamaServerModelSchema =
+  createInsertSchema(ollamaServerModels);
+export const selectOllamaServerModelSchema =
+  createSelectSchema(ollamaServerModels);
+export type InsertOllamaServerModel = z.infer<
+  typeof insertOllamaServerModelSchema
+>;
+export type SelectOllamaServerModel = z.infer<
+  typeof selectOllamaServerModelSchema
+>;
+
 export const insertChatThreadSchema = createInsertSchema(chatThreads);
 export const selectChatThreadSchema = createSelectSchema(chatThreads);
 export type InsertChatThread = z.infer<typeof insertChatThreadSchema>;
@@ -585,6 +671,8 @@ export type SelectSystemSetting = z.infer<typeof selectSystemSettingSchema>;
 
 export type User = SelectUser;
 export type LLMModel = SelectLlmModel;
+export type OllamaServer = SelectOllamaServer;
+export type OllamaServerModel = SelectOllamaServerModel;
 export type ChatThread = SelectChatThread;
 export type Message = SelectMessage;
 export type Translation = SelectTranslation;

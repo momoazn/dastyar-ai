@@ -13,12 +13,27 @@ import {
 import { createUser, hashPassword, usernameExists } from "@/repositories/auth";
 import { addModel, getModels, updateModel } from "@/repositories/llm-models";
 import {
+  createOllamaServer,
+  deleteOllamaServer,
+  getOllamaModelCoverageCounts,
+  getOllamaServerById,
+  listOllamaServerModelIdentifiers,
+  listOllamaServers,
+  updateOllamaServer,
+} from "@/repositories/ollama-servers";
+import {
   deleteSetting,
   getAllSettings,
   getSetting,
   initializeDefaultSettings,
   upsertSetting,
 } from "@/repositories/system-settings";
+import {
+  syncAllOllamaServerModels,
+  syncOllamaModelsForServer,
+  testOllamaServerConnection,
+} from "@/services/ai-providers/ollama-provider";
+import { getOllamaServerRuntimeMetrics } from "@/services/ai-providers/ollama-router";
 import { adminProcedure } from "./base";
 
 const updateUserSchema = z.object({
@@ -55,6 +70,23 @@ const addModelSchema = z.object({
   creator: z.string().optional(),
   family: z.string().optional(),
   size: z.string().optional(),
+});
+
+const ollamaServerBaseSchema = z.object({
+  name: z.string().min(1, "Server name is required"),
+  baseUrl: z.string().min(1, "Server base URL is required"),
+  isEnabled: z.boolean().default(true),
+});
+
+const ollamaServerIdSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+const updateOllamaServerSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1).optional(),
+  baseUrl: z.string().min(1).optional(),
+  isEnabled: z.boolean().optional(),
 });
 
 const upsertSettingSchema = z.object({
@@ -179,7 +211,14 @@ export const adminProcedures = {
   listAllModels: adminProcedure.handler(async () => {
     try {
       const models = await getModels();
-      return models;
+      const coverageByIdentifier = await getOllamaModelCoverageCounts();
+      return models.map((model) => ({
+        ...model,
+        serverCoverage:
+          model.provider === "ollama"
+            ? (coverageByIdentifier[model.identifier] ?? 0)
+            : 0,
+      }));
     } catch (error) {
       logger.error("Error listing all models:", error, { function: "admin" });
       throw new ORPCError("INTERNAL_ERROR", {
@@ -246,6 +285,215 @@ export const adminProcedures = {
         }
         throw new ORPCError("INTERNAL_ERROR", {
           message: "Failed to delete user",
+          status: 500,
+        });
+      }
+    }),
+
+  listOllamaServers: adminProcedure.handler(async () => {
+    try {
+      const servers = await listOllamaServers({
+        includeDisabled: true,
+        ensureDefault: true,
+      });
+      const runtimeMetrics = await getOllamaServerRuntimeMetrics(servers);
+      const runtimeByServerId = new Map(
+        runtimeMetrics.map((metric) => [metric.serverId, metric])
+      );
+      const serverModels = await Promise.all(
+        servers.map((server) => listOllamaServerModelIdentifiers(server.id))
+      );
+
+      return servers.map((server, index) => ({
+        ...server,
+        models: serverModels[index] ?? [],
+        modelCount: (serverModels[index] ?? []).length,
+        runtime: runtimeByServerId.get(server.id) ?? {
+          inFlight: 0,
+          runningModels: 0,
+          reachable: false,
+          busyScore: 0,
+          ewmaLatencyMs: 0,
+        },
+      }));
+    } catch (error) {
+      logger.error("Error listing Ollama servers:", error, {
+        function: "admin",
+      });
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: "Failed to fetch Ollama servers",
+        status: 500,
+      });
+    }
+  }),
+
+  createOllamaServer: adminProcedure
+    .input(ollamaServerBaseSchema)
+    .handler(async ({ input }) => {
+      try {
+        const server = await createOllamaServer(input);
+        await syncOllamaModelsForServer(server);
+        return server;
+      } catch (error) {
+        logger.error("Error creating Ollama server:", error, {
+          function: "admin",
+          input,
+        });
+        const message =
+          error instanceof Error ? error.message : "Failed to create server";
+        if (message.includes("UNIQUE")) {
+          throw new ORPCError("CONFLICT", {
+            message: "Server base URL already exists",
+            status: 409,
+          });
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to create Ollama server",
+          status: 500,
+        });
+      }
+    }),
+
+  updateOllamaServer: adminProcedure
+    .input(updateOllamaServerSchema)
+    .handler(async ({ input }) => {
+      try {
+        const existing = await getOllamaServerById(input.id);
+        if (!existing) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "Ollama server not found",
+            status: 404,
+          });
+        }
+
+        const updated = await updateOllamaServer(input.id, {
+          name: input.name,
+          baseUrl: input.baseUrl,
+          isEnabled: input.isEnabled,
+        });
+
+        if (input.baseUrl !== undefined) {
+          await syncOllamaModelsForServer(updated);
+        }
+
+        return updated;
+      } catch (error) {
+        logger.error("Error updating Ollama server:", error, {
+          function: "admin",
+          input,
+        });
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        const message =
+          error instanceof Error ? error.message : "Failed to update server";
+        if (message.includes("UNIQUE")) {
+          throw new ORPCError("CONFLICT", {
+            message: "Server base URL already exists",
+            status: 409,
+          });
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to update Ollama server",
+          status: 500,
+        });
+      }
+    }),
+
+  deleteOllamaServer: adminProcedure
+    .input(ollamaServerIdSchema)
+    .handler(async ({ input }) => {
+      try {
+        const existing = await getOllamaServerById(input.id);
+        if (!existing) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "Ollama server not found",
+            status: 404,
+          });
+        }
+
+        await deleteOllamaServer(input.id);
+        return { success: true };
+      } catch (error) {
+        logger.error("Error deleting Ollama server:", error, {
+          function: "admin",
+          input,
+        });
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to delete Ollama server",
+          status: 500,
+        });
+      }
+    }),
+
+  syncOllamaServerModels: adminProcedure
+    .input(ollamaServerIdSchema)
+    .handler(async ({ input }) => {
+      try {
+        const existing = await getOllamaServerById(input.id);
+        if (!existing) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "Ollama server not found",
+            status: 404,
+          });
+        }
+        const models = await syncOllamaModelsForServer(existing);
+        return { success: true, modelCount: models.length };
+      } catch (error) {
+        logger.error("Error syncing Ollama server models:", error, {
+          function: "admin",
+          input,
+        });
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to sync Ollama server models",
+          status: 500,
+        });
+      }
+    }),
+
+  syncAllOllamaServersModels: adminProcedure.handler(async () => {
+    try {
+      const models = await syncAllOllamaServerModels();
+      return { success: true, modelCount: models.length };
+    } catch (error) {
+      logger.error("Error syncing all Ollama server models:", error, {
+        function: "admin",
+      });
+      throw new ORPCError("INTERNAL_ERROR", {
+        message: "Failed to sync Ollama server models",
+        status: 500,
+      });
+    }
+  }),
+
+  testOllamaServerConnection: adminProcedure
+    .input(ollamaServerIdSchema)
+    .handler(async ({ input }) => {
+      try {
+        const existing = await getOllamaServerById(input.id);
+        if (!existing) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "Ollama server not found",
+            status: 404,
+          });
+        }
+        return await testOllamaServerConnection(existing.baseUrl);
+      } catch (error) {
+        logger.error("Error testing Ollama server:", error, {
+          function: "admin",
+          input,
+        });
+        if (error instanceof ORPCError) {
+          throw error;
+        }
+        throw new ORPCError("INTERNAL_ERROR", {
+          message: "Failed to test Ollama server",
           status: 500,
         });
       }
