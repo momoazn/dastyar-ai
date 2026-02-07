@@ -7,10 +7,9 @@ import {
   getCodeRun,
   listCodeRuns,
 } from "@/repositories/code-runs";
-import { getModelById } from "@/repositories/llm-models";
-import { acquireProviderForModel } from "@/services/ai-providers";
 import { extractJsonObject } from "@/utils/llm-json";
 import { protectedProcedure } from "./base";
+import { withModelProviderById } from "./helpers/llm";
 
 const codeRunInputSchema = z.object({
   mode: z.enum(["generate", "explain", "review", "debug"]),
@@ -181,48 +180,47 @@ async function handleDebugMode(
 }
 
 export const codeProcedures = {
-  run: protectedProcedure
-    .input(codeRunInputSchema)
-    .handler(async ({ input, context }) => {
-      const model = await getModelById(input.modelId);
-      if (!model) {
-        throw new Error("Model not found");
-      }
+  run: protectedProcedure.input(codeRunInputSchema).handler(
+    async ({ input, context }) =>
+      await withModelProviderById({
+        modelId: input.modelId,
+        notFoundMessage: "Model not found",
+        handler: async ({ providerModel }) => {
+          const makeRequest: MakeRequest = (system, userPrompt) =>
+            generateText({
+              model: providerModel,
+              system,
+              prompt: userPrompt,
+              temperature: 0.2,
+            });
 
-      const providerLease = await acquireProviderForModel(
-        model.identifier,
-        model.provider
-      );
-
-      const makeRequest: MakeRequest = (system, userPrompt) =>
-        generateText({
-          model: providerLease.model,
-          system,
-          prompt: userPrompt,
-          temperature: 0.2,
-        });
-
-      try {
-        switch (input.mode) {
-          case "generate":
-            return await handleGenerateMode(
-              input,
-              makeRequest,
-              context.user.id
-            );
-          case "explain":
-            return await handleExplainMode(input, makeRequest, context.user.id);
-          case "review":
-            return await handleReviewMode(input, makeRequest, context.user.id);
-          case "debug":
-            return await handleDebugMode(input, makeRequest, context.user.id);
-          default:
-            throw new Error(`Unsupported mode: ${input.mode}`);
-        }
-      } finally {
-        providerLease.release();
-      }
-    }),
+          switch (input.mode) {
+            case "generate":
+              return await handleGenerateMode(
+                input,
+                makeRequest,
+                context.user.id
+              );
+            case "explain":
+              return await handleExplainMode(
+                input,
+                makeRequest,
+                context.user.id
+              );
+            case "review":
+              return await handleReviewMode(
+                input,
+                makeRequest,
+                context.user.id
+              );
+            case "debug":
+              return await handleDebugMode(input, makeRequest, context.user.id);
+            default:
+              throw new Error(`Unsupported mode: ${input.mode}`);
+          }
+        },
+      })
+  ),
   listRuns: protectedProcedure.handler(async ({ context }) =>
     listCodeRuns(context.user.id)
   ),

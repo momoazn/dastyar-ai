@@ -1,16 +1,15 @@
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
 import { summarySystemPrompt } from "@/lib/prompts";
-import { getModelById } from "@/repositories/llm-models";
 import {
   createSummary,
   deleteSummary,
   getSummary,
   listSummaries,
 } from "@/repositories/summaries";
-import { acquireProviderForModel } from "@/services/ai-providers";
 import { generateWithStructuredJsonFallback } from "@/services/ai-providers/llm-generation";
 import { protectedProcedure } from "./base";
+import { withModelProviderById } from "./helpers/llm";
 
 const SUMMARY_TEXT_SCHEMA = z.object({
   summaryText: z
@@ -92,26 +91,17 @@ export const summarizeProcedures = {
     .handler(async ({ input, context }) => {
       const mode = input.mode as SummaryMode;
       const tone = input.tone as Tone;
-      const model = await getModelById(input.modelId);
-      if (!model) {
-        throw new Error("Model not found");
-      }
-      const providerLease = await acquireProviderForModel(
-        model.identifier,
-        model.provider
-      );
-
-      let summaryText = "";
-      try {
-        summaryText = await summarizeTextWithModel({
-          model: providerLease.model,
-          text: input.text,
-          mode,
-          tone,
-        });
-      } finally {
-        providerLease.release();
-      }
+      const summaryText = await withModelProviderById({
+        modelId: input.modelId,
+        notFoundMessage: "Model not found",
+        handler: async ({ providerModel }) =>
+          await summarizeTextWithModel({
+            model: providerModel,
+            text: input.text,
+            mode,
+            tone,
+          }),
+      });
 
       const summary = await createSummary({
         sourceText: input.text,

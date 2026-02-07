@@ -8,18 +8,17 @@ import {
   tones,
 } from "@/database";
 import { translationSystemPrompt } from "@/lib/prompts";
-import { getModelById } from "@/repositories/llm-models";
 import {
   createTranslation,
   deleteTranslation,
   getTranslation,
   listTranslations,
 } from "@/repositories/translations";
-import { acquireProviderForModel } from "@/services/ai-providers";
 import { generateWithStructuredJsonFallback } from "@/services/ai-providers/llm-generation";
 import { extractTextFromPdf } from "@/services/processors";
 import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { protectedProcedure } from "./base";
+import { withModelProviderById } from "./helpers/llm";
 
 const STORAGE_TEXT_LIMIT = 12_000;
 const TRANSLATION_CHUNK_LIMIT = 2800;
@@ -103,17 +102,6 @@ const translateTextWithModel = async ({
       status: 502,
     });
   }
-};
-
-const getTranslationModelOrThrow = async (modelId: number) => {
-  const model = await getModelById(modelId);
-  if (!model) {
-    throw new ORPCError("MODEL_NOT_FOUND", {
-      message: "مدل مورد نظر پیدا نشد",
-      status: 400,
-    });
-  }
-  return model;
 };
 
 const saveTranslationOrThrow = async (
@@ -233,28 +221,22 @@ export const translationProcedures = {
       })
     )
     .handler(async ({ input, context }) => {
-      const model = await getTranslationModelOrThrow(input.modelId);
-
-      const providerLease = await acquireProviderForModel(
-        model.identifier,
-        model.provider
-      );
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
 
-      let translatedText = "";
-      try {
-        translatedText = await translateTextWithModel({
-          model: providerLease.model,
-          text: input.text,
-          sourceLanguage,
-          targetLanguage,
-          tone,
-        });
-      } finally {
-        providerLease.release();
-      }
+      const translatedText = await withModelProviderById({
+        modelId: input.modelId,
+        notFoundMessage: "مدل مورد نظر پیدا نشد",
+        handler: async ({ providerModel }) =>
+          await translateTextWithModel({
+            model: providerModel,
+            text: input.text,
+            sourceLanguage,
+            targetLanguage,
+            tone,
+          }),
+      });
 
       return await saveTranslationOrThrow({
         sourceText: input.text,
@@ -283,12 +265,6 @@ export const translationProcedures = {
       })
     )
     .handler(async ({ input, context }) => {
-      const model = await getTranslationModelOrThrow(input.modelId);
-
-      const providerLease = await acquireProviderForModel(
-        model.identifier,
-        model.provider
-      );
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
@@ -309,47 +285,50 @@ export const translationProcedures = {
         });
       }
 
-      const translatedPages: TranslationPayload["pages"] = [];
-      try {
-        for (const page of pdfPages) {
-          const chunks = chunkPageText(page.text);
-          if (chunks.length === 0) {
-            continue;
-          }
-          const translatedChunks: string[] = [];
-          for (const chunk of chunks) {
-            try {
-              const chunkTranslation = await translateTextWithModel({
-                model: providerLease.model,
-                text: chunk,
-                sourceLanguage,
-                targetLanguage,
-                tone,
-              });
-              translatedChunks.push(chunkTranslation);
-            } catch (error) {
-              if (error instanceof ORPCError) {
-                throw new ORPCError(error.code, {
-                  message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
-                  status: error.status,
-                  data: error.data,
-                });
-              }
-              throw error;
+      const translatedPages = await withModelProviderById({
+        modelId: input.modelId,
+        notFoundMessage: "مدل مورد نظر پیدا نشد",
+        handler: async ({ providerModel }) => {
+          const pages: TranslationPayload["pages"] = [];
+          for (const page of pdfPages) {
+            const chunks = chunkPageText(page.text);
+            if (chunks.length === 0) {
+              continue;
             }
+            const translatedChunks: string[] = [];
+            for (const chunk of chunks) {
+              try {
+                const chunkTranslation = await translateTextWithModel({
+                  model: providerModel,
+                  text: chunk,
+                  sourceLanguage,
+                  targetLanguage,
+                  tone,
+                });
+                translatedChunks.push(chunkTranslation);
+              } catch (error) {
+                if (error instanceof ORPCError) {
+                  throw new ORPCError(error.code, {
+                    message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
+                    status: error.status,
+                    data: error.data,
+                  });
+                }
+                throw error;
+              }
+            }
+            if (translatedChunks.length === 0) {
+              continue;
+            }
+            pages.push({
+              page: page.page,
+              source_text: page.text,
+              translated_text: translatedChunks.join("\n\n"),
+            });
           }
-          if (translatedChunks.length === 0) {
-            continue;
-          }
-          translatedPages.push({
-            page: page.page,
-            source_text: page.text,
-            translated_text: translatedChunks.join("\n\n"),
-          });
-        }
-      } finally {
-        providerLease.release();
-      }
+          return pages;
+        },
+      });
 
       if (translatedPages.length === 0) {
         throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
