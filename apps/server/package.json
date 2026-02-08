@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "bun db:bundle && bun build src/index.ts --compile --minify --target bun --outfile ./dist/dastyar-ai",
-    "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --outfile ./dist/dastyar-ai.exe",
+    "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --outfile ./dist/dastyar-ai.exe --windows-icon=./assets/app.ico",
     "check-types": "tsc -b",
     "test": "bun test ./src",
     "test:coverage": "bun test ./src --coverage",
