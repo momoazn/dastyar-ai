@@ -258,3 +258,22 @@ export async function getOllamaModelCoverageCounts(): Promise<
 
   return map;
 }
+
+export async function listKnownEnabledOllamaModels(): Promise<string[]> {
+  await ensureDefaultOllamaServer();
+
+  const rows = await db
+    .selectDistinct({
+      modelIdentifier: ollamaServerModels.modelIdentifier,
+    })
+    .from(ollamaServerModels)
+    .innerJoin(
+      ollamaServers,
+      and(
+        eq(ollamaServerModels.serverId, ollamaServers.id),
+        eq(ollamaServers.isEnabled, true)
+      )
+    );
+
+  return rows.map((row) => row.modelIdentifier);
+}

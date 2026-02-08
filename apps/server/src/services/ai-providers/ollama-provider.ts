@@ -3,18 +3,25 @@ import OpenAI from "openai";
 import { env } from "@/config";
 import { logger } from "@/lib/logger";
 import {
+  listKnownEnabledOllamaModels,
   listOllamaServers,
   replaceOllamaServerModels,
 } from "@/repositories/ollama-servers";
 
 const OLLAMA_TIMEOUT_MS = 5000;
 const TRAILING_SLASH_RE = /\/+$/u;
+const V1_SUFFIX_RE = /\/v1$/u;
+const API_SUFFIX_RE = /\/api$/u;
 
 const openAiClientsByBaseUrl = new Map<string, OpenAI>();
 const providersByBaseUrl = new Map<string, ReturnType<typeof createOllama>>();
 
 const normalizeBaseUrl = (baseUrl: string): string =>
-  baseUrl.trim().replace(TRAILING_SLASH_RE, "");
+  baseUrl
+    .trim()
+    .replace(TRAILING_SLASH_RE, "")
+    .replace(V1_SUFFIX_RE, "")
+    .replace(API_SUFFIX_RE, "");
 
 const toV1BaseUrl = (baseUrl: string): string =>
   `${normalizeBaseUrl(baseUrl)}/v1`;
@@ -108,7 +115,17 @@ export async function listOllamaModels() {
     })
   );
 
-  return result.flat();
+  const flattened = result.flat();
+  if (flattened.length > 0) {
+    return flattened;
+  }
+
+  // Fallback to previously known mappings if all live probes fail.
+  const knownModels = await listKnownEnabledOllamaModels();
+  return knownModels.map((name) => ({
+    name,
+    provider: "ollama" as const,
+  }));
 }
 
 export async function syncOllamaModelsForServer(server: {

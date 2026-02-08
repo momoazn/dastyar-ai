@@ -11,7 +11,12 @@ import {
   updateUser,
 } from "@/repositories/admin";
 import { createUser, hashPassword, usernameExists } from "@/repositories/auth";
-import { addModel, getModels, updateModel } from "@/repositories/llm-models";
+import {
+  addModel,
+  getModels,
+  syncModels,
+  updateModel,
+} from "@/repositories/llm-models";
 import {
   createOllamaServer,
   deleteOllamaServer,
@@ -237,7 +242,13 @@ export const adminProcedures = {
   // Model Management
   listAllModels: adminProcedure.handler(async () => {
     try {
-      const models = await getModels();
+      let models = await getModels();
+      if (models.length === 0) {
+        const discovered = await syncAllOllamaServerModels();
+        if (discovered.length > 0) {
+          models = await syncModels(discovered);
+        }
+      }
       const coverageByIdentifier = await getOllamaModelCoverageCounts();
       return models.map((model) => ({
         ...model,
@@ -355,7 +366,8 @@ export const adminProcedures = {
     .handler(async ({ input }) => {
       try {
         const server = await createOllamaServer(input);
-        await syncOllamaModelsForServer(server);
+        const discovered = await syncOllamaModelsForServer(server);
+        await syncModels(discovered);
         return server;
       } catch (error) {
         if (hasSqliteUniqueConstraint(error)) {
@@ -392,7 +404,8 @@ export const adminProcedures = {
         });
 
         if (input.baseUrl !== undefined) {
-          await syncOllamaModelsForServer(updated);
+          const discovered = await syncOllamaModelsForServer(updated);
+          await syncModels(discovered);
         }
 
         return updated;
@@ -448,6 +461,7 @@ export const adminProcedures = {
           });
         }
         const models = await syncOllamaModelsForServer(existing);
+        await syncModels(models);
         return { success: true, modelCount: models.length };
       } catch (error) {
         return rethrowAdminError(
@@ -462,6 +476,7 @@ export const adminProcedures = {
   syncAllOllamaServersModels: adminProcedure.handler(async () => {
     try {
       const models = await syncAllOllamaServerModels();
+      await syncModels(models);
       return { success: true, modelCount: models.length };
     } catch (error) {
       return rethrowAdminError(
