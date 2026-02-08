@@ -50,6 +50,16 @@ export function CodeRunsList() {
     return when.toLocaleDateString("fa-IR", { month: "short", day: "2-digit" });
   };
 
+  const getRunTitle = (inputCode: string | null | undefined, mode: string) => {
+    const preview = (inputCode ?? "").trim();
+    if (!preview) {
+      return mode;
+    }
+
+    const firstTenChars = preview.slice(0, 10);
+    return preview.length > 10 ? `${firstTenChars}...` : firstTenChars;
+  };
+
   return (
     <div className="p-2">
       <div className="mb-2 flex items-center justify-between">
@@ -75,7 +85,9 @@ export function CodeRunsList() {
               <div className="group flex items-center gap-2 rounded-md p-2 text-sm hover:bg-accent">
                 <Icon className="h-4 w-4 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{run.mode}</div>
+                  <div className="truncate font-medium">
+                    {getRunTitle(run.inputCode, run.mode)}
+                  </div>
                   <div className="text-muted-foreground text-xs">
                     {run.language} • {formatDate(run.createdAt)}
                   </div>

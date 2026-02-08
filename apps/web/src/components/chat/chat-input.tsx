@@ -193,11 +193,6 @@ export const ChatInput = ({
               {typeof threadId === "number" && (
                 <DocumentUploadButton
                   onStatusChange={handleDocStatus}
-                  onUploaded={({ title, indexedChunks }) => {
-                    toast.success(
-                      `سند "${title}" با موفقیت آپلود شد. ${indexedChunks} قطعه ایندکس شد.`
-                    );
-                  }}
                   threadId={threadId}
                 />
               )}
