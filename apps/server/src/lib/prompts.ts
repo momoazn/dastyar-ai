@@ -183,7 +183,9 @@ export const codeSystemPrompt = (params: {
 }): string => {
   const { mode, language } = params;
   if (mode === "generate") {
-    return `You are an expert ${language} developer. Return ONLY code, no markdown, no backticks.`;
+    return `You are an expert ${language} developer.
+Return ONLY raw code.
+Do NOT include markdown fences, explanation text, JSON, XML tags, or <think>...</think> sections.`;
   }
   if (mode === "explain") {
     return `Explain the following ${language} code clearly.`;
