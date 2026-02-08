@@ -1,12 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Bug, Code, Copy, FileText, Shield } from "lucide-react";
+import {
+  ArrowRight,
+  Bug,
+  Code,
+  Copy,
+  Download,
+  FileText,
+  Shield,
+} from "lucide-react";
 import { useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import { Alert, Badge, Button, Card, Textarea } from "@/components/ui";
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
+import { sanitizeGeneratedCodeOutput } from "@/lib/code-output";
 import { fa } from "@/lib/texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
@@ -64,6 +73,24 @@ function CodeHistoryView() {
     }
   };
 
+  const handleDownloadOutput = () => {
+    if (!formattedOutput) {
+      return;
+    }
+
+    const extension = mode === "generate" ? getCodeExtension(language) : "txt";
+    const fileName = `generated-code-${runId}.${extension}`;
+    const blob = new Blob([formattedOutput], { type: "text/plain;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+  };
+
   if (isLoading) {
     return (
       <ToolScaffold
@@ -105,7 +132,9 @@ function CodeHistoryView() {
     try {
       const parsed = JSON.parse(runData.output as string) as unknown;
       if (mode === "generate") {
-        return (parsed as { generatedCode?: string }).generatedCode || "";
+        return sanitizeGeneratedCodeOutput(
+          (parsed as { generatedCode?: string }).generatedCode || ""
+        );
       }
       if (mode === "explain") {
         return (parsed as { explanation?: string }).explanation || "";
@@ -238,7 +267,7 @@ function CodeHistoryView() {
             </Card>
 
             {/* Output Column (Left) */}
-            <Card className="flex flex-col py-0 lg:order-2">
+            <Card className="flex min-h-0 flex-col py-0 lg:order-2">
               <div className="border-b bg-muted/30 px-4 py-2.5">
                 <div className="flex h-8 items-center justify-between">
                   <span className="font-semibold text-foreground text-sm">
@@ -261,12 +290,23 @@ function CodeHistoryView() {
                           : fa.codeAssistant.copy}
                       </Button>
                     )}
+                    {formattedOutput && (
+                      <Button
+                        onClick={handleDownloadOutput}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Download className="h-4 w-4" />
+                        {fa.general.download}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="flex-1 p-4">
-                <div className="h-full overflow-auto text-left" dir="ltr">
-                  <Response>
+              <div className="min-h-0 flex-1 p-4">
+                <div className="h-full overflow-y-auto text-left" dir="ltr">
+                  <Response className="h-auto w-full" controls={{ code: false }}>
                     {mode === "generate" && formattedOutput
                       ? `\`\`\`${language}\n${formattedOutput}\n\`\`\``
                       : formattedOutput}
@@ -311,3 +351,48 @@ function CodeHistoryView() {
     />
   );
 }
+
+const getCodeExtension = (language: string): string => {
+  switch (language) {
+    case "javascript":
+      return "js";
+    case "typescript":
+      return "ts";
+    case "python":
+      return "py";
+    case "java":
+      return "java";
+    case "cpp":
+      return "cpp";
+    case "go":
+      return "go";
+    case "rust":
+      return "rs";
+    case "csharp":
+      return "cs";
+    case "php":
+      return "php";
+    case "ruby":
+      return "rb";
+    case "swift":
+      return "swift";
+    case "kotlin":
+      return "kt";
+    case "scala":
+      return "scala";
+    case "r":
+      return "r";
+    case "sql":
+      return "sql";
+    case "html":
+      return "html";
+    case "css":
+      return "css";
+    case "bash":
+      return "sh";
+    case "dart":
+      return "dart";
+    default:
+      return "txt";
+  }
+};

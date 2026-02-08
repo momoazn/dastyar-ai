@@ -1,6 +1,15 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { Bug, Code, Copy, FileText, Loader2, Play, Shield } from "lucide-react";
+import {
+  Bug,
+  Code,
+  Copy,
+  Download,
+  FileText,
+  Loader2,
+  Play,
+  Shield,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
@@ -17,6 +26,7 @@ import {
 } from "@/components/ui";
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
+import { sanitizeGeneratedCodeOutput } from "@/lib/code-output";
 import { fa } from "@/lib/texts";
 import { cn, detectTextDirection } from "@/lib/utils";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -141,6 +151,25 @@ function RouteComponent() {
     }
   };
 
+  const handleDownload = () => {
+    if (!output) {
+      return;
+    }
+
+    const extension =
+      mode === "generate" ? getCodeExtension(language) : "txt";
+    const fileName = `generated-code-${Date.now()}.${extension}`;
+    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+  };
+
   const handleExecute = () => {
     if (!(inputCode.trim() && modelId)) {
       return;
@@ -162,7 +191,9 @@ function RouteComponent() {
     try {
       const parsed = JSON.parse(run.output) as unknown;
       if (run.mode === "generate") {
-        return (parsed as { generatedCode?: string }).generatedCode || "";
+        return sanitizeGeneratedCodeOutput(
+          (parsed as { generatedCode?: string }).generatedCode || ""
+        );
       }
       if (run.mode === "explain") {
         return (parsed as { explanation?: string }).explanation || "";
@@ -421,7 +452,7 @@ function RouteComponent() {
             </Card>
 
             {/* Output Column (Left) */}
-            <Card className="flex flex-col py-0 lg:order-2">
+            <Card className="flex min-h-0 flex-col py-0 lg:order-2">
               <div className="border-b bg-muted/30 px-4 py-2.5">
                 <div className="flex h-8 items-center justify-between">
                   <span className="font-semibold text-foreground text-sm">
@@ -444,10 +475,21 @@ function RouteComponent() {
                           : fa.codeAssistant.copy}
                       </Button>
                     )}
+                    {output && (
+                      <Button
+                        onClick={handleDownload}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Download className="h-4 w-4" />
+                        {fa.general.download}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="flex-1 p-4">
+              <div className="min-h-0 flex-1 p-4">
                 {currentMutation.isPending ? (
                   <div className="flex h-full items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
@@ -458,8 +500,8 @@ function RouteComponent() {
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full overflow-auto text-left" dir="ltr">
-                    <Response>
+                  <div className="h-full overflow-y-auto text-left" dir="ltr">
+                    <Response className="h-auto w-full" controls={{ code: false }}>
                       {mode === "generate" && output
                         ? `\`\`\`${language}\n${output}\n\`\`\``
                         : output}
@@ -511,7 +553,7 @@ const formatImmediateOutput = (m: CodeMode, data: unknown): string => {
   try {
     if (m === "generate") {
       const payload = data as { generatedCode?: string };
-      return String(payload.generatedCode ?? "");
+      return sanitizeGeneratedCodeOutput(String(payload.generatedCode ?? ""));
     }
     if (m === "explain") {
       const payload = data as { explanation?: string };
@@ -542,5 +584,50 @@ const formatImmediateOutput = (m: CodeMode, data: unknown): string => {
     }`;
   } catch {
     return "";
+  }
+};
+
+const getCodeExtension = (language: ProgrammingLanguage): string => {
+  switch (language) {
+    case "javascript":
+      return "js";
+    case "typescript":
+      return "ts";
+    case "python":
+      return "py";
+    case "java":
+      return "java";
+    case "cpp":
+      return "cpp";
+    case "go":
+      return "go";
+    case "rust":
+      return "rs";
+    case "csharp":
+      return "cs";
+    case "php":
+      return "php";
+    case "ruby":
+      return "rb";
+    case "swift":
+      return "swift";
+    case "kotlin":
+      return "kt";
+    case "scala":
+      return "scala";
+    case "r":
+      return "r";
+    case "sql":
+      return "sql";
+    case "html":
+      return "html";
+    case "css":
+      return "css";
+    case "bash":
+      return "sh";
+    case "dart":
+      return "dart";
+    default:
+      return "txt";
   }
 };
