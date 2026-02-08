@@ -50,16 +50,30 @@ async function processFileContent(file: File): Promise<{
 async function uploadDocument(
   file: File,
   threadId: number,
-  textContent?: string,
-  pages?: { page: number; text: string }[]
+  textContent?: string
 ) {
-  return await client.documents.upload({
+  const baseInput = {
     file,
     threadId,
     title: file.name,
-    textContent,
-    pages,
-  });
+  };
+
+  const input =
+    file.type === "text/plain" || file.type === "text/markdown"
+      ? { ...baseInput, textContent }
+      : baseInput;
+
+  try {
+    return await client.documents.upload(input);
+  } catch (error) {
+    const message = getErrorMessage(error, "");
+    if (!message.includes("Malformed request")) {
+      throw error;
+    }
+
+    // Fallback retry with the smallest multipart payload for fragile body parsers.
+    return await client.documents.upload(baseInput);
+  }
 }
 
 function showUploadSuccess(
@@ -106,11 +120,11 @@ export function DocumentUploadButton({
         onStatusChange?.({ filename: file.name, phase: "uploading" });
       }
 
-      const { textContent, pages } = await processFileContent(file);
-
-      onStatusChange?.({ filename: file.name, phase: "indexing" });
-      const res = await uploadDocument(file, threadId, textContent, pages);
+      const { textContent } = await processFileContent(file);
+      onStatusChange?.({ filename: file.name, phase: "uploading" });
+      const res = await uploadDocument(file, threadId, textContent);
       const indexed = res.indexedChunks ?? 0;
+      onStatusChange?.({ filename: file.name, phase: "indexing" });
 
       onUploaded?.({
         id: Number(res.id),
