@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Bot } from "lucide-react";
 import {
   SidebarHeader,
   SidebarMenu,
@@ -23,10 +22,12 @@ export function AppSidebarHeader({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="md:h-8 md:p-0" size="lg">
-              <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Bot className="size-4" />
-                </div>
+              <Link aria-label={fa.navigation.appTitle} to="/">
+                <img
+                  alt={fa.navigation.appTitle}
+                  className="size-8 rounded-lg"
+                  src="/brand-logo.svg"
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -48,7 +49,11 @@ export function AppSidebarHeader({
           >
             <Link to="/">
               <div className="flex items-center gap-2">
-                <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <img
+                  alt={fa.navigation.appTitle}
+                  className="size-7 rounded-lg"
+                  src="/brand-logo.svg"
+                />
                 <h1 className="font-medium text-gray-900 text-lg dark:text-gray-100">
                   {fa.navigation.appTitle}
                 </h1>
