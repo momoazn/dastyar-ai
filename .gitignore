@@ -180,7 +180,12 @@ apps/whisper/internal/ffmpeg/bin/ffmpeg-*
 
 *.pem
 
+# Local artifacts
+dastyar.zip
+dastyar/
+
 # Configuration files with secrets
+
 /config.json
 /server.log
 
