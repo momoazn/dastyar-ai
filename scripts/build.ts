@@ -58,6 +58,8 @@ function parseArgs(): BuildOptions {
 async function main() {
   const startTime = Date.now();
   const options = parseArgs();
+  const isWindowsHost = process.platform === "win32";
+  const isWindowsTarget = options.platform === "windows";
 
   console.log("============================================================");
   console.log("🚀 DASTYAR AI - BUILD SYSTEM");
@@ -104,7 +106,13 @@ async function main() {
     }
 
     // Step 4: Build Whisper
-    if (!options.skipWhisper) {
+    if (isWindowsTarget && !isWindowsHost && !options.skipWhisper) {
+      console.log("[3/4] Building Whisper");
+      console.log("─".repeat(60));
+      console.log(
+        "⏭️  Skipping Whisper build: cross-compiling Whisper for Windows is not supported on this host\n"
+      );
+    } else if (!options.skipWhisper) {
       console.log("[3/4] Building Whisper");
       console.log("─".repeat(60));
       await buildWhisper();
@@ -113,7 +121,7 @@ async function main() {
     // Step 5: Package distribution
     console.log("[4/4] Packaging Distribution");
     console.log("─".repeat(60));
-    packageDist();
+    packageDist({ platform: options.platform });
 
     // Success summary
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

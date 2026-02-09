@@ -1,87 +1,170 @@
 #!/usr/bin/env bun
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = join(import.meta.dir, "../..");
 const DIST = join(ROOT, "dist");
-const isWindows = process.platform === "win32";
+const SERVER_DIST = join(ROOT, "apps/server/dist");
+const WHISPER_DIR = join(ROOT, "apps/whisper");
 
-export function packageDist(): void {
+type PackageDistOptions = {
+  platform?: "current" | "windows" | "all";
+};
+
+const resolveTargetWindows = (
+  platform?: PackageDistOptions["platform"]
+): boolean => {
+  if (platform === "windows") {
+    return true;
+  }
+  return process.platform === "win32";
+};
+
+export function packageDist(options: PackageDistOptions = {}): void {
+  const isWindowsTarget = resolveTargetWindows(options.platform);
+
   console.log("📦 Packaging distribution...");
 
-  // Ensure dist directory exists
-  mkdirSync(DIST, { recursive: true });
+  resetDistDirectory();
+  copyWebAssets();
+  copyServerBinaries(options.platform, isWindowsTarget);
+  copyWhisperBinary(isWindowsTarget);
+  copyWhisperModels();
+  copyFfmpegBinary(isWindowsTarget);
+  copyConfigFile();
+  createDistReadme(isWindowsTarget);
 
-  // Copy web assets
+  console.log("✅ Distribution packaged successfully\n");
+}
+
+function resetDistDirectory(): void {
+  // Always package from a clean output directory to avoid stale binaries.
+  rmSync(DIST, { recursive: true, force: true });
+  mkdirSync(DIST, { recursive: true });
+}
+
+function copyWebAssets(): void {
   const webSrc = join(ROOT, "apps/web/dist");
   const webDest = join(DIST, "web");
-  if (existsSync(webSrc)) {
-    console.log("  → Copying web assets...");
-    cpSync(webSrc, webDest, { recursive: true, force: true });
+  if (!existsSync(webSrc)) {
+    return;
   }
 
-  // Copy server binary
-  const serverSrc = join(ROOT, "apps/server/dist");
-  if (existsSync(serverSrc)) {
-    console.log("  → Copying server binary...");
-    cpSync(serverSrc, DIST, { recursive: true, force: true });
+  console.log("  → Copying web assets...");
+  cpSync(webSrc, webDest, { recursive: true, force: true });
+}
+
+function getServerBinaryNames(
+  platform: PackageDistOptions["platform"],
+  isWindowsTarget: boolean
+): string[] {
+  if (platform === "all") {
+    return ["dastyar-ai", "dastyar-ai.exe"];
+  }
+  return [isWindowsTarget ? "dastyar-ai.exe" : "dastyar-ai"];
+}
+
+function copyServerBinaries(
+  platform: PackageDistOptions["platform"],
+  isWindowsTarget: boolean
+): void {
+  const allowMissing = platform === "all";
+  const serverBinaries = getServerBinaryNames(platform, isWindowsTarget);
+
+  console.log("  → Copying server binary...");
+
+  let copiedServerBinary = false;
+  for (const binaryName of serverBinaries) {
+    const serverSrc = join(SERVER_DIST, binaryName);
+    const serverDest = join(DIST, binaryName);
+
+    if (existsSync(serverSrc)) {
+      cpSync(serverSrc, serverDest, { force: true });
+      copiedServerBinary = true;
+      continue;
+    }
+
+    if (allowMissing) {
+      console.warn(`  ⚠️  Server binary not found: ${serverSrc}`);
+      continue;
+    }
+
+    throw new Error(`Expected server binary was not found: ${serverSrc}`);
   }
 
-  // Copy whisper binary
-  const whisperBinName = isWindows ? "whisper.exe" : "whisper";
-  const whisperSrc = join(ROOT, `apps/whisper/${whisperBinName}`);
+  if (!copiedServerBinary) {
+    throw new Error("No server binary was copied into dist/");
+  }
+}
+
+function copyWhisperBinary(isWindowsTarget: boolean): void {
+  const whisperBinName = isWindowsTarget ? "whisper.exe" : "whisper";
+  const whisperSrc = join(WHISPER_DIR, whisperBinName);
   const whisperDest = join(DIST, whisperBinName);
-  if (existsSync(whisperSrc)) {
-    console.log("  → Copying whisper binary...");
-    cpSync(whisperSrc, whisperDest);
+  if (!existsSync(whisperSrc)) {
+    console.warn(`  ⚠️  Whisper binary not found for target: ${whisperSrc}`);
+    return;
   }
 
-  // Copy whisper models
-  const modelsSrc = join(ROOT, "apps/whisper/models");
+  console.log("  → Copying whisper binary...");
+  cpSync(whisperSrc, whisperDest);
+}
+
+function copyWhisperModels(): void {
+  const modelsSrc = join(WHISPER_DIR, "models");
   const modelsDest = join(DIST, "models");
-  if (existsSync(modelsSrc)) {
-    console.log("  → Copying whisper models...");
-    cpSync(modelsSrc, modelsDest, { recursive: true, force: true });
-  } else {
+  if (!existsSync(modelsSrc)) {
     mkdirSync(modelsDest, { recursive: true });
+    return;
   }
 
-  // Copy FFmpeg
-  const ffmpegBinDir = join(ROOT, "apps/whisper/ffmpeg-binaries");
-  let ffmpegName: string;
-  if (isWindows) {
-    ffmpegName = "ffmpeg-windows-amd64.exe";
-  } else if (process.arch === "arm64") {
-    ffmpegName = `ffmpeg-${process.platform}-arm64`;
-  } else {
-    ffmpegName = `ffmpeg-${process.platform}-amd64`;
-  }
-  const ffmpegSrc = join(ffmpegBinDir, ffmpegName);
-  const ffmpegDest = join(DIST, isWindows ? "ffmpeg.exe" : "ffmpeg");
+  console.log("  → Copying whisper models...");
+  cpSync(modelsSrc, modelsDest, { recursive: true, force: true });
+}
 
-  if (existsSync(ffmpegSrc)) {
-    console.log("  → Copying FFmpeg...");
-    cpSync(ffmpegSrc, ffmpegDest);
+function getFfmpegFileName(isWindowsTarget: boolean): string {
+  if (isWindowsTarget) {
+    return "ffmpeg-windows-amd64.exe";
+  }
+  if (process.arch === "arm64") {
+    return `ffmpeg-${process.platform}-arm64`;
+  }
+  return `ffmpeg-${process.platform}-amd64`;
+}
+
+function copyFfmpegBinary(isWindowsTarget: boolean): void {
+  const ffmpegName = getFfmpegFileName(isWindowsTarget);
+  const ffmpegSrc = join(WHISPER_DIR, "ffmpeg-binaries", ffmpegName);
+  const ffmpegDest = join(DIST, isWindowsTarget ? "ffmpeg.exe" : "ffmpeg");
+  if (!existsSync(ffmpegSrc)) {
+    console.warn(`  ⚠️  FFmpeg binary not found for target: ${ffmpegSrc}`);
+    return;
   }
 
-  // Copy config.json from root
+  console.log("  → Copying FFmpeg...");
+  cpSync(ffmpegSrc, ffmpegDest);
+}
+
+function copyConfigFile(): void {
   const configSrc = join(ROOT, "config.json");
   const configPath = join(DIST, "config.json");
   if (existsSync(configSrc)) {
     console.log("  → Copying config.json...");
     cpSync(configSrc, configPath, { force: true });
-  } else if (!existsSync(configPath)) {
+    return;
+  }
+
+  if (!existsSync(configPath)) {
     console.log("  → Creating default config...");
     createDefaultConfig(configPath);
   }
+}
 
-  // Create README
+function createDistReadme(isWindowsTarget: boolean): void {
   const readmePath = join(DIST, "README.md");
   console.log("  → Creating README...");
-  createReadme(readmePath);
-
-  console.log("✅ Distribution packaged successfully\n");
+  createReadme(readmePath, isWindowsTarget);
 }
 
 function createDefaultConfig(path: string): void {
@@ -115,9 +198,9 @@ function createDefaultConfig(path: string): void {
   writeFileSync(path, JSON.stringify(config, null, 2));
 }
 
-function createReadme(path: string): void {
-  const serverBin = isWindows ? "dastyar-ai.exe" : "./dastyar-ai";
-  const whisperBin = isWindows ? "whisper.exe" : "./whisper";
+function createReadme(path: string, isWindowsTarget: boolean): void {
+  const serverBin = isWindowsTarget ? "dastyar-ai.exe" : "./dastyar-ai";
+  const whisperBin = isWindowsTarget ? "whisper.exe" : "./whisper";
 
   const readme = `# Dastyar AI - Distribution
 
