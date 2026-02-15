@@ -116,12 +116,9 @@ function isExtensionAllowed(
  * Check if MIME type is allowed
  */
 function isMimeTypeAllowed(
-  mimeType: string,
+  normalizedMimeType: string,
   allowedMimeTypes: readonly string[] = FILE_VALIDATION_CONFIG.ALLOWED_MIME_TYPES
 ): boolean {
-  // Normalize MIME type (remove charset, etc.)
-  const normalizedMimeType = mimeType.split(";")[0].trim().toLowerCase();
-
   return allowedMimeTypes.some(
     (allowed) => allowed.toLowerCase() === normalizedMimeType
   );
