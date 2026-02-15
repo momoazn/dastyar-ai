@@ -1,4 +1,5 @@
 import { adminProcedures } from "./admin";
+import { appConfigProcedures } from "./app-config";
 import { authProcedures } from "./auth";
 import { codeProcedures } from "./code";
 import { documentProcedures } from "./documents";
@@ -16,6 +17,7 @@ export const appRouter = {
   ...healthProcedures,
   auth: authProcedures,
   admin: adminProcedures,
+  appConfig: appConfigProcedures,
   models: llmModelProcedures,
   threads: threadProcedures,
   messages: messageProcedures,

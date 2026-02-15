@@ -257,59 +257,88 @@ export function SettingsPanel() {
               value={(settings.model_response_timeout_seconds as number) || 300}
             />
           </div>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_transcription as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_transcription", e.target.checked)
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableTranscription}
-              </span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_translation as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_translation", e.target.checked)
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableTranslation}
-              </span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_code_execution as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_code_execution", e.target.checked)
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableCodeExecution}
-              </span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_image_generation as boolean}
-                onChange={(e) =>
-                  handleSettingChange(
-                    "enable_image_generation",
-                    e.target.checked
-                  )
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableImageGeneration}
-              </span>
-            </label>
-          </div>
+        </div>
+      </Card>
+
+      {/* Sidebar Features */}
+      <Card className="p-6">
+        <h3 className="mb-4 font-semibold text-lg">
+          {fa.admin.settings.sidebarFeatures.title}
+        </h3>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_chat as boolean) ?? true}
+              onChange={(e) => handleSettingChange("enable_chat", e.target.checked)}
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableChat}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_image_generation as boolean) ?? true}
+              onChange={(e) =>
+                handleSettingChange("enable_image_generation", e.target.checked)
+              }
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableImageGeneration}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_code_execution as boolean) ?? true}
+              onChange={(e) =>
+                handleSettingChange("enable_code_execution", e.target.checked)
+              }
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableCodeAssistant}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_translation as boolean) ?? true}
+              onChange={(e) =>
+                handleSettingChange("enable_translation", e.target.checked)
+              }
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableTranslation}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_summary as boolean) ?? true}
+              onChange={(e) => handleSettingChange("enable_summary", e.target.checked)}
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableSummarize}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              checked={(settings.enable_transcription as boolean) ?? true}
+              onChange={(e) =>
+                handleSettingChange("enable_transcription", e.target.checked)
+              }
+              type="checkbox"
+            />
+            <span className="font-medium text-sm">
+              {fa.admin.settings.sidebarFeatures.enableTranscribe}
+            </span>
+          </label>
         </div>
       </Card>
 

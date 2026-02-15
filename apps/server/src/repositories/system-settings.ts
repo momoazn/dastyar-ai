@@ -107,6 +107,15 @@ export async function deleteSetting(key: string): Promise<boolean> {
 /**
  * Initialize default settings if they don't exist
  */
+export const FEATURE_TOGGLE_DEFAULTS = {
+  enable_chat: true,
+  enable_translation: true,
+  enable_summary: true,
+  enable_transcription: true,
+  enable_code_execution: true,
+  enable_image_generation: true,
+} as const;
+
 export async function initializeDefaultSettings(): Promise<void> {
   const defaults: Record<string, ConfigValue> = {
     app_name: "Dastyar AI",
@@ -129,10 +138,7 @@ export async function initializeDefaultSettings(): Promise<void> {
     password_require_numbers: false,
     password_require_uppercase: false,
     model_response_timeout_seconds: 300,
-    enable_transcription: true,
-    enable_translation: true,
-    enable_code_execution: true,
-    enable_image_generation: true,
+    ...FEATURE_TOGGLE_DEFAULTS,
   };
 
   for (const [key, value] of Object.entries(defaults)) {
