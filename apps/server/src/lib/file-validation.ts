@@ -15,6 +15,7 @@ export const FILE_VALIDATION_CONFIG = {
   // Allowed MIME types for document uploads
   ALLOWED_MIME_TYPES: [
     "application/pdf",
+    "application/x-pdf", // Common PDF alias (older browsers/platforms)
     "text/plain",
     "text/markdown",
     "text/csv",
@@ -252,7 +253,16 @@ export async function validateUploadedFile(
   }
 
   // Validate MIME type
-  if (file.type && !isMimeTypeAllowed(file.type)) {
+  // Some clients/platforms send generic MIME values for valid files (e.g. application/octet-stream)
+  // so we rely on extension + content checks in those cases.
+  const normalizedMimeType = file.type.split(";")[0].trim().toLowerCase();
+  const genericMimeTypes = new Set(["application/octet-stream", "binary/octet-stream"]);
+
+  if (
+    normalizedMimeType &&
+    !genericMimeTypes.has(normalizedMimeType) &&
+    !isMimeTypeAllowed(normalizedMimeType)
+  ) {
     throw new FileValidationError(
       `MIME type '${file.type}' is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
       "INVALID_MIME_TYPE",
