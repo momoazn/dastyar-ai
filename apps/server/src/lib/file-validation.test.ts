@@ -65,6 +65,20 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).resolves.toBeUndefined();
     });
 
+    it("should accept common PDF MIME alias", async () => {
+      const file = createMockFile("document.pdf", 1024, "application/x-pdf");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept generic octet-stream MIME for valid PDF by extension", async () => {
+      const file = createMockFile(
+        "document.pdf",
+        1024,
+        "application/octet-stream"
+      );
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
     it("should accept valid text file", async () => {
       const file = createMockFile("notes.txt", 512, "text/plain");
       await expect(validateUploadedFile(file)).resolves.toBeUndefined();
@@ -109,6 +123,15 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
+    });
+
+    it("should respect custom allowed MIME types option", async () => {
+      const file = createMockFile("document.pdf", 1024, "application/pdf");
+      await expect(
+        validateUploadedFile(file, {
+          allowedMimeTypes: ["text/plain"],
+        })
+      ).rejects.toThrow(FileValidationError);
     });
 
     it("should reject filename with path traversal", async () => {
