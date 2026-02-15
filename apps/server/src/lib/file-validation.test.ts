@@ -125,6 +125,15 @@ describe("File Validation", () => {
       );
     });
 
+    it("should respect custom allowed MIME types option", async () => {
+      const file = createMockFile("document.pdf", 1024, "application/pdf");
+      await expect(
+        validateUploadedFile(file, {
+          allowedMimeTypes: ["text/plain"],
+        })
+      ).rejects.toThrow(FileValidationError);
+    });
+
     it("should reject filename with path traversal", async () => {
       const file = createMockFile("../../../etc/passwd", 1024, "text/plain");
       await expect(validateUploadedFile(file)).rejects.toThrow(

@@ -4,6 +4,10 @@ import { logger } from "./logger";
 // biome-ignore lint/suspicious/noControlCharactersInRegex: Needed for security validation
 const CONTROL_CHARACTERS_REGEX = /[\x00-\x1F\x7F]/;
 const LEADING_DOT_REGEX = /^\./;
+const GENERIC_MIME_TYPES = new Set([
+  "application/octet-stream",
+  "binary/octet-stream",
+]);
 
 /**
  * File validation configuration
@@ -93,7 +97,10 @@ function getFileExtension(filename: string): string {
 /**
  * Check if file extension is allowed
  */
-function isExtensionAllowed(filename: string): boolean {
+function isExtensionAllowed(
+  filename: string,
+  allowedExtensions: readonly string[] = FILE_VALIDATION_CONFIG.ALLOWED_EXTENSIONS
+): boolean {
   const ext = getFileExtension(filename);
 
   // Check if extension is explicitly blocked
@@ -102,17 +109,20 @@ function isExtensionAllowed(filename: string): boolean {
   }
 
   // Check if extension is in allowed list
-  return FILE_VALIDATION_CONFIG.ALLOWED_EXTENSIONS.includes(ext as never);
+  return allowedExtensions.some((allowed) => allowed.toLowerCase() === ext);
 }
 
 /**
  * Check if MIME type is allowed
  */
-function isMimeTypeAllowed(mimeType: string): boolean {
+function isMimeTypeAllowed(
+  mimeType: string,
+  allowedMimeTypes: readonly string[] = FILE_VALIDATION_CONFIG.ALLOWED_MIME_TYPES
+): boolean {
   // Normalize MIME type (remove charset, etc.)
   const normalizedMimeType = mimeType.split(";")[0].trim().toLowerCase();
 
-  return FILE_VALIDATION_CONFIG.ALLOWED_MIME_TYPES.some(
+  return allowedMimeTypes.some(
     (allowed) => allowed.toLowerCase() === normalizedMimeType
   );
 }
@@ -243,7 +253,7 @@ export async function validateUploadedFile(
   }
 
   // Validate file extension
-  if (!isExtensionAllowed(file.name)) {
+  if (!isExtensionAllowed(file.name, allowedExtensions)) {
     const ext = getFileExtension(file.name);
     throw new FileValidationError(
       `File extension '.${ext}' is not allowed. Allowed extensions: ${allowedExtensions.join(", ")}`,
@@ -256,12 +266,11 @@ export async function validateUploadedFile(
   // Some clients/platforms send generic MIME values for valid files (e.g. application/octet-stream)
   // so we rely on extension + content checks in those cases.
   const normalizedMimeType = file.type.split(";")[0].trim().toLowerCase();
-  const genericMimeTypes = new Set(["application/octet-stream", "binary/octet-stream"]);
 
   if (
     normalizedMimeType &&
-    !genericMimeTypes.has(normalizedMimeType) &&
-    !isMimeTypeAllowed(normalizedMimeType)
+    !GENERIC_MIME_TYPES.has(normalizedMimeType) &&
+    !isMimeTypeAllowed(normalizedMimeType, allowedMimeTypes)
   ) {
     throw new FileValidationError(
       `MIME type '${file.type}' is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
