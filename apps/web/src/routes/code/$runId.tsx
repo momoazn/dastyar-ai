@@ -63,14 +63,16 @@ function CodeHistoryView() {
   };
 
   const handleCopyOutput = async () => {
-    if (!formattedOutput) return;
-    try {
-      await navigator.clipboard.writeText(formattedOutput);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      // Ignore clipboard errors
+    const copyableOutput = formattedOutput.trim();
+    if (!copyableOutput) {
+      return;
     }
+    const copied = await copyToClipboard(copyableOutput);
+    if (!copied) {
+      return;
+    }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleDownloadOutput = () => {
@@ -110,12 +112,14 @@ function CodeHistoryView() {
       <ToolScaffold
         alerts={
           <Alert variant="destructive">
-            <span>Code run not found</span>
+            <span>{fa.codeAssistant.messages.sessionNotFound}</span>
           </Alert>
         }
         content={
           <div className="flex h-full items-center justify-center">
-            <div className="text-muted-foreground">Code run not found</div>
+            <div className="text-muted-foreground">
+              {fa.codeAssistant.messages.sessionNotFound}
+            </div>
           </div>
         }
       />
@@ -394,5 +398,27 @@ const getCodeExtension = (language: string): string => {
       return "dart";
     default:
       return "txt";
+  }
+};
+
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return copied;
+    } catch {
+      return false;
+    }
   }
 };

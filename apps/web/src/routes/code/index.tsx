@@ -137,18 +137,39 @@ function RouteComponent() {
     })
   );
 
-  const _handleCopy = () => {
-    // Intentionally ignoring copy errors
+  const copyToClipboard = async (text: string): Promise<boolean> => {
     try {
-      // no await to keep UI snappy
-      navigator.clipboard.writeText(output).catch(() => {
-        /* ignore */
-      });
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      return true;
     } catch {
-      // noop
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        return copied;
+      } catch {
+        return false;
+      }
     }
+  };
+
+  const handleCopyOutput = async () => {
+    const copyableOutput = output.trim();
+    if (!copyableOutput) {
+      return;
+    }
+    const copied = await copyToClipboard(copyableOutput);
+    if (!copied) {
+      return;
+    }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -464,7 +485,7 @@ function RouteComponent() {
                         className={
                           isCopied ? "bg-green-600 hover:bg-green-700" : ""
                         }
-                        onClick={_handleCopy}
+                        onClick={handleCopyOutput}
                         size="sm"
                         type="button"
                         variant={isCopied ? "default" : "ghost"}
