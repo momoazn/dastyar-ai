@@ -29,9 +29,108 @@ const TEXT_MIME_TYPES = new Set([
   "text/plain",
   "text/markdown",
   "text/csv",
+  "text/tab-separated-values",
   "application/json",
+  "text/xml",
+  "application/xml",
+  "text/html",
+  "application/xhtml+xml",
+  "application/rtf",
+  "text/rtf",
+  "message/rfc822",
+  "text/yaml",
+  "application/x-yaml",
+  "application/yaml",
+  "application/toml",
+  "text/x-toml",
 ]);
-const TEXT_EXTENSIONS = new Set(["txt", "md", "markdown", "csv", "json"]);
+const TEXT_EXTENSIONS = new Set([
+  "txt",
+  "md",
+  "markdown",
+  "csv",
+  "tsv",
+  "json",
+  "html",
+  "htm",
+  "xml",
+  "eml",
+  "rtf",
+  "yaml",
+  "yml",
+  "toml",
+  "ini",
+  "conf",
+  "log",
+  "sql",
+  "py",
+  "ts",
+  "tsx",
+  "java",
+  "go",
+  "rs",
+  "c",
+  "cc",
+  "cpp",
+  "h",
+  "hpp",
+  "cs",
+  "rb",
+  "php",
+  "swift",
+  "kt",
+  "kts",
+  "scala",
+  "lua",
+  "r",
+  "m",
+]);
+const SUPPORTED_ACCEPT = [
+  ".pdf",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".xlsm",
+  ".txt",
+  ".md",
+  ".markdown",
+  ".csv",
+  ".tsv",
+  ".json",
+  ".html",
+  ".htm",
+  ".xml",
+  ".eml",
+  ".rtf",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".ini",
+  ".conf",
+  ".log",
+  ".sql",
+  ".py",
+  ".ts",
+  ".tsx",
+  ".java",
+  ".go",
+  ".rs",
+  ".c",
+  ".cc",
+  ".cpp",
+  ".h",
+  ".hpp",
+  ".cs",
+  ".rb",
+  ".php",
+  ".swift",
+  ".kt",
+  ".kts",
+  ".scala",
+  ".lua",
+  ".r",
+  ".m",
+].join(",");
 
 type UploadResponse = {
   id: number | string;
@@ -197,7 +296,7 @@ export function DocumentUploadButton({
         <TooltipTrigger asChild>
           <div>
             <input
-              accept=".pdf,.txt,.md,.markdown,.csv,.json,.docx"
+              accept={SUPPORTED_ACCEPT}
               className="hidden"
               id={inputId}
               onChange={handleSelect}
@@ -222,6 +321,9 @@ export function DocumentUploadButton({
         </TooltipTrigger>
         <TooltipContent>
           <p>{fa.documents.attachmentLabel}</p>
+          <p className="mt-1 max-w-72 text-muted-foreground text-xs">
+            {fa.documents.supportedFormatsHint}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

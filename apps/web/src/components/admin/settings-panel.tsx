@@ -34,7 +34,10 @@ type SidebarFeatureToggleKey = Extract<
   | "enable_transcription"
 >;
 
-const sidebarFeatureToggles: Array<{ key: SidebarFeatureToggleKey; label: string }> = [
+const sidebarFeatureToggles: Array<{
+  key: SidebarFeatureToggleKey;
+  label: string;
+}> = [
   {
     key: "enable_chat",
     label: fa.admin.settings.sidebarFeatures.enableChat,
@@ -257,7 +260,7 @@ export function SettingsPanel() {
                   e.target.value.split(",").map((t) => t.trim())
                 )
               }
-              placeholder="pdf, txt, docx (comma-separated)"
+              placeholder="pdf, docx, xlsx, csv, txt, md, html, eml, rtf, yaml, toml (comma-separated)"
               value={
                 Array.isArray(settings.allowed_file_types)
                   ? (settings.allowed_file_types as string[]).join(", ")
