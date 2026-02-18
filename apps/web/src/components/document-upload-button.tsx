@@ -50,18 +50,25 @@ async function processFileContent(file: File): Promise<{
 async function uploadDocument(
   file: File,
   threadId: number,
-  textContent?: string
+  extracted?: {
+    textContent?: string;
+    pages?: { page: number; text: string }[];
+  }
 ) {
+  const { textContent, pages } = extracted ?? {};
   const baseInput = {
     file,
     threadId,
     title: file.name,
   };
 
-  const input =
-    file.type === "text/plain" || file.type === "text/markdown"
-      ? { ...baseInput, textContent }
-      : baseInput;
+  const input = {
+    ...baseInput,
+    ...(typeof textContent === "string" && textContent.trim().length > 0
+      ? { textContent }
+      : {}),
+    ...(Array.isArray(pages) && pages.length > 0 ? { pages } : {}),
+  };
 
   try {
     return await client.documents.upload(input);
@@ -120,9 +127,9 @@ export function DocumentUploadButton({
         onStatusChange?.({ filename: file.name, phase: "uploading" });
       }
 
-      const { textContent } = await processFileContent(file);
+      const extracted = await processFileContent(file);
       onStatusChange?.({ filename: file.name, phase: "uploading" });
-      const res = await uploadDocument(file, threadId, textContent);
+      const res = await uploadDocument(file, threadId, extracted);
       const indexed = res.indexedChunks ?? 0;
       onStatusChange?.({ filename: file.name, phase: "indexing" });
 
