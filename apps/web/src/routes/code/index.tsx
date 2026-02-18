@@ -272,7 +272,7 @@ function RouteComponent() {
             <div className="flex items-center gap-2">
               <span>
                 {modelsError
-                  ? "Failed to load models. Please refresh the page."
+                  ? "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید."
                   : fa.codeAssistant.messages.processingError}
               </span>
               <span>{fa.codeAssistant.messages.tryAgain}</span>

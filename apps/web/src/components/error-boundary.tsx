@@ -84,6 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         unknown: fa.errors.unknown,
                         networkError: fa.errors.networkError,
                         unauthorized: fa.errors.unauthorized,
+                        tokenExpired: fa.errors.tokenExpired,
                         forbidden: fa.errors.forbidden,
                         notFound: fa.errors.notFound,
                         serverError: fa.errors.serverError,

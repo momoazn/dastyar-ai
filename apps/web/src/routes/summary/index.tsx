@@ -181,7 +181,7 @@ function SummarizePage() {
                 const message =
                   clipboardError ??
                   (modelsError
-                    ? "Failed to load models. Please refresh the page."
+                    ? "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید."
                     : fa.summarize.errors.requestFailed);
                 return <span>{message}</span>;
               })()}

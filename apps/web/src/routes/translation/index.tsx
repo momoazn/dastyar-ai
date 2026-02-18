@@ -301,7 +301,7 @@ function RouteComponent() {
   const getErrorMessage = () => {
     if (pdfError) return pdfError;
     if (clipboardError) return clipboardError;
-    if (modelsError) return "Failed to load models. Please refresh the page.";
+    if (modelsError) return "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید.";
     if (translatePdfMutation.error) {
       return extractErrorMessage(
         translatePdfMutation.error,

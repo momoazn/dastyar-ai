@@ -5,6 +5,8 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LS_TOKEN_KEY } from "@/atoms/auth";
+import { formatErrorForUser } from "@/lib/error-utils";
+import { errors } from "@/lib/texts/errors";
 import type { appRouter } from "@/server/procedures";
 
 export const queryClient = new QueryClient({
@@ -14,9 +16,9 @@ export const queryClient = new QueryClient({
       if (query.meta?.suppressErrorToast) {
         return;
       }
-      toast.error(`Error: ${error.message}`, {
+      toast.error(formatErrorForUser(error, errors.unknown, errors), {
         action: {
-          label: "retry",
+          label: "تلاش مجدد",
           onClick: () => {
             queryClient.invalidateQueries();
           },

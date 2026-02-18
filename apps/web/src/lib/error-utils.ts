@@ -1,20 +1,102 @@
+const DEFAULT_ERROR_TEXTS = {
+  unknown: "خطای ناشناخته",
+  networkError: "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.",
+  unauthorized: "شما مجاز به انجام این عملیات نیستید. لطفاً دوباره وارد شوید.",
+  forbidden: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
+  notFound: "منبع درخواستی یافت نشد.",
+  serverError: "خطای سرور. لطفاً بعداً تلاش کنید.",
+  tokenExpired: "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
+} as const;
+
+function normalizeMessage(message: string): string {
+  return message.trim().toLowerCase();
+}
+
+function mapMessageToFriendlyText(
+  message: string,
+  texts: {
+    unknown: string;
+    networkError: string;
+    unauthorized: string;
+    forbidden: string;
+    notFound: string;
+    serverError: string;
+    tokenExpired: string;
+  }
+): string {
+  const normalized = normalizeMessage(message);
+
+  if (
+    normalized.includes("token_expired") ||
+    normalized.includes("token expired") ||
+    normalized.includes("jwt expired") ||
+    normalized.includes("توکن منقضی")
+  ) {
+    return texts.tokenExpired;
+  }
+
+  if (
+    normalized.includes("401") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("invalid token") ||
+    normalized.includes("missing_auth_header")
+  ) {
+    return texts.unauthorized;
+  }
+
+  if (normalized.includes("403") || normalized.includes("forbidden")) {
+    return texts.forbidden;
+  }
+
+  if (normalized.includes("404") || normalized.includes("not found")) {
+    return texts.notFound;
+  }
+
+  if (normalized.includes("500") || normalized.includes("server error")) {
+    return texts.serverError;
+  }
+
+  return message;
+}
+
+function extractMessageFromObject(error: object): string | undefined {
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  if ("error" in error && error.error && typeof error.error === "object") {
+    const nestedError = error.error as { message?: unknown };
+    if (typeof nestedError.message === "string") {
+      return nestedError.message;
+    }
+  }
+
+  if ("cause" in error && error.cause && typeof error.cause === "object") {
+    const cause = error.cause as { message?: unknown };
+    if (typeof cause.message === "string") {
+      return cause.message;
+    }
+  }
+}
+
 /**
  * Extract error message from unknown error type
  * Handles Error instances, string errors, and other types
  */
 export function getErrorMessage(error: unknown, fallback?: string): string {
-  const defaultFallback = "خطای ناشناخته";
+  const defaultFallback = DEFAULT_ERROR_TEXTS.unknown;
   const finalFallback: string = fallback ?? defaultFallback;
   if (error instanceof Error) {
-    return error.message || finalFallback;
+    const rawMessage = error.message || finalFallback;
+    return mapMessageToFriendlyText(rawMessage, DEFAULT_ERROR_TEXTS);
   }
   if (typeof error === "string") {
-    return error;
+    return mapMessageToFriendlyText(error, DEFAULT_ERROR_TEXTS);
   }
-  if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message: unknown }).message;
-    if (typeof message === "string") {
-      return message;
+  if (error && typeof error === "object") {
+    const message = extractMessageFromObject(error);
+    if (message) {
+      return mapMessageToFriendlyText(message, DEFAULT_ERROR_TEXTS);
     }
   }
   return finalFallback;
@@ -75,18 +157,15 @@ export function formatErrorForUser(
     forbidden: string;
     notFound: string;
     serverError: string;
+    tokenExpired?: string;
   }
 ): string {
-  const defaultTexts = {
-    unknown: "خطای ناشناخته",
-    networkError: "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.",
-    unauthorized: "شما مجاز به انجام این عملیات نیستید. لطفاً دوباره وارد شوید.",
-    forbidden: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
-    notFound: "منبع درخواستی یافت نشد.",
-    serverError: "خطای سرور. لطفاً بعداً تلاش کنید.",
+  const texts = {
+    ...DEFAULT_ERROR_TEXTS,
+    ...errorTexts,
+    tokenExpired:
+      errorTexts?.tokenExpired ?? DEFAULT_ERROR_TEXTS.tokenExpired,
   };
-
-  const texts = errorTexts ?? defaultTexts;
   const finalFallback = fallback ?? texts.unknown;
   const message = getErrorMessage(error, finalFallback);
 
@@ -95,21 +174,5 @@ export function formatErrorForUser(
     return texts.networkError;
   }
 
-  if (message.includes("401") || message.includes("unauthorized")) {
-    return texts.unauthorized;
-  }
-
-  if (message.includes("403") || message.includes("forbidden")) {
-    return texts.forbidden;
-  }
-
-  if (message.includes("404") || message.includes("not found")) {
-    return texts.notFound;
-  }
-
-  if (message.includes("500") || message.includes("server error")) {
-    return texts.serverError;
-  }
-
-  return message;
+  return mapMessageToFriendlyText(message, texts);
 }
