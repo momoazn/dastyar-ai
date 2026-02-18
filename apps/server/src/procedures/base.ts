@@ -1,4 +1,5 @@
 import { os } from "@orpc/server";
+import { ORPCError } from "@orpc/server";
 import type { Context } from "@/lib/context";
 import { validateAuthHeader } from "@/services/auth";
 
@@ -15,13 +16,17 @@ async function validateAndGetUser(authHeader: string | undefined) {
   const authResult = await validateAuthHeader(authHeader);
 
   if (!authResult.success) {
-    throw new Error(
-      `Authentication failed: ${authResult.error?.message ?? "Unknown error"}`
-    );
+    throw new ORPCError(authResult.error?.code ?? "UNAUTHORIZED", {
+      message: authResult.error?.message ?? "احراز هویت ناموفق بود.",
+      status: 401,
+    });
   }
 
   if (!authResult.user) {
-    throw new Error("Authentication failed: User not found");
+    throw new ORPCError("USER_NOT_FOUND", {
+      message: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
+      status: 401,
+    });
   }
 
   return authResult.user;
@@ -46,7 +51,10 @@ export const adminMiddleware = o.middleware(async ({ context, next }) => {
   const user = await validateAndGetUser(authHeader);
 
   if (user.role !== "admin") {
-    throw new Error("Access denied: Admin role required");
+    throw new ORPCError("FORBIDDEN", {
+      message: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
+      status: 403,
+    });
   }
 
   return next({

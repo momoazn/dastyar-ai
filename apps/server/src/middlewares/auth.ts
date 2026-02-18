@@ -25,7 +25,7 @@ export const authMiddleware = async (
       {
         error: {
           code: authResult.error?.code ?? "UNAUTHORIZED",
-          message: authResult.error?.message ?? "Authentication failed",
+          message: authResult.error?.message ?? "احراز هویت ناموفق بود.",
         },
       },
       401
@@ -36,7 +36,7 @@ export const authMiddleware = async (
       {
         error: {
           code: "UNAUTHORIZED",
-          message: "User not found",
+          message: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
         },
       },
       401
@@ -68,7 +68,7 @@ export const authMiddlewareHeaderOrQuery = async (
       {
         error: {
           code: result.error?.code ?? "UNAUTHORIZED",
-          message: result.error?.message ?? "Authentication failed",
+          message: result.error?.message ?? "احراز هویت ناموفق بود.",
         },
       },
       401

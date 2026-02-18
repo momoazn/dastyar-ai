@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { env } from "@/config";
 import type { User } from "@/database";
 import { findUserById } from "@/repositories/auth";
@@ -11,6 +11,13 @@ export type AuthResult = {
     message: string;
   };
 };
+
+const AUTH_ERROR_MESSAGES = {
+  tokenExpired: "توکن منقضی شده است. لطفاً دوباره وارد شوید.",
+  invalidToken: "توکن نامعتبر است. لطفاً دوباره وارد شوید.",
+  missingAuthHeader: "هدر احراز هویت نامعتبر است.",
+  userNotFound: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
+} as const;
 
 export type JwtPayload = {
   userId: number;
@@ -60,8 +67,8 @@ export async function validateJwtToken(token: string): Promise<AuthResult> {
       return {
         success: false,
         error: {
-          code: "UNAUTHORIZED",
-          message: "User not found",
+          code: "USER_NOT_FOUND",
+          message: AUTH_ERROR_MESSAGES.userNotFound,
         },
       };
     }
@@ -70,12 +77,32 @@ export async function validateJwtToken(token: string): Promise<AuthResult> {
       success: true,
       user,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return {
+        success: false,
+        error: {
+          code: "TOKEN_EXPIRED",
+          message: AUTH_ERROR_MESSAGES.tokenExpired,
+        },
+      };
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      return {
+        success: false,
+        error: {
+          code: "INVALID_TOKEN",
+          message: AUTH_ERROR_MESSAGES.invalidToken,
+        },
+      };
+    }
+
     return {
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "Invalid token",
+        message: AUTH_ERROR_MESSAGES.invalidToken,
       },
     };
   }
@@ -94,8 +121,8 @@ export async function validateAuthHeader(
     return {
       success: false,
       error: {
-        code: "UNAUTHORIZED",
-        message: "Missing or invalid authorization header",
+        code: "MISSING_AUTH_HEADER",
+        message: AUTH_ERROR_MESSAGES.missingAuthHeader,
       },
     };
   }

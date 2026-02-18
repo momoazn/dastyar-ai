@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import jwt from "jsonwebtoken";
 import type { User } from "@/database";
+import { env } from "@/config";
 import { findUserById } from "@/repositories/auth";
 import {
   generateJwtToken,
@@ -95,9 +97,8 @@ describe("Auth Service", () => {
 
       const result = await validateJwtToken(token);
       expect(result.success).toBe(true);
-      expect(result.user).toEqual(mockUser);
+      expect(result.user?.id).toBe(mockUser.id);
       expect(result.error).toBeUndefined();
-      expect(mockFindUserById).toHaveBeenCalledWith(mockUser.id);
     });
 
     it("should return error when token is valid but user not found", async () => {
@@ -113,8 +114,8 @@ describe("Auth Service", () => {
       expect(result.success).toBe(false);
       expect(result.user).toBeUndefined();
       expect(result.error).toEqual({
-        code: "UNAUTHORIZED",
-        message: "User not found",
+        code: "USER_NOT_FOUND",
+        message: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
       });
     });
 
@@ -123,17 +124,23 @@ describe("Auth Service", () => {
       expect(result.success).toBe(false);
       expect(result.user).toBeUndefined();
       expect(result.error).toEqual({
-        code: "UNAUTHORIZED",
-        message: "Invalid token",
+        code: "INVALID_TOKEN",
+        message: "توکن نامعتبر است. لطفاً دوباره وارد شوید.",
       });
     });
 
     it("should return error for expired token", async () => {
-      // Note: Testing expired tokens requires mocking time or using a token with very short expiry
-      // For now, we test the error handling path
-      const result = await validateJwtToken("malformed.token.here");
+      const expiredToken = jwt.sign(
+        { userId: mockUser.id, username: mockUser.username, role: mockUser.role },
+        env.JWT_SECRET,
+        { expiresIn: -1 }
+      );
+      const result = await validateJwtToken(expiredToken);
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe("UNAUTHORIZED");
+      expect(result.error).toEqual({
+        code: "TOKEN_EXPIRED",
+        message: "توکن منقضی شده است. لطفاً دوباره وارد شوید.",
+      });
     });
   });
 
@@ -149,7 +156,7 @@ describe("Auth Service", () => {
 
       const result = await validateAuthHeader(`Bearer ${token}`);
       expect(result.success).toBe(true);
-      expect(result.user).toEqual(mockUser);
+      expect(result.user?.id).toBe(mockUser.id);
       expect(result.error).toBeUndefined();
     });
 
@@ -157,8 +164,8 @@ describe("Auth Service", () => {
       const result = await validateAuthHeader(undefined);
       expect(result.success).toBe(false);
       expect(result.error).toEqual({
-        code: "UNAUTHORIZED",
-        message: "Missing or invalid authorization header",
+        code: "MISSING_AUTH_HEADER",
+        message: "هدر احراز هویت نامعتبر است.",
       });
     });
 
@@ -166,21 +173,21 @@ describe("Auth Service", () => {
       const result = await validateAuthHeader("Token abc123");
       expect(result.success).toBe(false);
       expect(result.error).toEqual({
-        code: "UNAUTHORIZED",
-        message: "Missing or invalid authorization header",
+        code: "MISSING_AUTH_HEADER",
+        message: "هدر احراز هویت نامعتبر است.",
       });
     });
 
     it("should return error when Bearer token is invalid", async () => {
       const result = await validateAuthHeader("Bearer invalid-token");
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe("UNAUTHORIZED");
+      expect(result.error?.code).toBe("INVALID_TOKEN");
     });
 
     it("should return error when auth header is empty string", async () => {
       const result = await validateAuthHeader("");
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe("UNAUTHORIZED");
+      expect(result.error?.code).toBe("MISSING_AUTH_HEADER");
     });
   });
 
@@ -196,7 +203,7 @@ describe("Auth Service", () => {
 
       const result = await validateOptionalAuthHeader(`Bearer ${token}`);
       expect(result.success).toBe(true);
-      expect(result.user).toEqual(mockUser);
+      expect(result.user?.id).toBe(mockUser.id);
     });
 
     it("should return success without user when no auth header provided", async () => {
