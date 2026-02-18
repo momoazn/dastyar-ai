@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useSidebar } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { navMain, useActiveNavItem } from "../nav";
+import { useActiveNavItem } from "../nav";
+import { useEnabledNavItems } from "../use-enabled-nav-items";
 
 export type NavigationMenuProps = {
   variant?: "icon" | "full";
@@ -13,12 +14,13 @@ export function NavigationMenu({
   className,
 }: NavigationMenuProps) {
   const { setOpen } = useSidebar();
-  const activeItem = useActiveNavItem();
+  const navItems = useEnabledNavItems();
+  const activeItem = useActiveNavItem(navItems);
 
   if (variant === "icon") {
     return (
       <div className={className}>
-        {navMain.map((item) => (
+        {navItems.map((item) => (
           <Link
             aria-current={activeItem?.url === item.url ? "page" : undefined}
             className={cn(
@@ -40,7 +42,7 @@ export function NavigationMenu({
 
   return (
     <div className={className}>
-      {navMain.map((item) => (
+      {navItems.map((item) => (
         <Link
           aria-current={activeItem?.url === item.url ? "page" : undefined}
           className={cn(

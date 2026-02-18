@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
-import type { SystemSettingsMap } from "@/types/settings";
+import type { SystemSettingKey, SystemSettingsMap } from "@/types/settings";
 import { orpc, queryClient } from "@/utils/orpc";
 
 const buildSettingsMap = (
@@ -23,6 +23,43 @@ const buildSettingsMap = (
   }
   return map;
 };
+
+type SidebarFeatureToggleKey = Extract<
+  SystemSettingKey,
+  | "enable_chat"
+  | "enable_image_generation"
+  | "enable_code_execution"
+  | "enable_translation"
+  | "enable_summary"
+  | "enable_transcription"
+>;
+
+const sidebarFeatureToggles: Array<{ key: SidebarFeatureToggleKey; label: string }> = [
+  {
+    key: "enable_chat",
+    label: fa.admin.settings.sidebarFeatures.enableChat,
+  },
+  {
+    key: "enable_image_generation",
+    label: fa.admin.settings.sidebarFeatures.enableImageGeneration,
+  },
+  {
+    key: "enable_code_execution",
+    label: fa.admin.settings.sidebarFeatures.enableCodeAssistant,
+  },
+  {
+    key: "enable_translation",
+    label: fa.admin.settings.sidebarFeatures.enableTranslation,
+  },
+  {
+    key: "enable_summary",
+    label: fa.admin.settings.sidebarFeatures.enableSummarize,
+  },
+  {
+    key: "enable_transcription",
+    label: fa.admin.settings.sidebarFeatures.enableTranscribe,
+  },
+];
 
 export function SettingsPanel() {
   const [settings, setSettings] = useState<SystemSettingsMap>({});
@@ -257,59 +294,25 @@ export function SettingsPanel() {
               value={(settings.model_response_timeout_seconds as number) || 300}
             />
           </div>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
+        </div>
+      </Card>
+
+      {/* Sidebar Features */}
+      <Card className="p-6">
+        <h3 className="mb-4 font-semibold text-lg">
+          {fa.admin.settings.sidebarFeatures.title}
+        </h3>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {sidebarFeatureToggles.map(({ key, label }) => (
+            <label className="flex items-center gap-2" key={key}>
               <input
-                checked={settings.enable_transcription as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_transcription", e.target.checked)
-                }
+                checked={(settings[key] as boolean) ?? true}
+                onChange={(e) => handleSettingChange(key, e.target.checked)}
                 type="checkbox"
               />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableTranscription}
-              </span>
+              <span className="font-medium text-sm">{label}</span>
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_translation as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_translation", e.target.checked)
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableTranslation}
-              </span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_code_execution as boolean}
-                onChange={(e) =>
-                  handleSettingChange("enable_code_execution", e.target.checked)
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableCodeExecution}
-              </span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                checked={settings.enable_image_generation as boolean}
-                onChange={(e) =>
-                  handleSettingChange(
-                    "enable_image_generation",
-                    e.target.checked
-                  )
-                }
-                type="checkbox"
-              />
-              <span className="font-medium text-sm">
-                {fa.admin.settings.aiModels.enableImageGeneration}
-              </span>
-            </label>
-          </div>
+          ))}
         </div>
       </Card>
 

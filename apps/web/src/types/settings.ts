@@ -19,8 +19,10 @@ export type SystemSettingKey =
   | "password_require_numbers"
   | "password_require_uppercase"
   | "model_response_timeout_seconds"
+  | "enable_chat"
   | "enable_transcription"
   | "enable_translation"
+  | "enable_summary"
   | "enable_code_execution"
   | "enable_image_generation";
 

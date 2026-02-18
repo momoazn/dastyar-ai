@@ -20,10 +20,12 @@ import { ImagesSidebar } from "./images-sidebar";
 import { AppSidebarHeader, NavigationMenu } from "./navigation";
 import { SummariesList } from "./summaries-list";
 import { TranslationsList } from "./translations-list";
+import { useEnabledNavItems } from "./use-enabled-nav-items";
 import { UserProfileButton } from "./user-profile-button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const activeItem = useActiveNavItem();
+  const navItems = useEnabledNavItems();
+  const activeItem = useActiveNavItem(navItems);
   const { createChatThread } = useCreateThread(activeItem?.url === "/chat/");
   const { handleNewTranslation } = useTranslationActions();
   const location = useLocation();

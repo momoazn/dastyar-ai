@@ -231,6 +231,15 @@ export const admin = {
       enableCodeExecution: "فعال کردن اجرای کد",
       enableImageGeneration: "فعال کردن تولید تصویر",
     },
+    sidebarFeatures: {
+      title: "ویژگی‌های نوار کناری",
+      enableChat: "نمایش گفتگو",
+      enableImageGeneration: "نمایش تولید تصویر",
+      enableCodeAssistant: "نمایش دستیار کد",
+      enableTranslation: "نمایش ترجمه",
+      enableSummarize: "نمایش خلاصه‌سازی",
+      enableTranscribe: "نمایش تبدیل صوت به متن",
+    },
     messages: {
       saved: "تنظیمات با موفقیت ذخیره شد",
       error: "خطا در ذخیره تنظیمات",
