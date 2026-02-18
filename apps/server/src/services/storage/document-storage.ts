@@ -81,7 +81,14 @@ export function guessMimeType(fileName: string): string {
     case ".txt":
       return "text/plain";
     case ".md":
+    case ".markdown":
       return "text/markdown";
+    case ".csv":
+      return "text/csv";
+    case ".json":
+      return "application/json";
+    case ".docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     default:
       return "application/octet-stream";
   }

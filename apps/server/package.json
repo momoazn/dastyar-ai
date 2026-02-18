@@ -37,6 +37,7 @@
     "drizzle-zod": "^0.8.3",
     "hono": "^4.9.10",
     "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.11.0",
     "ollama-ai-provider-v2": "^1.4.1",
     "openai": "^6.2.0",
     "pdf-parse": "^2.4.5",

@@ -11,11 +11,7 @@ import {
   detachDocumentFromThread,
   listThreadDocuments,
 } from "@/repositories/documents";
-import {
-  extractTextFromPdf,
-  indexDocumentPages,
-  indexDocumentText,
-} from "@/services/processors";
+import { indexUploadedDocument } from "@/services/processors";
 import { saveDocumentFromFile } from "@/services/storage";
 import { protectedProcedure } from "./base";
 
@@ -72,34 +68,23 @@ export const documentProcedures = {
         });
       }
 
-      let chunks = 0;
-      try {
-        if (Array.isArray(pages) && pages.length > 0) {
-          chunks = await indexDocumentPages(
-            Number(doc.id),
-            pages.map((p) => ({ page: p.page, text: p.text }))
-          );
-        } else if (textContent && textContent.trim().length > 0) {
-          chunks = await indexDocumentText(Number(doc.id), textContent);
-        } else if (stored.mimeType.includes("pdf")) {
-          const p = await extractTextFromPdf(stored.filePath);
-          if (p.length > 0) {
-            chunks = await indexDocumentPages(Number(doc.id), p);
-          }
-        }
-      } catch (e) {
-        logger.error(
-          "Document indexing failed, continuing without embeddings",
-          e,
-          {
-            documentId: doc.id,
-            userId,
-          }
-        );
-        chunks = 0;
-      }
+      const indexing = await indexUploadedDocument({
+        clientPages: pages,
+        clientTextContent: textContent,
+        documentId: Number(doc.id),
+        fileName: file.name,
+        filePath: stored.filePath,
+        mimeType: stored.mimeType,
+        userId,
+      });
 
-      return { ...doc, indexedChunks: chunks };
+      return {
+        ...doc,
+        indexedChunks: indexing.chunks,
+        indexingReason: indexing.reason,
+        indexingSource: indexing.source,
+        indexingStatus: indexing.status,
+      };
     }),
 
   attachToThread: protectedProcedure

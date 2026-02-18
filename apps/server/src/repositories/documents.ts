@@ -171,6 +171,15 @@ export async function insertDocumentChunks(
   return chunks.length;
 }
 
+export async function deleteChunksForDocument(
+  documentId: number
+): Promise<void> {
+  await db
+    .delete(documentChunks)
+    .where(eq(documentChunks.documentId, documentId))
+    .run();
+}
+
 export async function listChunksForDocuments(
   documentIds: number[]
 ): Promise<(DocumentChunk & { documentId: number })[]> {
