@@ -9,7 +9,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui";
 import { getErrorMessage } from "@/lib/error-utils";
-import { extractPdfPages } from "@/lib/pdf";
 import { fa } from "@/lib/texts";
 import { client, queryClient } from "@/utils/orpc";
 
@@ -26,25 +25,47 @@ type Props = {
   }) => void;
 };
 
+const TEXT_MIME_TYPES = new Set([
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+  "application/json",
+]);
+const TEXT_EXTENSIONS = new Set(["txt", "md", "markdown", "csv", "json"]);
+
+type UploadResponse = {
+  id: number | string;
+  indexedChunks?: number | null;
+  indexingReason?: string;
+  title: string;
+};
+
+function normalizeMimeType(mimeType: string): string {
+  return mimeType.split(";")[0].trim().toLowerCase();
+}
+
+function getExtension(fileName: string): string {
+  const parts = fileName.toLowerCase().split(".");
+  return parts.length > 1 ? (parts.at(-1) ?? "") : "";
+}
+
+function isTextLikeFile(file: File): boolean {
+  const mime = normalizeMimeType(file.type);
+  return (
+    TEXT_MIME_TYPES.has(mime) || TEXT_EXTENSIONS.has(getExtension(file.name))
+  );
+}
+
 async function processFileContent(file: File): Promise<{
   textContent?: string;
-  pages?: { page: number; text: string }[];
 }> {
   let textContent: string | undefined;
-  let pages: { page: number; text: string }[] | undefined;
 
-  if (file.type === "text/plain" || file.type === "text/markdown") {
+  if (isTextLikeFile(file)) {
     textContent = await file.text();
-  } else if (file.type === "application/pdf") {
-    try {
-      pages = await extractPdfPages(file);
-    } catch {
-      // If parsing fails, continue without pages; server may still index via fallback
-      toast.warning(fa.documents.pdfExtractionFailed);
-    }
   }
 
-  return { textContent, pages };
+  return { textContent };
 }
 
 async function uploadDocument(
@@ -52,10 +73,9 @@ async function uploadDocument(
   threadId: number,
   extracted?: {
     textContent?: string;
-    pages?: { page: number; text: string }[];
   }
 ) {
-  const { textContent, pages } = extracted ?? {};
+  const { textContent } = extracted ?? {};
   const baseInput = {
     file,
     threadId,
@@ -67,7 +87,6 @@ async function uploadDocument(
     ...(typeof textContent === "string" && textContent.trim().length > 0
       ? { textContent }
       : {}),
-    ...(Array.isArray(pages) && pages.length > 0 ? { pages } : {}),
   };
 
   try {
@@ -86,18 +105,41 @@ async function uploadDocument(
 function showUploadSuccess(
   fileName: string,
   fileType: string,
-  indexed: number
+  indexed: number,
+  indexingReason?: string
 ) {
-  if (fileType === "application/pdf") {
-    if (indexed > 0) {
-      toast.success(fa.documents.uploadSuccess(fileName, indexed));
-    } else {
-      toast.success(fa.documents.uploadSuccessPdfNoIndex(fileName));
-    }
-  } else if (indexed > 0) {
+  if (indexed > 0) {
     toast.success(fa.documents.uploadSuccess(fileName, indexed));
+    return;
+  }
+
+  if (indexingReason) {
+    toast.success(
+      fa.documents.uploadSuccessNoIndexWithReason(
+        fileName,
+        indexingReasonToText(indexingReason)
+      )
+    );
+    return;
+  }
+
+  if (fileType === "application/pdf") {
+    toast.success(fa.documents.uploadSuccessPdfNoIndex(fileName));
   } else {
     toast.success(fa.documents.uploadSuccessNoIndex(fileName));
+  }
+}
+
+function indexingReasonToText(reason: string): string {
+  switch (reason) {
+    case "unsupported_file_type":
+      return fa.documents.indexingReasonUnsupportedType;
+    case "no_extractable_content":
+      return fa.documents.indexingReasonNoContent;
+    case "indexing_failed":
+      return fa.documents.indexingReasonFailed;
+    default:
+      return fa.documents.indexingReasonUnknown;
   }
 }
 
@@ -121,15 +163,13 @@ export function DocumentUploadButton({
     }
     setUploading(true);
     try {
-      if (file.type === "application/pdf") {
-        onStatusChange?.({ filename: file.name, phase: "extracting" });
-      } else {
-        onStatusChange?.({ filename: file.name, phase: "uploading" });
-      }
-
-      const extracted = await processFileContent(file);
       onStatusChange?.({ filename: file.name, phase: "uploading" });
-      const res = await uploadDocument(file, threadId, extracted);
+      const extracted = await processFileContent(file);
+      const res = (await uploadDocument(
+        file,
+        threadId,
+        extracted
+      )) as UploadResponse;
       const indexed = res.indexedChunks ?? 0;
       onStatusChange?.({ filename: file.name, phase: "indexing" });
 
@@ -141,7 +181,7 @@ export function DocumentUploadButton({
 
       queryClient.invalidateQueries();
       onStatusChange?.({ filename: file.name, phase: "done" });
-      showUploadSuccess(file.name, file.type, indexed);
+      showUploadSuccess(file.name, file.type, indexed, res.indexingReason);
     } catch (err) {
       handleUploadError(err);
       onStatusChange?.({ filename: file.name, phase: "error" });
@@ -157,7 +197,7 @@ export function DocumentUploadButton({
         <TooltipTrigger asChild>
           <div>
             <input
-              accept=".pdf,.txt,.md"
+              accept=".pdf,.txt,.md,.markdown,.csv,.json,.docx"
               className="hidden"
               id={inputId}
               onChange={handleSelect}
