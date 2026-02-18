@@ -84,6 +84,50 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).resolves.toBeUndefined();
     });
 
+    it("should accept valid EML file", async () => {
+      const file = createMockFile("mail.eml", 512, "message/rfc822");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid HTML file", async () => {
+      const file = createMockFile("page.html", 512, "text/html");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid TSV file", async () => {
+      const file = createMockFile(
+        "table.tsv",
+        512,
+        "text/tab-separated-values"
+      );
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid YAML file", async () => {
+      const file = createMockFile("config.yaml", 512, "application/x-yaml");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid TOML file", async () => {
+      const file = createMockFile("config.toml", 512, "application/toml");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid XML file", async () => {
+      const file = createMockFile("data.xml", 512, "application/xml");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid RTF file", async () => {
+      const file = createMockFile("doc.rtf", 512, "application/rtf");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept valid code file extension with generic mime", async () => {
+      const file = createMockFile("script.py", 512, "application/octet-stream");
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
     it("should reject empty file", async () => {
       const file = createMockFile("empty.pdf", 0, "application/pdf");
       await expect(validateUploadedFile(file)).rejects.toThrow(
@@ -167,6 +211,59 @@ describe("File Validation", () => {
       );
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
+      );
+      await expect(validateUploadedFile(file)).rejects.toThrow(
+        "executable or archive signature"
+      );
+    });
+
+    it("should accept zip-based office container signatures for docx", async () => {
+      const zipSignature = new Uint8Array([
+        0x50,
+        0x4b,
+        0x03,
+        0x04,
+        ...new Array(1020).fill(0),
+      ]);
+      const file = createMockFile(
+        "report.docx",
+        1024,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        zipSignature
+      );
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should accept zip-based office container signatures for xlsx", async () => {
+      const zipSignature = new Uint8Array([
+        0x50,
+        0x4b,
+        0x03,
+        0x04,
+        ...new Array(1020).fill(0),
+      ]);
+      const file = createMockFile(
+        "sheet.xlsx",
+        1024,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        zipSignature
+      );
+      await expect(validateUploadedFile(file)).resolves.toBeUndefined();
+    });
+
+    it("should reject zip signature for non-office extension", async () => {
+      const zipSignature = new Uint8Array([
+        0x50,
+        0x4b,
+        0x03,
+        0x04,
+        ...new Array(1020).fill(0),
+      ]);
+      const file = createMockFile(
+        "archive.pdf",
+        1024,
+        "application/pdf",
+        zipSignature
       );
       await expect(validateUploadedFile(file)).rejects.toThrow(
         "executable or archive signature"

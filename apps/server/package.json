@@ -36,17 +36,22 @@
     "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.9.10",
+    "html-to-text": "^9.0.5",
     "jsonwebtoken": "^9.0.2",
+    "mailparser": "^3.9.3",
     "mammoth": "^1.11.0",
     "ollama-ai-provider-v2": "^1.4.1",
     "openai": "^6.2.0",
     "pdf-parse": "^2.4.5",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "@types/bun": "^1.2.23",
+    "@types/html-to-text": "^9.0.4",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/mailparser": "^3.4.6",
     "drizzle-kit": "^0.31.6",
     "typescript": "^5.9.3"
   },

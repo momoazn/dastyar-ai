@@ -8,6 +8,7 @@ const GENERIC_MIME_TYPES = new Set([
   "application/octet-stream",
   "binary/octet-stream",
 ]);
+const ZIP_BASED_ALLOWED_EXTENSIONS = new Set(["docx", "xlsx", "xlsm", "pptx"]);
 
 /**
  * File validation configuration
@@ -23,11 +24,25 @@ export const FILE_VALIDATION_CONFIG = {
     "text/plain",
     "text/markdown",
     "text/csv",
+    "text/tab-separated-values",
     "application/json",
+    "text/xml",
+    "application/xml",
+    "text/html",
+    "application/xhtml+xml",
+    "application/rtf",
+    "text/rtf",
+    "message/rfc822",
+    "text/yaml",
+    "application/x-yaml",
+    "application/yaml",
+    "application/toml",
+    "text/x-toml",
     "application/msword", // .doc
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
     "application/vnd.ms-excel", // .xls
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+    "application/vnd.ms-excel.sheet.macroenabled.12", // .xlsm
   ] as const,
 
   // Allowed file extensions (without dot)
@@ -37,11 +52,46 @@ export const FILE_VALIDATION_CONFIG = {
     "md",
     "markdown",
     "csv",
+    "tsv",
     "json",
+    "html",
+    "htm",
+    "xml",
+    "rtf",
+    "eml",
+    "yaml",
+    "yml",
+    "toml",
+    "ini",
+    "conf",
+    "log",
+    "sql",
+    "py",
+    "ts",
+    "tsx",
+    "java",
+    "go",
+    "rs",
+    "c",
+    "cc",
+    "cpp",
+    "h",
+    "hpp",
+    "cs",
+    "rb",
+    "php",
+    "swift",
+    "kt",
+    "kts",
+    "scala",
+    "lua",
+    "r",
+    "m",
     "doc",
     "docx",
     "xls",
     "xlsx",
+    "xlsm",
   ] as const,
 
   // Dangerous file extensions that should never be allowed
@@ -197,6 +247,16 @@ async function validateFileContent(file: File): Promise<void> {
         }
       }
       if (match) {
+        const extension = getFileExtension(file.name);
+        const isZipContainer =
+          signature.length === 4 &&
+          signature[0] === 0x50 &&
+          signature[1] === 0x4b &&
+          signature[2] === 0x03 &&
+          signature[3] === 0x04;
+        if (isZipContainer && ZIP_BASED_ALLOWED_EXTENSIONS.has(extension)) {
+          continue;
+        }
         throw new FileValidationError(
           "File contains executable or archive signature",
           "SUSPICIOUS_CONTENT"

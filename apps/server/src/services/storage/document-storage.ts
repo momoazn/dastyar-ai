@@ -79,16 +79,63 @@ export function guessMimeType(fileName: string): string {
     case ".pdf":
       return "application/pdf";
     case ".txt":
+    case ".log":
+    case ".ini":
+    case ".conf":
+    case ".sql":
+    case ".py":
+    case ".ts":
+    case ".tsx":
+    case ".java":
+    case ".go":
+    case ".rs":
+    case ".c":
+    case ".cc":
+    case ".cpp":
+    case ".h":
+    case ".hpp":
+    case ".cs":
+    case ".rb":
+    case ".php":
+    case ".swift":
+    case ".kt":
+    case ".kts":
+    case ".scala":
+    case ".lua":
+    case ".r":
+    case ".m":
       return "text/plain";
     case ".md":
     case ".markdown":
       return "text/markdown";
     case ".csv":
       return "text/csv";
+    case ".tsv":
+      return "text/tab-separated-values";
     case ".json":
       return "application/json";
+    case ".yaml":
+    case ".yml":
+      return "application/x-yaml";
+    case ".toml":
+      return "application/toml";
+    case ".html":
+    case ".htm":
+      return "text/html";
+    case ".xml":
+      return "application/xml";
+    case ".rtf":
+      return "application/rtf";
+    case ".eml":
+      return "message/rfc822";
     case ".docx":
       return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case ".xls":
+      return "application/vnd.ms-excel";
+    case ".xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    case ".xlsm":
+      return "application/vnd.ms-excel.sheet.macroenabled.12";
     default:
       return "application/octet-stream";
   }

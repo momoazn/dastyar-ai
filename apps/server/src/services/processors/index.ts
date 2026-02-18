@@ -10,4 +10,5 @@ export * from "./embeddings";
 export * from "./images";
 export * from "./pdf";
 export * from "./rag";
+export * from "./text-extractors";
 export * from "./upload-indexing";

@@ -2,7 +2,11 @@ import { describe, expect, it } from "bun:test";
 import {
   indexUploadedDocument,
   isDocxDocument,
+  isEmlDocument,
+  isHtmlDocument,
   isPdfDocument,
+  isRtfDocument,
+  isSpreadsheetDocument,
   isTextDocument,
   type UploadIndexingDeps,
   type UploadIndexingInput,
@@ -22,7 +26,11 @@ function buildDeps(
   return {
     clearChunks: () => Promise.resolve(undefined),
     extractDocxText: () => Promise.resolve(""),
+    extractEmlText: () => Promise.resolve(""),
+    extractHtmlText: () => Promise.resolve(""),
     extractPdfPages: () => Promise.resolve([]),
+    extractRtfText: () => Promise.resolve(""),
+    extractXlsxText: () => Promise.resolve(""),
     indexPages: () => Promise.resolve(0),
     indexText: () => Promise.resolve(0),
     readTextFile: () => Promise.resolve(""),
@@ -57,6 +65,37 @@ describe("upload-indexing", () => {
       true
     );
     expect(isDocxDocument("report.txt", "text/plain")).toBe(false);
+  });
+
+  it("detects spreadsheet documents by mime and extension", () => {
+    expect(
+      isSpreadsheetDocument(
+        "sheet.bin",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      )
+    ).toBe(true);
+    expect(isSpreadsheetDocument("sheet.xls", "application/octet-stream")).toBe(
+      true
+    );
+    expect(isSpreadsheetDocument("sheet.txt", "text/plain")).toBe(false);
+  });
+
+  it("detects html documents by mime and extension", () => {
+    expect(isHtmlDocument("page.bin", "text/html")).toBe(true);
+    expect(isHtmlDocument("page.htm", "application/octet-stream")).toBe(true);
+    expect(isHtmlDocument("page.txt", "text/plain")).toBe(false);
+  });
+
+  it("detects eml documents by mime and extension", () => {
+    expect(isEmlDocument("mail.bin", "message/rfc822")).toBe(true);
+    expect(isEmlDocument("mail.eml", "application/octet-stream")).toBe(true);
+    expect(isEmlDocument("mail.txt", "text/plain")).toBe(false);
+  });
+
+  it("detects rtf documents by mime and extension", () => {
+    expect(isRtfDocument("doc.bin", "application/rtf")).toBe(true);
+    expect(isRtfDocument("doc.rtf", "application/octet-stream")).toBe(true);
+    expect(isRtfDocument("doc.txt", "text/plain")).toBe(false);
   });
 
   it("uses server PDF extraction when available", async () => {
@@ -149,6 +188,87 @@ describe("upload-indexing", () => {
 
     expect(result.chunks).toBe(2);
     expect(result.source).toBe("server_docx");
+    expect(result.status).toBe("indexed");
+  });
+
+  it("indexes spreadsheet documents from server extraction", async () => {
+    const deps = buildDeps({
+      extractXlsxText: async () => "sheet extracted text",
+      indexText: async (_documentId, text) => (text.includes("sheet") ? 2 : 0),
+    });
+
+    const result = await indexUploadedDocument(
+      {
+        ...BASE_INPUT,
+        fileName: "sheet.xlsx",
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+      deps
+    );
+
+    expect(result.chunks).toBe(2);
+    expect(result.source).toBe("server_xlsx");
+    expect(result.status).toBe("indexed");
+  });
+
+  it("indexes html documents from server extraction", async () => {
+    const deps = buildDeps({
+      extractHtmlText: async () => "html extracted text",
+      indexText: async (_documentId, text) => (text.includes("html") ? 1 : 0),
+    });
+
+    const result = await indexUploadedDocument(
+      {
+        ...BASE_INPUT,
+        fileName: "page.html",
+        mimeType: "text/html",
+      },
+      deps
+    );
+
+    expect(result.chunks).toBe(1);
+    expect(result.source).toBe("server_html");
+    expect(result.status).toBe("indexed");
+  });
+
+  it("indexes eml documents from server extraction", async () => {
+    const deps = buildDeps({
+      extractEmlText: async () => "email extracted text",
+      indexText: async (_documentId, text) => (text.includes("email") ? 1 : 0),
+    });
+
+    const result = await indexUploadedDocument(
+      {
+        ...BASE_INPUT,
+        fileName: "mail.eml",
+        mimeType: "message/rfc822",
+      },
+      deps
+    );
+
+    expect(result.chunks).toBe(1);
+    expect(result.source).toBe("server_eml");
+    expect(result.status).toBe("indexed");
+  });
+
+  it("indexes rtf documents from server extraction", async () => {
+    const deps = buildDeps({
+      extractRtfText: async () => "rtf extracted text",
+      indexText: async (_documentId, text) => (text.includes("rtf") ? 1 : 0),
+    });
+
+    const result = await indexUploadedDocument(
+      {
+        ...BASE_INPUT,
+        fileName: "doc.rtf",
+        mimeType: "application/rtf",
+      },
+      deps
+    );
+
+    expect(result.chunks).toBe(1);
+    expect(result.source).toBe("server_rtf");
     expect(result.status).toBe("indexed");
   });
 
