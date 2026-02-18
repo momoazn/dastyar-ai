@@ -1,6 +1,6 @@
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { MessageCircleIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -10,10 +10,15 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatInput, Message } from "@/components/chat";
 import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
+import { Button } from "@/components/ui";
 import { useAIChat } from "@/hooks/use-ai-chat";
 import { useChatInput } from "@/hooks/use-chat-input";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
+import {
+  readAutoScrollByThread,
+  writeAutoScrollByThread,
+} from "@/lib/chat-auto-scroll";
 import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/chat/$id")({
@@ -28,6 +33,9 @@ function RouteComponent() {
   const { id: threadId } = useParams({ from: "/chat/$id" });
   const search = useSearch({ from: "/chat/$id" }) as { initialPrompt?: string };
   const threadIdNum = Number(threadId);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(() =>
+    readAutoScrollByThread(threadIdNum)
+  );
 
   const { modelId } = useChatModelSelection({ threadId: threadIdNum });
   const { messages, status, stop, sendPrompt } = useAIChat({
@@ -59,18 +67,56 @@ function RouteComponent() {
     }
   }, [search, messages.length, handleSendPrompt]);
 
+  useEffect(() => {
+    setIsAutoScrollEnabled(readAutoScrollByThread(threadIdNum));
+  }, [threadIdNum]);
+
+  const toggleAutoScroll = useCallback(() => {
+    setIsAutoScrollEnabled((current) => {
+      const next = !current;
+      writeAutoScrollByThread(threadIdNum, next);
+      return next;
+    });
+  }, [threadIdNum]);
+
+  const renderedMessages = (
+    <>
+      {messages.map((message) => (
+        <Message key={message.id} message={message} />
+      ))}
+      {status === "submitted" && <Loader />}
+    </>
+  );
+
   return (
     <ConversationScaffold
+      banner={
+        <div className="flex justify-end">
+          <Button
+            onClick={toggleAutoScroll}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {isAutoScrollEnabled
+              ? fa.chat.disableAutoScroll
+              : fa.chat.enableAutoScroll}
+          </Button>
+        </div>
+      }
       conversation={
-        <Conversation className="h-full">
-          <ConversationContent>
-            {messages.map((m) => (
-              <Message key={m.id} message={m} />
-            ))}
-            {status === "submitted" && <Loader />}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+        isAutoScrollEnabled ? (
+          <Conversation className="h-full">
+            <ConversationContent>{renderedMessages}</ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+        ) : (
+          <div className="relative h-full flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-4xl space-y-3 px-2 pt-2 pb-6">
+              {renderedMessages}
+            </div>
+          </div>
+        )
       }
       empty={
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">

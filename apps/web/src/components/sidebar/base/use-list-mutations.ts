@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { removeAutoScrollByThread } from "@/lib/chat-auto-scroll";
 import { client, orpc } from "@/utils/orpc";
 
 export type ListMutationsConfig = {
@@ -8,6 +9,7 @@ export type ListMutationsConfig = {
 
 export interface DeleteMutationConfig extends ListMutationsConfig {
   deleteFn: (id: number) => Promise<unknown>;
+  onDeleteSuccess?: (id: number) => void;
 }
 
 export interface ArchiveMutationConfig extends ListMutationsConfig {
@@ -21,13 +23,15 @@ export interface RenameMutationConfig extends ListMutationsConfig {
 export function useDeleteMutation({
   listQueryKey,
   deleteFn,
+  onDeleteSuccess,
   refetchOnSuccess = true,
 }: DeleteMutationConfig) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: deleteFn,
-    onSuccess: async () => {
+    onSuccess: async (_data, id) => {
+      onDeleteSuccess?.(id);
       if (refetchOnSuccess) {
         await queryClient.invalidateQueries({
           queryKey: listQueryKey,
@@ -82,6 +86,7 @@ export function useThreadMutations() {
     delete: useDeleteMutation({
       listQueryKey: orpc.threads.list.queryKey(),
       deleteFn: (id: number) => client.threads.delete({ id }),
+      onDeleteSuccess: removeAutoScrollByThread,
     }),
     archive: useArchiveMutation({
       listQueryKey: orpc.threads.list.queryKey(),

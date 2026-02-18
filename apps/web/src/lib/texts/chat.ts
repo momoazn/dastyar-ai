@@ -31,6 +31,8 @@ export const chat = {
   newChatError: "خطا در ساخت گفتگوی جدید",
   renameError: "خطا در تغییر عنوان گفتگو",
   sendMessageError: "ارسال پیام ناموفق بود. دوباره تلاش کنید.",
+  enableAutoScroll: "فعال‌کردن اسکرول خودکار",
+  disableAutoScroll: "غیرفعال‌کردن اسکرول خودکار",
 } as const;
 
 export const imageChat = {
