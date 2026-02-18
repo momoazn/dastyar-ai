@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/database";
 import {
   type InsertSystemSetting,
@@ -33,14 +33,13 @@ export async function getSetting(key: string): Promise<SystemSetting | null> {
 export async function getSettingsByKeys(
   keys: string[]
 ): Promise<SystemSetting[]> {
-  if (keys.length === 0) return [];
+  if (keys.length === 0) {
+    return [];
+  }
   const result = await db
     .select()
     .from(systemSettings)
-    .where((table) => {
-      const conditions = keys.map((key) => eq(table.key, key));
-      return conditions.length === 1 ? conditions[0] : conditions[0];
-    });
+    .where(inArray(systemSettings.key, keys));
   return result as SystemSetting[];
 }
 

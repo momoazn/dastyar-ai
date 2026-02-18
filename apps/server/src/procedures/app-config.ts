@@ -1,4 +1,7 @@
-import { getAllSettings, FEATURE_TOGGLE_DEFAULTS } from "@/repositories/system-settings";
+import {
+  FEATURE_TOGGLE_DEFAULTS,
+  getSettingsByKeys,
+} from "@/repositories/system-settings";
 import { publicProcedure } from "./base";
 
 export type FeatureToggleMap = {
@@ -21,7 +24,8 @@ export function normalizeFeatureToggles(
 
 export const appConfigProcedures = {
   getFeatureToggles: publicProcedure.handler(async () => {
-    const settings = await getAllSettings();
+    const featureToggleKeys = Object.keys(FEATURE_TOGGLE_DEFAULTS);
+    const settings = await getSettingsByKeys(featureToggleKeys);
     const settingsMap = Object.fromEntries(
       settings.map((setting) => [setting.key, setting.value])
     );
