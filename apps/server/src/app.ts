@@ -101,7 +101,9 @@ export function createApp() {
     });
     const status = err instanceof HTTPException ? err.status : 500;
     const message =
-      err instanceof HTTPException ? err.message : "Internal Server Error";
+      err instanceof HTTPException
+        ? err.message || "درخواست با خطا مواجه شد."
+        : "خطای داخلی سرور رخ داد.";
     return c.json({ error: message }, status);
   });
 
@@ -115,7 +117,7 @@ export function createApp() {
         "Content-Type": "text/html; charset=utf-8",
       });
     }
-    return c.json({ error: "Not Found" }, 404);
+    return c.json({ error: "مسیر درخواستی یافت نشد." }, 404);
   });
 
   return app;

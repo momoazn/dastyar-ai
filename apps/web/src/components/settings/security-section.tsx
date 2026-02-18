@@ -21,6 +21,7 @@ import {
   FormMessage,
   Input,
 } from "@/components/ui";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SettingsItem } from "./settings-item";
@@ -60,7 +61,10 @@ export function SecuritySection() {
       },
       onError: (error: Error) => {
         toast.error(fa.settings.account.passwordUpdateError, {
-          description: error.message,
+          description: getErrorMessage(
+            error,
+            fa.settings.account.passwordUpdateError
+          ),
         });
       },
     })

@@ -40,6 +40,36 @@ export function sendError(
   return c.json({ error: { code, message, details } }, status);
 }
 
+function mapChatErrorMessage(rawMessage: string): string {
+  const normalized = rawMessage.trim().toLowerCase();
+
+  if (
+    normalized.includes("bad request") ||
+    normalized.includes("invalid request") ||
+    normalized.includes("validation")
+  ) {
+    return "درخواست نامعتبر است. لطفاً ورودی‌ها را بررسی کنید.";
+  }
+
+  if (
+    normalized.includes("unauthorized") ||
+    normalized.includes("invalid token") ||
+    normalized.includes("token")
+  ) {
+    return "نشست شما معتبر نیست. لطفاً دوباره وارد شوید.";
+  }
+
+  if (normalized.includes("forbidden")) {
+    return "شما دسترسی لازم برای انجام این عملیات را ندارید.";
+  }
+
+  if (normalized.includes("not found")) {
+    return "منبع درخواستی یافت نشد.";
+  }
+
+  return "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+}
+
 const MessagePartSchema = z.union([
   z.object({ type: z.literal("text"), text: z.string() }),
   z.object({
@@ -93,7 +123,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 400,
           code: "INVALID_REQUEST",
-          message: "Last message must be from user",
+          message: "آخرین پیام باید از طرف کاربر باشد.",
         });
       }
 
@@ -102,7 +132,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 404,
           code: "MODEL_NOT_FOUND",
-          message: "No model exists with the provided id",
+          message: "مدل انتخاب‌شده یافت نشد.",
           details: { modelId },
         });
       }
@@ -111,7 +141,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 403,
           code: "MODEL_DISABLED",
-          message: "The selected model is disabled",
+          message: "مدل انتخاب‌شده غیرفعال است.",
           details: { modelId },
         });
       }
@@ -138,7 +168,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 500,
           code: "PERSIST_USER_MESSAGE_FAILED",
-          message: "Could not save the user message",
+          message: "ذخیره پیام کاربر ناموفق بود.",
         });
       }
 
@@ -275,15 +305,17 @@ const app = new Hono<AuthEnv>()
     } catch (error) {
       releaseProvider?.();
       releaseProvider = null;
-      let message = "An unexpected error occurred";
+      let message = "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
       if (error instanceof Error) {
-        message = error.message;
+        message = mapChatErrorMessage(error.message);
       } else if (
         typeof error === "object" &&
         error !== null &&
         "message" in error
       ) {
-        message = String((error as { message: unknown }).message);
+        message = mapChatErrorMessage(
+          String((error as { message: unknown }).message)
+        );
       }
       return sendError(c, {
         status: 500,

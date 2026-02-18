@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,8 +119,12 @@ export function OllamaServersTable() {
           toast.success(fa.admin.ollamaServers.messages.testedOk);
           return;
         }
+        const readableError = getErrorMessage(
+          result.error,
+          fa.admin.ollamaServers.messages.error
+        );
         toast.error(
-          `${fa.admin.ollamaServers.messages.testedFailed}: ${result.error}`
+          `${fa.admin.ollamaServers.messages.testedFailed}: ${readableError}`
         );
       },
       onError: showServerError,

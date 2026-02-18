@@ -33,6 +33,7 @@ import {
   useVoiceRecorder,
 } from "@/hooks/use-voice-recorder";
 import ProtectedLayout from "@/layouts/protected";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
@@ -106,7 +107,10 @@ function RouteComponent() {
   const { mutate: summarize, isPending: isSummarizing } = useMutation(
     orpc.summarize.create.mutationOptions({
       onSuccess: (data) => setSmartResult(data.summaryText || ""),
-      onError: (error) => setTranscribeError(error.message),
+      onError: (error) =>
+        setTranscribeError(
+          getErrorMessage(error, fa.transcribe.errors.processFailed)
+        ),
     })
   );
 
@@ -114,7 +118,7 @@ function RouteComponent() {
     mode: "action-items" | "meeting-notes" | "concise"
   ) => {
     if (!llmModels?.length) {
-      setTranscribeError("No AI models available for processing.");
+      setTranscribeError("هیچ مدل هوش مصنوعی فعالی برای پردازش در دسترس نیست.");
       return;
     }
     setSmartActionTitle(getSmartActionTitle(mode));

@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUser } from "@/hooks/use-user";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
@@ -77,7 +78,10 @@ export function AccountSettings() {
       },
       onError: (error: Error) => {
         toast.error(fa.settings.account.usernameUpdateError, {
-          description: error.message,
+          description: getErrorMessage(
+            error,
+            fa.settings.account.usernameUpdateError
+          ),
         });
       },
     })
@@ -92,7 +96,10 @@ export function AccountSettings() {
       },
       onError: (error: Error) => {
         toast.error(fa.settings.account.passwordUpdateError, {
-          description: error.message,
+          description: getErrorMessage(
+            error,
+            fa.settings.account.passwordUpdateError
+          ),
         });
       },
     })

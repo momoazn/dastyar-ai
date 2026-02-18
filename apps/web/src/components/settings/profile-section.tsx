@@ -15,6 +15,7 @@ import {
   Input,
 } from "@/components/ui";
 import { useUser } from "@/hooks/use-user";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SettingsItem } from "./settings-item";
@@ -46,7 +47,10 @@ export function ProfileSection() {
       },
       onError: (error: Error) => {
         toast.error(fa.settings.account.usernameUpdateError, {
-          description: error.message,
+          description: getErrorMessage(
+            error,
+            fa.settings.account.usernameUpdateError
+          ),
         });
       },
     })

@@ -1,5 +1,6 @@
 const DEFAULT_ERROR_TEXTS = {
   unknown: "خطای ناشناخته",
+  badRequest: "درخواست شما نامعتبر است. لطفاً ورودی‌ها را بررسی کنید.",
   networkError: "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.",
   unauthorized: "شما مجاز به انجام این عملیات نیستید. لطفاً دوباره وارد شوید.",
   forbidden: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
@@ -12,10 +13,15 @@ function normalizeMessage(message: string): string {
   return message.trim().toLowerCase();
 }
 
+function containsPersianText(text: string): boolean {
+  return /[\u0600-\u06ff]/.test(text);
+}
+
 function mapMessageToFriendlyText(
   message: string,
   texts: {
     unknown: string;
+    badRequest: string;
     networkError: string;
     unauthorized: string;
     forbidden: string;
@@ -33,6 +39,19 @@ function mapMessageToFriendlyText(
     normalized.includes("توکن منقضی")
   ) {
     return texts.tokenExpired;
+  }
+
+  if (
+    normalized.includes("400") ||
+    normalized.includes("bad request") ||
+    normalized.includes("bad_request") ||
+    normalized.includes("invalid request") ||
+    normalized.includes("invalid input") ||
+    normalized.includes("validation error") ||
+    normalized.includes("malformed request") ||
+    normalized.includes("unprocessable")
+  ) {
+    return texts.badRequest;
   }
 
   if (
@@ -54,6 +73,21 @@ function mapMessageToFriendlyText(
 
   if (normalized.includes("500") || normalized.includes("server error")) {
     return texts.serverError;
+  }
+
+  if (normalized.includes("internal server error")) {
+    return texts.serverError;
+  }
+
+  if (
+    !containsPersianText(message) &&
+    (normalized.includes("error") ||
+      normalized.includes("failed") ||
+      normalized.includes("exception") ||
+      normalized.includes("stack") ||
+      normalized.includes("http "))
+  ) {
+    return texts.unknown;
   }
 
   return message;
@@ -152,6 +186,7 @@ export function formatErrorForUser(
   fallback?: string,
   errorTexts?: {
     unknown: string;
+    badRequest?: string;
     networkError: string;
     unauthorized: string;
     forbidden: string;
@@ -163,6 +198,7 @@ export function formatErrorForUser(
   const texts = {
     ...DEFAULT_ERROR_TEXTS,
     ...errorTexts,
+    badRequest: errorTexts?.badRequest ?? DEFAULT_ERROR_TEXTS.badRequest,
     tokenExpired:
       errorTexts?.tokenExpired ?? DEFAULT_ERROR_TEXTS.tokenExpired,
   };
