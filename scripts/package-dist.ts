@@ -3,6 +3,7 @@
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_CONFIG } from "../apps/server/src/config-schema";
+import { withTag } from "./build-log";
 import {
   DIST_DIR,
   REPO_ROOT,
@@ -21,6 +22,11 @@ type PackageDistOptions = {
   release?: boolean;
 };
 
+export type PackageDistResult = {
+  artifacts: string[];
+  warnings: string[];
+};
+
 const resolveTargetWindows = (
   platform?: PackageDistOptions["platform"]
 ): boolean => {
@@ -30,23 +36,43 @@ const resolveTargetWindows = (
   return process.platform === "win32";
 };
 
-export async function packageDist(options: PackageDistOptions): Promise<void> {
+export async function packageDist(
+  options: PackageDistOptions
+): Promise<PackageDistResult> {
   const isWindowsTarget = resolveTargetWindows(options.platform);
+  const warnings: string[] = [];
+  const artifacts: string[] = [];
 
-  console.log("📦 Packaging distribution...");
+  console.log(withTag("step", "Packaging distribution..."));
 
   resetDistDirectory();
-  copyWebAssets();
-  copyServerBinaries(options.platform, isWindowsTarget, options);
-  copyWhisperBinary(isWindowsTarget);
-  copyWhisperModels();
-  copyFfmpegBinary(isWindowsTarget);
+  if (copyWebAssets()) {
+    artifacts.push("web/");
+  }
+  artifacts.push(
+    ...copyServerBinaries(options.platform, isWindowsTarget, options, warnings)
+  );
+  const whisperBinary = copyWhisperBinary(isWindowsTarget, warnings);
+  if (whisperBinary) {
+    artifacts.push(whisperBinary);
+  }
+  if (copyWhisperModels()) {
+    artifacts.push("models/");
+  }
+  const ffmpegBinary = copyFfmpegBinary(isWindowsTarget, warnings);
+  if (ffmpegBinary) {
+    artifacts.push(ffmpegBinary);
+  }
   await copyConfigFile();
+  artifacts.push("config.json");
   await copyBuildInfoFile(options.appVersion, options.release ?? false);
+  artifacts.push("build-info.json");
   await createDistReadme(isWindowsTarget, options);
+  artifacts.push("README.md");
   await verifyDistribution(options);
 
-  console.log("✅ Distribution packaged successfully\n");
+  console.log(`${withTag("ok", "Distribution packaged successfully")}\n`);
+  return { artifacts, warnings };
 }
 
 function resetDistDirectory(): void {
@@ -55,15 +81,16 @@ function resetDistDirectory(): void {
   mkdirSync(DIST, { recursive: true });
 }
 
-function copyWebAssets(): void {
+function copyWebAssets(): boolean {
   const webSrc = join(ROOT, "apps/web/dist");
   const webDest = join(DIST, "web");
   if (!existsSync(webSrc)) {
-    return;
+    return false;
   }
 
-  console.log("  → Copying web assets...");
+  console.log(`  ${withTag("info", "Copying web assets...")}`);
   cpSync(webSrc, webDest, { recursive: true, force: true });
+  return true;
 }
 
 function getServerBinaryNames(
@@ -94,26 +121,30 @@ function getDistServerBinaryName(
 function copyServerBinaries(
   platform: PackageDistOptions["platform"],
   isWindowsTarget: boolean,
-  options: PackageDistOptions
-): void {
+  options: PackageDistOptions,
+  warnings: string[]
+): string[] {
   const allowMissing = platform === "all";
   const serverBinaries = getServerBinaryNames(platform, isWindowsTarget);
+  const copiedBinaries: string[] = [];
 
-  console.log("  → Copying server binary...");
+  console.log(`  ${withTag("info", "Copying server binary...")}`);
 
   let copiedServerBinary = false;
   for (const binaryName of serverBinaries) {
     const serverSrc = join(SERVER_DIST, binaryName);
-    const serverDest = join(DIST, getDistServerBinaryName(binaryName, options));
+    const distName = getDistServerBinaryName(binaryName, options);
+    const serverDest = join(DIST, distName);
 
     if (existsSync(serverSrc)) {
       cpSync(serverSrc, serverDest, { force: true });
       copiedServerBinary = true;
+      copiedBinaries.push(distName);
       continue;
     }
 
     if (allowMissing) {
-      console.warn(`  ⚠️  Server binary not found: ${serverSrc}`);
+      warnings.push(`Server binary not found: ${serverSrc}`);
       continue;
     }
 
@@ -123,31 +154,37 @@ function copyServerBinaries(
   if (!copiedServerBinary) {
     throw new Error("No server binary was copied into dist/");
   }
+  return copiedBinaries;
 }
 
-function copyWhisperBinary(isWindowsTarget: boolean): void {
+function copyWhisperBinary(
+  isWindowsTarget: boolean,
+  warnings: string[]
+): string | undefined {
   const whisperBinName = isWindowsTarget ? "whisper.exe" : "whisper";
   const whisperSrc = join(WHISPER_DIR, whisperBinName);
   const whisperDest = join(DIST, whisperBinName);
   if (!existsSync(whisperSrc)) {
-    console.warn(`  ⚠️  Whisper binary not found for target: ${whisperSrc}`);
+    warnings.push(`Whisper binary not found for target: ${whisperSrc}`);
     return;
   }
 
-  console.log("  → Copying whisper binary...");
+  console.log(`  ${withTag("info", "Copying whisper binary...")}`);
   cpSync(whisperSrc, whisperDest);
+  return whisperBinName;
 }
 
-function copyWhisperModels(): void {
+function copyWhisperModels(): boolean {
   const modelsSrc = join(WHISPER_DIR, "models");
   const modelsDest = join(DIST, "models");
   if (!existsSync(modelsSrc)) {
     mkdirSync(modelsDest, { recursive: true });
-    return;
+    return false;
   }
 
-  console.log("  → Copying whisper models...");
+  console.log(`  ${withTag("info", "Copying whisper models...")}`);
   cpSync(modelsSrc, modelsDest, { recursive: true, force: true });
+  return true;
 }
 
 function getFfmpegFileName(isWindowsTarget: boolean): string {
@@ -160,23 +197,29 @@ function getFfmpegFileName(isWindowsTarget: boolean): string {
   return `ffmpeg-${process.platform}-amd64`;
 }
 
-function copyFfmpegBinary(isWindowsTarget: boolean): void {
+function copyFfmpegBinary(
+  isWindowsTarget: boolean,
+  warnings: string[]
+): string | undefined {
   const ffmpegName = getFfmpegFileName(isWindowsTarget);
   const ffmpegSrc = join(WHISPER_DIR, "ffmpeg-binaries", ffmpegName);
   const ffmpegDest = join(DIST, isWindowsTarget ? "ffmpeg.exe" : "ffmpeg");
   if (!existsSync(ffmpegSrc)) {
-    console.warn(`  ⚠️  FFmpeg binary not found for target: ${ffmpegSrc}`);
+    warnings.push(`FFmpeg binary not found for target: ${ffmpegSrc}`);
     return;
   }
 
-  console.log("  → Copying FFmpeg...");
+  console.log(`  ${withTag("info", "Copying FFmpeg...")}`);
   cpSync(ffmpegSrc, ffmpegDest);
+  return isWindowsTarget ? "ffmpeg.exe" : "ffmpeg";
 }
 
 async function copyConfigFile(): Promise<void> {
   const configPath = join(DIST, "config.json");
   const defaults = getDefaultConfig();
-  console.log("  → Writing default config from app defaults...");
+  console.log(
+    `  ${withTag("info", "Writing default config from app defaults...")}`
+  );
   await Bun.write(configPath, `${JSON.stringify(defaults, null, 2)}\n`);
 }
 
@@ -198,7 +241,7 @@ async function createDistReadme(
   options: PackageDistOptions
 ): Promise<void> {
   const readmePath = join(DIST, "README.md");
-  console.log("  → Creating README...");
+  console.log(`  ${withTag("info", "Creating README...")}`);
   await createReadme(readmePath, isWindowsTarget, options);
 }
 

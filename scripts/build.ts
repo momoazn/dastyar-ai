@@ -17,6 +17,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_KEYS, CONFIG_SCHEMA } from "../apps/server/src/config-schema";
+import { separator, withTag } from "./build-log";
 import { buildServer } from "./build-server";
 import { buildWeb } from "./build-web";
 import { buildWhisper } from "./build-whisper";
@@ -212,14 +213,14 @@ async function updateRootVersion(nextVersion: string): Promise<void> {
 }
 
 async function commitReleaseVersion(nextVersion: string): Promise<void> {
-  await runCommand("git", ["add", "package.json"], { cwd: ROOT });
+  await runCommand("git", ["add", "package.json"], { cwd: ROOT, quiet: true });
   if (await pathExists(join(ROOT, "bun.lock"))) {
-    await runCommand("git", ["add", "bun.lock"], { cwd: ROOT });
+    await runCommand("git", ["add", "bun.lock"], { cwd: ROOT, quiet: true });
   }
   await runCommand(
     "git",
     ["commit", "-m", `chore(release): bump version to v${nextVersion}`],
-    { cwd: ROOT }
+    { cwd: ROOT, quiet: true }
   );
 }
 
@@ -234,7 +235,10 @@ async function prepareReleaseVersion(options: BuildOptions): Promise<string> {
   await updateRootVersion(nextVersion);
   await commitReleaseVersion(nextVersion);
   console.log(
-    `🔖 Release version bumped: ${currentPackage.version} → ${nextVersion}`
+    withTag(
+      "info",
+      `Release version bumped: ${currentPackage.version} → ${nextVersion}`
+    )
   );
   return nextVersion;
 }
@@ -298,7 +302,9 @@ async function installDependenciesIfNeeded(
   options: BuildOptions
 ): Promise<void> {
   if (options.skipDeps) {
-    console.log("⏭️  Skipping dependency installation (--skip-deps)\n");
+    console.log(
+      withTag("info", "Skipping dependency installation (--skip-deps)")
+    );
     return;
   }
 
@@ -313,7 +319,7 @@ async function installDependenciesIfNeeded(
     options.forceDeps || inCi || !depsInstalled || fingerprintChanged;
 
   if (!shouldInstall) {
-    console.log("⚡ Dependencies unchanged, skipping install\n");
+    console.log(withTag("ok", "Dependencies unchanged, skipping install"));
     return;
   }
 
@@ -326,10 +332,18 @@ async function installDependenciesIfNeeded(
     reason = "node_modules missing";
   }
 
-  console.log(`📦 Installing dependencies (${reason})...`);
-  await runCommand("bun", ["install"], { cwd: ROOT });
+  console.log(withTag("step", `Installing dependencies (${reason})...`));
+  const installResult = await runCommand("bun", ["install"], {
+    cwd: ROOT,
+    quiet: true,
+  });
   await writeBuildState({ dependencyFingerprint });
-  console.log("✅ Dependencies ready\n");
+  console.log(
+    withTag(
+      "ok",
+      `Dependencies ready in ${(installResult.durationMs / 1000).toFixed(1)}s`
+    )
+  );
 }
 
 async function runTimedStep(
@@ -337,12 +351,14 @@ async function runTimedStep(
   run: () => Promise<void>,
   timings: StepTiming[]
 ): Promise<void> {
+  console.log(`\n${withTag("step", name)}`);
   const startedAt = Date.now();
   await run();
-  timings.push({
-    name,
-    durationMs: Date.now() - startedAt,
-  });
+  const durationMs = Date.now() - startedAt;
+  timings.push({ name, durationMs });
+  console.log(
+    withTag("ok", `${name} completed in ${(durationMs / 1000).toFixed(1)}s`)
+  );
 }
 
 async function buildWebAndServer(options: BuildOptions): Promise<void> {
@@ -363,7 +379,7 @@ async function buildWebAndServer(options: BuildOptions): Promise<void> {
   }
 
   if (buildJobs.length === 0) {
-    console.log("⏭️  Skipping web and server build stages\n");
+    console.log(withTag("info", "Skipping web and server build stages"));
     return;
   }
 
@@ -372,17 +388,16 @@ async function buildWebAndServer(options: BuildOptions): Promise<void> {
       console.log(`🔨 Building ${job.name}...`);
       await job.run();
     }
-    console.log("");
     return;
   }
 
-  console.log("⚡ Building web and server in parallel...");
+  console.log(withTag("step", "Building web and server in parallel..."));
   await Promise.all(
     buildJobs.map(async (job) => {
       await job.run();
     })
   );
-  console.log("✅ Parallel web/server stage completed\n");
+  console.log(withTag("ok", "Parallel web/server stage completed"));
 }
 
 function isWindowsBuildTarget(platform: BuildPlatform): boolean {
@@ -459,85 +474,139 @@ async function runWindowsPostBuildChecks(
 
   if (options.skipPackage) {
     console.log(
-      "⏭️  Skipping Windows post-build checks because packaging was skipped (--skip-package)\n"
+      withTag(
+        "info",
+        "Skipping Windows post-build checks because packaging was skipped (--skip-package)"
+      )
     );
     return;
   }
 
-  console.log("🔍 Running Windows post-build checks...");
+  console.log(withTag("step", "Running Windows post-build checks..."));
   await validateWindowsBinaryInDist(options, appVersion);
   await validateWindowsDistConfig();
-  console.log("✅ Windows post-build checks passed\n");
+  console.log(withTag("ok", "Windows post-build checks passed"));
 }
 
 function printHeader(options: BuildOptions): void {
-  console.log("============================================================");
-  console.log("🚀 DASTYAR AI - BUILD SYSTEM");
-  console.log("============================================================");
+  console.log(separator("info"));
+  console.log(withTag("info", "DASTYAR AI - BUILD SYSTEM"));
+  console.log(separator("info"));
   console.log("");
-  console.log("Building:");
+  console.log(withTag("info", "Build components:"));
   console.log("  • Web frontend (React 19 + Vite)");
   console.log("  • Server binary (Bun runtime + Hono API)");
   console.log("  • Whisper server (Go + whisper.cpp)");
   console.log("  • Distribution package");
   console.log("");
-  console.log(`Platform: ${options.platform}`);
-  console.log(`Release mode: ${options.release ? "enabled" : "disabled"}`);
+  console.log(withTag("info", `Platform: ${options.platform}`));
   console.log(
-    `Parallel web/server: ${options.parallel ? "enabled" : "disabled"}`
+    withTag("info", `Release mode: ${options.release ? "enabled" : "disabled"}`)
   );
-  console.log("============================================================");
+  console.log(
+    withTag(
+      "info",
+      `Parallel web/server: ${options.parallel ? "enabled" : "disabled"}`
+    )
+  );
+  console.log(separator("info"));
   console.log("");
 }
 
-function printSummary(
-  startedAt: number,
-  timings: StepTiming[],
-  options: BuildOptions,
-  appVersion: string
-): void {
-  const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+type BuildSummaryOptions = {
+  appVersion: string;
+  artifacts: string[];
+  options: BuildOptions;
+  startedAt: number;
+  timings: StepTiming[];
+  warnings: string[];
+};
 
-  console.log("");
-  console.log("============================================================");
-  console.log("🎉 BUILD COMPLETED SUCCESSFULLY");
-  console.log("============================================================");
-  console.log("");
-  console.log(`⏱️  Total build time: ${elapsed}s`);
-  console.log("📊 Step timings:");
+function printTimings(startedAt: number, timings: StepTiming[]): void {
+  const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+  console.log(withTag("info", `Total build time: ${elapsed}s`));
+  console.log(withTag("info", "Step timings:"));
   for (const timing of timings) {
     const seconds = (timing.durationMs / 1000).toFixed(1);
     console.log(`  • ${timing.name}: ${seconds}s`);
   }
   console.log("");
+}
 
-  if (options.skipPackage) {
-    console.log("ℹ️  Packaging skipped (--skip-package)");
-  } else {
-    console.log("📦 Distribution ready in: dist/");
-    console.log("");
-    console.log(`🏷️  Build version: v${appVersion}`);
-    if (options.release) {
-      console.log("Release binaries:");
-      if (options.platform !== "windows") {
-        console.log(`  • dist/dastyar-ai-v${appVersion}`);
-      }
-      if (options.platform !== "current" || process.platform === "win32") {
-        console.log(`  • dist/dastyar-ai-v${appVersion}.exe`);
-      }
-      console.log("");
-    }
-    console.log("Next steps:");
-    console.log("  1. Start Whisper API:  dist/whisper(.exe)");
-    console.log(
-      `  2. Start main server:  dist/${options.release ? `dastyar-ai-v${appVersion}` : "dastyar-ai"}(.exe)`
-    );
-    console.log("  3. Open browser:       http://localhost:3000");
-    console.log("");
-    console.log("See dist/README.md for more information");
+function printWarnings(warnings: string[]): void {
+  if (warnings.length === 0) {
+    return;
+  }
+  console.log(withTag("warn", "Build warnings:"));
+  for (const warning of warnings) {
+    console.log(`  • ${warning}`);
+  }
+  console.log("");
+}
+
+function printArtifactPreview(artifacts: string[]): void {
+  if (artifacts.length === 0) {
+    return;
   }
 
-  console.log("============================================================");
+  console.log(`📁 Packaged artifacts (${artifacts.length}):`);
+  const preview = artifacts.slice(0, 8);
+  for (const artifact of preview) {
+    console.log(`  • dist/${artifact}`);
+  }
+  if (artifacts.length > preview.length) {
+    console.log(`  • ... and ${artifacts.length - preview.length} more`);
+  }
+}
+
+function printReleaseBinaries(options: BuildOptions, appVersion: string): void {
+  if (!options.release) {
+    return;
+  }
+
+  console.log("Release binaries:");
+  if (options.platform !== "windows") {
+    console.log(`  • dist/dastyar-ai-v${appVersion}`);
+  }
+  if (options.platform !== "current" || process.platform === "win32") {
+    console.log(`  • dist/dastyar-ai-v${appVersion}.exe`);
+  }
+  console.log("");
+}
+
+function printDistributionSummary(summary: BuildSummaryOptions): void {
+  const { options, artifacts, appVersion } = summary;
+  if (options.skipPackage) {
+    console.log(withTag("info", "Packaging skipped (--skip-package)"));
+    return;
+  }
+
+  console.log(withTag("ok", "Distribution ready in: dist/"));
+  printArtifactPreview(artifacts);
+  console.log("");
+  console.log(withTag("info", `Build version: v${appVersion}`));
+  printReleaseBinaries(options, appVersion);
+  console.log("Next steps:");
+  console.log("  1. Start Whisper API:  dist/whisper(.exe)");
+  console.log(
+    `  2. Start main server:  dist/${options.release ? `dastyar-ai-v${appVersion}` : "dastyar-ai"}(.exe)`
+  );
+  console.log("  3. Open browser:       http://localhost:3000");
+  console.log("");
+  console.log("See dist/README.md for more information");
+}
+
+function printSummary(summary: BuildSummaryOptions): void {
+  console.log("");
+  console.log(separator("ok"));
+  console.log(withTag("ok", "BUILD COMPLETED SUCCESSFULLY"));
+  console.log(separator("ok"));
+  console.log("");
+  printTimings(summary.startedAt, summary.timings);
+  printWarnings(summary.warnings);
+  printDistributionSummary(summary);
+
+  console.log(separator("ok"));
 }
 
 async function main() {
@@ -547,6 +616,8 @@ async function main() {
   const isWindowsHost = process.platform === "win32";
   const isWindowsTarget = options.platform === "windows";
   let appVersion = "0.0.0";
+  const buildWarnings: string[] = [];
+  const packagedArtifacts: string[] = [];
 
   printHeader(options);
 
@@ -583,7 +654,10 @@ async function main() {
         async () => {
           if (isWindowsTarget && !isWindowsHost) {
             console.log(
-              "⏭️  Skipping Whisper build: cross-compiling Whisper for Windows is not supported on this host\n"
+              withTag(
+                "info",
+                "Skipping Whisper build: cross-compiling Whisper for Windows is not supported on this host"
+              )
             );
             return;
           }
@@ -596,12 +670,15 @@ async function main() {
     if (!options.skipPackage) {
       await runTimedStep(
         "Distribution Packaging",
-        async () =>
-          packageDist({
+        async () => {
+          const packageResult = await packageDist({
             appVersion,
             platform: options.platform,
             release: options.release,
-          }),
+          });
+          buildWarnings.push(...packageResult.warnings);
+          packagedArtifacts.push(...packageResult.artifacts);
+        },
         timings
       );
     }
@@ -612,18 +689,29 @@ async function main() {
       timings
     );
 
-    printSummary(startedAt, timings, options, appVersion);
+    printSummary({
+      startedAt,
+      timings,
+      options,
+      appVersion,
+      artifacts: packagedArtifacts,
+      warnings: buildWarnings,
+    });
   } catch (error) {
     console.error("");
-    console.error(
-      "============================================================"
-    );
-    console.error("❌ BUILD FAILED");
-    console.error(
-      "============================================================"
-    );
+    console.error(separator("error"));
+    console.error(withTag("error", "BUILD FAILED"));
+    console.error(separator("error"));
     console.error("");
-    console.error("Error:", error instanceof Error ? error.message : error);
+    if (error instanceof Error) {
+      console.error(withTag("error", error.message));
+      if (error.stack) {
+        console.error("");
+        console.error(error.stack);
+      }
+    } else {
+      console.error("Error:", error);
+    }
     console.error("");
     process.exit(1);
   }

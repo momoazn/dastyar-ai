@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 
+import { withTag } from "./build-log";
 import { hasCommand } from "./command-discovery";
 
 export function checkDependencies(): void {
-  console.log("🔍 Checking build dependencies...");
+  console.log(withTag("step", "Checking build dependencies..."));
   const requiresTar = process.platform === "linux";
 
   const deps = {
@@ -17,35 +18,45 @@ export function checkDependencies(): void {
   const errors: string[] = [];
 
   if (deps.bun) {
-    console.log("  ✓ Bun found");
+    console.log(`  ${withTag("ok", "Bun found")}`);
   } else {
-    errors.push("❌ Bun is required - Install from: https://bun.sh");
+    errors.push(
+      withTag("error", "Bun is required - Install from: https://bun.sh")
+    );
   }
 
   if (deps.go) {
-    console.log("  ✓ Go found");
+    console.log(`  ${withTag("ok", "Go found")}`);
   } else {
-    errors.push("❌ Go is required - Install from: https://go.dev/dl/");
+    errors.push(
+      withTag("error", "Go is required - Install from: https://go.dev/dl/")
+    );
   }
 
   if (deps.cmake) {
-    console.log("  ✓ CMake found");
+    console.log(`  ${withTag("ok", "CMake found")}`);
   } else {
-    errors.push("❌ CMake is required - Install from: https://cmake.org/");
+    errors.push(
+      withTag("error", "CMake is required - Install from: https://cmake.org/")
+    );
   }
 
   if (deps.git) {
-    console.log("  ✓ Git found");
+    console.log(`  ${withTag("ok", "Git found")}`);
   } else {
-    errors.push("❌ Git is required");
+    errors.push(withTag("error", "Git is required"));
   }
 
   if (!requiresTar) {
-    console.log("  ✓ Tar check skipped (not required on this platform)");
+    console.log(
+      `  ${withTag("info", "Tar check skipped (not required on this platform)")}`
+    );
   } else if (deps.tar) {
-    console.log("  ✓ Tar found");
+    console.log(`  ${withTag("ok", "Tar found")}`);
   } else {
-    errors.push("❌ tar is required on Linux for FFmpeg extraction");
+    errors.push(
+      withTag("error", "tar is required on Linux for FFmpeg extraction")
+    );
   }
 
   if (errors.length > 0) {

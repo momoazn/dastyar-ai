@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { join } from "node:path";
+import { withTag } from "./build-log";
 import { SERVER_APP_DIR } from "./project-paths";
 import { runCommand } from "./run-command";
 
@@ -28,11 +29,17 @@ async function ensureWindowsExecutable(path: string): Promise<void> {
 }
 
 async function bundleMigrations(): Promise<void> {
-  await runCommand("bun", ["run", "db:bundle"], { cwd: SERVER_DIR });
+  const result = await runCommand("bun", ["run", "db:bundle"], {
+    cwd: SERVER_DIR,
+    quiet: true,
+  });
+  console.log(
+    `  ${withTag("ok", `Database migrations bundled in ${(result.durationMs / 1000).toFixed(1)}s`)}`
+  );
 }
 
 async function buildCurrentPlatformBinary(): Promise<void> {
-  await runCommand(
+  const result = await runCommand(
     "bun",
     [
       "build",
@@ -44,7 +51,10 @@ async function buildCurrentPlatformBinary(): Promise<void> {
       "--outfile",
       "./dist/dastyar-ai",
     ],
-    { cwd: SERVER_DIR }
+    { cwd: SERVER_DIR, quiet: true }
+  );
+  console.log(
+    `  ${withTag("ok", `Server binary compiled in ${(result.durationMs / 1000).toFixed(1)}s`)}`
   );
 }
 
@@ -64,7 +74,13 @@ async function buildWindowsBinary(): Promise<void> {
     args.push("--windows-icon=./assets/app.ico");
   }
 
-  await runCommand("bun", args, { cwd: SERVER_DIR });
+  const result = await runCommand("bun", args, {
+    cwd: SERVER_DIR,
+    quiet: true,
+  });
+  console.log(
+    `  ${withTag("ok", `Windows binary compiled in ${(result.durationMs / 1000).toFixed(1)}s`)}`
+  );
 }
 
 export async function buildServer(
@@ -72,7 +88,7 @@ export async function buildServer(
 ): Promise<void> {
   const { platform = "current" } = options;
 
-  console.log("📦 Building server binary...");
+  console.log(withTag("step", "Building server binary..."));
 
   const isWindowsHost = process.platform === "win32";
   const serverDist = join(SERVER_DIR, "dist");
@@ -85,30 +101,32 @@ export async function buildServer(
   await bundleMigrations();
 
   if (platform === "windows" || (platform === "current" && isWindowsHost)) {
-    console.log("  → Building for Windows...");
+    console.log(`  ${withTag("info", "Building for Windows...")}`);
     await buildWindowsBinary();
     await ensureWindowsExecutable(windowsBinary);
   } else if (platform === "all") {
-    console.log("  → Building for current platform...");
+    console.log(`  ${withTag("info", "Building for current platform...")}`);
     await buildCurrentPlatformBinary();
     await ensureFileExists(currentBinary);
 
     if (!isWindowsHost) {
       try {
-        console.log("  → Cross-compiling for Windows...");
+        console.log(`  ${withTag("info", "Cross-compiling for Windows...")}`);
         await buildWindowsBinary();
         await ensureWindowsExecutable(windowsBinary);
       } catch {
-        console.warn("  ⚠️  Windows cross-compile failed, skipping");
+        console.warn(
+          `  ${withTag("warn", "Windows cross-compile failed, skipping")}`
+        );
       }
     }
   } else {
-    console.log("  → Building for current platform...");
+    console.log(`  ${withTag("info", "Building for current platform...")}`);
     await buildCurrentPlatformBinary();
     await ensureFileExists(currentBinary);
   }
 
-  console.log("✅ Server binary built successfully\n");
+  console.log(`${withTag("ok", "Server binary built successfully")}\n`);
 }
 
 // Run if executed directly
