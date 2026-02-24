@@ -12,6 +12,7 @@ import { initializeDatabase } from "./database";
 import { logger } from "./lib/logger";
 import {
   buildServerUrl,
+  displayFatalError,
   displayInitProgress,
   displayServerReady,
   displayStartupError,
@@ -109,11 +110,11 @@ export async function startServer(): Promise<void> {
 
     logger.info("Server ready", { url: networkUrl });
   } catch (error) {
-    logger.fatal("Failed to start server", error);
-
-    if (error instanceof Error) {
-      displayStartupError(error);
-    }
+    const startupError =
+      error instanceof Error ? error : new Error(String(error));
+    logger.fatal("Failed to start server", startupError);
+    displayStartupError(startupError);
+    displayFatalError("Server startup failed", startupError);
 
     process.exit(1);
   }
