@@ -1,21 +1,23 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import OpenAI from "openai";
-import { env } from "@/config";
 import { logger } from "@/lib/logger";
 
+const LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
+const LMSTUDIO_ENABLED = false;
+
 export const lmstudioClient = new OpenAI({
-  baseURL: env.LMSTUDIO_BASE_URL,
+  baseURL: LMSTUDIO_BASE_URL,
   apiKey: "",
   timeout: 5000, // 5 second timeout
 });
 
 export const lmstudioProvider = createOpenAICompatible({
-  baseURL: env.LMSTUDIO_BASE_URL,
+  baseURL: LMSTUDIO_BASE_URL,
   name: "lmstudio",
 });
 
 export async function listLmstudioModels() {
-  if (!env.LMSTUDIO_ENABLED) {
+  if (!LMSTUDIO_ENABLED) {
     return [];
   }
 
@@ -36,7 +38,7 @@ export async function listLmstudioModels() {
     const message =
       error instanceof Error ? error.message : "Connection failed";
     logger.error("LMStudio provider not available", error, {
-      baseURL: env.LMSTUDIO_BASE_URL,
+      baseURL: LMSTUDIO_BASE_URL,
       message,
     });
     return [];

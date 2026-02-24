@@ -7,11 +7,11 @@ import {
   type Automatic1111Provider,
   createAutomatic1111,
 } from "automatic1111-provider";
-import { env } from "@/config";
 
 const MAX_RETRIES = 3;
 const HEALTH_CACHE_MS = 5000;
 const MODEL_ID_CACHE_MS = 60_000;
+const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
 
 let provider: Automatic1111Provider | null = null;
 let cachedHealth: { at: number; ok: boolean } | null = null;
@@ -20,7 +20,7 @@ let cachedModelId: { at: number; id: string } | null = null;
 function getProvider(): Automatic1111Provider {
   if (!provider) {
     provider = createAutomatic1111({
-      baseURL: env.STABLE_DIFFUSION_URL,
+      baseURL: STABLE_DIFFUSION_BASE_URL,
     });
   }
   return provider;
@@ -60,7 +60,7 @@ export async function ping(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${env.STABLE_DIFFUSION_URL}/internal/ping`, {
+    const response = await fetch(`${STABLE_DIFFUSION_BASE_URL}/internal/ping`, {
       method: "GET",
       signal: AbortSignal.timeout(5000),
     });
@@ -74,7 +74,7 @@ export async function ping(): Promise<boolean> {
 
 export async function getSamplers(): Promise<string[]> {
   const response = await fetch(
-    `${env.STABLE_DIFFUSION_URL}/sdapi/v1/samplers`,
+    `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/samplers`,
     {
       signal: AbortSignal.timeout(10_000),
     }
@@ -92,9 +92,12 @@ async function getModelId(): Promise<string> {
     return cachedModelId.id;
   }
 
-  const response = await fetch(`${env.STABLE_DIFFUSION_URL}/sdapi/v1/options`, {
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
+  const response = await fetch(
+    `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/options`,
+    {
+      signal: AbortSignal.timeout(10_000),
+    }
+  ).catch(() => null);
 
   if (response?.ok) {
     const options = (await response.json()) as {
@@ -144,7 +147,7 @@ export async function generate(params: GenerateParams): Promise<string> {
 export async function progress(): Promise<Progress | null> {
   try {
     const response = await fetch(
-      `${env.STABLE_DIFFUSION_URL}/sdapi/v1/progress`,
+      `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/progress`,
       {
         signal: AbortSignal.timeout(5000),
       }
@@ -161,7 +164,7 @@ export async function progress(): Promise<Progress | null> {
 export async function interrupt(): Promise<boolean> {
   try {
     const response = await fetch(
-      `${env.STABLE_DIFFUSION_URL}/sdapi/v1/interrupt`,
+      `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/interrupt`,
       {
         method: "POST",
         signal: AbortSignal.timeout(5000),
