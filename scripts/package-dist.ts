@@ -1,12 +1,19 @@
 #!/usr/bin/env bun
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { DEFAULT_CONFIG } from "../apps/server/src/config-schema";
+import {
+  DIST_DIR,
+  REPO_ROOT,
+  SERVER_APP_DIR,
+  WHISPER_APP_DIR,
+} from "./project-paths";
 
-const ROOT = join(import.meta.dir, "../..");
-const DIST = join(ROOT, "dist");
-const SERVER_DIST = join(ROOT, "apps/server/dist");
-const WHISPER_DIR = join(ROOT, "apps/whisper");
+const ROOT = REPO_ROOT;
+const DIST = DIST_DIR;
+const SERVER_DIST = join(SERVER_APP_DIR, "dist");
+const WHISPER_DIR = WHISPER_APP_DIR;
 
 type PackageDistOptions = {
   platform?: "current" | "windows" | "all";
@@ -21,7 +28,9 @@ const resolveTargetWindows = (
   return process.platform === "win32";
 };
 
-export function packageDist(options: PackageDistOptions = {}): void {
+export async function packageDist(
+  options: PackageDistOptions = {}
+): Promise<void> {
   const isWindowsTarget = resolveTargetWindows(options.platform);
 
   console.log("📦 Packaging distribution...");
@@ -32,8 +41,9 @@ export function packageDist(options: PackageDistOptions = {}): void {
   copyWhisperBinary(isWindowsTarget);
   copyWhisperModels();
   copyFfmpegBinary(isWindowsTarget);
-  copyConfigFile();
-  createDistReadme(isWindowsTarget);
+  await copyConfigFile();
+  await createDistReadme(isWindowsTarget);
+  await verifyDistribution(options);
 
   console.log("✅ Distribution packaged successfully\n");
 }
@@ -146,59 +156,27 @@ function copyFfmpegBinary(isWindowsTarget: boolean): void {
   cpSync(ffmpegSrc, ffmpegDest);
 }
 
-function copyConfigFile(): void {
-  const configSrc = join(ROOT, "config.json");
+async function copyConfigFile(): Promise<void> {
   const configPath = join(DIST, "config.json");
-  if (existsSync(configSrc)) {
-    console.log("  → Copying config.json...");
-    cpSync(configSrc, configPath, { force: true });
-    return;
-  }
-
-  if (!existsSync(configPath)) {
-    console.log("  → Creating default config...");
-    createDefaultConfig(configPath);
-  }
+  const defaults = getDefaultConfig();
+  console.log("  → Writing default config from app defaults...");
+  await Bun.write(configPath, `${JSON.stringify(defaults, null, 2)}\n`);
 }
 
-function createDistReadme(isWindowsTarget: boolean): void {
+async function createDistReadme(isWindowsTarget: boolean): Promise<void> {
   const readmePath = join(DIST, "README.md");
   console.log("  → Creating README...");
-  createReadme(readmePath, isWindowsTarget);
+  await createReadme(readmePath, isWindowsTarget);
 }
 
-function createDefaultConfig(path: string): void {
-  const config = {
-    PORT: 3000,
-    HOST: "0.0.0.0",
-    CORS_ORIGIN: "*",
-    JWT_SECRET:
-      "your-super-secret-jwt-key-change-this-in-production-min-32-chars",
-    JWT_EXPIRES_IN: 86_400,
-    DATABASE_FILE: "./data.db",
-    WHISPER_SERVER_URL: "http://127.0.0.1:8080",
-    WHISPER_TIMEOUT_MS: 120_000,
-    WHISPER_MODELS: "tiny",
-    OLLAMA_BASE_URL: "http://localhost:11434",
-    OLLAMA_ENABLED: true,
-    LMSTUDIO_BASE_URL: "http://localhost:1234/v1",
-    LMSTUDIO_ENABLED: true,
-    GROQ_API_KEY: "",
-    GROQ_ENABLED: false,
-    GEMINI_API_KEY: "",
-    GEMINI_ENABLED: false,
-    STABLE_DIFFUSION_URL: "http://localhost:7860",
-    STABLE_DIFFUSION_ENABLED: true,
-    IMAGES_DIR: "./generated-images",
-    DOCUMENTS_DIR: "./uploaded-documents",
-    EMBEDDING_MODEL: "nomic-embed-text",
-    WEB_DIST_DIR: "./web",
-  };
-
-  writeFileSync(path, JSON.stringify(config, null, 2));
+function getDefaultConfig(): Record<string, unknown> {
+  return { ...DEFAULT_CONFIG };
 }
 
-function createReadme(path: string, isWindowsTarget: boolean): void {
+async function createReadme(
+  path: string,
+  isWindowsTarget: boolean
+): Promise<void> {
   const serverBin = isWindowsTarget ? "dastyar-ai.exe" : "./dastyar-ai";
   const whisperBin = isWindowsTarget ? "whisper.exe" : "./whisper";
 
@@ -225,21 +203,58 @@ Open http://localhost:3000
 
 Edit \`config.json\` to customize settings. Important:
 - Change \`JWT_SECRET\` for production
-- Configure external services (Ollama, LM Studio, etc.)
+- Configure Ollama endpoint if needed
 
 ## Requirements
 
 All binaries are self-contained. Optional external services:
 - Ollama (for local LLM): https://ollama.ai
-- Stable Diffusion WebUI: https://github.com/AUTOMATIC1111/stable-diffusion-webui
 
 See config.json to enable/disable services.
 `;
 
-  writeFileSync(path, readme);
+  await Bun.write(path, readme);
+}
+
+async function verifyExists(path: string): Promise<void> {
+  if (!(await Bun.file(path).exists())) {
+    throw new Error(`Expected dist artifact is missing: ${path}`);
+  }
+}
+
+export async function verifyDistribution(
+  options: PackageDistOptions = {}
+): Promise<void> {
+  const isWindowsTarget = resolveTargetWindows(options.platform);
+  const serverBinary =
+    options.platform === "all"
+      ? undefined
+      : join(DIST, isWindowsTarget ? "dastyar-ai.exe" : "dastyar-ai");
+  const whisperBinary = join(DIST, isWindowsTarget ? "whisper.exe" : "whisper");
+
+  await verifyExists(join(DIST, "config.json"));
+  await verifyExists(join(DIST, "README.md"));
+
+  if (serverBinary) {
+    await verifyExists(serverBinary);
+  } else {
+    const linuxOrMacServer = join(DIST, "dastyar-ai");
+    const windowsServer = join(DIST, "dastyar-ai.exe");
+    if (!(existsSync(linuxOrMacServer) || existsSync(windowsServer))) {
+      throw new Error(
+        "Expected at least one server binary in dist/ for platform=all"
+      );
+    }
+  }
+
+  if (
+    existsSync(join(WHISPER_DIR, isWindowsTarget ? "whisper.exe" : "whisper"))
+  ) {
+    await verifyExists(whisperBinary);
+  }
 }
 
 // Run if executed directly
 if (import.meta.main) {
-  packageDist();
+  await packageDist();
 }

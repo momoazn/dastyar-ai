@@ -3,64 +3,347 @@
 /**
  * Dastyar AI - Main Build Orchestrator
  *
- * This is the single entry point for building the entire application.
- * Works cross-platform on Windows, macOS, and Linux.
- *
  * Usage:
- *   bun scripts/build.ts                    # Build for current platform
- *   bun scripts/build.ts --platform=windows # Build for Windows
- *   bun scripts/build.ts --platform=all     # Build for all platforms
- *   bun scripts/build.ts --skip-deps        # Skip dependency install
+ *   bun scripts/build.ts
+ *   bun scripts/build.ts --platform=windows
+ *   bun scripts/build.ts --platform=all
+ *   bun scripts/build.ts --skip-deps
+ *   bun scripts/build.ts --force-deps
+ *   bun scripts/build.ts --no-parallel
+ *   bun scripts/build.ts --skip-package
  */
 
-import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { buildServer } from "./tasks/build-server";
-import { buildWeb } from "./tasks/build-web";
-import { buildWhisper } from "./tasks/build-whisper";
-import { checkDependencies } from "./tasks/check-dependencies";
-import { packageDist } from "./tasks/package-dist";
+import { CONFIG_KEYS, CONFIG_SCHEMA } from "../apps/server/src/config-schema";
+import { buildServer } from "./build-server";
+import { buildWeb } from "./build-web";
+import { buildWhisper } from "./build-whisper";
+import { checkDependencies } from "./check-dependencies";
+import { packageDist, verifyDistribution } from "./package-dist";
+import { DIST_DIR, REPO_ROOT } from "./project-paths";
+import { runCommand } from "./run-command";
 
-const ROOT = join(import.meta.dir, "..");
+const ROOT = REPO_ROOT;
+const BUILD_STATE_DIR = join(ROOT, ".turbo");
+const BUILD_STATE_FILE = join(BUILD_STATE_DIR, "build-state.json");
+
+const DEPENDENCY_FILES = [
+  "bun.lock",
+  "package.json",
+  "apps/server/package.json",
+  "apps/web/package.json",
+  "apps/whisper/package.json",
+] as const;
+
+type BuildPlatform = "current" | "windows" | "all";
 
 type BuildOptions = {
-  platform?: "current" | "windows" | "all";
-  skipDeps?: boolean;
-  skipWeb?: boolean;
-  skipServer?: boolean;
-  skipWhisper?: boolean;
+  platform: BuildPlatform;
+  skipDeps: boolean;
+  skipWeb: boolean;
+  skipServer: boolean;
+  skipWhisper: boolean;
+  skipPackage: boolean;
+  forceDeps: boolean;
+  parallel: boolean;
+};
+
+type BuildState = {
+  dependencyFingerprint?: string;
+};
+
+type StepTiming = {
+  name: string;
+  durationMs: number;
+};
+
+const DEFAULT_OPTIONS: BuildOptions = {
+  platform: "current",
+  skipDeps: false,
+  skipWeb: false,
+  skipServer: false,
+  skipWhisper: false,
+  skipPackage: false,
+  forceDeps: false,
+  parallel: true,
 };
 
 function parseArgs(): BuildOptions {
   const args = process.argv.slice(2);
-  const options: BuildOptions = {};
+  const options: BuildOptions = { ...DEFAULT_OPTIONS };
+  const flagHandlers: Record<string, () => void> = {
+    "--skip-deps": () => {
+      options.skipDeps = true;
+    },
+    "--skip-web": () => {
+      options.skipWeb = true;
+    },
+    "--skip-server": () => {
+      options.skipServer = true;
+    },
+    "--skip-whisper": () => {
+      options.skipWhisper = true;
+    },
+    "--skip-package": () => {
+      options.skipPackage = true;
+    },
+    "--force-deps": () => {
+      options.forceDeps = true;
+    },
+    "--no-parallel": () => {
+      options.parallel = false;
+    },
+  };
 
   for (const arg of args) {
     if (arg.startsWith("--platform=")) {
       const platform = arg.split("=")[1];
-      if (platform === "windows" || platform === "all") {
+      if (
+        platform === "current" ||
+        platform === "windows" ||
+        platform === "all"
+      ) {
         options.platform = platform;
       }
-    } else if (arg === "--skip-deps") {
-      options.skipDeps = true;
-    } else if (arg === "--skip-web") {
-      options.skipWeb = true;
-    } else if (arg === "--skip-server") {
-      options.skipServer = true;
-    } else if (arg === "--skip-whisper") {
-      options.skipWhisper = true;
+      continue;
+    }
+
+    const handler = flagHandlers[arg];
+    if (handler) {
+      handler();
     }
   }
 
   return options;
 }
 
-async function main() {
-  const startTime = Date.now();
-  const options = parseArgs();
-  const isWindowsHost = process.platform === "win32";
-  const isWindowsTarget = options.platform === "windows";
+async function pathExists(path: string): Promise<boolean> {
+  return await Bun.file(path).exists();
+}
 
+async function readBuildState(): Promise<BuildState> {
+  if (!(await pathExists(BUILD_STATE_FILE))) {
+    return {};
+  }
+
+  try {
+    const parsed = (await Bun.file(BUILD_STATE_FILE).json()) as unknown;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return parsed as BuildState;
+  } catch {
+    return {};
+  }
+}
+
+async function writeBuildState(state: BuildState): Promise<void> {
+  if (!(await pathExists(BUILD_STATE_DIR))) {
+    mkdirSync(BUILD_STATE_DIR, { recursive: true });
+  }
+  await Bun.write(BUILD_STATE_FILE, `${JSON.stringify(state, null, 2)}\n`);
+}
+
+async function getDependencyFingerprint(): Promise<string> {
+  const hash = createHash("sha256");
+
+  for (const relativePath of DEPENDENCY_FILES) {
+    const absolutePath = join(ROOT, relativePath);
+    hash.update(relativePath);
+    hash.update(":");
+
+    if (await pathExists(absolutePath)) {
+      const fileData = await Bun.file(absolutePath).arrayBuffer();
+      hash.update(Buffer.from(fileData));
+    }
+    hash.update(";");
+  }
+
+  return hash.digest("hex");
+}
+
+async function hasInstalledDependencies(): Promise<boolean> {
+  return await pathExists(join(ROOT, "node_modules"));
+}
+
+function isCiEnvironment(): boolean {
+  const value = process.env.CI;
+  if (!value) {
+    return false;
+  }
+  return value.toLowerCase() !== "false";
+}
+
+async function installDependenciesIfNeeded(
+  options: BuildOptions
+): Promise<void> {
+  if (options.skipDeps) {
+    console.log("⏭️  Skipping dependency installation (--skip-deps)\n");
+    return;
+  }
+
+  const inCi = isCiEnvironment();
+  const dependencyFingerprint = await getDependencyFingerprint();
+  const state = await readBuildState();
+  const fingerprintChanged =
+    state.dependencyFingerprint !== dependencyFingerprint;
+  const depsInstalled = await hasInstalledDependencies();
+
+  const shouldInstall =
+    options.forceDeps || inCi || !depsInstalled || fingerprintChanged;
+
+  if (!shouldInstall) {
+    console.log("⚡ Dependencies unchanged, skipping install\n");
+    return;
+  }
+
+  let reason = "dependency fingerprint changed";
+  if (options.forceDeps) {
+    reason = "--force-deps";
+  } else if (inCi) {
+    reason = "CI environment";
+  } else if (!depsInstalled) {
+    reason = "node_modules missing";
+  }
+
+  console.log(`📦 Installing dependencies (${reason})...`);
+  await runCommand("bun", ["install"], { cwd: ROOT });
+  await writeBuildState({ dependencyFingerprint });
+  console.log("✅ Dependencies ready\n");
+}
+
+async function runTimedStep(
+  name: string,
+  run: () => Promise<void>,
+  timings: StepTiming[]
+): Promise<void> {
+  const startedAt = Date.now();
+  await run();
+  timings.push({
+    name,
+    durationMs: Date.now() - startedAt,
+  });
+}
+
+async function buildWebAndServer(options: BuildOptions): Promise<void> {
+  const buildJobs: Array<{ name: string; run: () => Promise<void> }> = [];
+
+  if (!options.skipWeb) {
+    buildJobs.push({
+      name: "Web Frontend",
+      run: async () => buildWeb(),
+    });
+  }
+
+  if (!options.skipServer) {
+    buildJobs.push({
+      name: "Server Binary",
+      run: async () => buildServer({ platform: options.platform }),
+    });
+  }
+
+  if (buildJobs.length === 0) {
+    console.log("⏭️  Skipping web and server build stages\n");
+    return;
+  }
+
+  if (!options.parallel || buildJobs.length === 1) {
+    for (const job of buildJobs) {
+      console.log(`🔨 Building ${job.name}...`);
+      await job.run();
+    }
+    console.log("");
+    return;
+  }
+
+  console.log("⚡ Building web and server in parallel...");
+  await Promise.all(
+    buildJobs.map(async (job) => {
+      await job.run();
+    })
+  );
+  console.log("✅ Parallel web/server stage completed\n");
+}
+
+function isWindowsBuildTarget(platform: BuildPlatform): boolean {
+  return platform === "windows" || platform === "all";
+}
+
+async function validateWindowsBinaryInDist(
+  options: BuildOptions
+): Promise<void> {
+  const binaryPath = join(DIST_DIR, "dastyar-ai.exe");
+  if (!(await Bun.file(binaryPath).exists())) {
+    throw new Error(`Windows binary is missing in dist: ${binaryPath}`);
+  }
+
+  const signature = new Uint8Array(
+    await Bun.file(binaryPath).slice(0, 2).arrayBuffer()
+  );
+  if (signature[0] !== 0x4d || signature[1] !== 0x5a) {
+    throw new Error(`Invalid Windows executable header in ${binaryPath}`);
+  }
+
+  await verifyDistribution({ platform: options.platform });
+}
+
+async function validateWindowsDistConfig(): Promise<void> {
+  const configPath = join(DIST_DIR, "config.json");
+  if (!(await Bun.file(configPath).exists())) {
+    throw new Error(`dist config is missing: ${configPath}`);
+  }
+
+  const parsed = (await Bun.file(configPath).json()) as unknown;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`dist config must be a JSON object: ${configPath}`);
+  }
+
+  const config = parsed as Record<string, unknown>;
+  const missingKeys = CONFIG_KEYS.filter((key) => !(key in config));
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `dist config is missing required keys: ${missingKeys.join(", ")}`
+    );
+  }
+
+  const unknownKeys = Object.keys(config).filter(
+    (key) => !CONFIG_KEYS.includes(key as (typeof CONFIG_KEYS)[number])
+  );
+  if (unknownKeys.length > 0) {
+    throw new Error(`dist config has unknown keys: ${unknownKeys.join(", ")}`);
+  }
+
+  const configParse = CONFIG_SCHEMA.safeParse(config);
+  if (!configParse.success) {
+    throw new Error(
+      `dist config has invalid values: ${JSON.stringify(configParse.error.flatten())}`
+    );
+  }
+}
+
+async function runWindowsPostBuildChecks(options: BuildOptions): Promise<void> {
+  if (!isWindowsBuildTarget(options.platform)) {
+    return;
+  }
+
+  if (options.skipPackage) {
+    console.log(
+      "⏭️  Skipping Windows post-build checks because packaging was skipped (--skip-package)\n"
+    );
+    return;
+  }
+
+  console.log("🔍 Running Windows post-build checks...");
+  await validateWindowsBinaryInDist(options);
+  await validateWindowsDistConfig();
+  console.log("✅ Windows post-build checks passed\n");
+}
+
+function printHeader(options: BuildOptions): void {
   console.log("============================================================");
   console.log("🚀 DASTYAR AI - BUILD SYSTEM");
   console.log("============================================================");
@@ -71,68 +354,37 @@ async function main() {
   console.log("  • Whisper server (Go + whisper.cpp)");
   console.log("  • Distribution package");
   console.log("");
-  console.log("Platform:", options.platform || "current");
+  console.log(`Platform: ${options.platform}`);
+  console.log(
+    `Parallel web/server: ${options.parallel ? "enabled" : "disabled"}`
+  );
   console.log("============================================================");
   console.log("");
+}
 
-  try {
-    // Step 0: Check dependencies
-    checkDependencies();
+function printSummary(
+  startedAt: number,
+  timings: StepTiming[],
+  options: BuildOptions
+): void {
+  const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
-    // Step 1: Install Node dependencies
-    if (options.skipDeps) {
-      console.log("⏭️  Skipping dependency installation\n");
-    } else {
-      console.log("📦 Installing dependencies...");
-      execSync("bun install", {
-        cwd: ROOT,
-        stdio: "inherit",
-      });
-      console.log("✅ Dependencies installed\n");
-    }
+  console.log("");
+  console.log("============================================================");
+  console.log("🎉 BUILD COMPLETED SUCCESSFULLY");
+  console.log("============================================================");
+  console.log("");
+  console.log(`⏱️  Total build time: ${elapsed}s`);
+  console.log("📊 Step timings:");
+  for (const timing of timings) {
+    const seconds = (timing.durationMs / 1000).toFixed(1);
+    console.log(`  • ${timing.name}: ${seconds}s`);
+  }
+  console.log("");
 
-    // Step 2: Build web frontend
-    if (!options.skipWeb) {
-      console.log("[1/4] Building Web Frontend");
-      console.log("─".repeat(60));
-      buildWeb();
-    }
-
-    // Step 3: Build server
-    if (!options.skipServer) {
-      console.log("[2/4] Building Server");
-      console.log("─".repeat(60));
-      buildServer({ platform: options.platform });
-    }
-
-    // Step 4: Build Whisper
-    if (isWindowsTarget && !isWindowsHost && !options.skipWhisper) {
-      console.log("[3/4] Building Whisper");
-      console.log("─".repeat(60));
-      console.log(
-        "⏭️  Skipping Whisper build: cross-compiling Whisper for Windows is not supported on this host\n"
-      );
-    } else if (!options.skipWhisper) {
-      console.log("[3/4] Building Whisper");
-      console.log("─".repeat(60));
-      await buildWhisper();
-    }
-
-    // Step 5: Package distribution
-    console.log("[4/4] Packaging Distribution");
-    console.log("─".repeat(60));
-    packageDist({ platform: options.platform });
-
-    // Success summary
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-    console.log("");
-    console.log("============================================================");
-    console.log("🎉 BUILD COMPLETED SUCCESSFULLY");
-    console.log("============================================================");
-    console.log("");
-    console.log(`⏱️  Build time: ${elapsed}s`);
-    console.log("");
+  if (options.skipPackage) {
+    console.log("ℹ️  Packaging skipped (--skip-package)");
+  } else {
     console.log("📦 Distribution ready in: dist/");
     console.log("");
     console.log("Next steps:");
@@ -141,7 +393,70 @@ async function main() {
     console.log("  3. Open browser:       http://localhost:3000");
     console.log("");
     console.log("See dist/README.md for more information");
-    console.log("============================================================");
+  }
+
+  console.log("============================================================");
+}
+
+async function main() {
+  const startedAt = Date.now();
+  const options = parseArgs();
+  const timings: StepTiming[] = [];
+  const isWindowsHost = process.platform === "win32";
+  const isWindowsTarget = options.platform === "windows";
+
+  printHeader(options);
+
+  try {
+    await runTimedStep(
+      "Dependency Check",
+      async () => checkDependencies(),
+      timings
+    );
+
+    await runTimedStep(
+      "Dependency Install",
+      async () => installDependenciesIfNeeded(options),
+      timings
+    );
+
+    await runTimedStep(
+      "Web + Server Build",
+      async () => buildWebAndServer(options),
+      timings
+    );
+
+    if (!options.skipWhisper) {
+      await runTimedStep(
+        "Whisper Build",
+        async () => {
+          if (isWindowsTarget && !isWindowsHost) {
+            console.log(
+              "⏭️  Skipping Whisper build: cross-compiling Whisper for Windows is not supported on this host\n"
+            );
+            return;
+          }
+          await buildWhisper();
+        },
+        timings
+      );
+    }
+
+    if (!options.skipPackage) {
+      await runTimedStep(
+        "Distribution Packaging",
+        async () => packageDist({ platform: options.platform }),
+        timings
+      );
+    }
+
+    await runTimedStep(
+      "Windows Build Validation",
+      async () => runWindowsPostBuildChecks(options),
+      timings
+    );
+
+    printSummary(startedAt, timings, options);
   } catch (error) {
     console.error("");
     console.error(
@@ -158,4 +473,4 @@ async function main() {
   }
 }
 
-main();
+await main();

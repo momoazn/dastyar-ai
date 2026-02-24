@@ -1,39 +1,17 @@
 #!/usr/bin/env bun
 
-import { execSync } from "node:child_process";
-
-const isWindows = process.platform === "win32";
-
-export function hasCommand(cmd: string): boolean {
-  try {
-    execSync(isWindows ? `where ${cmd}` : `which ${cmd}`, {
-      stdio: "ignore",
-    });
-    return true;
-  } catch {
-    // Fallback: check if CMake is installed in the default location on Windows
-    if (isWindows && cmd === "cmake") {
-      try {
-        execSync(`"C:\\Program Files\\CMake\\bin\\cmake" --version`, {
-          stdio: "ignore",
-        });
-        return true;
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  }
-}
+import { hasCommand } from "./command-discovery";
 
 export function checkDependencies(): void {
   console.log("🔍 Checking build dependencies...");
+  const requiresTar = process.platform === "linux";
 
   const deps = {
     bun: hasCommand("bun"),
     go: hasCommand("go"),
     cmake: hasCommand("cmake"),
     git: hasCommand("git"),
+    tar: requiresTar ? hasCommand("tar") : true,
   };
 
   const errors: string[] = [];
@@ -60,6 +38,14 @@ export function checkDependencies(): void {
     console.log("  ✓ Git found");
   } else {
     errors.push("❌ Git is required");
+  }
+
+  if (!requiresTar) {
+    console.log("  ✓ Tar check skipped (not required on this platform)");
+  } else if (deps.tar) {
+    console.log("  ✓ Tar found");
+  } else {
+    errors.push("❌ tar is required on Linux for FFmpeg extraction");
   }
 
   if (errors.length > 0) {

@@ -8,16 +8,19 @@ This directory contains all build, deployment, and utility scripts for the Dasty
 scripts/
 ├── README.md                    # This file
 ├── build.ts                     # Main build orchestrator
+├── check-dependencies.ts        # Verify build prerequisites
+├── build-web.ts                 # Build React frontend
+├── build-server.ts              # Build Bun server binary
+├── build-whisper.ts             # Build Go Whisper server
+├── package-dist.ts              # Package distribution files
+├── project-paths.ts             # Shared script paths
+├── run-command.ts               # Bun process execution helper
+├── command-discovery.ts         # Command detection helper
+├── whisper-assets.ts            # FFmpeg/model utilities
+│
 ├── start.ts                     # Start all services
 ├── stop.ts                      # Stop all services
 ├── status.ts                    # Check service status
-│
-├── tasks/                       # Build task modules
-│   ├── check-dependencies.ts    # Verify build prerequisites
-│   ├── build-web.ts            # Build React frontend
-│   ├── build-server.ts         # Build Bun server binary
-│   ├── build-whisper.ts        # Build Go Whisper server
-│   └── package-dist.ts         # Package distribution files
 │
 ├── downloads/                   # Download utilities
 │   ├── download-ffmpeg.ts      # Download FFmpeg binaries
@@ -48,7 +51,15 @@ bun scripts/build.ts --skip-deps        # Skip dependency install
 bun scripts/build.ts --skip-web         # Skip web build
 bun scripts/build.ts --skip-server      # Skip server build
 bun scripts/build.ts --skip-whisper     # Skip whisper build
+bun scripts/build.ts --skip-package     # Skip dist packaging
+bun scripts/build.ts --force-deps       # Force dependency reinstall
+bun scripts/build.ts --no-parallel      # Disable parallel web/server build
 ```
+
+Build behavior:
+- Web and server builds run in parallel by default.
+- Dependencies are reinstalled only when needed (lockfiles changed, `node_modules` missing, or CI).
+- Use `--force-deps` for clean reproducible local builds.
 
 Or use npm scripts:
 ```bash
@@ -91,16 +102,16 @@ bun scripts/status.ts          # Check all services
 bun run status
 ```
 
-## Task Scripts
+## Build Modules
 
-Located in `tasks/` - These are modular build tasks that can be run independently:
+These build modules can be run independently:
 
 ```bash
-bun scripts/tasks/check-dependencies.ts  # Verify build tools
-bun scripts/tasks/build-web.ts          # Build web only
-bun scripts/tasks/build-server.ts       # Build server only
-bun scripts/tasks/build-whisper.ts      # Build whisper only
-bun scripts/tasks/package-dist.ts       # Package distribution
+bun scripts/check-dependencies.ts  # Verify build tools
+bun scripts/build-web.ts           # Build web only
+bun scripts/build-server.ts        # Build server only
+bun scripts/build-whisper.ts       # Build whisper only
+bun scripts/package-dist.ts        # Package distribution
 ```
 
 ## Download Scripts
@@ -111,6 +122,7 @@ Located in `downloads/`:
 ```bash
 bun scripts/downloads/download-ffmpeg.ts        # Current platform
 bun scripts/downloads/download-ffmpeg.ts --all  # All platforms
+bun scripts/downloads/download-ffmpeg.ts --force
 
 # Or use npm scripts
 bun run download:ffmpeg
@@ -125,6 +137,10 @@ bun scripts/downloads/download-model.ts ggml-large-v3.bin --force
 # Or use npm scripts
 bun run download:model ggml-base.bin
 ```
+
+Default download locations:
+- FFmpeg binaries: `apps/whisper/ffmpeg-binaries`
+- Whisper models: `apps/whisper/models`
 
 Available models:
 - `ggml-tiny.bin` - Fastest (75MB)
