@@ -33,6 +33,15 @@ export const settings = {
     dark: "تیره",
     system: "سیستم",
   },
+  appInfo: {
+    title: "اطلاعات برنامه",
+    description: "نسخه فعلی برنامه",
+    versionLabel: "نسخه",
+    releaseLabel: "نوع بیلد",
+    release: "انتشار",
+    development: "توسعه",
+    unknown: "نامشخص",
+  },
   account: {
     title: "حساب کاربری",
     description: "نام کاربری و رمز عبور خود را مدیریت کنید",
