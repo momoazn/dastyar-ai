@@ -1,3 +1,4 @@
+import { getBuildInfo } from "@/lib/build-info";
 import {
   FEATURE_TOGGLE_DEFAULTS,
   getSettingsByKeys,
@@ -32,4 +33,5 @@ export const appConfigProcedures = {
 
     return normalizeFeatureToggles(settingsMap);
   }),
+  getBuildInfo: publicProcedure.handler(() => getBuildInfo()),
 };
