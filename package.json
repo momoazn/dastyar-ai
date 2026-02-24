@@ -15,6 +15,8 @@
     "check-types": "turbo check-types",
     "dev": "turbo dev",
     "build": "bun scripts/build.ts",
+    "build:fast": "bun scripts/build.ts --skip-deps --skip-whisper",
+    "build:ci": "CI=true bun scripts/build.ts --force-deps --no-parallel",
     "build:windows": "bun scripts/build.ts --platform=windows",
     "build:all": "bun scripts/build.ts --platform=all",
     "start": "bun scripts/start.ts",
