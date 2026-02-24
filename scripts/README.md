@@ -54,12 +54,15 @@ bun scripts/build.ts --skip-whisper     # Skip whisper build
 bun scripts/build.ts --skip-package     # Skip dist packaging
 bun scripts/build.ts --force-deps       # Force dependency reinstall
 bun scripts/build.ts --no-parallel      # Disable parallel web/server build
+bun scripts/build.ts --release          # Release build (auto-bump version)
+bun scripts/build.ts --release --bump=major # Release build with major bump
 ```
 
 Build behavior:
 - Web and server builds run in parallel by default.
 - Dependencies are reinstalled only when needed (lockfiles changed, `node_modules` missing, or CI).
 - Use `--force-deps` for clean reproducible local builds.
+- Release mode auto-bumps root `package.json` version (default bump: `minor`) and commits it as `chore(release): bump version to vX.Y.Z`.
 
 Or use npm scripts:
 ```bash

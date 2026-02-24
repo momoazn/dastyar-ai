@@ -36,8 +36,10 @@ const DEPENDENCY_FILES = [
   "apps/web/package.json",
   "apps/whisper/package.json",
 ] as const;
+const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
 type BuildPlatform = "current" | "windows" | "all";
+type VersionBumpType = "patch" | "minor" | "major";
 
 type BuildOptions = {
   platform: BuildPlatform;
@@ -48,6 +50,8 @@ type BuildOptions = {
   skipPackage: boolean;
   forceDeps: boolean;
   parallel: boolean;
+  release: boolean;
+  bump: VersionBumpType;
 };
 
 type BuildState = {
@@ -68,6 +72,8 @@ const DEFAULT_OPTIONS: BuildOptions = {
   skipPackage: false,
   forceDeps: false,
   parallel: true,
+  release: false,
+  bump: "minor",
 };
 
 function parseArgs(): BuildOptions {
@@ -95,6 +101,9 @@ function parseArgs(): BuildOptions {
     "--no-parallel": () => {
       options.parallel = false;
     },
+    "--release": () => {
+      options.release = true;
+    },
   };
 
   for (const arg of args) {
@@ -110,6 +119,14 @@ function parseArgs(): BuildOptions {
       continue;
     }
 
+    if (arg.startsWith("--bump=")) {
+      const bump = arg.split("=")[1];
+      if (bump === "patch" || bump === "minor" || bump === "major") {
+        options.bump = bump;
+      }
+      continue;
+    }
+
     const handler = flagHandlers[arg];
     if (handler) {
       handler();
@@ -121,6 +138,105 @@ function parseArgs(): BuildOptions {
 
 async function pathExists(path: string): Promise<boolean> {
   return await Bun.file(path).exists();
+}
+
+type RootPackage = {
+  version: string;
+};
+
+async function readRootPackage(): Promise<RootPackage> {
+  const pkgPath = join(ROOT, "package.json");
+  const parsed = (await Bun.file(pkgPath).json()) as unknown;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Root package.json is invalid");
+  }
+
+  const version = (parsed as { version?: unknown }).version;
+  if (typeof version !== "string") {
+    throw new Error("Root package.json must contain a string version");
+  }
+
+  return { version };
+}
+
+function bumpVersion(currentVersion: string, bump: VersionBumpType): string {
+  const match = currentVersion.match(SEMVER_REGEX);
+  if (!match) {
+    throw new Error(
+      `Unsupported version format "${currentVersion}". Expected semantic version like 1.2.3`
+    );
+  }
+
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  const patch = Number(match[3]);
+
+  if (bump === "major") {
+    return `${major + 1}.0.0`;
+  }
+  if (bump === "minor") {
+    return `${major}.${minor + 1}.0`;
+  }
+  return `${major}.${minor}.${patch + 1}`;
+}
+
+function gitOutput(args: string[]): string {
+  const result = Bun.spawnSync(["git", ...args], {
+    cwd: ROOT,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) {
+    const stderr = new TextDecoder().decode(result.stderr).trim();
+    throw new Error(
+      `git ${args.join(" ")} failed${stderr ? `: ${stderr}` : ""}`
+    );
+  }
+  return new TextDecoder().decode(result.stdout).trim();
+}
+
+function assertCleanWorkingTreeForRelease(): void {
+  const status = gitOutput(["status", "--porcelain"]);
+  if (status.length > 0) {
+    throw new Error(
+      "Release build requires a clean working tree before bumping version. Commit or stash current changes first."
+    );
+  }
+}
+
+async function updateRootVersion(nextVersion: string): Promise<void> {
+  const pkgPath = join(ROOT, "package.json");
+  const parsed = (await Bun.file(pkgPath).json()) as Record<string, unknown>;
+  parsed.version = nextVersion;
+  await Bun.write(pkgPath, `${JSON.stringify(parsed, null, 2)}\n`);
+}
+
+async function commitReleaseVersion(nextVersion: string): Promise<void> {
+  await runCommand("git", ["add", "package.json"], { cwd: ROOT });
+  if (await pathExists(join(ROOT, "bun.lock"))) {
+    await runCommand("git", ["add", "bun.lock"], { cwd: ROOT });
+  }
+  await runCommand(
+    "git",
+    ["commit", "-m", `chore(release): bump version to v${nextVersion}`],
+    { cwd: ROOT }
+  );
+}
+
+async function prepareReleaseVersion(options: BuildOptions): Promise<string> {
+  const currentPackage = await readRootPackage();
+  if (!options.release) {
+    return currentPackage.version;
+  }
+
+  assertCleanWorkingTreeForRelease();
+  const nextVersion = bumpVersion(currentPackage.version, options.bump);
+  await updateRootVersion(nextVersion);
+  await commitReleaseVersion(nextVersion);
+  console.log(
+    `🔖 Release version bumped: ${currentPackage.version} → ${nextVersion}`
+  );
+  return nextVersion;
 }
 
 async function readBuildState(): Promise<BuildState> {
@@ -274,9 +390,13 @@ function isWindowsBuildTarget(platform: BuildPlatform): boolean {
 }
 
 async function validateWindowsBinaryInDist(
-  options: BuildOptions
+  options: BuildOptions,
+  appVersion: string
 ): Promise<void> {
-  const binaryPath = join(DIST_DIR, "dastyar-ai.exe");
+  const binaryName = options.release
+    ? `dastyar-ai-v${appVersion}.exe`
+    : "dastyar-ai.exe";
+  const binaryPath = join(DIST_DIR, binaryName);
   if (!(await Bun.file(binaryPath).exists())) {
     throw new Error(`Windows binary is missing in dist: ${binaryPath}`);
   }
@@ -288,7 +408,11 @@ async function validateWindowsBinaryInDist(
     throw new Error(`Invalid Windows executable header in ${binaryPath}`);
   }
 
-  await verifyDistribution({ platform: options.platform });
+  await verifyDistribution({
+    appVersion,
+    platform: options.platform,
+    release: options.release,
+  });
 }
 
 async function validateWindowsDistConfig(): Promise<void> {
@@ -325,7 +449,10 @@ async function validateWindowsDistConfig(): Promise<void> {
   }
 }
 
-async function runWindowsPostBuildChecks(options: BuildOptions): Promise<void> {
+async function runWindowsPostBuildChecks(
+  options: BuildOptions,
+  appVersion: string
+): Promise<void> {
   if (!isWindowsBuildTarget(options.platform)) {
     return;
   }
@@ -338,7 +465,7 @@ async function runWindowsPostBuildChecks(options: BuildOptions): Promise<void> {
   }
 
   console.log("🔍 Running Windows post-build checks...");
-  await validateWindowsBinaryInDist(options);
+  await validateWindowsBinaryInDist(options, appVersion);
   await validateWindowsDistConfig();
   console.log("✅ Windows post-build checks passed\n");
 }
@@ -355,6 +482,7 @@ function printHeader(options: BuildOptions): void {
   console.log("  • Distribution package");
   console.log("");
   console.log(`Platform: ${options.platform}`);
+  console.log(`Release mode: ${options.release ? "enabled" : "disabled"}`);
   console.log(
     `Parallel web/server: ${options.parallel ? "enabled" : "disabled"}`
   );
@@ -365,7 +493,8 @@ function printHeader(options: BuildOptions): void {
 function printSummary(
   startedAt: number,
   timings: StepTiming[],
-  options: BuildOptions
+  options: BuildOptions,
+  appVersion: string
 ): void {
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
@@ -387,9 +516,22 @@ function printSummary(
   } else {
     console.log("📦 Distribution ready in: dist/");
     console.log("");
+    console.log(`🏷️  Build version: v${appVersion}`);
+    if (options.release) {
+      console.log("Release binaries:");
+      if (options.platform !== "windows") {
+        console.log(`  • dist/dastyar-ai-v${appVersion}`);
+      }
+      if (options.platform !== "current" || process.platform === "win32") {
+        console.log(`  • dist/dastyar-ai-v${appVersion}.exe`);
+      }
+      console.log("");
+    }
     console.log("Next steps:");
     console.log("  1. Start Whisper API:  dist/whisper(.exe)");
-    console.log("  2. Start main server:  dist/dastyar-ai(.exe)");
+    console.log(
+      `  2. Start main server:  dist/${options.release ? `dastyar-ai-v${appVersion}` : "dastyar-ai"}(.exe)`
+    );
     console.log("  3. Open browser:       http://localhost:3000");
     console.log("");
     console.log("See dist/README.md for more information");
@@ -404,10 +546,19 @@ async function main() {
   const timings: StepTiming[] = [];
   const isWindowsHost = process.platform === "win32";
   const isWindowsTarget = options.platform === "windows";
+  let appVersion = "0.0.0";
 
   printHeader(options);
 
   try {
+    await runTimedStep(
+      "Release Versioning",
+      async () => {
+        appVersion = await prepareReleaseVersion(options);
+      },
+      timings
+    );
+
     await runTimedStep(
       "Dependency Check",
       async () => checkDependencies(),
@@ -445,18 +596,23 @@ async function main() {
     if (!options.skipPackage) {
       await runTimedStep(
         "Distribution Packaging",
-        async () => packageDist({ platform: options.platform }),
+        async () =>
+          packageDist({
+            appVersion,
+            platform: options.platform,
+            release: options.release,
+          }),
         timings
       );
     }
 
     await runTimedStep(
       "Windows Build Validation",
-      async () => runWindowsPostBuildChecks(options),
+      async () => runWindowsPostBuildChecks(options, appVersion),
       timings
     );
 
-    printSummary(startedAt, timings, options);
+    printSummary(startedAt, timings, options, appVersion);
   } catch (error) {
     console.error("");
     console.error(

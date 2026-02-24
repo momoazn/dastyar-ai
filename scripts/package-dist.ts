@@ -16,7 +16,9 @@ const SERVER_DIST = join(SERVER_APP_DIR, "dist");
 const WHISPER_DIR = WHISPER_APP_DIR;
 
 type PackageDistOptions = {
+  appVersion: string;
   platform?: "current" | "windows" | "all";
+  release?: boolean;
 };
 
 const resolveTargetWindows = (
@@ -28,21 +30,20 @@ const resolveTargetWindows = (
   return process.platform === "win32";
 };
 
-export async function packageDist(
-  options: PackageDistOptions = {}
-): Promise<void> {
+export async function packageDist(options: PackageDistOptions): Promise<void> {
   const isWindowsTarget = resolveTargetWindows(options.platform);
 
   console.log("📦 Packaging distribution...");
 
   resetDistDirectory();
   copyWebAssets();
-  copyServerBinaries(options.platform, isWindowsTarget);
+  copyServerBinaries(options.platform, isWindowsTarget, options);
   copyWhisperBinary(isWindowsTarget);
   copyWhisperModels();
   copyFfmpegBinary(isWindowsTarget);
   await copyConfigFile();
-  await createDistReadme(isWindowsTarget);
+  await copyBuildInfoFile(options.appVersion, options.release ?? false);
+  await createDistReadme(isWindowsTarget, options);
   await verifyDistribution(options);
 
   console.log("✅ Distribution packaged successfully\n");
@@ -75,9 +76,25 @@ function getServerBinaryNames(
   return [isWindowsTarget ? "dastyar-ai.exe" : "dastyar-ai"];
 }
 
+function getDistServerBinaryName(
+  sourceBinaryName: string,
+  options: PackageDistOptions
+): string {
+  if (!options.release) {
+    return sourceBinaryName;
+  }
+
+  const versionTag = `v${options.appVersion}`;
+  if (sourceBinaryName.endsWith(".exe")) {
+    return `dastyar-ai-${versionTag}.exe`;
+  }
+  return `dastyar-ai-${versionTag}`;
+}
+
 function copyServerBinaries(
   platform: PackageDistOptions["platform"],
-  isWindowsTarget: boolean
+  isWindowsTarget: boolean,
+  options: PackageDistOptions
 ): void {
   const allowMissing = platform === "all";
   const serverBinaries = getServerBinaryNames(platform, isWindowsTarget);
@@ -87,7 +104,7 @@ function copyServerBinaries(
   let copiedServerBinary = false;
   for (const binaryName of serverBinaries) {
     const serverSrc = join(SERVER_DIST, binaryName);
-    const serverDest = join(DIST, binaryName);
+    const serverDest = join(DIST, getDistServerBinaryName(binaryName, options));
 
     if (existsSync(serverSrc)) {
       cpSync(serverSrc, serverDest, { force: true });
@@ -163,10 +180,26 @@ async function copyConfigFile(): Promise<void> {
   await Bun.write(configPath, `${JSON.stringify(defaults, null, 2)}\n`);
 }
 
-async function createDistReadme(isWindowsTarget: boolean): Promise<void> {
+async function copyBuildInfoFile(
+  appVersion: string,
+  release: boolean
+): Promise<void> {
+  const buildInfoPath = join(DIST, "build-info.json");
+  const buildInfo = {
+    version: appVersion,
+    release,
+    builtAt: new Date().toISOString(),
+  };
+  await Bun.write(buildInfoPath, `${JSON.stringify(buildInfo, null, 2)}\n`);
+}
+
+async function createDistReadme(
+  isWindowsTarget: boolean,
+  options: PackageDistOptions
+): Promise<void> {
   const readmePath = join(DIST, "README.md");
   console.log("  → Creating README...");
-  await createReadme(readmePath, isWindowsTarget);
+  await createReadme(readmePath, isWindowsTarget, options);
 }
 
 function getDefaultConfig(): Record<string, unknown> {
@@ -175,9 +208,17 @@ function getDefaultConfig(): Record<string, unknown> {
 
 async function createReadme(
   path: string,
-  isWindowsTarget: boolean
+  isWindowsTarget: boolean,
+  options: PackageDistOptions
 ): Promise<void> {
-  const serverBin = isWindowsTarget ? "dastyar-ai.exe" : "./dastyar-ai";
+  let serverBin: string;
+  if (options.release) {
+    serverBin = isWindowsTarget
+      ? `dastyar-ai-v${options.appVersion}.exe`
+      : `./dastyar-ai-v${options.appVersion}`;
+  } else {
+    serverBin = isWindowsTarget ? "dastyar-ai.exe" : "./dastyar-ai";
+  }
   const whisperBin = isWindowsTarget ? "whisper.exe" : "./whisper";
 
   const readme = `# Dastyar AI - Distribution
@@ -223,23 +264,36 @@ async function verifyExists(path: string): Promise<void> {
 }
 
 export async function verifyDistribution(
-  options: PackageDistOptions = {}
+  options: PackageDistOptions
 ): Promise<void> {
   const isWindowsTarget = resolveTargetWindows(options.platform);
   const serverBinary =
     options.platform === "all"
       ? undefined
-      : join(DIST, isWindowsTarget ? "dastyar-ai.exe" : "dastyar-ai");
+      : join(
+          DIST,
+          getDistServerBinaryName(
+            isWindowsTarget ? "dastyar-ai.exe" : "dastyar-ai",
+            options
+          )
+        );
   const whisperBinary = join(DIST, isWindowsTarget ? "whisper.exe" : "whisper");
 
   await verifyExists(join(DIST, "config.json"));
+  await verifyExists(join(DIST, "build-info.json"));
   await verifyExists(join(DIST, "README.md"));
 
   if (serverBinary) {
     await verifyExists(serverBinary);
   } else {
-    const linuxOrMacServer = join(DIST, "dastyar-ai");
-    const windowsServer = join(DIST, "dastyar-ai.exe");
+    const linuxOrMacServer = join(
+      DIST,
+      getDistServerBinaryName("dastyar-ai", options)
+    );
+    const windowsServer = join(
+      DIST,
+      getDistServerBinaryName("dastyar-ai.exe", options)
+    );
     if (!(existsSync(linuxOrMacServer) || existsSync(windowsServer))) {
       throw new Error(
         "Expected at least one server binary in dist/ for platform=all"
@@ -256,5 +310,9 @@ export async function verifyDistribution(
 
 // Run if executed directly
 if (import.meta.main) {
-  await packageDist();
+  await packageDist({
+    appVersion: "0.0.0",
+    platform: "current",
+    release: false,
+  });
 }

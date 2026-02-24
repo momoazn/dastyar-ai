@@ -1,5 +1,6 @@
 {
   "name": "dastyar-ai",
+  "version": "0.1.0",
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
     "@types/bun": "^1.3.1",
@@ -19,6 +20,9 @@
     "build:ci": "CI=true bun scripts/build.ts --force-deps --no-parallel",
     "build:windows": "bun scripts/build.ts --platform=windows",
     "build:all": "bun scripts/build.ts --platform=all",
+    "build:release": "bun scripts/build.ts --release",
+    "build:release:windows": "bun scripts/build.ts --release --platform=windows",
+    "build:release:all": "bun scripts/build.ts --release --platform=all",
     "start": "bun scripts/start.ts",
     "stop": "bun scripts/stop.ts",
     "status": "bun scripts/status.ts",
