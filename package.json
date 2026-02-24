@@ -29,6 +29,7 @@
     "download:ffmpeg": "bun scripts/downloads/download-ffmpeg.ts",
     "download:ffmpeg:all": "bun scripts/downloads/download-ffmpeg.ts --all",
     "download:model": "bun scripts/downloads/download-model.ts",
+    "package:source": "bun scripts/package-source.ts",
     "test": "turbo test",
     "test:coverage": "turbo test:coverage",
     "test:api": "cd apps/server && bun run run-all-tests-orpc.ts",

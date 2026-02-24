@@ -191,3 +191,6 @@ dastyar/
 
 # Turbo logs (override wildcard)
 .turbo/**/*.log
+
+# Source package artifacts
+dastyar-ai-source-v*.zip
