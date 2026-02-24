@@ -22,10 +22,6 @@ export const buildServerUrl = (hostname: string, port: number): string => {
 export const getEnabledServices = (): string[] => {
   const services: string[] = [];
   if (env.OLLAMA_ENABLED) services.push("Ollama");
-  if (env.LMSTUDIO_ENABLED) services.push("LM Studio");
-  if (env.GROQ_ENABLED) services.push("Groq");
-  if (env.GEMINI_ENABLED) services.push("Gemini");
-  if (env.STABLE_DIFFUSION_ENABLED) services.push("Stable Diffusion");
   return services;
 };
 
@@ -72,20 +68,6 @@ export const displayStartupInfo = (): void => {
   process.stdout.write("🤖 AI Services:\n");
   if (env.OLLAMA_ENABLED) {
     process.stdout.write(`   ✅ Ollama (${env.OLLAMA_BASE_URL})\n`);
-  }
-  if (env.LMSTUDIO_ENABLED) {
-    process.stdout.write(`   ✅ LM Studio (${env.LMSTUDIO_BASE_URL})\n`);
-  }
-  if (env.GROQ_ENABLED) {
-    process.stdout.write("   ✅ Groq\n");
-  }
-  if (env.GEMINI_ENABLED) {
-    process.stdout.write("   ✅ Gemini\n");
-  }
-  if (env.STABLE_DIFFUSION_ENABLED) {
-    process.stdout.write(
-      `   ✅ Stable Diffusion (${env.STABLE_DIFFUSION_URL})\n`
-    );
   }
   if (enabledServices.length === 0) {
     process.stdout.write("   ⚠️  No AI services enabled\n");

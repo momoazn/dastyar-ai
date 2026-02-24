@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { z } from "zod";
+import { ZodError } from "zod";
+import { CONFIG_KEYS, CONFIG_SCHEMA } from "./config-schema";
 import { logger } from "./lib/logger";
 import type { ConfigMap } from "./types/config";
 
@@ -41,91 +42,104 @@ export const getRuntimeBaseDir = (): string => {
   return base;
 };
 
-const findConfigPath = (baseDir: string): string | undefined => {
-  const candidates = [
-    resolve(baseDir, CONFIG_FILE),
-    resolve(serverRootDir, CONFIG_FILE),
-  ];
+const findConfigPath = (
+  baseDir: string,
+  productionMode: boolean
+): string | undefined => {
+  const candidates = productionMode
+    ? [resolve(baseDir, CONFIG_FILE)]
+    : [resolve(baseDir, CONFIG_FILE), resolve(serverRootDir, CONFIG_FILE)];
+
   return candidates.find((p) => existsSync(p));
 };
 
-const loadJson = (p?: string): ConfigMap => {
+const failAndExit = (
+  message: string,
+  details?: Record<string, unknown>
+): never => {
+  const detailsText = details ? ` ${JSON.stringify(details)}` : "";
+  process.stderr.write(`FATAL: ${message}${detailsText}\n`);
+  logger.fatal(message, details);
+  process.stdout.write("\n");
+  process.stderr.write("\n");
+  process.exit(1);
+};
+
+const loadJson = (
+  p: string | undefined,
+  productionMode: boolean
+): ConfigMap => {
   if (!p) {
+    if (productionMode) {
+      failAndExit(
+        "Production config is missing. Expected config.json next to the binary.",
+        {
+          expectedPath: resolve(getRuntimeBaseDir(), CONFIG_FILE),
+        }
+      );
+    }
     logger.warn("No config.json found; using defaults", { path: p });
     return {};
   }
+
   try {
-    return JSON.parse(readFileSync(p, "utf8")) as ConfigMap;
+    const parsed = JSON.parse(readFileSync(p, "utf8")) as unknown;
+    if (
+      parsed === null ||
+      Array.isArray(parsed) ||
+      typeof parsed !== "object"
+    ) {
+      failAndExit("Config file must contain a JSON object", { path: p });
+    }
+    return parsed as ConfigMap;
   } catch (err) {
-    logger.error("Failed to read/parse config file", err, { path: p });
-    // Ensure logs are flushed before exiting
-    process.stdout.write("\n");
-    process.stderr.write("\n");
-    process.exit(1);
+    return failAndExit("Failed to read/parse config file", {
+      path: p,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 
-const Schema = z.object({
-  PORT: z.coerce.number().default(3000),
-  HOST: z.string().default("0.0.0.0"),
-  CORS_ORIGIN: z
-    .string()
-    .transform((val) => {
-      // If "*" is specified, return it as-is for allow-all
-      // Safe to use "*" since frontend uses relative URLs (same origin in production)
-      // and Vite proxy handles CORS in development mode
-      if (val.trim() === "*") {
-        return "*";
+const assertProductionConfigCompleteness = (rawConfig: ConfigMap): void => {
+  const missingKeys = CONFIG_KEYS.filter((key) => !(key in rawConfig));
+  if (missingKeys.length > 0) {
+    failAndExit(
+      "Production config must define every required key in config.json",
+      {
+        missingKeys,
       }
-      // Otherwise, return comma-separated list as array
-      return val.split(",").map((o) => o.trim());
-    })
-    .default("*"),
-  JWT_SECRET: z
-    .string()
-    .min(32, "JWT_SECRET must be at least 32 characters for security")
-    .default("your-super-secret-jwt-key-change-this-in-production"),
-  JWT_EXPIRES_IN: z.number().default(24 * 60 * 60),
-  DATABASE_FILE: z.string().default("./data.db"),
-  // Optional external Whisper server (Go implementation) used for transcription
-  WHISPER_SERVER_URL: z.string().default("http://127.0.0.1:8080"),
-  // Timeout for requests to the Whisper server (ms)
-  WHISPER_TIMEOUT_MS: z.coerce.number().default(120_000),
-  WHISPER_MODELS: z.string().default("ggml-base.bin"),
-  OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
-  OLLAMA_ENABLED: z.coerce.boolean().default(true),
-  LMSTUDIO_BASE_URL: z.string().default("http://localhost:1234/v1"),
-  LMSTUDIO_ENABLED: z.coerce.boolean().default(true),
-  GROQ_API_KEY: z.string().default(""),
-  GROQ_ENABLED: z.coerce.boolean().default(false),
-  GEMINI_API_KEY: z.string().default(""),
-  GEMINI_ENABLED: z.coerce.boolean().default(false),
-  STABLE_DIFFUSION_URL: z.string().default("http://localhost:7860"),
-  STABLE_DIFFUSION_ENABLED: z.coerce.boolean().default(true),
-  IMAGES_DIR: z.string().default("./generated-images"),
-  DOCUMENTS_DIR: z.string().default("./uploaded-documents"),
-  EMBEDDING_MODEL: z.string().default("nomic-embed-text"),
-  WEB_DIST_DIR: z.string().default("./web"),
-  // SSL/TLS configuration
-  SSL_ENABLED: z.coerce.boolean().default(false),
-  SSL_CERT_PATH: z.string().default(""),
-  SSL_KEY_PATH: z.string().default(""),
-});
+    );
+  }
+};
 
-type Env = z.infer<typeof Schema>;
+type Env = import("./config-schema").RuntimeConfig;
 
+const runtimeIsProduction = isProduction();
 const _runtimeBaseDir = getRuntimeBaseDir();
-const configPath = findConfigPath(_runtimeBaseDir);
+const configPath = findConfigPath(_runtimeBaseDir, runtimeIsProduction);
 
-const jsonConfig = loadJson(configPath);
-const parsed = Schema.safeParse(jsonConfig);
-
-if (!parsed.success) {
-  logger.error("Invalid configuration", parsed.error);
-  process.exit(1);
+const jsonConfig = loadJson(configPath, runtimeIsProduction);
+if (runtimeIsProduction) {
+  assertProductionConfigCompleteness(jsonConfig);
 }
+const parsedConfig: Env = (() => {
+  try {
+    return CONFIG_SCHEMA.parse(jsonConfig);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return failAndExit("Invalid configuration", {
+        path: configPath,
+        error: error.flatten(),
+      });
+    }
+    return failAndExit("Invalid configuration", {
+      path: configPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+})();
 
-export const env: Env = parsed.data;
+export const env: Env = parsedConfig;
 export const configFilePath = configPath;
 
 /**
@@ -151,15 +165,6 @@ export const validateProductionSecrets = (): void => {
     );
   }
 
-  // Check API keys if services are enabled
-  if (env.GROQ_ENABLED && !env.GROQ_API_KEY) {
-    issues.push("GROQ is enabled but GROQ_API_KEY is not set");
-  }
-
-  if (env.GEMINI_ENABLED && !env.GEMINI_API_KEY) {
-    issues.push("GEMINI is enabled but GEMINI_API_KEY is not set");
-  }
-
   // Check SSL configuration
   if (env.SSL_ENABLED) {
     if (!env.SSL_CERT_PATH) {
@@ -171,10 +176,16 @@ export const validateProductionSecrets = (): void => {
   }
 
   if (issues.length > 0) {
-    logger.fatal("Production security configuration issues detected:", {
+    logger.warn("Production security configuration issues detected:", {
       issues,
     });
-    process.exit(1);
+    process.stderr.write("\n⚠️  Production security warnings:\n");
+    for (const issue of issues) {
+      process.stderr.write(`   - ${issue}\n`);
+    }
+    process.stderr.write(
+      "⚠️  Server will continue to start, but this should be fixed before deployment.\n\n"
+    );
   }
 };
 
