@@ -1,10 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Bot, FolderCog, LayoutPanelLeft, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SettingsItem } from "@/components/settings/settings-item";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
@@ -143,99 +146,84 @@ export function SettingsPanel() {
 
   if (isLoadingSettings) {
     return (
-      <Card className="p-6">
-        <div className="text-center text-gray-500">
+      <div className="rounded-xl border bg-card p-6">
+        <div className="text-center text-muted-foreground">
           {fa.admin.settings.messages.loading}
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Security Settings */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.security.title}
-        </h3>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block font-medium text-sm"
-                htmlFor="tokenExpiration"
-              >
-                {fa.admin.settings.security.tokenExpiration}
-              </label>
-              <Input
-                className="mt-1"
-                id="tokenExpiration"
-                onChange={(e) =>
-                  handleSettingChange(
-                    "token_expiration_hours",
-                    Number.parseInt(e.target.value, 10)
-                  )
-                }
-                type="number"
-                value={(settings.token_expiration_hours as number) || 24}
-              />
-            </div>
-            <div>
-              <label
-                className="block font-medium text-sm"
-                htmlFor="sessionTimeout"
-              >
-                {fa.admin.settings.security.sessionTimeout}
-              </label>
-              <Input
-                className="mt-1"
-                id="sessionTimeout"
-                onChange={(e) =>
-                  handleSettingChange(
-                    "session_timeout_minutes",
-                    Number.parseInt(e.target.value, 10)
-                  )
-                }
-                type="number"
-                value={(settings.session_timeout_minutes as number) || 30}
-              />
-            </div>
-            <div>
-              <label
-                className="block font-medium text-sm"
-                htmlFor="passwordMinLength"
-              >
-                {fa.admin.settings.security.passwordMinLength}
-              </label>
-              <Input
-                className="mt-1"
-                id="passwordMinLength"
-                onChange={(e) =>
-                  handleSettingChange(
-                    "password_min_length",
-                    Number.parseInt(e.target.value, 10)
-                  )
-                }
-                type="number"
-                value={(settings.password_min_length as number) || 6}
-              />
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* File Management Settings */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.fileManagement.title}
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block font-medium text-sm" htmlFor="maxFileSize">
-              {fa.admin.settings.fileManagement.maxFileSize}
-            </label>
+    <div className="space-y-5" dir="rtl">
+      <SettingsSection
+        description="زمان انقضا و الزامات امنیتی حساب‌ها را مدیریت کنید"
+        icon={<Shield className="h-4 w-4" />}
+        title={fa.admin.settings.security.title}
+      >
+        <div className="space-y-3">
+          <SettingsItem label={fa.admin.settings.security.tokenExpiration}>
             <Input
-              className="mt-1"
+              aria-label={fa.admin.settings.security.tokenExpiration}
+              className="w-full text-right sm:w-32"
+              dir="rtl"
+              id="tokenExpiration"
+              onChange={(e) =>
+                handleSettingChange(
+                  "token_expiration_hours",
+                  Number.parseInt(e.target.value, 10)
+                )
+              }
+              type="number"
+              value={(settings.token_expiration_hours as number) || 24}
+            />
+          </SettingsItem>
+          <SettingsItem label={fa.admin.settings.security.sessionTimeout}>
+            <Input
+              aria-label={fa.admin.settings.security.sessionTimeout}
+              className="w-full text-right sm:w-32"
+              dir="rtl"
+              id="sessionTimeout"
+              onChange={(e) =>
+                handleSettingChange(
+                  "session_timeout_minutes",
+                  Number.parseInt(e.target.value, 10)
+                )
+              }
+              type="number"
+              value={(settings.session_timeout_minutes as number) || 30}
+            />
+          </SettingsItem>
+          <SettingsItem label={fa.admin.settings.security.passwordMinLength}>
+            <Input
+              aria-label={fa.admin.settings.security.passwordMinLength}
+              className="w-full text-right sm:w-32"
+              dir="rtl"
+              id="passwordMinLength"
+              onChange={(e) =>
+                handleSettingChange(
+                  "password_min_length",
+                  Number.parseInt(e.target.value, 10)
+                )
+              }
+              type="number"
+              value={(settings.password_min_length as number) || 6}
+            />
+          </SettingsItem>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        description="سقف حجم و فرمت‌های مجاز برای فایل‌های بارگذاری‌شده"
+        icon={<FolderCog className="h-4 w-4" />}
+        title={fa.admin.settings.fileManagement.title}
+      >
+        <div className="space-y-3">
+          <SettingsItem label={fa.admin.settings.fileManagement.maxFileSize}>
+            <Input
+              aria-label={fa.admin.settings.fileManagement.maxFileSize}
+              className="w-full text-right sm:w-36"
+              dir="rtl"
               id="maxFileSize"
               onChange={(e) =>
                 handleSettingChange(
@@ -246,13 +234,12 @@ export function SettingsPanel() {
               type="number"
               value={(settings.max_file_size_mb as number) || 50}
             />
-          </div>
-          <div>
-            <label className="block font-medium text-sm" htmlFor="allowedTypes">
-              {fa.admin.settings.fileManagement.allowedTypes}
-            </label>
+          </SettingsItem>
+          <SettingsItem label={fa.admin.settings.fileManagement.allowedTypes}>
             <Textarea
-              className="mt-1 text-xs"
+              aria-label={fa.admin.settings.fileManagement.allowedTypes}
+              className="min-h-20 w-full text-right text-xs sm:w-[28rem]"
+              dir="rtl"
               id="allowedTypes"
               onChange={(e) =>
                 handleSettingChange(
@@ -260,32 +247,28 @@ export function SettingsPanel() {
                   e.target.value.split(",").map((t) => t.trim())
                 )
               }
-              placeholder="pdf, docx, xlsx, csv, txt, md, html, eml, rtf, yaml, toml (comma-separated)"
+              placeholder="pdf, docx, xlsx, csv, txt, md, html, eml, rtf, yaml, toml"
               value={
                 Array.isArray(settings.allowed_file_types)
                   ? (settings.allowed_file_types as string[]).join(", ")
                   : ""
               }
             />
-          </div>
+          </SettingsItem>
         </div>
-      </Card>
+      </SettingsSection>
 
-      {/* AI Models Settings */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.aiModels.title}
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label
-              className="block font-medium text-sm"
-              htmlFor="responseTimeout"
-            >
-              {fa.admin.settings.aiModels.responseTimeout}
-            </label>
+      <SettingsSection
+        description="تنظیمات زمان انتظار پاسخ مدل‌ها"
+        icon={<Bot className="h-4 w-4" />}
+        title={fa.admin.settings.aiModels.title}
+      >
+        <div className="space-y-3">
+          <SettingsItem label={fa.admin.settings.aiModels.responseTimeout}>
             <Input
-              className="mt-1"
+              aria-label={fa.admin.settings.aiModels.responseTimeout}
+              className="w-full text-right sm:w-36"
+              dir="rtl"
               id="responseTimeout"
               onChange={(e) =>
                 handleSettingChange(
@@ -296,62 +279,61 @@ export function SettingsPanel() {
               type="number"
               value={(settings.model_response_timeout_seconds as number) || 300}
             />
-          </div>
+          </SettingsItem>
         </div>
-      </Card>
+      </SettingsSection>
 
-      {/* Sidebar Features */}
-      <Card className="p-6">
-        <h3 className="mb-4 font-semibold text-lg">
-          {fa.admin.settings.sidebarFeatures.title}
-        </h3>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+      <SettingsSection
+        description="ماژول‌های قابل مشاهده در نوار کناری را فعال یا غیرفعال کنید"
+        icon={<LayoutPanelLeft className="h-4 w-4" />}
+        title={fa.admin.settings.sidebarFeatures.title}
+      >
+        <div className="space-y-3">
           {sidebarFeatureToggles.map(({ key, label }) => (
-            <label className="flex items-center gap-2" key={key}>
-              <input
+            <SettingsItem key={key} label={label}>
+              <Switch
+                aria-label={label}
                 checked={(settings[key] as boolean) ?? true}
-                onChange={(e) => handleSettingChange(key, e.target.checked)}
-                type="checkbox"
+                onCheckedChange={(checked) => handleSettingChange(key, checked)}
               />
-              <span className="font-medium text-sm">{label}</span>
-            </label>
+            </SettingsItem>
           ))}
         </div>
-      </Card>
+      </SettingsSection>
 
-      {/* Status Badge */}
       {hasChanges && (
-        <Card className="border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <div className="rounded-xl border border-yellow-300/60 bg-yellow-50/70 p-4 dark:border-yellow-700/50 dark:bg-yellow-950/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-right">
               <Badge variant="secondary">
                 {fa.admin.settings.unsavedChanges.badge}
               </Badge>
-              <span className="text-gray-600 text-sm">
+              <span className="text-muted-foreground text-sm">
                 {fa.admin.settings.unsavedChanges.message}
               </span>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-row-reverse justify-start gap-3">
-        <Button
-          disabled={!hasChanges || upsertMutation.isPending}
-          onClick={handleCancel}
-          variant="outline"
-        >
-          {fa.admin.settings.actions.cancel}
-        </Button>
-        <Button
-          disabled={!hasChanges || upsertMutation.isPending}
-          onClick={handleSave}
-        >
-          {upsertMutation.isPending
-            ? fa.admin.settings.saving
-            : fa.admin.settings.actions.save}
-        </Button>
+      <div className="rounded-xl border bg-card/90 p-4">
+        <div className="flex flex-row-reverse justify-start gap-3">
+          <Button
+            disabled={!hasChanges || upsertMutation.isPending}
+            onClick={handleCancel}
+            variant="outline"
+          >
+            {fa.admin.settings.actions.cancel}
+          </Button>
+          <Button
+            disabled={!hasChanges || upsertMutation.isPending}
+            onClick={handleSave}
+          >
+            {upsertMutation.isPending
+              ? fa.admin.settings.saving
+              : fa.admin.settings.actions.save}
+          </Button>
+        </div>
       </div>
     </div>
   );

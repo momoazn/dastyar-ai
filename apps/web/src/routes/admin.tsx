@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ModelsTable } from "@/components/admin/models-table";
 import { OllamaServersTable } from "@/components/admin/ollama-servers-table";
 import { SettingsPanel } from "@/components/admin/settings-panel";
+import { SettingsHeader } from "@/components/settings/settings-header";
 import { UsersTable } from "@/components/admin/users-table";
 import { UserProfile } from "@/components/user-profile";
 import AdminLayout from "@/layouts/admin";
@@ -23,14 +24,10 @@ function AdminRouteComponent() {
           </div>
           <div className="space-y-6">
             <UserProfile />
-            <div className="rounded-lg border bg-card p-6 text-right">
-              <h2 className="font-semibold text-lg">
-                {fa.admin.settings.title}
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {fa.admin.settings.subtitle}
-              </p>
-            </div>
+            <SettingsHeader
+              description={fa.admin.settings.subtitle}
+              title={fa.admin.settings.title}
+            />
           </div>
         </section>
 
