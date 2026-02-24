@@ -24,6 +24,15 @@ export const settings = {
     description: "تنظیمات امنیتی حساب خود را مدیریت کنید",
     passwordDescription: "تغییر رمز عبور حساب کاربری",
   },
+  appearance: {
+    title: "ظاهر",
+    description: "تنظیمات نمایش برنامه را مدیریت کنید",
+    theme: "تم",
+    themeDescription: "حالت نمایش برنامه",
+    light: "روشن",
+    dark: "تیره",
+    system: "سیستم",
+  },
   account: {
     title: "حساب کاربری",
     description: "نام کاربری و رمز عبور خود را مدیریت کنید",

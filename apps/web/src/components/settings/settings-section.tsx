@@ -26,33 +26,38 @@ export function SettingsSection({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "overflow-hidden rounded-xl border bg-card/95 text-card-foreground shadow-sm transition-shadow hover:shadow-md",
         className
       )}
     >
       <Button
-        className="flex w-full items-center justify-between gap-3 p-4 text-right hover:bg-muted/50"
+        className="flex h-auto w-full items-center justify-between rounded-none px-5 py-4 text-right hover:bg-muted/40"
+        dir="rtl"
         onClick={() => setIsOpen(!isOpen)}
         variant="ghost"
       >
-        <div className="flex items-center gap-3">
-          {icon && <div className="text-muted-foreground">{icon}</div>}
+        <div className="flex items-center gap-3 text-right">
+          {icon && (
+            <div className="rounded-md border bg-background p-2 text-muted-foreground">
+              {icon}
+            </div>
+          )}
           <div className="flex-1 text-right">
-            <h3 className="font-semibold">{title}</h3>
+            <h3 className="font-semibold text-base">{title}</h3>
             {description && (
-              <p className="text-muted-foreground text-sm">{description}</p>
+              <p className="mt-1 text-muted-foreground text-sm">{description}</p>
             )}
           </div>
         </div>
         <ChevronLeft
           className={cn(
-            "h-4 w-4 shrink-0 transition-transform",
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
             isOpen ? "rotate-0" : "rotate-180"
           )}
         />
       </Button>
 
-      {isOpen && <div className="border-t bg-muted/20 p-5">{children}</div>}
+      {isOpen && <div className="border-t bg-muted/15 p-4 md:p-5">{children}</div>}
     </div>
   );
 }

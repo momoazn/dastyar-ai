@@ -74,18 +74,18 @@ export function ProfileSection() {
           {isEditingUsername ? (
             <Form {...usernameForm}>
               <form
-                className="flex items-center gap-3"
+                className="flex w-full flex-col gap-2 sm:flex-row sm:items-start"
                 onSubmit={usernameForm.handleSubmit(onUsernameSubmit)}
               >
                 <FormField
                   control={usernameForm.control}
                   name="newUsername"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="w-full sm:min-w-64">
                       <FormControl>
                         <Input
                           {...field}
-                          className="w-48 text-right"
+                          className="w-full text-right"
                           dir="rtl"
                           disabled={updateUsernameMutation.isPending}
                         />
@@ -94,32 +94,36 @@ export function ProfileSection() {
                     </FormItem>
                   )}
                 />
-                <Button
-                  disabled={updateUsernameMutation.isPending}
-                  size="sm"
-                  type="submit"
-                >
-                  {updateUsernameMutation.isPending
-                    ? fa.general.loading
-                    : fa.general.save}
-                </Button>
-                <Button
-                  disabled={updateUsernameMutation.isPending}
-                  onClick={() => {
-                    setIsEditingUsername(false);
-                    usernameForm.reset();
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {fa.general.cancel}
-                </Button>
+                <div className="flex items-center gap-2 sm:pt-0.5">
+                  <Button
+                    disabled={updateUsernameMutation.isPending}
+                    size="sm"
+                    type="submit"
+                  >
+                    {updateUsernameMutation.isPending
+                      ? fa.general.loading
+                      : fa.general.save}
+                  </Button>
+                  <Button
+                    disabled={updateUsernameMutation.isPending}
+                    onClick={() => {
+                      setIsEditingUsername(false);
+                      usernameForm.reset();
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {fa.general.cancel}
+                  </Button>
+                </div>
               </form>
             </Form>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-sm">{user?.username}</span>
+              <span className="rounded-md bg-muted px-2.5 py-1 text-sm">
+                {user?.username}
+              </span>
               <Button
                 onClick={() => setIsEditingUsername(true)}
                 size="sm"

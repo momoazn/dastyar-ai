@@ -15,13 +15,19 @@ export function SettingsHeader({
   className,
 }: SettingsHeaderProps) {
   return (
-    <div className={cn("text-right", className)}>
-      <div className="flex items-center gap-3">
-        {Icon && <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />}
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-xl border bg-card px-5 py-4 text-right shadow-sm",
+        className
+      )}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary/60" />
+      <div className="flex flex-row-reverse items-start gap-3">
+        {Icon && <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary/80" />}
         <div className="flex-1">
-          <h2 className="font-bold text-xl">{title}</h2>
+          <h2 className="font-bold text-2xl tracking-tight">{title}</h2>
           {description && (
-            <p className="mt-1.5 text-muted-foreground text-sm">
+            <p className="mt-2 text-muted-foreground text-sm leading-6">
               {description}
             </p>
           )}

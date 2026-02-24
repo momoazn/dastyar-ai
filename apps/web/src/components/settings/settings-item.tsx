@@ -15,15 +15,17 @@ export function SettingsItem({
   className,
 }: SettingsItemProps) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <div className="flex items-start justify-between gap-6">
+    <div className={cn("rounded-lg border bg-background/70 px-4 py-3", className)}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="flex-1 text-right">
-          <div className="block font-medium text-sm">{label}</div>
+          <div className="block font-medium text-sm leading-6">{label}</div>
           {description && (
-            <p className="mt-1 text-muted-foreground text-xs">{description}</p>
+            <p className="mt-1 text-muted-foreground text-xs leading-5">
+              {description}
+            </p>
           )}
         </div>
-        <div className="shrink-0">{children}</div>
+        <div className="flex shrink-0 justify-start sm:justify-end">{children}</div>
       </div>
     </div>
   );

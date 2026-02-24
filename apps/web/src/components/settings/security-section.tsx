@@ -90,6 +90,7 @@ export function SecuritySection() {
             label={fa.settings.account.password}
           >
             <Button
+              className="min-w-28"
               onClick={() => setIsPasswordDialogOpen(true)}
               size="sm"
               variant="outline"
@@ -104,7 +105,7 @@ export function SecuritySection() {
         onOpenChange={setIsPasswordDialogOpen}
         open={isPasswordDialogOpen}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-right">
               {fa.settings.account.changePassword}
