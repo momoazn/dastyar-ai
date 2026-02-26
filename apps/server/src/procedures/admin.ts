@@ -64,7 +64,9 @@ const deleteUserSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z
+    .string()
+    .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["admin", "user"]).default("user"),
 });
@@ -206,7 +208,7 @@ export const adminProcedures = {
         const exists = await usernameExists(username);
         if (exists) {
           throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-            message: "نام کاربری قبلاً استفاده شده است",
+            message: "کد ملی قبلاً استفاده شده است",
             status: 400,
           });
         }

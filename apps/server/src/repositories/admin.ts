@@ -13,6 +13,7 @@ import {
   users,
 } from "@/database";
 import { hashPassword } from "./auth";
+import { listUsersRecentIps } from "./user-ips";
 
 export type UserWithoutSensitiveData = Omit<User, "password">;
 
@@ -26,8 +27,13 @@ export interface UserWithStats extends UserWithoutSensitiveData {
   threadCount: number;
 }
 
+export interface AdminUserListItem extends UserWithoutSensitiveData {
+  latestIps: string[];
+  ipCount: number;
+}
+
 export type UserListResponse = {
-  users: UserWithoutSensitiveData[];
+  users: AdminUserListItem[];
   total: number;
   page: number;
   pageSize: number;
@@ -84,8 +90,15 @@ export async function listUsers(options?: {
     ? await dataQuery.where(whereClause).limit(pageSize).offset(offset)
     : await dataQuery.limit(pageSize).offset(offset);
 
+  const ipDataByUserId = await listUsersRecentIps(rows.map((row) => row.id));
+  const usersWithIps: AdminUserListItem[] = rows.map((row) => ({
+    ...row,
+    latestIps: ipDataByUserId[row.id]?.latestIps ?? [],
+    ipCount: ipDataByUserId[row.id]?.ipCount ?? 0,
+  }));
+
   return {
-    users: rows,
+    users: usersWithIps,
     total,
     page,
     pageSize,

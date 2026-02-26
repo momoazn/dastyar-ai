@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { getClientIpFromContext } from "@/lib/request-ip";
 import {
   countUsers,
   createUser,
@@ -10,21 +11,26 @@ import {
   usernameExists,
   verifyUserCredentials,
 } from "@/repositories/auth";
+import { recordUserIp } from "@/repositories/user-ips";
 import { generateJwtToken } from "@/services/auth";
 import { protectedProcedure, publicProcedure } from "./base";
 
+const nationalCodeSchema = z
+  .string()
+  .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد");
+
 const registerSchema = z.object({
-  username: z.string().min(3).max(50),
+  username: nationalCodeSchema,
   password: z.string().min(6),
 });
 
 const loginSchema = z.object({
-  username: z.string(),
+  username: nationalCodeSchema,
   password: z.string(),
 });
 
 const updateUsernameSchema = z.object({
-  newUsername: z.string().min(3).max(50),
+  newUsername: nationalCodeSchema,
 });
 
 const updatePasswordSchema = z.object({
@@ -33,14 +39,17 @@ const updatePasswordSchema = z.object({
 });
 
 export const authProcedures = {
-  register: publicProcedure.input(registerSchema).handler(async ({ input }) => {
+  register: publicProcedure.input(registerSchema).handler(async ({
+    input,
+    context,
+  }) => {
     const { username, password } = input;
 
     const exists = await usernameExists(username);
     if (exists) {
       logger.info("Username already exists", { username });
       throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-        message: "نام کاربری قبلاً استفاده شده است",
+        message: "کد ملی قبلاً استفاده شده است",
         status: 400,
       });
     }
@@ -54,6 +63,11 @@ export const authProcedures = {
       password: hashedPassword,
       role,
     });
+
+    const clientIp = getClientIpFromContext(context.honoContext);
+    if (clientIp) {
+      await recordUserIp({ userId: user.id, ipAddress: clientIp });
+    }
 
     logger.info("User registered", { userId: user.id, username, role });
 
@@ -73,7 +87,10 @@ export const authProcedures = {
     };
   }),
 
-  login: publicProcedure.input(loginSchema).handler(async ({ input }) => {
+  login: publicProcedure.input(loginSchema).handler(async ({
+    input,
+    context,
+  }) => {
     const { username, password } = input;
 
     const user = await verifyUserCredentials({ username, password });
@@ -81,12 +98,17 @@ export const authProcedures = {
     if (!user) {
       logger.warn("Invalid login credentials", { username });
       throw new ORPCError("INVALID_CREDENTIALS", {
-        message: "نام کاربری یا رمز عبور اشتباه است",
+        message: "کد ملی یا رمز عبور اشتباه است",
         status: 401,
       });
     }
 
     logger.info("User logged in", { userId: user.id, username });
+
+    const clientIp = getClientIpFromContext(context.honoContext);
+    if (clientIp) {
+      await recordUserIp({ userId: user.id, ipAddress: clientIp });
+    }
 
     const token = generateJwtToken({
       id: user.id,
@@ -119,7 +141,7 @@ export const authProcedures = {
       const exists = await usernameExists(newUsername);
       if (exists) {
         throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-          message: "نام کاربری قبلاً استفاده شده است",
+          message: "کد ملی قبلاً استفاده شده است",
           status: 400,
         });
       }

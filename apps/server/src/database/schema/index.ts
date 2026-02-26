@@ -60,6 +60,38 @@ export const users = sqliteTable("users", {
     .default(timestamp),
 });
 
+export const userIps = sqliteTable(
+  "user_ips",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    ipAddress: text("ip_address").notNull(),
+    firstSeenAt: integer("first_seen_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    lastSeenAt: integer("last_seen_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    hitCount: integer("hit_count").notNull().default(1),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(timestamp),
+  },
+  (table) => [
+    index("idx_user_ips_user_id").on(table.userId),
+    index("idx_user_ips_last_seen_at").on(table.lastSeenAt),
+    uniqueIndex("uidx_user_ips_user_ip").on(table.userId, table.ipAddress),
+  ]
+);
+
 export const llmModels = sqliteTable(
   "llm_models",
   {
@@ -437,6 +469,7 @@ export const systemSettings = sqliteTable("system_settings", {
 // ============================================================================
 
 export const usersRelations = relations(users, ({ many }) => ({
+  userIps: many(userIps),
   chatThreads: many(chatThreads),
   messages: many(messages),
   translations: many(translations),
@@ -445,6 +478,13 @@ export const usersRelations = relations(users, ({ many }) => ({
   generatedImages: many(generatedImages),
   codeRuns: many(codeRuns),
   documents: many(documents),
+}));
+
+export const userIpsRelations = relations(userIps, ({ one }) => ({
+  user: one(users, {
+    fields: [userIps.userId],
+    references: [users.id],
+  }),
 }));
 
 export const llmModelsRelations = relations(llmModels, ({ many }) => ({
@@ -589,6 +629,11 @@ export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
+export const insertUserIpSchema = createInsertSchema(userIps);
+export const selectUserIpSchema = createSelectSchema(userIps);
+export type InsertUserIp = z.infer<typeof insertUserIpSchema>;
+export type SelectUserIp = z.infer<typeof selectUserIpSchema>;
+
 export const insertLlmModelSchema = createInsertSchema(llmModels);
 export const selectLlmModelSchema = createSelectSchema(llmModels);
 export type InsertLlmModel = z.infer<typeof insertLlmModelSchema>;
@@ -670,6 +715,7 @@ export type SelectSystemSetting = z.infer<typeof selectSystemSettingSchema>;
 // ============================================================================
 
 export type User = SelectUser;
+export type UserIp = SelectUserIp;
 export type LLMModel = SelectLlmModel;
 export type OllamaServer = SelectOllamaServer;
 export type OllamaServerModel = SelectOllamaServerModel;
