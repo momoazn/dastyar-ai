@@ -37,6 +37,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState("");
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/login" }) as { redirect?: string };
@@ -52,13 +53,14 @@ function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate({ username, password });
+    const trimmedUsername = username.trim();
+    if (!/^\d{10}$/.test(trimmedUsername)) {
+      setLocalError(fa.auth.registerForm.nationalCodeInvalid);
+      return;
+    }
+    setLocalError("");
+    loginMutation.mutate({ username: trimmedUsername, password });
   };
-
-  const localError = getErrorMessage(
-    loginMutation.error,
-    fa.auth.loginForm.unknownError
-  );
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
@@ -82,11 +84,21 @@ function LoginPage() {
                   {fa.auth.loginForm.usernameLabel}
                 </Label>
                 <Input
+                  autoComplete="username"
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                   dir="ltr"
                   disabled={loginMutation.isPending}
                   id="username"
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (localError) {
+                      setLocalError("");
+                    }
+                  }}
+                  inputMode="numeric"
+                  maxLength={10}
+                  minLength={10}
+                  pattern="\\d{10}"
                   placeholder={fa.auth.loginForm.usernamePlaceholder}
                   required
                   type="text"
@@ -113,9 +125,15 @@ function LoginPage() {
                   value={password}
                 />
               </div>
-              {loginMutation.error && (
+              {(localError || loginMutation.error) && (
                 <Alert variant="destructive">
-                  <AlertDescription>{localError}</AlertDescription>
+                  <AlertDescription>
+                    {localError ||
+                      getErrorMessage(
+                        loginMutation.error,
+                        fa.auth.loginForm.unknownError
+                      )}
+                  </AlertDescription>
                 </Alert>
               )}
               <Button

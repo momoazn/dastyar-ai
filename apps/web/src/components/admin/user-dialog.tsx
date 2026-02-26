@@ -172,10 +172,14 @@ export function UserDialog({
     return true;
   };
 
-  const handleAddUser = () => {
+const handleAddUser = () => {
     const trimmedUsername = username.trim();
     if (!trimmedUsername) {
       toast.error(fa.admin.users.messages.usernameRequired);
+      return;
+    }
+    if (!/^\d{10}$/.test(trimmedUsername)) {
+      toast.error(fa.admin.users.messages.usernameInvalid);
       return;
     }
     if (!password.trim()) {
@@ -268,10 +272,14 @@ export function UserDialog({
             <Input
               autoComplete="username"
               className="text-right"
-              dir="rtl"
+              dir="ltr"
               disabled={isPending || isEditMode}
               id="username"
               onChange={(e) => setUsername(e.target.value)}
+              inputMode="numeric"
+              maxLength={10}
+              minLength={10}
+              pattern="\\d{10}"
               placeholder={fa.admin.users.addDialog.usernamePlaceholder}
               value={username}
             />

@@ -67,7 +67,7 @@ export const userProfile = {
   pleaseWait: "لطفاً صبر کنید",
   logOut: "خروج",
   title: "پروفایل کاربر",
-  username: "نام کاربری",
+  username: "کد ملی",
   role: "نقش",
   id: "شناسه",
   failedToLoad: "خطا در بارگذاری اطلاعات کاربر",

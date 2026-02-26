@@ -22,7 +22,7 @@ import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";
 
 const usernameSchema = z.object({
-  newUsername: z.string().min(3).max(50),
+  newUsername: z.string().regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
 });
 
 type UsernameFormValues = z.infer<typeof usernameSchema>;
@@ -86,8 +86,12 @@ export function ProfileSection() {
                         <Input
                           {...field}
                           className="w-full text-right"
-                          dir="rtl"
+                          dir="ltr"
                           disabled={updateUsernameMutation.isPending}
+                          inputMode="numeric"
+                          maxLength={10}
+                          minLength={10}
+                          pattern="\\d{10}"
                         />
                       </FormControl>
                       <FormMessage className="text-right" />

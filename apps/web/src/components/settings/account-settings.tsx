@@ -30,7 +30,7 @@ import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 const usernameSchema = z.object({
-  newUsername: z.string().min(3).max(50),
+  newUsername: z.string().regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
 });
 
 const passwordSchema = z
@@ -148,8 +148,12 @@ export function AccountSettings() {
                     <Input
                       {...field}
                       className="text-right"
-                      dir="rtl"
+                      dir="ltr"
                       disabled={updateUsernameMutation.isPending}
+                      inputMode="numeric"
+                      maxLength={10}
+                      minLength={10}
+                      pattern="\\d{10}"
                       placeholder={user?.username}
                     />
                   </FormControl>

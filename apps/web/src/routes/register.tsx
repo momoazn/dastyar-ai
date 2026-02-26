@@ -72,6 +72,12 @@ function RegisterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError("");
+    const trimmedUsername = username.trim();
+
+    if (!/^\d{10}$/.test(trimmedUsername)) {
+      setLocalError(fa.auth.registerForm.nationalCodeInvalid);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setLocalError(fa.auth.registerForm.passwordMismatch);
@@ -83,7 +89,7 @@ function RegisterPage() {
       return;
     }
 
-    registerMutation.mutate({ username, password });
+    registerMutation.mutate({ username: trimmedUsername, password });
   };
 
   return (
@@ -108,11 +114,21 @@ function RegisterPage() {
                   {fa.auth.registerForm.usernameLabel}
                 </Label>
                 <Input
+                  autoComplete="username"
                   className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
                   dir="ltr"
                   disabled={registerMutation.isPending}
                   id="username"
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (localError) {
+                      setLocalError("");
+                    }
+                  }}
+                  inputMode="numeric"
+                  maxLength={10}
+                  minLength={10}
+                  pattern="\\d{10}"
                   placeholder={fa.auth.registerForm.usernamePlaceholder}
                   required
                   type="text"

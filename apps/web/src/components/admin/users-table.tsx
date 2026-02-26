@@ -46,6 +46,11 @@ import { UserDetailDialog } from "./user-detail-dialog";
 import { UserDialog } from "./user-dialog";
 
 export function UsersTable() {
+  type AdminUserWithIps = User & {
+    latestIps: string[];
+    ipCount: number;
+  };
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
@@ -72,7 +77,7 @@ export function UsersTable() {
     })
   );
 
-  const users = usersResponse?.users ?? [];
+  const users = (usersResponse?.users ?? []) as AdminUserWithIps[];
   const isEmpty = !(isLoading || error) && users.length === 0;
 
   const deleteUserMutation = useMutation(
@@ -237,6 +242,9 @@ export function UsersTable() {
                   {fa.admin.users.table.role}
                 </TableHead>
                 <TableHead className="text-right">
+                  {fa.admin.users.table.ips}
+                </TableHead>
+                <TableHead className="text-right">
                   {fa.admin.users.table.username}
                 </TableHead>
                 <TableHead className="text-right">
@@ -302,6 +310,18 @@ export function UsersTable() {
                         ? fa.admin.users.table.admin
                         : fa.admin.users.table.user}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[240px] text-right">
+                    <span className="line-clamp-2 break-words text-sm">
+                      {user.latestIps.length > 0
+                        ? user.latestIps.join("، ")
+                        : fa.admin.users.noIps}
+                    </span>
+                    {user.ipCount > user.latestIps.length && (
+                      <div className="mt-1 text-muted-foreground text-xs">
+                        +{user.ipCount - user.latestIps.length}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">{user.username}</TableCell>
                   <TableCell className="text-right font-medium">
