@@ -168,6 +168,36 @@ export function UserDetailDialog({
                   </div>
                 </Card>
 
+                {/* IPs */}
+                {(userDetails.latestIps.length > 0 || userDetails.ipCount > 0) && (
+                  <Card className="p-4">
+                    <div className="space-y-3">
+                      <h3 className="font-medium text-sm">
+                        {fa.admin.users.table.ips}
+                      </h3>
+                      {userDetails.latestIps.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {userDetails.latestIps.map((ip, index) => (
+                            <Badge
+                              key={index}
+                              className="font-mono text-xs"
+                              variant="secondary"
+                            >
+                              {ip}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                      {userDetails.ipCount > userDetails.latestIps.length && (
+                        <p className="text-muted-foreground text-xs">
+                          +{userDetails.ipCount - userDetails.latestIps.length}{" "}
+                              {fa.general.more}
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                )}
+
                 {/* Activity Stats */}
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">

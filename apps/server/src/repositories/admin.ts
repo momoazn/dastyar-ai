@@ -25,6 +25,8 @@ export interface UserWithStats extends UserWithoutSensitiveData {
   summaryCount: number;
   codeRunCount: number;
   threadCount: number;
+  latestIps: string[];
+  ipCount: number;
 }
 
 export interface AdminUserListItem extends UserWithoutSensitiveData {
@@ -140,6 +142,7 @@ export async function getUserWithStats(
     summaryCount,
     codeRunCount,
     threadCount,
+    userIps,
   ] = await Promise.all([
     countByUserId(messages, userId),
     countByUserId(documents, userId),
@@ -148,6 +151,7 @@ export async function getUserWithStats(
     countByUserId(summaries, userId),
     countByUserId(codeRuns, userId),
     countByUserId(chatThreads, userId),
+    listUsersRecentIps(userId, 10),
   ]);
 
   return {
@@ -159,6 +163,8 @@ export async function getUserWithStats(
     summaryCount,
     codeRunCount,
     threadCount,
+    latestIps: userIps.ips,
+    ipCount: userIps.totalCount,
   };
 }
 

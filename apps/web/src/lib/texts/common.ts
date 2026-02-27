@@ -18,6 +18,7 @@ export const general = {
   save: "ذخیره",
   cancel: "لغو",
   edit: "ویرایش",
+  more: "بیشتر",
 } as const;
 
 export const languages = {

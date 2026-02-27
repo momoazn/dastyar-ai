@@ -239,9 +239,6 @@ export function UsersTable() {
                   {fa.admin.users.table.username}
                 </TableHead>
                 <TableHead>
-                  {fa.admin.users.table.ips}
-                </TableHead>
-                <TableHead>
                   {fa.admin.users.table.role}
                 </TableHead>
                 <TableHead>
@@ -259,18 +256,6 @@ export function UsersTable() {
                     {user.id}
                   </TableCell>
                   <TableCell>{user.username}</TableCell>
-                  <TableCell className="max-w-[240px]">
-                    <span className="line-clamp-2 break-words text-sm">
-                      {user.latestIps.length > 0
-                        ? user.latestIps.join("، ")
-                        : fa.admin.users.noIps}
-                    </span>
-                    {user.ipCount > user.latestIps.length && (
-                      <div className="mt-1 text-muted-foreground text-xs">
-                        +{user.ipCount - user.latestIps.length}
-                      </div>
-                    )}
-                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={user.role === "admin" ? "default" : "secondary"}
