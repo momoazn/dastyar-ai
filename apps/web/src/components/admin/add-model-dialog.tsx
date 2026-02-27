@@ -90,15 +90,15 @@ export function AddModelDialog({ open, onOpenChange }: AddModelDialogProps) {
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader className="text-right">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+        <DialogHeader>
           <DialogTitle>{fa.admin.models.addDialog.title}</DialogTitle>
           <DialogDescription>
             {fa.admin.models.addDialog.description}
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" dir="rtl" onSubmit={handleSubmit}>
           {/* Identifier */}
           <div className="space-y-2">
             <Label htmlFor="identifier">
