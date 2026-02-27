@@ -1,64 +1,11 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { User } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import {
-  Button,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-  Input,
-} from "@/components/ui";
-import { useUser } from "@/hooks/use-user";
-import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
-import { orpc } from "@/utils/orpc";
+import { useUser } from "@/hooks/use-user";
 import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";
 
-const usernameSchema = z.object({
-  newUsername: z.string().regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
-});
-
-type UsernameFormValues = z.infer<typeof usernameSchema>;
-
 export function ProfileSection() {
   const { data: user } = useUser();
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-
-  const usernameForm = useForm<UsernameFormValues>({
-    resolver: zodResolver(usernameSchema),
-    defaultValues: {
-      newUsername: user?.username || "",
-    },
-  });
-
-  const updateUsernameMutation = useMutation(
-    orpc.auth.updateUsername.mutationOptions({
-      onSuccess: () => {
-        toast.success(fa.settings.account.usernameUpdated);
-        setIsEditingUsername(false);
-        usernameForm.reset();
-      },
-      onError: (error: Error) => {
-        toast.error(fa.settings.account.usernameUpdateError, {
-          description: getErrorMessage(
-            error,
-            fa.settings.account.usernameUpdateError
-          ),
-        });
-      },
-    })
-  );
-
-  const onUsernameSubmit = (values: UsernameFormValues) => {
-    updateUsernameMutation.mutate({ newUsername: values.newUsername });
-  };
 
   return (
     <SettingsSection
@@ -71,73 +18,9 @@ export function ProfileSection() {
           description={fa.settings.account.currentUsername}
           label={fa.settings.account.username}
         >
-          {isEditingUsername ? (
-            <Form {...usernameForm}>
-              <form
-                className="flex w-full flex-col gap-2 sm:flex-row sm:items-start"
-                onSubmit={usernameForm.handleSubmit(onUsernameSubmit)}
-              >
-                <FormField
-                  control={usernameForm.control}
-                  name="newUsername"
-                  render={({ field }) => (
-                    <FormItem className="w-full sm:min-w-64">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="w-full text-right"
-                          dir="ltr"
-                          disabled={updateUsernameMutation.isPending}
-                          inputMode="numeric"
-                          maxLength={10}
-                          minLength={10}
-                          pattern="\\d{10}"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-right" />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex items-center gap-2 sm:pt-0.5">
-                  <Button
-                    disabled={updateUsernameMutation.isPending}
-                    size="sm"
-                    type="submit"
-                  >
-                    {updateUsernameMutation.isPending
-                      ? fa.general.loading
-                      : fa.general.save}
-                  </Button>
-                  <Button
-                    disabled={updateUsernameMutation.isPending}
-                    onClick={() => {
-                      setIsEditingUsername(false);
-                      usernameForm.reset();
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    {fa.general.cancel}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          ) : (
-            <div className="flex items-center gap-3">
-              <span className="rounded-md bg-muted px-2.5 py-1 text-sm">
-                {user?.username}
-              </span>
-              <Button
-                onClick={() => setIsEditingUsername(true)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                {fa.general.edit}
-              </Button>
-            </div>
-          )}
+          <span className="rounded-md bg-muted px-2.5 py-1 text-sm">
+            {user?.username}
+          </span>
         </SettingsItem>
       </div>
     </SettingsSection>

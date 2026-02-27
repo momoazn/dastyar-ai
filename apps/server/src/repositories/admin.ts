@@ -165,12 +165,19 @@ export async function getUserWithStats(
 export async function updateUser(
   userId: number,
   updates: {
+    username?: string;
     role?: UserRole;
     password?: string;
   }
 ): Promise<UserWithoutSensitiveData> {
-  const updateData: { role?: UserRole; password?: string; updatedAt: Date } = {
+  const updateData: {
+    username?: string;
+    role?: UserRole;
+    password?: string;
+    updatedAt: Date;
+  } = {
     updatedAt: new Date(),
+    ...(updates.username !== undefined && { username: updates.username }),
     ...(updates.role !== undefined && { role: updates.role }),
     ...(updates.password !== undefined && {
       password: await hashPassword(updates.password),

@@ -25,6 +25,8 @@ import type { User } from "@/types/database";
 import { orpc } from "@/utils/orpc";
 import { invalidateAdminUsers } from "./query-utils";
 
+const NATIONAL_CODE_REGEX = /^\d{10}$/;
+
 type UserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -178,7 +180,7 @@ const handleAddUser = () => {
       toast.error(fa.admin.users.messages.usernameRequired);
       return;
     }
-    if (!/^\d{10}$/.test(trimmedUsername)) {
+    if (!NATIONAL_CODE_REGEX.test(trimmedUsername)) {
       toast.error(fa.admin.users.messages.usernameInvalid);
       return;
     }
@@ -202,12 +204,26 @@ const handleAddUser = () => {
       return;
     }
 
+    const trimmedUsername = username.trim();
+    const usernameChanged = trimmedUsername !== user.username;
     const roleChanged = role !== user.role;
     const passwordChanged = changePassword && password.trim().length > 0;
-    const hasChanges = roleChanged || passwordChanged;
+    const hasChanges = usernameChanged || roleChanged || passwordChanged;
     if (!hasChanges) {
       onOpenChange(false);
       return;
+    }
+
+    // Validate username if changed
+    if (usernameChanged) {
+      if (!trimmedUsername) {
+        toast.error(fa.admin.users.messages.usernameRequired);
+        return;
+      }
+      if (!NATIONAL_CODE_REGEX.test(trimmedUsername)) {
+        toast.error(fa.admin.users.messages.usernameInvalid);
+        return;
+      }
     }
 
     if (passwordChanged) {
@@ -222,6 +238,7 @@ const handleAddUser = () => {
 
     updateUserMutation.mutate({
       userId: user.id,
+      ...(usernameChanged && { username: trimmedUsername }),
       ...(roleChanged && { role }),
       ...(passwordChanged && { password }),
     });
@@ -273,16 +290,19 @@ const handleAddUser = () => {
               autoComplete="username"
               className="text-right"
               dir="ltr"
-              disabled={isPending || isEditMode}
+              disabled={isPending}
               id="username"
               onChange={(e) => setUsername(e.target.value)}
               inputMode="numeric"
               maxLength={10}
-              minLength={10}
-              pattern="\\d{10}"
               placeholder={fa.admin.users.addDialog.usernamePlaceholder}
               value={username}
             />
+            <p className="text-muted-foreground text-xs">
+              {isEditMode
+                ? "تغییر کد ملی تنها در صورت اشتباه نگارشی مجاز است"
+                : "کد ملی باید ۱۰ رقم عددی باشد"}
+            </p>
           </div>
 
           {/* Password - required for add, optional for edit */}

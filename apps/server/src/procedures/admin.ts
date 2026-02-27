@@ -43,6 +43,10 @@ import { adminProcedure } from "./base";
 
 const updateUserSchema = z.object({
   userId: z.number().int().positive(),
+  username: z
+    .string()
+    .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد")
+    .optional(),
   role: z.enum(["admin", "user"]).optional(),
   password: z.string().min(6).optional(),
 });
@@ -162,7 +166,7 @@ export const adminProcedures = {
     .input(updateUserSchema)
     .handler(async ({ input }) => {
       try {
-        const { userId, role, password } = input;
+        const { userId, username, role, password } = input;
 
         // Check if user exists
         const user = await getUserById(userId);
@@ -174,14 +178,26 @@ export const adminProcedures = {
         }
 
         // At least one field must be provided
-        if (role === undefined && password === undefined) {
+        if (username === undefined && role === undefined && password === undefined) {
           throw new ORPCError("INVALID_INPUT", {
-            message: "At least one field (role or password) must be provided",
+            message: "At least one field (username, role or password) must be provided",
             status: 400,
           });
         }
 
+        // Check if new username already exists (if changing username)
+        if (username !== undefined && username !== user.username) {
+          const exists = await usernameExists(username);
+          if (exists) {
+            throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+              message: "کد ملی قبلاً استفاده شده است",
+              status: 400,
+            });
+          }
+        }
+
         const updatedUser = await updateUser(userId, {
+          username,
           role,
           password,
         });
