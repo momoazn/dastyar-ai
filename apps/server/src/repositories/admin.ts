@@ -13,7 +13,11 @@ import {
   users,
 } from "@/database";
 import { hashPassword } from "./auth";
-import { listUsersRecentIps } from "./user-ips";
+import {
+  countDistinctUserIps,
+  listRecentUserIps,
+  listUsersRecentIps,
+} from "./user-ips";
 
 export type UserWithoutSensitiveData = Omit<User, "password">;
 
@@ -142,7 +146,8 @@ export async function getUserWithStats(
     summaryCount,
     codeRunCount,
     threadCount,
-    userIps,
+    latestIps,
+    ipCount,
   ] = await Promise.all([
     countByUserId(messages, userId),
     countByUserId(documents, userId),
@@ -151,7 +156,8 @@ export async function getUserWithStats(
     countByUserId(summaries, userId),
     countByUserId(codeRuns, userId),
     countByUserId(chatThreads, userId),
-    listUsersRecentIps(userId, 10),
+    listRecentUserIps(userId, 10),
+    countDistinctUserIps(userId),
   ]);
 
   return {
@@ -163,8 +169,8 @@ export async function getUserWithStats(
     summaryCount,
     codeRunCount,
     threadCount,
-    latestIps: userIps.ips,
-    ipCount: userIps.totalCount,
+    latestIps,
+    ipCount,
   };
 }
 
