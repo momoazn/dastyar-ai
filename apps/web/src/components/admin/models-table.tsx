@@ -167,57 +167,36 @@ export function ModelsTable() {
       title={fa.admin.models.title}
     >
       <div className="rounded-md border">
-        <Table>
+        <Table dir="rtl">
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">
-                {fa.admin.models.table.toggle}
+              <TableHead>
+                {fa.admin.models.table.id}
               </TableHead>
-              <TableHead className="text-right">
-                {fa.admin.models.table.status}
-              </TableHead>
-              <TableHead className="text-right">
-                {fa.admin.models.table.provider}
-              </TableHead>
-              <TableHead className="text-right">
-                {fa.admin.models.table.name}
-              </TableHead>
-              <TableHead className="text-right">
+              <TableHead>
                 {fa.admin.models.table.servers}
               </TableHead>
-              <TableHead className="text-right">
-                {fa.admin.models.table.id}
+              <TableHead>
+                {fa.admin.models.table.name}
+              </TableHead>
+              <TableHead>
+                {fa.admin.models.table.provider}
+              </TableHead>
+              <TableHead>
+                {fa.admin.models.table.status}
+              </TableHead>
+              <TableHead>
+                {fa.admin.models.table.toggle}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {models?.map((model) => (
               <TableRow key={model.id}>
-                <TableCell className="text-right">
-                  <Switch
-                    checked={model.isEnabled}
-                    disabled={toggleModelMutation.isPending}
-                    onCheckedChange={() =>
-                      handleToggleModel(model.id, model.isEnabled)
-                    }
-                  />
+                <TableCell className="font-medium">
+                  {model.id}
                 </TableCell>
-                <TableCell className="text-right">
-                  <Badge variant={model.isEnabled ? "default" : "secondary"}>
-                    {model.isEnabled
-                      ? fa.admin.models.table.enabled
-                      : fa.admin.models.table.disabled}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Badge variant="outline">
-                    {getProviderLabel(model.provider)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {model.identifier}
-                </TableCell>
-                <TableCell className="text-right">
+                <TableCell>
                   {model.provider === "ollama" ? (
                     <Badge variant="secondary">
                       {fa.admin.models.serverCoverage(
@@ -228,8 +207,29 @@ export function ModelsTable() {
                     <span className="text-muted-foreground text-xs">-</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right font-medium">
-                  {model.id}
+                <TableCell className="font-medium">
+                  {model.identifier}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {getProviderLabel(model.provider)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={model.isEnabled ? "default" : "secondary"}>
+                    {model.isEnabled
+                      ? fa.admin.models.table.enabled
+                      : fa.admin.models.table.disabled}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Switch
+                    checked={model.isEnabled}
+                    disabled={toggleModelMutation.isPending}
+                    onCheckedChange={() =>
+                      handleToggleModel(model.id, model.isEnabled)
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ))}

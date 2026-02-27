@@ -247,84 +247,43 @@ export function OllamaServersTable() {
         </div>
 
         <div className="rounded-md border">
-          <Table>
+          <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.name}
+                <TableHead>
+                  {fa.admin.ollamaServers.table.actions}
                 </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.baseUrl}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.status}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.modelCount}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.inFlight}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.running}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.busyScore}
-                </TableHead>
-                <TableHead className="text-right">
+                <TableHead>
                   {fa.admin.ollamaServers.table.latency}
                 </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.ollamaServers.table.actions}
+                <TableHead>
+                  {fa.admin.ollamaServers.table.busyScore}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.running}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.inFlight}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.modelCount}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.status}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.baseUrl}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.ollamaServers.table.name}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedServers.map((server) => (
                 <TableRow key={server.id}>
-                  <TableCell className="text-right font-medium">
-                    {server.name}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
-                    {server.baseUrl}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Badge
-                        variant={server.isEnabled ? "default" : "secondary"}
-                      >
-                        {server.isEnabled
-                          ? fa.admin.ollamaServers.status.enabled
-                          : fa.admin.ollamaServers.status.disabled}
-                      </Badge>
-                      <Badge
-                        variant={
-                          server.runtime.reachable ? "secondary" : "destructive"
-                        }
-                      >
-                        {server.runtime.reachable
-                          ? fa.admin.ollamaServers.status.reachable
-                          : fa.admin.ollamaServers.status.unreachable}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {server.modelCount}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {server.runtime.inFlight}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {server.runtime.runningModels}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {server.runtime.busyScore.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {server.runtime.ewmaLatencyMs}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
                       <Switch
                         checked={server.isEnabled}
                         onCheckedChange={(checked) =>
@@ -378,6 +337,47 @@ export function OllamaServersTable() {
                         {fa.admin.ollamaServers.actions.delete}
                       </Button>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {server.runtime.ewmaLatencyMs}
+                  </TableCell>
+                  <TableCell>
+                    {server.runtime.busyScore.toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    {server.runtime.runningModels}
+                  </TableCell>
+                  <TableCell>
+                    {server.runtime.inFlight}
+                  </TableCell>
+                  <TableCell>
+                    {server.modelCount}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={server.isEnabled ? "default" : "secondary"}
+                      >
+                        {server.isEnabled
+                          ? fa.admin.ollamaServers.status.enabled
+                          : fa.admin.ollamaServers.status.disabled}
+                      </Badge>
+                      <Badge
+                        variant={
+                          server.runtime.reachable ? "secondary" : "destructive"
+                        }
+                      >
+                        {server.runtime.reachable
+                          ? fa.admin.ollamaServers.status.reachable
+                          : fa.admin.ollamaServers.status.unreachable}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {server.baseUrl}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {server.name}
                   </TableCell>
                 </TableRow>
               ))}

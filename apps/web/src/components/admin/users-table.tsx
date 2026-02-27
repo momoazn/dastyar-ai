@@ -229,33 +229,61 @@ export function UsersTable() {
         title={fa.admin.users.title}
       >
         <div className="overflow-x-auto rounded-md border">
-          <Table>
+          <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.actions}
+                <TableHead>
+                  {fa.admin.users.table.id}
                 </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.createdAt}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.role}
-                </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.ips}
-                </TableHead>
-                <TableHead className="text-right">
+                <TableHead>
                   {fa.admin.users.table.username}
                 </TableHead>
-                <TableHead className="text-right">
-                  {fa.admin.users.table.id}
+                <TableHead>
+                  {fa.admin.users.table.ips}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.users.table.role}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.users.table.createdAt}
+                </TableHead>
+                <TableHead>
+                  {fa.admin.users.table.actions}
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="text-right">
+                  <TableCell className="font-medium">
+                    {user.id}
+                  </TableCell>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell className="max-w-[240px]">
+                    <span className="line-clamp-2 break-words text-sm">
+                      {user.latestIps.length > 0
+                        ? user.latestIps.join("، ")
+                        : fa.admin.users.noIps}
+                    </span>
+                    {user.ipCount > user.latestIps.length && (
+                      <div className="mt-1 text-muted-foreground text-xs">
+                        +{user.ipCount - user.latestIps.length}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                    >
+                      {user.role === "admin"
+                        ? fa.admin.users.table.admin
+                        : fa.admin.users.table.user}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
+                  </TableCell>
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -298,34 +326,6 @@ export function UsersTable() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Date(user.createdAt).toLocaleDateString("fa-IR")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={user.role === "admin" ? "default" : "secondary"}
-                    >
-                      {user.role === "admin"
-                        ? fa.admin.users.table.admin
-                        : fa.admin.users.table.user}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="max-w-[240px] text-right">
-                    <span className="line-clamp-2 break-words text-sm">
-                      {user.latestIps.length > 0
-                        ? user.latestIps.join("، ")
-                        : fa.admin.users.noIps}
-                    </span>
-                    {user.ipCount > user.latestIps.length && (
-                      <div className="mt-1 text-muted-foreground text-xs">
-                        +{user.ipCount - user.latestIps.length}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{user.username}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {user.id}
                   </TableCell>
                 </TableRow>
               ))}
