@@ -45,7 +45,9 @@ export function SettingsSection({
           <div className="flex-1 text-right">
             <h3 className="font-semibold text-base">{title}</h3>
             {description && (
-              <p className="mt-1 text-muted-foreground text-sm">{description}</p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                {description}
+              </p>
             )}
           </div>
         </div>
@@ -57,7 +59,9 @@ export function SettingsSection({
         />
       </Button>
 
-      {isOpen && <div className="border-t bg-muted/15 p-4 md:p-5">{children}</div>}
+      {isOpen && (
+        <div className="border-t bg-muted/15 p-4 md:p-5">{children}</div>
+      )}
     </div>
   );
 }

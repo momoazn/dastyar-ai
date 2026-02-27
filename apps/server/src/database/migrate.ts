@@ -1,8 +1,7 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { logger } from "@/lib/logger";
-import { db, sqliteDB } from "./index";
+import { sqliteDB } from "./index";
 
 type MigrationEntry = {
   idx: number;
@@ -10,7 +9,8 @@ type MigrationEntry = {
   when: number;
 };
 
-type MigrationData = { [key: string]: string };
+type MigrationData = Record<string, string>;
+type MigrationSource = "directory" | "bundled";
 
 /**
  * Load bundled migration data
@@ -25,6 +25,63 @@ async function loadBundledMigrations(): Promise<MigrationData | null> {
     );
     return null;
   }
+}
+
+function loadFileMigrations(migrationsPath: string): MigrationData {
+  const journalPath = join(migrationsPath, "meta", "_journal.json");
+
+  if (!existsSync(journalPath)) {
+    throw new Error(`Migration journal not found: ${journalPath}`);
+  }
+
+  const migrationData: MigrationData = {
+    "meta/_journal.json": readFileSync(journalPath, "utf8"),
+  };
+
+  const journal = JSON.parse(migrationData["meta/_journal.json"]) as {
+    entries: MigrationEntry[];
+  };
+
+  for (const entry of journal.entries) {
+    const sqlFileName = `${entry.tag}.sql`;
+    const sqlFilePath = join(migrationsPath, sqlFileName);
+
+    if (!existsSync(sqlFilePath)) {
+      throw new Error(`Migration SQL file not found: ${sqlFilePath}`);
+    }
+
+    migrationData[sqlFileName] = readFileSync(sqlFilePath, "utf8");
+  }
+
+  return migrationData;
+}
+
+async function loadAvailableMigrations(): Promise<{
+  source: MigrationSource;
+  data: MigrationData;
+} | null> {
+  const migrationsPath = join(import.meta.dir, "migrations");
+
+  if (existsSync(migrationsPath)) {
+    logger.info(
+      `[migrate] Loading migrations from directory: ${migrationsPath}`
+    );
+    return {
+      source: "directory",
+      data: loadFileMigrations(migrationsPath),
+    };
+  }
+
+  const bundled = await loadBundledMigrations();
+  if (bundled) {
+    logger.info("[migrate] Loading bundled migrations");
+    return {
+      source: "bundled",
+      data: bundled,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -97,11 +154,11 @@ function recordMigration(migrationTag: string): void {
 }
 
 /**
- * Apply bundled migrations
+ * Apply migrations from either directory or bundled source
  */
-function applyBundledMigrations(migrationData: MigrationData): void {
+function applyMigrations(migrationData: MigrationData): void {
   logger.info(
-    `[migrate] Running migrations from bundled data (${
+    `[migrate] Running migrations from loaded migration data (${
       Object.keys(migrationData).length
     } files)...`
   );
@@ -164,28 +221,19 @@ export async function runMigrations(): Promise<void> {
   try {
     logger.info("[migrate] Starting database migrations...");
 
-    const migrationData = await loadBundledMigrations();
+    const loadedMigrations = await loadAvailableMigrations();
 
-    if (migrationData) {
-      applyBundledMigrations(migrationData);
-      logger.info("[migrate] All migrations completed successfully");
+    if (loadedMigrations) {
+      applyMigrations(loadedMigrations.data);
+      logger.info(
+        `[migrate] ${loadedMigrations.source} migrations completed successfully`
+      );
       return;
     }
 
-    // Fallback to file-based migrations in development
-    const migrationsPath = join(import.meta.dir, "migrations");
-
-    if (existsSync(migrationsPath)) {
-      logger.info(
-        `[migrate] Running migrations from directory: ${migrationsPath}`
-      );
-      await migrate(db, { migrationsFolder: migrationsPath });
-      logger.info("[migrate] Migrations completed successfully");
-    } else {
-      logger.info(
-        "[migrate] No migrations found, database will be created from schema"
-      );
-    }
+    logger.info(
+      "[migrate] No migrations found, database will be created from schema"
+    );
   } catch (error) {
     logger.error(
       "[migrate] Migration failed:",

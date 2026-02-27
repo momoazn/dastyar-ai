@@ -177,8 +177,7 @@ function RouteComponent() {
       return;
     }
 
-    const extension =
-      mode === "generate" ? getCodeExtension(language) : "txt";
+    const extension = mode === "generate" ? getCodeExtension(language) : "txt";
     const fileName = `generated-code-${Date.now()}.${extension}`;
     const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
     const downloadUrl = URL.createObjectURL(blob);
@@ -522,7 +521,10 @@ function RouteComponent() {
                   </div>
                 ) : (
                   <div className="h-full overflow-y-auto text-left" dir="ltr">
-                    <Response className="h-auto w-full" controls={{ code: false }}>
+                    <Response
+                      className="h-auto w-full"
+                      controls={{ code: false }}
+                    >
                       {mode === "generate" && output
                         ? `\`\`\`${language}\n${output}\n\`\`\``
                         : output}

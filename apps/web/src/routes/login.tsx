@@ -26,6 +26,9 @@ import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
+const NATIONAL_CODE_NUMERIC_REGEX = /^\d+$/;
+const NATIONAL_CODE_LENGTH_REGEX = /^\d{10}$/;
+
 export const Route = createFileRoute("/login")({
   component: () => (
     <AuthLayout>
@@ -54,11 +57,11 @@ function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedUsername = username.trim();
-    if (!/^\d+$/.test(trimmedUsername)) {
+    if (!NATIONAL_CODE_NUMERIC_REGEX.test(trimmedUsername)) {
       setLocalError(fa.auth.loginForm.nationalCodeNotNumeric);
       return;
     }
-    if (!/^\d{10}$/.test(trimmedUsername)) {
+    if (!NATIONAL_CODE_LENGTH_REGEX.test(trimmedUsername)) {
       setLocalError(fa.auth.loginForm.nationalCodeInvalid);
       return;
     }
@@ -93,14 +96,14 @@ function LoginPage() {
                   dir="ltr"
                   disabled={loginMutation.isPending}
                   id="username"
+                  inputMode="numeric"
+                  maxLength={10}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     if (localError) {
                       setLocalError("");
                     }
                   }}
-                  inputMode="numeric"
-                  maxLength={10}
                   placeholder={fa.auth.loginForm.usernamePlaceholder}
                   required
                   type="text"

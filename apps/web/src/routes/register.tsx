@@ -36,6 +36,8 @@ import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 
 const MIN_PASSWORD_LENGTH = 6;
+const NATIONAL_CODE_NUMERIC_REGEX = /^\d+$/;
+const NATIONAL_CODE_LENGTH_REGEX = /^\d{10}$/;
 
 export const Route = createFileRoute("/register")({
   component: () => (
@@ -74,11 +76,11 @@ function RegisterPage() {
     setLocalError("");
     const trimmedUsername = username.trim();
 
-    if (!/^\d+$/.test(trimmedUsername)) {
+    if (!NATIONAL_CODE_NUMERIC_REGEX.test(trimmedUsername)) {
       setLocalError(fa.auth.registerForm.nationalCodeNotNumeric);
       return;
     }
-    if (!/^\d{10}$/.test(trimmedUsername)) {
+    if (!NATIONAL_CODE_LENGTH_REGEX.test(trimmedUsername)) {
       setLocalError(fa.auth.registerForm.nationalCodeInvalid);
       return;
     }
@@ -123,14 +125,14 @@ function RegisterPage() {
                   dir="ltr"
                   disabled={registerMutation.isPending}
                   id="username"
+                  inputMode="numeric"
+                  maxLength={10}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     if (localError) {
                       setLocalError("");
                     }
                   }}
-                  inputMode="numeric"
-                  maxLength={10}
                   placeholder={fa.auth.registerForm.usernamePlaceholder}
                   required
                   type="text"

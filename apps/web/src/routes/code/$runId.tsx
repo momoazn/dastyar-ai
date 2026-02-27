@@ -82,7 +82,9 @@ function CodeHistoryView() {
 
     const extension = mode === "generate" ? getCodeExtension(language) : "txt";
     const fileName = `generated-code-${runId}.${extension}`;
-    const blob = new Blob([formattedOutput], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([formattedOutput], {
+      type: "text/plain;charset=utf-8",
+    });
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
@@ -310,7 +312,10 @@ function CodeHistoryView() {
               </div>
               <div className="min-h-0 flex-1 p-4">
                 <div className="h-full overflow-y-auto text-left" dir="ltr">
-                  <Response className="h-auto w-full" controls={{ code: false }}>
+                  <Response
+                    className="h-auto w-full"
+                    controls={{ code: false }}
+                  >
                     {mode === "generate" && formattedOutput
                       ? `\`\`\`${language}\n${formattedOutput}\n\`\`\``
                       : formattedOutput}

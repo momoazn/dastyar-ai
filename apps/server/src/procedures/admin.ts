@@ -68,9 +68,7 @@ const deleteUserSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  username: z
-    .string()
-    .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
+  username: z.string().regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["admin", "user"]).default("user"),
 });
@@ -178,9 +176,14 @@ export const adminProcedures = {
         }
 
         // At least one field must be provided
-        if (username === undefined && role === undefined && password === undefined) {
+        if (
+          username === undefined &&
+          role === undefined &&
+          password === undefined
+        ) {
           throw new ORPCError("INVALID_INPUT", {
-            message: "At least one field (username, role or password) must be provided",
+            message:
+              "At least one field (username, role or password) must be provided",
             status: 400,
           });
         }

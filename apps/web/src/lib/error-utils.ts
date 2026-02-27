@@ -9,12 +9,14 @@ const DEFAULT_ERROR_TEXTS = {
   tokenExpired: "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
 } as const;
 
+const PERSIAN_TEXT_REGEX = /[\u0600-\u06ff]/;
+
 function normalizeMessage(message: string): string {
   return message.trim().toLowerCase();
 }
 
 function containsPersianText(text: string): boolean {
-  return /[\u0600-\u06ff]/.test(text);
+  return PERSIAN_TEXT_REGEX.test(text);
 }
 
 function mapMessageToFriendlyText(
@@ -199,8 +201,7 @@ export function formatErrorForUser(
     ...DEFAULT_ERROR_TEXTS,
     ...errorTexts,
     badRequest: errorTexts?.badRequest ?? DEFAULT_ERROR_TEXTS.badRequest,
-    tokenExpired:
-      errorTexts?.tokenExpired ?? DEFAULT_ERROR_TEXTS.tokenExpired,
+    tokenExpired: errorTexts?.tokenExpired ?? DEFAULT_ERROR_TEXTS.tokenExpired,
   };
   const finalFallback = fallback ?? texts.unknown;
   const message = getErrorMessage(error, finalFallback);

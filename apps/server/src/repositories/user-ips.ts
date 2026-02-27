@@ -52,9 +52,9 @@ export async function countDistinctUserIps(userId: number): Promise<number> {
   return rows.at(0)?.count ?? 0;
 }
 
-export async function listUsersRecentIps(userIds: number[]): Promise<
-  Record<number, { latestIps: string[]; ipCount: number }>
-> {
+export async function listUsersRecentIps(
+  userIds: number[]
+): Promise<Record<number, { latestIps: string[]; ipCount: number }>> {
   if (userIds.length === 0) {
     return {};
   }
@@ -80,14 +80,13 @@ export async function listUsersRecentIps(userIds: number[]): Promise<
     counts.map((row) => [row.userId, row.ipCount ?? 0] as const)
   );
 
-  return latest.reduce<Record<number, { latestIps: string[]; ipCount: number }>>(
-    (acc, row) => {
-      acc[row.userId] = {
-        latestIps: row.ips,
-        ipCount: countByUserId.get(row.userId) ?? 0,
-      };
-      return acc;
-    },
-    {}
-  );
+  return latest.reduce<
+    Record<number, { latestIps: string[]; ipCount: number }>
+  >((acc, row) => {
+    acc[row.userId] = {
+      latestIps: row.ips,
+      ipCount: countByUserId.get(row.userId) ?? 0,
+    };
+    return acc;
+  }, {});
 }

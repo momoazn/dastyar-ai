@@ -30,13 +30,22 @@ export function AppearanceSection() {
           label={fa.settings.appearance.theme}
         >
           <Select onValueChange={setTheme} value={selectedTheme}>
-            <SelectTrigger className="w-36 justify-between text-right" dir="rtl">
+            <SelectTrigger
+              className="w-36 justify-between text-right"
+              dir="rtl"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent dir="rtl">
-              <SelectItem value="light">{fa.settings.appearance.light}</SelectItem>
-              <SelectItem value="dark">{fa.settings.appearance.dark}</SelectItem>
-              <SelectItem value="system">{fa.settings.appearance.system}</SelectItem>
+              <SelectItem value="light">
+                {fa.settings.appearance.light}
+              </SelectItem>
+              <SelectItem value="dark">
+                {fa.settings.appearance.dark}
+              </SelectItem>
+              <SelectItem value="system">
+                {fa.settings.appearance.system}
+              </SelectItem>
             </SelectContent>
           </Select>
         </SettingsItem>

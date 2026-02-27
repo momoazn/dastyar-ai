@@ -85,7 +85,9 @@ export function getEnabledNavItems(
   });
 }
 
-export function useActiveNavItem(items: NavItem[] = navMain): NavItem | undefined {
+export function useActiveNavItem(
+  items: NavItem[] = navMain
+): NavItem | undefined {
   const location = useLocation();
   const currentPath = location.pathname;
 

@@ -1,9 +1,6 @@
 import type { Context } from "hono";
 
-const tryHeader = (
-  context: Context,
-  headerName: string
-): string | null => {
+const tryHeader = (context: Context, headerName: string): string | null => {
   const value = context.req.header(headerName)?.trim();
   if (!value) {
     return null;
@@ -29,7 +26,7 @@ const parseForwardedHeader = (value: string): string | null => {
     }
     const withoutPort = normalized.startsWith("[")
       ? normalized
-      : normalized.split(":").at(0) ?? normalized;
+      : (normalized.split(":").at(0) ?? normalized);
     return withoutPort;
   }
   return null;

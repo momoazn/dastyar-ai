@@ -2,6 +2,8 @@
 
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import type { RouterClient } from "@orpc/server";
+import type { appRouter } from "@/server/procedures";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3000";
 const MODEL_IDENTIFIER = process.env.MODEL_IDENTIFIER ?? "deepseek-r1:1.5b";
@@ -38,6 +40,8 @@ type UploadResponse = {
   indexingSource?: string;
   indexingStatus?: string;
 };
+
+type OrpcClient = RouterClient<typeof appRouter>;
 
 function assertOrExit(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -149,7 +153,7 @@ async function main() {
   const file = Bun.file(DOCUMENT_PATH);
   assertOrExit(file.size > 0, `Document file not found: ${DOCUMENT_PATH}`);
 
-  const publicClient = createORPCClient(
+  const publicClient: OrpcClient = createORPCClient(
     new RPCLink({
       url: `${API_URL}/rpc`,
     })
@@ -166,7 +170,7 @@ async function main() {
   })) as AuthResponse;
   assertOrExit(registered?.token, "Registration failed");
 
-  const authClient = createORPCClient(
+  const authClient: OrpcClient = createORPCClient(
     new RPCLink({
       url: `${API_URL}/rpc`,
       headers: () => ({

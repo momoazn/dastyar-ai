@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import jwt from "jsonwebtoken";
-import type { User } from "@/database";
 import { env } from "@/config";
+import type { User } from "@/database";
 import { findUserById } from "@/repositories/auth";
 import {
   generateJwtToken,
@@ -131,7 +131,11 @@ describe("Auth Service", () => {
 
     it("should return error for expired token", async () => {
       const expiredToken = jwt.sign(
-        { userId: mockUser.id, username: mockUser.username, role: mockUser.role },
+        {
+          userId: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+        },
         env.JWT_SECRET,
         { expiresIn: -1 }
       );

@@ -1,4 +1,4 @@
-import type { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { logoutAtom, tokenAtom } from "@/atoms/auth";
@@ -12,14 +12,14 @@ export function useUser() {
     orpc.auth.me.queryOptions({
       enabled: !!token,
       staleTime: 5 * 60_000,
-      retry: (failureCount, error) => {
+      retry: (failureCount, error: unknown) => {
         // Only retry on network errors, not on auth errors
         const isAuthError =
           error instanceof ORPCError &&
           (error.status === 401 || error.code === "MISSING_AUTH_HEADER");
         return !isAuthError && failureCount < 3;
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         // Only logout on authentication errors
         const isAuthError =
           error instanceof ORPCError &&

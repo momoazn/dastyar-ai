@@ -26,7 +26,9 @@ export function AppSidebarHeader({
                 <img
                   alt={fa.navigation.appTitle}
                   className="size-8 rounded-lg"
+                  height={32}
                   src="/brand-logo.svg"
+                  width={32}
                 />
               </Link>
             </SidebarMenuButton>
@@ -52,7 +54,9 @@ export function AppSidebarHeader({
                 <img
                   alt={fa.navigation.appTitle}
                   className="size-7 rounded-lg"
+                  height={28}
                   src="/brand-logo.svg"
+                  width={28}
                 />
                 <h1 className="font-medium text-gray-900 text-lg dark:text-gray-100">
                   {fa.navigation.appTitle}

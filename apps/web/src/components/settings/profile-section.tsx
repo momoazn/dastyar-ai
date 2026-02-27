@@ -1,6 +1,6 @@
 import { User } from "lucide-react";
-import { fa } from "@/lib/texts";
 import { useUser } from "@/hooks/use-user";
+import { fa } from "@/lib/texts";
 import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";
 

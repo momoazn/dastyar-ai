@@ -174,7 +174,39 @@ export function UserDialog({
     return true;
   };
 
-const handleAddUser = () => {
+  const validateChangedUsername = (
+    usernameChanged: boolean,
+    trimmedUsername: string
+  ): boolean => {
+    if (!usernameChanged) {
+      return true;
+    }
+    if (!trimmedUsername) {
+      toast.error(fa.admin.users.messages.usernameRequired);
+      return false;
+    }
+    if (!NATIONAL_CODE_REGEX.test(trimmedUsername)) {
+      toast.error(fa.admin.users.messages.usernameInvalid);
+      return false;
+    }
+    return true;
+  };
+
+  const validateChangedPassword = (passwordChanged: boolean): boolean => {
+    if (!passwordChanged) {
+      return true;
+    }
+    if (!validatePassword(password)) {
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error(fa.admin.users.actions.passwordMismatch);
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddUser = () => {
     const trimmedUsername = username.trim();
     if (!trimmedUsername) {
       toast.error(fa.admin.users.messages.usernameRequired);
@@ -214,26 +246,11 @@ const handleAddUser = () => {
       return;
     }
 
-    // Validate username if changed
-    if (usernameChanged) {
-      if (!trimmedUsername) {
-        toast.error(fa.admin.users.messages.usernameRequired);
-        return;
-      }
-      if (!NATIONAL_CODE_REGEX.test(trimmedUsername)) {
-        toast.error(fa.admin.users.messages.usernameInvalid);
-        return;
-      }
+    if (!validateChangedUsername(usernameChanged, trimmedUsername)) {
+      return;
     }
-
-    if (passwordChanged) {
-      if (!validatePassword(password)) {
-        return;
-      }
-      if (password !== confirmPassword) {
-        toast.error(fa.admin.users.actions.passwordMismatch);
-        return;
-      }
+    if (!validateChangedPassword(passwordChanged)) {
+      return;
     }
 
     updateUserMutation.mutate({
@@ -292,9 +309,9 @@ const handleAddUser = () => {
               dir="ltr"
               disabled={isPending}
               id="username"
-              onChange={(e) => setUsername(e.target.value)}
               inputMode="numeric"
               maxLength={10}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder={fa.admin.users.addDialog.usernamePlaceholder}
               value={username}
             />

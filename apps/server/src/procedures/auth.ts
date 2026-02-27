@@ -39,92 +39,90 @@ const updatePasswordSchema = z.object({
 });
 
 export const authProcedures = {
-  register: publicProcedure.input(registerSchema).handler(async ({
-    input,
-    context,
-  }) => {
-    const { username, password } = input;
+  register: publicProcedure
+    .input(registerSchema)
+    .handler(async ({ input, context }) => {
+      const { username, password } = input;
 
-    const exists = await usernameExists(username);
-    if (exists) {
-      logger.info("Username already exists", { username });
-      throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-        message: "کد ملی قبلاً استفاده شده است",
-        status: 400,
+      const exists = await usernameExists(username);
+      if (exists) {
+        logger.info("Username already exists", { username });
+        throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+          message: "کد ملی قبلاً استفاده شده است",
+          status: 400,
+        });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      const userCount = await countUsers();
+      const role = userCount === 0 ? "admin" : "user";
+
+      const user = await createUser({
+        username,
+        password: hashedPassword,
+        role,
       });
-    }
 
-    const hashedPassword = await hashPassword(password);
-    const userCount = await countUsers();
-    const role = userCount === 0 ? "admin" : "user";
+      const clientIp = getClientIpFromContext(context.honoContext);
+      if (clientIp) {
+        await recordUserIp({ userId: user.id, ipAddress: clientIp });
+      }
 
-    const user = await createUser({
-      username,
-      password: hashedPassword,
-      role,
-    });
+      logger.info("User registered", { userId: user.id, username, role });
 
-    const clientIp = getClientIpFromContext(context.honoContext);
-    if (clientIp) {
-      await recordUserIp({ userId: user.id, ipAddress: clientIp });
-    }
-
-    logger.info("User registered", { userId: user.id, username, role });
-
-    const token = generateJwtToken({
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    });
-
-    return {
-      token,
-      user: {
+      const token = generateJwtToken({
         id: user.id,
         username: user.username,
         role: user.role,
-      },
-    };
-  }),
-
-  login: publicProcedure.input(loginSchema).handler(async ({
-    input,
-    context,
-  }) => {
-    const { username, password } = input;
-
-    const user = await verifyUserCredentials({ username, password });
-
-    if (!user) {
-      logger.warn("Invalid login credentials", { username });
-      throw new ORPCError("INVALID_CREDENTIALS", {
-        message: "کد ملی یا رمز عبور اشتباه است",
-        status: 401,
       });
-    }
 
-    logger.info("User logged in", { userId: user.id, username });
+      return {
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      };
+    }),
 
-    const clientIp = getClientIpFromContext(context.honoContext);
-    if (clientIp) {
-      await recordUserIp({ userId: user.id, ipAddress: clientIp });
-    }
+  login: publicProcedure
+    .input(loginSchema)
+    .handler(async ({ input, context }) => {
+      const { username, password } = input;
 
-    const token = generateJwtToken({
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    });
+      const user = await verifyUserCredentials({ username, password });
 
-    return {
-      token,
-      user: {
+      if (!user) {
+        logger.warn("Invalid login credentials", { username });
+        throw new ORPCError("INVALID_CREDENTIALS", {
+          message: "کد ملی یا رمز عبور اشتباه است",
+          status: 401,
+        });
+      }
+
+      logger.info("User logged in", { userId: user.id, username });
+
+      const clientIp = getClientIpFromContext(context.honoContext);
+      if (clientIp) {
+        await recordUserIp({ userId: user.id, ipAddress: clientIp });
+      }
+
+      const token = generateJwtToken({
         id: user.id,
         username: user.username,
         role: user.role,
-      },
-    };
-  }),
+      });
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      };
+    }),
 
   me: protectedProcedure.handler(({ context }) => ({
     id: context.user.id,
