@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { getConnInfo } from "hono/bun";
 
 const tryHeader = (context: Context, headerName: string): string | null => {
   const value = context.req.header(headerName)?.trim();
@@ -11,6 +12,17 @@ const tryHeader = (context: Context, headerName: string): string | null => {
 const parseForwardedFor = (value: string): string | null => {
   const first = value.split(",").at(0)?.trim();
   return first && first.length > 0 ? first : null;
+};
+
+const normalizeIp = (raw: string): string => {
+  // Bun/Hono on localhost can expose IPv4-mapped IPv6 (::ffff:127.0.0.1)
+  if (raw.startsWith("::ffff:")) {
+    return raw.slice("::ffff:".length);
+  }
+  if (raw === "::1") {
+    return "127.0.0.1";
+  }
+  return raw;
 };
 
 const parseForwardedHeader = (value: string): string | null => {
@@ -54,7 +66,20 @@ export function getClientIpFromContext(context: Context): string | null {
   if (forwarded) {
     const ip = parseForwardedHeader(forwarded);
     if (ip) {
-      return ip;
+      return normalizeIp(ip);
+    }
+  }
+
+  const connInfo = getConnInfo(context);
+  if (connInfo.remote.address) {
+    return normalizeIp(connInfo.remote.address);
+  }
+
+  const fallback = context.req.raw.headers.get("x-forwarded-for");
+  if (fallback) {
+    const ip = parseForwardedFor(fallback);
+    if (ip) {
+      return normalizeIp(ip);
     }
   }
 

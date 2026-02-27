@@ -1,5 +1,8 @@
 import { ORPCError, os } from "@orpc/server";
 import type { Context } from "@/lib/context";
+import { logger } from "@/lib/logger";
+import { getClientIpFromContext } from "@/lib/request-ip";
+import { recordUserIp } from "@/repositories/user-ips";
 import { validateAuthHeader } from "@/services/auth";
 
 // Create the base context with database support
@@ -31,10 +34,29 @@ async function validateAndGetUser(authHeader: string | undefined) {
   return authResult.user;
 }
 
+const trackUserIpBestEffort = async (
+  context: Context,
+  userId: number
+): Promise<void> => {
+  try {
+    const clientIp = getClientIpFromContext(context.honoContext);
+    if (!clientIp) {
+      return;
+    }
+    await recordUserIp({ userId, ipAddress: clientIp });
+  } catch (error) {
+    logger.warn("Failed to track user IP", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
 // Auth middleware to validate JWT and add user to context
 export const authMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header("Authorization");
   const user = await validateAndGetUser(authHeader);
+  await trackUserIpBestEffort(context, user.id);
 
   return next({
     context: {
@@ -48,6 +70,7 @@ export const authMiddleware = o.middleware(async ({ context, next }) => {
 export const adminMiddleware = o.middleware(async ({ context, next }) => {
   const authHeader = context.req?.header("Authorization");
   const user = await validateAndGetUser(authHeader);
+  await trackUserIpBestEffort(context, user.id);
 
   if (user.role !== "admin") {
     throw new ORPCError("FORBIDDEN", {
