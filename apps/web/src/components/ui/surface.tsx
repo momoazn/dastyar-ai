@@ -42,7 +42,7 @@ export function SurfaceTitle({ className, ...props }: SurfaceTitleProps) {
         "leading-6",
         "font-semibold",
         "text-base",
-        "text-right",
+        "text-end",
         className
       )}
       {...props}

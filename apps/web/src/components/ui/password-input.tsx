@@ -30,7 +30,7 @@ function PasswordInput({
         aria-label={
           showPassword ? hidePasswordAriaLabel : showPasswordAriaLabel
         }
-        className="-translate-y-1/2 absolute top-1/2 right-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+        className="-translate-y-1/2 absolute top-1/2 end-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
         disabled={disabled}
         onClick={() => setShowPassword((prev) => !prev)}
         size="icon"
