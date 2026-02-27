@@ -54,8 +54,12 @@ function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedUsername = username.trim();
+    if (!/^\d+$/.test(trimmedUsername)) {
+      setLocalError(fa.auth.loginForm.nationalCodeNotNumeric);
+      return;
+    }
     if (!/^\d{10}$/.test(trimmedUsername)) {
-      setLocalError(fa.auth.registerForm.nationalCodeInvalid);
+      setLocalError(fa.auth.loginForm.nationalCodeInvalid);
       return;
     }
     setLocalError("");
@@ -97,13 +101,14 @@ function LoginPage() {
                   }}
                   inputMode="numeric"
                   maxLength={10}
-                  minLength={10}
-                  pattern="\\d{10}"
                   placeholder={fa.auth.loginForm.usernamePlaceholder}
                   required
                   type="text"
                   value={username}
                 />
+                <p className="text-muted-foreground text-xs">
+                  {fa.auth.loginForm.usernameHint}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label

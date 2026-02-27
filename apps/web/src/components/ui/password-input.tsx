@@ -34,6 +34,7 @@ function PasswordInput({
         disabled={disabled}
         onClick={() => setShowPassword((prev) => !prev)}
         size="icon"
+        tabIndex={-1}
         type="button"
         variant="ghost"
       >

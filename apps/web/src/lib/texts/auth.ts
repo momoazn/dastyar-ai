@@ -1,6 +1,7 @@
 export const auth = {
   registerForm: {
     nationalCodeInvalid: "کد ملی باید دقیقاً ۱۰ رقم باشد",
+    nationalCodeNotNumeric: "کد ملی باید فقط شامل اعداد باشد",
     passwordMismatch: "رمز عبور و تکرار آن مطابقت ندارند",
     passwordTooShort: "رمز عبور باید حداقل ۶ کاراکتر باشد",
     register: "ثبت نام",
@@ -19,6 +20,8 @@ export const auth = {
     usernameExists: "کد ملی قبلاً استفاده شده است",
     registrationFailed: "ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید",
     firstUserAdmin: "شما به عنوان اولین کاربر، مدیر سیستم هستید.",
+    usernameHint: "کد ملی باید ۱۰ رقم عددی باشد",
+    passwordHint: "رمز عبور باید حداقل ۶ کاراکتر باشد",
   },
   loginForm: {
     title: "ورود به حساب کاربری",
@@ -36,5 +39,8 @@ export const auth = {
     userNotFound: "کاربری با این کد ملی یافت نشد",
     invalidPassword: "رمز عبور اشتباه است",
     invalidCredentials: "کد ملی یا رمز عبور اشتباه است",
+    nationalCodeInvalid: "کد ملی باید دقیقاً ۱۰ رقم باشد",
+    nationalCodeNotNumeric: "کد ملی باید فقط شامل اعداد باشد",
+    usernameHint: "کد ملی ۱۰ رقمی بدون خط تیره یا فاصله",
   },
 } as const;

@@ -74,6 +74,10 @@ function RegisterPage() {
     setLocalError("");
     const trimmedUsername = username.trim();
 
+    if (!/^\d+$/.test(trimmedUsername)) {
+      setLocalError(fa.auth.registerForm.nationalCodeNotNumeric);
+      return;
+    }
     if (!/^\d{10}$/.test(trimmedUsername)) {
       setLocalError(fa.auth.registerForm.nationalCodeInvalid);
       return;
@@ -127,13 +131,14 @@ function RegisterPage() {
                   }}
                   inputMode="numeric"
                   maxLength={10}
-                  minLength={10}
-                  pattern="\\d{10}"
                   placeholder={fa.auth.registerForm.usernamePlaceholder}
                   required
                   type="text"
                   value={username}
                 />
+                <p className="text-muted-foreground text-xs">
+                  {fa.auth.registerForm.usernameHint}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label
@@ -154,6 +159,9 @@ function RegisterPage() {
                   showPasswordAriaLabel={fa.auth.loginForm.showPassword}
                   value={password}
                 />
+                <p className="text-muted-foreground text-xs">
+                  {fa.auth.registerForm.passwordHint}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label
