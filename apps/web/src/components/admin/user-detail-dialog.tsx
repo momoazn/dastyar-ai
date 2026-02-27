@@ -90,7 +90,7 @@ export function UserDetailDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" dir="rtl">
         <DialogHeader className="text-right">
           <DialogTitle>{fa.admin.userDetails.title}</DialogTitle>
         </DialogHeader>

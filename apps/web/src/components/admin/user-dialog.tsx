@@ -283,21 +283,21 @@ export function UserDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader className="space-y-3 text-right">
-          <DialogTitle className="text-right">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+        <DialogHeader className="space-y-3">
+          <DialogTitle>
             {isEditMode
               ? fa.admin.users.actions.editUser
               : fa.admin.users.addDialog.title}
           </DialogTitle>
-          <DialogDescription className="text-right text-sm">
+          <DialogDescription className="text-sm">
             {isEditMode
               ? fa.admin.users.actions.editUserDescription(user?.username ?? "")
               : fa.admin.users.addDialog.description}
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-6" dir="rtl" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {/* Username */}
           <div className="space-y-2">
             <Label className="text-right" htmlFor="username">
