@@ -30,9 +30,6 @@ The new modular build system in `scripts/` provides cross-platform build orchest
 - `bun run download:ffmpeg` - Download FFmpeg binaries
 - `bun run download:model` - Download Whisper models
 
-**Testing:**
-- `bun run test:api` - Test Whisper API endpoints
-
 ### Database & Quality
 
 Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.

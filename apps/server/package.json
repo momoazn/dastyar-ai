@@ -27,7 +27,6 @@
     "@ai-sdk/openai-compatible": "^1.0.19",
     "@ai-sdk/provider": "^2.0.0",
     "@hono/zod-validator": "^0.7.3",
-    "@orpc/client": "^1.9.4",
     "@orpc/server": "^1.9.4",
     "ai": "^5.0.76",
     "automatic1111-provider": "^0.1.1",
