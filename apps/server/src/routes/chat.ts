@@ -21,6 +21,7 @@ import {
 } from "@/repositories/messages";
 import { updateThreadOnNewMessage } from "@/repositories/threads";
 import { acquireProviderForModel } from "@/services/ai-providers";
+import { generateChatTitleBestEffort } from "@/services/chat-title";
 import {
   buildContextFromChunks,
   retrieveRelevantChunksForThread,
@@ -189,6 +190,13 @@ const app = new Hono<AuthEnv>()
           userId: user.id,
         });
         await updateThreadOnNewMessage(threadId, user.id, new Date());
+        if (uiMessages.length === 1) {
+          generateChatTitleBestEffort({
+            threadId,
+            userId: user.id,
+            userText: extractTextFromParts(last).content,
+          });
+        }
       } catch {
         return sendError(c, {
           status: 500,
