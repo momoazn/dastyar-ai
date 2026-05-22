@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import jwt from "jsonwebtoken";
 import { env } from "@/config";
 import type { User } from "@/database";
-import { findUserById } from "@/repositories/auth";
 import {
   generateJwtToken,
   validateAuthHeader,
@@ -10,9 +9,6 @@ import {
   validateOptionalAuthHeader,
   verifyJwtToken,
 } from "./auth";
-
-// Mock the auth repository function
-const mockFindUserById = mock(findUserById);
 
 // Mock user data for testing
 const mockUser: User = {
@@ -25,9 +21,13 @@ const mockUser: User = {
 };
 
 describe("Auth Service", () => {
+  const mockFindUserById = mock(
+    async (_id: number): Promise<User | null> => mockUser
+  );
+
   beforeEach(() => {
-    // Reset mocks before each test
     mockFindUserById.mockReset();
+    mockFindUserById.mockImplementation(async () => mockUser);
   });
 
   describe("generateJwtToken", () => {
@@ -93,9 +93,7 @@ describe("Auth Service", () => {
         role: mockUser.role,
       });
 
-      mockFindUserById.mockResolvedValue(mockUser);
-
-      const result = await validateJwtToken(token);
+      const result = await validateJwtToken(token, mockFindUserById);
       expect(result.success).toBe(true);
       expect(result.user?.id).toBe(mockUser.id);
       expect(result.error).toBeUndefined();
@@ -108,9 +106,9 @@ describe("Auth Service", () => {
         role: "user",
       });
 
-      mockFindUserById.mockResolvedValue(null);
+      mockFindUserById.mockImplementation(async () => null);
 
-      const result = await validateJwtToken(token);
+      const result = await validateJwtToken(token, mockFindUserById);
       expect(result.success).toBe(false);
       expect(result.user).toBeUndefined();
       expect(result.error).toEqual({
@@ -156,9 +154,10 @@ describe("Auth Service", () => {
         role: mockUser.role,
       });
 
-      mockFindUserById.mockResolvedValue(mockUser);
-
-      const result = await validateAuthHeader(`Bearer ${token}`);
+      const result = await validateAuthHeader(
+        `Bearer ${token}`,
+        mockFindUserById
+      );
       expect(result.success).toBe(true);
       expect(result.user?.id).toBe(mockUser.id);
       expect(result.error).toBeUndefined();
@@ -203,9 +202,10 @@ describe("Auth Service", () => {
         role: mockUser.role,
       });
 
-      mockFindUserById.mockResolvedValue(mockUser);
-
-      const result = await validateOptionalAuthHeader(`Bearer ${token}`);
+      const result = await validateOptionalAuthHeader(
+        `Bearer ${token}`,
+        mockFindUserById
+      );
       expect(result.success).toBe(true);
       expect(result.user?.id).toBe(mockUser.id);
     });
@@ -235,9 +235,12 @@ describe("Auth Service", () => {
         role: "user",
       });
 
-      mockFindUserById.mockResolvedValue(null);
+      mockFindUserById.mockImplementation(async () => null);
 
-      const result = await validateOptionalAuthHeader(`Bearer ${token}`);
+      const result = await validateOptionalAuthHeader(
+        `Bearer ${token}`,
+        mockFindUserById
+      );
       expect(result.success).toBe(true);
       expect(result.user).toBeUndefined();
     });

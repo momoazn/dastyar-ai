@@ -10,7 +10,6 @@
     "test:coverage": "bun test ./src --coverage",
     "dev": "bun run --hot src/index.ts",
     "start": "./dist/dastyar-ai",
-    "seed:models": "bun run src/scripts/seed-models.ts",
     "config:generate": "bun run src/scripts/config-generator.ts generate",
     "config:show": "bun run src/scripts/config-generator.ts show",
     "config:validate": "bun run src/scripts/config-generator.ts validate",

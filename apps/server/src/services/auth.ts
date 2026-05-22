@@ -3,6 +3,8 @@ import { env } from "@/config";
 import type { User } from "@/database";
 import { findUserById } from "@/repositories/auth";
 
+type FindUserById = typeof findUserById;
+
 export type AuthResult = {
   success: boolean;
   user?: User;
@@ -56,12 +58,15 @@ export function verifyJwtToken(token: string): JwtPayload {
  * @param token - The JWT token to validate
  * @returns AuthResult with success status and user/error information
  */
-export async function validateJwtToken(token: string): Promise<AuthResult> {
+export async function validateJwtToken(
+  token: string,
+  findUser: FindUserById = findUserById
+): Promise<AuthResult> {
   try {
     const decoded = verifyJwtToken(token);
 
     // Fetch user from database to ensure they still exist
-    const user = await findUserById(decoded.userId);
+    const user = await findUser(decoded.userId);
 
     if (!user) {
       return {
@@ -115,7 +120,8 @@ export async function validateJwtToken(token: string): Promise<AuthResult> {
  * @returns AuthResult with success status and user/error information
  */
 export async function validateAuthHeader(
-  authHeader: string | undefined
+  authHeader: string | undefined,
+  findUser: FindUserById = findUserById
 ): Promise<AuthResult> {
   if (!authHeader?.startsWith("Bearer ")) {
     return {
@@ -128,7 +134,7 @@ export async function validateAuthHeader(
   }
 
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-  return await validateJwtToken(token);
+  return await validateJwtToken(token, findUser);
 }
 
 /**
@@ -139,14 +145,15 @@ export async function validateAuthHeader(
  * @returns AuthResult with success status and user/error information
  */
 export async function validateOptionalAuthHeader(
-  authHeader: string | undefined
+  authHeader: string | undefined,
+  findUser: FindUserById = findUserById
 ): Promise<AuthResult> {
   if (!authHeader?.startsWith("Bearer ")) {
     return { success: true }; // No token provided, but that's okay for optional auth
   }
 
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-  const result = await validateJwtToken(token);
+  const result = await validateJwtToken(token, findUser);
 
   // For optional auth, always return success even if token validation fails
   return {
