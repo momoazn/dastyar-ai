@@ -10,7 +10,7 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
       <a href="01-getting-started.html">02 راه اندازی local</a>
       <a href="06-commands.html">03 دستورات</a>
       <a href="02-structure.html">04 ساختار</a>
@@ -159,6 +159,16 @@ curl http://localhost:3000/health</code></pre>
         شود.
       </p>
 
+      <h2>فایل های route بزرگ هستند</h2>
+      <p>
+        چند route وب عمدا هنوز بزرگ مانده اند و در cleanup به عنوان ریسک آینده
+        ثبت شده اند: <code>apps/web/src/routes/code/index.tsx</code>،
+        <code>apps/web/src/routes/code/$runId.tsx</code>و
+        <code>apps/web/src/routes/translation/index.tsx</code>. اگر روی این بخش
+        ها کار می کنید، extraction تدریجی به component/hookهای کوچک تر امن تر از
+        rewrite کامل است.
+      </p>
+
       <h2>Archive فایل لازم را ندارد</h2>
       <ul>
         <li>
@@ -185,6 +195,13 @@ curl http://localhost:3000/health</code></pre>
       </ul>
       <pre><code>bun test apps/server/src/path/to/file.test.ts
 bun --cwd apps/web test src/path/to/file.test.tsx</code></pre>
+
+      <h2>Whisper Go tests محیطی هستند</h2>
+      <p>
+        تست کامل Go برای Whisper بدون آماده بودن whisper.cpp headers/build
+        artifacts hermetic نیست. اگر خطا مربوط به native dependency بود، اول
+        smoke مسیر runtime را با <code>bun run dev:whisper</code>بررسی کنید.
+      </p>
     </main>
   </body>
 </html>

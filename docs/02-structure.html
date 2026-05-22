@@ -10,7 +10,7 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
       <a href="01-getting-started.html">02 راه اندازی local</a>
       <a href="06-commands.html">03 دستورات</a>
       <a href="02-structure.html" class="active">04 ساختار</a>
@@ -106,6 +106,109 @@
         </li>
         <li>نتیجه به وب برمی گردد و TanStack Query cache را به روز می کند.</li>
       </ol>
+
+      <h2>جریان کامل بین appها</h2>
+      <ol>
+        <li>Web app از طریق TanStack Query و ORPC به سرور درخواست می فرستد.</li>
+        <li>Server با JWT و lookup کاربر در دیتابیس، auth context می سازد.</li>
+        <li>Repository layer از SQLite با Drizzle ORM استفاده می کند.</li>
+        <li>
+          AI providerها مثل Ollama و LM Studio با APIهای OpenAI-compatible صدا
+          زده می شوند.
+        </li>
+        <li>
+          File upload از validation، storage، text extraction و chunk indexing
+          عبور می کند.
+        </li>
+        <li>Whisper service transcription صوت را از طریق HTTP انجام می دهد.</li>
+      </ol>
+
+      <h2>Entry pointهای اصلی</h2>
+      <table>
+        <tr>
+          <th>بخش</th>
+          <th>Entry</th>
+          <th>جزئیات</th>
+        </tr>
+        <tr>
+          <td>Server</td>
+          <td>
+            <code>apps/server/src/index.ts</code>
+          </td>
+          <td>config، migration و start سرور</td>
+        </tr>
+        <tr>
+          <td>Server app factory</td>
+          <td>
+            <code>apps/server/src/app.ts</code>
+          </td>
+          <td>Hono app، middlewareها، routeها و static serving</td>
+        </tr>
+        <tr>
+          <td>ORPC router</td>
+          <td>
+            <code>apps/server/src/procedures/index.ts</code>
+          </td>
+          <td>ترکیب procedureهای API</td>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td>
+            <code>apps/server/src/services/auth.ts</code>و
+            <code>middlewares/auth.ts</code>
+          </td>
+          <td>JWT، user lookup و access control</td>
+        </tr>
+        <tr>
+          <td>Database</td>
+          <td>
+            <code>apps/server/src/database/schema/index.ts</code>
+          </td>
+          <td>schema و migrationهای Drizzle/SQLite</td>
+        </tr>
+        <tr>
+          <td>Web</td>
+          <td>
+            <code>apps/web/src/main.tsx</code>
+          </td>
+          <td>mount اپ و providerها</td>
+        </tr>
+        <tr>
+          <td>Web routes</td>
+          <td>
+            <code>apps/web/src/routes/*</code>
+          </td>
+          <td>routeهای TanStack Router</td>
+        </tr>
+        <tr>
+          <td>Web ORPC client</td>
+          <td>
+            <code>apps/web/src/utils/orpc.ts</code>
+          </td>
+          <td>client و QueryClient مشترک</td>
+        </tr>
+        <tr>
+          <td>Whisper</td>
+          <td>
+            <code>apps/whisper/main.go</code>
+          </td>
+          <td>HTTP service برای transcription</td>
+        </tr>
+        <tr>
+          <td>Whisper handler</td>
+          <td>
+            <code>apps/whisper/internal/handler/transcribe.go</code>
+          </td>
+          <td>HTTP handler آپلود/تبدیل صوت</td>
+        </tr>
+        <tr>
+          <td>Whisper service</td>
+          <td>
+            <code>apps/whisper/internal/service/whisper.go</code>
+          </td>
+          <td>ارتباط با whisper.cpp و مدل ها</td>
+        </tr>
+      </table>
 
       <h2>مرزبندی لایه ها</h2>
       <ul>

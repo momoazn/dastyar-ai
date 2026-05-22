@@ -10,7 +10,7 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html" class="active">فهرست</a>
-      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
       <a href="01-getting-started.html">02 راه اندازی local</a>
       <a href="06-commands.html">03 دستورات</a>
       <a href="02-structure.html">04 ساختار</a>
@@ -82,9 +82,9 @@ bun run dev</code></pre>
       </p>
       <div class="note">
         اگر پروژه را روی Windows تحویل می گیرید، از
-        <a href="08-windows-setup.html">Windows onboarding</a>شروع کنید. آن صفحه
-        نصب prerequisiteها، dependencyها، assetها و اجرای هر سرویس را کامل پوشش
-        می دهد.
+        <a href="08-windows-setup.html">راهنمای راه اندازی Windows</a>شروع کنید.
+        آن صفحه نصب prerequisiteها، dependencyها، assetها و اجرای هر سرویس را
+        کامل پوشش می دهد.
       </div>
 
       <h2>نقشه مستندات</h2>
@@ -95,7 +95,7 @@ bun run dev</code></pre>
         </tr>
         <tr>
           <td>
-            <a href="08-windows-setup.html">01 Windows onboarding</a>
+            <a href="08-windows-setup.html">01 راه اندازی Windows</a>
           </td>
           <td>مسیر کامل Windows از دریافت repo تا اپ در حال اجرا</td>
         </tr>
@@ -156,6 +156,100 @@ bun run dev</code></pre>
           runtime را حذف می کند.
         </li>
       </ul>
+
+      <h2>وضعیت handoff</h2>
+      <ul>
+        <li>
+          Typecheck، lint، test، web build و server build بعد از cleanup پاس شده
+          اند.
+        </li>
+        <li>
+          Whisper برای تست کامل Go به whisper.cpp headers/build artifacts نیاز
+          دارد.
+        </li>
+        <li>
+          برای smoke test روزمره، اجرای <code>bun run dev:whisper</code>کافی
+          است.
+        </li>
+        <li>
+          اولین روز توسعه دهنده جدید: نصب Bun/Go، اجرای <code>bun install</code>
+          ، سپس quality gates و <code>bun run dev</code>.
+        </li>
+      </ul>
+
+      <h2>کارهای امن برای شروع</h2>
+      <ul>
+        <li>افزودن test متمرکز برای یک procedure یا UI component.</li>
+        <li>بهبود یک route با componentهای scaffold موجود.</li>
+        <li>بهبود یک repository method همراه regression test.</li>
+      </ul>
+
+      <h2>نواحی پرریسک</h2>
+      <ul>
+        <li>Auth/session behavior.</li>
+        <li>DB schema و migrationها.</li>
+        <li>File upload validation/storage.</li>
+        <li>Build/package scripts.</li>
+        <li>Whisper native dependency setup.</li>
+      </ul>
+
+      <h2>خلاصه cleanup انجام شده</h2>
+      <ul>
+        <li>Quality gates ثابت و پاس شده اند.</li>
+        <li>
+          docs/specs/reportهای stale حذف و مستندات فعلی از codebase بازسازی شده
+          اند.
+        </li>
+        <li>تست های شکننده و JSON parsing اصلاح شده اند.</li>
+        <li>frontend componentهای مرده حذف شده اند.</li>
+        <li>
+          source archive script اضافه و noiseهای runtime از archive حذف شده اند.
+        </li>
+      </ul>
+
+      <h2>Verification ثبت شده</h2>
+      <table>
+        <tr>
+          <th>Gate</th>
+          <th>وضعیت</th>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run lint:check</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run check-types</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run test</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun --cwd apps/web build</code>
+          </td>
+          <td>PASS با chunk warning شناخته شده</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun --cwd apps/server build</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run archive</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+      </table>
     </main>
   </body>
 </html>

@@ -10,7 +10,7 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
       <a href="01-getting-started.html">02 راه اندازی local</a>
       <a href="06-commands.html">03 دستورات</a>
       <a href="02-structure.html">04 ساختار</a>
@@ -173,6 +173,189 @@
         </tr>
       </table>
 
+      <h2>Procedure export map</h2>
+      <p>
+        همه procedureها از <code>apps/server/src/procedures/</code>export می
+        شوند و از طریق <code>/rpc</code>در اختیار وب قرار می گیرند.
+      </p>
+      <table>
+        <tr>
+          <th>Procedure</th>
+          <th>File</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>
+            <code>healthProcedures</code>
+          </td>
+          <td>
+            <code>health.ts</code>
+          </td>
+          <td>Health check endpoint</td>
+        </tr>
+        <tr>
+          <td>
+            <code>authProcedures</code>
+          </td>
+          <td>
+            <code>auth.ts</code>
+          </td>
+          <td>Login، register و token management</td>
+        </tr>
+        <tr>
+          <td>
+            <code>adminProcedures</code>
+          </td>
+          <td>
+            <code>admin.ts</code>
+          </td>
+          <td>User management، model CRUD، Ollama serverها و settings</td>
+        </tr>
+        <tr>
+          <td>
+            <code>appConfigProcedures</code>
+          </td>
+          <td>
+            <code>app-config.ts</code>
+          </td>
+          <td>Feature toggles و app configuration</td>
+        </tr>
+        <tr>
+          <td>
+            <code>llmModelProcedures</code>
+          </td>
+          <td>
+            <code>llm-models.ts</code>
+          </td>
+          <td>لیست مدل های LLM در دسترس</td>
+        </tr>
+        <tr>
+          <td>
+            <code>threadProcedures</code>
+          </td>
+          <td>
+            <code>threads.ts</code>
+          </td>
+          <td>Chat thread CRUD</td>
+        </tr>
+        <tr>
+          <td>
+            <code>messageProcedures</code>
+          </td>
+          <td>
+            <code>messages.ts</code>
+          </td>
+          <td>Chat message operations</td>
+        </tr>
+        <tr>
+          <td>
+            <code>translationProcedures</code>
+          </td>
+          <td>
+            <code>translation.ts</code>
+          </td>
+          <td>Text/PDF translation</td>
+        </tr>
+        <tr>
+          <td>
+            <code>transcribeProcedures</code>
+          </td>
+          <td>
+            <code>transcribe.ts</code>
+          </td>
+          <td>Audio transcription via Whisper</td>
+        </tr>
+        <tr>
+          <td>
+            <code>summarizeProcedures</code>
+          </td>
+          <td>
+            <code>summarize.ts</code>
+          </td>
+          <td>Text summarization</td>
+        </tr>
+        <tr>
+          <td>
+            <code>imageProcedures</code>
+          </td>
+          <td>
+            <code>images.ts</code>
+          </td>
+          <td>Image generation با Stable Diffusion</td>
+        </tr>
+        <tr>
+          <td>
+            <code>imageThreadProcedures</code>
+          </td>
+          <td>
+            <code>image-threads.ts</code>
+          </td>
+          <td>Image generation thread management</td>
+        </tr>
+        <tr>
+          <td>
+            <code>codeProcedures</code>
+          </td>
+          <td>
+            <code>code.ts</code>
+          </td>
+          <td>Code generation، execution و review/debug</td>
+        </tr>
+        <tr>
+          <td>
+            <code>documentProcedures</code>
+          </td>
+          <td>
+            <code>documents.ts</code>
+          </td>
+          <td>Document upload، indexing و RAG</td>
+        </tr>
+      </table>
+
+      <h2>REST endpoints</h2>
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/health</code>
+          </td>
+          <td>Server health check</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td>
+            <code>/api/chat</code>
+          </td>
+          <td>Streaming chat completions</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/api/images/:id/file</code>
+          </td>
+          <td>Serve generated image</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/api/images/:id/download</code>
+          </td>
+          <td>Download generated image</td>
+        </tr>
+        <tr>
+          <td>Any</td>
+          <td>
+            <code>/rpc</code>
+          </td>
+          <td>ORPC handler for all procedures</td>
+        </tr>
+      </table>
+
       <h2>Auth و نقش ها</h2>
       <ul>
         <li>
@@ -186,6 +369,18 @@
           دارد.
         </li>
         <li>اولین کاربر ثبت نام شده admin می شود.</li>
+        <li>
+          احراز هویت با header استاندارد
+          <code>Authorization: Bearer &lt;token&gt;</code>انجام می شود.
+        </li>
+        <li>
+          middleware اجباری token را validate می کند و وجود user در دیتابیس را
+          هم چک می کند.
+        </li>
+        <li>
+          middleware اختیاری اگر token وجود داشته باشد آن را validate می کند،
+          اما request بدون token را reject نمی کند.
+        </li>
       </ul>
 
       <h2>دیتابیس</h2>

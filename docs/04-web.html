@@ -10,7 +10,7 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
       <a href="01-getting-started.html">02 راه اندازی local</a>
       <a href="06-commands.html">03 دستورات</a>
       <a href="02-structure.html">04 ساختار</a>
@@ -206,6 +206,37 @@
           <code>hooks/use-chat-input.ts</code>است.
         </li>
       </ul>
+
+      <h2>قواعد تغییر UI</h2>
+      <ul>
+        <li>
+          برای data fetching از ORPC helperهای موجود در
+          <code>src/utils/orpc.ts</code>استفاده کنید.
+        </li>
+        <li>
+          query invalidation را محدود به query مربوط به همان feature نگه دارید.
+        </li>
+        <li>
+          برای routeهای جدید، pattern routeهای موجود در <code>src/routes</code>
+          را دنبال کنید.
+        </li>
+        <li>
+          متن جدید را در <code>src/lib/texts</code>ثبت کنید، نه مستقیم داخل JSX.
+        </li>
+        <li>
+          componentهای shared را داخل <code>components/ui</code>یا scaffoldهای
+          موجود بسازید؛ componentهای feature-specific کنار همان feature بمانند.
+        </li>
+      </ul>
+
+      <h2>ریسک bundle</h2>
+      <p>
+        build وب ممکن است warning مربوط به chunkهای بزرگ بدهد. منبع اصلی
+        <code>react-syntax-highlighter</code>language packها، Mermaid و KaTeX
+        است. این هزینه فعلا برای code rendering و markdown/display featureها
+        قابل قبول است؛ اگر performance مشکل شد، lazy loading یا manual chunking
+        را بررسی کنید.
+      </p>
 
       <h2>متن ها و localization</h2>
       <p>

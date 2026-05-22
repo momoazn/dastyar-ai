@@ -30,4 +30,4 @@ bun --cwd apps/server build
 ## More Docs
 
 - Open `docs/index.html` for the full project documentation.
-- Markdown references: `docs/HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/API.md`.
+- Setup, architecture, API, operations, handoff, and troubleshooting are all merged into the HTML docs.
