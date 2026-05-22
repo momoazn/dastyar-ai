@@ -187,6 +187,7 @@ dastyar/
 # Configuration files with secrets
 
 /config.json
+/apps/server/config.json
 /server.log
 
 # Turbo logs (override wildcard)

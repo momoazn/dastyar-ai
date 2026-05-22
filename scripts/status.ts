@@ -14,12 +14,12 @@ const services = [
   {
     name: "Whisper API",
     url: "http://localhost:8080",
-    endpoint: "/v1/models",
+    endpoint: "/health",
   },
   {
     name: "Dastyar AI Server",
     url: "http://localhost:3000",
-    endpoint: "/api/health",
+    endpoint: "/health",
   },
 ];
 
