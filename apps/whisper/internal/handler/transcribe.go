@@ -43,9 +43,10 @@ type openAIErrorResponse struct {
 }
 
 func NewTranscribeHandler(whisperService *service.WhisperService) *TranscribeHandler {
-	// Create temp directory for uploaded files
 	tempDir := "./temp"
-	os.MkdirAll(tempDir, 0755)
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		panic(fmt.Sprintf("failed to create temp directory: %v", err))
+	}
 
 	return &TranscribeHandler{
 		whisperService: whisperService,
@@ -54,18 +55,21 @@ func NewTranscribeHandler(whisperService *service.WhisperService) *TranscribeHan
 }
 
 func (h *TranscribeHandler) persistUpload(file multipart.File, header *multipart.FileHeader) (string, error) {
-	tempFile := filepath.Join(h.tempDir, header.Filename)
-	dst, err := os.Create(tempFile)
+	ext := filepath.Ext(header.Filename)
+	dst, err := os.CreateTemp(h.tempDir, "upload-*"+ext)
 	if err != nil {
 		return "", err
 	}
-	defer dst.Close()
+	defer func() {
+		_ = dst.Close()
+	}()
 
 	if _, err := io.Copy(dst, file); err != nil {
+		_ = os.Remove(dst.Name())
 		return "", err
 	}
 
-	return tempFile, nil
+	return dst.Name(), nil
 }
 
 // HandleOpenAITranscriptions mirrors OpenAI's /v1/audio/transcriptions endpoint
@@ -131,17 +135,14 @@ func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r 
 
 	switch format {
 	case "json":
-		// OpenAI json format: only return text field
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
 			"text": result.Text,
 		})
 	case "verbose_json":
-		// OpenAI verbose_json format: return full object with all fields
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		// Build OpenAI-compatible response structure
 		response := map[string]interface{}{
 			"text": result.Text,
 		}

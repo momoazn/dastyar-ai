@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -8,23 +9,44 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"whisper/internal/config"
 	"whisper/internal/handler"
 	"whisper/internal/service"
 )
 
-func main() {
-	// Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+type config struct {
+	port      string
+	modelDir  string
+	modelName string
+}
+
+func loadConfig() config {
+	cfg := config{
+		port:      os.Getenv("PORT"),
+		modelDir:  os.Getenv("MODEL_PATH"),
+		modelName: os.Getenv("MODEL_NAME"),
 	}
 
-	// Initialize Whisper service
-	log.Printf("Loading Whisper model: %s from directory: %s", cfg.ModelName, cfg.ModelPath)
+	if cfg.port == "" {
+		cfg.port = "8080"
+	}
+	if cfg.modelDir == "" {
+		cfg.modelDir = "./models"
+	}
+	if cfg.modelName == "" {
+		cfg.modelName = "ggml-base.bin"
+	}
 
-	whisperService, err := service.NewWhisperService(cfg.ModelPath, cfg.ModelName)
+	return cfg
+}
+
+func main() {
+	cfg := loadConfig()
+
+	log.Printf("Loading Whisper model: %s from directory: %s", cfg.modelName, cfg.modelDir)
+
+	whisperService, err := service.NewWhisperService(cfg.modelDir, cfg.modelName)
 	if err != nil {
 		log.Fatalf("Failed to initialize Whisper service: %v", err)
 	}
@@ -32,68 +54,60 @@ func main() {
 
 	log.Println("Whisper model loaded successfully")
 
-	// Create handlers
 	transcribeHandler := handler.NewTranscribeHandler(whisperService)
+	mux := http.NewServeMux()
 
-	// Setup routes
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		http.ServeFile(w, r, "./web/static/index.html")
-	})
 
-	// OpenAI-compatible API endpoints
-	http.HandleFunc("/v1/audio/transcriptions", transcribeHandler.HandleOpenAITranscriptions)
-	http.HandleFunc("/v1/models", transcribeHandler.HandleOpenAIModels)
+	mux.HandleFunc("/v1/audio/transcriptions", transcribeHandler.HandleOpenAITranscriptions)
+	mux.HandleFunc("/v1/models", transcribeHandler.HandleOpenAIModels)
 
-	// Start server
-	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
+	addr := fmt.Sprintf("0.0.0.0:%s", cfg.port)
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 
 	log.Printf("Starting Whisper Server on %s", addr)
 	log.Println("")
 	log.Println("Endpoints:")
 	log.Println("  GET  /health - Health check")
-	log.Println("  GET  / - Web UI")
-	log.Println("")
-	log.Println("  OpenAI-compatible API:")
 	log.Println("    POST /v1/audio/transcriptions - Transcribe/translate audio")
 	log.Println("    GET  /v1/models - List available models")
 
-	// Get local IP addresses
-	log.Printf("\nAccess the web interface at:")
-	log.Printf("  Local:   http://localhost:%s", cfg.Port)
-	log.Printf("  Local:   http://127.0.0.1:%s", cfg.Port)
+	log.Printf("\nAccess the API at:")
+	log.Printf("  Local:   http://localhost:%s", cfg.port)
 
-	// Try to get network IP
 	if ips := getLocalIPs(); len(ips) > 0 {
 		for _, ip := range ips {
-			log.Printf("  Network: http://%s:%s", ip, cfg.Port)
+			log.Printf("  Network: http://%s:%s", ip, cfg.port)
 		}
 	}
 
 	log.Printf("\n(Server listening on all network interfaces)")
 	log.Println("")
 
-	// Setup server
 	go func() {
-		if err := http.ListenAndServe(addr, nil); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Println("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
+	}
 }
 
 // getLocalIPs returns a list of local IP addresses

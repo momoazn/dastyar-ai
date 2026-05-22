@@ -97,7 +97,7 @@ func (s *WhisperService) loadModel(modelName string) error {
 
 	// Check if model exists
 	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
-		return fmt.Errorf("model file not found: %s. Please download it first with: ./download-model.sh", modelPath)
+		return fmt.Errorf("model file not found: %s. Please download it first with: bun run download:model", modelPath)
 	}
 
 	// Load the model
@@ -166,7 +166,7 @@ func (s *WhisperService) ListModels() ([]ModelInfo, error) {
 	}
 
 	if len(models) == 0 {
-		return nil, fmt.Errorf("no models found in %s. Please download a model with: ./download-model.sh", s.modelDir)
+		return nil, fmt.Errorf("no models found in %s. Please download a model with: bun run download:model", s.modelDir)
 	}
 
 	return models, nil
