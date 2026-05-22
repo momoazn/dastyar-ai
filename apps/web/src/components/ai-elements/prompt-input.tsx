@@ -156,20 +156,26 @@ export const PromptInputSubmit = ({
   size = "icon",
   status,
   children,
+  "aria-label": ariaLabel,
   ...props
 }: PromptInputSubmitProps) => {
   let Icon = <SendIcon className="size-4" />;
+  let label = "ارسال پیام";
 
   if (status === "submitted") {
     Icon = <Loader2Icon className="size-4 animate-spin" />;
+    label = "در حال ارسال";
   } else if (status === "streaming") {
     Icon = <SquareIcon className="size-4" />;
+    label = "توقف پاسخ";
   } else if (status === "error") {
     Icon = <XIcon className="size-4" />;
+    label = "تلاش دوباره";
   }
 
   return (
     <Button
+      aria-label={ariaLabel ?? label}
       className={cn("gap-1.5 rounded-md", className)}
       size={size}
       type="submit"

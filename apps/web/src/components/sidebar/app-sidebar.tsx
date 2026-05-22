@@ -64,12 +64,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" dir="rtl" {...props}>
       <AppSidebarHeader variant="full" />
 
-      <SidebarContent className="gap-2 px-2 py-2 pr-0">
+      <SidebarContent className="gap-2 px-2 py-2 text-right">
         {/* Navigation Items */}
-        <SidebarGroup className="pr-1">
+        <SidebarGroup>
           <SidebarGroupContent>
             <NavigationMenu className="gap-0.5" variant="full" />
           </SidebarGroupContent>
@@ -77,13 +77,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Feature Lists */}
         {location.pathname !== "/" && activeItem && (
-          <SidebarGroup className="pt-1 pr-1">
+          <SidebarGroup className="pt-1">
             <SidebarGroupContent>
               <div className="mb-2 flex items-center justify-between rounded-md bg-sidebar-accent/40 px-2.5 py-1.5">
                 <h3 className="font-semibold text-sidebar-foreground text-xs">
                   {activeItem.title}
                 </h3>
                 <Button
+                  aria-label={fa.general.startNew}
                   className="h-6 w-6 rounded-md bg-primary/10 transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={handleNew}
                   size="icon"
