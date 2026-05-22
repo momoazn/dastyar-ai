@@ -10,13 +10,14 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html" class="active">فهرست</a>
-      <a href="01-getting-started.html">01 راه اندازی</a>
-      <a href="02-structure.html">02 ساختار</a>
-      <a href="03-server.html">03 سرور</a>
-      <a href="04-web.html">04 وب</a>
-      <a href="05-features.html">05 قابلیت ها</a>
-      <a href="06-commands.html">06 دستورات</a>
-      <a href="07-troubleshooting.html">07 عیب یابی</a>
+      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-features.html">07 قابلیت ها</a>
+      <a href="07-troubleshooting.html">08 عیب یابی</a>
     </aside>
     <main>
       <h1>Dastyar AI — مستندات پروژه</h1>
@@ -71,12 +72,20 @@
       </table>
 
       <h2>شروع سریع</h2>
-      <pre><code>rtk bun install
-rtk bun run dev</code></pre>
+      <pre><code>bun install
+bun run config:generate
+bun run db:migrate
+bun run dev</code></pre>
       <p>
         وب معمولا روی <code>http://localhost:5173</code>و سرور روی
         <code>http://localhost:3000</code>اجرا می شود.
       </p>
+      <div class="note">
+        اگر پروژه را روی Windows تحویل می گیرید، از
+        <a href="08-windows-setup.html">Windows onboarding</a>شروع کنید. آن صفحه
+        نصب prerequisiteها، dependencyها، assetها و اجرای هر سرویس را کامل پوشش
+        می دهد.
+      </div>
 
       <h2>نقشه مستندات</h2>
       <table>
@@ -86,43 +95,49 @@ rtk bun run dev</code></pre>
         </tr>
         <tr>
           <td>
-            <a href="01-getting-started.html">01 راه اندازی</a>
+            <a href="08-windows-setup.html">01 Windows onboarding</a>
           </td>
-          <td>پیش نیازها، نصب، config، اجرای local</td>
+          <td>مسیر کامل Windows از دریافت repo تا اپ در حال اجرا</td>
         </tr>
         <tr>
           <td>
-            <a href="02-structure.html">02 ساختار</a>
+            <a href="01-getting-started.html">02 راه اندازی local</a>
+          </td>
+          <td>راه اندازی عمومی، config، دیتابیس، health و اولین ورود</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="06-commands.html">03 دستورات</a>
+          </td>
+          <td>دستورهای dev، build، test، database، service و release</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="02-structure.html">04 ساختار</a>
           </td>
           <td>ساختار monorepo، جریان داده و ownership فایل ها</td>
         </tr>
         <tr>
           <td>
-            <a href="03-server.html">03 سرور</a>
+            <a href="03-server.html">05 سرور</a>
           </td>
           <td>Hono، ORPC، auth، DB، repositoryها، providerها</td>
         </tr>
         <tr>
           <td>
-            <a href="04-web.html">04 وب</a>
+            <a href="04-web.html">06 وب</a>
           </td>
           <td>React، routeها، components، state و UX patterns</td>
         </tr>
         <tr>
           <td>
-            <a href="05-features.html">05 قابلیت ها</a>
+            <a href="05-features.html">07 قابلیت ها</a>
           </td>
           <td>چت، RAG، ترجمه، خلاصه سازی، کد، تصویر، صوت، ادمین</td>
         </tr>
         <tr>
           <td>
-            <a href="06-commands.html">06 دستورات</a>
-          </td>
-          <td>دستورهای dev، build، test، database و release</td>
-        </tr>
-        <tr>
-          <td>
-            <a href="07-troubleshooting.html">07 عیب یابی</a>
+            <a href="07-troubleshooting.html">08 عیب یابی</a>
           </td>
           <td>خطاهای رایج و مسیر تشخیص</td>
         </tr>

@@ -10,77 +10,137 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="01-getting-started.html">01 راه اندازی</a>
-      <a href="02-structure.html">02 ساختار</a>
-      <a href="03-server.html">03 سرور</a>
-      <a href="04-web.html">04 وب</a>
-      <a href="05-features.html">05 قابلیت ها</a>
-      <a href="06-commands.html" class="active">06 دستورات</a>
-      <a href="07-troubleshooting.html">07 عیب یابی</a>
+      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html" class="active">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-features.html">07 قابلیت ها</a>
+      <a href="07-troubleshooting.html">08 عیب یابی</a>
     </aside>
     <main>
-      <h1>06 — دستورات</h1>
+      <h1>03 — دستورات</h1>
       <p>همه commandها از root اجرا می شوند مگر خلاف آن نوشته شده باشد.</p>
 
       <h2>توسعه</h2>
-      <pre><code>rtk bun install
-rtk bun run dev
-rtk bun run dev:web
-rtk bun run dev:server
-rtk bun run dev:whisper</code></pre>
+      <pre><code>bun install
+bun run dev
+bun run dev:web
+bun run dev:server
+bun run dev:whisper</code></pre>
+
+      <table>
+        <tr>
+          <th>دستور</th>
+          <th>کاربرد</th>
+        </tr>
+        <tr>
+          <td>
+            <code>bun install</code>
+          </td>
+          <td>نصب dependencyهای همه workspaceها از root.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run dev</code>
+          </td>
+          <td>اجرای همه appها با Turbo؛ مناسب smoke test کامل.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run dev:web</code>
+          </td>
+          <td>اجرای Vite/React web app.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run dev:server</code>
+          </td>
+          <td>اجرای Bun/Hono API server.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run dev:whisper</code>
+          </td>
+          <td>اجرای Go Whisper service.</td>
+        </tr>
+      </table>
 
       <h2>کیفیت</h2>
-      <pre><code>rtk bun run lint:check
-rtk bun run lint:fix
-rtk bun run check-types
-rtk bun run test
-rtk bun run test:coverage</code></pre>
+      <pre><code>bun run lint:check
+bun run lint:fix
+bun run check-types
+bun run test
+bun run test:coverage</code></pre>
 
       <h2>Build</h2>
-      <pre><code>rtk bun run build
-rtk bun run build:fast
-rtk bun run build:ci
-rtk bun run build:windows
-rtk bun run build:all
-rtk bun --cwd apps/web build
-rtk bun --cwd apps/server build</code></pre>
+      <pre><code>bun run build
+bun run build:fast
+bun run build:ci
+bun run build:windows
+bun run build:all
+bun --cwd apps/web build
+bun --cwd apps/server build</code></pre>
+
+      <p>
+        <code>build:fast</code>برای feedback سریع development است.
+        <code>build:windows</code>خروجی Windows می سازد. <code>build:ci</code>
+        برای verify قبل از تحویل مناسب است.
+      </p>
 
       <h2>Release و package</h2>
-      <pre><code>rtk bun run build:release
-rtk bun run build:release:windows
-rtk bun run archive
-rtk bun run package:source</code></pre>
+      <pre><code>bun run build:release
+bun run build:release:windows
+bun run archive
+bun run package:source</code></pre>
       <p>
         <code>archive</code>source zip می سازد و generated/runtime outputها را
         حذف می کند.
       </p>
 
       <h2>Database و config</h2>
-      <pre><code>rtk bun run db:generate
-rtk bun run db:migrate
-rtk bun run db:push
-rtk bun run db:studio
-rtk bun run config:generate
-rtk bun run config:show
-rtk bun run config:validate</code></pre>
+      <pre><code>bun run db:generate
+bun run db:migrate
+bun run db:push
+bun run db:studio
+bun run config:generate
+bun run config:show
+bun run config:validate</code></pre>
+
+      <p>
+        بعد از تغییر schema، migration بسازید و روی دیتابیس local اجرا کنید.
+        <code>db:studio</code>برای inspect دستی داده ها مفید است. config runtime
+        در <code>apps/server/config.json</code>است و نباید commit شود.
+      </p>
 
       <h2>Service lifecycle</h2>
-      <pre><code>rtk bun run start
-rtk bun run stop
-rtk bun run status</code></pre>
+      <pre><code>bun run start
+bun run stop
+bun run status</code></pre>
 
       <h2>Assets</h2>
-      <pre><code>rtk bun run download:ffmpeg
-rtk bun run download:ffmpeg:all
-rtk bun run download:model</code></pre>
+      <pre><code>bun run download:ffmpeg
+bun run download:ffmpeg:all
+bun run download:model</code></pre>
+
+      <p>
+        این دستورها assetهای لازم برای Whisper را دانلود می کنند. این فایل ها
+        runtime artifact هستند و نباید وارد git یا source archive شوند.
+      </p>
 
       <h2>Verification پیشنهادی قبل از handoff</h2>
-      <pre><code>rtk bun run lint:check
-rtk bun run check-types
-rtk bun run test --force
-rtk bun --cwd apps/web build
-rtk bun --cwd apps/server build
-rtk bun run archive</code></pre>
+      <pre><code>bun run lint:check
+bun run check-types
+bun run test --force
+bun --cwd apps/web build
+bun --cwd apps/server build
+bun run archive</code></pre>
+      <p>
+        برای تغییر docs-only، <code>bun run lint:check</code>کافی است. برای
+        تغییر package، API، TypeScript، scripts یا build، کل checklist را اجرا
+        کنید.
+      </p>
     </main>
   </body>
 </html>

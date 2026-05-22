@@ -10,18 +10,22 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="01-getting-started.html" class="active">01 راه اندازی</a>
-      <a href="02-structure.html">02 ساختار</a>
-      <a href="03-server.html">03 سرور</a>
-      <a href="04-web.html">04 وب</a>
-      <a href="05-features.html">05 قابلیت ها</a>
-      <a href="06-commands.html">06 دستورات</a>
-      <a href="07-troubleshooting.html">07 عیب یابی</a>
+      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="01-getting-started.html" class="active">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-features.html">07 قابلیت ها</a>
+      <a href="07-troubleshooting.html">08 عیب یابی</a>
     </aside>
     <main>
-      <h1>01 — راه اندازی و اجرا</h1>
+      <h1>02 — راه اندازی local</h1>
       <p>
         این صفحه مسیر استاندارد اجرای پروژه روی ماشین توسعه را توضیح می دهد.
+        برای Windows، صفحه
+        <a href="08-windows-setup.html">Windows onboarding</a>
+        مسیر کامل تری از نصب ابزارها تا اجرای اپ دارد.
       </p>
 
       <h2>پیش نیازها</h2>
@@ -33,24 +37,47 @@
         <li>whisper.cpp و مدل های Whisper برای transcription کامل</li>
       </ul>
 
+      <h2>ترتیب درست راه اندازی</h2>
+      <ol>
+        <li>ابزارهای سیستم را نصب و نسخه ها را بررسی کنید.</li>
+        <li>
+          dependencyهای workspace را با <code>bun install</code>نصب کنید.
+        </li>
+        <li>config سرور را بسازید و validate کنید.</li>
+        <li>migration دیتابیس را اجرا کنید.</li>
+        <li>Ollama یا provider متنی را اجرا و حداقل یک مدل chat آماده کنید.</li>
+        <li>در صورت نیاز Whisper و Stable Diffusion را آماده کنید.</li>
+        <li>سرور و وب را اجرا و health را بررسی کنید.</li>
+        <li>اولین کاربر را بسازید؛ این کاربر admin می شود.</li>
+      </ol>
+
       <h2>نصب</h2>
-      <pre><code>rtk bun install</code></pre>
+      <pre><code>bun install</code></pre>
+      <p>
+        نصب باید از root repo اجرا شود تا Bun workspace همه appها را ببیند. نصب
+        جداگانه داخل <code>apps/server</code>یا <code>apps/web</code>برای شروع
+        لازم نیست.
+      </p>
 
       <h2>اجرای development</h2>
-      <pre><code>rtk bun run dev</code></pre>
+      <pre><code>bun run dev</code></pre>
+      <p>
+        این دستور Turbo pipeline را اجرا می کند. برای توسعه روزمره معمولا بهتر
+        است فقط سطحی را که تغییر می دهید جدا اجرا کنید.
+      </p>
       <p>برای اجرای جداگانه بخش ها:</p>
-      <pre><code>rtk bun run dev:web
-rtk bun run dev:server
-rtk bun run dev:whisper</code></pre>
+      <pre><code>bun run dev:web
+bun run dev:server
+bun run dev:whisper</code></pre>
 
       <h2>Config سرور</h2>
       <p>
         سرور از <code>apps/server/config.json</code>یا مقدارهای پیش فرض
         <code>apps/server/src/config-schema.ts</code>استفاده می کند.
       </p>
-      <pre><code>rtk bun run config:generate
-rtk bun run config:show
-rtk bun run config:validate</code></pre>
+      <pre><code>bun run config:generate
+bun run config:show
+bun run config:validate</code></pre>
 
       <h2>مهم ترین کلیدهای config</h2>
       <table>
@@ -132,11 +159,71 @@ rtk bun run config:validate</code></pre>
       </table>
 
       <h2>راه اندازی دیتابیس</h2>
-      <pre><code>rtk bun run db:migrate</code></pre>
+      <pre><code>bun run db:migrate</code></pre>
       <p>
         schema در <code>apps/server/src/database/schema/index.ts</code>تعریف شده
         و migrationها در <code>apps/server/src/database/migrations</code>هستند.
       </p>
+
+      <h2>چک سلامت بعد از اجرا</h2>
+      <pre><code>curl http://localhost:3000/health</code></pre>
+      <p>
+        پاسخ موفق باید <code>status</code>برابر <code>ok</code>داشته باشد. اگر
+        Whisper روشن نباشد، health آن unavailable می شود اما چت و تنظیمات عمومی
+        همچنان قابل استفاده هستند.
+      </p>
+
+      <h2>آماده سازی هر قطعه</h2>
+      <table>
+        <tr>
+          <th>قطعه</th>
+          <th>حداقل راه اندازی</th>
+          <th>نشانه موفقیت</th>
+        </tr>
+        <tr>
+          <td>Server</td>
+          <td>
+            <code>config:generate</code>، <code>db:migrate</code>،
+            <code>dev:server</code>
+          </td>
+          <td>
+            <code>/health</code>پاسخ JSON بدهد.
+          </td>
+        </tr>
+        <tr>
+          <td>Web</td>
+          <td>
+            <code>dev:web</code>بعد از روشن بودن server
+          </td>
+          <td>
+            صفحه login/register روی <code>5173</code>باز شود.
+          </td>
+        </tr>
+        <tr>
+          <td>Ollama</td>
+          <td>
+            <code>ollama serve</code>و <code>ollama pull</code>
+          </td>
+          <td>مدل ها در admin یا sync models دیده شوند.</td>
+        </tr>
+        <tr>
+          <td>Whisper</td>
+          <td>
+            <code>download:ffmpeg</code>، <code>download:model</code>،
+            <code>dev:whisper</code>
+          </td>
+          <td>health سرور، Whisper را available نشان دهد.</td>
+        </tr>
+        <tr>
+          <td>Stable Diffusion</td>
+          <td>
+            اجرای Automatic1111 با <code>--api</code>
+          </td>
+          <td>
+            <code>http://localhost:7860</code>پاسخ دهد.
+          </td>
+        </tr>
+      </table>
 
       <h2>ورود اولیه</h2>
       <p>
@@ -145,7 +232,8 @@ rtk bun run config:validate</code></pre>
       </p>
 
       <div class="note">
-        در این repo همه دستورهای shell باید با <code>rtk</code>اجرا شوند.
+        دستورهای مستندات برای توسعه دهنده عادی نوشته شده اند و مستقیم در shell
+        اجرا می شوند.
       </div>
     </main>
   </body>

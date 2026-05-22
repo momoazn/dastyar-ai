@@ -10,22 +10,42 @@
     <aside class="sidebar">
       <h2>مستندات</h2>
       <a href="index.html">فهرست</a>
-      <a href="01-getting-started.html">01 راه اندازی</a>
-      <a href="02-structure.html">02 ساختار</a>
-      <a href="03-server.html">03 سرور</a>
-      <a href="04-web.html">04 وب</a>
-      <a href="05-features.html">05 قابلیت ها</a>
-      <a href="06-commands.html">06 دستورات</a>
-      <a href="07-troubleshooting.html" class="active">07 عیب یابی</a>
+      <a href="08-windows-setup.html">01 Windows onboarding</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-features.html">07 قابلیت ها</a>
+      <a href="07-troubleshooting.html" class="active">08 عیب یابی</a>
     </aside>
     <main>
-      <h1>07 — عیب یابی</h1>
+      <h1>08 — عیب یابی</h1>
       <p>مسیرهای رایج تشخیص مشکل در پروژه.</p>
+
+      <h2>ترتیب تشخیص سریع</h2>
+      <ol>
+        <li>config را validate کنید.</li>
+        <li>health سرور را مستقیم صدا بزنید.</li>
+        <li>
+          اگر UI مشکل دارد، Network tab را با route متناظر سرور مقایسه کنید.
+        </li>
+        <li>
+          اگر AI مشکل دارد، provider محلی مثل Ollama را جدا از اپ تست کنید.
+        </li>
+        <li>
+          اگر build شکست خورد، اول typecheck و بعد dependency نصب شده را بررسی
+          کنید.
+        </li>
+      </ol>
+      <pre><code>bun run config:validate
+bun run dev:server
+curl http://localhost:3000/health</code></pre>
 
       <h2>سرور بالا نمی آید</h2>
       <ol>
         <li>
-          <code>rtk bun run config:validate</code>را اجرا کنید.
+          <code>bun run config:validate</code>را اجرا کنید.
         </li>
         <li>
           مطمئن شوید <code>JWT_SECRET</code>حداقل ۳۲ کاراکتر است.
@@ -37,11 +57,16 @@
           <code>DATABASE_FILE</code>قابل نوشتن باشد.
         </li>
       </ol>
+      <p>
+        اگر config درست است ولی سرور هنوز بالا نمی آید، مسیر
+        <code>DATABASE_FILE</code>و آزاد بودن پورت <code>PORT</code>را جداگانه
+        بررسی کنید.
+      </p>
 
       <h2>وب به API وصل نمی شود</h2>
       <ul>
         <li>
-          سرور را با <code>rtk bun run dev:server</code>اجرا کنید.
+          سرور را با <code>bun run dev:server</code>اجرا کنید.
         </li>
         <li>
           <code>CORS_ORIGIN</code>را بررسی کنید.
@@ -53,6 +78,11 @@
           <code>/health</code>باید JSON با <code>status: ok</code>برگرداند.
         </li>
       </ul>
+      <p>
+        در development، web معمولا روی <code>5173</code>و API روی
+        <code>3000</code>است. اگر صفحه باز می شود ولی داده نمی آید، مسئله اغلب
+        proxy، CORS یا خاموش بودن server است.
+      </p>
 
       <h2>مدل های چت دیده نمی شوند</h2>
       <ul>
@@ -104,7 +134,7 @@
       <h2>Whisper کار نمی کند</h2>
       <ul>
         <li>
-          <code>rtk bun run dev:whisper</code>را اجرا کنید.
+          <code>bun run dev:whisper</code>را اجرا کنید.
         </li>
         <li>
           مدل در <code>apps/whisper/models</code>وجود داشته باشد.
@@ -117,6 +147,10 @@
           <code>/health</code>سرور Bun وضعیت Whisper را هم برمی گرداند.
         </li>
       </ul>
+      <p>
+        برای توسعه chat، settings و admin، آماده نبودن Whisper blocker نیست. فقط
+        transcription را unavailable می کند.
+      </p>
 
       <h2>Build وب warning بزرگ بودن chunk دارد</h2>
       <p>
@@ -138,6 +172,19 @@
           آپلودها و مدل ها عمدا حذف می شوند.
         </li>
       </ul>
+
+      <h2>تست ها fail می شوند</h2>
+      <ul>
+        <li>اول همان فایل test را جدا اجرا کنید تا خروجی کوتاه تر شود.</li>
+        <li>خطای server معمولا از config، migration یا mock ناقص می آید.</li>
+        <li>خطای web معمولا از DOM، query cache یا timing async می آید.</li>
+        <li>
+          تست unit نباید به Ollama، Whisper یا Stable Diffusion واقعی وابسته
+          باشد.
+        </li>
+      </ul>
+      <pre><code>bun test apps/server/src/path/to/file.test.ts
+bun --cwd apps/web test src/path/to/file.test.tsx</code></pre>
     </main>
   </body>
 </html>
