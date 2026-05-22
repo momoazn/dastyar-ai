@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html">05 سرور</a>
       <a href="04-web.html">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html" class="active">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html" class="active">09 عیب یابی</a>
     </aside>
     <main>
       <h1>08 — عیب یابی</h1>
@@ -72,14 +73,14 @@ curl http://localhost:3000/health</code></pre>
           <code>CORS_ORIGIN</code>را بررسی کنید.
         </li>
         <li>
-          در dev، web معمولا <code>5173</code>و server <code>3000</code>است.
+          در dev، web معمولا <code>3001</code>و server <code>3000</code>است.
         </li>
         <li>
           <code>/health</code>باید JSON با <code>status: ok</code>برگرداند.
         </li>
       </ul>
       <p>
-        در development، web معمولا روی <code>5173</code>و API روی
+        در development، web معمولا روی <code>3001</code>و API روی
         <code>3000</code>است. اگر صفحه باز می شود ولی داده نمی آید، مسئله اغلب
         proxy، CORS یا خاموش بودن server است.
       </p>

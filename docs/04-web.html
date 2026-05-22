@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html">05 سرور</a>
       <a href="04-web.html" class="active">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
     </aside>
     <main>
       <h1>06 — وب</h1>
@@ -244,6 +245,49 @@
         جدید، اول همان فایل feature را به روز کنید و از hardcode مستقیم داخل
         component پرهیز کنید.
       </p>
+
+      <h2>Config و اتصال به API</h2>
+      <p>
+        وب در development از <code>apps/web/vite.config.ts</code>برای خواندن
+        <code>config.json</code>ریشه استفاده می کند. <code>WEB_DEV_PORT</code>
+        پورت Vite را تعیین می کند و <code>HOST</code>/<code>PORT</code>آدرس
+        proxy به سرور را می سازند. بنابراین تغییر پورت سرور یا وب باید فقط در
+        همین config واحد انجام شود.
+      </p>
+
+      <h2>قرارداد خطا و پیام</h2>
+      <ul>
+        <li>متن خطای قابل مشاهده برای کاربر باید فارسی باشد.</li>
+        <li>
+          raw error backend، exception انگلیسی یا message کتابخانه نباید مستقیم
+          render شود.
+        </li>
+        <li>
+          برای fallback از helperهای error موجود استفاده کنید و متن فارسی کوتاه
+          بدهید.
+        </li>
+        <li>
+          برای toast، alert و empty/error stateها پیام را در
+          <code>src/lib/texts</code>ثبت کنید.
+        </li>
+      </ul>
+
+      <h2>چک لیست تغییر frontend</h2>
+      <ul>
+        <li>
+          route جدید را با TanStack Router بسازید و route tree generated را
+          commit کنید.
+        </li>
+        <li>
+          فرم ها باید loading، success، validation و error state داشته باشند.
+        </li>
+        <li>
+          mutationها بعد از موفقیت queryهای همان feature را invalidate کنند.
+        </li>
+        <li>
+          component بزرگ را فقط وقتی بشکنید که state یا reuse واقعی وجود دارد.
+        </li>
+      </ul>
     </main>
   </body>
 </html>

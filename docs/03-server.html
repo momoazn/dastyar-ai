@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html" class="active">05 سرور</a>
       <a href="04-web.html">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
     </aside>
     <main>
       <h1>05 — سرور</h1>
@@ -474,6 +475,48 @@
         <li>
           ساخت embedding و chunk retrieval در <code>embeddings.ts</code>و
           <code>rag.ts</code>.
+        </li>
+      </ul>
+
+      <h2>Config و boot</h2>
+      <ul>
+        <li>
+          schema و defaults در <code>src/config-schema.ts</code>هستند.
+        </li>
+        <li>
+          loader در <code>src/config.ts</code>فقط <code>config.json</code>ریشه
+          repo را در dev و <code>config.json</code>کنار binary را در release می
+          خواند.
+        </li>
+        <li>
+          generator در <code>src/scripts/config-generator.ts</code>برای ساخت،
+          نمایش و validate همین فایل استفاده می شود.
+        </li>
+        <li>
+          ترتیب boot: خواندن config، ساخت logger/startup summary، اتصال DB،
+          اجرای migration، ساخت Hono app و listen روی <code>PORT</code>.
+        </li>
+      </ul>
+
+      <h2>قرارداد خطا</h2>
+      <p>
+        خطاهایی که به کاربر می رسند باید فارسی و قابل اقدام باشند. خطاهای داخلی
+        می توانند در log جزئیات انگلیسی داشته باشند، اما پیام ORPC، route
+        response و پیام برگشتی serviceها نباید raw exception یا متن انگلیسی را
+        به وب پاس بدهند.
+      </p>
+
+      <h2>چک لیست تغییر backend</h2>
+      <ul>
+        <li>برای procedure جدید، input را با Zod validate کنید.</li>
+        <li>
+          منطق DB را در repository نگه دارید و procedure را نازک نگه دارید.
+        </li>
+        <li>
+          برای operation حساس auth/admin، test کنار فایل مربوط اضافه کنید.
+        </li>
+        <li>
+          بعد از تغییر schema، migration بسازید و docs/config را همسان کنید.
         </li>
       </ul>
     </main>

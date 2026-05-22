@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html">05 سرور</a>
       <a href="04-web.html">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
     </aside>
     <main>
       <h1>01 — راه اندازی Windows از صفر</h1>
@@ -29,7 +30,7 @@
       <h2>هدف نهایی</h2>
       <ul>
         <li>
-          وب روی <code>http://localhost:5173</code>اجرا شود.
+          وب روی <code>http://localhost:3001</code>اجرا شود.
         </li>
         <li>
           سرور روی <code>http://localhost:3000</code>اجرا شود.
@@ -201,9 +202,9 @@ ollama --version</code></pre>
 bun run config:show
 bun run config:validate</code></pre>
       <p>
-        فایل runtime در <code>apps/server/config.json</code>ساخته می شود و داخل
-        git نگه داری نمی شود. برای development مقدارهای پیش فرض کافی هستند، اما
-        برای محیط واقعی حتما <code>JWT_SECRET</code>را تغییر دهید.
+        فایل runtime در ریشه repo با نام <code>config.json</code>ساخته می شود و
+        داخل git نگه داری نمی شود. برای development مقدارهای پیش فرض کافی هستند،
+        اما برای محیط واقعی حتما <code>JWT_SECRET</code>را تغییر دهید.
       </p>
       <table>
         <tr>
@@ -318,7 +319,7 @@ bun run dev:web
 bun run dev:whisper</code></pre>
       <p>بعد از بالا آمدن سرویس ها:</p>
       <pre><code>Invoke-WebRequest http://localhost:3000/health
-Start-Process http://localhost:5173</code></pre>
+Start-Process http://localhost:3001</code></pre>
       <p>
         اگر <code>bun run dev</code>خواندن logها را سخت کرد، سه PowerShell جدا
         باز کنید و هر سرویس را جدا اجرا کنید: server، web، whisper.
@@ -327,7 +328,7 @@ Start-Process http://localhost:5173</code></pre>
       <h2>11. اولین ورود</h2>
       <ul>
         <li>
-          وب را باز کنید: <code>http://localhost:5173</code>
+          وب را باز کنید: <code>http://localhost:3001</code>
         </li>
         <li>اولین کاربر را ثبت نام کنید.</li>
         <li>اولین کاربر به صورت خودکار admin می شود.</li>
@@ -399,7 +400,7 @@ bun run dev:web</code></pre>
           </td>
         </tr>
         <tr>
-          <td>پورت 3000 یا 5173 اشغال است</td>
+          <td>پورت 3000 یا 3001 اشغال است</td>
           <td>
             فرآیند قبلی را ببندید یا مقدار پورت server را در config تغییر دهید.
           </td>

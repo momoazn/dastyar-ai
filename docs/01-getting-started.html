@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html">05 سرور</a>
       <a href="04-web.html">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
     </aside>
     <main>
       <h1>02 — راه اندازی local</h1>
@@ -70,14 +71,22 @@
 bun run dev:server
 bun run dev:whisper</code></pre>
 
-      <h2>Config سرور</h2>
+      <h2>Config واحد پروژه</h2>
       <p>
-        سرور از <code>apps/server/config.json</code>یا مقدارهای پیش فرض
-        <code>apps/server/src/config-schema.ts</code>استفاده می کند.
+        همه بخش ها از یک فایل canonical استفاده می کنند:
+        <code>config.json</code>در ریشه repo. سرور، وب dev proxy، اسکریپت های
+        start/status و سرویس Whisper همین فایل را می خوانند. فایل های
+        <code>.env</code>یا config جداگانه داخل appها نباید برای تنظیمات runtime
+        ساخته شوند.
       </p>
       <pre><code>bun run config:generate
 bun run config:show
 bun run config:validate</code></pre>
+      <p>
+        مقدارهای پیش فرض در <code>apps/server/src/config-schema.ts</code>تعریف
+        شده اند و نمونه قابل commit در <code>config.example.json</code>است. فایل
+        واقعی <code>config.json</code>local است و نباید commit شود.
+      </p>
 
       <h2>مهم ترین کلیدهای config</h2>
       <table>
@@ -196,7 +205,7 @@ bun run config:validate</code></pre>
             <code>dev:web</code>بعد از روشن بودن server
           </td>
           <td>
-            صفحه login/register روی <code>5173</code>باز شود.
+            صفحه login/register روی <code>3001</code>باز شود.
           </td>
         </tr>
         <tr>

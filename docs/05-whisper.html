@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-whisper.html" class="active">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>07 — Whisper</h1>
+      <p>
+        سرویس Whisper یک سرویس Go کوچک است که فایل صوتی را از سرور دریافت می
+        کند، با whisper.cpp تبدیل به متن می کند و نتیجه را به API اصلی برمی
+        گرداند.
+      </p>
+
+      <h2>جایگاه در سیستم</h2>
+      <p>
+        وب فایل صوتی را به procedureهای transcribe در سرور می فرستد. سرور فایل
+        را validate و ذخیره موقت می کند، سپس از client
+        <code>apps/server/src/services/ai-providers/whisper.ts</code>به سرویس Go
+        درخواست می دهد. سرویس Go مدل local را load می کند و متن نهایی را به سرور
+        برمی گرداند.
+      </p>
+
+      <h2>فایل های اصلی</h2>
+      <table>
+        <tr>
+          <th>مسیر</th>
+          <th>وظیفه</th>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/whisper/main.go</code>
+          </td>
+          <td>خواندن config، اجرای HTTP server، health و graceful shutdown</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/whisper/internal/handler/transcribe.go</code>
+          </td>
+          <td>دریافت multipart upload، validation و پاسخ JSON</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/whisper/internal/service/whisper.go</code>
+          </td>
+          <td>اتصال به bindingهای whisper.cpp و اجرای transcription</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/whisper/go.mod</code>
+          </td>
+          <td>dependencyهای Go و binding whisper.cpp</td>
+        </tr>
+        <tr>
+          <td>
+            <code>whisper-models</code>
+          </td>
+          <td>مدل های دانلود شده برای release/runtime</td>
+        </tr>
+      </table>
+
+      <h2>Config</h2>
+      <p>
+        config فقط از <code>config.json</code>ریشه repo خوانده می شود. سرویس Go
+        هنگام اجرا در dev یا dist مسیرهای <code>config.json</code>،
+        <code>../config.json</code>و <code>../../config.json</code>را بررسی می
+        کند.
+      </p>
+      <table>
+        <tr>
+          <th>کلید</th>
+          <th>معنی</th>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_SERVER_URL</code>
+          </td>
+          <td>URL کامل سرویس؛ port از همین مقدار استخراج می شود.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_MODEL_DIR</code>
+          </td>
+          <td>
+            مسیر پوشه مدل ها، مثلا <code>./models</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_MODELS</code>
+          </td>
+          <td>
+            لیست مدل ها با comma؛ سرویس Go اولین مدل غیرخالی را استفاده می کند.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_TIMEOUT_MS</code>
+          </td>
+          <td>timeout سمت سرور API هنگام صدا زدن سرویس Whisper.</td>
+        </tr>
+      </table>
+
+      <h2>راه اندازی dev</h2>
+      <pre><code>bun run config:generate
+bun run download:model
+bun run dev:whisper</code></pre>
+      <p>
+        پس از اجرا، health را با آدرس داخل <code>WHISPER_SERVER_URL</code>چک
+        کنید. اگر config را تغییر دادید، سرویس را restart کنید.
+      </p>
+
+      <h2>قرارداد API</h2>
+      <table>
+        <tr>
+          <th>Endpoint</th>
+          <th>کاربرد</th>
+        </tr>
+        <tr>
+          <td>
+            <code>GET /health</code>
+          </td>
+          <td>بررسی آماده بودن سرویس</td>
+        </tr>
+        <tr>
+          <td>
+            <code>POST /transcribe</code>
+          </td>
+          <td>دریافت فایل صوتی multipart و برگرداندن متن</td>
+        </tr>
+      </table>
+
+      <h2>Build و release</h2>
+      <p>
+        build اصلی با <code>bun run build</code>یا build هدفمند در
+        <code>scripts/build.ts</code>انجام می شود. خروجی binary در
+        <code>dist</code>قرار می گیرد و مدل ها باید کنار release یا در مسیر
+        تعریف شده در config موجود باشند.
+      </p>
+
+      <h2>نکات توسعه</h2>
+      <ul>
+        <li>
+          مسیر happy path را از وب شروع کنید؛ UI فقط با سرور API صحبت می کند.
+        </li>
+        <li>
+          خطای file type، حجم، مدل گم شده و timeout باید پیام فارسی داشته باشد.
+        </li>
+        <li>
+          bindingهای whisper.cpp native هستند؛ خطای <code>whisper.h</code>یعنی
+          dependency native آماده نیست.
+        </li>
+        <li>
+          برای تغییر مدل پیش فرض، اول <code>config.example.json</code>و docs را
+          به روز کنید.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

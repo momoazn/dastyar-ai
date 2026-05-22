@@ -16,8 +16,9 @@
       <a href="02-structure.html">04 ساختار</a>
       <a href="03-server.html">05 سرور</a>
       <a href="04-web.html">06 وب</a>
-      <a href="05-features.html">07 قابلیت ها</a>
-      <a href="07-troubleshooting.html">08 عیب یابی</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
     </aside>
     <main>
       <h1>03 — دستورات</h1>
@@ -110,7 +111,7 @@ bun run config:validate</code></pre>
       <p>
         بعد از تغییر schema، migration بسازید و روی دیتابیس local اجرا کنید.
         <code>db:studio</code>برای inspect دستی داده ها مفید است. config runtime
-        در <code>apps/server/config.json</code>است و نباید commit شود.
+        در <code>config.json</code>است و نباید commit شود.
       </p>
 
       <h2>Service lifecycle</h2>
@@ -126,7 +127,6 @@ bun run status</code></pre>
 
       <h2>Assets</h2>
       <pre><code>bun run download:ffmpeg
-bun run download:ffmpeg:all
 bun run download:model</code></pre>
 
       <p>
