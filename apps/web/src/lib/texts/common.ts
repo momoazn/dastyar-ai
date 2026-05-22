@@ -82,7 +82,7 @@ export const userProfile = {
 
 export const invalidThreadId = "شناسه گفتگوی نامعتبر";
 
-export const documents = {
+export const documentHints = {
   attachmentLabel: "پیوست سند",
   supportedFormatsHint:
     "فرمت‌های پشتیبانی‌شده: PDF, DOCX, XLS/XLSX/XLSM, CSV/TSV, TXT/MD, HTML/XML, EML/RTF, YAML/TOML/INI/LOG/SQL و فایل‌های کد رایج.",

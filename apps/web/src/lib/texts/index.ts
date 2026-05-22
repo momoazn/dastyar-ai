@@ -2,7 +2,7 @@ import { admin } from "./admin";
 import { auth } from "./auth";
 import { chat, imageChat } from "./chat";
 import {
-  documents as commonDocuments,
+  documentHints,
   general,
   invalidThreadId,
   languages,
@@ -62,7 +62,7 @@ export const fa = {
   imageGeneration,
   imageChat,
   codeAssistant,
-  documents: { ...documents, ...commonDocuments },
+  documents: { ...documents, ...documentHints },
   admin,
   sidebar,
   errors,

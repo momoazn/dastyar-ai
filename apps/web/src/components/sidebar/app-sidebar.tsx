@@ -1,11 +1,6 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import {
-  useActiveNavItem,
-  useCreateThread,
-  useTranslationActions,
-} from "@/components/sidebar";
-import {
   Button,
   Sidebar,
   SidebarContent,
@@ -16,7 +11,9 @@ import {
 import { fa } from "@/lib/texts";
 import { ChatThreadsList } from "./chat-threads-list";
 import { CodeRunsList } from "./code-runs-list";
+import { useCreateThread, useTranslationActions } from "./hooks";
 import { ImagesSidebar } from "./images-sidebar";
+import { useActiveNavItem } from "./nav";
 import { AppSidebarHeader, NavigationMenu } from "./navigation";
 import { SummariesList } from "./summaries-list";
 import { TranslationsList } from "./translations-list";

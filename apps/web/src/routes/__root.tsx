@@ -2,7 +2,6 @@ import "@fontsource-variable/vazirmatn";
 import "../index.css";
 
 import type { QueryClient } from "@tanstack/react-query";
-// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -10,7 +9,6 @@ import {
   useLocation,
   useRouterState,
 } from "@tanstack/react-router";
-// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -70,8 +68,6 @@ function RootComponent() {
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster position="bottom-left" richColors />
       </ThemeProvider>
-      {/* <TanStackRouterDevtools position="bottom-left" /> */}
-      {/* <ReactQueryDevtools buttonPosition="relative" position="bottom" /> */}
     </>
   );
 }
