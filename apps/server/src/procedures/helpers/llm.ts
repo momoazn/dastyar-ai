@@ -1,4 +1,4 @@
-import { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 import { getModelById } from "@/repositories/llm-models";
 import { acquireProviderForModel } from "@/services/ai-providers";
 

@@ -1,4 +1,4 @@
-import { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import {
   db,
