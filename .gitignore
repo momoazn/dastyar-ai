@@ -187,6 +187,7 @@ dastyar/
 # Configuration files with secrets
 
 /config.json
+/apps/server/config.json
 /server.log
 
 # Turbo logs (override wildcard)
@@ -194,3 +195,4 @@ dastyar/
 
 # Source package artifacts
 dastyar-ai-source-v*.zip
+release/

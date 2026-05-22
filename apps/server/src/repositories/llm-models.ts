@@ -1,4 +1,4 @@
-import { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import {
   db,
@@ -6,6 +6,7 @@ import {
   type LLMModelProvider,
   llmModels,
 } from "@/database";
+import { serverTexts } from "@/lib/texts";
 
 type ModelFilter = Partial<{
   id: number;
@@ -67,7 +68,7 @@ export async function addModel(
 
   if (existing.length > 0) {
     throw new ORPCError("CONFLICT", {
-      message: `Model with identifier "${identifier}" already exists for provider "${provider}"`,
+      message: serverTexts.model.duplicate,
       status: 409,
     });
   }
@@ -90,7 +91,7 @@ export async function addModel(
   // Fetch and return the newly created model
   const newModels = await getModels({ identifier, provider });
   if (newModels.length === 0) {
-    throw new Error("Unable to load model after creation");
+    throw new Error("بارگذاری مدل پس از ایجاد ناموفق بود.");
   }
   return newModels[0];
 }
@@ -125,7 +126,7 @@ export async function updateModel(
 
   const updated = await getModelById(id);
   if (!updated) {
-    throw new Error("Unable to load model after update");
+    throw new Error("بارگذاری مدل پس از به‌روزرسانی ناموفق بود.");
   }
   return updated;
 }

@@ -44,10 +44,9 @@ describe("ErrorBoundary", () => {
 
     // Check for Persian error message
     expect(screen.getByText("خطای غیرمنتظره")).toBeTruthy();
+    expect(screen.getByText("خطای ناشناخته")).toBeTruthy();
     expect(
-      screen.getByText(
-        "متأسفیم، مشکلی پیش آمده است. لطفاً صفحه را بازنشانی کنید."
-      )
+      screen.getByRole("button", { name: RESET_BUTTON_PATTERN })
     ).toBeTruthy();
 
     // Restore console.error
@@ -137,7 +136,7 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText("Test error message")).toBeTruthy();
+    expect(screen.getByText("خطای ناشناخته")).toBeTruthy();
 
     console.error = originalError;
     import.meta.env.DEV = originalEnv;

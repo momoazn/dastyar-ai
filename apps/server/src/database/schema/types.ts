@@ -85,9 +85,11 @@ export type SummaryMode = (typeof summaryModes)[number];
 // ============================================================================
 
 export const codeModes = [
+  "generate",
   "explain",
-  "refactor",
+  "review",
   "debug",
+  "refactor",
   "optimize",
   "document",
   "test",
@@ -108,6 +110,9 @@ export const programmingLanguages = [
   "ruby",
   "swift",
   "kotlin",
+  "scala",
+  "r",
+  "bash",
   "dart",
   "sql",
   "html",

@@ -67,6 +67,14 @@ const sidebarFeatureToggles: Array<{
   },
 ];
 
+const parseIntegerSettingInput = (rawValue: string): number | null => {
+  const parsed = Number.parseInt(rawValue, 10);
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+  return parsed;
+};
+
 export function SettingsPanel() {
   const [settings, setSettings] = useState<SystemSettingsMap>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -108,9 +116,14 @@ export function SettingsPanel() {
           })
         )
       );
-      await queryClient.invalidateQueries({
-        queryKey: orpc.admin.getAllSettings.queryKey(),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: orpc.admin.getAllSettings.queryKey(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: orpc.appConfig.getFeatureToggles.queryKey(),
+        }),
+      ]);
       toast.success(fa.admin.settings.messages.saved);
       setHasChanges(false);
     },
@@ -126,6 +139,14 @@ export function SettingsPanel() {
       [key]: value,
     }));
     setHasChanges(true);
+  };
+
+  const handleIntegerSettingChange = (key: string, rawValue: string): void => {
+    const parsed = parseIntegerSettingInput(rawValue);
+    if (parsed === null) {
+      return;
+    }
+    handleSettingChange(key, parsed);
   };
 
   const handleSave = useCallback(async () => {
@@ -157,7 +178,7 @@ export function SettingsPanel() {
   return (
     <div className="space-y-5" dir="rtl">
       <SettingsSection
-        description="زمان انقضا و الزامات امنیتی حساب‌ها را مدیریت کنید"
+        description={fa.admin.settings.security.description}
         icon={<Shield className="h-4 w-4" />}
         title={fa.admin.settings.security.title}
       >
@@ -168,10 +189,11 @@ export function SettingsPanel() {
               className="w-full text-right sm:w-32"
               dir="rtl"
               id="tokenExpiration"
+              min={1}
               onChange={(e) =>
-                handleSettingChange(
+                handleIntegerSettingChange(
                   "token_expiration_hours",
-                  Number.parseInt(e.target.value, 10)
+                  e.target.value
                 )
               }
               type="number"
@@ -184,10 +206,11 @@ export function SettingsPanel() {
               className="w-full text-right sm:w-32"
               dir="rtl"
               id="sessionTimeout"
+              min={1}
               onChange={(e) =>
-                handleSettingChange(
+                handleIntegerSettingChange(
                   "session_timeout_minutes",
-                  Number.parseInt(e.target.value, 10)
+                  e.target.value
                 )
               }
               type="number"
@@ -200,10 +223,11 @@ export function SettingsPanel() {
               className="w-full text-right sm:w-32"
               dir="rtl"
               id="passwordMinLength"
+              min={6}
               onChange={(e) =>
-                handleSettingChange(
+                handleIntegerSettingChange(
                   "password_min_length",
-                  Number.parseInt(e.target.value, 10)
+                  e.target.value
                 )
               }
               type="number"
@@ -214,7 +238,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="سقف حجم و فرمت‌های مجاز برای فایل‌های بارگذاری‌شده"
+        description={fa.admin.settings.fileManagement.description}
         icon={<FolderCog className="h-4 w-4" />}
         title={fa.admin.settings.fileManagement.title}
       >
@@ -225,11 +249,9 @@ export function SettingsPanel() {
               className="w-full text-right sm:w-36"
               dir="rtl"
               id="maxFileSize"
+              min={1}
               onChange={(e) =>
-                handleSettingChange(
-                  "max_file_size_mb",
-                  Number.parseInt(e.target.value, 10)
-                )
+                handleIntegerSettingChange("max_file_size_mb", e.target.value)
               }
               type="number"
               value={(settings.max_file_size_mb as number) || 50}
@@ -259,7 +281,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="تنظیمات زمان انتظار پاسخ مدل‌ها"
+        description={fa.admin.settings.aiModels.description}
         icon={<Bot className="h-4 w-4" />}
         title={fa.admin.settings.aiModels.title}
       >
@@ -270,10 +292,11 @@ export function SettingsPanel() {
               className="w-full text-right sm:w-36"
               dir="rtl"
               id="responseTimeout"
+              min={1}
               onChange={(e) =>
-                handleSettingChange(
+                handleIntegerSettingChange(
                   "model_response_timeout_seconds",
-                  Number.parseInt(e.target.value, 10)
+                  e.target.value
                 )
               }
               type="number"
@@ -284,7 +307,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="ماژول‌های قابل مشاهده در نوار کناری را فعال یا غیرفعال کنید"
+        description={fa.admin.settings.aiModels.featuresDescription}
         icon={<LayoutPanelLeft className="h-4 w-4" />}
         title={fa.admin.settings.sidebarFeatures.title}
       >

@@ -1,8 +1,6 @@
 import {
   AlertCircle,
   Bot,
-  Check,
-  Copy,
   Eye,
   EyeOff,
   Loader2,
@@ -10,6 +8,10 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Streamdown } from "streamdown";
+import {
+  CopyMessageButton,
+  formatMessageTime,
+} from "@/components/chat/message-actions";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -33,7 +35,6 @@ export type AssistantMessageProps = {
 
 export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
 
   const hasThinking =
     message.role === "assistant" && Boolean((message.reasoning || "").trim());
@@ -49,26 +50,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   };
 
   const textDirection = detectTextDirection(message.content || "");
-
-  const formattedTime = useMemo(() => {
-    if (!message.sent_at) {
-      return null;
-    }
-    return new Date(message.sent_at).toLocaleTimeString("fa-IR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }, [message.sent_at]);
-
-  const handleCopy = useCallback(async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (_error) {
-      setCopySuccess(false);
-    }
-  }, []);
+  const formattedTime = formatMessageTime(message.sent_at);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => !c);
@@ -78,25 +60,10 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
     () => (
       <TooltipProvider>
         <div className="mt-2 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
-                onClick={() => handleCopy(message.content || "")}
-                size="sm"
-                variant="ghost"
-              >
-                {copySuccess ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{copySuccess ? fa.chat.copied : fa.chat.copy}</p>
-            </TooltipContent>
-          </Tooltip>
+          <CopyMessageButton
+            className="h-8 w-8 rounded-lg p-0 hover:bg-accent hover:text-accent-foreground"
+            content={message.content}
+          />
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -115,7 +82,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
         </div>
       </TooltipProvider>
     ),
-    [copySuccess, handleCopy, message.content, message.model]
+    [message.content, message.model]
   );
 
   const { isStopped, isErrored, isGenerating } = messageStatus;
@@ -130,7 +97,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
                 <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500" />
               </div>
               <span className="font-medium text-gray-600 text-sm dark:text-gray-400">
-                🧠 فرآیند تفکر
+                {fa.chat.thinkingProcess}
               </span>
             </div>
 
@@ -145,7 +112,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
               ) : (
                 <EyeOff className="ml-1 h-3 w-3" />
               )}{" "}
-              {collapsed ? "نمایش" : "پنهان"}
+              {collapsed ? fa.chat.show : fa.chat.hide}
             </Button>
           </div>
 

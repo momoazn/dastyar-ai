@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>راه اندازی ویندوز — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="08-windows-setup.html" class="active">01 راه اندازی Windows</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>01 — راه اندازی Windows از صفر</h1>
+      <p>
+        این راهنما مسیر تحویل repo به یک توسعه دهنده را تا رسیدن به اپ در حال
+        اجرا روی Windows توضیح می دهد. دستورها برای PowerShell نوشته شده اند.
+      </p>
+
+      <h2>هدف نهایی</h2>
+      <ul>
+        <li>
+          وب روی <code>http://localhost:3001</code>اجرا شود.
+        </li>
+        <li>
+          سرور روی <code>http://localhost:3000</code>اجرا شود.
+        </li>
+        <li>
+          health سرور از <code>http://localhost:3000/health</code>پاسخ دهد.
+        </li>
+        <li>Ollama برای قابلیت های متنی آماده باشد.</li>
+        <li>
+          Whisper و Stable Diffusion در صورت نیاز آماده یا آگاهانه غیرفعال
+          باشند.
+        </li>
+      </ul>
+
+      <h2>1. نصب پیش نیازهای سیستم</h2>
+      <p>
+        ساده ترین مسیر نصب روی Windows استفاده از <code>winget</code>است. اگر
+        ماشین سازمانی <code>winget</code>ندارد، همان ابزارها را از وب سایت رسمی
+        نصب کنید و بعد PowerShell جدید باز کنید.
+      </p>
+      <table>
+        <tr>
+          <th>ابزار</th>
+          <th>کاربرد</th>
+          <th>نصب پیشنهادی</th>
+        </tr>
+        <tr>
+          <td>Git</td>
+          <td>دریافت repo</td>
+          <td>
+            <code>winget install --id Git.Git -e</code>
+          </td>
+        </tr>
+        <tr>
+          <td>Bun</td>
+          <td>package manager، runtime و test runner</td>
+          <td>
+            <code>powershell -c "irm bun.sh/install.ps1 | iex"</code>
+          </td>
+        </tr>
+        <tr>
+          <td>Go</td>
+          <td>ساخت و اجرای سرویس Whisper</td>
+          <td>
+            <code>winget install --id GoLang.Go -e</code>
+          </td>
+        </tr>
+        <tr>
+          <td>Ollama</td>
+          <td>مدل های chat، ترجمه، خلاصه سازی و embedding</td>
+          <td>
+            <code>winget install --id Ollama.Ollama -e</code>
+          </td>
+        </tr>
+        <tr>
+          <td>Visual Studio Build Tools</td>
+          <td>ابزار native build در صورت نیاز dependencyها</td>
+          <td>
+            <code>
+              winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+            </code>
+          </td>
+        </tr>
+      </table>
+      <p>
+        بعد از نصب، PowerShell را ببندید و دوباره باز کنید تا PATH جدید اعمال
+        شود.
+      </p>
+
+      <h2>1.1 لینک و دستور نصب دستی prerequisiteها</h2>
+      <table>
+        <tr>
+          <th>ابزار</th>
+          <th>روش جایگزین</th>
+          <th>چرا لازم است</th>
+        </tr>
+        <tr>
+          <td>Bun</td>
+          <td>
+            <code>https://bun.sh/docs/installation</code>
+          </td>
+          <td>اجرای scriptها، نصب packageها، test و build.</td>
+        </tr>
+        <tr>
+          <td>Git</td>
+          <td>
+            <code>https://git-scm.com/download/win</code>
+          </td>
+          <td>clone کردن repo و ساخت archive source.</td>
+        </tr>
+        <tr>
+          <td>Go</td>
+          <td>
+            <code>https://go.dev/dl/</code>
+          </td>
+          <td>
+            اجرای <code>apps/whisper</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Ollama</td>
+          <td>
+            <code>https://ollama.com/download/windows</code>
+          </td>
+          <td>مدل های local chat و embedding.</td>
+        </tr>
+        <tr>
+          <td>LM Studio</td>
+          <td>
+            <code>https://lmstudio.ai/download</code>
+          </td>
+          <td>جایگزین OpenAI-compatible برای مدل های local.</td>
+        </tr>
+        <tr>
+          <td>Automatic1111</td>
+          <td>
+            <code>https://github.com/AUTOMATIC1111/stable-diffusion-webui</code>
+          </td>
+          <td>تولید تصویر با Stable Diffusion.</td>
+        </tr>
+      </table>
+
+      <h2>1.2 آماده سازی PowerShell</h2>
+      <p>
+        اگر اجرای script روی سیستم محدود شده است، PowerShell را با دسترسی عادی
+        باز کنید و فقط برای همین session policy را آزادتر کنید:
+      </p>
+      <pre
+      ><code>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass</code></pre>
+      <p>
+        این تغییر دائمی نیست و فقط همان پنجره PowerShell را تحت تاثیر قرار می
+        دهد.
+      </p>
+
+      <h2>2. دریافت repo</h2>
+      <pre><code>git clone &lt;REPO_URL&gt; dastyar-ai
+cd dastyar-ai</code></pre>
+      <p>
+        اگر repo به صورت zip تحویل شده است، آن را extract کنید و PowerShell را
+        در root پروژه باز کنید.
+      </p>
+
+      <h2>3. بررسی نسخه ابزارها</h2>
+      <pre><code>git --version
+bun --version
+go version
+ollama --version</code></pre>
+      <p>
+        نسخه Bun باید 1.3 یا جدیدتر باشد. اگر دستور <code>bun</code>پیدا نشد،
+        مسیر نصب Bun را به PATH اضافه کنید یا PowerShell را دوباره باز کنید.
+      </p>
+
+      <h2>4. نصب dependencyها</h2>
+      <pre><code>bun install</code></pre>
+      <p>
+        این دستور dependencyهای root، <code>apps/server</code>و
+        <code>apps/web</code>را با workspace نصب می کند.
+      </p>
+      <p>اگر نصب به خاطر cache یا network شکست خورد:</p>
+      <pre><code>bun install --force</code></pre>
+      <p>
+        اگر پشت proxy یا registry داخلی هستید، اول تنظیمات شبکه سازمان را روی
+        npm/Bun اعمال کنید. بعد از نصب موفق، پوشه <code>node_modules</code>در
+        root ساخته می شود.
+      </p>
+
+      <h2>5. ساخت config سرور</h2>
+      <pre><code>bun run config:generate
+bun run config:show
+bun run config:validate</code></pre>
+      <p>
+        فایل runtime در ریشه repo با نام <code>config.json</code>ساخته می شود و
+        داخل git نگه داری نمی شود. برای development مقدارهای پیش فرض کافی هستند،
+        اما برای محیط واقعی حتما <code>JWT_SECRET</code>را تغییر دهید.
+      </p>
+      <table>
+        <tr>
+          <th>کلید</th>
+          <th>مقدار توسعه</th>
+        </tr>
+        <tr>
+          <td>
+            <code>DATABASE_FILE</code>
+          </td>
+          <td>
+            <code>./data.db</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>OLLAMA_BASE_URL</code>
+          </td>
+          <td>
+            <code>http://localhost:11434</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_SERVER_URL</code>
+          </td>
+          <td>
+            <code>http://127.0.0.1:8080</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>STABLE_DIFFUSION_BASE_URL</code>
+          </td>
+          <td>
+            <code>http://localhost:7860</code>
+          </td>
+        </tr>
+      </table>
+
+      <h2>6. آماده سازی دیتابیس</h2>
+      <pre><code>bun run db:migrate</code></pre>
+      <p>دیتابیس SQLite محلی ساخته یا migrate می شود. برای دیدن دیتابیس:</p>
+      <pre><code>bun run db:studio</code></pre>
+
+      <h2>7. راه اندازی Ollama</h2>
+      <p>Ollama باید قبل از استفاده از chat و embedding در حال اجرا باشد.</p>
+      <pre><code>ollama serve</code></pre>
+      <p>در یک PowerShell دیگر مدل های لازم را بگیرید:</p>
+      <pre><code>ollama pull llama3.2
+ollama pull nomic-embed-text
+ollama list</code></pre>
+      <p>
+        اگر از مدل دیگری استفاده می کنید، بعد از اجرای اپ از بخش admin یا sync
+        مدل ها آن را به سیستم معرفی کنید.
+      </p>
+      <p>برای تست مستقیم Ollama بدون اپ:</p>
+      <pre><code>ollama run llama3.2 "Say ready"
+Invoke-WebRequest http://localhost:11434/api/tags</code></pre>
+
+      <h2>8. راه اندازی Whisper اختیاری</h2>
+      <p>
+        Whisper برای transcription فایل صوتی است. اگر فعلا transcription لازم
+        نیست، می توانید این بخش را رد کنید؛ health سرور فقط Whisper را
+        unavailable نشان می دهد.
+      </p>
+      <pre><code>bun run download:ffmpeg
+bun run download:model
+bun run dev:whisper</code></pre>
+      <p>
+        سرویس Whisper روی <code>http://localhost:8080</code>اجرا می شود. مدل پیش
+        فرض <code>ggml-base.bin</code>است و داخل
+        <code>apps/whisper/models</code>قرار می گیرد.
+      </p>
+      <p>برای دانلود مدل بزرگ تر:</p>
+      <pre><code>bun scripts/downloads/download-model.ts ggml-small.bin
+bun scripts/downloads/download-model.ts ggml-medium.bin</code></pre>
+      <p>
+        مدل بزرگ تر کیفیت بهتر و مصرف RAM/CPU بیشتر دارد. برای onboarding سریع،
+        همان <code>ggml-base.bin</code>کافی است.
+      </p>
+
+      <h2>9. راه اندازی Stable Diffusion اختیاری</h2>
+      <p>
+        تولید تصویر به Automatic1111 WebUI نیاز دارد. اگر تصویر لازم نیست، این
+        بخش را رد کنید.
+      </p>
+      <ol>
+        <li>Automatic1111 WebUI را نصب کنید.</li>
+        <li>
+          آن را با API فعال اجرا کنید: <code>webui-user.bat --api</code>
+        </li>
+        <li>
+          آدرس <code>http://localhost:7860</code>را باز کنید.
+        </li>
+        <li>
+          اگر پورت متفاوت است، <code>STABLE_DIFFUSION_BASE_URL</code>را در
+          config تغییر دهید.
+        </li>
+      </ol>
+      <p>
+        اگر فقط chat/RAG/translation را توسعه می دهید، Stable Diffusion اجباری
+        نیست. فقط feature تصویر خطا یا unavailable نشان می دهد.
+      </p>
+
+      <h2>10. اجرای development</h2>
+      <p>ساده ترین حالت اجرای کل workspace:</p>
+      <pre><code>bun run dev</code></pre>
+      <p>یا هر بخش جداگانه:</p>
+      <pre><code>bun run dev:server
+bun run dev:web
+bun run dev:whisper</code></pre>
+      <p>بعد از بالا آمدن سرویس ها:</p>
+      <pre><code>Invoke-WebRequest http://localhost:3000/health
+Start-Process http://localhost:3001</code></pre>
+      <p>
+        اگر <code>bun run dev</code>خواندن logها را سخت کرد، سه PowerShell جدا
+        باز کنید و هر سرویس را جدا اجرا کنید: server، web، whisper.
+      </p>
+
+      <h2>11. اولین ورود</h2>
+      <ul>
+        <li>
+          وب را باز کنید: <code>http://localhost:3001</code>
+        </li>
+        <li>اولین کاربر را ثبت نام کنید.</li>
+        <li>اولین کاربر به صورت خودکار admin می شود.</li>
+        <li>
+          از admin/settings وضعیت featureها، مدل ها و health را بررسی کنید.
+        </li>
+      </ul>
+
+      <h2>12. اجرای build ویندوز</h2>
+      <pre><code>bun run build:windows</code></pre>
+      <p>
+        خروجی executable ویندوز برای سرور در <code>apps/server/dist</code>و
+        خروجی Whisper در مسیر build مربوط به آن قرار می گیرد. برای build سریع
+        توسعه که Whisper را رد کند:
+      </p>
+      <pre><code>bun run build:fast</code></pre>
+
+      <h2>13. اجرای نسخه build شده</h2>
+      <pre><code>bun run start
+bun run status
+bun run stop</code></pre>
+      <p>
+        <code>start</code>binaryهای build شده را اجرا می کند. قبل از آن باید
+        build موفق انجام شده باشد.
+      </p>
+
+      <h2>14. چک نهایی قبل از تحویل</h2>
+      <pre><code>bun run lint:check
+bun run check-types
+bun run test --force
+bun --cwd apps/web build
+bun --cwd apps/server build
+bun run archive</code></pre>
+      <p>
+        اگر همه دستورها pass شدند، repo برای توسعه بعدی آماده است. خروجی archive
+        در پوشه <code>release</code>ساخته می شود.
+      </p>
+
+      <h2>15. حداقل setup بدون سرویس های اختیاری</h2>
+      <p>
+        برای یک توسعه دهنده frontend یا backend که فعلا transcription و تصویر
+        لازم ندارد، این حداقل کافی است:
+      </p>
+      <pre><code>bun install
+bun run config:generate
+bun run db:migrate
+ollama serve
+ollama pull llama3.2
+ollama pull nomic-embed-text
+bun run dev:server
+bun run dev:web</code></pre>
+      <p>
+        در این حالت Whisper و Stable Diffusion آماده نیستند، اما login، admin،
+        chat، settings و بخش های اصلی قابل توسعه هستند.
+      </p>
+
+      <h2>خطاهای رایج ویندوز</h2>
+      <table>
+        <tr>
+          <th>نشانه</th>
+          <th>راه حل</th>
+        </tr>
+        <tr>
+          <td>
+            <code>bun</code>شناخته نمی شود
+          </td>
+          <td>
+            PowerShell را دوباره باز کنید یا مسیر Bun را به PATH اضافه کنید.
+          </td>
+        </tr>
+        <tr>
+          <td>پورت 3000 یا 3001 اشغال است</td>
+          <td>
+            فرآیند قبلی را ببندید یا مقدار پورت server را در config تغییر دهید.
+          </td>
+        </tr>
+        <tr>
+          <td>مدل chat پاسخ نمی دهد</td>
+          <td>
+            <code>ollama serve</code>و <code>ollama list</code>را بررسی کنید.
+          </td>
+        </tr>
+        <tr>
+          <td>Whisper unavailable است</td>
+          <td>
+            برای transcription، <code>bun run dev:whisper</code>را اجرا کنید؛ در
+            غیر این صورت قابل چشم پوشی است.
+          </td>
+        </tr>
+        <tr>
+          <td>تولید تصویر خطا می دهد</td>
+          <td>
+            Automatic1111 را با <code>--api</code>اجرا و آدرس config را چک کنید.
+          </td>
+        </tr>
+      </table>
+
+      <div class="note">
+        دستورهای این صفحه برای PowerShell عادی نوشته شده اند و مستقیم اجرا می
+        شوند.
+      </div>
+    </main>
+  </body>
+</html>

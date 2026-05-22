@@ -37,7 +37,6 @@ const DEPENDENCY_FILES = [
   "apps/web/package.json",
   "apps/whisper/package.json",
 ] as const;
-const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
 type BuildPlatform = "current" | "windows" | "all";
 type VersionBumpType = "patch" | "minor" | "major";
@@ -160,87 +159,25 @@ async function readRootPackage(): Promise<RootPackage> {
   return { version };
 }
 
-function bumpVersion(currentVersion: string, bump: VersionBumpType): string {
-  const match = currentVersion.match(SEMVER_REGEX);
-  if (!match) {
-    throw new Error(
-      `Unsupported version format "${currentVersion}". Expected semantic version like 1.2.3`
-    );
-  }
-
-  const major = Number(match[1]);
-  const minor = Number(match[2]);
-  const patch = Number(match[3]);
-
-  if (bump === "major") {
-    return `${major + 1}.0.0`;
-  }
-  if (bump === "minor") {
-    return `${major}.${minor + 1}.0`;
-  }
-  return `${major}.${minor}.${patch + 1}`;
-}
-
-function gitOutput(args: string[]): string {
-  const result = Bun.spawnSync(["git", ...args], {
-    cwd: ROOT,
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  if (result.exitCode !== 0) {
-    const stderr = new TextDecoder().decode(result.stderr).trim();
-    throw new Error(
-      `git ${args.join(" ")} failed${stderr ? `: ${stderr}` : ""}`
-    );
-  }
-  return new TextDecoder().decode(result.stdout).trim();
-}
-
-function assertCleanWorkingTreeForRelease(): void {
-  const status = gitOutput(["status", "--porcelain"]);
-  if (status.length > 0) {
-    throw new Error(
-      "Release build requires a clean working tree before bumping version. Commit or stash current changes first."
-    );
-  }
-}
-
-async function updateRootVersion(nextVersion: string): Promise<void> {
-  const pkgPath = join(ROOT, "package.json");
-  const parsed = (await Bun.file(pkgPath).json()) as Record<string, unknown>;
-  parsed.version = nextVersion;
-  await Bun.write(pkgPath, `${JSON.stringify(parsed, null, 2)}\n`);
-}
-
-async function commitReleaseVersion(nextVersion: string): Promise<void> {
-  await runCommand("git", ["add", "package.json"], { cwd: ROOT, quiet: true });
-  if (await pathExists(join(ROOT, "bun.lock"))) {
-    await runCommand("git", ["add", "bun.lock"], { cwd: ROOT, quiet: true });
-  }
-  await runCommand(
-    "git",
-    ["commit", "-m", `chore(release): bump version to v${nextVersion}`],
-    { cwd: ROOT, quiet: true }
-  );
-}
-
 async function prepareReleaseVersion(options: BuildOptions): Promise<string> {
   const currentPackage = await readRootPackage();
-  if (!options.release) {
-    return currentPackage.version;
+  if (options.release) {
+    console.log(
+      withTag(
+        "info",
+        `Release build will use current package version v${currentPackage.version}`
+      )
+    );
+    if (options.bump !== DEFAULT_OPTIONS.bump) {
+      console.log(
+        withTag(
+          "warn",
+          "Version bump flags are ignored during automated builds to avoid implicit package.json changes or local commits."
+        )
+      );
+    }
   }
-
-  assertCleanWorkingTreeForRelease();
-  const nextVersion = bumpVersion(currentPackage.version, options.bump);
-  await updateRootVersion(nextVersion);
-  await commitReleaseVersion(nextVersion);
-  console.log(
-    withTag(
-      "info",
-      `Release version bumped: ${currentPackage.version} → ${nextVersion}`
-    )
-  );
-  return nextVersion;
+  return currentPackage.version;
 }
 
 async function readBuildState(): Promise<BuildState> {

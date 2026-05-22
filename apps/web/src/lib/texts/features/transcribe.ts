@@ -16,6 +16,7 @@ export const transcribe = {
     micAccess: "عدم دسترسی به میکروفون یا عدم پشتیبانی مرورگر.",
     transcribeFailed: "تبدیل گفتار به متن با خطا مواجه شد. دوباره تلاش کنید.",
     fileTooLarge: "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.",
+    noActiveModel: "هیچ مدل هوش مصنوعی فعالی برای پردازش در دسترس نیست.",
   },
   transcriptionError: "خطا در تبدیل صدا به متن",
   modelDescription: "نام مدل Whisper (مثال: base, small, medium, large)",

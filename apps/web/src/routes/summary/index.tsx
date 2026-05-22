@@ -139,7 +139,7 @@ function SummarizePage() {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), COPY_SUCCESS_DURATION_MS);
     } catch {
-      setClipboardError("Failed to copy to clipboard");
+      setClipboardError(fa.general.clipboardCopyFailed);
     }
   };
 
@@ -181,7 +181,7 @@ function SummarizePage() {
                 const message =
                   clipboardError ??
                   (modelsError
-                    ? "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید."
+                    ? fa.general.modelsRefreshFailed
                     : fa.summarize.errors.requestFailed);
                 return <span>{message}</span>;
               })()}

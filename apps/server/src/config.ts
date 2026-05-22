@@ -8,6 +8,7 @@ import type { ConfigMap } from "./types/config";
 
 const CONFIG_FILE = "config.json";
 const serverRootDir = fileURLToPath(new URL("..", import.meta.url));
+const repoRootDir = resolve(serverRootDir, "../..");
 
 const isVirtualBunPath = (p?: string): boolean => {
   if (!p) {
@@ -48,7 +49,7 @@ const findConfigPath = (
 ): string | undefined => {
   const candidates = productionMode
     ? [resolve(baseDir, CONFIG_FILE)]
-    : [resolve(baseDir, CONFIG_FILE), resolve(serverRootDir, CONFIG_FILE)];
+    : [resolve(repoRootDir, CONFIG_FILE)];
 
   return candidates.find((p) => existsSync(p));
 };
@@ -78,7 +79,7 @@ const loadJson = (
         }
       );
     }
-    logger.warn("No config.json found; using defaults", { path: p });
+    logger.warn("No root config.json found; using defaults", { path: p });
     return {};
   }
 

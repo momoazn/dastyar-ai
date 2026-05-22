@@ -7,11 +7,12 @@ import {
   type Automatic1111Provider,
   createAutomatic1111,
 } from "automatic1111-provider";
+import { env } from "@/config";
 
 const MAX_RETRIES = 3;
 const HEALTH_CACHE_MS = 5000;
 const MODEL_ID_CACHE_MS = 60_000;
-const STABLE_DIFFUSION_BASE_URL = "http://localhost:7860";
+const STABLE_DIFFUSION_BASE_URL = env.STABLE_DIFFUSION_BASE_URL;
 
 let provider: Automatic1111Provider | null = null;
 let cachedHealth: { at: number; ok: boolean } | null = null;

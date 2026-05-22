@@ -44,7 +44,7 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
     [token]
   );
 
-  const { messages, status, stop, sendMessage, setMessages } =
+  const { messages, status, stop, sendMessage, setMessages, error } =
     useChat<MyUIMessage>({
       id: threadId.toString(),
       transport,
@@ -78,6 +78,7 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
     stop,
     sendPrompt,
     setMessages,
+    error,
     isLoading: messagesQuery.isLoading,
     isError: messagesQuery.isError,
   };

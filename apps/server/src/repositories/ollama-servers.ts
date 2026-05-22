@@ -122,7 +122,7 @@ export async function createOllamaServer(input: {
     .limit(1);
 
   if (created.length === 0) {
-    throw new Error("Unable to load Ollama server after creation");
+    throw new Error("بارگذاری سرور Ollama پس از ایجاد ناموفق بود.");
   }
 
   return created[0];
@@ -156,7 +156,7 @@ export async function updateOllamaServer(
 
   const updated = await getOllamaServerById(id, { ensureDefault: false });
   if (!updated) {
-    throw new Error("Unable to load Ollama server after update");
+    throw new Error("بارگذاری سرور Ollama پس از به‌روزرسانی ناموفق بود.");
   }
 
   return updated;

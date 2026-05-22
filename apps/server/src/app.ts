@@ -7,12 +7,24 @@ import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { env, webDistDir } from "./config";
 import { logger } from "./lib/logger";
+import { serverTexts } from "./lib/texts";
 import chatHandler from "./routes/chat";
 import imagesHandler from "./routes/images";
 import orpcHandler from "./routes/rpc";
 
 // Regex patterns moved to top level for performance
 const TRAILING_SLASH_REGEX = /\/$/;
+const WHISPER_HEALTH_TIMEOUT_MS = 3000;
+const PERSIAN_TEXT_REGEX = /[\u0600-\u06ff]/;
+
+function userSafeErrorMessage(err: Error): string {
+  if (err instanceof HTTPException && PERSIAN_TEXT_REGEX.test(err.message)) {
+    return err.message;
+  }
+  return err instanceof HTTPException
+    ? serverTexts.errors.badRequest
+    : serverTexts.errors.internal;
+}
 
 export function createApp() {
   const app = new Hono();
@@ -70,7 +82,7 @@ export function createApp() {
         const controller = new AbortController();
         const timer = setTimeout(
           () => controller.abort(),
-          env.WHISPER_TIMEOUT_MS
+          Math.min(env.WHISPER_TIMEOUT_MS, WHISPER_HEALTH_TIMEOUT_MS)
         );
         const res = await fetch(`${base}/health`, {
           signal: controller.signal,
@@ -100,10 +112,7 @@ export function createApp() {
       method: c.req.method,
     });
     const status = err instanceof HTTPException ? err.status : 500;
-    const message =
-      err instanceof HTTPException
-        ? err.message || "درخواست با خطا مواجه شد."
-        : "خطای داخلی سرور رخ داد.";
+    const message = userSafeErrorMessage(err);
     return c.json({ error: message }, status);
   });
 
@@ -117,7 +126,7 @@ export function createApp() {
         "Content-Type": "text/html; charset=utf-8",
       });
     }
-    return c.json({ error: "مسیر درخواستی یافت نشد." }, 404);
+    return c.json({ error: serverTexts.errors.routeNotFound }, 404);
   });
 
   return app;

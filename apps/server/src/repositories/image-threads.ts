@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, type ImageThread, imageThreads } from "@/database";
 import { logger } from "@/lib/logger";
 
@@ -20,45 +20,58 @@ export async function createImageThread(
     return { id: Number(result.at(0)?.id) };
   } catch (error) {
     logger.error("Failed to create image thread", error);
-    throw new Error("Unable to create image thread");
+    throw new Error("ایجاد گفتگوی تصویری ناموفق بود.");
   }
 }
 
-export async function getImageThread(id: number): Promise<ImageThread | null> {
+export async function getImageThread(
+  id: number,
+  userId: number
+): Promise<ImageThread | null> {
   try {
     const rows = await db
       .select()
       .from(imageThreads)
-      .where(eq(imageThreads.id, id))
+      .where(and(eq(imageThreads.id, id), eq(imageThreads.userId, userId)))
       .limit(1);
 
     return rows.at(0) ?? null;
   } catch (error) {
-    logger.error("Failed to get image thread", error, { id });
-    throw new Error("Unable to retrieve image thread");
+    logger.error("Failed to get image thread", error, { id, userId });
+    throw new Error("دریافت گفتگوی تصویری ناموفق بود.");
   }
 }
 
-export function listImageThreads(options?: {
+export function listImageThreads(options: {
   includeArchived?: boolean;
+  userId: number;
 }): Promise<ImageThread[]> {
-  const includeArchived = options?.includeArchived ?? false;
-  if (includeArchived) {
+  const includeArchived = options.includeArchived ?? false;
+  const conditions = [eq(imageThreads.userId, options.userId)];
+
+  if (!includeArchived) {
+    conditions.push(eq(imageThreads.isArchived, false));
+  }
+
+  if (conditions.length === 1) {
     return db
       .select()
       .from(imageThreads)
+      .where(conditions[0])
       .orderBy(desc(imageThreads.lastImageAt), desc(imageThreads.updatedAt));
   }
+
   return db
     .select()
     .from(imageThreads)
-    .where(eq(imageThreads.isArchived, false))
+    .where(and(...conditions))
     .orderBy(desc(imageThreads.lastImageAt), desc(imageThreads.updatedAt));
 }
 
 export async function renameImageThread(
   id: number,
-  title: string
+  title: string,
+  userId: number
 ): Promise<void> {
   try {
     await db
@@ -67,17 +80,18 @@ export async function renameImageThread(
         title,
         updatedAt: new Date(),
       })
-      .where(eq(imageThreads.id, id))
+      .where(and(eq(imageThreads.id, id), eq(imageThreads.userId, userId)))
       .run();
   } catch (error) {
-    logger.error("Failed to rename image thread", error, { id });
-    throw new Error("Unable to rename image thread");
+    logger.error("Failed to rename image thread", error, { id, userId });
+    throw new Error("تغییر نام گفتگوی تصویری ناموفق بود.");
   }
 }
 
 export async function setImageThreadArchived(
   id: number,
-  isArchived: boolean
+  isArchived: boolean,
+  userId: number
 ): Promise<void> {
   try {
     await db
@@ -86,27 +100,35 @@ export async function setImageThreadArchived(
         isArchived,
         updatedAt: new Date(),
       })
-      .where(eq(imageThreads.id, id))
+      .where(and(eq(imageThreads.id, id), eq(imageThreads.userId, userId)))
       .run();
   } catch (error) {
     logger.error("Failed to set archived status for image thread", error, {
       id,
+      userId,
     });
-    throw new Error("Unable to update image thread archived status");
+    throw new Error("به‌روزرسانی وضعیت بایگانی گفتگوی تصویری ناموفق بود.");
   }
 }
 
-export async function deleteImageThread(id: number): Promise<void> {
+export async function deleteImageThread(
+  id: number,
+  userId: number
+): Promise<void> {
   try {
-    await db.delete(imageThreads).where(eq(imageThreads.id, id)).run();
+    await db
+      .delete(imageThreads)
+      .where(and(eq(imageThreads.id, id), eq(imageThreads.userId, userId)))
+      .run();
   } catch (error) {
-    logger.error("Failed to delete image thread", error, { id });
-    throw new Error("Unable to delete image thread");
+    logger.error("Failed to delete image thread", error, { id, userId });
+    throw new Error("حذف گفتگوی تصویری ناموفق بود.");
   }
 }
 
 export async function touchLastImageAt(
   threadId: number,
+  userId: number,
   date: Date = new Date()
 ): Promise<void> {
   try {
@@ -116,12 +138,15 @@ export async function touchLastImageAt(
         lastImageAt: date,
         updatedAt: date,
       })
-      .where(eq(imageThreads.id, threadId))
+      .where(
+        and(eq(imageThreads.id, threadId), eq(imageThreads.userId, userId))
+      )
       .run();
   } catch (error) {
     logger.error("Failed to update image thread on new image", error, {
       threadId,
+      userId,
     });
-    throw new Error("Unable to update image thread timestamp");
+    throw new Error("به‌روزرسانی زمان گفتگوی تصویری ناموفق بود.");
   }
 }

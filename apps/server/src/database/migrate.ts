@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "@/lib/logger";
-import { sqliteDB } from "./index";
+import { sqliteDB } from "./connection";
 
 type MigrationEntry = {
   idx: number;

@@ -17,7 +17,9 @@ export const general = {
   startNew: "شروع جدید",
   save: "ذخیره",
   cancel: "لغو",
+  clipboardCopyFailed: "کپی کردن در کلیپ‌بورد ناموفق بود.",
   edit: "ویرایش",
+  modelsRefreshFailed: "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید.",
   more: "بیشتر",
 } as const;
 
@@ -80,7 +82,7 @@ export const userProfile = {
 
 export const invalidThreadId = "شناسه گفتگوی نامعتبر";
 
-export const documents = {
+export const documentHints = {
   attachmentLabel: "پیوست سند",
   supportedFormatsHint:
     "فرمت‌های پشتیبانی‌شده: PDF, DOCX, XLS/XLSX/XLSM, CSV/TSV, TXT/MD, HTML/XML, EML/RTF, YAML/TOML/INI/LOG/SQL و فایل‌های کد رایج.",

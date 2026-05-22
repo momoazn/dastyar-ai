@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قابلیت ها — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html" class="active">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>07 — قابلیت ها و مسیر تغییرات رایج</h1>
+      <p>این صفحه هر feature را به فایل های اصلی آن وصل می کند.</p>
+
+      <h2>Chat و RAG</h2>
+      <ul>
+        <li>
+          وب: <code>routes/chat/*</code>, <code>components/chat/*</code>,
+          <code>hooks/use-ai-chat.ts</code>.
+        </li>
+        <li>
+          سرور: <code>routes/chat.ts</code>, <code>procedures/threads.ts</code>,
+          <code>procedures/messages.ts</code>.
+        </li>
+        <li>
+          RAG: <code>procedures/documents.ts</code>,
+          <code>services/processors/rag.ts</code>, <code>embeddings.ts</code>.
+        </li>
+        <li>
+          مدل ها: <code>procedures/llm-models.ts</code>,
+          <code>repositories/llm-models.ts</code>.
+        </li>
+      </ul>
+
+      <h2>ترجمه</h2>
+      <ul>
+        <li>
+          وب: <code>routes/translation/*</code>,
+          <code>components/translation/*</code>.
+        </li>
+        <li>
+          سرور: <code>procedures/translation.ts</code>,
+          <code>repositories/translations.ts</code>.
+        </li>
+        <li>PDF translation از extractors و LLM helper استفاده می کند.</li>
+      </ul>
+
+      <h2>خلاصه سازی</h2>
+      <ul>
+        <li>
+          وب: <code>routes/summary/*</code>.
+        </li>
+        <li>
+          سرور: <code>procedures/summarize.ts</code>,
+          <code>repositories/summaries.ts</code>.
+        </li>
+        <li>خروجی ها history دارند و قابل حذف هستند.</li>
+      </ul>
+
+      <h2>دستیار کد</h2>
+      <ul>
+        <li>
+          وب: <code>routes/code/*</code>, <code>lib/code-output.ts</code>.
+        </li>
+        <li>
+          سرور: <code>procedures/code.ts</code>,
+          <code>repositories/code-runs.ts</code>.
+        </li>
+        <li>modeها شامل generate، explain، review و debug هستند.</li>
+      </ul>
+
+      <h2>تولید تصویر</h2>
+      <ul>
+        <li>
+          وب: <code>routes/image/*</code>,
+          <code>components/image-generation/*</code>.
+        </li>
+        <li>
+          سرور: <code>procedures/images.ts</code>,
+          <code>procedures/image-threads.ts</code>.
+        </li>
+        <li>
+          Provider: <code>services/ai-providers/stable-diffusion.ts</code>.
+        </li>
+        <li>
+          فایل ها در <code>IMAGES_DIR</code>ذخیره و از routeهای
+          <code>/api/images</code>serve می شوند.
+        </li>
+      </ul>
+
+      <h2>تبدیل صوت به متن</h2>
+      <ul>
+        <li>
+          وب: <code>routes/transcribe.tsx</code>,
+          <code>hooks/use-transcription.ts</code>,
+          <code>components/transcribe/*</code>.
+        </li>
+        <li>
+          سرور Bun: <code>procedures/transcribe.ts</code>,
+          <code>services/ai-providers/whisper.ts</code>.
+        </li>
+        <li>
+          سرویس Go: <code>apps/whisper/main.go</code>,
+          <code>internal/handler/transcribe.go</code>.
+        </li>
+      </ul>
+
+      <h2>Admin و settings</h2>
+      <ul>
+        <li>
+          وب: <code>routes/admin.tsx</code>, <code>components/admin/*</code>.
+        </li>
+        <li>
+          سرور: <code>procedures/admin.ts</code>, repositoryهای
+          admin/settings/models/ollama.
+        </li>
+        <li>
+          Feature toggles از system settings خوانده و در sidebar اعمال می شوند.
+        </li>
+      </ul>
+
+      <h2>افزودن feature جدید</h2>
+      <ol>
+        <li>schema و repository را در سرور اضافه کنید.</li>
+        <li>
+          procedure را در <code>procedures</code>بسازید و در
+          <code>index.ts</code>export کنید.
+        </li>
+        <li>route و componentهای وب را اضافه کنید.</li>
+        <li>
+          متن فارسی را در <code>lib/texts</code>اضافه کنید.
+        </li>
+        <li>در صورت نیاز sidebar/navigation و feature toggle را آپدیت کنید.</li>
+        <li>برای repository/procedure/hook تست focused اضافه کنید.</li>
+      </ol>
+    </main>
+  </body>
+</html>

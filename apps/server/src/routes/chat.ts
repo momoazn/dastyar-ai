@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { JsonValue } from "@/database";
 import { logger } from "@/lib/logger";
 import { chatSystemPrompt } from "@/lib/prompts";
+import { serverTexts } from "@/lib/texts";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import {
@@ -27,7 +28,7 @@ import {
 import { getModelSizeCategory, type MyUIMessage } from "@/utils/chat";
 import { extractTextFromParts } from "@/utils/text-extractor";
 
-export function sendError(
+function sendError(
   c: Context<AuthEnv>,
   params: {
     status: ContentfulStatusCode;
@@ -48,7 +49,7 @@ function mapChatErrorMessage(rawMessage: string): string {
     normalized.includes("invalid request") ||
     normalized.includes("validation")
   ) {
-    return "درخواست نامعتبر است. لطفاً ورودی‌ها را بررسی کنید.";
+    return serverTexts.errors.invalidRequest;
   }
 
   if (
@@ -56,18 +57,41 @@ function mapChatErrorMessage(rawMessage: string): string {
     normalized.includes("invalid token") ||
     normalized.includes("token")
   ) {
-    return "نشست شما معتبر نیست. لطفاً دوباره وارد شوید.";
+    return serverTexts.errors.unauthorized;
   }
 
   if (normalized.includes("forbidden")) {
-    return "شما دسترسی لازم برای انجام این عملیات را ندارید.";
+    return serverTexts.errors.forbidden;
+  }
+
+  if (
+    normalized.includes("econnrefused") ||
+    normalized.includes("network") ||
+    normalized.includes("fetch") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("connection refused")
+  ) {
+    return serverTexts.chat.providerUnavailable;
   }
 
   if (normalized.includes("not found")) {
-    return "منبع درخواستی یافت نشد.";
+    return serverTexts.errors.notFound;
   }
 
-  return "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+  return serverTexts.chat.genericFailure;
+}
+
+async function markMessageErrored(messageId: number | null): Promise<void> {
+  if (messageId === null) {
+    return;
+  }
+
+  await updateMessage({
+    id: messageId,
+    status: "errored",
+  }).catch(() => {
+    return;
+  });
 }
 
 const MessagePartSchema = z.union([
@@ -112,6 +136,7 @@ const ChatRequestSchema = z.object({
 const app = new Hono<AuthEnv>()
   .use(authMiddleware)
   .post("/", zValidator("json", ChatRequestSchema), async (c) => {
+    let assistantMessageId: number | null = null;
     let releaseProvider: (() => void) | null = null;
     try {
       const { messages, modelId, threadId } = c.req.valid("json");
@@ -123,7 +148,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 400,
           code: "INVALID_REQUEST",
-          message: "آخرین پیام باید از طرف کاربر باشد.",
+          message: serverTexts.chat.lastMessageMustBeUser,
         });
       }
 
@@ -132,7 +157,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 404,
           code: "MODEL_NOT_FOUND",
-          message: "مدل انتخاب‌شده یافت نشد.",
+          message: serverTexts.chat.modelNotFound,
           details: { modelId },
         });
       }
@@ -141,7 +166,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 403,
           code: "MODEL_DISABLED",
-          message: "مدل انتخاب‌شده غیرفعال است.",
+          message: serverTexts.chat.inactiveModel,
           details: { modelId },
         });
       }
@@ -168,7 +193,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 500,
           code: "PERSIST_USER_MESSAGE_FAILED",
-          message: "ذخیره پیام کاربر ناموفق بود.",
+          message: serverTexts.chat.saveUserMessageFailed,
         });
       }
 
@@ -211,6 +236,7 @@ const app = new Hono<AuthEnv>()
         threadId,
         userId: user.id,
       });
+      assistantMessageId = assistantMessage.id;
 
       // Accumulate assistant text and reasoning and persist in AI SDK parts format with a 500ms throttle
       const throttledUpdateIntervalMs = 500;
@@ -296,6 +322,7 @@ const app = new Hono<AuthEnv>()
             releaseProvider?.();
             releaseProvider = null;
           } catch {
+            await markMessageErrored(assistantMessageId);
             releaseProvider?.();
             releaseProvider = null;
             return;
@@ -303,9 +330,10 @@ const app = new Hono<AuthEnv>()
         },
       });
     } catch (error) {
+      await markMessageErrored(assistantMessageId);
       releaseProvider?.();
       releaseProvider = null;
-      let message = "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+      let message: string = serverTexts.chat.genericFailure;
       if (error instanceof Error) {
         message = mapChatErrorMessage(error.message);
       } else if (

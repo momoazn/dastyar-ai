@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سرور — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html" class="active">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>05 — سرور</h1>
+      <p>سرور با Bun، Hono، ORPC، Drizzle و SQLite ساخته شده است.</p>
+
+      <h2>Entry points</h2>
+      <table>
+        <tr>
+          <th>فایل</th>
+          <th>وظیفه</th>
+        </tr>
+        <tr>
+          <td>
+            <code>src/index.ts</code>
+          </td>
+          <td>خواندن config، اجرای migrationها و start سرور</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/app.ts</code>
+          </td>
+          <td>ساخت Hono app، middlewareها، health، static serving</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/routes/rpc.ts</code>
+          </td>
+          <td>اتصال ORPC router به Hono</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/routes/chat.ts</code>
+          </td>
+          <td>مسیر streaming chat با AI SDK</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/routes/images.ts</code>
+          </td>
+          <td>serve/download تصویرهای تولید شده</td>
+        </tr>
+      </table>
+
+      <h2>ORPC router</h2>
+      <p>
+        <code>apps/server/src/procedures/index.ts</code>همه procedureها را در
+        <code>appRouter</code>ترکیب می کند.
+      </p>
+      <table>
+        <tr>
+          <th>Namespace</th>
+          <th>فایل</th>
+          <th>کاربرد</th>
+        </tr>
+        <tr>
+          <td>
+            <code>auth</code>
+          </td>
+          <td>
+            <code>auth.ts</code>
+          </td>
+          <td>register، login، me، تغییر username/password</td>
+        </tr>
+        <tr>
+          <td>
+            <code>admin</code>
+          </td>
+          <td>
+            <code>admin.ts</code>
+          </td>
+          <td>کاربران، مدل ها، Ollama serverها، system settings</td>
+        </tr>
+        <tr>
+          <td>
+            <code>appConfig</code>
+          </td>
+          <td>
+            <code>app-config.ts</code>
+          </td>
+          <td>feature toggles و build info</td>
+        </tr>
+        <tr>
+          <td>
+            <code>models</code>
+          </td>
+          <td>
+            <code>llm-models.ts</code>
+          </td>
+          <td>لیست مدل های فعال و sync مدل ها</td>
+        </tr>
+        <tr>
+          <td>
+            <code>threads/messages</code>
+          </td>
+          <td>
+            <code>threads.ts</code>, <code>messages.ts</code>
+          </td>
+          <td>مدیریت thread و پیام های chat</td>
+        </tr>
+        <tr>
+          <td>
+            <code>documents</code>
+          </td>
+          <td>
+            <code>documents.ts</code>
+          </td>
+          <td>آپلود، attach، index و حذف سند</td>
+        </tr>
+        <tr>
+          <td>
+            <code>translations</code>
+          </td>
+          <td>
+            <code>translation.ts</code>
+          </td>
+          <td>ترجمه متن و PDF</td>
+        </tr>
+        <tr>
+          <td>
+            <code>summarize</code>
+          </td>
+          <td>
+            <code>summarize.ts</code>
+          </td>
+          <td>خلاصه سازی و history</td>
+        </tr>
+        <tr>
+          <td>
+            <code>code</code>
+          </td>
+          <td>
+            <code>code.ts</code>
+          </td>
+          <td>تولید، توضیح، review و debug کد</td>
+        </tr>
+        <tr>
+          <td>
+            <code>images/imageThreads</code>
+          </td>
+          <td>
+            <code>images.ts</code>, <code>image-threads.ts</code>
+          </td>
+          <td>تولید تصویر و threadهای تصویر</td>
+        </tr>
+        <tr>
+          <td>
+            <code>transcribe</code>
+          </td>
+          <td>
+            <code>transcribe.ts</code>
+          </td>
+          <td>مدل های Whisper و transcription</td>
+        </tr>
+      </table>
+
+      <h2>Procedure export map</h2>
+      <p>
+        همه procedureها از <code>apps/server/src/procedures/</code>export می
+        شوند و از طریق <code>/rpc</code>در اختیار وب قرار می گیرند.
+      </p>
+      <table>
+        <tr>
+          <th>Procedure</th>
+          <th>File</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>
+            <code>healthProcedures</code>
+          </td>
+          <td>
+            <code>health.ts</code>
+          </td>
+          <td>Health check endpoint</td>
+        </tr>
+        <tr>
+          <td>
+            <code>authProcedures</code>
+          </td>
+          <td>
+            <code>auth.ts</code>
+          </td>
+          <td>Login، register و token management</td>
+        </tr>
+        <tr>
+          <td>
+            <code>adminProcedures</code>
+          </td>
+          <td>
+            <code>admin.ts</code>
+          </td>
+          <td>User management، model CRUD، Ollama serverها و settings</td>
+        </tr>
+        <tr>
+          <td>
+            <code>appConfigProcedures</code>
+          </td>
+          <td>
+            <code>app-config.ts</code>
+          </td>
+          <td>Feature toggles و app configuration</td>
+        </tr>
+        <tr>
+          <td>
+            <code>llmModelProcedures</code>
+          </td>
+          <td>
+            <code>llm-models.ts</code>
+          </td>
+          <td>لیست مدل های LLM در دسترس</td>
+        </tr>
+        <tr>
+          <td>
+            <code>threadProcedures</code>
+          </td>
+          <td>
+            <code>threads.ts</code>
+          </td>
+          <td>Chat thread CRUD</td>
+        </tr>
+        <tr>
+          <td>
+            <code>messageProcedures</code>
+          </td>
+          <td>
+            <code>messages.ts</code>
+          </td>
+          <td>Chat message operations</td>
+        </tr>
+        <tr>
+          <td>
+            <code>translationProcedures</code>
+          </td>
+          <td>
+            <code>translation.ts</code>
+          </td>
+          <td>Text/PDF translation</td>
+        </tr>
+        <tr>
+          <td>
+            <code>transcribeProcedures</code>
+          </td>
+          <td>
+            <code>transcribe.ts</code>
+          </td>
+          <td>Audio transcription via Whisper</td>
+        </tr>
+        <tr>
+          <td>
+            <code>summarizeProcedures</code>
+          </td>
+          <td>
+            <code>summarize.ts</code>
+          </td>
+          <td>Text summarization</td>
+        </tr>
+        <tr>
+          <td>
+            <code>imageProcedures</code>
+          </td>
+          <td>
+            <code>images.ts</code>
+          </td>
+          <td>Image generation با Stable Diffusion</td>
+        </tr>
+        <tr>
+          <td>
+            <code>imageThreadProcedures</code>
+          </td>
+          <td>
+            <code>image-threads.ts</code>
+          </td>
+          <td>Image generation thread management</td>
+        </tr>
+        <tr>
+          <td>
+            <code>codeProcedures</code>
+          </td>
+          <td>
+            <code>code.ts</code>
+          </td>
+          <td>Code generation، execution و review/debug</td>
+        </tr>
+        <tr>
+          <td>
+            <code>documentProcedures</code>
+          </td>
+          <td>
+            <code>documents.ts</code>
+          </td>
+          <td>Document upload، indexing و RAG</td>
+        </tr>
+      </table>
+
+      <h2>REST endpoints</h2>
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/health</code>
+          </td>
+          <td>Server health check</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td>
+            <code>/api/chat</code>
+          </td>
+          <td>Streaming chat completions</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/api/images/:id/file</code>
+          </td>
+          <td>Serve generated image</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>
+            <code>/api/images/:id/download</code>
+          </td>
+          <td>Download generated image</td>
+        </tr>
+        <tr>
+          <td>Any</td>
+          <td>
+            <code>/rpc</code>
+          </td>
+          <td>ORPC handler for all procedures</td>
+        </tr>
+      </table>
+
+      <h2>Auth و نقش ها</h2>
+      <ul>
+        <li>
+          JWT در <code>services/auth.ts</code>ساخته و validate می شود.
+        </li>
+        <li>
+          <code>protectedProcedure</code>نیاز به user معتبر دارد.
+        </li>
+        <li>
+          <code>adminProcedure</code>علاوه بر user معتبر، نقش admin را لازم
+          دارد.
+        </li>
+        <li>اولین کاربر ثبت نام شده admin می شود.</li>
+        <li>
+          احراز هویت با header استاندارد
+          <code>Authorization: Bearer &lt;token&gt;</code>انجام می شود.
+        </li>
+        <li>
+          middleware اجباری token را validate می کند و وجود user در دیتابیس را
+          هم چک می کند.
+        </li>
+        <li>
+          middleware اختیاری اگر token وجود داشته باشد آن را validate می کند،
+          اما request بدون token را reject نمی کند.
+        </li>
+      </ul>
+
+      <h2>دیتابیس</h2>
+      <p>
+        schema در <code>src/database/schema/index.ts</code>است. migrationها در
+        <code>src/database/migrations</code>نگهداری و برای build با
+        <code>bundle-migrations.ts</code>embed می شوند.
+      </p>
+      <table>
+        <tr>
+          <th>Repository</th>
+          <th>داده</th>
+        </tr>
+        <tr>
+          <td>
+            <code>auth.ts</code>
+          </td>
+          <td>users، password hash، profile update</td>
+        </tr>
+        <tr>
+          <td>
+            <code>threads.ts</code>, <code>messages.ts</code>
+          </td>
+          <td>chat threads و messages</td>
+        </tr>
+        <tr>
+          <td>
+            <code>documents.ts</code>
+          </td>
+          <td>document metadata و chunks</td>
+        </tr>
+        <tr>
+          <td>
+            <code>images.ts</code>, <code>image-threads.ts</code>
+          </td>
+          <td>image generations و image threads</td>
+        </tr>
+        <tr>
+          <td>
+            <code>translations.ts</code>, <code>summaries.ts</code>,
+            <code>code-runs.ts</code>
+          </td>
+          <td>history قابلیت های ابزارها</td>
+        </tr>
+        <tr>
+          <td>
+            <code>ollama-servers.ts</code>, <code>llm-models.ts</code>
+          </td>
+          <td>provider registry و models</td>
+        </tr>
+        <tr>
+          <td>
+            <code>system-settings.ts</code>
+          </td>
+          <td>feature flags و تنظیمات admin</td>
+        </tr>
+      </table>
+
+      <h2>AI providers</h2>
+      <ul>
+        <li>
+          <code>ollama-provider.ts</code>: Ollama، OpenAI-compatible و Ollama
+          native endpoints.
+        </li>
+        <li>
+          <code>lmstudio-provider.ts</code>: LM Studio compatible API.
+        </li>
+        <li>
+          <code>ollama-router.ts</code>: انتخاب least-busy Ollama server.
+        </li>
+        <li>
+          <code>stable-diffusion.ts</code>: Stable Diffusion WebUI API.
+        </li>
+        <li>
+          <code>whisper.ts</code>: client سرویس Whisper.
+        </li>
+      </ul>
+
+      <h2>فایل، RAG و پردازش</h2>
+      <ul>
+        <li>
+          اعتبارسنجی فایل در <code>lib/file-validation.ts</code>.
+        </li>
+        <li>
+          storage سند و تصویر در <code>services/storage</code>.
+        </li>
+        <li>
+          استخراج متن PDF/DOCX/HTML/EML/RTF/XLSX در
+          <code>services/processors</code>.
+        </li>
+        <li>
+          ساخت embedding و chunk retrieval در <code>embeddings.ts</code>و
+          <code>rag.ts</code>.
+        </li>
+      </ul>
+
+      <h2>Config و boot</h2>
+      <ul>
+        <li>
+          schema و defaults در <code>src/config-schema.ts</code>هستند.
+        </li>
+        <li>
+          loader در <code>src/config.ts</code>فقط <code>config.json</code>ریشه
+          repo را در dev و <code>config.json</code>کنار binary را در release می
+          خواند.
+        </li>
+        <li>
+          generator در <code>src/scripts/config-generator.ts</code>برای ساخت،
+          نمایش و validate همین فایل استفاده می شود.
+        </li>
+        <li>
+          ترتیب boot: خواندن config، ساخت logger/startup summary، اتصال DB،
+          اجرای migration، ساخت Hono app و listen روی <code>PORT</code>.
+        </li>
+      </ul>
+
+      <h2>قرارداد خطا</h2>
+      <p>
+        خطاهایی که به کاربر می رسند باید فارسی و قابل اقدام باشند. خطاهای داخلی
+        می توانند در log جزئیات انگلیسی داشته باشند، اما پیام ORPC، route
+        response و پیام برگشتی serviceها نباید raw exception یا متن انگلیسی را
+        به وب پاس بدهند.
+      </p>
+
+      <h2>چک لیست تغییر backend</h2>
+      <ul>
+        <li>برای procedure جدید، input را با Zod validate کنید.</li>
+        <li>
+          منطق DB را در repository نگه دارید و procedure را نازک نگه دارید.
+        </li>
+        <li>
+          برای operation حساس auth/admin، test کنار فایل مربوط اضافه کنید.
+        </li>
+        <li>
+          بعد از تغییر schema، migration بسازید و docs/config را همسان کنید.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

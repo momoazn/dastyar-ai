@@ -1,5 +1,5 @@
 import type { GenerateInput } from "@/procedures/images";
-import { touchLastImageAt } from "@/repositories/image-threads";
+import { getImageThread, touchLastImageAt } from "@/repositories/image-threads";
 import { createGeneratedImage } from "@/repositories/images";
 import { generate } from "../ai-providers";
 import { getImageUrl, saveImage } from "../storage";
@@ -8,6 +8,11 @@ export async function generateAndPersistImage(
   input: GenerateInput,
   userId: number
 ) {
+  const thread = await getImageThread(input.threadId, userId);
+  if (!thread) {
+    throw new Error("Image thread not found");
+  }
+
   // Generate base64 image (includes availability check)
   const base64Image = await generate({
     prompt: input.prompt,
@@ -40,7 +45,7 @@ export async function generateAndPersistImage(
   });
 
   // Update thread's last image timestamp
-  await touchLastImageAt(input.threadId);
+  await touchLastImageAt(input.threadId, userId);
 
   return {
     id: savedImage.id,

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
 import { summarySystemPrompt } from "@/lib/prompts";
+import { serverTexts } from "@/lib/texts";
 import {
   createSummary,
   deleteSummary,
@@ -52,7 +53,7 @@ const summarizeTextWithModel = async (params: {
   });
 
   if (!summaryText) {
-    throw new Error("Failed to summarize text");
+    throw new Error(serverTexts.summary.failed);
   }
 
   return summaryText;
@@ -93,7 +94,7 @@ export const summarizeProcedures = {
       const tone = input.tone as Tone;
       const summaryText = await withModelProviderById({
         modelId: input.modelId,
-        notFoundMessage: "Model not found",
+        notFoundMessage: serverTexts.model.notFound,
         handler: async ({ providerModel }) =>
           await summarizeTextWithModel({
             model: providerModel,

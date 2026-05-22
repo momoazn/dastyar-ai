@@ -170,32 +170,18 @@ export function ModelsTable() {
         <Table dir="rtl">
           <TableHeader>
             <TableRow>
-              <TableHead>
-                {fa.admin.models.table.id}
-              </TableHead>
-              <TableHead>
-                {fa.admin.models.table.servers}
-              </TableHead>
-              <TableHead>
-                {fa.admin.models.table.name}
-              </TableHead>
-              <TableHead>
-                {fa.admin.models.table.provider}
-              </TableHead>
-              <TableHead>
-                {fa.admin.models.table.status}
-              </TableHead>
-              <TableHead>
-                {fa.admin.models.table.toggle}
-              </TableHead>
+              <TableHead>{fa.admin.models.table.id}</TableHead>
+              <TableHead>{fa.admin.models.table.servers}</TableHead>
+              <TableHead>{fa.admin.models.table.name}</TableHead>
+              <TableHead>{fa.admin.models.table.provider}</TableHead>
+              <TableHead>{fa.admin.models.table.status}</TableHead>
+              <TableHead>{fa.admin.models.table.toggle}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {models?.map((model) => (
               <TableRow key={model.id}>
-                <TableCell className="font-medium">
-                  {model.id}
-                </TableCell>
+                <TableCell className="font-medium">{model.id}</TableCell>
                 <TableCell>
                   {model.provider === "ollama" ? (
                     <Badge variant="secondary">

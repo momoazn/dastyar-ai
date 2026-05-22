@@ -15,6 +15,7 @@ export const translation = {
   translations: "ترجمه‌ها",
   translatedText: "ترجمه",
   noTranslations: "هیچ ترجمه‌ای وجود ندارد",
+  notFound: "ترجمه مورد نظر یافت نشد.",
   parametersChanged:
     "پارامترها تغییر کرده‌اند. برای ایجاد ترجمه جدید روی دکمه ترجمه کلیک کنید.",
   keyboardHint: "⌘/Ctrl+Enter برای ترجمه",

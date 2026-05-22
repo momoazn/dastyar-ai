@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-The monorepo is coordinated by Turbo and Bun workspaces. Place API logic in `apps/server/src`, including Hono handlers, ORPC endpoints, and Prisma schema files under `apps/server/prisma`; runtime scripts belong in `apps/server/src/scripts`. React 19 UI code lives in `apps/web/src`, with routes, hooks, and components co-located by domain, while shared primitives stay in `apps/web/src/components`. Archive research or product briefs in `docs/` and `specs/`, and keep compiled binaries in `dist/`. Runtime assets such as Whisper models and generated outputs stay in `whisper-models/` and `generated-images/`.
+The monorepo is coordinated by Turbo and Bun workspaces. Place API logic in `apps/server/src`, including Hono handlers, ORPC endpoints, SQLite/Drizzle schema files under `apps/server/src/database`, and runtime scripts under `apps/server/src/scripts`. React UI code lives in `apps/web/src`, with routes, hooks, and components co-located by domain, while shared primitives stay in `apps/web/src/components`. Keep current project documentation in `docs/`; generated builds, Whisper assets, uploaded documents, and generated images stay out of source archives.
 
 ## Build, Test, and Development Commands
 
@@ -30,9 +30,6 @@ The new modular build system in `scripts/` provides cross-platform build orchest
 - `bun run download:ffmpeg` - Download FFmpeg binaries
 - `bun run download:model` - Download Whisper models
 
-**Testing:**
-- `bun run test:api` - Test Whisper API endpoints
-
 ### Database & Quality
 
 Keep the database shape current through `bun run db:generate`, `bun run db:push`, and inspect it with `bun run db:studio`. Safeguard type guarantees using `bun run check-types`.
@@ -43,7 +40,7 @@ Ultracite + Biome enforce linting, formatting, and strict a11y—run `npx ultrac
 
 ## Testing Guidelines
 
-Add unit or integration tests alongside the code they cover using Bun’s test runner (`bun test apps/server/src/...`). Name specs `*.test.ts` or `*.test.tsx` with descriptive titles. Focus coverage on authentication flows, AI orchestration, and config generation logic; document any temporary gaps in `specs/IMPROVEMENTS_TODO.md` until tests land.
+Add unit or integration tests alongside the code they cover using Bun’s test runner (`bun test apps/server/src/...`). Name specs `*.test.ts` or `*.test.tsx` with descriptive titles. Focus coverage on authentication flows, AI orchestration, and config generation logic; document temporary gaps in the active handoff or cleanup docs until tests land.
 
 ## Commit & Pull Request Guidelines
 

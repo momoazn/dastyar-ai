@@ -1,7 +1,10 @@
 export const chat = {
   thinking: "در حال فکر کردن...",
+  thinkingProcess: "فرآیند تفکر",
   showThoughts: "نمایش افکار",
   hideThoughts: "پنهان کردن افکار",
+  show: "نمایش",
+  hide: "پنهان",
   writeMessage: "پیام خود را بنویسید...",
   generationStopped: "تولید پاسخ متوقف شد",
   generationErrored: "خطا در تولید پاسخ",
@@ -23,6 +26,10 @@ export const chat = {
   voiceTranscriptionErrorPrefix: "خطا در تبدیل صدا به متن: ",
   retryVoiceTranscription: "تلاش مجدد برای تبدیل صدا",
   responseError: "مشکلی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.",
+  modelsUnavailable:
+    "هیچ مدل فعالی در دسترس نیست. اتصال Ollama را بررسی کنید یا از مدیر بخواهید مدل‌ها را فعال کند.",
+  modelsLoadFailed:
+    "بارگذاری مدل‌ها ناموفق بود. لطفاً اتصال سرور را بررسی کرده و دوباره تلاش کنید.",
   newChatTitle: "آماده شروع گفتگو هستید؟",
   newChatDescription:
     "برای آغاز، روی «شروع گفتگوی جدید» کلیک کنید. پس از ارسال اولین پیام، عنوان گفتگو به‌صورت خودکار از ۱۰ کاراکتر نخست پیام شما تنظیم می‌شود.",

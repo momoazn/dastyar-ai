@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { serverTexts } from "@/lib/texts";
 import {
   clearGeneratedImagesByThread,
   listGeneratedImagesByThread,
@@ -16,14 +17,14 @@ import { getImageUrl } from "@/services/storage";
 import { protectedProcedure, publicProcedure } from "./base";
 
 const imageGenerationParamsSchema = z.object({
-  prompt: z.string().min(1, "Prompt is required"),
+  prompt: z.string().min(1, serverTexts.image.promptRequired),
   steps: z.number().int().min(1).max(150).default(20),
   cfgScale: z.number().min(1).max(30).default(7.5),
   negativePrompt: z.string().optional(),
   sampler: z.string().default("Euler a"),
   width: z.number().int().min(64).max(2048).default(512),
   height: z.number().int().min(64).max(2048).default(512),
-  threadId: z.number().int().positive("Thread ID is required"),
+  threadId: z.number().int().positive(serverTexts.image.threadIdRequired),
 });
 
 export type GenerateInput = z.infer<typeof imageGenerationParamsSchema>;
@@ -44,7 +45,7 @@ export const imageProcedures = {
     } catch (error) {
       logger.error("Error getting samplers", error);
       throw new ORPCError("SD_SERVICE_UNAVAILABLE", {
-        message: "سرویس Stable Diffusion در دسترس نیست",
+        message: serverTexts.image.serviceUnavailable,
         status: 503,
       });
     }
@@ -58,7 +59,7 @@ export const imageProcedures = {
     ),
 
   // Get generation progress (for real-time updates)
-  getProgress: publicProcedure.handler(async () => {
+  getProgress: protectedProcedure.handler(async () => {
     const generationProgress = await progress();
     return generationProgress
       ? {
@@ -71,7 +72,7 @@ export const imageProcedures = {
   }),
 
   // Interrupt current generation
-  interrupt: publicProcedure.handler(async () => {
+  interrupt: protectedProcedure.handler(async () => {
     const success = await interrupt();
     return { success };
   }),

@@ -1,11 +1,6 @@
 import z from "zod";
 import { logger } from "@/lib/logger";
-import {
-  getModelById,
-  getModels,
-  syncModels,
-  updateModel,
-} from "@/repositories/llm-models";
+import { getModels, syncModels } from "@/repositories/llm-models";
 import { listAllModels } from "@/services/ai-providers";
 import { publicProcedure } from "./base";
 
@@ -43,40 +38,6 @@ export const llmModelProcedures = {
         return nonEmbeds;
       } catch (error) {
         logger.error("Error listing models", error);
-        throw error;
-      }
-    }),
-
-  enable: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      try {
-        const model = await getModelById(input.id);
-        if (!model) {
-          throw new Error(`Model with id ${input.id} not found`);
-        }
-
-        await updateModel(input.id, { isEnabled: true });
-        return getModels({ isEnabled: true });
-      } catch (error) {
-        logger.error("Error enabling model", error, { modelId: input.id });
-        throw error;
-      }
-    }),
-
-  disable: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .handler(async ({ input }) => {
-      try {
-        const model = await getModelById(input.id);
-        if (!model) {
-          throw new Error(`Model with id ${input.id} not found`);
-        }
-
-        await updateModel(input.id, { isEnabled: false });
-        return getModels({ isEnabled: true });
-      } catch (error) {
-        logger.error("Error disabling model", error, { modelId: input.id });
         throw error;
       }
     }),

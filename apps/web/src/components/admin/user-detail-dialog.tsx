@@ -169,7 +169,8 @@ export function UserDetailDialog({
                 </Card>
 
                 {/* IPs */}
-                {(userDetails.latestIps.length > 0 || userDetails.ipCount > 0) && (
+                {(userDetails.latestIps.length > 0 ||
+                  userDetails.ipCount > 0) && (
                   <Card className="p-4">
                     <div className="space-y-3">
                       <h3 className="font-medium text-sm">
@@ -177,10 +178,10 @@ export function UserDetailDialog({
                       </h3>
                       {userDetails.latestIps.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {userDetails.latestIps.map((ip, index) => (
+                          {userDetails.latestIps.map((ip) => (
                             <Badge
-                              key={index}
                               className="font-mono text-xs"
+                              key={ip}
                               variant="secondary"
                             >
                               {ip}
@@ -191,7 +192,7 @@ export function UserDetailDialog({
                       {userDetails.ipCount > userDetails.latestIps.length && (
                         <p className="text-muted-foreground text-xs">
                           +{userDetails.ipCount - userDetails.latestIps.length}{" "}
-                              {fa.general.more}
+                          {fa.general.more}
                         </p>
                       )}
                     </div>

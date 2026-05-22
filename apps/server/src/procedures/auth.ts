@@ -1,7 +1,8 @@
-import { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { getClientIpFromContext } from "@/lib/request-ip";
+import { serverTexts } from "@/lib/texts";
 import {
   countUsers,
   createUser,
@@ -17,7 +18,7 @@ import { protectedProcedure, publicProcedure } from "./base";
 
 const nationalCodeSchema = z
   .string()
-  .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد");
+  .regex(/^\d{10}$/, serverTexts.config.validation.nationalCode);
 
 const registerSchema = z.object({
   username: nationalCodeSchema,
@@ -46,9 +47,9 @@ export const authProcedures = {
 
       const exists = await usernameExists(username);
       if (exists) {
-        logger.info("Username already exists", { username });
+        logger.info("کد ملی قبلاً استفاده شده است.", { username });
         throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-          message: "کد ملی قبلاً استفاده شده است",
+          message: serverTexts.auth.usernameExists,
           status: 400,
         });
       }
@@ -96,7 +97,7 @@ export const authProcedures = {
       if (!user) {
         logger.warn("Invalid login credentials", { username });
         throw new ORPCError("INVALID_CREDENTIALS", {
-          message: "کد ملی یا رمز عبور اشتباه است",
+          message: serverTexts.auth.invalidCredentials,
           status: 401,
         });
       }
@@ -139,7 +140,7 @@ export const authProcedures = {
       const exists = await usernameExists(newUsername);
       if (exists) {
         throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-          message: "کد ملی قبلاً استفاده شده است",
+          message: serverTexts.auth.usernameExists,
           status: 400,
         });
       }
@@ -175,15 +176,15 @@ export const authProcedures = {
         return { success: true };
       } catch (error) {
         const errorMessage = (error as Error)?.message || "";
-        if (errorMessage.includes("Current password is incorrect")) {
+        if (errorMessage.includes("رمز عبور فعلی اشتباه است.")) {
           throw new ORPCError("INVALID_CREDENTIALS", {
-            message: "رمز عبور فعلی اشتباه است",
+            message: serverTexts.auth.wrongCurrentPassword,
             status: 401,
           });
         }
         logger.error("Password update failed", { userId, error: errorMessage });
         throw new ORPCError("INTERNAL_ERROR", {
-          message: "خطا در به‌روزرسانی رمز عبور",
+          message: serverTexts.auth.passwordUpdateFailed,
           status: 500,
         });
       }

@@ -93,12 +93,14 @@ function TranslationHistoryView() {
       <ToolScaffold
         alerts={
           <Alert variant="destructive">
-            <span>Translation not found</span>
+            <span>{fa.translation.notFound}</span>
           </Alert>
         }
         content={
           <div className="flex h-full items-center justify-center">
-            <div className="text-muted-foreground">Translation not found</div>
+            <div className="text-muted-foreground">
+              {fa.translation.notFound}
+            </div>
           </div>
         }
       />

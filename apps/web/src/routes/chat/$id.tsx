@@ -10,7 +10,7 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatInput, Message } from "@/components/chat";
 import { ConversationScaffold } from "@/components/scaffold/conversation-scaffold";
-import { Button } from "@/components/ui";
+import { Alert, AlertDescription, Button } from "@/components/ui";
 import { useAIChat } from "@/hooks/use-ai-chat";
 import { useChatInput } from "@/hooks/use-chat-input";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
@@ -19,6 +19,7 @@ import {
   readAutoScrollByThread,
   writeAutoScrollByThread,
 } from "@/lib/chat-auto-scroll";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 
 export const Route = createFileRoute("/chat/$id")({
@@ -38,12 +39,13 @@ function RouteComponent() {
   );
 
   const { modelId } = useChatModelSelection({ threadId: threadIdNum });
-  const { messages, status, stop, sendPrompt } = useAIChat({
+  const { messages, status, stop, sendPrompt, error, isLoading } = useAIChat({
     threadId: threadIdNum,
   });
 
   const { handleSendPrompt, isGenerating } = useChatInput({
     threadId: threadIdNum,
+    renameOnSend: !isLoading && messages.length === 0,
     onSendMessage: (prompt) => {
       if (!modelId) {
         return Promise.resolve();
@@ -62,7 +64,7 @@ function RouteComponent() {
       hasSentInitialPromptRef.current = true;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
-        toast.error("ارسال پیام اولیه ناموفق بود");
+        toast.error(fa.chat.sendMessageError);
       });
     }
   }, [search, messages.length, handleSendPrompt]);
@@ -91,17 +93,26 @@ function RouteComponent() {
   return (
     <ConversationScaffold
       banner={
-        <div className="flex justify-end">
-          <Button
-            onClick={toggleAutoScroll}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {isAutoScrollEnabled
-              ? fa.chat.disableAutoScroll
-              : fa.chat.enableAutoScroll}
-          </Button>
+        <div className="space-y-2">
+          <div className="flex justify-end">
+            <Button
+              onClick={toggleAutoScroll}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {isAutoScrollEnabled
+                ? fa.chat.disableAutoScroll
+                : fa.chat.enableAutoScroll}
+            </Button>
+          </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription dir="rtl">
+                {getErrorMessage(error, fa.chat.responseError)}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       }
       conversation={

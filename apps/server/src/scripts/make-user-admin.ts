@@ -6,9 +6,7 @@ import { logger } from "../lib/logger";
 const username = process.argv[2];
 
 if (!username) {
-  logger.error(
-    "Please provide a username: bun run src/scripts/make-user-admin.ts <username>"
-  );
+  logger.error("Please provide a username: bun run make-admin <username>");
   process.exit(1);
 }
 

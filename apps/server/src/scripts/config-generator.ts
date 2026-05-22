@@ -14,7 +14,7 @@ type CliOptions = {
 
 type JsonObject = Record<string, unknown>;
 
-const DEFAULT_CONFIG_FILE = "config.json";
+const DEFAULT_CONFIG_FILE = resolve(import.meta.dir, "../../../../config.json");
 
 const writeOut = (message: string): void => {
   process.stdout.write(`${message}\n`);
@@ -28,7 +28,7 @@ const printUsage = (): void => {
   writeOut("Config generator");
   writeOut("");
   writeOut("Usage:");
-  writeOut("  bun run src/scripts/config-generator.ts <command> [options]");
+  writeOut("  bun run config:<command> -- [options]");
   writeOut("");
   writeOut("Commands:");
   writeOut(
@@ -40,8 +40,12 @@ const printUsage = (): void => {
   );
   writeOut("");
   writeOut("Options:");
-  writeOut("  --path <path>     Config file path (default: ./config.json)");
-  writeOut("  --path=<path>     Config file path (default: ./config.json)");
+  writeOut(
+    "  --path <path>     Config file path (default: repo ./config.json)"
+  );
+  writeOut(
+    "  --path=<path>     Config file path (default: repo ./config.json)"
+  );
   writeOut(
     "  --force           Overwrite with defaults (ignore existing values)"
   );
@@ -53,7 +57,7 @@ const failAndExit = (message: string): never => {
 };
 
 const toResolvedPath = (pathArg?: string): string =>
-  resolve(process.cwd(), pathArg ?? DEFAULT_CONFIG_FILE);
+  pathArg ? resolve(process.cwd(), pathArg) : DEFAULT_CONFIG_FILE;
 
 const parseArgs = (argv: string[]): CliOptions => {
   const [commandArg, ...rest] = argv;

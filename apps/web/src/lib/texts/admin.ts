@@ -214,6 +214,7 @@ export const admin = {
     },
     security: {
       title: "تنظیمات امنیتی",
+      description: "زمان انقضا و الزامات امنیتی حساب‌ها را مدیریت کنید",
       tokenExpiration: "انقضای توکن (ساعت)",
       sessionTimeout: "زمان انقضای جلسه (دقیقه)",
       passwordMinLength: "حداقل طول رمز عبور",
@@ -223,16 +224,20 @@ export const admin = {
     },
     fileManagement: {
       title: "مدیریت فایل",
+      description: "سقف حجم و فرمت‌های مجاز برای فایل‌های بارگذاری‌شده",
       maxFileSize: "حداکثر اندازه فایل (مگابایت)",
       allowedTypes: "نوع‌های فایل مجاز",
     },
     aiModels: {
       title: "تنظیمات مدل‌های هوش مصنوعی",
+      description: "تنظیمات زمان انتظار پاسخ مدل‌ها",
       responseTimeout: "زمان انتظار پاسخ (ثانیه)",
       enableTranscription: "فعال کردن رونویسی",
       enableTranslation: "فعال کردن ترجمه",
       enableCodeExecution: "فعال کردن اجرای کد",
       enableImageGeneration: "فعال کردن تولید تصویر",
+      featuresDescription:
+        "ماژول‌های قابل مشاهده در نوار کناری را فعال یا غیرفعال کنید",
     },
     sidebarFeatures: {
       title: "ویژگی‌های نوار کناری",

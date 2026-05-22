@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dastyar AI — مستندات پروژه</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html" class="active">فهرست</a>
+      <a href="08-windows-setup.html">01 راه اندازی Windows</a>
+      <a href="01-getting-started.html">02 راه اندازی local</a>
+      <a href="06-commands.html">03 دستورات</a>
+      <a href="02-structure.html">04 ساختار</a>
+      <a href="03-server.html">05 سرور</a>
+      <a href="04-web.html">06 وب</a>
+      <a href="05-whisper.html">07 Whisper</a>
+      <a href="05-features.html">08 قابلیت ها</a>
+      <a href="07-troubleshooting.html">09 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>Dastyar AI — مستندات پروژه</h1>
+      <p>
+        دستیار هوشمند local-first با وب اپ React، سرور Bun/Hono، دیتابیس SQLite
+        با Drizzle، سرویس اختیاری Whisper، و اتصال به Ollama، LM Studio و Stable
+        Diffusion.
+      </p>
+
+      <h2>اجزای اصلی</h2>
+      <table>
+        <tr>
+          <th>بخش</th>
+          <th>مسیر</th>
+          <th>وظیفه</th>
+        </tr>
+        <tr>
+          <td>وب</td>
+          <td>
+            <code>apps/web</code>
+          </td>
+          <td>رابط کاربری، routeها، فرم ها، چت، تنظیمات و پنل ادمین</td>
+        </tr>
+        <tr>
+          <td>سرور</td>
+          <td>
+            <code>apps/server</code>
+          </td>
+          <td>API، احراز هویت، دیتابیس، فایل ها، RAG و هماهنگی AI</td>
+        </tr>
+        <tr>
+          <td>Whisper</td>
+          <td>
+            <code>apps/whisper</code>
+          </td>
+          <td>سرویس Go برای تبدیل صوت به متن با whisper.cpp</td>
+        </tr>
+        <tr>
+          <td>اسکریپت ها</td>
+          <td>
+            <code>scripts</code>
+          </td>
+          <td>build، start/stop، status، دانلود asset و archive</td>
+        </tr>
+        <tr>
+          <td>مستندات</td>
+          <td>
+            <code>docs</code>
+          </td>
+          <td>راهنمای توسعه، معماری، عملیات و تحویل</td>
+        </tr>
+      </table>
+
+      <h2>شروع سریع</h2>
+      <pre><code>bun install
+bun run config:generate
+bun run db:migrate
+bun run dev</code></pre>
+      <p>
+        وب معمولا روی <code>http://localhost:3001</code>و سرور روی
+        <code>http://localhost:3000</code>اجرا می شود.
+      </p>
+      <div class="note">
+        اگر پروژه را روی Windows تحویل می گیرید، از
+        <a href="08-windows-setup.html">راهنمای راه اندازی Windows</a>شروع کنید.
+        آن صفحه نصب prerequisiteها، dependencyها، assetها و اجرای هر سرویس را
+        کامل پوشش می دهد.
+      </div>
+
+      <h2>نقشه مستندات</h2>
+      <table>
+        <tr>
+          <th>فایل</th>
+          <th>محتوا</th>
+        </tr>
+        <tr>
+          <td>
+            <a href="08-windows-setup.html">01 راه اندازی Windows</a>
+          </td>
+          <td>مسیر کامل Windows از دریافت repo تا اپ در حال اجرا</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="01-getting-started.html">02 راه اندازی local</a>
+          </td>
+          <td>راه اندازی عمومی، config، دیتابیس، health و اولین ورود</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="06-commands.html">03 دستورات</a>
+          </td>
+          <td>دستورهای dev، build، test، database، service و release</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="02-structure.html">04 ساختار</a>
+          </td>
+          <td>ساختار monorepo، جریان داده و ownership فایل ها</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="03-server.html">05 سرور</a>
+          </td>
+          <td>Hono، ORPC، auth، DB، repositoryها، providerها</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="04-web.html">06 وب</a>
+          </td>
+          <td>React، routeها، components، state و UX patterns</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="05-whisper.html">07 Whisper</a>
+          </td>
+          <td>سرویس Go، config، مدل ها، API و build صوت به متن</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="05-features.html">08 قابلیت ها</a>
+          </td>
+          <td>چت، RAG، ترجمه، خلاصه سازی، کد، تصویر، صوت، ادمین</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="07-troubleshooting.html">09 عیب یابی</a>
+          </td>
+          <td>خطاهای رایج و مسیر تشخیص</td>
+        </tr>
+      </table>
+
+      <h2>کیفیت و وضعیت فعلی</h2>
+      <ul>
+        <li>فرمت و lint با Ultracite/Biome کنترل می شود.</li>
+        <li>تست ها با Bun test اجرا می شوند؛ E2E فعلا عمدا حذف شده است.</li>
+        <li>
+          Build وب warning بزرگ بودن chunk دارد؛ منبع اصلی syntax highlighting،
+          Mermaid و KaTeX است.
+        </li>
+        <li>
+          Archive source با <code>bun run archive</code>ساخته می شود و خروجی های
+          runtime را حذف می کند.
+        </li>
+      </ul>
+
+      <h2>وضعیت handoff</h2>
+      <ul>
+        <li>
+          Typecheck، lint، test، web build و server build بعد از cleanup پاس شده
+          اند.
+        </li>
+        <li>
+          Whisper برای تست کامل Go به whisper.cpp headers/build artifacts نیاز
+          دارد.
+        </li>
+        <li>
+          برای smoke test روزمره، اجرای <code>bun run dev:whisper</code>کافی
+          است.
+        </li>
+        <li>
+          اولین روز توسعه دهنده جدید: نصب Bun/Go، اجرای <code>bun install</code>
+          ، سپس quality gates و <code>bun run dev</code>.
+        </li>
+      </ul>
+
+      <h2>کارهای امن برای شروع</h2>
+      <ul>
+        <li>افزودن test متمرکز برای یک procedure یا UI component.</li>
+        <li>بهبود یک route با componentهای scaffold موجود.</li>
+        <li>بهبود یک repository method همراه regression test.</li>
+      </ul>
+
+      <h2>نواحی پرریسک</h2>
+      <ul>
+        <li>Auth/session behavior.</li>
+        <li>DB schema و migrationها.</li>
+        <li>File upload validation/storage.</li>
+        <li>Build/package scripts.</li>
+        <li>Whisper native dependency setup.</li>
+      </ul>
+
+      <h2>خلاصه cleanup انجام شده</h2>
+      <ul>
+        <li>Quality gates ثابت و پاس شده اند.</li>
+        <li>
+          docs/specs/reportهای stale حذف و مستندات فعلی از codebase بازسازی شده
+          اند.
+        </li>
+        <li>تست های شکننده و JSON parsing اصلاح شده اند.</li>
+        <li>frontend componentهای مرده حذف شده اند.</li>
+        <li>
+          source archive script اضافه و noiseهای runtime از archive حذف شده اند.
+        </li>
+      </ul>
+
+      <h2>Verification ثبت شده</h2>
+      <table>
+        <tr>
+          <th>Gate</th>
+          <th>وضعیت</th>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run lint:check</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run check-types</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run test</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun --cwd apps/web build</code>
+          </td>
+          <td>PASS با chunk warning شناخته شده</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun --cwd apps/server build</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+        <tr>
+          <td>
+            <code>bun run archive</code>
+          </td>
+          <td>PASS</td>
+        </tr>
+      </table>
+    </main>
+  </body>
+</html>

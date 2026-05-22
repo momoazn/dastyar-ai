@@ -34,7 +34,7 @@ export async function createGeneratedImage(
 
   const created = await getGeneratedImage(Number(result.at(0)?.id));
   if (!created) {
-    throw new Error("Unable to load generated image after insert");
+    throw new Error("بارگذاری تصویر تولیدشده پس از ثبت ناموفق بود.");
   }
   return created;
 }
@@ -100,7 +100,7 @@ export async function getGeneratedImageByUser(
 export async function deleteGeneratedImage(id: number): Promise<void> {
   const image = await getGeneratedImage(id);
   if (!image) {
-    throw new Error(`Generated image with id ${id} not found`);
+    throw new Error("تصویر تولیدشده یافت نشد.");
   }
 
   await deleteImageFile(image.filePath);

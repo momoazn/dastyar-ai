@@ -23,9 +23,13 @@ export function ToolScaffold({
   dir = "rtl",
 }: ToolScaffoldProps) {
   return (
-    <div className="flex h-full flex-col" dir={dir}>
-      {toolbar ? <div className="bg-background p-4">{toolbar}</div> : null}
-      <div className="flex-1 space-y-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto" dir={dir}>
+      {toolbar ? (
+        <div className="border-b bg-background/95 p-4 backdrop-blur">
+          {toolbar}
+        </div>
+      ) : null}
+      <div className="mx-auto w-full max-w-6xl flex-1 space-y-5 p-4 md:p-6">
         {alerts}
         {content}
         {actionBar ? <div className="flex justify-end">{actionBar}</div> : null}

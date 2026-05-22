@@ -5,14 +5,14 @@ import {
   getWhisperModels,
   transcribe as whisperTranscribe,
 } from "@/services/ai-providers";
-import { publicProcedure } from "./base";
+import { protectedProcedure } from "./base";
 
 export const transcribeProcedures = {
-  models: publicProcedure
+  models: protectedProcedure
     .input(z.object({}).optional())
     .handler(async () => await getWhisperModels()),
 
-  transcribe: publicProcedure
+  transcribe: protectedProcedure
     .input(
       z.object({
         file: z.preprocess(

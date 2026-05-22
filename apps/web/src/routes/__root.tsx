@@ -2,7 +2,6 @@ import "@fontsource-variable/vazirmatn";
 import "../index.css";
 
 import type { QueryClient } from "@tanstack/react-query";
-// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -10,7 +9,6 @@ import {
   useLocation,
   useRouterState,
 } from "@tanstack/react-router";
-// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Loader from "@/components/chat/loader";
 import { Header } from "@/components/header";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -70,8 +68,6 @@ function RootComponent() {
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster position="bottom-left" richColors />
       </ThemeProvider>
-      {/* <TanStackRouterDevtools position="bottom-left" /> */}
-      {/* <ReactQueryDevtools buttonPosition="relative" position="bottom" /> */}
     </>
   );
 }
@@ -93,6 +89,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider
+      className="min-h-dvh bg-sidebar"
       style={
         {
           "--sidebar-width": "300px",
@@ -100,9 +97,9 @@ function Wrapper({ children }: { children: React.ReactNode }) {
       }
     >
       <AppSidebar side="right" />
-      <SidebarInset className="bg-sidebar pe-2 pb-2">
+      <SidebarInset className="min-w-0 bg-sidebar ps-2 pb-2">
         <Header SideBarTrigger={<SidebarTrigger />} />
-        <div className="flex h-full flex-col rounded-md border bg-background p-2">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border bg-background">
           {children}
         </div>
       </SidebarInset>

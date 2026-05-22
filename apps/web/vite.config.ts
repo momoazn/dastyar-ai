@@ -1,33 +1,47 @@
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const WEB_PORT = 3001;
-const SERVER_PORT = Number(process.env.SERVER_PORT) || 3000;
-const SERVER_HOST = process.env.SERVER_HOST || "127.0.0.1";
-const SERVER_PROTOCOL = process.env.SERVER_PROTOCOL || "http";
+type AppConfig = {
+  HOST?: string;
+  PORT?: number;
+  WEB_DEV_PORT?: number;
+};
+
+const loadAppConfig = (): AppConfig => {
+  const configPath = path.resolve(__dirname, "../../config.json");
+  if (!existsSync(configPath)) {
+    return {};
+  }
+
+  return JSON.parse(readFileSync(configPath, "utf8")) as AppConfig;
+};
+
+const appConfig = loadAppConfig();
+const webPort = appConfig.WEB_DEV_PORT ?? 3001;
+const serverPort = appConfig.PORT ?? 3000;
+const serverHost =
+  !appConfig.HOST || appConfig.HOST === "0.0.0.0"
+    ? "127.0.0.1"
+    : appConfig.HOST;
+const serverTarget = `http://${serverHost}:${serverPort}`;
 
 export default defineConfig({
   plugins: [tailwindcss(), tanstackRouter(), react()],
   server: {
-    port: Number(process.env.WEB_PORT) || WEB_PORT,
-    host: "0.0.0.0", // Allow network access in dev mode
+    port: webPort,
+    host: "0.0.0.0",
     proxy: {
-      // Proxy RPC endpoints to backend server
       "/rpc": {
-        target: `${SERVER_PROTOCOL}://${SERVER_HOST}:${SERVER_PORT}`,
+        target: serverTarget,
         changeOrigin: true,
         secure: false,
-        configure: (_proxy, _options) => {
-          // Proxy configuration - errors are handled by Vite's error handling
-          // Detailed logging can be enabled via VITE_LOG_LEVEL=debug if needed
-        },
       },
-      // Proxy API endpoints to backend server
       "/api": {
-        target: `${SERVER_PROTOCOL}://${SERVER_HOST}:${SERVER_PORT}`,
+        target: serverTarget,
         changeOrigin: true,
         secure: false,
       },

@@ -30,7 +30,7 @@ export async function createDocument(rec: {
   const id = Number(res.at(0)?.id);
   const created = await getDocumentById(id, rec.userId);
   if (!created) {
-    throw new Error("Document insert failed");
+    throw new Error("ثبت سند ناموفق بود.");
   }
   return created;
 }
@@ -72,7 +72,7 @@ export async function attachDocumentToThread(params: {
     )
     .limit(1);
   if (!row.at(0)) {
-    throw new Error("Thread not found for user");
+    throw new Error("گفتگوی مورد نظر یافت نشد.");
   }
 
   await db
@@ -98,7 +98,7 @@ export async function detachDocumentFromThread(params: {
     )
     .limit(1);
   if (!threadRows.at(0)) {
-    throw new Error("Thread not found for user");
+    throw new Error("گفتگوی مورد نظر یافت نشد.");
   }
   await db
     .delete(threadDocuments)
@@ -200,7 +200,7 @@ export async function deleteDocument(
 ): Promise<void> {
   const doc = await getDocumentById(id, userId);
   if (!doc) {
-    throw new Error("Document not found");
+    throw new Error("سند مورد نظر یافت نشد.");
   }
   await db.delete(documents).where(eq(documents.id, id)).run();
 }

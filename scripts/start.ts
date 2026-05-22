@@ -15,22 +15,24 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { loadRootConfig, serverUrl, whisperUrl } from "./app-config";
 
 const isWindows = process.platform === "win32";
 const DIST = join(import.meta.dir, "../dist");
+const appConfig = loadRootConfig();
 
 const services = {
   whisper: {
     name: "Whisper API",
     bin: isWindows ? "whisper.exe" : "whisper",
-    port: 8080,
-    url: "http://localhost:8080",
+    port: Number(new URL(appConfig.WHISPER_SERVER_URL).port || "80"),
+    url: whisperUrl(appConfig),
   },
   server: {
     name: "Dastyar AI Server",
     bin: isWindows ? "dastyar-ai.exe" : "dastyar-ai",
-    port: 3000,
-    url: "http://localhost:3000",
+    port: appConfig.PORT,
+    url: serverUrl(appConfig),
   },
 };
 

@@ -27,14 +27,14 @@ const features = [
     title: fa.index.imageTitle,
     description: fa.index.imageDescription,
     link: "/image",
-    color: "text-accent-foreground",
+    color: "text-primary",
   },
   {
     icon: <Code className="size-12" />,
     title: fa.index.codeTitle,
     description: fa.index.codeDescription,
     link: "/code",
-    color: "text-purple-600",
+    color: "text-primary",
   },
   {
     icon: <MessageCircle className="size-12" />,
@@ -47,80 +47,67 @@ const features = [
     icon: <FileText className="size-12" />,
     title: fa.summarize.title,
     description: fa.summarize.description,
-    link: "/summarize",
-    color: "text-blue-600",
+    link: "/summary",
+    color: "text-primary",
   },
   {
     icon: <Mic className="size-12" />,
     title: fa.transcribe.title,
     description: fa.transcribe.description,
     link: "/transcribe",
-    color: "text-green-600",
+    color: "text-primary",
   },
 ] as const;
 
 function HomeComponent() {
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden bg-linear-to-br from-background via-background to-muted/20">
-      <div className="flex w-full max-w-6xl flex-col items-center justify-center px-4 md:px-8">
-        <section className="w-full space-y-6">
-          {/* Hero Section */}
-          <header className="space-y-4 text-center">
-            <div className="relative">
-              <h1 className="fade-in slide-in-from-top-4 animate-in bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text font-bold text-4xl text-transparent duration-1000 md:text-5xl lg:text-6xl">
-                {fa.index.appTitle}
-              </h1>
-              {/* Decorative elements */}
-              <div className="-top-3 -right-3 absolute h-6 w-6 animate-pulse rounded-full bg-primary/20" />
-              <div className="-bottom-2 -left-3 absolute h-5 w-5 animate-pulse rounded-full bg-primary/15 delay-500" />
-            </div>
-            <p className="fade-in slide-in-from-bottom-4 mx-auto max-w-xl animate-in text-lg text-muted-foreground delay-300 duration-1000">
+    <main className="min-h-0 flex-1 overflow-auto bg-linear-to-b from-background to-muted/20">
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 md:px-8 md:py-10">
+        <header className="text-right">
+          <div className="space-y-3">
+            <p className="font-medium text-primary text-sm">
+              {fa.index.smartToolsTitle}
+            </p>
+            <h1 className="max-w-3xl text-balance font-bold text-3xl leading-tight md:text-5xl">
+              {fa.index.appTitle}
+            </h1>
+            <p className="max-w-2xl text-muted-foreground leading-7">
               {fa.index.description}
             </p>
-          </header>
-
-          {/* Features Grid */}
-          <main className="space-y-4">
-            <div className="text-center">
-              <h2 className="font-bold text-2xl">{fa.index.smartToolsTitle}</h2>
+            <div className="pt-2">
+              <Button asChild className="w-full sm:w-auto" size="lg">
+                <Link to="/chat">{fa.index.start}</Link>
+              </Button>
             </div>
+          </div>
+        </header>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {features.map((feature, index) => (
-                <Card
-                  className="group fade-in slide-in-from-bottom-4 relative animate-in overflow-hidden border bg-card/80 p-4 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-primary/30 hover:shadow-primary/20 hover:shadow-xl"
-                  key={feature.link}
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                    animationFillMode: "both",
-                  }}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {features.map((feature) => (
+            <Card
+              className="group hover:-translate-y-0.5 flex min-h-48 flex-col justify-between border bg-card p-5 shadow-none transition-[border-color,transform,box-shadow] duration-200 hover:border-primary/35 hover:shadow-md"
+              key={feature.link}
+            >
+              <div className="space-y-4">
+                <div
+                  className={`${feature.color} flex size-12 items-center justify-center rounded-md bg-muted`}
                 >
-                  <div className="relative z-10">
-                    <div
-                      className={`${feature.color} mb-3 transition-all duration-500 group-hover:scale-110`}
-                    >
-                      {feature.icon}
-                    </div>
-                    <h3 className="mb-2 font-semibold text-lg transition-colors duration-300 group-hover:text-primary">
-                      {feature.title}
-                    </h3>
-                    <p className="mb-4 min-h-[2.5rem] text-muted-foreground text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
-                    <Button
-                      asChild
-                      className="w-full transition-all duration-300"
-                      size="default"
-                    >
-                      <Link to={feature.link}>{fa.index.start}</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </main>
-        </section>
-      </div>
-    </div>
+                  {feature.icon}
+                </div>
+                <div className="space-y-2">
+                  <h2 className="font-semibold text-lg">{feature.title}</h2>
+                  <p className="text-muted-foreground text-sm leading-7">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="mt-5 w-full">
+                <Link to={feature.link}>{fa.index.start}</Link>
+              </Button>
+            </Card>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }
