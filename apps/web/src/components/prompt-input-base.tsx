@@ -47,9 +47,13 @@ export function PromptInputBase({
   );
 
   const disabledDefault = isGenerating || !value.trim();
+  const isSubmitDisabled = submitProps?.disabled ?? disabledDefault;
   const handleSubmit = () => {
     if (isGenerating) {
       onStop?.();
+      return;
+    }
+    if (isSubmitDisabled) {
       return;
     }
     const trimmed = value.trim();
@@ -77,7 +81,7 @@ export function PromptInputBase({
         <div className="flex items-center gap-2">
           {rightTools}
           <PromptInputSubmit
-            disabled={submitProps?.disabled ?? disabledDefault}
+            disabled={isSubmitDisabled}
             status={submitProps?.status}
             variant={submitProps?.variant}
           />

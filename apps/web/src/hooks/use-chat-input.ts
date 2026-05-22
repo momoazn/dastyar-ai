@@ -6,6 +6,7 @@ import { useChatThread } from "./use-chat-thread";
 
 type UseChatInputOptions = {
   threadId?: number;
+  renameOnSend?: boolean;
   onSendMessage?: (prompt: string) => Promise<void>;
 };
 
@@ -14,6 +15,7 @@ type UseChatInputOptions = {
  */
 export function useChatInput({
   threadId,
+  renameOnSend = false,
   onSendMessage,
 }: UseChatInputOptions = {}) {
   const navigate = useNavigate();
@@ -31,8 +33,9 @@ export function useChatInput({
         setIsGenerating(true);
 
         if (threadId) {
-          // Existing thread - rename if first message and send message
-          await renameThread(threadId, validPrompt);
+          if (renameOnSend) {
+            await renameThread(threadId, validPrompt);
+          }
           if (onSendMessage) await onSendMessage(validPrompt);
         } else {
           // New thread - create and navigate
@@ -59,6 +62,7 @@ export function useChatInput({
       renameThread,
       onSendMessage,
       navigate,
+      renameOnSend,
     ]
   );
 

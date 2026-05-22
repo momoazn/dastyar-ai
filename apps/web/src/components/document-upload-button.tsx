@@ -10,7 +10,7 @@ import {
 } from "@/components/ui";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
-import { client, queryClient } from "@/utils/orpc";
+import { client, orpc, queryClient } from "@/utils/orpc";
 
 type Props = {
   threadId: number;
@@ -262,8 +262,9 @@ export function DocumentUploadButton({
     }
     setUploading(true);
     try {
-      onStatusChange?.({ filename: file.name, phase: "uploading" });
+      onStatusChange?.({ filename: file.name, phase: "extracting" });
       const extracted = await processFileContent(file);
+      onStatusChange?.({ filename: file.name, phase: "uploading" });
       const res = (await uploadDocument(
         file,
         threadId,
@@ -278,7 +279,11 @@ export function DocumentUploadButton({
         indexedChunks: indexed,
       });
 
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries({
+        queryKey: orpc.documents.listByThread.queryKey({
+          input: { threadId },
+        }),
+      });
       onStatusChange?.({ filename: file.name, phase: "done" });
       showUploadSuccess(file.name, file.type, indexed, res.indexingReason);
     } catch (err) {

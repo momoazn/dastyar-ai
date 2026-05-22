@@ -36,6 +36,11 @@ func main() {
 	transcribeHandler := handler.NewTranscribeHandler(whisperService)
 
 	// Setup routes
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -54,6 +59,7 @@ func main() {
 	log.Printf("Starting Whisper Server on %s", addr)
 	log.Println("")
 	log.Println("Endpoints:")
+	log.Println("  GET  /health - Health check")
 	log.Println("  GET  / - Web UI")
 	log.Println("")
 	log.Println("  OpenAI-compatible API:")

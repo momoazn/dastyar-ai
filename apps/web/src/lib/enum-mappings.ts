@@ -45,9 +45,11 @@ export const summaryModeToLabel: Record<SummaryMode, string> = {
 
 // Code mode to label mappings
 export const codeModeToLabel: Record<CodeMode, string> = {
+  generate: fa.codeAssistant.modes.generate,
   explain: fa.codeAssistant.modes.explain,
-  refactor: "بازنویسی کد",
+  review: fa.codeAssistant.modes.review,
   debug: fa.codeAssistant.modes.debug,
+  refactor: "بازنویسی کد",
   optimize: "بهینه‌سازی",
   document: "مستندسازی",
   test: "تست‌نویسی",
@@ -68,6 +70,9 @@ export const programmingLanguageToLabel: Record<ProgrammingLanguage, string> = {
   ruby: "Ruby",
   swift: "Swift",
   kotlin: "Kotlin",
+  scala: "Scala",
+  r: "R",
+  bash: "Bash",
   dart: "Dart",
   sql: "SQL",
   html: "HTML",

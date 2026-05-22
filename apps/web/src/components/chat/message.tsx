@@ -8,6 +8,7 @@ export type MessageGenerationStatus =
   | "streaming"
   | "reasoning"
   | "submitted"
+  | "finished"
   | "stopped"
   | "errored"
   | undefined;
@@ -45,6 +46,9 @@ export const toMessageViewModel = (message: MyUIMessage): MessageViewModel => {
     content,
     reasoning,
     model: message.metadata?.modelName ?? undefined,
+    status: message.metadata?.status,
+    created: message.metadata?.createdAt,
+    sent_at: message.metadata?.updatedAt ?? message.metadata?.createdAt,
   };
 };
 

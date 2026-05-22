@@ -18,6 +18,7 @@ import { PromptInputBase } from "@/components/prompt-input-base";
 import { TranscribeButton } from "@/components/transcribe-button";
 import { Alert, AlertDescription } from "@/components/ui";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
+import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 
@@ -45,6 +46,7 @@ export const ChatInput = ({
     setModelId,
     models,
     refetch,
+    error: modelsError,
     isLoading: isModelsLoading,
     isFetching: isModelsFetching,
   } = useChatModelSelection({
@@ -136,6 +138,15 @@ export const ChatInput = ({
   );
 
   const isRefreshingModels = isModelsLoading || isModelsFetching;
+  let modelsStatusMessage: string | null = null;
+  if (modelsError) {
+    modelsStatusMessage = getErrorMessage(
+      modelsError,
+      fa.chat.modelsLoadFailed
+    );
+  } else if (!isRefreshingModels && models.length === 0) {
+    modelsStatusMessage = fa.chat.modelsUnavailable;
+  }
 
   return (
     <div
@@ -148,6 +159,11 @@ export const ChatInput = ({
           pending={pendingDocs}
           threadId={threadId}
         />
+      )}
+      {modelsStatusMessage && (
+        <Alert variant="destructive">
+          <AlertDescription dir="rtl">{modelsStatusMessage}</AlertDescription>
+        </Alert>
       )}
       <div>
         <PromptInputBase
@@ -175,7 +191,11 @@ export const ChatInput = ({
                   ))}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
-              <PromptInputButton onClick={() => refetch()} variant="outline">
+              <PromptInputButton
+                aria-label={fa.settings.appInfo.refreshStatus}
+                onClick={() => refetch()}
+                variant="outline"
+              >
                 <RefreshCcw
                   className={
                     isRefreshingModels ? "size-4 animate-spin" : "size-4"
@@ -206,7 +226,9 @@ export const ChatInput = ({
             </>
           }
           submitProps={{
-            disabled: isGenerating ? false : !(prompt.trim() && modelId),
+            disabled: isGenerating
+              ? false
+              : !(prompt.trim() && modelId) || Boolean(modelsStatusMessage),
             status: isGenerating ? "streaming" : undefined,
             variant: isGenerating ? "destructive" : "default",
           }}
