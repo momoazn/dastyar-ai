@@ -250,44 +250,22 @@ export function OllamaServersTable() {
           <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.name}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.baseUrl}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.status}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.modelCount}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.inFlight}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.running}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.busyScore}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.latency}
-                </TableHead>
-                <TableHead>
-                  {fa.admin.ollamaServers.table.actions}
-                </TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.name}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.baseUrl}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.status}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.modelCount}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.inFlight}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.running}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.busyScore}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.latency}</TableHead>
+                <TableHead>{fa.admin.ollamaServers.table.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedServers.map((server) => (
                 <TableRow key={server.id}>
-                  <TableCell className="font-medium">
-                    {server.name}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {server.baseUrl}
-                  </TableCell>
+                  <TableCell className="font-medium">{server.name}</TableCell>
+                  <TableCell className="text-xs">{server.baseUrl}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge
@@ -308,21 +286,11 @@ export function OllamaServersTable() {
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {server.modelCount}
-                  </TableCell>
-                  <TableCell>
-                    {server.runtime.inFlight}
-                  </TableCell>
-                  <TableCell>
-                    {server.runtime.runningModels}
-                  </TableCell>
-                  <TableCell>
-                    {server.runtime.busyScore.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {server.runtime.ewmaLatencyMs}
-                  </TableCell>
+                  <TableCell>{server.modelCount}</TableCell>
+                  <TableCell>{server.runtime.inFlight}</TableCell>
+                  <TableCell>{server.runtime.runningModels}</TableCell>
+                  <TableCell>{server.runtime.busyScore.toFixed(2)}</TableCell>
+                  <TableCell>{server.runtime.ewmaLatencyMs}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Switch
