@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>راه اندازی — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="01-getting-started.html" class="active">01 راه اندازی</a>
+      <a href="02-structure.html">02 ساختار</a>
+      <a href="03-server.html">03 سرور</a>
+      <a href="04-web.html">04 وب</a>
+      <a href="05-features.html">05 قابلیت ها</a>
+      <a href="06-commands.html">06 دستورات</a>
+      <a href="07-troubleshooting.html">07 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>01 — راه اندازی و اجرا</h1>
+      <p>
+        این صفحه مسیر استاندارد اجرای پروژه روی ماشین توسعه را توضیح می دهد.
+      </p>
+
+      <h2>پیش نیازها</h2>
+      <ul>
+        <li>Bun 1.3 یا جدیدتر</li>
+        <li>Go برای سرویس Whisper</li>
+        <li>Ollama یا LM Studio برای چت و قابلیت های متنی</li>
+        <li>Stable Diffusion WebUI برای تولید تصویر، در صورت نیاز</li>
+        <li>whisper.cpp و مدل های Whisper برای transcription کامل</li>
+      </ul>
+
+      <h2>نصب</h2>
+      <pre><code>rtk bun install</code></pre>
+
+      <h2>اجرای development</h2>
+      <pre><code>rtk bun run dev</code></pre>
+      <p>برای اجرای جداگانه بخش ها:</p>
+      <pre><code>rtk bun run dev:web
+rtk bun run dev:server
+rtk bun run dev:whisper</code></pre>
+
+      <h2>Config سرور</h2>
+      <p>
+        سرور از <code>apps/server/config.json</code>یا مقدارهای پیش فرض
+        <code>apps/server/src/config-schema.ts</code>استفاده می کند.
+      </p>
+      <pre><code>rtk bun run config:generate
+rtk bun run config:show
+rtk bun run config:validate</code></pre>
+
+      <h2>مهم ترین کلیدهای config</h2>
+      <table>
+        <tr>
+          <th>کلید</th>
+          <th>معنی</th>
+          <th>پیش فرض</th>
+        </tr>
+        <tr>
+          <td>
+            <code>PORT</code>
+          </td>
+          <td>پورت سرور</td>
+          <td>
+            <code>3000</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>DATABASE_FILE</code>
+          </td>
+          <td>مسیر SQLite</td>
+          <td>
+            <code>./data.db</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>JWT_SECRET</code>
+          </td>
+          <td>کلید امضای JWT</td>
+          <td>باید در production تغییر کند</td>
+        </tr>
+        <tr>
+          <td>
+            <code>OLLAMA_BASE_URL</code>
+          </td>
+          <td>آدرس Ollama</td>
+          <td>
+            <code>http://localhost:11434</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>STABLE_DIFFUSION_BASE_URL</code>
+          </td>
+          <td>آدرس Stable Diffusion WebUI</td>
+          <td>
+            <code>http://localhost:7860</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>WHISPER_SERVER_URL</code>
+          </td>
+          <td>آدرس سرویس Whisper</td>
+          <td>
+            <code>http://127.0.0.1:8080</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>IMAGES_DIR</code>
+          </td>
+          <td>ذخیره خروجی تصاویر</td>
+          <td>
+            <code>./generated-images</code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>DOCUMENTS_DIR</code>
+          </td>
+          <td>ذخیره فایل های آپلودی</td>
+          <td>
+            <code>./uploaded-documents</code>
+          </td>
+        </tr>
+      </table>
+
+      <h2>راه اندازی دیتابیس</h2>
+      <pre><code>rtk bun run db:migrate</code></pre>
+      <p>
+        schema در <code>apps/server/src/database/schema/index.ts</code>تعریف شده
+        و migrationها در <code>apps/server/src/database/migrations</code>هستند.
+      </p>
+
+      <h2>ورود اولیه</h2>
+      <p>
+        اولین کاربر ثبت نام شده به صورت خودکار admin می شود. بعد از آن ساخت و
+        مدیریت کاربران از پنل admin انجام می شود.
+      </p>
+
+      <div class="note">
+        در این repo همه دستورهای shell باید با <code>rtk</code>اجرا شوند.
+      </div>
+    </main>
+  </body>
+</html>

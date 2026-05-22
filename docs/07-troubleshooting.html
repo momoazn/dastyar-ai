@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عیب یابی — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="01-getting-started.html">01 راه اندازی</a>
+      <a href="02-structure.html">02 ساختار</a>
+      <a href="03-server.html">03 سرور</a>
+      <a href="04-web.html">04 وب</a>
+      <a href="05-features.html">05 قابلیت ها</a>
+      <a href="06-commands.html">06 دستورات</a>
+      <a href="07-troubleshooting.html" class="active">07 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>07 — عیب یابی</h1>
+      <p>مسیرهای رایج تشخیص مشکل در پروژه.</p>
+
+      <h2>سرور بالا نمی آید</h2>
+      <ol>
+        <li>
+          <code>rtk bun run config:validate</code>را اجرا کنید.
+        </li>
+        <li>
+          مطمئن شوید <code>JWT_SECRET</code>حداقل ۳۲ کاراکتر است.
+        </li>
+        <li>
+          پورت <code>PORT</code>آزاد باشد.
+        </li>
+        <li>
+          <code>DATABASE_FILE</code>قابل نوشتن باشد.
+        </li>
+      </ol>
+
+      <h2>وب به API وصل نمی شود</h2>
+      <ul>
+        <li>
+          سرور را با <code>rtk bun run dev:server</code>اجرا کنید.
+        </li>
+        <li>
+          <code>CORS_ORIGIN</code>را بررسی کنید.
+        </li>
+        <li>
+          در dev، web معمولا <code>5173</code>و server <code>3000</code>است.
+        </li>
+        <li>
+          <code>/health</code>باید JSON با <code>status: ok</code>برگرداند.
+        </li>
+      </ul>
+
+      <h2>مدل های چت دیده نمی شوند</h2>
+      <ul>
+        <li>
+          <code>OLLAMA_ENABLED</code>و <code>OLLAMA_BASE_URL</code>را بررسی
+          کنید.
+        </li>
+        <li>در پنل admin، Ollama serverها را sync کنید.</li>
+        <li>
+          اگر چند سرور Ollama دارید، <code>ollama-router.ts</code>least-busy
+          server را انتخاب می کند.
+        </li>
+        <li>مدل باید در دیتابیس فعال باشد تا در UI انتخاب شود.</li>
+      </ul>
+
+      <h2>Document upload یا RAG جواب نمی دهد</h2>
+      <ul>
+        <li>
+          نوع فایل باید در <code>lib/file-validation.ts</code>مجاز باشد.
+        </li>
+        <li>
+          <code>DOCUMENTS_DIR</code>باید قابل نوشتن باشد.
+        </li>
+        <li>
+          برای RAG، embedding model در <code>EMBEDDING_MODEL</code>باید در
+          provider موجود باشد.
+        </li>
+        <li>
+          متن از فایل با processorهای <code>services/processors</code>استخراج می
+          شود.
+        </li>
+      </ul>
+
+      <h2>تولید تصویر خطا می دهد</h2>
+      <ul>
+        <li>
+          Stable Diffusion WebUI باید در <code>STABLE_DIFFUSION_BASE_URL</code>
+          فعال باشد.
+        </li>
+        <li>
+          مسیرهای <code>/sdapi/v1/options</code>و <code>/sdapi/v1/txt2img</code>
+          باید پاسخ دهند.
+        </li>
+        <li>
+          <code>IMAGES_DIR</code>باید قابل نوشتن باشد.
+        </li>
+      </ul>
+
+      <h2>Whisper کار نمی کند</h2>
+      <ul>
+        <li>
+          <code>rtk bun run dev:whisper</code>را اجرا کنید.
+        </li>
+        <li>
+          مدل در <code>apps/whisper/models</code>وجود داشته باشد.
+        </li>
+        <li>
+          اگر Go test خطای <code>whisper.h</code>داد، whisper.cpp headers/build
+          artifacts آماده نیستند.
+        </li>
+        <li>
+          <code>/health</code>سرور Bun وضعیت Whisper را هم برمی گرداند.
+        </li>
+      </ul>
+
+      <h2>Build وب warning بزرگ بودن chunk دارد</h2>
+      <p>
+        فعلا known issue است. منبع اصلی language packهای syntax highlighter،
+        Mermaid و KaTeX است. اگر لازم شد، با dynamic import یا manualChunks کم
+        شود.
+      </p>
+
+      <h2>Archive فایل لازم را ندارد</h2>
+      <ul>
+        <li>
+          <code>scripts/archive.ts</code>از
+          <code>git ls-files --cached --others --exclude-standard</code>استفاده
+          می کند.
+        </li>
+        <li>اگر فایلی ignored باشد وارد archive نمی شود.</li>
+        <li>
+          generated/runtime paths مثل <code>dist</code>، <code>release</code>،
+          آپلودها و مدل ها عمدا حذف می شوند.
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

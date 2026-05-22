@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وب — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="01-getting-started.html">01 راه اندازی</a>
+      <a href="02-structure.html">02 ساختار</a>
+      <a href="03-server.html">03 سرور</a>
+      <a href="04-web.html" class="active">04 وب</a>
+      <a href="05-features.html">05 قابلیت ها</a>
+      <a href="06-commands.html">06 دستورات</a>
+      <a href="07-troubleshooting.html">07 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>04 — وب</h1>
+      <p>
+        وب اپ با React 19، Vite، TanStack Router/Query، Jotai و Radix UI ساخته
+        شده است.
+      </p>
+
+      <h2>Entry و زیرساخت</h2>
+      <table>
+        <tr>
+          <th>فایل</th>
+          <th>وظیفه</th>
+        </tr>
+        <tr>
+          <td>
+            <code>src/main.tsx</code>
+          </td>
+          <td>mount اپ و providerها</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/routes/__root.tsx</code>
+          </td>
+          <td>root route، layout کلی و error handling</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/utils/orpc.ts</code>
+          </td>
+          <td>ORPC client و QueryClient</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/index.css</code>
+          </td>
+          <td>Tailwind/theme/global styles</td>
+        </tr>
+        <tr>
+          <td>
+            <code>src/routeTree.gen.ts</code>
+          </td>
+          <td>فایل generated توسط TanStack Router</td>
+        </tr>
+      </table>
+
+      <h2>Routeها</h2>
+      <table>
+        <tr>
+          <th>Route</th>
+          <th>فایل</th>
+          <th>کاربرد</th>
+        </tr>
+        <tr>
+          <td>
+            <code>/</code>
+          </td>
+          <td>
+            <code>routes/index.tsx</code>
+          </td>
+          <td>صفحه اصلی و لینک قابلیت ها</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/login</code>, <code>/register</code>
+          </td>
+          <td>
+            <code>login.tsx</code>, <code>register.tsx</code>
+          </td>
+          <td>auth flow</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/chat</code>, <code>/chat/$id</code>
+          </td>
+          <td>
+            <code>chat/*</code>
+          </td>
+          <td>چت و threadها</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/image</code>, <code>/image/$id</code>
+          </td>
+          <td>
+            <code>image/*</code>
+          </td>
+          <td>تولید تصویر</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/code</code>, <code>/code/$runId</code>
+          </td>
+          <td>
+            <code>code/*</code>
+          </td>
+          <td>دستیار کد</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/translation</code>, <code>/translation/$translationId</code>
+          </td>
+          <td>
+            <code>translation/*</code>
+          </td>
+          <td>ترجمه متن و PDF</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/summary</code>, <code>/summary/$summaryId</code>
+          </td>
+          <td>
+            <code>summary/*</code>
+          </td>
+          <td>خلاصه سازی</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/transcribe</code>
+          </td>
+          <td>
+            <code>transcribe.tsx</code>
+          </td>
+          <td>تبدیل صوت به متن</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/settings</code>
+          </td>
+          <td>
+            <code>settings.tsx</code>
+          </td>
+          <td>پروفایل، امنیت، ظاهر، وضعیت app</td>
+        </tr>
+        <tr>
+          <td>
+            <code>/admin</code>
+          </td>
+          <td>
+            <code>admin.tsx</code>
+          </td>
+          <td>پنل مدیریت</td>
+        </tr>
+      </table>
+
+      <h2>کامپوننت ها</h2>
+      <ul>
+        <li>
+          <code>components/ui</code>: primitives با Radix و Tailwind.
+        </li>
+        <li>
+          <code>components/scaffold</code>: shellهای مشترک conversation/tool.
+        </li>
+        <li>
+          <code>components/sidebar</code>: navigation، لیست threadها و feature
+          filtering.
+        </li>
+        <li>
+          <code>components/chat</code>: پیام ها، input، attachment و streaming
+          UI.
+        </li>
+        <li>
+          <code>components/image-generation</code>: فرم تولید تصویر و تنظیمات
+          advanced.
+        </li>
+        <li>
+          <code>components/transcribe</code>, <code>translation</code>,
+          <code>settings</code>, <code>admin</code>: feature-specific UI.
+        </li>
+      </ul>
+
+      <h2>State و data fetching</h2>
+      <ul>
+        <li>
+          Server state با TanStack Query و ORPC queryOptions/mutationOptions
+          مدیریت می شود.
+        </li>
+        <li>
+          Auth token و user state در <code>atoms/auth.ts</code>نگهداری می شود.
+        </li>
+        <li>
+          مدل انتخابی در <code>atoms/model.ts</code>است.
+        </li>
+        <li>
+          منطق chat در <code>hooks/use-ai-chat.ts</code>و
+          <code>hooks/use-chat-input.ts</code>است.
+        </li>
+      </ul>
+
+      <h2>متن ها و localization</h2>
+      <p>
+        متن های فارسی در <code>src/lib/texts</code>گروه بندی شده اند. برای متن
+        جدید، اول همان فایل feature را به روز کنید و از hardcode مستقیم داخل
+        component پرهیز کنید.
+      </p>
+    </main>
+  </body>
+</html>

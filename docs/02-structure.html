@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساختار — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="01-getting-started.html">01 راه اندازی</a>
+      <a href="02-structure.html" class="active">02 ساختار</a>
+      <a href="03-server.html">03 سرور</a>
+      <a href="04-web.html">04 وب</a>
+      <a href="05-features.html">05 قابلیت ها</a>
+      <a href="06-commands.html">06 دستورات</a>
+      <a href="07-troubleshooting.html">07 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>02 — ساختار پروژه</h1>
+      <p>پروژه یک monorepo با Bun workspace و Turbo است.</p>
+
+      <h2>دایرکتوری ها</h2>
+      <table>
+        <tr>
+          <th>مسیر</th>
+          <th>محتوا</th>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/server/src/app.ts</code>
+          </td>
+          <td>ساخت Hono app، CORS، security headers، routes و SPA fallback</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/server/src/routes</code>
+          </td>
+          <td>REST routeهای chat، images و ORPC bridge</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/server/src/procedures</code>
+          </td>
+          <td>ORPC procedureها برای web client</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/server/src/repositories</code>
+          </td>
+          <td>دسترسی به دیتابیس و queryهای مالکیت محور</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/server/src/services</code>
+          </td>
+          <td>auth، AI providers، پردازش فایل، storage</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/web/src/routes</code>
+          </td>
+          <td>TanStack Router file routes</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/web/src/components</code>
+          </td>
+          <td>UI primitives و feature components</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/web/src/hooks</code>
+          </td>
+          <td>منطق reusable برای chat، user، image، transcription</td>
+        </tr>
+        <tr>
+          <td>
+            <code>apps/whisper</code>
+          </td>
+          <td>Go HTTP service برای Whisper</td>
+        </tr>
+        <tr>
+          <td>
+            <code>scripts</code>
+          </td>
+          <td>build orchestration، packaging، lifecycle commandها</td>
+        </tr>
+      </table>
+
+      <h2>جریان داده اصلی</h2>
+      <ol>
+        <li>کاربر در وب با React routeها کار می کند.</li>
+        <li>
+          وب برای CRUD و feature actions از ORPC client در
+          <code>apps/web/src/utils/orpc.ts</code>استفاده می کند.
+        </li>
+        <li>سرور procedure را validate می کند و auth context می سازد.</li>
+        <li>Repositoryها با Drizzle/SQLite داده را می خوانند یا می نویسند.</li>
+        <li>
+          در featureهای AI، سرور provider مناسب را انتخاب و external service را
+          فراخوانی می کند.
+        </li>
+        <li>نتیجه به وب برمی گردد و TanStack Query cache را به روز می کند.</li>
+      </ol>
+
+      <h2>مرزبندی لایه ها</h2>
+      <ul>
+        <li>
+          <strong>Route/Procedure:</strong>validation، auth، شکل response،
+          orchestration سبک.
+        </li>
+        <li>
+          <strong>Repository:</strong>SQL/Drizzle، ownership filtering،
+          persistence.
+        </li>
+        <li>
+          <strong>Service:</strong>provider integration، پردازش فایل، storage،
+          auth helpers.
+        </li>
+        <li>
+          <strong>Web Hook:</strong>query/mutation wiring، state و side
+          effectهای UI.
+        </li>
+        <li>
+          <strong>Component:</strong>rendering و interaction محلی.
+        </li>
+      </ul>
+
+      <h2>داده های runtime</h2>
+      <table>
+        <tr>
+          <th>نوع</th>
+          <th>مسیر پیش فرض</th>
+          <th>در archive؟</th>
+        </tr>
+        <tr>
+          <td>SQLite</td>
+          <td>
+            <code>apps/server/data.db</code>یا config
+          </td>
+          <td>خیر</td>
+        </tr>
+        <tr>
+          <td>آپلودها</td>
+          <td>
+            <code>apps/server/uploaded-documents</code>
+          </td>
+          <td>خیر</td>
+        </tr>
+        <tr>
+          <td>تصاویر تولید شده</td>
+          <td>
+            <code>apps/server/generated-images</code>
+          </td>
+          <td>خیر</td>
+        </tr>
+        <tr>
+          <td>Whisper models</td>
+          <td>
+            <code>apps/whisper/models</code>
+          </td>
+          <td>خیر</td>
+        </tr>
+        <tr>
+          <td>Build output</td>
+          <td>
+            <code>apps/*/dist</code>
+          </td>
+          <td>خیر</td>
+        </tr>
+      </table>
+    </main>
+  </body>
+</html>

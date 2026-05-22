@@ -36,7 +36,7 @@ All gates pass as of 2026-05-22:
 
 ### Removed
 - **Stale docs**: CLEAN_DOCUMENTATION_INDEX.md, PROJECT-STRUCTURE.md, README.md, SECRETS.md, TASKS.md, admin-panel.md, thesis-proposal.md
-- **Stale specs**: README.md, e2e-auth-testing-plan.md, IMPROVEMENTS_TODO.md
+- **Stale specs**: README.md, legacy auth testing plan, IMPROVEMENTS_TODO.md
 - **Report artifacts**: report/ (entire directory)
 - **Duplicate agent doc**: CLAUDE.md (AGENTS.md covers current instructions)
 - **Stale READMEs**: scripts/README.md, apps/whisper/README.md

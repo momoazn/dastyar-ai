@@ -29,7 +29,5 @@ bun --cwd apps/server build
 
 ## More Docs
 
-- `docs/HANDOFF.md`
-- `docs/ARCHITECTURE.md`
-- `docs/OPERATIONS.md`
-- `docs/API.md`
+- Open `docs/index.html` for the full project documentation.
+- Markdown references: `docs/HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/API.md`.

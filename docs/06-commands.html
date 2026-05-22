@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دستورات — Dastyar AI</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h2>مستندات</h2>
+      <a href="index.html">فهرست</a>
+      <a href="01-getting-started.html">01 راه اندازی</a>
+      <a href="02-structure.html">02 ساختار</a>
+      <a href="03-server.html">03 سرور</a>
+      <a href="04-web.html">04 وب</a>
+      <a href="05-features.html">05 قابلیت ها</a>
+      <a href="06-commands.html" class="active">06 دستورات</a>
+      <a href="07-troubleshooting.html">07 عیب یابی</a>
+    </aside>
+    <main>
+      <h1>06 — دستورات</h1>
+      <p>همه commandها از root اجرا می شوند مگر خلاف آن نوشته شده باشد.</p>
+
+      <h2>توسعه</h2>
+      <pre><code>rtk bun install
+rtk bun run dev
+rtk bun run dev:web
+rtk bun run dev:server
+rtk bun run dev:whisper</code></pre>
+
+      <h2>کیفیت</h2>
+      <pre><code>rtk bun run lint:check
+rtk bun run lint:fix
+rtk bun run check-types
+rtk bun run test
+rtk bun run test:coverage</code></pre>
+
+      <h2>Build</h2>
+      <pre><code>rtk bun run build
+rtk bun run build:fast
+rtk bun run build:ci
+rtk bun run build:windows
+rtk bun run build:all
+rtk bun --cwd apps/web build
+rtk bun --cwd apps/server build</code></pre>
+
+      <h2>Release و package</h2>
+      <pre><code>rtk bun run build:release
+rtk bun run build:release:windows
+rtk bun run archive
+rtk bun run package:source</code></pre>
+      <p>
+        <code>archive</code>source zip می سازد و generated/runtime outputها را
+        حذف می کند.
+      </p>
+
+      <h2>Database و config</h2>
+      <pre><code>rtk bun run db:generate
+rtk bun run db:migrate
+rtk bun run db:push
+rtk bun run db:studio
+rtk bun run config:generate
+rtk bun run config:show
+rtk bun run config:validate</code></pre>
+
+      <h2>Service lifecycle</h2>
+      <pre><code>rtk bun run start
+rtk bun run stop
+rtk bun run status</code></pre>
+
+      <h2>Assets</h2>
+      <pre><code>rtk bun run download:ffmpeg
+rtk bun run download:ffmpeg:all
+rtk bun run download:model</code></pre>
+
+      <h2>Verification پیشنهادی قبل از handoff</h2>
+      <pre><code>rtk bun run lint:check
+rtk bun run check-types
+rtk bun run test --force
+rtk bun --cwd apps/web build
+rtk bun --cwd apps/server build
+rtk bun run archive</code></pre>
+    </main>
+  </body>
+</html>
