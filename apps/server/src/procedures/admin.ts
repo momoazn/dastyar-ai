@@ -141,6 +141,33 @@ const rethrowAdminError = (
   });
 };
 
+const throwIfMissingUser = async (userId: number) => {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new ORPCError("USER_NOT_FOUND", {
+      message: "User not found",
+      status: 404,
+    });
+  }
+  return user;
+};
+
+const throwIfUsernameTaken = async (
+  username: string,
+  currentUsername?: string
+): Promise<void> => {
+  if (username === currentUsername) {
+    return;
+  }
+
+  if (await usernameExists(username)) {
+    throw new ORPCError("USERNAME_ALREADY_EXISTS", {
+      message: "کد ملی قبلاً استفاده شده است",
+      status: 400,
+    });
+  }
+};
+
 export const adminProcedures = {
   // User Management
   listUsers: adminProcedure.input(listUsersSchema).handler(
@@ -166,16 +193,8 @@ export const adminProcedures = {
       try {
         const { userId, username, role, password } = input;
 
-        // Check if user exists
-        const user = await getUserById(userId);
-        if (!user) {
-          throw new ORPCError("USER_NOT_FOUND", {
-            message: "User not found",
-            status: 404,
-          });
-        }
+        const user = await throwIfMissingUser(userId);
 
-        // At least one field must be provided
         if (
           username === undefined &&
           role === undefined &&
@@ -188,32 +207,22 @@ export const adminProcedures = {
           });
         }
 
-        // Check if new username already exists (if changing username)
-        if (username !== undefined && username !== user.username) {
-          const exists = await usernameExists(username);
-          if (exists) {
-            throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-              message: "کد ملی قبلاً استفاده شده است",
-              status: 400,
-            });
-          }
+        if (username !== undefined) {
+          await throwIfUsernameTaken(username, user.username);
         }
 
-        const updatedUser = await updateUser(userId, {
+        return await updateUser(userId, {
           username,
           role,
           password,
         });
-        return updatedUser;
       } catch (error) {
-        logger.error("Error updating user", error, { userId: input.userId });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to update user",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error updating user",
+          error,
+          "Failed to update user",
+          { userId: input.userId }
+        );
       }
     }),
 
@@ -223,19 +232,8 @@ export const adminProcedures = {
       try {
         const { username, password, role } = input;
 
-        // Check if username already exists
-        const exists = await usernameExists(username);
-        if (exists) {
-          throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-            message: "کد ملی قبلاً استفاده شده است",
-            status: 400,
-          });
-        }
-
-        // Hash password
+        await throwIfUsernameTaken(username);
         const hashedPassword = await hashPassword(password);
-
-        // Create user
         const newUser = await createUser({
           username,
           password: hashedPassword,
@@ -249,14 +247,11 @@ export const adminProcedures = {
           createdAt: newUser.createdAt,
         };
       } catch (error) {
-        logger.error("Error creating user:", error, { function: "admin" });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to create user",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error creating user",
+          error,
+          "Failed to create user"
+        );
       }
     }),
 
@@ -310,16 +305,8 @@ export const adminProcedures = {
       try {
         const { userId } = input;
 
-        // Check if user exists
-        const user = await getUserById(userId);
-        if (!user) {
-          throw new ORPCError("USER_NOT_FOUND", {
-            message: "User not found",
-            status: 404,
-          });
-        }
+        const user = await throwIfMissingUser(userId);
 
-        // Prevent deleting if it's the only admin
         if (user.role === "admin") {
           const allUsers = await listUsers({ page: 1, pageSize: 1000 });
           const adminCount = allUsers.users.filter(
@@ -336,14 +323,12 @@ export const adminProcedures = {
         await deleteUser(userId);
         return { success: true };
       } catch (error) {
-        logger.error("Error deleting user:", error, { function: "admin" });
-        if (error instanceof ORPCError) {
-          throw error;
-        }
-        throw new ORPCError("INTERNAL_ERROR", {
-          message: "Failed to delete user",
-          status: 500,
-        });
+        return rethrowAdminError(
+          "Error deleting user",
+          error,
+          "Failed to delete user",
+          { userId: input.userId }
+        );
       }
     }),
 

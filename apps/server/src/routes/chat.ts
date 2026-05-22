@@ -27,7 +27,7 @@ import {
 import { getModelSizeCategory, type MyUIMessage } from "@/utils/chat";
 import { extractTextFromParts } from "@/utils/text-extractor";
 
-export function sendError(
+function sendError(
   c: Context<AuthEnv>,
   params: {
     status: ContentfulStatusCode;
@@ -78,6 +78,19 @@ function mapChatErrorMessage(rawMessage: string): string {
   }
 
   return "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+}
+
+async function markMessageErrored(messageId: number | null): Promise<void> {
+  if (messageId === null) {
+    return;
+  }
+
+  await updateMessage({
+    id: messageId,
+    status: "errored",
+  }).catch(() => {
+    return;
+  });
 }
 
 const MessagePartSchema = z.union([
@@ -308,14 +321,7 @@ const app = new Hono<AuthEnv>()
             releaseProvider?.();
             releaseProvider = null;
           } catch {
-            if (assistantMessageId !== null) {
-              await updateMessage({
-                id: assistantMessageId,
-                status: "errored",
-              }).catch(() => {
-                return;
-              });
-            }
+            await markMessageErrored(assistantMessageId);
             releaseProvider?.();
             releaseProvider = null;
             return;
@@ -323,14 +329,7 @@ const app = new Hono<AuthEnv>()
         },
       });
     } catch (error) {
-      if (assistantMessageId !== null) {
-        await updateMessage({
-          id: assistantMessageId,
-          status: "errored",
-        }).catch(() => {
-          return;
-        });
-      }
+      await markMessageErrored(assistantMessageId);
       releaseProvider?.();
       releaseProvider = null;
       let message = "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";

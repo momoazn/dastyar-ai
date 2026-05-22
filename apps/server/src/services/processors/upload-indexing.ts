@@ -157,7 +157,15 @@ type ResolvedInput =
 
 type ServerTextCandidate = {
   matches: (fileName: string, mimeType: string) => boolean;
-  read: (filePath: string, deps: UploadIndexingDeps) => Promise<string>;
+  read: keyof Pick<
+    UploadIndexingDeps,
+    | "extractDocxText"
+    | "extractEmlText"
+    | "extractHtmlText"
+    | "extractRtfText"
+    | "extractXlsxText"
+    | "readTextFile"
+  >;
   source: UploadIndexingSource;
 };
 
@@ -375,12 +383,14 @@ async function runIndexingWithRetry(
 
 async function safeReadTextFile(
   filePath: string,
-  deps: UploadIndexingDeps
+  deps: UploadIndexingDeps,
+  read: ServerTextCandidate["read"] = "readTextFile",
+  label = "Text"
 ): Promise<string> {
   try {
-    return normalizeText(await deps.readTextFile(filePath));
+    return normalizeText(await deps[read](filePath));
   } catch (error) {
-    logger.warn("Text extraction failed", {
+    logger.warn(`${label} extraction failed`, {
       error: error instanceof Error ? error.message : String(error),
       filePath,
     });
@@ -414,32 +424,32 @@ function getServerTextCandidates(): ServerTextCandidate[] {
   return [
     {
       matches: isDocxDocument,
-      read: safeReadDocxFile,
+      read: "extractDocxText",
       source: "server_docx",
     },
     {
       matches: isSpreadsheetDocument,
-      read: safeReadXlsxFile,
+      read: "extractXlsxText",
       source: "server_xlsx",
     },
     {
       matches: isHtmlDocument,
-      read: safeReadHtmlFile,
+      read: "extractHtmlText",
       source: "server_html",
     },
     {
       matches: isEmlDocument,
-      read: safeReadEmlFile,
+      read: "extractEmlText",
       source: "server_eml",
     },
     {
       matches: isRtfDocument,
-      read: safeReadRtfFile,
+      read: "extractRtfText",
       source: "server_rtf",
     },
     {
       matches: isTextDocument,
-      read: safeReadTextFile,
+      read: "readTextFile",
       source: "server_text",
     },
   ];
@@ -473,7 +483,12 @@ async function resolveServerTextInput(
   candidate: ServerTextCandidate,
   clientText: string
 ): Promise<ResolvedInput> {
-  const serverText = await candidate.read(input.filePath, deps);
+  const serverText = await safeReadTextFile(
+    input.filePath,
+    deps,
+    candidate.read,
+    candidate.source
+  );
   if (serverText.length > 0) {
     return { source: candidate.source, text: serverText, type: "text" };
   }
@@ -508,79 +523,4 @@ function noExtractableContentResult(): ResolvedInput {
     source: "none",
     type: "none",
   };
-}
-
-async function safeReadDocxFile(
-  filePath: string,
-  deps: UploadIndexingDeps
-): Promise<string> {
-  try {
-    return normalizeText(await deps.extractDocxText(filePath));
-  } catch (error) {
-    logger.warn("DOCX extraction failed", {
-      error: error instanceof Error ? error.message : String(error),
-      filePath,
-    });
-    return "";
-  }
-}
-
-async function safeReadEmlFile(
-  filePath: string,
-  deps: UploadIndexingDeps
-): Promise<string> {
-  try {
-    return normalizeText(await deps.extractEmlText(filePath));
-  } catch (error) {
-    logger.warn("EML extraction failed", {
-      error: error instanceof Error ? error.message : String(error),
-      filePath,
-    });
-    return "";
-  }
-}
-
-async function safeReadHtmlFile(
-  filePath: string,
-  deps: UploadIndexingDeps
-): Promise<string> {
-  try {
-    return normalizeText(await deps.extractHtmlText(filePath));
-  } catch (error) {
-    logger.warn("HTML extraction failed", {
-      error: error instanceof Error ? error.message : String(error),
-      filePath,
-    });
-    return "";
-  }
-}
-
-async function safeReadRtfFile(
-  filePath: string,
-  deps: UploadIndexingDeps
-): Promise<string> {
-  try {
-    return normalizeText(await deps.extractRtfText(filePath));
-  } catch (error) {
-    logger.warn("RTF extraction failed", {
-      error: error instanceof Error ? error.message : String(error),
-      filePath,
-    });
-    return "";
-  }
-}
-
-async function safeReadXlsxFile(
-  filePath: string,
-  deps: UploadIndexingDeps
-): Promise<string> {
-  try {
-    return normalizeText(await deps.extractXlsxText(filePath));
-  } catch (error) {
-    logger.warn("Spreadsheet extraction failed", {
-      error: error instanceof Error ? error.message : String(error),
-      filePath,
-    });
-    return "";
-  }
 }
