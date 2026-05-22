@@ -1,14 +1,9 @@
-import { Check, Copy } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo } from "react";
 import { Streamdown } from "streamdown";
-import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { fa } from "@/lib/texts";
+  CopyMessageButton,
+  formatMessageTime,
+} from "@/components/chat/message-actions";
 import { detectTextDirection } from "@/lib/utils";
 
 export type UserMessageProps = {
@@ -20,29 +15,8 @@ export type UserMessageProps = {
 };
 
 export const UserMessage = memo(({ message }: UserMessageProps) => {
-  const [copySuccess, setCopySuccess] = useState(false);
-
   const textDirection = detectTextDirection(message.content || "");
-
-  const formattedTime = useMemo(() => {
-    if (!message.created) {
-      return null;
-    }
-    return new Date(message.created).toLocaleTimeString("fa-IR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }, [message.created]);
-
-  const handleCopy = useCallback(async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch {
-      setCopySuccess(false);
-    }
-  }, []);
+  const formattedTime = formatMessageTime(message.created);
 
   return (
     <div className="group fade-in-50 mt-8 flex w-full animate-in justify-start duration-300">
@@ -65,31 +39,14 @@ export const UserMessage = memo(({ message }: UserMessageProps) => {
             {formattedTime}
           </time>
 
-          <TooltipProvider>
-            <div className="translate-y-1 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105 hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => handleCopy(message.content || "")}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    {copySuccess ? (
-                      <Check className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="text-xs">
-                    {copySuccess ? fa.chat.copied : fa.chat.copy}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </TooltipProvider>
+          <div className="translate-y-1 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+            <CopyMessageButton
+              className="h-7 w-7 rounded-full p-0 transition-all duration-200 hover:scale-105 hover:bg-accent hover:text-accent-foreground"
+              content={message.content}
+              iconClassName="h-3.5 w-3.5"
+              tooltipSide="left"
+            />
+          </div>
         </div>
       </div>
     </div>
