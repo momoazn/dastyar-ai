@@ -13,12 +13,10 @@
     "config:generate": "bun run src/scripts/config-generator.ts generate",
     "config:show": "bun run src/scripts/config-generator.ts show",
     "config:validate": "bun run src/scripts/config-generator.ts validate",
-    "db:local": "bun run src/database/index.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/scripts/run-migrations.ts",
-    "db:migrate:drizzle": "drizzle-kit migrate",
     "db:bundle": "bun run src/scripts/bundle-migrations.ts",
     "make-admin": "bun run src/scripts/make-user-admin.ts"
   },

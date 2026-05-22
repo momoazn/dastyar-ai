@@ -28,7 +28,7 @@ const printUsage = (): void => {
   writeOut("Config generator");
   writeOut("");
   writeOut("Usage:");
-  writeOut("  bun run src/scripts/config-generator.ts <command> [options]");
+  writeOut("  bun run config:<command> -- [options]");
   writeOut("");
   writeOut("Commands:");
   writeOut(
