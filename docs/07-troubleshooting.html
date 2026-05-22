@@ -179,8 +179,14 @@ curl http://localhost:3000/health</code></pre>
         </li>
         <li>اگر فایلی ignored باشد وارد archive نمی شود.</li>
         <li>
+          استثنای عمدی: سورس <code>apps/whisper/whisper.cpp</code>با وجود
+          ignored بودن وارد archive می شود، چون <code>apps/whisper/go.mod</code>
+          به آن replace محلی دارد.
+        </li>
+        <li>
           generated/runtime paths مثل <code>dist</code>، <code>release</code>،
-          آپلودها و مدل ها عمدا حذف می شوند.
+          آپلودها، مدل ها و build outputهای <code>whisper.cpp</code>عمدا حذف می
+          شوند.
         </li>
       </ul>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import JSZip from "jszip";
 
@@ -21,13 +21,63 @@ const excludedPrefixes = [
   "apps/whisper/.go-work/",
   "apps/whisper/models/",
   "apps/whisper/temp/",
-  "apps/whisper/whisper.cpp/",
   "release/",
   "tmp/",
 ] as const;
 
+const includedIgnoredSourceDirs = ["apps/whisper/whisper.cpp"] as const;
+
+const excludedArchivePrefixes = [
+  "apps/whisper/whisper.cpp/.git/",
+  "apps/whisper/whisper.cpp/build/",
+  "apps/whisper/whisper.cpp/build_go/",
+  "apps/whisper/whisper.cpp/cmake-build-",
+  "apps/whisper/whisper.cpp/models/",
+  "apps/whisper/whisper.cpp/samples/",
+] as const;
+
+function toArchivePath(path: string): string {
+  return path.replaceAll("\\", "/");
+}
+
 function shouldInclude(path: string): boolean {
-  return !excludedPrefixes.some((prefix) => path.startsWith(prefix));
+  const normalizedPath = toArchivePath(path);
+  return !(
+    excludedPrefixes.some((prefix) => normalizedPath.startsWith(prefix)) ||
+    excludedArchivePrefixes.some((prefix) => normalizedPath.startsWith(prefix))
+  );
+}
+
+function isSourceFile(path: string): boolean {
+  return !path.endsWith(".DS_Store") && shouldInclude(path);
+}
+
+function collectFilesInDirectory(directory: string): string[] {
+  if (!existsSync(directory)) {
+    return [];
+  }
+
+  const files: string[] = [];
+  const entries = readdirSync(directory, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+
+    if (!shouldInclude(`${path}/`) && entry.isDirectory()) {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      files.push(...collectFilesInDirectory(path));
+      continue;
+    }
+
+    if (entry.isFile() && isSourceFile(path)) {
+      files.push(path);
+    }
+  }
+
+  return files;
 }
 
 function getSourceFiles(): string[] {
@@ -48,18 +98,30 @@ function getSourceFiles(): string[] {
     .decode(result.stdout)
     .split("\n")
     .filter(Boolean)
-    .filter(shouldInclude)
+    .filter(isSourceFile)
     .filter((file) => existsSync(file));
+}
+
+function getArchiveFiles(): string[] {
+  const files = new Set(getSourceFiles());
+
+  for (const directory of includedIgnoredSourceDirs) {
+    for (const file of collectFilesInDirectory(directory)) {
+      files.add(file);
+    }
+  }
+
+  return [...files].sort();
 }
 
 async function main(): Promise<void> {
   mkdirSync(releaseDir, { recursive: true });
 
-  const trackedFiles = getSourceFiles();
+  const trackedFiles = getArchiveFiles();
   const zip = new JSZip();
 
   for (const file of trackedFiles) {
-    zip.file(`${folderName}/${file}`, readFileSync(file));
+    zip.file(`${folderName}/${toArchivePath(file)}`, readFileSync(file));
   }
 
   const buffer = await zip.generateAsync({

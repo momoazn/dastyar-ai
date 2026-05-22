@@ -96,7 +96,9 @@ bun run build:release:windows
 bun run archive</code></pre>
       <p>
         <code>archive</code>source zip می سازد و generated/runtime outputها را
-        حذف می کند.
+        حذف می کند. سورس <code>apps/whisper/whisper.cpp</code>عمدا داخل archive
+        قرار می گیرد تا build سرویس Whisper بدون clone جداگانه ممکن باشد؛
+        metadata، build output، مدل ها و sampleها حذف می شوند.
       </p>
 
       <h2>Database و config</h2>
