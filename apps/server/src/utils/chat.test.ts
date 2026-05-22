@@ -53,6 +53,9 @@ describe("Chat Utilities", () => {
       expect(firstMetadata?.modelId).toBe(5);
       expect(firstMetadata?.threadId).toBe(10);
       expect(firstMetadata?.modelName).toBe("llama3");
+      expect(firstMetadata?.status).toBe("finished");
+      expect(typeof firstMetadata?.createdAt).toBe("string");
+      expect(typeof firstMetadata?.updatedAt).toBe("string");
 
       // Assert second message
       const secondMessage = uiMessages[1];

@@ -13,6 +13,7 @@ import orpcHandler from "./routes/rpc";
 
 // Regex patterns moved to top level for performance
 const TRAILING_SLASH_REGEX = /\/$/;
+const WHISPER_HEALTH_TIMEOUT_MS = 3000;
 
 export function createApp() {
   const app = new Hono();
@@ -70,7 +71,7 @@ export function createApp() {
         const controller = new AbortController();
         const timer = setTimeout(
           () => controller.abort(),
-          env.WHISPER_TIMEOUT_MS
+          Math.min(env.WHISPER_TIMEOUT_MS, WHISPER_HEALTH_TIMEOUT_MS)
         );
         const res = await fetch(`${base}/health`, {
           signal: controller.signal,

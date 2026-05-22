@@ -16,10 +16,11 @@ export type CreateMessageParams = Omit<
   parts: unknown;
 };
 
-export type UpdateMessageParams = Pick<
-  SelectMessage,
-  "id" | "parts" | "status"
->;
+export type UpdateMessageParams = {
+  id: SelectMessage["id"];
+  parts?: SelectMessage["parts"];
+  status?: SelectMessage["status"];
+};
 
 export async function appendMessageParts(params: {
   id: number;

@@ -12,6 +12,7 @@ export const DEFAULT_CONFIG = {
   WHISPER_MODELS: "ggml-base.bin",
   OLLAMA_BASE_URL: "http://localhost:11434",
   OLLAMA_ENABLED: true,
+  STABLE_DIFFUSION_BASE_URL: "http://localhost:7860",
   IMAGES_DIR: "./generated-images",
   DOCUMENTS_DIR: "./uploaded-documents",
   EMBEDDING_MODEL: "nomic-embed-text",
@@ -50,6 +51,9 @@ export const CONFIG_SCHEMA = z.object({
   WHISPER_MODELS: z.string().default(DEFAULT_CONFIG.WHISPER_MODELS),
   OLLAMA_BASE_URL: z.string().default(DEFAULT_CONFIG.OLLAMA_BASE_URL),
   OLLAMA_ENABLED: z.coerce.boolean().default(DEFAULT_CONFIG.OLLAMA_ENABLED),
+  STABLE_DIFFUSION_BASE_URL: z
+    .string()
+    .default(DEFAULT_CONFIG.STABLE_DIFFUSION_BASE_URL),
   IMAGES_DIR: z.string().default(DEFAULT_CONFIG.IMAGES_DIR),
   DOCUMENTS_DIR: z.string().default(DEFAULT_CONFIG.DOCUMENTS_DIR),
   EMBEDDING_MODEL: z.string().default(DEFAULT_CONFIG.EMBEDDING_MODEL),

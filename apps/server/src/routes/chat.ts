@@ -63,6 +63,16 @@ function mapChatErrorMessage(rawMessage: string): string {
     return "شما دسترسی لازم برای انجام این عملیات را ندارید.";
   }
 
+  if (
+    normalized.includes("econnrefused") ||
+    normalized.includes("network") ||
+    normalized.includes("fetch") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("connection refused")
+  ) {
+    return "سرویس مدل در دسترس نیست. لطفاً اتصال Ollama را بررسی کرده و دوباره تلاش کنید.";
+  }
+
   if (normalized.includes("not found")) {
     return "منبع درخواستی یافت نشد.";
   }
@@ -112,6 +122,7 @@ const ChatRequestSchema = z.object({
 const app = new Hono<AuthEnv>()
   .use(authMiddleware)
   .post("/", zValidator("json", ChatRequestSchema), async (c) => {
+    let assistantMessageId: number | null = null;
     let releaseProvider: (() => void) | null = null;
     try {
       const { messages, modelId, threadId } = c.req.valid("json");
@@ -211,6 +222,7 @@ const app = new Hono<AuthEnv>()
         threadId,
         userId: user.id,
       });
+      assistantMessageId = assistantMessage.id;
 
       // Accumulate assistant text and reasoning and persist in AI SDK parts format with a 500ms throttle
       const throttledUpdateIntervalMs = 500;
@@ -296,6 +308,14 @@ const app = new Hono<AuthEnv>()
             releaseProvider?.();
             releaseProvider = null;
           } catch {
+            if (assistantMessageId !== null) {
+              await updateMessage({
+                id: assistantMessageId,
+                status: "errored",
+              }).catch(() => {
+                return;
+              });
+            }
             releaseProvider?.();
             releaseProvider = null;
             return;
@@ -303,6 +323,14 @@ const app = new Hono<AuthEnv>()
         },
       });
     } catch (error) {
+      if (assistantMessageId !== null) {
+        await updateMessage({
+          id: assistantMessageId,
+          status: "errored",
+        }).catch(() => {
+          return;
+        });
+      }
       releaseProvider?.();
       releaseProvider = null;
       let message = "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";

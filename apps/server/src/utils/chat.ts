@@ -3,7 +3,14 @@ import type { MessageRole } from "@/database";
 import type { MessageWithModel } from "@/repositories/threads";
 
 export type MyUIMessage = UIMessage<
-  { modelId: number; threadId: number; modelName?: string },
+  {
+    createdAt?: string;
+    modelId: number;
+    modelName?: string;
+    status?: MessageWithModel["status"];
+    threadId: number;
+    updatedAt?: string;
+  },
   UIDataTypes,
   UITools
 >;
@@ -16,9 +23,12 @@ export const convertDbMessagesToUiMessages = (
     role: message.role as MessageRole,
     parts: message.parts as UIMessagePart<UIDataTypes, UITools>[],
     metadata: {
+      createdAt: message.createdAt.toISOString(),
       modelId: message.modelId,
       threadId: message.threadId,
       modelName: message.model?.identifier,
+      status: message.status,
+      updatedAt: message.updatedAt.toISOString(),
     },
   }));
 

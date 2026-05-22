@@ -58,7 +58,7 @@ export const imageProcedures = {
     ),
 
   // Get generation progress (for real-time updates)
-  getProgress: publicProcedure.handler(async () => {
+  getProgress: protectedProcedure.handler(async () => {
     const generationProgress = await progress();
     return generationProgress
       ? {
@@ -71,7 +71,7 @@ export const imageProcedures = {
   }),
 
   // Interrupt current generation
-  interrupt: publicProcedure.handler(async () => {
+  interrupt: protectedProcedure.handler(async () => {
     const success = await interrupt();
     return { success };
   }),
