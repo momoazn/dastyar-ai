@@ -93,19 +93,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 </p>
               </div>
 
-              {this.state.error && import.meta.env.DEV && (
-                <div className="w-full rounded-md bg-muted p-3 text-left">
-                  <p className="font-mono text-destructive text-xs">
-                    {this.state.error.message}
-                  </p>
-                  {this.state.error.stack && (
-                    <pre className="mt-2 overflow-auto text-xs">
-                      {this.state.error.stack}
-                    </pre>
-                  )}
-                </div>
-              )}
-
               <div className="flex gap-2">
                 <Button onClick={this.handleReset} size="sm">
                   <RefreshCw className="mr-2 h-4 w-4" />

@@ -1,5 +1,6 @@
 // Utility to convert a recorded media file (e.g., webm/opus) to WAV (mono, 16 kHz)
 // and return as a File suitable for server-side transcription.
+import { errors } from "@/lib/texts/errors";
 
 const clamp = (val: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, val));
@@ -76,7 +77,7 @@ export const fileToWav16kMono = async (file: File): Promise<File> => {
     (window as unknown as { webkitAudioContext?: typeof AudioContext })
       .webkitAudioContext;
   if (!AudioCtxCtor) {
-    throw new Error("AudioContext is not supported in this browser");
+    throw new Error(errors.audioUnsupported);
   }
   const audioCtx = new AudioCtxCtor();
   const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));

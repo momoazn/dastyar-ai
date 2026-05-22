@@ -118,7 +118,7 @@ function RouteComponent() {
     mode: "action-items" | "meeting-notes" | "concise"
   ) => {
     if (!llmModels?.length) {
-      setTranscribeError("هیچ مدل هوش مصنوعی فعالی برای پردازش در دسترس نیست.");
+      setTranscribeError(fa.transcribe.errors.noActiveModel);
       return;
     }
     setSmartActionTitle(getSmartActionTitle(mode));

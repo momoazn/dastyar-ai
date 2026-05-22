@@ -21,7 +21,7 @@ export async function createThread(
 ): Promise<{ id: number }> {
   try {
     if (!params.userId) {
-      throw new Error("User id is required to create a thread");
+      throw new Error("شناسه کاربر برای ایجاد گفتگو الزامی است.");
     }
     const title = (params?.title ?? "گفتگوی جدید").trim();
 
@@ -37,7 +37,7 @@ export async function createThread(
     return { id: Number(result.at(0)?.id) };
   } catch (error) {
     logger.error("Failed to create thread:", error, { function: "threads" });
-    throw new Error("Unable to create thread");
+    throw new Error("ایجاد گفتگو ناموفق بود.");
   }
 }
 
@@ -53,7 +53,7 @@ export async function getThread(
 ): Promise<ChatThread | null> {
   try {
     if (!userId) {
-      throw new Error("User id is required to load thread");
+      throw new Error("شناسه کاربر برای دریافت گفتگو الزامی است.");
     }
     const rows = await db
       .select()
@@ -64,7 +64,7 @@ export async function getThread(
     return rows.at(0) ?? null;
   } catch (error) {
     logger.error("Failed to get thread", error, { id });
-    throw new Error("Unable to retrieve thread");
+    throw new Error("دریافت گفتگو ناموفق بود.");
   }
 }
 
@@ -79,7 +79,7 @@ export function listThreads(options?: {
 }): Promise<ChatThread[]> {
   const includeArchived = options?.includeArchived ?? false;
   if (!options?.userId) {
-    throw new Error("User id is required to list threads");
+    throw new Error("شناسه کاربر برای فهرست گفتگوها الزامی است.");
   }
 
   const conditions = [eq(chatThreads.userId, options.userId)];
@@ -113,7 +113,7 @@ export async function renameThread(
 ): Promise<void> {
   try {
     if (!userId) {
-      throw new Error("User id is required to rename thread");
+      throw new Error("شناسه کاربر برای تغییر نام گفتگو الزامی است.");
     }
     await db
       .update(chatThreads)
@@ -125,7 +125,7 @@ export async function renameThread(
       .run();
   } catch (error) {
     logger.error("Failed to rename thread", error, { id });
-    throw new Error("Unable to rename thread");
+    throw new Error("تغییر نام گفتگو ناموفق بود.");
   }
 }
 
@@ -142,7 +142,7 @@ export async function setArchived(
 ): Promise<void> {
   try {
     if (!userId) {
-      throw new Error("User id is required to update archive status");
+      throw new Error("شناسه کاربر برای تغییر وضعیت بایگانی الزامی است.");
     }
     await db
       .update(chatThreads)
@@ -154,7 +154,7 @@ export async function setArchived(
       .run();
   } catch (error) {
     logger.error("Failed to set archived status for thread", error, { id });
-    throw new Error("Unable to update thread archived status");
+    throw new Error("به‌روزرسانی وضعیت بایگانی گفتگو ناموفق بود.");
   }
 }
 
@@ -169,7 +169,7 @@ export async function deleteThread(
 ): Promise<void> {
   try {
     if (!userId) {
-      throw new Error("User id is required to delete thread");
+      throw new Error("شناسه کاربر برای حذف گفتگو الزامی است.");
     }
     await db
       .delete(chatThreads)
@@ -177,7 +177,7 @@ export async function deleteThread(
       .run();
   } catch (error) {
     logger.error("Failed to delete thread", error, { id });
-    throw new Error("Unable to delete thread");
+    throw new Error("حذف گفتگو ناموفق بود.");
   }
 }
 
@@ -194,7 +194,7 @@ export async function updateThreadOnNewMessage(
 ): Promise<void> {
   try {
     if (!userId) {
-      throw new Error("User id is required to update thread");
+      throw new Error("شناسه کاربر برای به‌روزرسانی گفتگو الزامی است.");
     }
     await db
       .update(chatThreads)
@@ -206,7 +206,7 @@ export async function updateThreadOnNewMessage(
       .run();
   } catch (error) {
     logger.error("Failed to update thread on new message", error, { threadId });
-    throw new Error("Unable to update thread timestamp");
+    throw new Error("به‌روزرسانی زمان گفتگو ناموفق بود.");
   }
 }
 
@@ -226,7 +226,7 @@ export async function loadThreadMessages(
 ): Promise<MessageWithModel[]> {
   try {
     if (!userId) {
-      throw new Error("User id is required to load thread messages");
+      throw new Error("شناسه کاربر برای دریافت پیام‌های گفتگو الزامی است.");
     }
     const rows = await db
       .select({
@@ -264,6 +264,6 @@ export async function loadThreadMessages(
     }));
   } catch (error) {
     logger.error("Failed to load messages for thread", error, { threadId });
-    throw new Error("Unable to load thread messages");
+    throw new Error("دریافت پیام‌های گفتگو ناموفق بود.");
   }
 }

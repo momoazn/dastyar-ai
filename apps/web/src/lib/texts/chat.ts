@@ -1,7 +1,10 @@
 export const chat = {
   thinking: "در حال فکر کردن...",
+  thinkingProcess: "فرآیند تفکر",
   showThoughts: "نمایش افکار",
   hideThoughts: "پنهان کردن افکار",
+  show: "نمایش",
+  hide: "پنهان",
   writeMessage: "پیام خود را بنویسید...",
   generationStopped: "تولید پاسخ متوقف شد",
   generationErrored: "خطا در تولید پاسخ",

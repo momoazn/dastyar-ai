@@ -26,7 +26,7 @@ export function mapRecordingError(error: RecordingError): string {
     case "noAudioCaptured":
       return fa.transcribe.errors.noAudio;
     case "fileTooLarge":
-      return "فایل ضبط شده خیلی بزرگ است. حداکثر سایز مجاز 50MB می‌باشد.";
+      return fa.transcribe.errors.fileTooLarge;
     case "initFailed":
     case "processingFailed":
       return fa.transcribe.errors.processFailed;

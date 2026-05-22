@@ -2,6 +2,7 @@ import { ORPCError, os } from "@orpc/server";
 import type { Context } from "@/lib/context";
 import { logger } from "@/lib/logger";
 import { getClientIpFromContext } from "@/lib/request-ip";
+import { serverTexts } from "@/lib/texts";
 import { recordUserIp } from "@/repositories/user-ips";
 import { validateAuthHeader } from "@/services/auth";
 
@@ -19,14 +20,14 @@ async function validateAndGetUser(authHeader: string | undefined) {
 
   if (!authResult.success) {
     throw new ORPCError(authResult.error?.code ?? "UNAUTHORIZED", {
-      message: authResult.error?.message ?? "احراز هویت ناموفق بود.",
+      message: authResult.error?.message ?? serverTexts.auth.failed,
       status: 401,
     });
   }
 
   if (!authResult.user) {
     throw new ORPCError("USER_NOT_FOUND", {
-      message: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
+      message: serverTexts.auth.userNotFound,
       status: 401,
     });
   }
@@ -74,7 +75,7 @@ export const adminMiddleware = o.middleware(async ({ context, next }) => {
 
   if (user.role !== "admin") {
     throw new ORPCError("FORBIDDEN", {
-      message: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
+      message: serverTexts.errors.forbidden,
       status: 403,
     });
   }

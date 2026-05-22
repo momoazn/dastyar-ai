@@ -292,7 +292,7 @@ function RouteComponent() {
             <div className="flex items-center gap-2">
               <span>
                 {modelsError
-                  ? "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید."
+                  ? fa.general.modelsRefreshFailed
                   : fa.codeAssistant.messages.processingError}
               </span>
               <span>{fa.codeAssistant.messages.tryAgain}</span>
@@ -454,15 +454,13 @@ function RouteComponent() {
                   placeholder={(() => {
                     switch (mode) {
                       case "generate":
-                        return "مثال: یک مولد رمز عبور امن با قابلیت تنظیم طول و کاراکترها";
+                        return fa.codeAssistant.placeholders.codeRequest;
                       case "explain":
-                        return "مثال: function calculateSum(a, b) { return a + b; }";
                       case "review":
-                        return "مثال: function calculateSum(a, b) { return a + b; }";
                       case "debug":
-                        return "مثال: function calculateSum(a, b) { return a + b; }";
+                        return fa.codeAssistant.placeholders.inputCode;
                       default:
-                        return "کد خود را اینجا وارد کنید...";
+                        return fa.codeAssistant.placeholders.inputCode;
                     }
                   })()}
                   spellCheck={false}
@@ -556,7 +554,7 @@ function RouteComponent() {
                 dir={errorMessage ? detectTextDirection(errorMessage) : "ltr"}
                 disabled={currentMutation.isPending}
                 onChange={(e) => setErrorMessage(e.target.value)}
-                placeholder="مثال: TypeError: Cannot read property 'length' of undefined"
+                placeholder={fa.codeAssistant.placeholders.errorMessage}
                 spellCheck={false}
                 value={errorMessage}
               />

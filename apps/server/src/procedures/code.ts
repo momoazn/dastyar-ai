@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { z } from "zod";
 import { codeSystemPrompt } from "@/lib/prompts";
+import { serverTexts } from "@/lib/texts";
 import {
   createCodeRun,
   deleteCodeRun,
@@ -199,7 +200,7 @@ export const codeProcedures = {
     async ({ input, context }) =>
       await withModelProviderById({
         modelId: input.modelId,
-        notFoundMessage: "Model not found",
+        notFoundMessage: serverTexts.model.notFound,
         handler: async ({ providerModel }) => {
           const makeRequest: MakeRequest = (system, userPrompt) =>
             generateText({
@@ -231,7 +232,7 @@ export const codeProcedures = {
             case "debug":
               return await handleDebugMode(input, makeRequest, context.user.id);
             default:
-              throw new Error(`Unsupported mode: ${input.mode}`);
+              throw new Error(serverTexts.errors.invalidRequest);
           }
         },
       })

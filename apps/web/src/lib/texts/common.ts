@@ -17,7 +17,9 @@ export const general = {
   startNew: "شروع جدید",
   save: "ذخیره",
   cancel: "لغو",
+  clipboardCopyFailed: "کپی کردن در کلیپ‌بورد ناموفق بود.",
   edit: "ویرایش",
+  modelsRefreshFailed: "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید.",
   more: "بیشتر",
 } as const;
 

@@ -56,7 +56,7 @@ export async function appendMessageParts(params: {
     logger.error("Failed to append message parts", error, {
       messageId: params.id,
     });
-    throw new Error("Unable to append message parts");
+    throw new Error("افزودن بخش‌های پیام ناموفق بود.");
   }
 }
 
@@ -82,7 +82,7 @@ export async function createMessage(
       threadId: params.threadId,
       role: params.role,
     });
-    throw new Error("Unable to save message");
+    throw new Error("ذخیره پیام ناموفق بود.");
   }
 }
 
@@ -112,7 +112,7 @@ export async function updateMessage(
       .run();
   } catch (error) {
     logger.error("Failed to update message", error, { messageId: params.id });
-    throw new Error("Unable to update message");
+    throw new Error("به‌روزرسانی پیام ناموفق بود.");
   }
 }
 
@@ -141,7 +141,7 @@ export async function saveMessages(
     return { count: params.length };
   } catch (error) {
     logger.error("Failed to save messages:", error, { function: "messages" });
-    throw new Error("Unable to save messages");
+    throw new Error("ذخیره پیام‌ها ناموفق بود.");
   }
 }
 
@@ -183,7 +183,7 @@ export async function getMessagesByThread(
     logger.error("Failed to get messages for thread", error, {
       threadId: params.threadId,
     });
-    throw new Error("Unable to retrieve messages");
+    throw new Error("دریافت پیام‌ها ناموفق بود.");
   }
 }
 
@@ -195,7 +195,7 @@ export async function deleteMessage(id: number, userId: number): Promise<void> {
       .run();
   } catch (error) {
     logger.error("Failed to delete message", error, { messageId: id });
-    throw new Error("Unable to delete message");
+    throw new Error("حذف پیام ناموفق بود.");
   }
 }
 
@@ -215,7 +215,7 @@ export async function clearThread(
       .run();
   } catch (error) {
     logger.error("Failed to clear thread", error, { threadId });
-    throw new Error("Unable to clear thread");
+    throw new Error("پاک کردن گفتگو ناموفق بود.");
   }
 }
 
@@ -252,7 +252,7 @@ export async function getLastUsedModelInThread(
     logger.error("Failed to get last used model for thread", error, {
       threadId,
     });
-    throw new Error("Unable to retrieve last used model");
+    throw new Error("دریافت آخرین مدل استفاده‌شده ناموفق بود.");
   }
 }
 
@@ -283,6 +283,6 @@ export async function getLastUsedModelGlobal(
     logger.error("Failed to get last used model globally:", error, {
       function: "messages",
     });
-    throw new Error("Unable to retrieve last used model");
+    throw new Error("دریافت آخرین مدل استفاده‌شده ناموفق بود.");
   }
 }

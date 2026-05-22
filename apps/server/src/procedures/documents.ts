@@ -46,7 +46,7 @@ export const documentProcedures = {
             code: error.code,
             userId,
           });
-          throw new Error(`File validation failed: ${error.message}`);
+          throw new Error(error.message);
         }
         throw error;
       }

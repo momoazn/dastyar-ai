@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { serverTexts } from "@/lib/texts";
 import {
   deleteUser,
   getUserById,
@@ -45,7 +46,7 @@ const updateUserSchema = z.object({
   userId: z.number().int().positive(),
   username: z
     .string()
-    .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد")
+    .regex(/^\d{10}$/, serverTexts.config.validation.nationalCode)
     .optional(),
   role: z.enum(["admin", "user"]).optional(),
   password: z.string().min(6).optional(),
@@ -68,7 +69,9 @@ const deleteUserSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  username: z.string().regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
+  username: z
+    .string()
+    .regex(/^\d{10}$/, serverTexts.config.validation.nationalCode),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["admin", "user"]).default("user"),
 });
@@ -145,7 +148,7 @@ const throwIfMissingUser = async (userId: number) => {
   const user = await getUserById(userId);
   if (!user) {
     throw new ORPCError("USER_NOT_FOUND", {
-      message: "User not found",
+      message: serverTexts.admin.userNotFound,
       status: 404,
     });
   }
@@ -162,7 +165,7 @@ const throwIfUsernameTaken = async (
 
   if (await usernameExists(username)) {
     throw new ORPCError("USERNAME_ALREADY_EXISTS", {
-      message: "کد ملی قبلاً استفاده شده است",
+      message: serverTexts.auth.usernameExists,
       status: 400,
     });
   }
@@ -201,8 +204,7 @@ export const adminProcedures = {
           password === undefined
         ) {
           throw new ORPCError("INVALID_INPUT", {
-            message:
-              "At least one field (username, role or password) must be provided",
+            message: serverTexts.admin.missingUserUpdateFields,
             status: 400,
           });
         }
@@ -220,7 +222,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error updating user",
           error,
-          "Failed to update user",
+          serverTexts.admin.updateUserFailed,
           { userId: input.userId }
         );
       }
@@ -250,7 +252,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error creating user",
           error,
-          "Failed to create user"
+          serverTexts.admin.createUserFailed
         );
       }
     }),
@@ -277,7 +279,7 @@ export const adminProcedures = {
       return rethrowAdminError(
         "Error listing all models",
         error,
-        "Failed to fetch models"
+        serverTexts.admin.listModelsFailed
       );
     }
   }),
@@ -294,7 +296,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error toggling model status",
           error,
-          "Failed to update model status"
+          serverTexts.admin.updateModelStatusFailed
         );
       }
     }),
@@ -314,7 +316,7 @@ export const adminProcedures = {
           ).length;
           if (adminCount === 1) {
             throw new ORPCError("FORBIDDEN", {
-              message: "Cannot delete the only admin user",
+              message: serverTexts.admin.cannotDeleteOnlyAdmin,
               status: 403,
             });
           }
@@ -326,7 +328,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error deleting user",
           error,
-          "Failed to delete user",
+          serverTexts.admin.deleteUserFailed,
           { userId: input.userId }
         );
       }
@@ -362,7 +364,7 @@ export const adminProcedures = {
       return rethrowAdminError(
         "Error listing Ollama servers",
         error,
-        "Failed to fetch Ollama servers"
+        serverTexts.admin.listOllamaServersFailed
       );
     }
   }),
@@ -378,14 +380,14 @@ export const adminProcedures = {
       } catch (error) {
         if (hasSqliteUniqueConstraint(error)) {
           throw new ORPCError("CONFLICT", {
-            message: "Server base URL already exists",
+            message: serverTexts.admin.duplicateOllamaServerUrl,
             status: 409,
           });
         }
         return rethrowAdminError(
           "Error creating Ollama server",
           error,
-          "Failed to create Ollama server",
+          serverTexts.admin.createOllamaServerFailed,
           { input }
         );
       }
@@ -398,7 +400,7 @@ export const adminProcedures = {
         const existing = await getOllamaServerById(input.id);
         if (!existing) {
           throw new ORPCError("NOT_FOUND", {
-            message: "Ollama server not found",
+            message: serverTexts.admin.ollamaServerNotFound,
             status: 404,
           });
         }
@@ -418,14 +420,14 @@ export const adminProcedures = {
       } catch (error) {
         if (hasSqliteUniqueConstraint(error)) {
           throw new ORPCError("CONFLICT", {
-            message: "Server base URL already exists",
+            message: serverTexts.admin.duplicateOllamaServerUrl,
             status: 409,
           });
         }
         return rethrowAdminError(
           "Error updating Ollama server",
           error,
-          "Failed to update Ollama server",
+          serverTexts.admin.updateOllamaServerFailed,
           { input }
         );
       }
@@ -438,7 +440,7 @@ export const adminProcedures = {
         const existing = await getOllamaServerById(input.id);
         if (!existing) {
           throw new ORPCError("NOT_FOUND", {
-            message: "Ollama server not found",
+            message: serverTexts.admin.ollamaServerNotFound,
             status: 404,
           });
         }
@@ -449,7 +451,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error deleting Ollama server",
           error,
-          "Failed to delete Ollama server",
+          serverTexts.admin.deleteOllamaServerFailed,
           { input }
         );
       }
@@ -462,7 +464,7 @@ export const adminProcedures = {
         const existing = await getOllamaServerById(input.id);
         if (!existing) {
           throw new ORPCError("NOT_FOUND", {
-            message: "Ollama server not found",
+            message: serverTexts.admin.ollamaServerNotFound,
             status: 404,
           });
         }
@@ -473,7 +475,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error syncing Ollama server models",
           error,
-          "Failed to sync Ollama server models",
+          serverTexts.admin.syncOllamaModelsFailed,
           { input }
         );
       }
@@ -488,7 +490,7 @@ export const adminProcedures = {
       return rethrowAdminError(
         "Error syncing all Ollama server models",
         error,
-        "Failed to sync Ollama server models"
+        serverTexts.admin.syncOllamaModelsFailed
       );
     }
   }),
@@ -500,7 +502,7 @@ export const adminProcedures = {
         const existing = await getOllamaServerById(input.id);
         if (!existing) {
           throw new ORPCError("NOT_FOUND", {
-            message: "Ollama server not found",
+            message: serverTexts.admin.ollamaServerNotFound,
             status: 404,
           });
         }
@@ -509,7 +511,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error testing Ollama server",
           error,
-          "Failed to test Ollama server",
+          serverTexts.admin.testOllamaServerFailed,
           { input }
         );
       }
@@ -530,7 +532,7 @@ export const adminProcedures = {
       return rethrowAdminError(
         "Error adding model",
         error,
-        "Failed to add model"
+        serverTexts.admin.addModelFailed
       );
     }
   }),
@@ -544,7 +546,7 @@ export const adminProcedures = {
       return rethrowAdminError(
         "Error getting settings",
         error,
-        "Failed to get settings"
+        serverTexts.admin.getSettingsFailed
       );
     }
   }),
@@ -556,7 +558,7 @@ export const adminProcedures = {
         const setting = await getSetting(input.key);
         if (!setting) {
           throw new ORPCError("NOT_FOUND", {
-            message: `Setting '${input.key}' not found`,
+            message: serverTexts.admin.settingNotFound,
             status: 404,
           });
         }
@@ -565,7 +567,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error getting setting",
           error,
-          "Failed to get setting"
+          serverTexts.admin.getSettingFailed
         );
       }
     }),
@@ -581,7 +583,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error upserting setting",
           error,
-          "Failed to update setting"
+          serverTexts.admin.updateSettingFailed
         );
       }
     }),
@@ -593,7 +595,7 @@ export const adminProcedures = {
         const success = await deleteSetting(input.key);
         if (!success) {
           throw new ORPCError("NOT_FOUND", {
-            message: `Setting '${input.key}' not found`,
+            message: serverTexts.admin.settingNotFound,
             status: 404,
           });
         }
@@ -602,7 +604,7 @@ export const adminProcedures = {
         return rethrowAdminError(
           "Error deleting setting",
           error,
-          "Failed to delete setting"
+          serverTexts.admin.deleteSettingFailed
         );
       }
     }),

@@ -162,7 +162,7 @@ function RouteComponent() {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
-      setClipboardError("Failed to copy to clipboard");
+      setClipboardError(fa.general.clipboardCopyFailed);
       setIsCopied(false);
     }
   };
@@ -301,8 +301,7 @@ function RouteComponent() {
   const getErrorMessage = () => {
     if (pdfError) return pdfError;
     if (clipboardError) return clipboardError;
-    if (modelsError)
-      return "بارگذاری مدل‌ها ناموفق بود. لطفاً صفحه را تازه‌سازی کنید.";
+    if (modelsError) return fa.general.modelsRefreshFailed;
     if (translatePdfMutation.error) {
       return extractErrorMessage(
         translatePdfMutation.error,

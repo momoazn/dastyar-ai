@@ -133,7 +133,9 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
-      await expect(validateUploadedFile(file)).rejects.toThrow("File is empty");
+      await expect(validateUploadedFile(file)).rejects.toThrow(
+        "فایل خالی است."
+      );
     });
 
     it("should reject file that is too large", async () => {
@@ -145,9 +147,7 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
-      await expect(validateUploadedFile(file)).rejects.toThrow(
-        "exceeds maximum allowed size"
-      );
+      await expect(validateUploadedFile(file)).rejects.toThrow("از حد مجاز");
     });
 
     it("should reject files with blocked extensions", async () => {
@@ -159,7 +159,7 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
-      await expect(validateUploadedFile(file)).rejects.toThrow("not allowed");
+      await expect(validateUploadedFile(file)).rejects.toThrow("مجاز نیست");
     });
 
     it("should reject files with invalid MIME types", async () => {
@@ -184,7 +184,7 @@ describe("File Validation", () => {
         FileValidationError
       );
       await expect(validateUploadedFile(file)).rejects.toThrow(
-        "path traversal"
+        "مسیر یا کاراکتر غیرمجاز"
       );
     });
 
@@ -193,7 +193,9 @@ describe("File Validation", () => {
       await expect(validateUploadedFile(file)).rejects.toThrow(
         FileValidationError
       );
-      await expect(validateUploadedFile(file)).rejects.toThrow("null bytes");
+      await expect(validateUploadedFile(file)).rejects.toThrow(
+        "کاراکتر نامعتبر"
+      );
     });
 
     it("should reject executable signatures", async () => {
@@ -213,7 +215,7 @@ describe("File Validation", () => {
         FileValidationError
       );
       await expect(validateUploadedFile(file)).rejects.toThrow(
-        "executable or archive signature"
+        "محتوای فایل مجاز نیست."
       );
     });
 
@@ -266,7 +268,7 @@ describe("File Validation", () => {
         zipSignature
       );
       await expect(validateUploadedFile(file)).rejects.toThrow(
-        "executable or archive signature"
+        "محتوای فایل مجاز نیست."
       );
     });
 
@@ -302,7 +304,7 @@ describe("File Validation", () => {
       ).resolves.toBeUndefined();
       // But it should still fail on signature check if not skipped
       await expect(validateUploadedFile(file)).rejects.toThrow(
-        "executable or archive signature"
+        "محتوای فایل مجاز نیست."
       );
     });
   });

@@ -1,6 +1,7 @@
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { env } from "@/config";
 import type { User } from "@/database";
+import { serverTexts } from "@/lib/texts";
 import { findUserById } from "@/repositories/auth";
 
 type FindUserById = typeof findUserById;
@@ -15,10 +16,10 @@ export type AuthResult = {
 };
 
 const AUTH_ERROR_MESSAGES = {
-  tokenExpired: "توکن منقضی شده است. لطفاً دوباره وارد شوید.",
-  invalidToken: "توکن نامعتبر است. لطفاً دوباره وارد شوید.",
-  missingAuthHeader: "هدر احراز هویت نامعتبر است.",
-  userNotFound: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
+  tokenExpired: serverTexts.auth.tokenExpired,
+  invalidToken: serverTexts.auth.invalidToken,
+  missingAuthHeader: serverTexts.auth.missingAuthHeader,
+  userNotFound: serverTexts.auth.userNotFound,
 } as const;
 
 export type JwtPayload = {

@@ -136,7 +136,7 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText("Test error message")).toBeTruthy();
+    expect(screen.getByText("خطای ناشناخته")).toBeTruthy();
 
     console.error = originalError;
     import.meta.env.DEV = originalEnv;

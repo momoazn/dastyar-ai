@@ -64,7 +64,7 @@ function RouteComponent() {
       hasSentInitialPromptRef.current = true;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
-        toast.error("ارسال پیام اولیه ناموفق بود");
+        toast.error(fa.chat.sendMessageError);
       });
     }
   }, [search, messages.length, handleSendPrompt]);

@@ -1,12 +1,14 @@
+import { errors } from "@/lib/texts/errors";
+
 const DEFAULT_ERROR_TEXTS = {
-  unknown: "خطای ناشناخته",
-  badRequest: "درخواست شما نامعتبر است. لطفاً ورودی‌ها را بررسی کنید.",
-  networkError: "خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.",
-  unauthorized: "شما مجاز به انجام این عملیات نیستید. لطفاً دوباره وارد شوید.",
-  forbidden: "شما دسترسی لازم برای انجام این عملیات را ندارید.",
-  notFound: "منبع درخواستی یافت نشد.",
-  serverError: "خطای سرور. لطفاً بعداً تلاش کنید.",
-  tokenExpired: "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
+  unknown: errors.unknown,
+  badRequest: errors.badRequest,
+  networkError: errors.networkError,
+  unauthorized: errors.unauthorized,
+  forbidden: errors.forbidden,
+  notFound: errors.notFound,
+  serverError: errors.serverError,
+  tokenExpired: errors.tokenExpired,
 } as const;
 
 const PERSIAN_TEXT_REGEX = /[\u0600-\u06ff]/;
@@ -92,7 +94,7 @@ function mapMessageToFriendlyText(
     return texts.unknown;
   }
 
-  return message;
+  return containsPersianText(message) ? message : texts.unknown;
 }
 
 function extractMessageFromObject(error: object): string | undefined {

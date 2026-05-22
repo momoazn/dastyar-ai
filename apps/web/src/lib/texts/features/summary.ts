@@ -27,6 +27,7 @@ export const summarize = {
   readOnly: "فقط خواندنی",
   errors: {
     modelNotFound: "مدل یافت نشد",
+    notFound: "خلاصه مورد نظر یافت نشد.",
     requestFailed: "درخواست ناموفق بود",
     textTooLong: "متن خیلی طولانی است",
   },

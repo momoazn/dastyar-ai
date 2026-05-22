@@ -200,7 +200,7 @@ export async function updateUser(
 
   const updatedUser = await getUserById(userId);
   if (!updatedUser) {
-    throw new Error("User not found after update");
+    throw new Error("کاربر پس از به‌روزرسانی یافت نشد.");
   }
   return updatedUser;
 }

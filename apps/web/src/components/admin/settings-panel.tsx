@@ -178,7 +178,7 @@ export function SettingsPanel() {
   return (
     <div className="space-y-5" dir="rtl">
       <SettingsSection
-        description="زمان انقضا و الزامات امنیتی حساب‌ها را مدیریت کنید"
+        description={fa.admin.settings.security.description}
         icon={<Shield className="h-4 w-4" />}
         title={fa.admin.settings.security.title}
       >
@@ -238,7 +238,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="سقف حجم و فرمت‌های مجاز برای فایل‌های بارگذاری‌شده"
+        description={fa.admin.settings.fileManagement.description}
         icon={<FolderCog className="h-4 w-4" />}
         title={fa.admin.settings.fileManagement.title}
       >
@@ -281,7 +281,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="تنظیمات زمان انتظار پاسخ مدل‌ها"
+        description={fa.admin.settings.aiModels.description}
         icon={<Bot className="h-4 w-4" />}
         title={fa.admin.settings.aiModels.title}
       >
@@ -307,7 +307,7 @@ export function SettingsPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="ماژول‌های قابل مشاهده در نوار کناری را فعال یا غیرفعال کنید"
+        description={fa.admin.settings.aiModels.featuresDescription}
         icon={<LayoutPanelLeft className="h-4 w-4" />}
         title={fa.admin.settings.sidebarFeatures.title}
       >

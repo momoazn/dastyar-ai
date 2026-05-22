@@ -76,7 +76,7 @@ export async function upsertSetting(
       .where(eq(systemSettings.key, key))
       .returning();
     if (!updated[0]) {
-      throw new Error(`Failed to update system setting with key: ${key}`);
+      throw new Error("به‌روزرسانی تنظیم سیستم ناموفق بود.");
     }
     return updated[0] as SystemSetting;
   }
@@ -90,7 +90,7 @@ export async function upsertSetting(
     })
     .returning();
   if (!created[0]) {
-    throw new Error(`Failed to create system setting with key: ${key}`);
+    throw new Error("ایجاد تنظیم سیستم ناموفق بود.");
   }
   return created[0] as SystemSetting;
 }

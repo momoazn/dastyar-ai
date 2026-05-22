@@ -33,7 +33,7 @@ export async function createUser(
 
   const created = result[0];
   if (!created) {
-    throw new Error("Unable to create user");
+    throw new Error("ایجاد کاربر ناموفق بود.");
   }
   return created;
 }
@@ -88,7 +88,7 @@ export async function updateUsername(
     .limit(1);
 
   if (existingUser.length > 0 && existingUser[0].id !== userId) {
-    throw new Error("Username already exists");
+    throw new Error("کد ملی قبلاً استفاده شده است.");
   }
 
   const result = await db
@@ -98,7 +98,7 @@ export async function updateUsername(
     .returning();
 
   if (!result[0]) {
-    throw new Error("Failed to update username");
+    throw new Error("به‌روزرسانی کد ملی ناموفق بود.");
   }
 
   logger.info("Username updated", { userId, newUsername });
@@ -113,12 +113,12 @@ export async function updateUserPassword(
   // Verify current password
   const user = await findUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("کاربر یافت نشد.");
   }
 
   const isValidPassword = await bcrypt.compare(currentPassword, user.password);
   if (!isValidPassword) {
-    throw new Error("Current password is incorrect");
+    throw new Error("رمز عبور فعلی اشتباه است.");
   }
 
   // Hash new password

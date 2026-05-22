@@ -30,12 +30,12 @@ export async function createSummary(
 
     const created = await getSummary(Number(result.at(0)?.id), params.userId);
     if (!created) {
-      throw new Error("Unable to load summary after insert");
+      throw new Error("بارگذاری خلاصه پس از ثبت ناموفق بود.");
     }
     return created;
   } catch (error) {
     logger.error("Failed to create summary", error);
-    throw new Error("Unable to create summary");
+    throw new Error("ایجاد خلاصه ناموفق بود.");
   }
 }
 
@@ -53,7 +53,7 @@ export async function getSummary(
     return rows.at(0) ?? null;
   } catch (error) {
     logger.error("Failed to get summary", error, { id });
-    throw new Error("Unable to retrieve summary");
+    throw new Error("دریافت خلاصه ناموفق بود.");
   }
 }
 
@@ -65,6 +65,6 @@ export async function deleteSummary(id: number, userId: number): Promise<void> {
       .run();
   } catch (error) {
     logger.error("Failed to delete summary", error, { id });
-    throw new Error("Unable to delete summary");
+    throw new Error("حذف خلاصه ناموفق بود.");
   }
 }

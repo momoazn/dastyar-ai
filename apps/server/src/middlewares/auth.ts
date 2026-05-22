@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import type { User } from "@/database";
+import { serverTexts } from "@/lib/texts";
 import { validateAuthHeader, validateJwtToken } from "@/services/auth";
 
 // Define the environment type for Hono
@@ -25,7 +26,7 @@ export const authMiddleware = async (
       {
         error: {
           code: authResult.error?.code ?? "UNAUTHORIZED",
-          message: authResult.error?.message ?? "احراز هویت ناموفق بود.",
+          message: authResult.error?.message ?? serverTexts.auth.failed,
         },
       },
       401
@@ -36,7 +37,7 @@ export const authMiddleware = async (
       {
         error: {
           code: "UNAUTHORIZED",
-          message: "کاربر یافت نشد. لطفاً دوباره وارد شوید.",
+          message: serverTexts.auth.userNotFound,
         },
       },
       401
@@ -68,7 +69,7 @@ export const authMiddlewareHeaderOrQuery = async (
       {
         error: {
           code: result.error?.code ?? "UNAUTHORIZED",
-          message: result.error?.message ?? "احراز هویت ناموفق بود.",
+          message: result.error?.message ?? serverTexts.auth.failed,
         },
       },
       401

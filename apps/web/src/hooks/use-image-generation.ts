@@ -199,8 +199,8 @@ export function useImageGeneration({
   );
 
   // Transcription handlers
-  const handleTranscribeError = useCallback((error: string) => {
-    toast.error(`${fa.imageGeneration.voiceTranscriptionError} ${error}`);
+  const handleTranscribeError = useCallback(() => {
+    toast.error(fa.imageGeneration.voiceTranscriptionError);
   }, []);
 
   const handleTranscribed = useCallback((text: string) => {

@@ -20,7 +20,7 @@ export async function createImageThread(
     return { id: Number(result.at(0)?.id) };
   } catch (error) {
     logger.error("Failed to create image thread", error);
-    throw new Error("Unable to create image thread");
+    throw new Error("ایجاد گفتگوی تصویری ناموفق بود.");
   }
 }
 
@@ -38,7 +38,7 @@ export async function getImageThread(
     return rows.at(0) ?? null;
   } catch (error) {
     logger.error("Failed to get image thread", error, { id, userId });
-    throw new Error("Unable to retrieve image thread");
+    throw new Error("دریافت گفتگوی تصویری ناموفق بود.");
   }
 }
 
@@ -84,7 +84,7 @@ export async function renameImageThread(
       .run();
   } catch (error) {
     logger.error("Failed to rename image thread", error, { id, userId });
-    throw new Error("Unable to rename image thread");
+    throw new Error("تغییر نام گفتگوی تصویری ناموفق بود.");
   }
 }
 
@@ -107,7 +107,7 @@ export async function setImageThreadArchived(
       id,
       userId,
     });
-    throw new Error("Unable to update image thread archived status");
+    throw new Error("به‌روزرسانی وضعیت بایگانی گفتگوی تصویری ناموفق بود.");
   }
 }
 
@@ -122,7 +122,7 @@ export async function deleteImageThread(
       .run();
   } catch (error) {
     logger.error("Failed to delete image thread", error, { id, userId });
-    throw new Error("Unable to delete image thread");
+    throw new Error("حذف گفتگوی تصویری ناموفق بود.");
   }
 }
 
@@ -147,6 +147,6 @@ export async function touchLastImageAt(
       threadId,
       userId,
     });
-    throw new Error("Unable to update image thread timestamp");
+    throw new Error("به‌روزرسانی زمان گفتگوی تصویری ناموفق بود.");
   }
 }

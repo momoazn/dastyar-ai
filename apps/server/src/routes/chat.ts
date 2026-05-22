@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { JsonValue } from "@/database";
 import { logger } from "@/lib/logger";
 import { chatSystemPrompt } from "@/lib/prompts";
+import { serverTexts } from "@/lib/texts";
 import { type AuthEnv, authMiddleware } from "@/middlewares/auth";
 import { getModelById } from "@/repositories/llm-models";
 import {
@@ -48,7 +49,7 @@ function mapChatErrorMessage(rawMessage: string): string {
     normalized.includes("invalid request") ||
     normalized.includes("validation")
   ) {
-    return "درخواست نامعتبر است. لطفاً ورودی‌ها را بررسی کنید.";
+    return serverTexts.errors.invalidRequest;
   }
 
   if (
@@ -56,11 +57,11 @@ function mapChatErrorMessage(rawMessage: string): string {
     normalized.includes("invalid token") ||
     normalized.includes("token")
   ) {
-    return "نشست شما معتبر نیست. لطفاً دوباره وارد شوید.";
+    return serverTexts.errors.unauthorized;
   }
 
   if (normalized.includes("forbidden")) {
-    return "شما دسترسی لازم برای انجام این عملیات را ندارید.";
+    return serverTexts.errors.forbidden;
   }
 
   if (
@@ -70,14 +71,14 @@ function mapChatErrorMessage(rawMessage: string): string {
     normalized.includes("unavailable") ||
     normalized.includes("connection refused")
   ) {
-    return "سرویس مدل در دسترس نیست. لطفاً اتصال Ollama را بررسی کرده و دوباره تلاش کنید.";
+    return serverTexts.chat.providerUnavailable;
   }
 
   if (normalized.includes("not found")) {
-    return "منبع درخواستی یافت نشد.";
+    return serverTexts.errors.notFound;
   }
 
-  return "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+  return serverTexts.chat.genericFailure;
 }
 
 async function markMessageErrored(messageId: number | null): Promise<void> {
@@ -147,7 +148,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 400,
           code: "INVALID_REQUEST",
-          message: "آخرین پیام باید از طرف کاربر باشد.",
+          message: serverTexts.chat.lastMessageMustBeUser,
         });
       }
 
@@ -156,7 +157,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 404,
           code: "MODEL_NOT_FOUND",
-          message: "مدل انتخاب‌شده یافت نشد.",
+          message: serverTexts.chat.modelNotFound,
           details: { modelId },
         });
       }
@@ -165,7 +166,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 403,
           code: "MODEL_DISABLED",
-          message: "مدل انتخاب‌شده غیرفعال است.",
+          message: serverTexts.chat.inactiveModel,
           details: { modelId },
         });
       }
@@ -192,7 +193,7 @@ const app = new Hono<AuthEnv>()
         return sendError(c, {
           status: 500,
           code: "PERSIST_USER_MESSAGE_FAILED",
-          message: "ذخیره پیام کاربر ناموفق بود.",
+          message: serverTexts.chat.saveUserMessageFailed,
         });
       }
 
@@ -332,7 +333,7 @@ const app = new Hono<AuthEnv>()
       await markMessageErrored(assistantMessageId);
       releaseProvider?.();
       releaseProvider = null;
-      let message = "در پردازش درخواست مشکلی رخ داد. لطفاً دوباره تلاش کنید.";
+      let message: string = serverTexts.chat.genericFailure;
       if (error instanceof Error) {
         message = mapChatErrorMessage(error.message);
       } else if (

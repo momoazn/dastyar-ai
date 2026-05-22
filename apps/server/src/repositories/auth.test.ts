@@ -282,7 +282,7 @@ describe("Auth Repository", () => {
       });
 
       await expect(updateUsername(user2.id, "existing")).rejects.toThrow(
-        "Username already exists"
+        "کد ملی قبلاً استفاده شده است."
       );
     });
 
@@ -301,7 +301,7 @@ describe("Auth Repository", () => {
 
     it("should throw error for non-existent user", async () => {
       await expect(updateUsername(99_999, "newname")).rejects.toThrow(
-        "Failed to update username"
+        "به‌روزرسانی کد ملی ناموفق بود."
       );
     });
   });
@@ -348,13 +348,13 @@ describe("Auth Repository", () => {
 
       await expect(
         updateUserPassword(user.id, "wrongpassword", "newpassword")
-      ).rejects.toThrow("Current password is incorrect");
+      ).rejects.toThrow("رمز عبور فعلی اشتباه است.");
     });
 
     it("should throw error for non-existent user", async () => {
       await expect(
         updateUserPassword(99_999, "oldpass", "newpass")
-      ).rejects.toThrow("User not found");
+      ).rejects.toThrow("کاربر یافت نشد.");
     });
 
     it("should allow setting same password", async () => {

@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { serverTexts } from "./texts";
 
 // Regex constants for performance
 // biome-ignore lint/suspicious/noControlCharactersInRegex: Needed for security validation
@@ -181,7 +182,7 @@ function validateFilename(filename: string): void {
   // Check filename length
   if (filename.length > FILE_VALIDATION_CONFIG.MAX_FILENAME_LENGTH) {
     throw new FileValidationError(
-      `Filename too long (max ${FILE_VALIDATION_CONFIG.MAX_FILENAME_LENGTH} characters)`,
+      serverTexts.file.nameTooLong(FILE_VALIDATION_CONFIG.MAX_FILENAME_LENGTH),
       "FILENAME_TOO_LONG"
     );
   }
@@ -189,7 +190,7 @@ function validateFilename(filename: string): void {
   // Check for null bytes (path traversal attempt)
   if (filename.includes("\0")) {
     throw new FileValidationError(
-      "Filename contains null bytes",
+      serverTexts.file.invalidName,
       "INVALID_FILENAME"
     );
   }
@@ -201,20 +202,20 @@ function validateFilename(filename: string): void {
     filename.includes("\\")
   ) {
     throw new FileValidationError(
-      "Filename contains path traversal characters",
+      serverTexts.file.invalidPath,
       "PATH_TRAVERSAL_ATTEMPT"
     );
   }
 
   // Check for empty filename
   if (filename.trim().length === 0) {
-    throw new FileValidationError("Filename cannot be empty", "EMPTY_FILENAME");
+    throw new FileValidationError(serverTexts.file.nameEmpty, "EMPTY_FILENAME");
   }
 
   // Check for control characters
   if (CONTROL_CHARACTERS_REGEX.test(filename)) {
     throw new FileValidationError(
-      "Filename contains control characters",
+      serverTexts.file.invalidNameControl,
       "INVALID_FILENAME"
     );
   }
@@ -258,7 +259,7 @@ async function validateFileContent(file: File): Promise<void> {
           continue;
         }
         throw new FileValidationError(
-          "File contains executable or archive signature",
+          serverTexts.file.invalidContent,
           "SUSPICIOUS_CONTENT"
         );
       }
@@ -288,7 +289,10 @@ export async function validateUploadedFile(
 
   // Validate file object
   if (!(file && file instanceof File)) {
-    throw new FileValidationError("Invalid file object", "INVALID_FILE_OBJECT");
+    throw new FileValidationError(
+      serverTexts.file.invalidFile,
+      "INVALID_FILE_OBJECT"
+    );
   }
 
   // Validate filename
@@ -296,14 +300,14 @@ export async function validateUploadedFile(
 
   // Check file size
   if (file.size === 0) {
-    throw new FileValidationError("File is empty", "EMPTY_FILE");
+    throw new FileValidationError(serverTexts.file.empty, "EMPTY_FILE");
   }
 
   if (file.size > maxSize) {
     const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(2);
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
     throw new FileValidationError(
-      `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`,
+      serverTexts.file.sizeTooLarge(fileSizeMB, maxSizeMB),
       "FILE_TOO_LARGE",
       { fileSize: file.size, maxSize }
     );
@@ -313,7 +317,7 @@ export async function validateUploadedFile(
   if (!isExtensionAllowed(file.name, allowedExtensions)) {
     const ext = getFileExtension(file.name);
     throw new FileValidationError(
-      `File extension '.${ext}' is not allowed. Allowed extensions: ${allowedExtensions.join(", ")}`,
+      serverTexts.file.unsupportedExtension(ext, allowedExtensions),
       "INVALID_EXTENSION",
       { extension: ext, allowedExtensions }
     );
@@ -330,7 +334,7 @@ export async function validateUploadedFile(
     !isMimeTypeAllowed(normalizedMimeType, allowedMimeTypes)
   ) {
     throw new FileValidationError(
-      `MIME type '${file.type}' is not allowed. Allowed types: ${allowedMimeTypes.join(", ")}`,
+      serverTexts.file.invalidMimeType(file.type, allowedMimeTypes),
       "INVALID_MIME_TYPE",
       { mimeType: file.type, allowedMimeTypes }
     );
@@ -346,7 +350,7 @@ export async function validateUploadedFile(
       }
       logger.error("Content validation failed", error);
       throw new FileValidationError(
-        "Failed to validate file content",
+        serverTexts.file.contentValidationFailed,
         "CONTENT_VALIDATION_FAILED"
       );
     }

@@ -88,12 +88,14 @@ function SummaryHistoryView() {
       <ToolScaffold
         alerts={
           <Alert variant="destructive">
-            <span>Summary not found</span>
+            <span>{fa.summarize.errors.notFound}</span>
           </Alert>
         }
         content={
           <div className="flex h-full items-center justify-center">
-            <div className="text-muted-foreground">Summary not found</div>
+            <div className="text-muted-foreground">
+              {fa.summarize.errors.notFound}
+            </div>
           </div>
         }
       />

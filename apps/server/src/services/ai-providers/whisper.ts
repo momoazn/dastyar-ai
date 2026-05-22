@@ -10,6 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { experimental_transcribe as aiTranscribe } from "ai";
 import { env, whisperModelIds } from "@/config";
 import { logger } from "@/lib/logger";
+import { serverTexts } from "@/lib/texts";
 import { normalizePersianText } from "@/utils/persian-normalize";
 
 type ModelInfo = { id: string; name: string };
@@ -179,9 +180,7 @@ function mapTranscriptionError(message: string): Error {
 
   // Explicit timeout/abort handling so users know to adjust server config
   if (lowerMsg.includes("timeout") || lowerMsg.includes("abort")) {
-    return new Error(
-      "زمان پردازش به پایان رسید. لطفاً فایل کوتاه‌تری ضبط کنید یا مقدار WHISPER_TIMEOUT_MS را در config.json افزایش دهید."
-    );
+    return new Error(serverTexts.speech.timeout);
   }
 
   // Payload too large (413) — prioritize this over generic server errors
@@ -191,9 +190,7 @@ function mapTranscriptionError(message: string): Error {
     lowerMsg.includes("payload too large") ||
     lowerMsg.includes("request entity too large")
   ) {
-    return new Error(
-      "فایل ضبط شده خیلی بزرگ است. لطفاً صدای کوتاه‌تری ضبط کنید."
-    );
+    return new Error(serverTexts.speech.fileTooLarge);
   }
 
   // Service unavailable, timeout, or network error
@@ -203,11 +200,9 @@ function mapTranscriptionError(message: string): Error {
     lowerMsg.includes("econnrefused") ||
     message.includes("Whisper server error")
   ) {
-    return new Error(
-      "سرویس تشخیص گفتار در دسترس نیست. لطفاً Whisper Server را اجرا کنید."
-    );
+    return new Error(serverTexts.speech.unavailable);
   }
 
   // Generic failure
-  return new Error("تبدیل صوت به متن انجام نشد. لطفاً دوباره تلاش کنید.");
+  return new Error(serverTexts.speech.failed);
 }

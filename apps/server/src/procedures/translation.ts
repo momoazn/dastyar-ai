@@ -8,6 +8,7 @@ import {
   tones,
 } from "@/database";
 import { translationSystemPrompt } from "@/lib/prompts";
+import { serverTexts } from "@/lib/texts";
 import {
   createTranslation,
   deleteTranslation,
@@ -86,7 +87,7 @@ const translateTextWithModel = async ({
 
     if (!translatedText) {
       throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
-        message: "پاسخی از مدل دریافت نشد",
+        message: serverTexts.translation.empty,
         status: 500,
       });
     }
@@ -97,8 +98,7 @@ const translateTextWithModel = async ({
       throw error;
     }
     throw new ORPCError("TRANSLATION_FAILED", {
-      message:
-        "ترجمه انجام نشد. لطفاً وضعیت مدل (LM Studio/Ollama) را بررسی کنید و دوباره تلاش کنید.",
+      message: serverTexts.translation.failed,
       status: 502,
     });
   }
@@ -111,7 +111,7 @@ const saveTranslationOrThrow = async (
     return await createTranslation(params);
   } catch {
     throw new ORPCError("TRANSLATION_PERSIST_FAILED", {
-      message: "ذخیره‌سازی ترجمه ناموفق بود",
+      message: serverTexts.translation.persistFailed,
       status: 500,
     });
   }
@@ -227,7 +227,7 @@ export const translationProcedures = {
 
       const translatedText = await withModelProviderById({
         modelId: input.modelId,
-        notFoundMessage: "مدل مورد نظر پیدا نشد",
+        notFoundMessage: serverTexts.model.notFound,
         handler: async ({ providerModel }) =>
           await translateTextWithModel({
             model: providerModel,
@@ -280,14 +280,14 @@ export const translationProcedures = {
 
       if (pdfPages.length === 0) {
         throw new ORPCError("PDF_EXTRACTION_FAILED", {
-          message: "استخراج متن از PDF ناموفق بود",
+          message: serverTexts.translation.pdfExtractionFailed,
           status: 400,
         });
       }
 
       const translatedPages = await withModelProviderById({
         modelId: input.modelId,
-        notFoundMessage: "مدل مورد نظر پیدا نشد",
+        notFoundMessage: serverTexts.model.notFound,
         handler: async ({ providerModel }) => {
           const pages: TranslationPayload["pages"] = [];
           for (const page of pdfPages) {
@@ -309,7 +309,7 @@ export const translationProcedures = {
               } catch (error) {
                 if (error instanceof ORPCError) {
                   throw new ORPCError(error.code, {
-                    message: `ترجمه صفحه ${page.page} ناموفق بود: ${error.message}`,
+                    message: serverTexts.translation.pageFailed(page.page),
                     status: error.status,
                     data: error.data,
                   });
@@ -332,7 +332,7 @@ export const translationProcedures = {
 
       if (translatedPages.length === 0) {
         throw new ORPCError("TRANSLATION_EMPTY_RESULT", {
-          message: "ترجمه‌ای برای صفحات استخراج‌شده تولید نشد",
+          message: serverTexts.translation.emptyPdfResult,
           status: 500,
         });
       }

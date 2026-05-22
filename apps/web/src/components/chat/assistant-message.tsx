@@ -97,7 +97,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
                 <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500" />
               </div>
               <span className="font-medium text-gray-600 text-sm dark:text-gray-400">
-                🧠 فرآیند تفکر
+                {fa.chat.thinkingProcess}
               </span>
             </div>
 
@@ -112,7 +112,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
               ) : (
                 <EyeOff className="ml-1 h-3 w-3" />
               )}{" "}
-              {collapsed ? "نمایش" : "پنهان"}
+              {collapsed ? fa.chat.show : fa.chat.hide}
             </Button>
           </div>
 

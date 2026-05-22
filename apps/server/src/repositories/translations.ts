@@ -52,12 +52,12 @@ export async function createTranslation(
       params.userId
     );
     if (!created) {
-      throw new Error("Unable to load translation after insert");
+      throw new Error("بارگذاری ترجمه پس از ثبت ناموفق بود.");
     }
     return created;
   } catch (error) {
     logger.error("Failed to create translation", error);
-    throw new Error("Unable to create translation");
+    throw new Error("ایجاد ترجمه ناموفق بود.");
   }
 }
 
@@ -77,7 +77,7 @@ export async function getTranslation(
     return rows.at(0) ?? null;
   } catch (error) {
     logger.error("Failed to get translation", error, { id });
-    throw new Error("Unable to retrieve translation");
+    throw new Error("دریافت ترجمه ناموفق بود.");
   }
 }
 
@@ -94,6 +94,6 @@ export async function deleteTranslation(
       .run();
   } catch (error) {
     logger.error("Failed to delete translation", error, { id });
-    throw new Error("Unable to delete translation");
+    throw new Error("حذف ترجمه ناموفق بود.");
   }
 }

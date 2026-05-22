@@ -3,6 +3,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
 import Loader from "./components/chat/loader";
 import { ErrorBoundary } from "./components/error-boundary";
+import { errors } from "./lib/texts/errors";
 import { routeTree } from "./routeTree.gen";
 import { orpc, queryClient } from "./utils/orpc";
 
@@ -21,7 +22,7 @@ const router = createRouter({
 const rootElement = document.getElementById("app");
 
 if (!rootElement) {
-  throw new Error("Root element not found");
+  throw new Error(errors.rootElementMissing);
 }
 
 if (!rootElement.innerHTML) {
