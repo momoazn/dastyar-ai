@@ -49,7 +49,6 @@ const logStartupInfo = (): void => {
 
   logger.info("Server Starting", {
     mode,
-    nodeEnv: process.env.NODE_ENV || "development",
     bunVersion,
     host: env.HOST,
     port: env.PORT,

@@ -10,15 +10,19 @@
  *   bun scripts/status.ts
  */
 
+import { loadRootConfig, serverUrl, whisperUrl } from "./app-config";
+
+const appConfig = loadRootConfig();
+
 const services = [
   {
     name: "Whisper API",
-    url: "http://localhost:8080",
+    url: whisperUrl(appConfig),
     endpoint: "/health",
   },
   {
     name: "Dastyar AI Server",
-    url: "http://localhost:3000",
+    url: serverUrl(appConfig),
     endpoint: "/health",
   },
 ];

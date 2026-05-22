@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": ["$TURBO_DEFAULT$", "config.json"],
       "outputs": ["dist/**"]
     },
     "lint": {
@@ -36,6 +36,15 @@
     "db:generate": {
       "cache": false,
       "persistent": true
+    },
+    "config:generate": {
+      "cache": false
+    },
+    "config:show": {
+      "cache": false
+    },
+    "config:validate": {
+      "cache": false
     }
   }
 }

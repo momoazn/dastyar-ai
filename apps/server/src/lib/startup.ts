@@ -42,9 +42,7 @@ export const displayStartupInfo = (): void => {
   process.stdout.write(
     `   Config File: ${configFilePath ?? "using defaults"}\n`
   );
-  process.stdout.write(
-    `   Environment: ${process.env.NODE_ENV || "development"}\n`
-  );
+  process.stdout.write(`   Runtime Mode: ${mode}\n`);
   process.stdout.write(
     `   Bun Version: ${typeof Bun !== "undefined" ? Bun.version : "unknown"}\n\n`
   );

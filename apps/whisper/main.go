@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,12 +24,19 @@ type config struct {
 	modelName string
 }
 
+type appConfig struct {
+	WhisperModelDir  string `json:"WHISPER_MODEL_DIR"`
+	WhisperModels    string `json:"WHISPER_MODELS"`
+	WhisperServerURL string `json:"WHISPER_SERVER_URL"`
+}
+
 func loadConfig() config {
-	cfg := config{
-		port:      os.Getenv("PORT"),
-		modelDir:  os.Getenv("MODEL_PATH"),
-		modelName: os.Getenv("MODEL_NAME"),
-	}
+	appCfg := readAppConfig()
+
+	cfg := config{}
+	cfg.port = portFromURL(appCfg.WhisperServerURL)
+	cfg.modelDir = appCfg.WhisperModelDir
+	cfg.modelName = firstModelName(appCfg.WhisperModels)
 
 	if cfg.port == "" {
 		cfg.port = "8080"
@@ -39,6 +49,40 @@ func loadConfig() config {
 	}
 
 	return cfg
+}
+
+func readAppConfig() appConfig {
+	for _, path := range []string{"config.json", "../config.json", "../../config.json"} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+
+		var cfg appConfig
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			log.Fatalf("Failed to parse %s: %v", path, err)
+		}
+		return cfg
+	}
+	return appConfig{}
+}
+
+func firstModelName(models string) string {
+	for _, model := range strings.Split(models, ",") {
+		trimmed := strings.TrimSpace(model)
+		if trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
+}
+
+func portFromURL(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return parsed.Port()
 }
 
 func main() {

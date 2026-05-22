@@ -55,23 +55,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
   trace: 50,
 };
 
-const CURRENT_LOG_LEVEL = (() => {
-  const envLevel = (
-    process.env.LOG_LEVEL ||
-    (process.env.NODE_ENV === "development" ? "debug" : "info")
-  ).toLowerCase();
-  const levels: LogLevel[] = [
-    "trace",
-    "debug",
-    "info",
-    "warn",
-    "error",
-    "fatal",
-  ];
-  return levels.includes(envLevel as LogLevel)
-    ? (envLevel as LogLevel)
-    : "info";
-})();
+const CURRENT_LOG_LEVEL: LogLevel = "info";
 
 const shouldLog = (level: LogLevel): boolean =>
   LOG_LEVELS[level] <= LOG_LEVELS[CURRENT_LOG_LEVEL];
@@ -100,10 +84,7 @@ const serializeError = (error: unknown) => {
 
 // Write to stdout/stderr synchronously - works in both dev and compiled binaries
 const writeStructuredLog = (entry: LogEntry, isError = false) => {
-  const line =
-    process.env.LOG_FORMAT === "json"
-      ? JSON.stringify(entry)
-      : formatLogEntry(entry);
+  const line = formatLogEntry(entry);
   const target = isError ? process.stderr : process.stdout;
   // Use sync write and ensure it's flushed immediately
   target.write(`${line}\n`);
@@ -163,9 +144,7 @@ const appendPerformanceParts = (
 const formatLogEntry = (entry: LogEntry): string => {
   const { timestamp, level, message, context, error, performance } = entry;
 
-  // Use simple format if colors aren't supported or in production
-  const useColors =
-    process.stdout.isTTY && process.env.NODE_ENV !== "production";
+  const useColors = process.stdout.isTTY;
 
   if (!useColors) {
     // Simple format without colors
