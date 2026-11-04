@@ -7,10 +7,12 @@ A local-first, Persian-first AI assistant: chat, document Q&A, translation, summ
 | Home | Chat, dark theme |
 | --- | --- |
 | ![Home page with the tool list](docs/screenshots/home.png) | ![Chat in the dark theme](docs/screenshots/chat-dark.png) |
+| **Speech to text** | **Admin panel** |
+| ![Speech to text with a local Whisper model](docs/screenshots/transcribe.png) | ![Admin panel with users and models](docs/screenshots/admin.png) |
 
 <p align="center"><img src="docs/screenshots/mobile.png" alt="Home page and chat on a phone" width="480"></p>
 
-The interface is in Persian with a right-to-left layout. The screenshots use a 4B model on a local Ollama server.
+The interface is in Persian with a right-to-left layout. The screenshots use demo data, a 4B model on a local Ollama server, and the Whisper `base` model with an English audio clip. Image generation needs a Stable Diffusion server, so it is not shown.
 
 ## What it does
 
