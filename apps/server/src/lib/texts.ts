@@ -62,6 +62,7 @@ export const serverTexts = {
   admin: {
     addModelFailed: "افزودن مدل ناموفق بود.",
     cannotDeleteOnlyAdmin: "تنها کاربر مدیر قابل حذف نیست.",
+    cannotDemoteOnlyAdmin: "نقش تنها کاربر مدیر قابل تغییر نیست.",
     createOllamaServerFailed: "ایجاد سرور Ollama ناموفق بود.",
     createUserFailed: "ایجاد کاربر ناموفق بود.",
     deleteOllamaServerFailed: "حذف سرور Ollama ناموفق بود.",

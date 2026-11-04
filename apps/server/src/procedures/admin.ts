@@ -3,6 +3,7 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { serverTexts } from "@/lib/texts";
 import {
+  countAdmins,
   deleteUser,
   getUserById,
   getUserWithStats,
@@ -171,6 +172,12 @@ const throwIfUsernameTaken = async (
   }
 };
 
+const throwIfLastAdmin = async (message: string): Promise<void> => {
+  if ((await countAdmins()) <= 1) {
+    throw new ORPCError("FORBIDDEN", { message, status: 403 });
+  }
+};
+
 export const adminProcedures = {
   // User Management
   listUsers: adminProcedure.input(listUsersSchema).handler(
@@ -211,6 +218,10 @@ export const adminProcedures = {
 
         if (username !== undefined) {
           await throwIfUsernameTaken(username, user.username);
+        }
+
+        if (user.role === "admin" && role === "user") {
+          await throwIfLastAdmin(serverTexts.admin.cannotDemoteOnlyAdmin);
         }
 
         return await updateUser(userId, {
@@ -310,16 +321,7 @@ export const adminProcedures = {
         const user = await throwIfMissingUser(userId);
 
         if (user.role === "admin") {
-          const allUsers = await listUsers({ page: 1, pageSize: 1000 });
-          const adminCount = allUsers.users.filter(
-            (u) => u.role === "admin"
-          ).length;
-          if (adminCount === 1) {
-            throw new ORPCError("FORBIDDEN", {
-              message: serverTexts.admin.cannotDeleteOnlyAdmin,
-              status: 403,
-            });
-          }
+          await throwIfLastAdmin(serverTexts.admin.cannotDeleteOnlyAdmin);
         }
 
         await deleteUser(userId);

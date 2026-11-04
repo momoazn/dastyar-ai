@@ -12,6 +12,8 @@ import {
   type UserRole,
   users,
 } from "@/database";
+import { deleteDocumentFile } from "@/services/storage/document-storage";
+import { deleteImage } from "@/services/storage/image-storage";
 import { hashPassword } from "./auth";
 import {
   countDistinctUserIps,
@@ -223,6 +225,29 @@ export async function getUserById(
   return rows.at(0) ?? null;
 }
 
+export async function countAdmins(): Promise<number> {
+  const result = await db
+    .select({ value: count() })
+    .from(users)
+    .where(eq(users.role, "admin"));
+  return result.at(0)?.value ?? 0;
+}
+
 export async function deleteUser(userId: number): Promise<void> {
+  // Read the file paths first: the rows go away with the user (cascade)
+  const imageRows = await db
+    .select({ filePath: generatedImages.filePath })
+    .from(generatedImages)
+    .where(eq(generatedImages.userId, userId));
+  const documentRows = await db
+    .select({ filePath: documents.filePath })
+    .from(documents)
+    .where(eq(documents.userId, userId));
+
   await db.delete(users).where(eq(users.id, userId)).run();
+
+  await Promise.allSettled([
+    ...imageRows.map((row) => deleteImage(row.filePath)),
+    ...documentRows.map((row) => deleteDocumentFile(row.filePath)),
+  ]);
 }
