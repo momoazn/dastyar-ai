@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { ModelName } from "@/components/tool-page/tool-page";
 import { Alert, Badge, Button, Card, Textarea } from "@/components/ui";
 import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
@@ -184,7 +185,7 @@ function CodeHistoryView() {
         <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h1 className="font-bold text-2xl">
                 دستیار کد - {fa.general.history}
               </h1>
@@ -225,8 +226,10 @@ function CodeHistoryView() {
               <div className="font-medium text-sm">
                 {fa.codeAssistant.labels.model}
               </div>
-              <div className="rounded-md border bg-muted px-3 py-2 text-right text-sm">
-                {getModelName(runData.modelId as number)}
+              <div className="min-w-0 rounded-md border bg-muted px-3 py-2 text-right text-sm">
+                <ModelName
+                  identifier={getModelName(runData.modelId as number)}
+                />
               </div>
             </div>
           </div>

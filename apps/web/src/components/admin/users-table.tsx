@@ -232,7 +232,9 @@ export function UsersTable() {
           <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead>{fa.admin.users.table.id}</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  {fa.admin.users.table.id}
+                </TableHead>
                 <TableHead>{fa.admin.users.table.username}</TableHead>
                 <TableHead>{fa.admin.users.table.role}</TableHead>
                 <TableHead>{fa.admin.users.table.createdAt}</TableHead>
@@ -242,7 +244,9 @@ export function UsersTable() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.id}</TableCell>
+                  <TableCell className="hidden font-medium sm:table-cell">
+                    {user.id}
+                  </TableCell>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>
                     <Badge

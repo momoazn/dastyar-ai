@@ -5,9 +5,18 @@ import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import {
+  EmptyHint,
+  ModelSelect,
+  PRIMARY_ACTION_CLASS,
+  SettingField,
+  ToolGrid,
+  ToolPageHeader,
+  ToolPanel,
+  ToolSettings,
+} from "@/components/tool-page/tool-page";
+import {
   Alert,
   Button,
-  Card,
   Select,
   SelectContent,
   SelectItem,
@@ -191,18 +200,14 @@ function SummarizePage() {
         )
       }
       content={
-        <div className="flex h-full flex-col gap-6">
-          {/* Title Header */}
-          <div className="flex flex-col gap-2">
-            <h1 className="font-bold text-2xl">{fa.summarize.title}</h1>
-          </div>
+        <div className="flex flex-col gap-6">
+          <ToolPageHeader
+            description={fa.summarize.description}
+            title={fa.summarize.title}
+          />
 
-          {/* Options Section */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.summarize.modeLabel}
-              </div>
+          <ToolSettings title={fa.summarize.settingsTitle}>
+            <SettingField label={fa.summarize.modeLabel}>
               <Select
                 disabled={summarizeMutation.isPending}
                 onValueChange={(v) => setMode(v as SummaryMode)}
@@ -223,11 +228,8 @@ function SummarizePage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.translation.translationTone}
-              </div>
+            </SettingField>
+            <SettingField label={fa.summarize.toneLabel}>
               <Select
                 disabled={summarizeMutation.isPending}
                 onValueChange={(v) => setTone(v as Tone)}
@@ -248,42 +250,20 @@ function SummarizePage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">{fa.summarize.model}</div>
-              <Select
-                disabled={summarizeMutation.isPending || isModelsLoading}
-                onValueChange={(value) => setModelId(Number(value))}
-                value={modelId?.toString()}
-              >
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue
-                    placeholder={
-                      isModelsLoading
-                        ? fa.general.loadingModels
-                        : fa.general.selectModel
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {models?.map((model) => (
-                    <SelectItem
-                      className="text-right"
-                      key={model.id}
-                      value={model.id.toString()}
-                    >
-                      {model.identifier}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            </SettingField>
+            <ModelSelect
+              disabled={summarizeMutation.isPending}
+              isLoading={isModelsLoading}
+              label={fa.summarize.model}
+              modelId={modelId}
+              models={models}
+              onChange={setModelId}
+            />
+          </ToolSettings>
 
-          {/* Main Action Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             <Button
-              className="min-w-[140px] gap-2"
+              className={PRIMARY_ACTION_CLASS}
               disabled={!canSummarize}
               onClick={submitSummarize}
               type="button"
@@ -299,80 +279,60 @@ function SummarizePage() {
             </Button>
           </div>
 
-          {/* Two Column Layout */}
-          <div
-            className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
-            dir="rtl"
-          >
-            {/* Source Column (Right) */}
-            <Card className="flex flex-col py-0 lg:order-1">
-              <div className="border-b bg-muted/30 px-4 py-2.5">
-                <div className="flex h-8 items-center justify-between">
-                  <span className="font-semibold text-foreground text-sm">
-                    {fa.summarize.sourceText}
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 p-4">
-                <Textarea
-                  className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
-                  dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
-                  disabled={summarizeMutation.isPending}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  onKeyDown={handleSourceKeyDown}
-                  placeholder={fa.summarize.enterText}
-                  value={sourceText}
-                />
-              </div>
-            </Card>
+          <ToolGrid>
+            <ToolPanel title={fa.summarize.sourceText}>
+              <Textarea
+                aria-label={fa.summarize.sourceText}
+                className="min-h-[300px] flex-1 resize-none border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+                dir={sourceText ? detectTextDirection(sourceText) : "rtl"}
+                disabled={summarizeMutation.isPending}
+                onChange={(e) => setSourceText(e.target.value)}
+                onKeyDown={handleSourceKeyDown}
+                placeholder={fa.summarize.enterText}
+                value={sourceText}
+              />
+            </ToolPanel>
 
-            {/* Result Column (Left) */}
-            <Card className="flex flex-col py-0 lg:order-2">
-              <div className="border-b bg-muted/30 px-4 py-2.5">
-                <div className="flex h-8 items-center justify-between">
-                  <span className="font-semibold text-foreground text-sm">
-                    {fa.summarize.generatedText}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {summaryText && (
-                      <Button
-                        className={
-                          isCopied ? "bg-green-600 hover:bg-green-700" : ""
-                        }
-                        onClick={handleCopy}
-                        size="sm"
-                        type="button"
-                        variant={isCopied ? "default" : "ghost"}
-                      >
-                        <Copy className="h-4 w-4" />
-                        {isCopied ? fa.summarize.copied : fa.summarize.copy}
-                      </Button>
-                    )}
+            <ToolPanel
+              actions={
+                summaryText ? (
+                  <Button
+                    className={
+                      isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                    }
+                    onClick={handleCopy}
+                    size="sm"
+                    type="button"
+                    variant={isCopied ? "default" : "ghost"}
+                  >
+                    <Copy className="h-4 w-4" />
+                    {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                  </Button>
+                ) : null
+              }
+              title={fa.summarize.generatedText}
+            >
+              {summarizeMutation.isPending ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="text-muted-foreground text-sm">
+                    {fa.summarize.generating}
                   </div>
                 </div>
-              </div>
-              <div className="flex-1 p-4">
-                {summarizeMutation.isPending ? (
-                  <div className="flex h-full min-h-[300px] items-center justify-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <div className="text-muted-foreground text-sm">
-                        {fa.summarize.generating}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <Textarea
-                    className="h-full min-h-[300px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
-                    dir={summaryText ? detectTextDirection(summaryText) : "rtl"}
-                    placeholder={fa.summarize.summaryPlaceholder}
-                    readOnly
-                    value={summaryText}
-                  />
-                )}
-              </div>
-            </Card>
-          </div>
+              ) : null}
+              {!summarizeMutation.isPending && summaryText ? (
+                <div
+                  className="wrap-break-word whitespace-pre-wrap text-base"
+                  dir={detectTextDirection(summaryText)}
+                >
+                  {summaryText}
+                </div>
+              ) : null}
+              {summarizeMutation.isPending || summaryText ? null : (
+                <EmptyHint>{fa.summarize.summaryPlaceholder}</EmptyHint>
+              )}
+            </ToolPanel>
+          </ToolGrid>
         </div>
       }
     />

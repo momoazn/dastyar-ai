@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Copy } from "lucide-react";
 import { useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { ModelName } from "@/components/tool-page/tool-page";
 import { Alert, Badge, Button, Card, Textarea } from "@/components/ui";
 import { useSummarizeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
@@ -108,7 +109,7 @@ function SummaryHistoryView() {
         <div className="flex h-full flex-col gap-6">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h1 className="font-bold text-2xl">
                 {fa.summarize.title} - {fa.general.history}
               </h1>
@@ -136,7 +137,7 @@ function SummaryHistoryView() {
             </div>
             <div className="flex flex-col gap-2">
               <div className="font-medium text-sm">
-                {fa.translation.translationTone}
+                {fa.summarize.toneLabel}
               </div>
               <div className="rounded-md border bg-muted px-3 py-2 text-right text-sm">
                 {getToneLabel(summaryData.tone as string)}
@@ -144,8 +145,10 @@ function SummaryHistoryView() {
             </div>
             <div className="flex flex-col gap-2">
               <div className="font-medium text-sm">{fa.summarize.model}</div>
-              <div className="rounded-md border bg-muted px-3 py-2 text-right text-sm">
-                {getModelName(summaryData.modelId as number)}
+              <div className="min-w-0 rounded-md border bg-muted px-3 py-2 text-right text-sm">
+                <ModelName
+                  identifier={getModelName(summaryData.modelId as number)}
+                />
               </div>
             </div>
           </div>

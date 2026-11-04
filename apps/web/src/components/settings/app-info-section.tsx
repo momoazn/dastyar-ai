@@ -2,32 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Info, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useRuntimeHealth } from "@/hooks/use-runtime-health";
 import { fa } from "@/lib/texts";
 import { orpc } from "@/utils/orpc";
 import { SettingsItem } from "./settings-item";
 import { SettingsSection } from "./settings-section";
-
-type RuntimeHealth = {
-  status: string;
-  whisper: {
-    available: boolean;
-    status: number;
-  };
-};
-
-const fetchRuntimeHealth = async (): Promise<RuntimeHealth> => {
-  const response = await fetch("/health", {
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("بررسی سلامت سرویس ناموفق بود.");
-  }
-
-  return (await response.json()) as RuntimeHealth;
-};
 
 const getAvailabilityLabel = (
   isAvailable: boolean | undefined,
@@ -35,6 +14,9 @@ const getAvailabilityLabel = (
 ): string => {
   if (isLoading) {
     return fa.settings.appInfo.checking;
+  }
+  if (isAvailable === undefined) {
+    return fa.settings.appInfo.unknown;
   }
   return isAvailable
     ? fa.settings.appInfo.available
@@ -50,12 +32,7 @@ export function AppInfoSection() {
     isLoading: isRuntimeHealthLoading,
     isFetching: isRuntimeHealthFetching,
     refetch: refetchRuntimeHealth,
-  } = useQuery({
-    queryKey: ["runtime-health"],
-    queryFn: fetchRuntimeHealth,
-    refetchInterval: 30_000,
-    meta: { suppressErrorToast: true },
-  });
+  } = useRuntimeHealth();
 
   const version = buildInfo?.version ?? fa.settings.appInfo.unknown;
   const releaseLabel =
@@ -74,7 +51,7 @@ export function AppInfoSection() {
       icon={<Info className="h-4 w-4" />}
       title={fa.settings.appInfo.title}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <SettingsItem label={fa.settings.appInfo.versionLabel}>
           <Badge dir="ltr" variant="secondary">
             v{version}
@@ -108,6 +85,7 @@ export function AppInfoSection() {
                 </span>
               )}
             <Button
+              aria-label={fa.settings.appInfo.refreshStatus}
               className="gap-2"
               disabled={isRuntimeHealthFetching}
               onClick={() => refetchRuntimeHealth()}

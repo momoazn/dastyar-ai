@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Copy, FileText } from "lucide-react";
 import { useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import { ModelName } from "@/components/tool-page/tool-page";
 import {
   Alert,
   Badge,
@@ -116,7 +117,7 @@ function TranslationHistoryView() {
         <div className="flex h-full flex-col gap-6">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h1 className="font-bold text-2xl">
                 {fa.index.translationTitle} - {fa.general.history}
               </h1>
@@ -160,8 +161,10 @@ function TranslationHistoryView() {
             </div>
             <div className="flex flex-col gap-2">
               <div className="font-medium text-sm">{fa.translation.model}</div>
-              <div className="rounded-md border bg-muted px-3 py-2 text-right text-sm">
-                {getModelName(translationData.modelId as number)}
+              <div className="min-w-0 rounded-md border bg-muted px-3 py-2 text-right text-sm">
+                <ModelName
+                  identifier={getModelName(translationData.modelId as number)}
+                />
               </div>
             </div>
             <div className="flex flex-col gap-2">

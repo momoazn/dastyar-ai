@@ -1,4 +1,6 @@
 export const translation = {
+  settingsTitle: "تنظیمات ترجمه",
+  swapLanguages: "جابجایی زبان‌ها",
   sourceLanguage: "زبان مبدا",
   targetLanguage: "زبان مقصد",
   translationTone: "لحن ترجمه",
@@ -40,6 +42,7 @@ export const translation = {
   translationCompleted: "ترجمه تکمیل شده",
   pagesTranslated: (count: number) => `${count} صفحه ترجمه شده`,
   selectPdfToStart: "فایل PDF خود را انتخاب کنید تا ترجمه شروع شود",
+  resultHint: "ترجمه اینجا نمایش داده می‌شود.",
   resultPlaceholder: "اینجا نمایش داده می‌شود...",
   copyToNew: "کپی به جدید",
   type: "نوع",

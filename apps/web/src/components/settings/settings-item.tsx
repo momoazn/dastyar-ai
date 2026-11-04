@@ -27,7 +27,7 @@ export function SettingsItem({
             </p>
           )}
         </div>
-        <div className="flex shrink-0 justify-start sm:justify-end">
+        <div className="flex min-w-0 shrink-0 flex-wrap justify-start gap-2 sm:justify-end">
           {children}
         </div>
       </div>

@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fa } from "@/lib/texts";
+import { formatModelName } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 import { invalidateAdminModels } from "./query-utils";
 import { AdminTableShell } from "./table-shell";
@@ -170,8 +171,12 @@ export function ModelsTable() {
         <Table dir="rtl">
           <TableHeader>
             <TableRow>
-              <TableHead>{fa.admin.models.table.id}</TableHead>
-              <TableHead>{fa.admin.models.table.servers}</TableHead>
+              <TableHead className="hidden sm:table-cell">
+                {fa.admin.models.table.id}
+              </TableHead>
+              <TableHead className="hidden sm:table-cell">
+                {fa.admin.models.table.servers}
+              </TableHead>
               <TableHead>{fa.admin.models.table.name}</TableHead>
               <TableHead>{fa.admin.models.table.provider}</TableHead>
               <TableHead>{fa.admin.models.table.status}</TableHead>
@@ -181,8 +186,10 @@ export function ModelsTable() {
           <TableBody>
             {models?.map((model) => (
               <TableRow key={model.id}>
-                <TableCell className="font-medium">{model.id}</TableCell>
-                <TableCell>
+                <TableCell className="hidden font-medium sm:table-cell">
+                  {model.id}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {model.provider === "ollama" ? (
                     <Badge variant="secondary">
                       {fa.admin.models.serverCoverage(
@@ -193,8 +200,12 @@ export function ModelsTable() {
                     <span className="text-muted-foreground text-xs">-</span>
                   )}
                 </TableCell>
-                <TableCell className="font-medium">
-                  {model.identifier}
+                <TableCell
+                  className="max-w-48 truncate font-medium sm:max-w-72"
+                  dir="ltr"
+                  title={model.identifier}
+                >
+                  {formatModelName(model.identifier)}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">

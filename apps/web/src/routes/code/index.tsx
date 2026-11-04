@@ -14,9 +14,18 @@ import { useCallback, useEffect, useState } from "react";
 import { Response } from "@/components/ai-elements/response";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
 import {
+  EmptyHint,
+  ModelSelect,
+  PRIMARY_ACTION_CLASS,
+  SettingField,
+  ToolGrid,
+  ToolPageHeader,
+  ToolPanel,
+  ToolSettings,
+} from "@/components/tool-page/tool-page";
+import {
   Alert,
   Button,
-  Card,
   Select,
   SelectContent,
   SelectItem,
@@ -28,7 +37,7 @@ import { useCodeModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
 import { sanitizeGeneratedCodeOutput } from "@/lib/code-output";
 import { fa } from "@/lib/texts";
-import { cn, detectTextDirection } from "@/lib/utils";
+import { detectTextDirection } from "@/lib/utils";
 import { orpc, queryClient } from "@/utils/orpc";
 
 export const Route = createFileRoute("/code/")({
@@ -301,18 +310,14 @@ function RouteComponent() {
         )
       }
       content={
-        <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
-          {/* Title Header */}
-          <div className="flex flex-col gap-2">
-            <h1 className="font-bold text-2xl">{fa.codeAssistant.title}</h1>
-          </div>
+        <div className="flex flex-col gap-6">
+          <ToolPageHeader
+            description={fa.index.codeDescription}
+            title={fa.codeAssistant.title}
+          />
 
-          {/* Options Section */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.codeAssistant.labels.mode}
-              </div>
+          <ToolSettings title={fa.codeAssistant.settingsTitle}>
+            <SettingField label={fa.codeAssistant.labels.mode}>
               <Select
                 disabled={currentMutation.isPending}
                 onValueChange={(v) => setMode(v as CodeMode)}
@@ -336,11 +341,8 @@ function RouteComponent() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.codeAssistant.labels.language}
-              </div>
+            </SettingField>
+            <SettingField label={fa.codeAssistant.labels.language}>
               <Select
                 disabled={currentMutation.isPending}
                 onValueChange={(v) => setLanguage(v as ProgrammingLanguage)}
@@ -361,44 +363,20 @@ function RouteComponent() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">
-                {fa.codeAssistant.labels.model}
-              </div>
-              <Select
-                disabled={currentMutation.isPending || modelsLoading}
-                onValueChange={(value) => setModelId(Number(value))}
-                value={modelId?.toString()}
-              >
-                <SelectTrigger className="w-full text-right" dir="rtl">
-                  <SelectValue
-                    placeholder={
-                      modelsLoading
-                        ? fa.general.loadingModels
-                        : fa.general.selectModel
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {modelList?.map((model) => (
-                    <SelectItem
-                      className="text-right"
-                      key={model.id}
-                      value={model.id.toString()}
-                    >
-                      {model.identifier}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            </SettingField>
+            <ModelSelect
+              disabled={currentMutation.isPending}
+              isLoading={modelsLoading}
+              label={fa.codeAssistant.labels.model}
+              modelId={modelId}
+              models={modelList}
+              onChange={setModelId}
+            />
+          </ToolSettings>
 
-          {/* Main Action Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             <Button
-              className="min-w-[160px] gap-2"
+              className={PRIMARY_ACTION_CLASS}
               disabled={!canExecute}
               onClick={handleExecute}
               type="button"
@@ -421,150 +399,117 @@ function RouteComponent() {
             </Button>
           </div>
 
-          {/* Two Column Layout */}
-          <div
-            className="grid min-h-0 w-full flex-1 grid-cols-1 gap-4 lg:grid-cols-2"
-            dir="rtl"
-          >
-            {/* Input Column (Right) */}
-            <Card className="flex min-h-0 flex-1 flex-col py-0 lg:order-1">
-              <div className="border-b bg-muted/30 px-4 py-2.5">
-                <div className="flex h-8 items-center justify-between">
-                  <span className="font-semibold text-foreground text-sm">
-                    {mode === "generate"
-                      ? fa.codeAssistant.labels.codeRequest
-                      : fa.codeAssistant.labels.inputCode}
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 p-4">
+          <ToolGrid>
+            <div className="flex min-w-0 flex-col gap-4">
+              <ToolPanel
+                title={
+                  mode === "generate"
+                    ? fa.codeAssistant.labels.codeRequest
+                    : fa.codeAssistant.labels.inputCode
+                }
+              >
                 <Textarea
+                  aria-label={
+                    mode === "generate"
+                      ? fa.codeAssistant.labels.codeRequest
+                      : fa.codeAssistant.labels.inputCode
+                  }
                   autoCapitalize="off"
                   autoCorrect="off"
-                  className={cn(
-                    "h-full resize-none border-none p-0 font-mono text-sm shadow-none focus-visible:ring-0",
-                    (inputCode ? detectTextDirection(inputCode) : "ltr") ===
-                      "rtl"
-                      ? "text-right"
-                      : "text-left"
-                  )}
-                  dir={inputCode ? detectTextDirection(inputCode) : "ltr"}
+                  className="min-h-[300px] flex-1 resize-none border-none bg-transparent p-0 font-mono text-sm shadow-none placeholder:font-sans focus-visible:ring-0"
+                  dir={inputCode ? detectTextDirection(inputCode) : "rtl"}
                   disabled={currentMutation.isPending}
                   onChange={(e) => setInputCode(e.target.value)}
-                  placeholder={(() => {
-                    switch (mode) {
-                      case "generate":
-                        return fa.codeAssistant.placeholders.codeRequest;
-                      case "explain":
-                      case "review":
-                      case "debug":
-                        return fa.codeAssistant.placeholders.inputCode;
-                      default:
-                        return fa.codeAssistant.placeholders.inputCode;
-                    }
-                  })()}
+                  placeholder={
+                    mode === "generate"
+                      ? fa.codeAssistant.placeholders.codeRequest
+                      : fa.codeAssistant.placeholders.inputCode
+                  }
                   spellCheck={false}
                   value={inputCode}
                 />
-              </div>
-            </Card>
+              </ToolPanel>
 
-            {/* Output Column (Left) */}
-            <Card className="flex min-h-0 flex-col py-0 lg:order-2">
-              <div className="border-b bg-muted/30 px-4 py-2.5">
-                <div className="flex h-8 items-center justify-between">
-                  <span className="font-semibold text-foreground text-sm">
-                    {fa.codeAssistant.labels.result}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {output && (
-                      <Button
-                        className={
-                          isCopied ? "bg-green-600 hover:bg-green-700" : ""
-                        }
-                        onClick={handleCopyOutput}
-                        size="sm"
-                        type="button"
-                        variant={isCopied ? "default" : "ghost"}
-                      >
-                        <Copy className="h-4 w-4" />
-                        {isCopied
-                          ? fa.codeAssistant.copied
-                          : fa.codeAssistant.copy}
-                      </Button>
-                    )}
-                    {output && (
-                      <Button
-                        onClick={handleDownload}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Download className="h-4 w-4" />
-                        {fa.general.download}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="min-h-0 flex-1 p-4">
-                {currentMutation.isPending ? (
-                  <div className="flex h-full items-center justify-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <div className="text-muted-foreground text-sm">
-                        {fa.codeAssistant.buttons.processing}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-full overflow-y-auto text-left" dir="ltr">
-                    <Response
-                      className="h-auto w-full"
-                      controls={{ code: false }}
-                    >
-                      {mode === "generate" && output
-                        ? `\`\`\`${language}\n${output}\n\`\`\``
-                        : output}
-                    </Response>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {/* Error Input (for debug mode) */}
-          {mode === "debug" && (
-            <Card className="p-4">
-              <div className="mb-2">
-                <h3 className="font-medium">
-                  {fa.codeAssistant.labels.errorMessage}
-                </h3>
-              </div>
-              <Textarea
-                autoCapitalize="off"
-                autoCorrect="off"
-                className={cn(
-                  "min-h-[100px] resize-none font-mono text-sm",
-                  (errorMessage ? detectTextDirection(errorMessage) : "ltr") ===
-                    "rtl"
-                    ? "text-right"
-                    : "text-left"
-                )}
-                dir={errorMessage ? detectTextDirection(errorMessage) : "ltr"}
-                disabled={currentMutation.isPending}
-                onChange={(e) => setErrorMessage(e.target.value)}
-                placeholder={fa.codeAssistant.placeholders.errorMessage}
-                spellCheck={false}
-                value={errorMessage}
-              />
-              {errorMessage.trim() && (
-                <div className="mt-3 rounded-md border p-3 text-left" dir="ltr">
-                  <Response>{`\`\`\`text\n${errorMessage}\n\`\`\``}</Response>
-                </div>
+              {mode === "debug" && (
+                <ToolPanel
+                  bodyClassName="min-h-[120px]"
+                  title={fa.codeAssistant.labels.errorMessage}
+                >
+                  <Textarea
+                    aria-label={fa.codeAssistant.labels.errorMessage}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    className="min-h-[100px] flex-1 resize-none border-none bg-transparent p-0 font-mono text-sm shadow-none placeholder:font-sans focus-visible:ring-0"
+                    dir={
+                      errorMessage ? detectTextDirection(errorMessage) : "rtl"
+                    }
+                    disabled={currentMutation.isPending}
+                    onChange={(e) => setErrorMessage(e.target.value)}
+                    placeholder={fa.codeAssistant.placeholders.errorMessage}
+                    spellCheck={false}
+                    value={errorMessage}
+                  />
+                </ToolPanel>
               )}
-            </Card>
-          )}
+            </div>
+
+            <ToolPanel
+              actions={
+                output ? (
+                  <>
+                    <Button
+                      className={
+                        isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                      }
+                      onClick={handleCopyOutput}
+                      size="sm"
+                      type="button"
+                      variant={isCopied ? "default" : "ghost"}
+                    >
+                      <Copy className="h-4 w-4" />
+                      {isCopied
+                        ? fa.codeAssistant.copied
+                        : fa.codeAssistant.copy}
+                    </Button>
+                    <Button
+                      onClick={handleDownload}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Download className="h-4 w-4" />
+                      {fa.general.download}
+                    </Button>
+                  </>
+                ) : null
+              }
+              title={fa.codeAssistant.labels.result}
+            >
+              {currentMutation.isPending ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="text-muted-foreground text-sm">
+                    {fa.codeAssistant.buttons.processing}
+                  </div>
+                </div>
+              ) : null}
+              {!currentMutation.isPending && output ? (
+                <div className="min-w-0 overflow-x-auto text-left" dir="ltr">
+                  <Response
+                    className="h-auto w-full"
+                    controls={{ code: false }}
+                  >
+                    {mode === "generate"
+                      ? `\`\`\`${language}\n${output}\n\`\`\``
+                      : output}
+                  </Response>
+                </div>
+              ) : null}
+              {currentMutation.isPending || output ? null : (
+                <EmptyHint>{fa.codeAssistant.placeholders.result}</EmptyHint>
+              )}
+            </ToolPanel>
+          </ToolGrid>
         </div>
       }
     />

@@ -1,5 +1,6 @@
 export const settings = {
   title: "تنظیمات",
+  description: "ظاهر برنامه، امنیت حساب و وضعیت سرویس‌ها را اینجا مدیریت کنید.",
   chatTab: "تنظیمات چت",
   imageTab: "تنظیمات تصویر",
   baseUrl: "آدرس سرور",

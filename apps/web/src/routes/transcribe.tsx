@@ -1,8 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CopyIcon, RefreshCcw, Trash2 } from "lucide-react";
+import { CopyIcon, MicOff, RefreshCcw, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import {
+  SettingField,
+  ToolPageHeader,
+  ToolPanel,
+} from "@/components/tool-page/tool-page";
 import {
   RecordingControls,
   SmartActionsToolbar,
@@ -13,20 +18,17 @@ import {
   AlertDescription,
   AlertTitle,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
+  Surface,
+  SurfaceContent,
+  SurfaceHeader,
+  SurfaceTitle,
 } from "@/components/ui";
-import { Label } from "@/components/ui/label";
+import { useWhisperAvailable } from "@/hooks/use-runtime-health";
 import { useTranscription } from "@/hooks/use-transcription";
 import {
   type RecordingError,
@@ -90,6 +92,7 @@ function RouteComponent() {
     clearRecordedFile,
   } = useVoiceRecorder();
 
+  const isWhisperAvailable = useWhisperAvailable();
   const { data: models } = useQuery(orpc.transcribe.models.queryOptions());
   const { data: llmModels } = useQuery(orpc.models.list.queryOptions());
 
@@ -132,14 +135,18 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    if (recordedFile && recordedFile !== processedFileRef.current) {
+    if (
+      recordedFile &&
+      isWhisperAvailable &&
+      recordedFile !== processedFileRef.current
+    ) {
       processedFileRef.current = recordedFile;
       setTranscribeError(null);
       setResult("");
       setSmartResult(null);
       transcribe({ file: recordedFile, language, model });
     }
-  }, [recordedFile, transcribe, language, model]);
+  }, [recordedFile, transcribe, language, model, isWhisperAvailable]);
 
   const handleStartRecording = async () => {
     setTranscribeError(null);
@@ -166,159 +173,177 @@ function RouteComponent() {
     ? mapRecordingError(recordingError)
     : transcribeError;
 
+  const isBusy = isRecording || isTranscribing;
+  const isRtl = language === "fa";
+
   return (
     <ToolScaffold
-      alerts={
-        displayError ? (
-          <Alert variant="destructive">
-            <AlertTitle>{fa.general.error}</AlertTitle>
-            <AlertDescription>{displayError}</AlertDescription>
-          </Alert>
-        ) : null
-      }
       content={
-        <div className="mx-auto w-full max-w-6xl space-y-6">
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>{fa.transcribe.title}</CardTitle>
-              <CardDescription>{fa.transcribe.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <div className="grid items-end gap-3 sm:grid-cols-3">
-                    <div className="space-y-1">
-                      <Label
-                        className="text-muted-foreground text-xs"
-                        htmlFor="language-select"
-                      >
-                        {fa.translation.sourceLanguage}
-                      </Label>
-                      <Select
-                        onValueChange={(v) => setLanguage(v as "fa" | "en")}
-                        value={language}
-                      >
-                        <SelectTrigger
-                          className="w-full"
-                          id="language-select"
-                          size="sm"
-                        >
-                          <SelectValue
-                            placeholder={fa.translation.sourceLanguage}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fa">
-                            {fa.languages.persian}
-                          </SelectItem>
-                          <SelectItem value="en">
-                            {fa.languages.english}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label
-                        className="text-muted-foreground text-xs"
-                        htmlFor="model-select"
-                      >
-                        {fa.modelSelection.speechModel}
-                      </Label>
-                      <Select
-                        disabled={!models?.length}
-                        onValueChange={setModel}
-                        value={model}
-                      >
-                        <SelectTrigger
-                          className="w-full"
-                          id="model-select"
-                          size="sm"
-                        >
-                          <SelectValue
-                            placeholder={fa.modelSelection.selectSpeechModel}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {models?.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+        <div className="mx-auto w-full max-w-4xl space-y-5">
+          <ToolPageHeader
+            description={fa.transcribe.description}
+            title={fa.transcribe.title}
+          />
+          {isWhisperAvailable ? null : (
+            <Alert className="text-muted-foreground">
+              <MicOff />
+              <AlertTitle className="text-foreground">
+                {fa.transcribe.unavailable.title}
+              </AlertTitle>
+              <AlertDescription>
+                {fa.transcribe.unavailable.hint}
+              </AlertDescription>
+            </Alert>
+          )}
+          {displayError ? (
+            <Alert variant="destructive">
+              <AlertTitle>{fa.general.error}</AlertTitle>
+              <AlertDescription>{displayError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-                  <RecordingControls
-                    elapsedMs={elapsedMs}
-                    isRecording={isRecording}
-                    isTranscribing={isTranscribing}
-                    onStart={handleStartRecording}
-                    onStop={stopRecording}
+          <Surface padded={false}>
+            <SurfaceHeader className="bg-muted/30">
+              <SurfaceTitle>{fa.transcribe.controlsTitle}</SurfaceTitle>
+            </SurfaceHeader>
+            <SurfaceContent>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <SettingField label={fa.translation.sourceLanguage}>
+                  <Select
+                    disabled={isBusy}
+                    onValueChange={(v) => setLanguage(v as "fa" | "en")}
+                    value={language}
                   >
-                    {result && !isRecording && !isTranscribing ? (
-                      <SmartActionsToolbar
-                        disabled={isSummarizing}
-                        onAction={handleSmartAction}
+                    <SelectTrigger
+                      aria-label={fa.translation.sourceLanguage}
+                      className="w-full"
+                      dir="rtl"
+                    >
+                      <SelectValue
+                        placeholder={fa.translation.sourceLanguage}
                       />
-                    ) : null}
-                  </RecordingControls>
-                </div>
+                    </SelectTrigger>
+                    <SelectContent dir="rtl">
+                      <SelectItem value="fa">{fa.languages.persian}</SelectItem>
+                      <SelectItem value="en">{fa.languages.english}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </SettingField>
+                <SettingField label={fa.modelSelection.speechModel}>
+                  <Select
+                    disabled={!models?.length || isBusy}
+                    onValueChange={setModel}
+                    value={model}
+                  >
+                    <SelectTrigger
+                      aria-label={fa.modelSelection.speechModel}
+                      className="w-full min-w-0"
+                      dir="rtl"
+                    >
+                      <SelectValue
+                        placeholder={fa.modelSelection.selectSpeechModel}
+                      />
+                    </SelectTrigger>
+                    <SelectContent dir="rtl">
+                      {models?.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          <span
+                            className="block truncate"
+                            dir="ltr"
+                            title={m.name}
+                          >
+                            {m.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingField>
+              </div>
 
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">
-                      {fa.transcribe.title}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {recordedFile && !isTranscribing && (
-                        <Button
-                          className="gap-2"
-                          onClick={() =>
-                            transcribe({ file: recordedFile, language, model })
-                          }
-                          type="button"
-                          variant="outline"
-                        >
-                          <RefreshCcw className="size-4" /> {fa.general.retry}
-                        </Button>
-                      )}
-                      <Button
-                        className="gap-2"
-                        disabled={!result}
-                        onClick={() => handleCopy(result)}
-                        type="button"
-                        variant="default"
-                      >
-                        <CopyIcon className="size-4" /> {fa.transcribe.copy}
-                      </Button>
-                      <Button
-                        className="gap-2"
-                        disabled={!result || isRecording || isTranscribing}
-                        onClick={handleClear}
-                        type="button"
-                        variant="secondary"
-                      >
-                        <Trash2 className="size-4" /> {fa.transcribe.clear}
-                      </Button>
-                    </div>
-                  </div>
-                  <Textarea
-                    aria-label={fa.transcribe.title}
-                    className={
-                      language === "fa" ? "rtl text-right" : "ltr text-left"
+              <RecordingControls
+                disabled={!isWhisperAvailable}
+                elapsedMs={elapsedMs}
+                isRecording={isRecording}
+                isTranscribing={isTranscribing}
+                onStart={handleStartRecording}
+                onStop={stopRecording}
+              />
+            </SurfaceContent>
+          </Surface>
+
+          <ToolPanel
+            actions={
+              <>
+                {recordedFile && !isTranscribing && isWhisperAvailable ? (
+                  <Button
+                    className="gap-2"
+                    onClick={() =>
+                      transcribe({ file: recordedFile, language, model })
                     }
-                    dir={language === "fa" ? "rtl" : "ltr"}
-                    placeholder={fa.transcribe.resultPlaceholder}
-                    readOnly
-                    rows={14}
-                    value={result}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    <RefreshCcw className="size-4" /> {fa.general.retry}
+                  </Button>
+                ) : null}
+                {result ? (
+                  <>
+                    <Button
+                      className="gap-2"
+                      onClick={() => handleCopy(result)}
+                      size="sm"
+                      type="button"
+                      variant="default"
+                    >
+                      <CopyIcon className="size-4" /> {fa.transcribe.copy}
+                    </Button>
+                    <Button
+                      className="gap-2"
+                      disabled={isBusy}
+                      onClick={handleClear}
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                    >
+                      <Trash2 className="size-4" /> {fa.transcribe.clear}
+                    </Button>
+                  </>
+                ) : null}
+              </>
+            }
+            bodyClassName="min-h-[320px]"
+            footer={
+              result && !isBusy ? (
+                <div className="border-t px-4 pb-4">
+                  <SmartActionsToolbar
+                    disabled={isSummarizing}
+                    onAction={handleSmartAction}
                   />
                 </div>
+              ) : null
+            }
+            title={fa.transcribe.resultTitle}
+          >
+            {result ? (
+              <section
+                aria-label={fa.transcribe.resultTitle}
+                className={`flex-1 whitespace-pre-wrap break-words text-base leading-8 ${
+                  isRtl ? "text-right" : "text-left"
+                }`}
+                dir={isRtl ? "rtl" : "ltr"}
+              >
+                {result}
+              </section>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-center text-muted-foreground text-sm">
+                {isTranscribing
+                  ? fa.transcribe.transcribing
+                  : fa.transcribe.emptyResult}
               </div>
-            </CardContent>
-            <CardFooter />
-          </Card>
+            )}
+          </ToolPanel>
 
           <SmartResultCard
             isLoading={isSummarizing}
