@@ -19,7 +19,7 @@ import {
   createMessage,
   updateMessage,
 } from "@/repositories/messages";
-import { updateThreadOnNewMessage } from "@/repositories/threads";
+import { getThread, updateThreadOnNewMessage } from "@/repositories/threads";
 import { acquireProviderForModel } from "@/services/ai-providers";
 import {
   buildContextFromChunks,
@@ -54,8 +54,7 @@ function mapChatErrorMessage(rawMessage: string): string {
 
   if (
     normalized.includes("unauthorized") ||
-    normalized.includes("invalid token") ||
-    normalized.includes("token")
+    normalized.includes("invalid token")
   ) {
     return serverTexts.errors.unauthorized;
   }
@@ -138,6 +137,8 @@ const app = new Hono<AuthEnv>()
   .post("/", zValidator("json", ChatRequestSchema), async (c) => {
     let assistantMessageId: number | null = null;
     let releaseProvider: (() => void) | null = null;
+    // Set once the stream owns the lease; its onFinish then releases it
+    let leaseHandedToStream = false;
     try {
       const { messages, modelId, threadId } = c.req.valid("json");
       const uiMessages = messages as unknown as MyUIMessage[];
@@ -149,6 +150,17 @@ const app = new Hono<AuthEnv>()
           status: 400,
           code: "INVALID_REQUEST",
           message: serverTexts.chat.lastMessageMustBeUser,
+        });
+      }
+
+      // The thread must exist and belong to the user
+      const thread = await getThread(threadId, user.id);
+      if (!thread) {
+        return sendError(c, {
+          status: 404,
+          code: "THREAD_NOT_FOUND",
+          message: serverTexts.chat.threadNotFound,
+          details: { threadId },
         });
       }
 
@@ -275,6 +287,7 @@ const app = new Hono<AuthEnv>()
         });
       };
 
+      let streamFailed = false;
       const result = streamText({
         model: wrapLanguageModel({
           model: providerModel,
@@ -286,6 +299,13 @@ const app = new Hono<AuthEnv>()
         messages: modelMessages,
         system: ragSystem,
         providerOptions: {},
+        onError: ({ error }) => {
+          streamFailed = true;
+          logger.error("Chat stream failed", error, {
+            threadId,
+            userId: user.id,
+          });
+        },
         onChunk: ({ chunk }) => {
           if (chunk.type === "text-delta") {
             accumulatedText += chunk.text;
@@ -304,7 +324,7 @@ const app = new Hono<AuthEnv>()
       // Ensure stream runs to completion and onFinish is triggered even if client disconnects
       result.consumeStream();
 
-      return result.toUIMessageStreamResponse({
+      const response = result.toUIMessageStreamResponse({
         originalMessages: uiMessages,
         sendReasoning: true,
         onFinish: async ({ responseMessage }) => {
@@ -316,23 +336,21 @@ const app = new Hono<AuthEnv>()
             await updateMessage({
               id: assistantMessage.id,
               parts: responseMessage.parts as JsonValue,
-              status: "finished",
+              status: streamFailed ? "errored" : "finished",
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());
-            releaseProvider?.();
-            releaseProvider = null;
           } catch {
             await markMessageErrored(assistantMessageId);
+          } finally {
             releaseProvider?.();
             releaseProvider = null;
-            return;
           }
         },
       });
+      leaseHandedToStream = true;
+      return response;
     } catch (error) {
       await markMessageErrored(assistantMessageId);
-      releaseProvider?.();
-      releaseProvider = null;
       let message: string = serverTexts.chat.genericFailure;
       if (error instanceof Error) {
         message = mapChatErrorMessage(error.message);
@@ -350,6 +368,12 @@ const app = new Hono<AuthEnv>()
         code: "INTERNAL_SERVER_ERROR",
         message,
       });
+    } finally {
+      // Every path that did not start the stream must free the lease
+      if (!leaseHandedToStream) {
+        releaseProvider?.();
+        releaseProvider = null;
+      }
     }
   });
 

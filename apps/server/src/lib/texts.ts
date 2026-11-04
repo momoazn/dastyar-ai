@@ -27,6 +27,7 @@ export const serverTexts = {
     providerUnavailable:
       "سرویس مدل در دسترس نیست. لطفاً اتصال Ollama را بررسی کرده و دوباره تلاش کنید.",
     saveUserMessageFailed: "ذخیره پیام کاربر ناموفق بود.",
+    threadNotFound: "گفتگوی مورد نظر یافت نشد.",
   },
   config: {
     validation: {
