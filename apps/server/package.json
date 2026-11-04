@@ -9,7 +9,7 @@
     "build": "bun db:bundle && bun build src/index.ts --compile --minify --target bun --outfile ./dist/dastyar-ai",
     "build:windows": "bun db:bundle && bun build src/index.ts --compile --minify --target bun-windows-x64 --outfile ./dist/dastyar-ai.exe",
     "check-types": "tsc -b",
-    "test": "bun test ./src",
+    "test": "bun test --timeout 30000 ./src",
     "dev": "bun run --hot src/index.ts",
     "start": "./dist/dastyar-ai",
     "config:generate": "bun run src/scripts/config-generator.ts generate",

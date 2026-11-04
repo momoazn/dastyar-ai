@@ -7,10 +7,12 @@ import {
   countUsers,
   createUser,
   hashPassword,
+  UsernameTakenError,
   updateUsername as updateUsernameRepo,
   updateUserPassword as updateUserPasswordRepo,
   usernameExists,
   verifyUserCredentials,
+  WrongPasswordError,
 } from "@/repositories/auth";
 import { recordUserIp } from "@/repositories/user-ips";
 import { generateJwtToken } from "@/services/auth";
@@ -39,6 +41,12 @@ const updatePasswordSchema = z.object({
   newPassword: z.string().min(6),
 });
 
+const usernameTakenError = () =>
+  new ORPCError("USERNAME_ALREADY_EXISTS", {
+    message: serverTexts.auth.usernameExists,
+    status: 400,
+  });
+
 export const authProcedures = {
   register: publicProcedure
     .input(registerSchema)
@@ -62,6 +70,11 @@ export const authProcedures = {
         username,
         password: hashedPassword,
         role,
+      }).catch((error) => {
+        if (error instanceof UsernameTakenError) {
+          throw usernameTakenError();
+        }
+        throw error;
       });
 
       const clientIp = getClientIpFromContext(context.honoContext);
@@ -145,7 +158,14 @@ export const authProcedures = {
         });
       }
 
-      const updatedUser = await updateUsernameRepo(userId, newUsername);
+      const updatedUser = await updateUsernameRepo(userId, newUsername).catch(
+        (error) => {
+          if (error instanceof UsernameTakenError) {
+            throw usernameTakenError();
+          }
+          throw error;
+        }
+      );
       logger.info("Username updated", { userId, newUsername });
 
       const token = generateJwtToken({
@@ -176,7 +196,7 @@ export const authProcedures = {
         return { success: true };
       } catch (error) {
         const errorMessage = (error as Error)?.message || "";
-        if (errorMessage.includes("رمز عبور فعلی اشتباه است.")) {
+        if (error instanceof WrongPasswordError) {
           throw new ORPCError("INVALID_CREDENTIALS", {
             message: serverTexts.auth.wrongCurrentPassword,
             status: 401,

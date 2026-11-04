@@ -5,10 +5,12 @@ import {
   findUserById,
   findUserByUsername,
   hashPassword,
+  UsernameTakenError,
   updateUsername,
   updateUserPassword,
   usernameExists,
   verifyUserCredentials,
+  WrongPasswordError,
 } from "./auth";
 
 // Helper function to clean up test data
@@ -19,6 +21,18 @@ async function cleanupTestUsers() {
     // Ignore errors during cleanup
   }
 }
+
+describe("createUser unique constraint", () => {
+  it("maps a duplicate username to UsernameTakenError", async () => {
+    await initializeDatabase();
+    await db.delete(users);
+    const password = await hashPassword("password123");
+    await createUser({ username: "dupuser", password, role: "user" });
+    await expect(
+      createUser({ username: "dupuser", password, role: "user" })
+    ).rejects.toBeInstanceOf(UsernameTakenError);
+  });
+});
 
 describe("Auth Repository", () => {
   beforeAll(async () => {
@@ -281,8 +295,8 @@ describe("Auth Repository", () => {
         role: "user",
       });
 
-      await expect(updateUsername(user2.id, "existing")).rejects.toThrow(
-        "کد ملی قبلاً استفاده شده است."
+      await expect(updateUsername(user2.id, "existing")).rejects.toBeInstanceOf(
+        UsernameTakenError
       );
     });
 
@@ -348,7 +362,7 @@ describe("Auth Repository", () => {
 
       await expect(
         updateUserPassword(user.id, "wrongpassword", "newpassword")
-      ).rejects.toThrow("رمز عبور فعلی اشتباه است.");
+      ).rejects.toBeInstanceOf(WrongPasswordError);
     });
 
     it("should throw error for non-existent user", async () => {
