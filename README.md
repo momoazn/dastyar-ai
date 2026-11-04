@@ -2,6 +2,16 @@
 
 A local-first, Persian-first AI assistant: chat, document Q&A, translation, summaries, code help, image generation, and speech-to-text. It runs on your own machine and talks to local model servers.
 
+![Chat with a local model](docs/screenshots/chat.png)
+
+| Home | Chat, dark theme |
+| --- | --- |
+| ![Home page with the tool list](docs/screenshots/home.png) | ![Chat in the dark theme](docs/screenshots/chat-dark.png) |
+
+<p align="center"><img src="docs/screenshots/mobile.png" alt="Home page and chat on a phone" width="480"></p>
+
+The interface is in Persian with a right-to-left layout. The screenshots use a 4B model on a local Ollama server.
+
 ## What it does
 
 - **Chat.** Streaming chat with saved threads. The system prompt changes with the size of the selected model (small models get a shorter prompt). Answers default to Persian when the user's language is unclear.
