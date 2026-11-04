@@ -54,10 +54,9 @@ export async function getWhisperModels(): Promise<ModelInfo[]> {
   const url = `${whisperApiBaseUrl}/models`;
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), env.WHISPER_TIMEOUT_MS);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(env.WHISPER_TIMEOUT_MS),
+    });
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }
@@ -131,9 +130,6 @@ export async function transcribe({
   }
   const audioData = new Uint8Array(audioBuffer);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), env.WHISPER_TIMEOUT_MS);
-
   try {
     const result = await aiTranscribe({
       model: whisperProvider.transcription(transcriptionModel),
@@ -144,10 +140,8 @@ export async function transcribe({
           ...(initialPrompt && { prompt: initialPrompt }),
         },
       },
-      abortSignal: controller.signal,
+      abortSignal: AbortSignal.timeout(env.WHISPER_TIMEOUT_MS),
     });
-
-    clearTimeout(timer);
 
     const output = (result.text ?? "").trim();
 
@@ -157,7 +151,6 @@ export async function transcribe({
 
     return normalized;
   } catch (err) {
-    clearTimeout(timer);
     const error =
       err instanceof Error ? err : new Error(String(err ?? "Unknown error"));
     logger.error("Whisper transcription request failed", error, {
@@ -179,7 +172,11 @@ function mapTranscriptionError(message: string): Error {
   const lowerMsg = message.toLowerCase();
 
   // Explicit timeout/abort handling so users know to adjust server config
-  if (lowerMsg.includes("timeout") || lowerMsg.includes("abort")) {
+  if (
+    lowerMsg.includes("timeout") ||
+    lowerMsg.includes("timed out") ||
+    lowerMsg.includes("abort")
+  ) {
     return new Error(serverTexts.speech.timeout);
   }
 

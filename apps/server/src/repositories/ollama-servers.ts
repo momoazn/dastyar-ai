@@ -177,33 +177,38 @@ export async function listOllamaServerModelIdentifiers(
   return rows.map((row) => row.modelIdentifier);
 }
 
-export async function replaceOllamaServerModels(
+export function replaceOllamaServerModels(
   serverId: number,
   modelIdentifiers: string[]
 ): Promise<void> {
   const deduped = dedupeStrings(modelIdentifiers);
 
-  await db
-    .delete(ollamaServerModels)
-    .where(eq(ollamaServerModels.serverId, serverId))
-    .run();
+  // One transaction, so a reader never sees the server with no models.
+  // A throw inside the executor rejects the promise.
+  return new Promise((resolve) => {
+    db.transaction((tx) => {
+      tx.delete(ollamaServerModels)
+        .where(eq(ollamaServerModels.serverId, serverId))
+        .run();
 
-  if (deduped.length === 0) {
-    return;
-  }
+      if (deduped.length === 0) {
+        return;
+      }
 
-  await db
-    .insert(ollamaServerModels)
-    .values(
-      deduped.map((modelIdentifier) => ({
-        serverId,
-        modelIdentifier,
-        lastSeenAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }))
-    )
-    .run();
+      tx.insert(ollamaServerModels)
+        .values(
+          deduped.map((modelIdentifier) => ({
+            serverId,
+            modelIdentifier,
+            lastSeenAt: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }))
+        )
+        .run();
+    });
+    resolve();
+  });
 }
 
 export async function getEnabledOllamaServersForModel(
