@@ -12,6 +12,7 @@
 
 import { loadRootConfig, serverUrl, whisperUrl } from "./app-config";
 
+const TRAILING_SLASHES_REGEX = /\/+$/;
 const appConfig = loadRootConfig();
 
 const services = [
@@ -33,21 +34,24 @@ async function checkService(
   endpoint: string
 ): Promise<boolean> {
   try {
-    const response = await fetch(`${url}${endpoint}`, {
-      method: "GET",
-      signal: AbortSignal.timeout(3000),
-    });
+    const response = await fetch(
+      `${url.replace(TRAILING_SLASHES_REGEX, "")}${endpoint}`,
+      {
+        method: "GET",
+        signal: AbortSignal.timeout(3000),
+      }
+    );
 
     if (response.ok) {
-      console.log(`✅ ${name}`);
+      console.log(`[OK]   ${name}`);
       console.log(`   ${url} - Running`);
       return true;
     }
-    console.log(`⚠️  ${name}`);
+    console.log(`[WARN] ${name}`);
     console.log(`   ${url} - Responded with status ${response.status}`);
     return false;
   } catch {
-    console.log(`❌ ${name}`);
+    console.log(`[FAIL] ${name}`);
     console.log(`   ${url} - Not running`);
     return false;
   }
@@ -55,7 +59,7 @@ async function checkService(
 
 async function main() {
   console.log("============================================================");
-  console.log("📊 DASTYAR AI - SERVICE STATUS");
+  console.log("DASTYAR AI - SERVICE STATUS");
   console.log("============================================================");
   console.log("");
 
@@ -71,9 +75,9 @@ async function main() {
   const allRunning = results.every((r) => r);
 
   if (allRunning) {
-    console.log("✅ All services are running!");
+    console.log("All services are running!");
   } else {
-    console.log("⚠️  Some services are not running");
+    console.log("Some services are not running");
     console.log("");
     console.log("To start services:");
     console.log("  bun scripts/start.ts");

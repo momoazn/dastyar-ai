@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import JSZip from "jszip";
+import { REPO_ROOT } from "./project-paths";
 
 const projectName = "dastyar-ai";
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -115,6 +116,8 @@ function getArchiveFiles(): string[] {
 }
 
 async function main(): Promise<void> {
+  // Paths below are relative to the repo root, whatever the caller's cwd is.
+  process.chdir(REPO_ROOT);
   mkdirSync(releaseDir, { recursive: true });
 
   const trackedFiles = getArchiveFiles();

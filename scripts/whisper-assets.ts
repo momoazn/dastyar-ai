@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  renameSync,
   rmSync,
   statSync,
 } from "node:fs";
@@ -183,19 +184,21 @@ async function extractTarArchive(
   rmSync(tmpDir, { recursive: true, force: true });
   ensureDir(tmpDir);
 
-  await runCommand("tar", ["-xJf", archivePath, "-C", tmpDir]);
+  try {
+    await runCommand("tar", ["-xJf", archivePath, "-C", tmpDir]);
 
-  const extracted = findExtractedBinary(tmpDir);
-  if (!extracted) {
-    throw new Error("ffmpeg binary not found in tar archive");
+    const extracted = findExtractedBinary(tmpDir);
+    if (!extracted) {
+      throw new Error("ffmpeg binary not found in tar archive");
+    }
+
+    copyFileSync(extracted, outputPath);
+    if (!outputPath.endsWith(".exe")) {
+      chmodSync(outputPath, 0o755);
+    }
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
   }
-
-  copyFileSync(extracted, outputPath);
-  if (!outputPath.endsWith(".exe")) {
-    chmodSync(outputPath, 0o755);
-  }
-
-  rmSync(tmpDir, { recursive: true, force: true });
 }
 
 async function extractZipArchive(
@@ -224,28 +227,56 @@ async function extractZipArchive(
   }
 }
 
+// ponytail: one total time limit per download. Upgrade path: a stall timer
+// that resets on each chunk.
+const DOWNLOAD_TIMEOUT_MS = 60 * 60 * 1000;
+
 async function downloadToFile(url: string, outputPath: string): Promise<void> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download ${url}: ${response.statusText}`);
-  }
+  // Write to a temp file and rename at the end. A failed or cut download
+  // must not leave a file that later runs treat as complete.
+  const partPath = `${outputPath}.part`;
+  rmSync(partPath, { force: true });
 
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new Error(`Failed to read response body for ${url}`);
-  }
-
-  const writer = Bun.file(outputPath).writer();
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      writer.write(value);
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download ${url}: ${response.status} ${response.statusText}`
+      );
     }
-  } finally {
-    await writer.end();
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error(`Failed to read response body for ${url}`);
+    }
+
+    const expected = Number(response.headers.get("content-length") ?? 0);
+    let received = 0;
+    const writer = Bun.file(partPath).writer();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        received += value.byteLength;
+        writer.write(value);
+      }
+    } finally {
+      await writer.end();
+    }
+
+    if (expected > 0 && received !== expected) {
+      throw new Error(
+        `Incomplete download of ${url}: got ${received} of ${expected} bytes`
+      );
+    }
+    renameSync(partPath, outputPath);
+  } catch (error) {
+    rmSync(partPath, { force: true });
+    throw error;
   }
 }
 

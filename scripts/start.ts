@@ -13,19 +13,27 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync } from "node:fs";
 import { join } from "node:path";
-import { loadRootConfig, serverUrl, whisperUrl } from "./app-config";
+import {
+  loadRootConfig,
+  portFromUrl,
+  serverUrl,
+  whisperUrl,
+} from "./app-config";
 
 const isWindows = process.platform === "win32";
 const DIST = join(import.meta.dir, "../dist");
+const LOG_DIR = join(DIST, "logs");
+const READY_TIMEOUT_MS = 30_000;
+const POLL_MS = 500;
 const appConfig = loadRootConfig();
 
 const services = {
   whisper: {
     name: "Whisper API",
     bin: isWindows ? "whisper.exe" : "whisper",
-    port: Number(new URL(appConfig.WHISPER_SERVER_URL).port || "80"),
+    port: portFromUrl(appConfig.WHISPER_SERVER_URL),
     url: whisperUrl(appConfig),
   },
   server: {
@@ -41,7 +49,9 @@ type ServiceName = keyof typeof services;
 function checkBinary(service: ServiceName): boolean {
   const binPath = join(DIST, services[service].bin);
   if (!existsSync(binPath)) {
-    console.error(`❌ ${services[service].name} binary not found: ${binPath}`);
+    console.error(
+      `ERROR: ${services[service].name} binary not found: ${binPath}`
+    );
     console.error("");
     console.error("Please build the project first:");
     console.error("  bun run build");
@@ -54,92 +64,127 @@ async function checkPort(port: number): Promise<boolean> {
   try {
     const response = await fetch(`http://localhost:${port}`, {
       method: "HEAD",
+      signal: AbortSignal.timeout(2000),
     });
-    return response.ok || response.status < 500;
+    return response.status < 500;
   } catch {
     return false;
   }
 }
 
-async function startService(service: ServiceName): Promise<void> {
+/** Start the binary detached. Resolves with how it ended up. */
+function launch(service: ServiceName): {
+  exited: Promise<string>;
+  logPath: string;
+} {
+  const { bin } = services[service];
+  mkdirSync(LOG_DIR, { recursive: true });
+  const logPath = join(LOG_DIR, `${service}.log`);
+  const logFd = openSync(logPath, "a");
+
+  const child = spawn(join(DIST, bin), [], {
+    cwd: DIST,
+    detached: true,
+    stdio: ["ignore", logFd, logFd],
+    env: process.env,
+    windowsHide: true,
+  });
+
+  // The child has its own copy of the descriptor.
+  closeSync(logFd);
+
+  const exited = new Promise<string>((resolve) => {
+    child.once("error", (error) =>
+      resolve(`failed to start: ${error.message}`)
+    );
+    child.once("exit", (code, signal) =>
+      resolve(`exited early (code ${code}, signal ${signal})`)
+    );
+  });
+  child.unref();
+  return { exited, logPath };
+}
+
+async function startService(service: ServiceName): Promise<boolean> {
   const { name, bin, port, url } = services[service];
 
-  console.log(`🚀 Starting ${name}...`);
+  console.log(`Starting ${name}...`);
   console.log(`   Binary: ${bin}`);
   console.log(`   Port: ${port}`);
 
-  // Check if already running
   if (await checkPort(port)) {
-    console.log(`   ⚠️  Already running at ${url}`);
+    console.log(`   Already running at ${url}`);
     console.log("");
-    return;
+    return true;
   }
 
-  // Check binary exists
   if (!checkBinary(service)) {
-    process.exit(1);
+    return false;
   }
 
-  const binPath = join(DIST, bin);
+  const { exited, logPath } = launch(service);
 
-  // Start the service in the background
-  const child = spawn(binPath, [], {
-    cwd: DIST,
-    detached: true,
-    stdio: "ignore",
-    env: process.env,
-  });
-
-  child.unref();
-
-  // Wait a moment and check if it started
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  if (await checkPort(port)) {
-    console.log(`   ✅ Started successfully at ${url}`);
-  } else {
-    console.log("   ⚠️  Service started but not responding yet");
-    console.log("   Check logs for details");
+  const deadline = Date.now() + READY_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const early = await Promise.race([
+      exited,
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), POLL_MS)),
+    ]);
+    if (early) {
+      console.error(`   ERROR: ${name} ${early}`);
+      console.error(`   Log: ${logPath}`);
+      console.log("");
+      return false;
+    }
+    if (await checkPort(port)) {
+      console.log(`   Started at ${url}`);
+      console.log(`   Log: ${logPath}`);
+      console.log("");
+      return true;
+    }
   }
 
+  console.error(
+    `   ERROR: ${name} did not respond within ${READY_TIMEOUT_MS / 1000}s`
+  );
+  console.error(`   Log: ${logPath}`);
   console.log("");
+  return false;
 }
 
-async function main() {
+async function main(): Promise<number> {
   const arg = process.argv[2];
 
+  if (arg && arg !== "whisper" && arg !== "server") {
+    console.error(`Unknown service "${arg}". Use "whisper" or "server".`);
+    return 2;
+  }
+
   console.log("============================================================");
-  console.log("🚀 DASTYAR AI - SERVICE STARTER");
+  console.log("DASTYAR AI - SERVICE STARTER");
   console.log("============================================================");
   console.log("");
 
-  if (arg === "whisper") {
-    await startService("whisper");
-  } else if (arg === "server") {
-    await startService("server");
-  } else {
-    // Start both services
-    console.log("Starting all services...");
-    console.log("");
+  const targets: ServiceName[] = arg ? [arg] : ["whisper", "server"];
+  for (const target of targets) {
+    if (!(await startService(target))) {
+      return 1;
+    }
+  }
 
-    await startService("whisper");
-    await startService("server");
-
-    console.log("============================================================");
-    console.log("✅ All services started!");
-    console.log("============================================================");
+  console.log("============================================================");
+  console.log("Services started.");
+  console.log("============================================================");
+  if (!arg) {
     console.log("");
     console.log("Services:");
-    console.log(`  • Whisper API: ${services.whisper.url}`);
-    console.log(`  • Main Server: ${services.server.url}`);
-    console.log("");
-    console.log("Open your browser:");
-    console.log(`  ${services.server.url}`);
+    console.log(`  - Whisper API: ${services.whisper.url}`);
+    console.log(`  - Main Server: ${services.server.url}`);
     console.log("");
     console.log("To stop services:");
     console.log("  bun scripts/stop.ts");
-    console.log("============================================================");
   }
+  return 0;
 }
 
-main();
+process.exit(await main());

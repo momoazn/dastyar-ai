@@ -3,8 +3,12 @@
 /**
  * Stop Dastyar AI Services
  *
- * This script stops both the Whisper API server and the main Dastyar AI server.
- * Works cross-platform on Windows, macOS, and Linux.
+ * Stops the Whisper API server and the main Dastyar AI server.
+ * Works on Windows, macOS, and Linux.
+ *
+ * It finds the process that listens on the configured port. It stops that
+ * process only if its name matches the service binary. It sends a normal stop
+ * signal first, then forces the stop after a short wait.
  *
  * Usage:
  *   bun scripts/stop.ts           # Stop both services
@@ -12,129 +16,196 @@
  *   bun scripts/stop.ts server    # Stop only main server
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import { basename } from "node:path";
+import { loadRootConfig, portFromUrl } from "./app-config";
 
 const isWindows = process.platform === "win32";
-
-// Regex patterns at top level for performance
 const WHITESPACE_REGEX = /\s+/;
 const NUMERIC_REGEX = /^\d+$/;
+const QUOTED_FIRST_FIELD_REGEX = /^"([^"]+)"/;
+const GRACE_MS = 5000;
+const POLL_MS = 200;
+
+const appConfig = loadRootConfig();
 
 const services = {
   whisper: {
     name: "Whisper API",
-    processName: isWindows ? "whisper.exe" : "whisper",
-    port: 8080,
+    bin: isWindows ? "whisper.exe" : "whisper",
+    port: portFromUrl(appConfig.WHISPER_SERVER_URL),
   },
   server: {
     name: "Dastyar AI Server",
-    processName: isWindows ? "dastyar-ai.exe" : "dastyar-ai",
-    port: 3000,
+    bin: isWindows ? "dastyar-ai.exe" : "dastyar-ai",
+    port: appConfig.PORT,
   },
 };
 
 type ServiceName = keyof typeof services;
 
-function killProcess(processName: string): boolean {
-  try {
-    if (isWindows) {
-      // Windows: Use taskkill
-      execSync(`taskkill /F /IM ${processName}`, {
-        stdio: "ignore",
-      });
-    } else {
-      // Unix: Use pkill
-      execSync(`pkill -f ${processName}`, {
-        stdio: "ignore",
-      });
-    }
-    return true;
-  } catch {
-    return false;
-  }
+function run(cmd: string, args: string[]): string {
+  return execFileSync(cmd, args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
 }
 
-function killByPort(port: number): boolean {
+/** PIDs that listen on a TCP port. Empty when none or when the lookup fails. */
+function listenerPids(port: number): number[] {
   try {
+    const pids = new Set<number>();
     if (isWindows) {
-      // Windows: Find PID and kill
-      const findCmd = `netstat -ano | findstr :${port}`;
-      const output = execSync(findCmd, { encoding: "utf8" });
-      const lines = output
-        .split("\n")
-        .filter((line) => line.includes("LISTENING"));
-
-      for (const line of lines) {
+      for (const line of run("netstat", ["-ano", "-p", "TCP"]).split("\n")) {
         const parts = line.trim().split(WHITESPACE_REGEX);
-        const pid = parts.at(-1);
-        if (pid && NUMERIC_REGEX.test(pid)) {
-          execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
+        // Proto, Local, Foreign, State, PID
+        const local = parts[1] ?? "";
+        const pid = parts.at(-1) ?? "";
+        if (
+          parts[3] === "LISTENING" &&
+          local.endsWith(`:${port}`) &&
+          NUMERIC_REGEX.test(pid)
+        ) {
+          pids.add(Number(pid));
         }
       }
     } else {
-      // Unix: Use lsof
-      const findCmd = `lsof -ti:${port}`;
-      const output = execSync(findCmd, { encoding: "utf8" }).trim();
-      if (output) {
-        execSync(`kill -9 ${output}`, { stdio: "ignore" });
+      const out = run("lsof", ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-t"]);
+      for (const pid of out.split("\n")) {
+        if (NUMERIC_REGEX.test(pid.trim())) {
+          pids.add(Number(pid.trim()));
+        }
       }
     }
-    return true;
+    return [...pids];
   } catch {
-    return false;
+    // lsof exits 1 when nothing listens; netstat failure is treated the same.
+    return [];
   }
 }
 
-function stopService(service: ServiceName): void {
-  const { name, processName, port } = services[service];
+function processName(pid: number): string | null {
+  try {
+    if (isWindows) {
+      const out = run("tasklist", [
+        "/FI",
+        `PID eq ${pid}`,
+        "/FO",
+        "CSV",
+        "/NH",
+      ]).trim();
+      const match = out.match(QUOTED_FIRST_FIELD_REGEX);
+      return match ? match[1] : null;
+    }
+    const out = run("ps", ["-p", String(pid), "-o", "comm="]).trim();
+    return out ? basename(out) : null;
+  } catch {
+    return null;
+  }
+}
 
-  console.log(`🛑 Stopping ${name}...`);
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    // EPERM means the process exists but we may not signal it.
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
 
-  let stopped = false;
+function terminate(pid: number, force: boolean): void {
+  try {
+    if (isWindows) {
+      run(
+        "taskkill",
+        force ? ["/F", "/T", "/PID", String(pid)] : ["/PID", String(pid)]
+      );
+    } else {
+      process.kill(pid, force ? "SIGKILL" : "SIGTERM");
+    }
+  } catch {
+    // Already gone, or no permission. The caller checks liveness afterwards.
+  }
+}
 
-  // Try to kill by process name
-  if (killProcess(processName)) {
-    console.log("   ✅ Stopped by process name");
-    stopped = true;
+async function waitForExit(pid: number, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (!isAlive(pid)) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+  }
+  return !isAlive(pid);
+}
+
+async function stopPid(pid: number): Promise<boolean> {
+  terminate(pid, false);
+  if (await waitForExit(pid, GRACE_MS)) {
+    return true;
+  }
+  terminate(pid, true);
+  return await waitForExit(pid, GRACE_MS);
+}
+
+async function stopService(service: ServiceName): Promise<boolean> {
+  const { name, bin, port } = services[service];
+
+  console.log(`Stopping ${name}...`);
+
+  const pids = listenerPids(port);
+  if (pids.length === 0) {
+    console.log("   Not running or already stopped");
+    console.log("");
+    return true;
   }
 
-  // Try to kill by port as backup
-  if (!stopped && killByPort(port)) {
-    console.log(`   ✅ Stopped by port ${port}`);
-    stopped = true;
-  }
-
-  if (!stopped) {
-    console.log("   ℹ️  Not running or already stopped");
+  let ok = true;
+  for (const pid of pids) {
+    const actual = processName(pid);
+    if (actual?.toLowerCase() !== bin.toLowerCase()) {
+      console.log(
+        `   Skipped PID ${pid}: it is "${actual ?? "unknown"}", not "${bin}"`
+      );
+      ok = false;
+      continue;
+    }
+    if (await stopPid(pid)) {
+      console.log(`   Stopped PID ${pid}`);
+    } else {
+      console.log(`   Could not stop PID ${pid}`);
+      ok = false;
+    }
   }
 
   console.log("");
+  return ok;
 }
 
-function main() {
+async function main(): Promise<number> {
   const arg = process.argv[2];
 
+  if (arg && arg !== "whisper" && arg !== "server") {
+    console.error(`Unknown service "${arg}". Use "whisper" or "server".`);
+    return 2;
+  }
+
   console.log("============================================================");
-  console.log("🛑 DASTYAR AI - SERVICE STOPPER");
+  console.log("DASTYAR AI - SERVICE STOPPER");
   console.log("============================================================");
   console.log("");
 
-  if (arg === "whisper") {
-    stopService("whisper");
-  } else if (arg === "server") {
-    stopService("server");
-  } else {
-    // Stop both services
-    console.log("Stopping all services...");
-    console.log("");
-
-    stopService("server");
-    stopService("whisper");
-
-    console.log("============================================================");
-    console.log("✅ All services stopped!");
-    console.log("============================================================");
+  const targets: ServiceName[] = arg ? [arg] : ["server", "whisper"];
+  let ok = true;
+  for (const target of targets) {
+    ok = (await stopService(target)) && ok;
   }
+
+  console.log("============================================================");
+  console.log(ok ? "Done." : "Some services were not stopped.");
+  console.log("============================================================");
+  return ok ? 0 : 1;
 }
 
-main();
+process.exit(await main());

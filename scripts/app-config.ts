@@ -27,3 +27,11 @@ export function serverUrl(config = loadRootConfig()): string {
 export function whisperUrl(config = loadRootConfig()): string {
   return config.WHISPER_SERVER_URL;
 }
+
+export function portFromUrl(url: string): number {
+  const parsed = new URL(url);
+  if (parsed.port) {
+    return Number(parsed.port);
+  }
+  return parsed.protocol === "https:" ? 443 : 80;
+}
