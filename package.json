@@ -5,9 +5,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/momoazn/persian-ai-assistant.git"
+    "url": "git+https://github.com/momoazn/dastyar-ai.git"
   },
-  "homepage": "https://github.com/momoazn/persian-ai-assistant#readme",
+  "homepage": "https://github.com/momoazn/dastyar-ai#readme",
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
     "bun-types": "^1.3.1",
