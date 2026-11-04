@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { cn, debounce, detectTextDirection, throttle } from "./utils";
+import {
+  cn,
+  debounce,
+  detectTextDirection,
+  formatModelName,
+  makeTitle,
+  throttle,
+} from "./utils";
 
 describe("Utils", () => {
   describe("cn (classname utility)", () => {
@@ -227,5 +234,38 @@ describe("Utils", () => {
       throttledFn(); // Call 2
       expect(callCount).toBe(2);
     });
+  });
+
+  describe("formatModelName", () => {
+    it("drops the Hugging Face prefix and the latest tag", () => {
+      expect(formatModelName("hf.co/user/alduin-4b-GGUF:latest")).toBe(
+        "alduin-4b-GGUF"
+      );
+    });
+
+    it("keeps explicit tags and plain names", () => {
+      expect(formatModelName("gemma3:270m")).toBe("gemma3:270m");
+      expect(formatModelName("qwen3")).toBe("qwen3");
+    });
+  });
+});
+
+describe("makeTitle", () => {
+  it("keeps short text and collapses whitespace", () => {
+    expect(makeTitle("  سلام   دنیا \n")).toBe("سلام دنیا");
+  });
+
+  it("cuts long text at a word boundary", () => {
+    const text =
+      "چطور می‌توانم یک فایل پی‌دی‌اف بزرگ را خلاصه کنم و نکات اصلی را بگیرم";
+    const title = makeTitle(text);
+    expect(title.endsWith("…")).toBe(true);
+    expect(title.length).toBeLessThanOrEqual(41);
+    expect(text.startsWith(title.slice(0, -1))).toBe(true);
+    expect(text[title.length - 1]).toBe(" ");
+  });
+
+  it("hard-cuts one long word", () => {
+    expect(makeTitle("a".repeat(50), 10)).toBe(`${"a".repeat(10)}…`);
   });
 });

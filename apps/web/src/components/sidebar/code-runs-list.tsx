@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Bug, Code, FileText, Shield } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fa } from "@/lib/texts";
+import { makeTitle } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 
 export function CodeRunsList() {
@@ -56,8 +57,7 @@ export function CodeRunsList() {
       return mode;
     }
 
-    const firstTenChars = preview.slice(0, 10);
-    return preview.length > 10 ? `${firstTenChars}...` : firstTenChars;
+    return makeTitle(preview, 30);
   };
 
   return (
