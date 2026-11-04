@@ -35,5 +35,14 @@ jobs:
       - name: Test
         run: bun run test
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/whisper/go.mod
+
+      # Only packages that do not use CGo. The rest needs whisper.cpp.
+      - name: Test whisper (Go)
+        working-directory: apps/whisper
+        run: go test ./internal/stt ./internal/config ./internal/audio ./internal/handler
+
       - name: Build web
         run: bun run --cwd apps/web build
