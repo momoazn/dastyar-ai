@@ -1,11 +1,15 @@
 package audio
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"whisper/internal/stt"
 )
 
 // getFFmpegPath returns the path to ffmpeg, trying multiple sources in order
@@ -30,47 +34,62 @@ func getFFmpegPath() (string, error) {
 	return path, nil
 }
 
-// ConvertToWAV converts an audio file to 16kHz mono WAV format using ffmpeg
-// Returns the path to the converted file and an error if conversion fails
-func ConvertToWAV(inputPath string) (string, error) {
-	// Get ffmpeg path (embedded or system)
+// maxFFmpegOutput limits how much ffmpeg output goes into an error message.
+const maxFFmpegOutput = 2048
+
+// convertTimeout is the hard limit for one ffmpeg run.
+const convertTimeout = 10 * time.Minute
+
+// ConvertToWAV converts an audio file to 16kHz mono 16-bit WAV using ffmpeg.
+// It returns the path to the converted file. On error no output file is left.
+// ffmpeg runs without a shell, and the input path is made absolute so it can
+// never be read as an option.
+func ConvertToWAV(ctx context.Context, inputPath string) (string, error) {
 	ffmpegPath, err := getFFmpegPath()
 	if err != nil {
 		return "", err
 	}
 
-	// Check if input file exists
-	if _, err := os.Stat(inputPath); os.IsNotExist(err) {
+	absInput, err := filepath.Abs(inputPath)
+	if err != nil {
+		return "", err
+	}
+	if _, err := os.Stat(absInput); err != nil {
 		return "", fmt.Errorf("input file not found: %s", inputPath)
 	}
 
-	// Create output path
-	ext := filepath.Ext(inputPath)
-	outputPath := strings.TrimSuffix(inputPath, ext) + "_converted.wav"
+	outputPath := strings.TrimSuffix(absInput, filepath.Ext(absInput)) + "_converted.wav"
 
-	// Build ffmpeg command
-	// -i: input file
-	// -ar 16000: set sample rate to 16kHz
-	// -ac 1: set to mono (1 channel)
-	// -y: overwrite output file if exists
-	// -loglevel error: only show errors
-	cmd := exec.Command(ffmpegPath,
-		"-i", inputPath,
+	ctx, cancel := context.WithTimeout(ctx, convertTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, ffmpegPath,
+		"-nostdin",
+		"-loglevel", "error",
+		"-i", absInput,
+		"-vn",
 		"-ar", "16000",
 		"-ac", "1",
+		"-c:a", "pcm_s16le",
+		"-f", "wav",
 		"-y",
-		"-loglevel", "error",
 		outputPath,
 	)
 
-	// Run the conversion
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("ffmpeg conversion failed: %w. Output: %s", err, string(output))
+		_ = os.Remove(outputPath)
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("ffmpeg conversion stopped: %w", ctx.Err())
+		}
+		msg := strings.TrimSpace(string(output))
+		if len(msg) > maxFFmpegOutput {
+			msg = msg[:maxFFmpegOutput]
+		}
+		return "", fmt.Errorf("%w: ffmpeg conversion failed: %v. Output: %s", stt.ErrInvalidInput, err, msg)
 	}
 
-	// Verify output file was created
-	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
+	if _, err := os.Stat(outputPath); err != nil {
 		return "", fmt.Errorf("converted file was not created: %s", outputPath)
 	}
 
