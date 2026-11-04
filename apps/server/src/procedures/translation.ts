@@ -7,6 +7,10 @@ import {
   type TranslationPayload,
   tones,
 } from "@/database";
+import {
+  FileValidationError,
+  validateUploadedFile,
+} from "@/lib/file-validation";
 import { translationSystemPrompt } from "@/lib/prompts";
 import { serverTexts } from "@/lib/texts";
 import {
@@ -268,6 +272,22 @@ export const translationProcedures = {
       const sourceLanguage = input.sourceLanguage as LanguageCode;
       const targetLanguage = input.targetLanguage as LanguageCode;
       const tone = input.tone as Tone;
+
+      // Only PDF files up to the standard size limit
+      try {
+        await validateUploadedFile(input.file, {
+          allowedExtensions: ["pdf"],
+          allowedMimeTypes: ["application/pdf", "application/x-pdf"],
+        });
+      } catch (error) {
+        if (error instanceof FileValidationError) {
+          throw new ORPCError("INVALID_FILE", {
+            message: error.message,
+            status: 400,
+          });
+        }
+        throw error;
+      }
 
       const stored = await saveDocumentFromFile(input.file, input.file.name);
 

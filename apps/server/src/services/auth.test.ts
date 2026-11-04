@@ -85,6 +85,31 @@ describe("Auth Service", () => {
     });
   });
 
+  describe("algorithm pinning", () => {
+    it("rejects a token signed with another HMAC algorithm", () => {
+      const token = jwt.sign(
+        { userId: 1, username: "a", role: "admin" },
+        env.JWT_SECRET,
+        {
+          algorithm: "HS512",
+        }
+      );
+      expect(() => verifyJwtToken(token)).toThrow();
+    });
+
+    it("rejects an unsigned token", () => {
+      const token = jwt.sign({ userId: 1, username: "a", role: "admin" }, "", {
+        algorithm: "none",
+      });
+      expect(() => verifyJwtToken(token)).toThrow();
+    });
+
+    it("signs with HS256", () => {
+      const token = generateJwtToken({ id: 1, username: "a", role: "user" });
+      expect(jwt.decode(token, { complete: true })?.header.alg).toBe("HS256");
+    });
+  });
+
   describe("validateJwtToken", () => {
     it("should validate token and return user when token is valid and user exists", async () => {
       const token = generateJwtToken({

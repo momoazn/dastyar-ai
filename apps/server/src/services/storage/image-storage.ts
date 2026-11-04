@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { env } from "@/config";
+import { env, resolveConfiguredPath } from "@/config";
 
 const DATA_URL_PREFIX_REGEX = /^data:image\/[a-zA-Z]+;base64,/;
 
@@ -13,7 +13,7 @@ export type SaveImageResult = {
 };
 
 function getImagesDir(): string {
-  return env.IMAGES_DIR;
+  return resolveConfiguredPath(env.IMAGES_DIR);
 }
 
 function generateFileName(): string {
@@ -76,6 +76,7 @@ export async function cleanupOrphanedFiles(
   existingFilePaths: string[]
 ): Promise<number> {
   let deletedCount = 0;
+  const keep = new Set(existingFilePaths.map((p) => path.resolve(p)));
 
   async function walkDir(dir: string): Promise<void> {
     try {
@@ -90,7 +91,7 @@ export async function cleanupOrphanedFiles(
           } catch {
             // ignore non-empty directories
           }
-        } else if (!existingFilePaths.includes(fullPath)) {
+        } else if (!keep.has(path.resolve(fullPath))) {
           try {
             await fs.unlink(fullPath);
             deletedCount++;

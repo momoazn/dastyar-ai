@@ -131,9 +131,24 @@ export async function updateModel(
   return updated;
 }
 
-export async function syncModels(
+// Runs syncs one at a time. Two parallel syncs would both see a model as
+// missing and insert it twice (the table has no unique index).
+let syncQueue: Promise<unknown> = Promise.resolve();
+
+export function syncModels(
   modelsList: { name: string; provider: LLMModelProvider }[],
   where: ModelFilter = {}
+): Promise<LLMModel[]> {
+  const run = syncQueue.then(() => syncModelsUnlocked(modelsList, where));
+  syncQueue = run.catch(() => {
+    // The caller sees the error; the queue must keep going.
+  });
+  return run;
+}
+
+async function syncModelsUnlocked(
+  modelsList: { name: string; provider: LLMModelProvider }[],
+  where: ModelFilter
 ): Promise<LLMModel[]> {
   await pruneDuplicateModels();
   const dedupedIncoming = dedupeByKey(
@@ -179,7 +194,30 @@ export async function syncModels(
   return await getModels(where);
 }
 
-async function pruneDuplicateModels(): Promise<void> {
+// Tables with a model_id foreign key. Foreign keys cascade on delete, so
+// rows must move to the kept model before a duplicate is deleted.
+const MODEL_REFERENCING_TABLES = [
+  "messages",
+  "translations",
+  "summaries",
+  "code_runs",
+] as const;
+
+export async function pruneDuplicateModels(): Promise<void> {
+  for (const table of MODEL_REFERENCING_TABLES) {
+    await db.run(
+      sql.raw(`
+        UPDATE ${table}
+        SET model_id = (
+          SELECT MIN(keep.id) FROM llm_models keep
+          JOIN llm_models dup
+            ON dup.provider = keep.provider AND dup.identifier = keep.identifier
+          WHERE dup.id = ${table}.model_id
+        )
+        WHERE model_id IS NOT NULL
+      `)
+    );
+  }
   await db.run(sql`
     DELETE FROM ${llmModels}
     WHERE id NOT IN (

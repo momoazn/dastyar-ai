@@ -3,6 +3,31 @@ import { eq, sql } from "drizzle-orm";
 import { db, type SelectUser, type UserRole, users } from "@/database";
 import { logger } from "@/lib/logger";
 
+const DUMMY_HASH = bcrypt.hashSync("dummy-password", 12);
+
+export class WrongPasswordError extends Error {
+  constructor() {
+    super("Current password is wrong");
+    this.name = "WrongPasswordError";
+  }
+}
+
+export class UsernameTakenError extends Error {
+  constructor() {
+    super("Username already taken");
+    this.name = "UsernameTakenError";
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  const message = error instanceof Error ? error.message : "";
+  return (
+    code === "SQLITE_CONSTRAINT_UNIQUE" ||
+    message.includes("UNIQUE constraint failed")
+  );
+}
+
 export async function findUserByUsername(
   username: string
 ): Promise<SelectUser | null> {
@@ -22,14 +47,22 @@ export async function findUserById(id: number): Promise<SelectUser | null> {
 export async function createUser(
   userData: Pick<SelectUser, "username" | "password" | "role">
 ): Promise<SelectUser> {
-  const result = await db
-    .insert(users)
-    .values({
-      username: userData.username,
-      password: userData.password,
-      role: (userData.role as UserRole) ?? ("user" as UserRole),
-    })
-    .returning();
+  let result: SelectUser[];
+  try {
+    result = await db
+      .insert(users)
+      .values({
+        username: userData.username,
+        password: userData.password,
+        role: (userData.role as UserRole) ?? ("user" as UserRole),
+      })
+      .returning();
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new UsernameTakenError();
+    }
+    throw error;
+  }
 
   const created = result[0];
   if (!created) {
@@ -65,6 +98,8 @@ export async function verifyUserCredentials({
       username,
       function: "verifyUserCredentials",
     });
+    // Same bcrypt cost as a real check, so timing does not reveal the username.
+    await bcrypt.compare(password, DUMMY_HASH);
     return null;
   }
 
@@ -88,14 +123,22 @@ export async function updateUsername(
     .limit(1);
 
   if (existingUser.length > 0 && existingUser[0].id !== userId) {
-    throw new Error("کد ملی قبلاً استفاده شده است.");
+    throw new UsernameTakenError();
   }
 
-  const result = await db
-    .update(users)
-    .set({ username: newUsername, updatedAt: new Date() })
-    .where(eq(users.id, userId))
-    .returning();
+  let result: SelectUser[];
+  try {
+    result = await db
+      .update(users)
+      .set({ username: newUsername, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new UsernameTakenError();
+    }
+    throw error;
+  }
 
   if (!result[0]) {
     throw new Error("به‌روزرسانی کد ملی ناموفق بود.");
@@ -118,7 +161,7 @@ export async function updateUserPassword(
 
   const isValidPassword = await bcrypt.compare(currentPassword, user.password);
   if (!isValidPassword) {
-    throw new Error("رمز عبور فعلی اشتباه است.");
+    throw new WrongPasswordError();
   }
 
   // Hash new password

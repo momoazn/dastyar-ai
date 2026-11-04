@@ -27,6 +27,7 @@ export const serverTexts = {
     providerUnavailable:
       "سرویس مدل در دسترس نیست. لطفاً اتصال Ollama را بررسی کرده و دوباره تلاش کنید.",
     saveUserMessageFailed: "ذخیره پیام کاربر ناموفق بود.",
+    threadNotFound: "گفتگوی مورد نظر یافت نشد.",
   },
   config: {
     validation: {
@@ -61,6 +62,7 @@ export const serverTexts = {
   admin: {
     addModelFailed: "افزودن مدل ناموفق بود.",
     cannotDeleteOnlyAdmin: "تنها کاربر مدیر قابل حذف نیست.",
+    cannotDemoteOnlyAdmin: "نقش تنها کاربر مدیر قابل تغییر نیست.",
     createOllamaServerFailed: "ایجاد سرور Ollama ناموفق بود.",
     createUserFailed: "ایجاد کاربر ناموفق بود.",
     deleteOllamaServerFailed: "حذف سرور Ollama ناموفق بود.",

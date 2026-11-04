@@ -22,6 +22,8 @@ const AUTH_ERROR_MESSAGES = {
   userNotFound: serverTexts.auth.userNotFound,
 } as const;
 
+const JWT_ALGORITHM = "HS256";
+
 export type JwtPayload = {
   userId: number;
   username: string;
@@ -41,7 +43,7 @@ export function generateJwtToken(user: {
   return jwt.sign(
     { userId: user.id, username: user.username, role: user.role },
     env.JWT_SECRET,
-    { expiresIn: env.JWT_EXPIRES_IN }
+    { algorithm: JWT_ALGORITHM, expiresIn: env.JWT_EXPIRES_IN }
   );
 }
 
@@ -51,7 +53,9 @@ export function generateJwtToken(user: {
  * @returns The decoded payload or throws an error
  */
 export function verifyJwtToken(token: string): JwtPayload {
-  return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+  return jwt.verify(token, env.JWT_SECRET, {
+    algorithms: [JWT_ALGORITHM],
+  }) as JwtPayload;
 }
 
 /**
