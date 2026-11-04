@@ -13,9 +13,9 @@ const isWindows = process.platform === "win32";
 
 // Check if whisper.cpp is built
 if (!existsSync(BUILD_DIR)) {
-  // This is a dev script, console output is acceptable for user feedback
-  // eslint-disable-next-line no-console
-  console.error("❌ whisper.cpp not built yet. Run: bun run build:whisper");
+  console.error(
+    "whisper.cpp not built yet. Run: bun scripts/build.ts --skip-web --skip-server --skip-package"
+  );
   process.exit(1);
 }
 
@@ -47,10 +47,7 @@ const env = {
   CGO_LDFLAGS: ldFlagPaths.join(" ") + openmpFlags,
 };
 
-// Dev script output - acceptable for user feedback
-// eslint-disable-next-line no-console
-console.log("🚀 Starting Whisper server in development mode...");
-// eslint-disable-next-line no-console
+console.log("Starting Whisper server in development mode...");
 console.log("");
 
 try {
