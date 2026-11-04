@@ -224,7 +224,14 @@ export async function runMigrations(): Promise<void> {
     const loadedMigrations = await loadAvailableMigrations();
 
     if (loadedMigrations) {
-      applyMigrations(loadedMigrations.data);
+      // Table rebuilds in a migration would cascade-delete child rows
+      // while foreign keys are on, so turn them off for the run.
+      sqliteDB.run("PRAGMA foreign_keys = OFF");
+      try {
+        applyMigrations(loadedMigrations.data);
+      } finally {
+        sqliteDB.run("PRAGMA foreign_keys = ON");
+      }
       logger.info(
         `[migrate] ${loadedMigrations.source} migrations completed successfully`
       );
