@@ -1,5 +1,8 @@
 {
   "name": "server",
+  "version": "0.3.0",
+  "private": true,
+  "license": "MIT",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -42,6 +45,9 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mailparser": "^3.9.0",
     "drizzle-kit": "^0.31.6",
     "typescript": "^5.9.3"
   },
