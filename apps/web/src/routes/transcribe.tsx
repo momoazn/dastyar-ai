@@ -295,7 +295,7 @@ function RouteComponent() {
                       onClick={() => handleCopy(result)}
                       size="sm"
                       type="button"
-                      variant="default"
+                      variant="outline"
                     >
                       <CopyIcon className="size-4" /> {fa.transcribe.copy}
                     </Button>
@@ -305,7 +305,7 @@ function RouteComponent() {
                       onClick={handleClear}
                       size="sm"
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                     >
                       <Trash2 className="size-4" /> {fa.transcribe.clear}
                     </Button>

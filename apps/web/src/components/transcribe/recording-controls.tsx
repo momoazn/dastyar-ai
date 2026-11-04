@@ -109,7 +109,7 @@ export function RecordingControls({
             )}
           </Button>
         </div>
-        <Progress value={isRecording ? progressValue : 0} />
+        {isRecording ? <Progress value={progressValue} /> : null}
         {children ? <div className="border-t pt-2">{children}</div> : null}
       </SurfaceContent>
     </Surface>
