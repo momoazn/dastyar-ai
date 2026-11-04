@@ -99,7 +99,7 @@
   --destructive-foreground: oklch(1 0 0);
   /* Subtle borders and inputs */
   --border: oklch(0.88 0.015 240);
-  --input: oklch(0.97 0.008 240);
+  --input: oklch(0.86 0.015 240);
   --ring: oklch(0.55 0.16 245);
   /* Vibrant chart colors */
   --chart-1: oklch(0.55 0.18 245); /* primary blue */
@@ -150,24 +150,24 @@
 
 .dark {
   /* Dark theme — rich and vibrant with personality */
-  --background: oklch(0.08 0.003 250);
+  --background: oklch(0.15 0.006 255);
   --foreground: oklch(0.95 0.004 230);
-  --card: oklch(0.12 0.008 270);
+  --card: oklch(0.18 0.008 260);
   --card-foreground: oklch(0.95 0.004 230);
-  --popover: oklch(0.11 0.006 260);
+  --popover: oklch(0.19 0.008 260);
   --popover-foreground: oklch(0.95 0.004 230);
   --primary: oklch(0.62 0.16 245);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.85 0.015 230);
   --secondary-foreground: oklch(0.15 0.01 250);
-  --muted: oklch(0.18 0.006 250);
-  --muted-foreground: oklch(0.65 0.015 250);
-  --accent: oklch(0.2 0.025 245);
+  --muted: oklch(0.23 0.008 250);
+  --muted-foreground: oklch(0.72 0.015 250);
+  --accent: oklch(0.26 0.03 245);
   --accent-foreground: oklch(0.88 0.025 245);
   --destructive: oklch(0.6 0.26 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.25 0.01 245);
-  --input: oklch(0.18 0.015 245);
+  --border: oklch(0.3 0.012 245);
+  --input: oklch(0.36 0.015 245);
   --ring: oklch(0.65 0.18 245);
   /* Vibrant dark theme charts */
   --chart-1: oklch(0.62 0.16 245); /* bright blue */
@@ -176,7 +176,7 @@
   --chart-4: oklch(0.65 0.2 280); /* purple */
   --chart-5: oklch(0.55 0.24 30); /* orange */
   /* Sidebar with dark theme personality */
-  --sidebar: oklch(0.12 0.008 270);
+  --sidebar: oklch(0.12 0.008 260);
   --sidebar-foreground: oklch(0.92 0.004 230);
   --sidebar-primary: oklch(0.62 0.16 245);
   --sidebar-primary-foreground: oklch(1 0 0);

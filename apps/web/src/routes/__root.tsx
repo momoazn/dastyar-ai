@@ -81,7 +81,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-sidebar">
-        <Header showAuthLinks />
+        <Header />
         <div className="container mx-auto">{children}</div>
       </div>
     );
@@ -89,7 +89,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider
-      className="min-h-dvh bg-sidebar"
+      className="h-dvh bg-sidebar"
       style={
         {
           "--sidebar-width": "300px",
@@ -99,7 +99,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
       <AppSidebar side="right" />
       <SidebarInset className="min-w-0 bg-sidebar ps-2 pb-2">
         <Header SideBarTrigger={<SidebarTrigger />} />
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border bg-background">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-md border bg-background">
           {children}
         </div>
       </SidebarInset>

@@ -21,7 +21,7 @@ function PasswordInput({
   return (
     <div className="relative">
       <Input
-        className={`pr-12 ${className || ""}`}
+        className={`pe-12 ${className || ""}`}
         disabled={disabled}
         type={showPassword ? "text" : "password"}
         {...props}
@@ -30,7 +30,7 @@ function PasswordInput({
         aria-label={
           showPassword ? hidePasswordAriaLabel : showPasswordAriaLabel
         }
-        className="-translate-y-1/2 absolute end-2 top-1/2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+        className="-translate-y-1/2 absolute end-1 top-1/2 size-8 text-muted-foreground hover:text-foreground"
         disabled={disabled}
         onClick={() => setShowPassword((prev) => !prev)}
         size="icon"
