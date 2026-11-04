@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ZodError } from "zod";
-import { CONFIG_KEYS, CONFIG_SCHEMA } from "./config-schema";
+import { CONFIG_KEYS, CONFIG_SCHEMA, DEFAULT_CONFIG } from "./config-schema";
 import { logger } from "./lib/logger";
 import type { ConfigMap } from "./types/config";
 
@@ -143,50 +144,68 @@ const parsedConfig: Env = (() => {
 export const env: Env = parsedConfig;
 export const configFilePath = configPath;
 
+/** Config warnings that do not stop the server. */
+export const findSslConfigWarnings = (
+  config: Pick<Env, "SSL_ENABLED" | "SSL_CERT_PATH" | "SSL_KEY_PATH">
+): string[] => {
+  if (!config.SSL_ENABLED) {
+    return [];
+  }
+  const warnings: string[] = [];
+  if (!config.SSL_CERT_PATH) {
+    warnings.push("SSL is enabled but SSL_CERT_PATH is not set");
+  }
+  if (!config.SSL_KEY_PATH) {
+    warnings.push("SSL is enabled but SSL_KEY_PATH is not set");
+  }
+  return warnings;
+};
+
 /**
- * Validate secrets in production
- * Ensures that default/example secrets are not used in production
+ * Replace the placeholder JWT_SECRET in a config file with a random one.
+ * Returns the new secret.
+ */
+export const replacePlaceholderJwtSecret = (path: string): string => {
+  const raw = JSON.parse(readFileSync(path, "utf8")) as ConfigMap;
+  const secret = randomBytes(48).toString("base64url");
+  raw.JWT_SECRET = secret;
+  writeFileSync(path, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+  return secret;
+};
+
+/**
+ * Production startup checks. A release package ships the placeholder
+ * JWT_SECRET, so the first start writes a random secret into config.json.
+ * The server stops if it cannot save that secret. Development runs skip this.
  */
 export const validateProductionSecrets = (): void => {
   if (!isProduction()) {
     return;
   }
 
-  const issues: string[] = [];
-
-  // Check JWT_SECRET
-  const UNSAFE_JWT_SECRETS = [
-    "your-super-secret-jwt-key-change-this-in-production",
-    "***REMOVED***",
-  ];
-
-  if (UNSAFE_JWT_SECRETS.includes(env.JWT_SECRET)) {
-    issues.push(
-      "JWT_SECRET is using a default/example value. Generate a new secret with: openssl rand -base64 48"
-    );
-  }
-
-  // Check SSL configuration
-  if (env.SSL_ENABLED) {
-    if (!env.SSL_CERT_PATH) {
-      issues.push("SSL is enabled but SSL_CERT_PATH is not set");
-    }
-    if (!env.SSL_KEY_PATH) {
-      issues.push("SSL is enabled but SSL_KEY_PATH is not set");
+  if (env.JWT_SECRET === DEFAULT_CONFIG.JWT_SECRET) {
+    const path =
+      configPath ??
+      failAndExit("JWT_SECRET is the placeholder and config.json is missing");
+    try {
+      env.JWT_SECRET = replacePlaceholderJwtSecret(path);
+      logger.info("Replaced placeholder JWT_SECRET with a random secret", {
+        path,
+      });
+    } catch (err) {
+      failAndExit(
+        "JWT_SECRET is the placeholder and config.json could not be updated. Set a random secret (openssl rand -base64 48).",
+        {
+          path,
+          error: err instanceof Error ? err.message : String(err),
+        }
+      );
     }
   }
 
-  if (issues.length > 0) {
-    logger.warn("Production security configuration issues detected:", {
-      issues,
-    });
-    process.stderr.write("\n⚠️  Production security warnings:\n");
-    for (const issue of issues) {
-      process.stderr.write(`   - ${issue}\n`);
-    }
-    process.stderr.write(
-      "⚠️  Server will continue to start, but this should be fixed before deployment.\n\n"
-    );
+  const warnings = findSslConfigWarnings(env);
+  if (warnings.length > 0) {
+    logger.warn("Production configuration warnings", { warnings });
   }
 };
 

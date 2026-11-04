@@ -4,17 +4,17 @@ import { listLmstudioModels, lmstudioProvider } from "./lmstudio-provider";
 import {
   getOllamaProviderForBaseUrl,
   listOllamaModels,
-  ollamaProvider,
   syncAllOllamaServerModels,
 } from "./ollama-provider";
 import { acquireLeastBusyOllamaServerForModel } from "./ollama-router";
 
-const providerToModel = {
-  ollama: ollamaProvider,
+// Providers that serve chat/text models. Stable Diffusion and Whisper models
+// have their own services and cannot be used for text generation.
+const textProviders: Partial<
+  Record<LLMModelProvider, (name: string) => LanguageModelV2>
+> = {
   lmstudio: lmstudioProvider,
-  "stable-diffusion": ollamaProvider, // Using ollama provider as fallback for stable-diffusion
-  whisper: ollamaProvider, // Using ollama provider as fallback for whisper
-} as const;
+};
 
 const modelListers = [listOllamaModels, listLmstudioModels] as const;
 
@@ -49,10 +49,11 @@ export async function acquireProviderForModel(
   provider: LLMModelProvider = "ollama"
 ): Promise<ProviderLease> {
   if (provider !== "ollama") {
-    return {
-      model: providerToModel[provider](name),
-      release: noOpRelease,
-    };
+    const createModel = textProviders[provider];
+    if (!createModel) {
+      throw new Error(`Provider "${provider}" does not serve text models`);
+    }
+    return { model: createModel(name), release: noOpRelease };
   }
 
   const lease = await acquireLeastBusyOllamaServerForModel(name).catch(

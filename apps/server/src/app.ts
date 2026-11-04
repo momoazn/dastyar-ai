@@ -69,10 +69,7 @@ export function createApp() {
   app.route("/api/chat", chatHandler);
   app.route("/api/images", imagesHandler);
 
-  // Health endpoints
-  // if (!isProduction()) {
-  //   app.get("/", (c) => c.text("Server is running", 200));
-  // }
+  // Health endpoint
   app.get("/health", async (c) => {
     const base =
       env.WHISPER_SERVER_URL?.replace(TRAILING_SLASH_REGEX, "") || "";

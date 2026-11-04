@@ -286,7 +286,7 @@ Open http://localhost:3000
 ## Configuration
 
 Edit \`config.json\` to customize settings. Important:
-- Change \`JWT_SECRET\` for production
+- The server replaces the placeholder \`JWT_SECRET\` with a random value on first start
 - Configure Ollama endpoint if needed
 
 ## Requirements

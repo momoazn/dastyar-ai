@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG_KEYS, CONFIG_SCHEMA, DEFAULT_CONFIG } from "../config-schema";
@@ -165,6 +166,10 @@ const generateConfig = ({ configPath, force }: CliOptions): void => {
   const normalized = force
     ? { ...DEFAULT_CONFIG }
     : normalizeFromDefaults(existingConfig);
+  if (normalized.JWT_SECRET === DEFAULT_CONFIG.JWT_SECRET) {
+    normalized.JWT_SECRET = randomBytes(48).toString("base64url");
+    writeOut("Generated a new random JWT_SECRET");
+  }
   const parsed = CONFIG_SCHEMA.safeParse(normalized);
 
   if (!parsed.success) {

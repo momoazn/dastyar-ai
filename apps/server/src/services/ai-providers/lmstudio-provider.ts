@@ -3,6 +3,9 @@ import OpenAI from "openai";
 import { logger } from "@/lib/logger";
 
 const LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
+// Automatic model discovery is off: when LM Studio is not running, every
+// model listing would log a connection error. Admins can still add LM Studio
+// models by hand in the admin panel. Set to true to list them automatically.
 const LMSTUDIO_ENABLED = false;
 
 export const lmstudioClient = new OpenAI({
