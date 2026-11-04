@@ -90,19 +90,19 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
   return (
     <div className="group fade-in-50 slide-in-from-bottom-2 w-full animate-in duration-500">
       {hasThinking && (
-        <div className="mb-2 rounded-xl border border-gray-200/40 bg-gray-50/40 p-3 shadow-sm dark:border-gray-700/30 dark:bg-gray-900/20">
+        <div className="mb-2 rounded-xl border bg-muted/30 p-3">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200/60 dark:bg-gray-700/40">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground" />
               </div>
-              <span className="font-medium text-gray-600 text-sm dark:text-gray-400">
+              <span className="font-medium text-muted-foreground text-sm">
                 {fa.chat.thinkingProcess}
               </span>
             </div>
 
             <Button
-              className="h-7 px-3 text-gray-500 text-xs hover:bg-gray-100/60 dark:text-gray-500 dark:hover:bg-gray-800/40"
+              className="h-7 px-3 text-muted-foreground text-xs"
               onClick={toggleCollapsed}
               size="sm"
               variant="ghost"
@@ -122,9 +122,9 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
               collapsed ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100"
             )}
           >
-            <div className="rounded-lg bg-gray-100/30 p-3 dark:bg-gray-800/20">
+            <div className="rounded-lg bg-muted/50 p-3">
               <div
-                className="text-justify text-gray-700 text-sm leading-relaxed dark:text-gray-300"
+                className="text-muted-foreground text-sm leading-relaxed"
                 dir={detectTextDirection(message.reasoning || "")}
               >
                 <Streamdown>{message.reasoning || ""}</Streamdown>
@@ -147,7 +147,7 @@ export const AssistantMessage = memo(({ message }: AssistantMessageProps) => {
         <div className="w-full">
           <div className="w-full" dir={textDirection}>
             <div className="prose prose-sm max-w-none text-foreground">
-              <div className="text-justify leading-relaxed">
+              <div className="leading-relaxed">
                 <Streamdown>{message.content || ""}</Streamdown>
               </div>
             </div>

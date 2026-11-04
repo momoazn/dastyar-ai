@@ -4,6 +4,8 @@ export const imageGeneration = {
     "سرویس تولید تصویر در دسترس نیست. وضعیت سرویس را بررسی کنید و دوباره تلاش کنید.",
   generatingAlt: "در حال تولید تصویر…",
   generatingDescription: "لطفاً صبر کنید، این کار ممکن است چند دقیقه طول بکشد",
+  serviceUnavailableHelp:
+    "این بخش به Stable Diffusion WebUI نیاز دارد. از مدیر سیستم بخواهید آن را اجرا کند.",
   serviceUnavailableAlert:
     "سرویس تولید تصویر در دسترس نیست. پس از فعال شدن سرویس، دوباره تلاش کنید.",
   title: "تولید تصویر",
