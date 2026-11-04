@@ -122,8 +122,8 @@ export function ModelsTable() {
             }
             value={providerFilter}
           >
-            <SelectTrigger className="w-full sm:w-40">
-              <Filter className="ml-2 h-4 w-4" />
+            <SelectTrigger className="w-full sm:w-48">
+              <Filter className="size-4 shrink-0" />
               <SelectValue
                 placeholder={fa.admin.models.table.filterByProvider}
               />
