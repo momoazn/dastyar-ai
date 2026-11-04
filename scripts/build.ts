@@ -322,7 +322,7 @@ async function buildWebAndServer(options: BuildOptions): Promise<void> {
 
   if (!options.parallel || buildJobs.length === 1) {
     for (const job of buildJobs) {
-      console.log(`🔨 Building ${job.name}...`);
+      console.log(`Building ${job.name}...`);
       await job.run();
     }
     return;
@@ -486,7 +486,7 @@ function printArtifactPreview(artifacts: string[]): void {
     return;
   }
 
-  console.log(`📁 Packaged artifacts (${artifacts.length}):`);
+  console.log(`Packaged artifacts (${artifacts.length}):`);
   const preview = artifacts.slice(0, 8);
   for (const artifact of preview) {
     console.log(`  • dist/${artifact}`);

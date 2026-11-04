@@ -17,16 +17,16 @@ const WHISPER_CPP_REPO_URL = "https://github.com/ggerganov/whisper.cpp.git";
 
 function checkWindowsCompiler(): string | null {
   if (hasCommand("gcc") && hasCommand("g++")) {
-    console.log("  ✓ Found MinGW compiler");
+    console.log("  Found MinGW compiler");
     return "MinGW Makefiles";
   }
 
   if (hasCommand("cl")) {
     if (hasCommand("rc")) {
-      console.log("  ✓ Found Visual Studio compiler with Windows SDK");
+      console.log("  Found Visual Studio compiler with Windows SDK");
       return "NMake Makefiles";
     }
-    console.log("  ⚠️  Found Visual Studio but Windows SDK is missing");
+    console.log("  Found Visual Studio but Windows SDK is missing");
     return null;
   }
 
@@ -66,11 +66,11 @@ async function ensureRuntimeAssets(): Promise<void> {
     binDir: ffmpegDir,
     preferLocalMacBinary: true,
   });
-  console.log("  ✓ FFmpeg ready");
+  console.log("  FFmpeg ready");
 
   const models = listWhisperModelsInDir(modelsDir);
   if (models.length > 0) {
-    console.log(`  ✓ Found ${models.length} Whisper model(s)`);
+    console.log(`  Found ${models.length} Whisper model(s)`);
     return;
   }
 
@@ -79,7 +79,7 @@ async function ensureRuntimeAssets(): Promise<void> {
     modelDir: modelsDir,
     modelName: "ggml-base.bin",
   });
-  console.log("  ✓ Whisper model ready");
+  console.log("  Whisper model ready");
 }
 
 async function cleanBuildDirIfGeneratorChanged(
@@ -202,7 +202,7 @@ async function buildGoWhisperServer(whisperCppDir: string): Promise<void> {
 }
 
 export async function buildWhisper(): Promise<void> {
-  console.log("📦 Building Whisper Go binary...");
+  console.log("Building Whisper Go binary...");
 
   assertWindowsCompiler();
   await ensureRuntimeAssets();
@@ -210,7 +210,7 @@ export async function buildWhisper(): Promise<void> {
   await buildWhisperCppLibrary(whisperCppDir);
   await buildGoWhisperServer(whisperCppDir);
 
-  console.log("✅ Whisper binary built successfully\n");
+  console.log("Whisper binary built successfully\n");
 }
 
 if (import.meta.main) {
