@@ -45,6 +45,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/health": {
+        target: serverTarget,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   resolve: {

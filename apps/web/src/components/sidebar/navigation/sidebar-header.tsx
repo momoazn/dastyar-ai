@@ -58,9 +58,9 @@ export function AppSidebarHeader({
                   src="/brand-logo.svg"
                   width={28}
                 />
-                <h1 className="font-medium text-gray-900 text-lg dark:text-gray-100">
+                <span className="font-semibold text-lg text-sidebar-foreground">
                   {fa.navigation.appTitle}
-                </h1>
+                </span>
               </div>
             </Link>
           </SidebarMenuButton>

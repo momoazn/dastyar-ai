@@ -152,13 +152,13 @@ function RouteComponent() {
   return (
     <ConversationScaffold
       banner={
-        isServiceAvailable ? null : (
+        isServiceAvailable === false ? (
           <Alert>
             <AlertDescription>
               {fa.imageGeneration.serviceUnavailableAlert}
             </AlertDescription>
           </Alert>
-        )
+        ) : null
       }
       conversation={
         <Conversation className="h-full">
@@ -266,6 +266,7 @@ function RouteComponent() {
       footer={
         <div className="mx-auto max-w-4xl px-6 py-4">
           <ImageGenerationInput
+            disabled={isServiceAvailable === false}
             formProps={formProps}
             isGenerating={isGenerating}
             onResetSettings={resetSettings}

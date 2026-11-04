@@ -2,6 +2,8 @@ export const summarize = {
   title: "خلاصه‌سازی متن",
   description: "متن‌های خود را به راحتی خلاصه کنید",
   modeLabel: "نوع خلاصه",
+  toneLabel: "لحن خلاصه",
+  settingsTitle: "تنظیمات خلاصه‌سازی",
   modes: {
     concise: "خلاصه",
     standard: "استاندارد",

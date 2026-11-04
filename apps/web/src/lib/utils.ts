@@ -125,3 +125,29 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
     }
   };
 }
+
+const HF_PREFIX_RE = /^hf\.co\/[^/]+\//;
+const LATEST_TAG_RE = /:latest$/;
+
+/**
+ * Shortens a model identifier for display.
+ * "hf.co/user/model-GGUF:latest" becomes "model-GGUF". Use the full
+ * identifier in a `title` attribute so users can still see it.
+ */
+export function formatModelName(identifier: string): string {
+  return identifier.replace(HF_PREFIX_RE, "").replace(LATEST_TAG_RE, "");
+}
+
+const WHITESPACE_RE = /\s+/g;
+
+/** Short title from the first words of a message, cut at a word boundary. */
+export function makeTitle(text: string, maxLength = 40): string {
+  const flat = text.replace(WHITESPACE_RE, " ").trim();
+  if (flat.length <= maxLength) {
+    return flat;
+  }
+  const cut = flat.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(" ");
+  const head = lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut;
+  return `${head.trimEnd()}…`;
+}

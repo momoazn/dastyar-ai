@@ -26,26 +26,28 @@ export function SettingsSection({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border bg-card/95 text-card-foreground shadow-sm transition-shadow hover:shadow-md",
+        "overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm",
         className
       )}
     >
       <Button
-        className="flex h-auto w-full items-center justify-between rounded-none px-5 py-4 text-right hover:bg-muted/40"
+        aria-expanded={isOpen}
+        className="flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-right hover:bg-muted/40 md:px-5"
         dir="rtl"
         onClick={() => setIsOpen(!isOpen)}
+        type="button"
         variant="ghost"
       >
-        <div className="flex items-center gap-3 text-right">
+        <div className="flex min-w-0 items-center gap-3 text-right">
           {icon && (
-            <div className="rounded-md border bg-background p-2 text-muted-foreground">
+            <div className="shrink-0 rounded-md border bg-background p-2 text-muted-foreground">
               {icon}
             </div>
           )}
-          <div className="flex-1 text-right">
+          <div className="min-w-0 flex-1 whitespace-normal text-right">
             <h3 className="font-semibold text-base">{title}</h3>
             {description && (
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="mt-0.5 font-normal text-muted-foreground text-sm">
                 {description}
               </p>
             )}

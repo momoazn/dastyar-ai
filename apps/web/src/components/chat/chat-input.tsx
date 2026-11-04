@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui";
 import { useChatModelSelection } from "@/hooks/use-feature-model-selection";
 import { getErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
-import { detectTextDirection } from "@/lib/utils";
+import { detectTextDirection, formatModelName } from "@/lib/utils";
 
 type ChatInputProps = {
   handleSendPrompt: (prompt: string) => void;
@@ -118,11 +118,16 @@ export const ChatInput = ({
       key: model.id.toString(),
       value: model.id.toString(),
       content: (
-        <div className="flex items-center gap-2">
-          <div className="size-2 rounded-full bg-green-500" />
-          <span className="text-sm">{model.identifier}</span>
+        <div
+          className="flex min-w-0 items-center gap-2"
+          title={model.identifier}
+        >
+          <div className="size-2 shrink-0 rounded-full bg-green-500" />
+          <span className="truncate text-sm">
+            {formatModelName(model.identifier)}
+          </span>
           {model.provider ? (
-            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
+            <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">
               {model.provider}
             </span>
           ) : null}
@@ -150,7 +155,7 @@ export const ChatInput = ({
 
   return (
     <div
-      className="mx-auto flex max-w-4xl flex-col gap-3 px-4 pt-3 pb-6"
+      className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-3 px-4 pt-3 pb-6"
       dir="rtl"
     >
       {typeof threadId === "number" && (
@@ -171,11 +176,10 @@ export const ChatInput = ({
           leftTools={
             <>
               <PromptInputModelSelect
-                defaultValue={modelId?.toString()}
                 onValueChange={(value) => setModelId(Number(value))}
-                value={modelId?.toString()}
+                value={modelId ? String(modelId) : ""}
               >
-                <PromptInputModelSelectTrigger className="h-9 w-64 cursor-pointer gap-2 md:w-80">
+                <PromptInputModelSelectTrigger className="h-9 w-full min-w-0 max-w-80 cursor-pointer gap-2 [&>span]:min-w-0 [&>span]:truncate">
                   <PromptInputModelSelectValue
                     placeholder={fa.modelSelection.selectChatModel}
                   />

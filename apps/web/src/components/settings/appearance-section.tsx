@@ -24,7 +24,7 @@ export function AppearanceSection() {
       icon={<Monitor className="h-4 w-4" />}
       title={fa.settings.appearance.title}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <SettingsItem
           description={fa.settings.appearance.themeDescription}
           label={fa.settings.appearance.theme}

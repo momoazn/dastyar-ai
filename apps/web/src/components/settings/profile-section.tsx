@@ -13,7 +13,7 @@ export function ProfileSection() {
       icon={<User className="h-4 w-4" />}
       title={fa.settings.profile.title}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <SettingsItem
           description={fa.settings.account.currentUsername}
           label={fa.settings.account.username}

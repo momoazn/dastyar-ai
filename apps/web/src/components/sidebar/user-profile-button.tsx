@@ -31,7 +31,7 @@ export function UserProfileButton() {
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <User className="size-4" />
           </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
+          <div className="grid flex-1 text-start text-sm leading-tight">
             <span className="truncate font-semibold">
               {fa.userProfile.notLoggedIn}
             </span>
@@ -54,7 +54,7 @@ export function UserProfileButton() {
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <User className="size-4" />
           </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
+          <div className="grid flex-1 text-start text-sm leading-tight">
             <span className="truncate font-semibold">
               {fa.userProfile.loading}
             </span>
@@ -67,14 +67,10 @@ export function UserProfileButton() {
     );
   }
 
-  const userInitials = user?.username
-    ? user.username
-        .split(" ")
-        .map((name: string) => name[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U";
+  const roleLabel =
+    user?.role === "admin"
+      ? fa.userProfile.roles.admin
+      : fa.userProfile.roles.user;
 
   return (
     <SidebarMenuItem className="cursor-pointer">
@@ -86,12 +82,16 @@ export function UserProfileButton() {
           >
             <Avatar className="h-8 w-8 rounded-lg">
               <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {userInitials}
+                <User aria-hidden="true" className="size-4" />
               </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">{user?.username}</span>
-              <span className="truncate text-xs">{user?.role}</span>
+            <div className="grid flex-1 text-start text-sm leading-tight">
+              <span className="truncate font-semibold tabular-nums">
+                {user?.username}
+              </span>
+              <span className="truncate text-muted-foreground text-xs">
+                {roleLabel}
+              </span>
             </div>
           </SidebarMenuButton>
         </DropdownMenuTrigger>
@@ -103,15 +103,15 @@ export function UserProfileButton() {
         >
           <div className="flex items-center justify-start gap-2 p-2">
             <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-medium">{user?.username}</p>
-              <p className="text-muted-foreground text-xs">{user?.role}</p>
+              <p className="font-medium tabular-nums">{user?.username}</p>
+              <p className="text-muted-foreground text-xs">{roleLabel}</p>
             </div>
           </div>
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => navigate({ to: "/settings" })}
           >
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings aria-hidden="true" className="h-4 w-4" />
             <span>{fa.settings.title}</span>
           </DropdownMenuItem>
           {user?.role === "admin" && (
@@ -119,13 +119,13 @@ export function UserProfileButton() {
               className="cursor-pointer"
               onClick={() => navigate({ to: "/admin" })}
             >
-              <Shield className="mr-2 h-4 w-4" />
+              <Shield aria-hidden="true" className="h-4 w-4" />
               <span>{fa.admin.title}</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut aria-hidden="true" className="h-4 w-4" />
             <span>{fa.userProfile.logOut}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>

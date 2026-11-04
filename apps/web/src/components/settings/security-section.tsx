@@ -84,7 +84,7 @@ export function SecuritySection() {
         icon={<Shield className="h-4 w-4" />}
         title={fa.settings.security.title}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <SettingsItem
             description={fa.settings.security.passwordDescription}
             label={fa.settings.account.password}

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { fa } from "@/lib/texts";
+import { makeTitle } from "@/lib/utils";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**
@@ -15,7 +16,7 @@ export function useChatThread() {
 
     try {
       const created = await client.threads.create({
-        title: trimmed.slice(0, 10),
+        title: makeTitle(trimmed),
       });
 
       await queryClient.invalidateQueries({
@@ -38,7 +39,7 @@ export function useChatThread() {
     try {
       await client.threads.rename({
         id: threadId,
-        title: trimmed.slice(0, 10),
+        title: makeTitle(trimmed),
       });
 
       await queryClient.invalidateQueries({

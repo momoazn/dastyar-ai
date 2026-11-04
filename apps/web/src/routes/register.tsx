@@ -99,30 +99,32 @@ function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-4">
-        <Card className="mx-auto w-full max-w-md shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-gray-900 dark:text-gray-100">
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="mx-auto w-full max-w-md shadow-sm">
+          <CardHeader className="items-center text-center">
+            <img
+              alt=""
+              className="mx-auto mb-2 size-12 rounded-xl"
+              height={48}
+              src="/brand-logo.svg"
+              width={48}
+            />
+            <CardTitle className="text-xl">
               {fa.auth.registerForm.title}
             </CardTitle>
-            <CardDescription className="text-gray-700 dark:text-gray-300">
+            <CardDescription>
               {fa.auth.registerForm.description}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label
-                  className="font-medium text-gray-900 dark:text-gray-100"
-                  htmlFor="username"
-                >
+                <Label htmlFor="username">
                   {fa.auth.registerForm.usernameLabel}
                 </Label>
                 <Input
                   autoComplete="username"
-                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
-                  dir="ltr"
                   disabled={registerMutation.isPending}
                   id="username"
                   inputMode="numeric"
@@ -138,20 +140,12 @@ function RegisterPage() {
                   type="text"
                   value={username}
                 />
-                <p className="text-muted-foreground text-xs">
-                  {fa.auth.registerForm.usernameHint}
-                </p>
               </div>
               <div className="space-y-2">
-                <Label
-                  className="font-medium text-gray-900 dark:text-gray-100"
-                  htmlFor="password"
-                >
+                <Label htmlFor="password">
                   {fa.auth.registerForm.passwordLabel}
                 </Label>
                 <PasswordInput
-                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
-                  dir="ltr"
                   disabled={registerMutation.isPending}
                   hidePasswordAriaLabel={fa.auth.loginForm.hidePassword}
                   id="password"
@@ -161,20 +155,12 @@ function RegisterPage() {
                   showPasswordAriaLabel={fa.auth.loginForm.showPassword}
                   value={password}
                 />
-                <p className="text-muted-foreground text-xs">
-                  {fa.auth.registerForm.passwordHint}
-                </p>
               </div>
               <div className="space-y-2">
-                <Label
-                  className="font-medium text-gray-900 dark:text-gray-100"
-                  htmlFor="confirmPassword"
-                >
+                <Label htmlFor="confirmPassword">
                   {fa.auth.registerForm.confirmPasswordLabel}
                 </Label>
                 <PasswordInput
-                  className="border-gray-300 bg-white text-gray-900 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
-                  dir="ltr"
                   disabled={registerMutation.isPending}
                   hidePasswordAriaLabel={fa.auth.loginForm.hidePassword}
                   id="confirmPassword"
@@ -197,34 +183,28 @@ function RegisterPage() {
                 </Alert>
               )}
               <Button
-                className="w-full bg-blue-600 font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                className="w-full"
                 disabled={registerMutation.isPending}
                 type="submit"
               >
                 {registerMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2
+                    aria-hidden="true"
+                    className="h-4 w-4 animate-spin"
+                  />
                 )}
                 {fa.auth.registerForm.register}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-gray-800 text-sm dark:text-gray-300">
-                {fa.auth.registerForm.alreadyRegistered}
-              </p>
-              <Button asChild className="mt-2" variant="link">
-                <Link
-                  className="font-medium text-blue-700 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                  to="/login"
-                >
-                  {fa.auth.loginForm.login}
-                </Link>
-              </Button>
-            </div>
+            <p className="mt-6 text-center text-muted-foreground text-sm">
+              {fa.auth.registerForm.alreadyRegistered}{" "}
+              <Link
+                className="font-medium text-primary underline-offset-4 hover:underline"
+                to="/login"
+              >
+                {fa.auth.loginForm.login}
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>

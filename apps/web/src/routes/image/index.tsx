@@ -48,10 +48,13 @@ function RouteComponent() {
   }, [formProps, creating, isServiceAvailable, create, navigate]);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center p-6">
+    <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-4 py-6">
       <div className="mx-auto w-full max-w-3xl" dir="rtl">
         <div className="mb-6 text-center">
-          <ImagePlus className="mx-auto mb-2 size-12 text-muted-foreground" />
+          <ImagePlus
+            aria-hidden="true"
+            className="mx-auto mb-2 size-12 text-muted-foreground"
+          />
           <h1 className="font-semibold text-2xl">
             {fa.imageChat.newChatTitle}
           </h1>
@@ -59,22 +62,25 @@ function RouteComponent() {
             {fa.imageChat.newChatDescription}
           </p>
         </div>
+        {isServiceAvailable === false && (
+          <Alert className="mb-4">
+            <AlertCircle aria-hidden="true" />
+            <AlertTitle>{fa.imageGeneration.serviceUnavailable}</AlertTitle>
+            <AlertDescription>
+              {fa.imageGeneration.serviceUnavailableHelp}
+            </AlertDescription>
+          </Alert>
+        )}
         <ImageGenerationInput
+          disabled={isServiceAvailable === false}
           formProps={formProps}
           isGenerating={creating}
           onResetSettings={resetSettings}
           onSubmit={handleCreateAndNavigate}
-          submitDisabled={creating || !formProps.prompt.trim()}
+          submitDisabled={
+            creating || !formProps.prompt.trim() || isServiceAvailable === false
+          }
         />
-        {isServiceAvailable === false && (
-          <Alert className="mt-6" variant="destructive">
-            <AlertCircle />
-            <AlertTitle>{fa.general.error}</AlertTitle>
-            <AlertDescription>
-              {fa.imageGeneration.serviceUnavailableAlert}
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
     </div>
   );

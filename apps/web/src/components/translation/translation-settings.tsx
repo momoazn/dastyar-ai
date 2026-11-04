@@ -1,11 +1,10 @@
 import { ArrowLeftRightIcon } from "lucide-react";
 import {
-  Button,
-  Surface,
-  SurfaceContent,
-  SurfaceHeader,
-  SurfaceTitle,
-} from "@/components/ui";
+  ModelSelect,
+  SettingField,
+  ToolSettings,
+} from "@/components/tool-page/tool-page";
+import { Button } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -36,6 +35,45 @@ type TranslationSettingsProps = {
   onSwapLanguages: () => void;
 };
 
+type LanguageSelectProps = {
+  label: string;
+  value: LanguageCode;
+  disabled: boolean;
+  onChange: (lang: LanguageCode) => void;
+};
+
+function LanguageSelect({
+  label,
+  value,
+  disabled,
+  onChange,
+}: LanguageSelectProps) {
+  return (
+    <SettingField label={label}>
+      <Select
+        disabled={disabled}
+        onValueChange={(v) => onChange(v as LanguageCode)}
+        value={value}
+      >
+        <SelectTrigger className="w-full text-right" dir="rtl">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent dir="rtl">
+          {languageOptions.map((lang) => (
+            <SelectItem
+              className="text-right"
+              key={lang.value}
+              value={lang.value}
+            >
+              {lang.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </SettingField>
+  );
+}
+
 export function TranslationSettings({
   sourceLanguage,
   targetLanguage,
@@ -51,65 +89,39 @@ export function TranslationSettings({
   onSwapLanguages,
 }: TranslationSettingsProps) {
   return (
-    <Surface padded={false}>
-      <SurfaceHeader className="border-b bg-muted/30">
-        <SurfaceTitle>تنظیمات ترجمه</SurfaceTitle>
-      </SurfaceHeader>
-      <SurfaceContent className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <div className="flex flex-col gap-1.5">
-          <div className="font-medium text-sm">
-            {fa.translation.sourceLanguage}
-          </div>
-          <Select
+    <ToolSettings
+      className="sm:grid-cols-1 lg:grid-cols-1"
+      title={fa.translation.settingsTitle}
+    >
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3">
+        <LanguageSelect
+          disabled={isTranslating}
+          label={fa.translation.sourceLanguage}
+          onChange={onSourceLanguageChange}
+          value={sourceLanguage}
+        />
+        <div className="flex items-end">
+          <Button
+            aria-label={fa.translation.swapLanguages}
             disabled={isTranslating}
-            onValueChange={(v) => onSourceLanguageChange(v as LanguageCode)}
-            value={sourceLanguage}
+            onClick={onSwapLanguages}
+            size="icon"
+            title={fa.translation.swapLanguages}
+            type="button"
+            variant="outline"
           >
-            <SelectTrigger className="w-full text-right" dir="rtl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent dir="rtl">
-              {languageOptions.map((lang) => (
-                <SelectItem
-                  className="text-right"
-                  key={lang.value}
-                  value={lang.value}
-                >
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ArrowLeftRightIcon className="h-4 w-4" />
+          </Button>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="font-medium text-sm">
-            {fa.translation.targetLanguage}
-          </div>
-          <Select
-            disabled={isTranslating}
-            onValueChange={(v) => onTargetLanguageChange(v as LanguageCode)}
-            value={targetLanguage}
-          >
-            <SelectTrigger className="w-full text-right" dir="rtl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent dir="rtl">
-              {languageOptions.map((lang) => (
-                <SelectItem
-                  className="text-right"
-                  key={lang.value}
-                  value={lang.value}
-                >
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="font-medium text-sm">
-            {fa.translation.translationTone}
-          </div>
+        <LanguageSelect
+          disabled={isTranslating}
+          label={fa.translation.targetLanguage}
+          onChange={onTargetLanguageChange}
+          value={targetLanguage}
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <SettingField label={fa.translation.translationTone}>
           <Select
             disabled={isTranslating}
             onValueChange={(v) => onToneChange(v as Tone)}
@@ -130,51 +142,16 @@ export function TranslationSettings({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="font-medium text-sm">{fa.translation.model}</div>
-          <Select
-            disabled={isTranslating || isModelsLoading}
-            onValueChange={(value) => onModelChange(Number(value))}
-            value={modelId?.toString()}
-          >
-            <SelectTrigger className="w-full text-right" dir="rtl">
-              <SelectValue
-                placeholder={
-                  isModelsLoading
-                    ? fa.general.loadingModels
-                    : fa.general.selectModel
-                }
-              />
-            </SelectTrigger>
-            <SelectContent dir="rtl">
-              {models?.map((m) => (
-                <SelectItem
-                  className="text-right"
-                  key={m.id}
-                  value={m.id.toString()}
-                >
-                  {m.identifier}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-end sm:col-span-2 xl:col-span-1">
-          <Button
-            className="w-full gap-2"
-            disabled={isTranslating}
-            onClick={onSwapLanguages}
-            type="button"
-            variant="outline"
-          >
-            <ArrowLeftRightIcon className="h-4 w-4" />
-            <span className="text-sm">
-              {fa.translation.sourceLanguage} ↔ {fa.translation.targetLanguage}
-            </span>
-          </Button>
-        </div>
-      </SurfaceContent>
-    </Surface>
+        </SettingField>
+        <ModelSelect
+          disabled={isTranslating}
+          isLoading={isModelsLoading}
+          label={fa.translation.model}
+          modelId={modelId}
+          models={models}
+          onChange={onModelChange}
+        />
+      </div>
+    </ToolSettings>
   );
 }

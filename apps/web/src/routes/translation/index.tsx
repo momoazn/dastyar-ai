@@ -4,12 +4,18 @@ import { Copy, Loader2, SendIcon } from "lucide-react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import { ToolScaffold } from "@/components/scaffold/tool-scaffold";
+import {
+  PRIMARY_ACTION_CLASS,
+  ToolGrid,
+  ToolPageHeader,
+  ToolPanel,
+} from "@/components/tool-page/tool-page";
 import { PdfResultDisplay } from "@/components/translation/pdf-result-display";
 import { PdfUploadArea } from "@/components/translation/pdf-upload-area";
 import { TranslationResult } from "@/components/translation/translation-result";
 import { TranslationSettings } from "@/components/translation/translation-settings";
 import { TranslationTextInput } from "@/components/translation/translation-text-input";
-import { Alert, Button, Card } from "@/components/ui";
+import { Alert, Button } from "@/components/ui";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useTranslationModelSelection } from "@/hooks/use-feature-model-selection";
 import ProtectedLayout from "@/layouts/protected";
@@ -331,13 +337,12 @@ function RouteComponent() {
         )
       }
       content={
-        <div className="flex h-full flex-col gap-6">
-          {/* Title Header */}
-          <div className="flex flex-col gap-2">
-            <h1 className="font-bold text-2xl">{fa.index.translationTitle}</h1>
-          </div>
+        <div className="flex flex-col gap-6">
+          <ToolPageHeader
+            description={fa.index.translationDescription}
+            title={fa.index.translationTitle}
+          />
 
-          {/* Options Section */}
           <TranslationSettings
             isModelsLoading={isModelsLoading}
             isTranslating={isTranslating}
@@ -353,10 +358,9 @@ function RouteComponent() {
             tone={tone}
           />
 
-          {/* Main Action Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             <Button
-              className="min-w-[160px] gap-2"
+              className={PRIMARY_ACTION_CLASS}
               disabled={actionDisabled}
               onClick={actionHandler}
               type="button"
@@ -375,20 +379,16 @@ function RouteComponent() {
             </Button>
           </div>
 
-          {/* Two Column Layout */}
           <Tabs
-            className="flex h-full w-full flex-col"
+            className="flex w-full flex-col"
             onValueChange={(value) => setMode(value as "text" | "pdf")}
             value={mode}
           >
             <TabsContent
-              className="flex-1 focus-visible:outline-none focus-visible:ring-0"
+              className="focus-visible:outline-none focus-visible:ring-0"
               value="text"
             >
-              <div
-                className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
-                dir="rtl"
-              >
+              <ToolGrid>
                 <TranslationTextInput
                   isTranslating={isTranslating}
                   onKeyDown={handleSourceKeyDown}
@@ -401,77 +401,58 @@ function RouteComponent() {
                   onCopy={handleCopy}
                   translatedText={translatedText}
                 />
-              </div>
+              </ToolGrid>
             </TabsContent>
 
             <TabsContent
-              className="flex-1 focus-visible:outline-none focus-visible:ring-0"
+              className="focus-visible:outline-none focus-visible:ring-0"
               value="pdf"
             >
-              <div
-                className="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-2"
-                dir="rtl"
-              >
-                <Card className="flex flex-col py-0 lg:order-1">
-                  <div className="border-b bg-muted/30 px-4 py-2.5">
-                    <div className="flex h-8 items-center justify-between">
-                      <span className="font-semibold text-foreground text-sm">
-                        {fa.translation.sourceLanguage}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex-1 p-4">
-                    <PdfUploadArea
-                      isDragging={isDragging}
-                      isTranslating={isTranslating}
-                      onDragLeave={handleDragLeave}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      onFileSelect={handlePdfSelect}
-                      onKeyDown={handleKeyDown}
-                      onRemovePdf={handleRemovePdf}
-                      pdfFileName={pdfFileName}
-                      pdfResult={pdfResult}
-                      selectedPdf={selectedPdf}
-                    />
-                  </div>
-                </Card>
+              <ToolGrid>
+                <ToolPanel title={fa.translation.sourceLanguage}>
+                  <PdfUploadArea
+                    isDragging={isDragging}
+                    isTranslating={isTranslating}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onFileSelect={handlePdfSelect}
+                    onKeyDown={handleKeyDown}
+                    onRemovePdf={handleRemovePdf}
+                    pdfFileName={pdfFileName}
+                    pdfResult={pdfResult}
+                    selectedPdf={selectedPdf}
+                  />
+                </ToolPanel>
 
-                <Card className="flex flex-col py-0 lg:order-2">
-                  <div className="border-b bg-muted/30 px-4 py-2.5">
-                    <div className="flex h-8 items-center justify-between">
-                      <span className="font-semibold text-foreground text-sm">
-                        {fa.translation.translatedText}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {translatedText && (
-                          <Button
-                            className={
-                              isCopied ? "bg-green-600 hover:bg-green-700" : ""
-                            }
-                            onClick={handleCopy}
-                            size="sm"
-                            type="button"
-                            variant={isCopied ? "default" : "ghost"}
-                          >
-                            <Copy className="h-4 w-4" />
-                            {isCopied ? fa.summarize.copied : fa.summarize.copy}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-4 p-4">
-                    <PdfResultDisplay
-                      isCopied={isCopied}
-                      isTranslating={isTranslatingPdf}
-                      onCopy={handleCopy}
-                      pdfResult={pdfResult}
-                      translatedText={translatedText}
-                    />
-                  </div>
-                </Card>
-              </div>
+                <ToolPanel
+                  actions={
+                    translatedText ? (
+                      <Button
+                        className={
+                          isCopied ? "bg-green-600 hover:bg-green-700" : ""
+                        }
+                        onClick={handleCopy}
+                        size="sm"
+                        type="button"
+                        variant={isCopied ? "default" : "ghost"}
+                      >
+                        <Copy className="h-4 w-4" />
+                        {isCopied ? fa.summarize.copied : fa.summarize.copy}
+                      </Button>
+                    ) : null
+                  }
+                  title={fa.translation.translatedText}
+                >
+                  <PdfResultDisplay
+                    isCopied={isCopied}
+                    isTranslating={isTranslatingPdf}
+                    onCopy={handleCopy}
+                    pdfResult={pdfResult}
+                    translatedText={translatedText}
+                  />
+                </ToolPanel>
+              </ToolGrid>
             </TabsContent>
           </Tabs>
         </div>

@@ -64,7 +64,7 @@ export function AdminTableShell({
   }
 
   return (
-    <Surface padded={false}>
+    <Surface className="min-w-0" padded={false}>
       <SurfaceHeader className="justify-between" dir="rtl">
         <div className="flex items-center gap-2">
           <SurfaceTitle>{title}</SurfaceTitle>

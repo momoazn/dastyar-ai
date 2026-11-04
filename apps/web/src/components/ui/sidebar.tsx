@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { fa } from "@/lib/texts";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -294,7 +295,7 @@ function SidebarTrigger({
       {...props}
     >
       <PanelRightIcon className="size-4 transition-transform duration-200" />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{fa.sidebar.toggle}</span>
     </Button>
   );
 }
@@ -304,7 +305,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 
   return (
     <button
-      aria-label="Toggle Sidebar"
+      aria-label={fa.sidebar.toggle}
       className={cn(
         "-translate-x-1/2 group-data-[side=left]:-right-4 absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=right]:left-0 sm:flex rtl:translate-x-1/2",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize rtl:in-data-[side=left]:cursor-e-resize rtl:in-data-[side=right]:cursor-w-resize",
@@ -318,7 +319,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       data-slot="sidebar-rail"
       onClick={toggleSidebar}
       tabIndex={-1}
-      title="Toggle Sidebar"
+      title={fa.sidebar.toggle}
       {...props}
     />
   );

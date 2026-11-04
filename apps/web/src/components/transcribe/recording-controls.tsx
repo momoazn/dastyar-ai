@@ -21,6 +21,7 @@ type RecordingControlsProps = {
   onStart: () => void;
   onStop: () => void;
   children?: React.ReactNode;
+  disabled?: boolean;
 };
 
 const getBadgeVariant = (
@@ -51,6 +52,7 @@ export function RecordingControls({
   onStart,
   onStop,
   children,
+  disabled = false,
 }: RecordingControlsProps) {
   const statusText = getStatusText(isRecording, isTranscribing, elapsedMs);
   const badgeVariant = getBadgeVariant(isRecording, isTranscribing);
@@ -88,7 +90,7 @@ export function RecordingControls({
             }
             aria-pressed={isRecording}
             className="gap-2"
-            disabled={isTranscribing}
+            disabled={isTranscribing || (disabled && !isRecording)}
             onClick={isRecording ? onStop : onStart}
             size="default"
             type="button"

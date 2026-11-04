@@ -32,6 +32,7 @@ type ImageGenerationInputProps = {
   submitDisabled?: boolean;
   submitStatus?: "submitted" | undefined;
   submitVariant?: "default" | "destructive";
+  disabled?: boolean;
 };
 
 export function ImageGenerationInput({
@@ -42,6 +43,7 @@ export function ImageGenerationInput({
   submitDisabled = false,
   submitStatus,
   submitVariant = "default",
+  disabled = false,
 }: ImageGenerationInputProps) {
   const {
     prompt,
@@ -77,6 +79,7 @@ export function ImageGenerationInput({
           />
         ) : null
       }
+      disabled={disabled}
       isGenerating={isGenerating}
       leftTools={
         <>
@@ -85,12 +88,16 @@ export function ImageGenerationInput({
             value={getSizeValue()}
           />
           <PromptInputButton
+            aria-label={fa.imageGeneration.resetButton}
             onClick={onResetSettings}
             size="sm"
+            title={fa.imageGeneration.resetButton}
             variant="outline"
           >
-            <RotateCcw className="size-4" />
-            {fa.imageGeneration.resetButton}
+            <RotateCcw aria-hidden="true" className="size-4" />
+            <span className="hidden sm:inline">
+              {fa.imageGeneration.resetButton}
+            </span>
           </PromptInputButton>
         </>
       }
@@ -100,12 +107,17 @@ export function ImageGenerationInput({
       rightTools={
         <>
           <PromptInputButton
+            aria-expanded={advancedSettingsOpen}
+            aria-label={fa.imageGeneration.advancedButton}
             onClick={() => setAdvancedSettingsOpen(!advancedSettingsOpen)}
             size="sm"
+            title={fa.imageGeneration.advancedButton}
             variant="outline"
           >
-            <Settings2 className="size-4" />
-            {fa.imageGeneration.advancedButton}
+            <Settings2 aria-hidden="true" className="size-4" />
+            <span className="hidden sm:inline">
+              {fa.imageGeneration.advancedButton}
+            </span>
           </PromptInputButton>
           <TranscribeButton
             language={

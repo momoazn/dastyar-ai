@@ -10,6 +10,7 @@ import {
   SelectValue,
   Switch,
 } from "@/components/ui";
+import { useWhisperAvailable } from "@/hooks/use-runtime-health";
 import { useTranscription } from "@/hooks/use-transcription";
 import {
   formatElapsed,
@@ -78,7 +79,7 @@ export function TranscribeButton({
   onModelChange,
   availableModels = [],
 }: TranscribeButtonProps) {
-  // Use mutation pending state instead of separate local state for transcribing
+  const isWhisperAvailable = useWhisperAvailable();
 
   const {
     isRecording,
@@ -155,6 +156,11 @@ export function TranscribeButton({
     getTranscribeButtonText(isRecording, isPending, elapsedMs);
 
   const isButtonDisabled = disabled || isPending;
+
+  // Hide the mic when the speech service is down, so users do not record audio that cannot be used.
+  if (!(isWhisperAvailable || isRecording || isPending)) {
+    return null;
+  }
 
   if (showControls) {
     return (

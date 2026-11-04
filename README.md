@@ -66,7 +66,7 @@ bun run dev:server        # API on http://localhost:3000
 bun run dev:web           # web app on http://localhost:3001
 ```
 
-Open `http://localhost:3001` and register. The username is a 10-digit number (the format of an Iranian national ID). New accounts are regular users. Promote your account to admin:
+Open `http://localhost:3001` and register. The username is a 10-digit number (the format of an Iranian national ID). The first account becomes the admin. Later accounts are regular users. To promote another account:
 
 ```bash
 (cd apps/server && bun run make-admin <username>)

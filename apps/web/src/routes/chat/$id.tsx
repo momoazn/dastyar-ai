@@ -1,5 +1,5 @@
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
-import { MessageCircleIcon } from "lucide-react";
+import { ArrowDownToLine, MessageCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -96,14 +96,16 @@ function RouteComponent() {
         <div className="space-y-2">
           <div className="flex justify-end">
             <Button
+              aria-label={fa.chat.autoScroll}
+              aria-pressed={isAutoScrollEnabled}
+              className="size-8 text-muted-foreground aria-pressed:text-primary"
               onClick={toggleAutoScroll}
-              size="sm"
+              size="icon"
+              title={fa.chat.autoScroll}
               type="button"
-              variant="outline"
+              variant="ghost"
             >
-              {isAutoScrollEnabled
-                ? fa.chat.disableAutoScroll
-                : fa.chat.enableAutoScroll}
+              <ArrowDownToLine aria-hidden="true" className="size-4" />
             </Button>
           </div>
           {error && (
@@ -131,7 +133,7 @@ function RouteComponent() {
       }
       empty={
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-          <MessageCircleIcon className="size-10" />
+          <MessageCircleIcon aria-hidden="true" className="size-10" />
           <div className="space-y-1" dir="rtl">
             <div className="font-medium">{fa.chat.askQuestion}</div>
             <div className="text-xs">{fa.chat.askQuestionDescription}</div>

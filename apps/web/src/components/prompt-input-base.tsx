@@ -26,6 +26,7 @@ type PromptInputBaseProps = {
   rightTools?: React.ReactNode;
   submitProps?: SubmitProps;
   bottomContent?: React.ReactNode;
+  disabled?: boolean;
 };
 
 export function PromptInputBase({
@@ -40,6 +41,7 @@ export function PromptInputBase({
   rightTools,
   submitProps,
   bottomContent,
+  disabled = false,
 }: PromptInputBaseProps) {
   const textDirection = useMemo(
     () => dir ?? (value ? detectTextDirection(value) : "rtl"),
@@ -72,13 +74,14 @@ export function PromptInputBase({
     >
       <PromptInputTextarea
         dir={textDirection}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         value={value}
       />
       <PromptInputToolbar>
         <PromptInputTools>{leftTools}</PromptInputTools>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {rightTools}
           <PromptInputSubmit
             disabled={isSubmitDisabled}

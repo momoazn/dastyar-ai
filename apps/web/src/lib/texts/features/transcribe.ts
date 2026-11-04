@@ -10,6 +10,13 @@ export const transcribe = {
   clear: "پاک کردن",
   resultPlaceholder: "مثال: فایل صوتی شما اینجا تبدیل به متن خواهد شد...",
   elapsedLabel: "زمان ضبط",
+  controlsTitle: "تنظیمات و ضبط",
+  resultTitle: "متن نتیجه",
+  emptyResult: "هنوز متنی ساخته نشده است. ضبط را شروع کنید.",
+  unavailable: {
+    title: "سرویس تبدیل گفتار به متن در دسترس نیست",
+    hint: "مدیر سیستم باید سرویس Whisper را روشن کند. بعد از آن، این صفحه خودکار به‌روز می‌شود.",
+  },
   errors: {
     noAudio: "هیچ صدایی ضبط نشد.",
     processFailed: "پردازش فایل صوتی ناموفق بود.",
