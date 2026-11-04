@@ -12,7 +12,7 @@ import {
   listThreadDocuments,
 } from "@/repositories/documents";
 import { indexUploadedDocument } from "@/services/processors";
-import { saveDocumentFromFile } from "@/services/storage";
+import { deleteDocumentFile, saveDocumentFromFile } from "@/services/storage";
 import { protectedProcedure } from "./base";
 
 export const documentProcedures = {
@@ -52,20 +52,32 @@ export const documentProcedures = {
       }
 
       const stored = await saveDocumentFromFile(file, file.name);
-      const doc = await createDocument({
-        title: title || file.name,
-        filePath: stored.filePath,
-        fileName: stored.fileName,
-        mimeType: stored.mimeType,
-        userId,
-      });
-
-      if (threadId) {
-        await attachDocumentToThread({
-          threadId,
-          documentId: Number(doc.id),
+      let doc: Awaited<ReturnType<typeof createDocument>> | null = null;
+      try {
+        doc = await createDocument({
+          title: title || file.name,
+          filePath: stored.filePath,
+          fileName: stored.fileName,
+          mimeType: stored.mimeType,
           userId,
         });
+
+        if (threadId) {
+          await attachDocumentToThread({
+            threadId,
+            documentId: Number(doc.id),
+            userId,
+          });
+        }
+      } catch (error) {
+        // Do not leave an orphan file or document row behind
+        if (doc) {
+          await deleteDocument(Number(doc.id), userId).catch((cleanupError) =>
+            logger.warn("Upload cleanup failed", { cleanupError, userId })
+          );
+        }
+        await deleteDocumentFile(stored.filePath);
+        throw error;
       }
 
       const indexing = await indexUploadedDocument({

@@ -9,6 +9,7 @@ import {
   type Json,
   threadDocuments,
 } from "@/database";
+import { deleteDocumentFile } from "@/services/storage";
 
 export async function createDocument(rec: {
   title: string;
@@ -73,6 +74,25 @@ export async function attachDocumentToThread(params: {
     .limit(1);
   if (!row.at(0)) {
     throw new Error("گفتگوی مورد نظر یافت نشد.");
+  }
+  // The document must belong to the same user
+  if (!(await getDocumentById(params.documentId, params.userId))) {
+    throw new Error("سند مورد نظر یافت نشد.");
+  }
+
+  // Attach once only: duplicates would repeat the same chunks in RAG
+  const existing = await db
+    .select({ id: threadDocuments.id })
+    .from(threadDocuments)
+    .where(
+      and(
+        eq(threadDocuments.threadId, params.threadId),
+        eq(threadDocuments.documentId, params.documentId)
+      )
+    )
+    .limit(1);
+  if (existing.at(0)) {
+    return;
   }
 
   await db
@@ -142,7 +162,12 @@ export async function listThreadDocuments(params: {
     })
     .from(threadDocuments)
     .innerJoin(documents, eq(threadDocuments.documentId, documents.id))
-    .where(eq(threadDocuments.threadId, params.threadId))
+    .where(
+      and(
+        eq(threadDocuments.threadId, params.threadId),
+        eq(documents.userId, params.userId)
+      )
+    )
     .orderBy(asc(documents.title));
 
   return rows;
@@ -203,4 +228,5 @@ export async function deleteDocument(
     throw new Error("سند مورد نظر یافت نشد.");
   }
   await db.delete(documents).where(eq(documents.id, id)).run();
+  await deleteDocumentFile(doc.filePath);
 }

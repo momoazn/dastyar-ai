@@ -226,9 +226,8 @@ function validateFilename(filename: string): void {
  * This is a simple check and not a replacement for proper virus scanning
  */
 async function validateFileContent(file: File): Promise<void> {
-  // Read first few bytes to check for common malicious patterns
-  const arrayBuffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer.slice(0, 1024)); // Check first 1KB
+  // Read only the first 1KB to check for common malicious patterns
+  const bytes = new Uint8Array(await file.slice(0, 1024).arrayBuffer());
 
   // Check for executable signatures (basic check)
   const executableSignatures = [
