@@ -13,10 +13,11 @@ const isWindows = process.platform === "win32";
 
 // Check if whisper.cpp is built
 if (!existsSync(BUILD_DIR)) {
-  console.error(
-    "whisper.cpp not built yet. Run: bun scripts/build.ts --skip-web --skip-server --skip-package"
+  // Speech to text is optional: skip it so `bun run dev` still starts the server and web app.
+  console.warn(
+    "Skipping the whisper service: whisper.cpp is not built. Run: bun scripts/build.ts --skip-web --skip-server --skip-package"
   );
-  process.exit(1);
+  process.exit(0);
 }
 
 // Set up CGo environment variables
