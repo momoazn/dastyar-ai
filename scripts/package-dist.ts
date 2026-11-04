@@ -281,7 +281,7 @@ ${serverBin}
 \`\`\`
 
 ### 3. Open in Browser
-Open http://localhost:3000
+Open http://localhost:${DEFAULT_CONFIG.PORT}
 
 ## Configuration
 

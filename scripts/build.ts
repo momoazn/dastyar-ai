@@ -16,7 +16,11 @@
 import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { CONFIG_KEYS, CONFIG_SCHEMA } from "../apps/server/src/config-schema";
+import {
+  CONFIG_KEYS,
+  CONFIG_SCHEMA,
+  DEFAULT_CONFIG,
+} from "../apps/server/src/config-schema";
 import { separator, withTag } from "./build-log";
 import { buildServer } from "./build-server";
 import { buildWeb } from "./build-web";
@@ -76,6 +80,25 @@ const DEFAULT_OPTIONS: BuildOptions = {
   bump: "minor",
 };
 
+const USAGE = `Usage: bun scripts/build.ts [options]
+
+Options:
+  --platform=current|windows|all   Target platform (default: current)
+  --skip-deps                      Skip dependency install
+  --force-deps                     Always run bun install
+  --skip-web | --skip-server | --skip-whisper | --skip-package
+  --no-parallel                    Build web and server one after the other
+  --release                        Name binaries with the package version
+  --bump=patch|minor|major         Ignored (kept for compatibility)
+  -h, --help                       Show this help`;
+
+function failUsage(message: string): never {
+  console.error(message);
+  console.error("");
+  console.error(USAGE);
+  process.exit(2);
+}
+
 function parseArgs(): BuildOptions {
   const args = process.argv.slice(2);
   const options: BuildOptions = { ...DEFAULT_OPTIONS };
@@ -107,6 +130,11 @@ function parseArgs(): BuildOptions {
   };
 
   for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      console.log(USAGE);
+      process.exit(0);
+    }
+
     if (arg.startsWith("--platform=")) {
       const platform = arg.split("=")[1];
       if (
@@ -115,22 +143,27 @@ function parseArgs(): BuildOptions {
         platform === "all"
       ) {
         options.platform = platform;
+        continue;
       }
-      continue;
+      failUsage(
+        `Invalid platform "${platform}". Use current, windows, or all.`
+      );
     }
 
     if (arg.startsWith("--bump=")) {
       const bump = arg.split("=")[1];
       if (bump === "patch" || bump === "minor" || bump === "major") {
         options.bump = bump;
+        continue;
       }
-      continue;
+      failUsage(`Invalid bump "${bump}". Use patch, minor, or major.`);
     }
 
     const handler = flagHandlers[arg];
-    if (handler) {
-      handler();
+    if (!handler) {
+      failUsage(`Unknown option "${arg}".`);
     }
+    handler();
   }
 
   return options;
@@ -329,11 +362,13 @@ async function buildWebAndServer(options: BuildOptions): Promise<void> {
   }
 
   console.log(withTag("step", "Building web and server in parallel..."));
-  await Promise.all(
-    buildJobs.map(async (job) => {
-      await job.run();
-    })
-  );
+  // allSettled lets both jobs finish, so a failure does not leave the other
+  // job running while the process exits.
+  const results = await Promise.allSettled(buildJobs.map((job) => job.run()));
+  const failed = results.find((result) => result.status === "rejected");
+  if (failed?.status === "rejected") {
+    throw failed.reason;
+  }
   console.log(withTag("ok", "Parallel web/server stage completed"));
 }
 
@@ -528,7 +563,9 @@ function printDistributionSummary(summary: BuildSummaryOptions): void {
   console.log(
     `  2. Start main server:  dist/${options.release ? `dastyar-ai-v${appVersion}` : "dastyar-ai"}(.exe)`
   );
-  console.log("  3. Open browser:       http://localhost:3000");
+  console.log(
+    `  3. Open browser:       http://localhost:${DEFAULT_CONFIG.PORT}`
+  );
   console.log("");
   console.log("See dist/README.md for more information");
 }
