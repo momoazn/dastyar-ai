@@ -1,4 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { env } from "@/config";
 import {
   db,
   generatedImages,
@@ -16,6 +19,7 @@ import {
   setImageThreadArchived,
   touchLastImageAt,
 } from "./image-threads";
+import { createGeneratedImage } from "./images";
 
 async function cleanupTables() {
   await db.delete(generatedImages);
@@ -99,6 +103,28 @@ describe("Image Threads Repository", () => {
     const thread = await getImageThread(created.id, userB.id);
     expect(thread).not.toBeNull();
     expect(thread?.isArchived).toBe(false);
+  });
+
+  it("removes image files when the thread is deleted", async () => {
+    const user = await createTestUser("3000000011");
+    const created = await createImageThread({ title: "T", userId: user.id });
+    mkdirSync(env.IMAGES_DIR, { recursive: true });
+    const filePath = join(env.IMAGES_DIR, "thread-delete.png");
+    writeFileSync(filePath, "x");
+    await createGeneratedImage({
+      prompt: "p",
+      negativePrompt: null,
+      filePath,
+      fileName: "thread-delete.png",
+      settings: {},
+      threadId: created.id,
+      userId: user.id,
+    });
+
+    await deleteImageThread(created.id, user.id);
+
+    expect(existsSync(filePath)).toBe(false);
+    expect(await getImageThread(created.id, user.id)).toBeNull();
   });
 
   it("updates lastImageAt only for the owning user", async () => {

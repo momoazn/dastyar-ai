@@ -58,7 +58,7 @@ async function streamImage(
     );
     headers.set("Content-Length", stat.size.toString());
     if (disposition === "inline") {
-      headers.set("Cache-Control", "public, max-age=31536000");
+      headers.set("Cache-Control", "private, max-age=31536000");
     }
 
     return new Response(file.stream(), {

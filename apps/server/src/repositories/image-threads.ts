@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db, type ImageThread, imageThreads } from "@/database";
 import { logger } from "@/lib/logger";
+import { clearGeneratedImagesByThread } from "./images";
 
 export async function createImageThread(
   params: Partial<Pick<ImageThread, "title">> & { userId: number }
@@ -116,6 +117,9 @@ export async function deleteImageThread(
   userId: number
 ): Promise<void> {
   try {
+    // Remove the image files first; the rows go with the thread (cascade).
+    // The call only sees images of this user, so a foreign thread is untouched.
+    await clearGeneratedImagesByThread(id, userId);
     await db
       .delete(imageThreads)
       .where(and(eq(imageThreads.id, id), eq(imageThreads.userId, userId)))
