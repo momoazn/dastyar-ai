@@ -4,9 +4,9 @@ A local-first, Persian-first AI assistant: chat, document Q&A, translation, summ
 
 ![Chat with a local model](docs/screenshots/chat.png)
 
-| Home | Chat, dark theme |
+| Landing page | Chat, dark theme |
 | --- | --- |
-| ![Home page with the tool list](docs/screenshots/home.png) | ![Chat in the dark theme](docs/screenshots/chat-dark.png) |
+| ![Landing page](docs/screenshots/home.png) | ![Chat in the dark theme](docs/screenshots/chat-dark.png) |
 | **Speech to text** | **Admin panel** |
 | ![Speech to text with a local Whisper model](docs/screenshots/transcribe.png) | ![Admin panel with users and models](docs/screenshots/admin.png) |
 
