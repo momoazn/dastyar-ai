@@ -1,18 +1,26 @@
 import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { fa } from "@/lib/texts";
+import { cn } from "@/lib/utils";
 
 export function Header({
   SideBarTrigger,
   actions,
+  className,
 }: {
   SideBarTrigger?: React.ReactNode;
   actions?: React.ReactNode;
+  className?: string;
 }) {
   const hasSidebar = Boolean(SideBarTrigger);
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-2 bg-sidebar px-2 md:h-16 md:px-4">
+    <header
+      className={cn(
+        "sticky top-0 z-10 flex h-14 items-center justify-between gap-2 bg-sidebar px-2 md:h-16 md:px-4",
+        className
+      )}
+    >
       <div className="flex min-w-0 items-center gap-2">
         {SideBarTrigger}
         {/* The sidebar shows the brand on desktop; show it here when the sidebar is hidden. */}
