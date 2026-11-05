@@ -1,3 +1,5 @@
+<img src="apps/web/public/brand-logo.svg" alt="" width="72">
+
 # Dastyar AI
 
 A local-first, Persian-first AI assistant: chat, document Q&A, translation, summaries, code help, image generation, and speech-to-text. It runs on your own machine and talks to local model servers.
