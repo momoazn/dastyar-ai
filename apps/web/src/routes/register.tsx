@@ -9,6 +9,7 @@ import { useSetAtom } from "jotai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
+import { useEnabledNavItems } from "@/components/sidebar/use-enabled-nav-items";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -56,6 +57,7 @@ function RegisterPage() {
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/register" }) as { redirect?: string };
+  const appHome = useEnabledNavItems()[0]?.url ?? "/chat/";
 
   const registerMutation = useMutation(
     orpc.auth.register.mutationOptions({
@@ -65,7 +67,7 @@ function RegisterPage() {
           setShowAdminDialog(true);
         } else {
           // Redirect to the intended page or home
-          navigate({ to: search.redirect || "/" });
+          navigate({ to: search.redirect || appHome });
         }
       },
     })
@@ -219,7 +221,7 @@ function RegisterPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() => navigate({ to: search.redirect || "/" })}
+              onClick={() => navigate({ to: search.redirect || appHome })}
             >
               {fa.admin.users.actions.confirm}
             </AlertDialogAction>

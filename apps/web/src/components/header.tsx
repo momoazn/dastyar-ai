@@ -4,8 +4,10 @@ import { fa } from "@/lib/texts";
 
 export function Header({
   SideBarTrigger,
+  actions,
 }: {
   SideBarTrigger?: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
   const hasSidebar = Boolean(SideBarTrigger);
 
@@ -30,6 +32,7 @@ export function Header({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {actions}
         <ThemeToggle />
       </div>
     </header>

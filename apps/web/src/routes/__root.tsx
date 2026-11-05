@@ -74,6 +74,11 @@ function RootComponent() {
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  // The landing page has its own full-width layout without the app shell.
+  if (location.pathname === "/") {
+    return children;
+  }
+
   const isAuthPage =
     location.pathname.startsWith("/login") ||
     location.pathname.startsWith("/register");

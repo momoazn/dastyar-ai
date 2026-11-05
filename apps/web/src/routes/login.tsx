@@ -9,6 +9,7 @@ import { useSetAtom } from "jotai";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { tokenAtom } from "@/atoms/auth";
+import { useEnabledNavItems } from "@/components/sidebar/use-enabled-nav-items";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,12 +45,13 @@ function LoginPage() {
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const search = useSearch({ from: "/login" }) as { redirect?: string };
+  const appHome = useEnabledNavItems()[0]?.url ?? "/chat/";
 
   const loginMutation = useMutation(
     orpc.auth.login.mutationOptions({
       onSuccess: (result) => {
         setToken(result.token);
-        navigate({ to: search.redirect || "/" });
+        navigate({ to: search.redirect || appHome });
       },
     })
   );
