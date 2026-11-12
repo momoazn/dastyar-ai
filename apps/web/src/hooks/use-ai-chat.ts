@@ -4,6 +4,8 @@ import { DefaultChatTransport } from "ai";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { tokenAtom } from "@/atoms/auth";
+import { demoChatFetch } from "@/demo/chat";
+import { IS_DEMO } from "@/demo/mode";
 import type { MyUIMessage } from "@/server/utils/chat";
 import { orpc } from "@/utils/orpc";
 
@@ -40,6 +42,7 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
       new DefaultChatTransport({
         api: getApiUrl(),
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        fetch: IS_DEMO ? (demoChatFetch as typeof fetch) : undefined,
       }),
     [token]
   );

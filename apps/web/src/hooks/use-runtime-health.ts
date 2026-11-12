@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { IS_DEMO } from "@/demo/mode";
 
 export type RuntimeHealth = {
   status: string;
@@ -9,6 +10,9 @@ export type RuntimeHealth = {
 };
 
 const fetchRuntimeHealth = async (): Promise<RuntimeHealth> => {
+  if (IS_DEMO) {
+    return { status: "ok", whisper: { available: true, status: 200 } };
+  }
   const response = await fetch("/health", {
     headers: { Accept: "application/json" },
   });
