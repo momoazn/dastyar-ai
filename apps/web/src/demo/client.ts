@@ -66,7 +66,7 @@ const demoUser = (id: number, username: string, role: "admin" | "user") => ({
   role,
   createdAt: ago(60 * 24 * id),
   updatedAt: ago(60 * 24 * id),
-  latestIps: ["192.168.1." + (10 + id)],
+  latestIps: [`192.168.1.${10 + id}`],
   ipCount: 1,
 });
 

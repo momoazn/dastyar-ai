@@ -13,6 +13,7 @@
     "outDir": "./dist",
     "types": ["bun-types"],
     "composite": true,
+    "emitDeclarationOnly": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   }
