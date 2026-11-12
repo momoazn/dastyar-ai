@@ -29,7 +29,7 @@ const getApiUrl = (): string => {
  */
 export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
   const token = useAtomValue(tokenAtom);
-  const isInitialRender = useRef(true);
+  const lastLoadedThreadId = useRef<number | null>(null);
 
   const messagesQuery = useQuery(
     orpc.messages.listByThread.queryOptions({
@@ -57,13 +57,26 @@ export function useAIChat({ threadId, onFinish }: UseAIChatOptions) {
       },
     });
 
-  // Load existing messages on initial render
+  // Load existing messages on thread change or query update (when not streaming)
   useEffect(() => {
-    if (isInitialRender.current && messagesQuery.data) {
-      setMessages([...messagesQuery.data]);
-      isInitialRender.current = false;
+    if (lastLoadedThreadId.current !== threadId) {
+      lastLoadedThreadId.current = threadId;
+      if (messagesQuery.data) {
+        setMessages([...messagesQuery.data]);
+      } else {
+        setMessages([]);
+      }
+      return;
     }
-  }, [messagesQuery.data, setMessages]);
+
+    if (
+      messagesQuery.data &&
+      status !== "streaming" &&
+      status !== "submitted"
+    ) {
+      setMessages([...messagesQuery.data]);
+    }
+  }, [threadId, messagesQuery.data, setMessages, status]);
 
   const sendPrompt = useCallback(
     (prompt: string, modelId: string) => {

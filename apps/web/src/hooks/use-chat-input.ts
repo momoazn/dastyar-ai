@@ -34,7 +34,9 @@ export function useChatInput({
 
         if (threadId) {
           if (renameOnSend) {
-            await renameThread(threadId, validPrompt);
+            renameThread(threadId, validPrompt).catch(() => {
+              // Best-effort auto-rename; failure should not block message sending
+            });
           }
           if (onSendMessage) await onSendMessage(validPrompt);
         } else {

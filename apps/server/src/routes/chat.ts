@@ -254,8 +254,12 @@ const app = new Hono<AuthEnv>()
       const throttledUpdateIntervalMs = 500;
       let accumulatedText = "";
       let accumulatedReasoning = "";
+      let totalAccumulatedText = "";
+      let totalAccumulatedReasoning = "";
       let lastPersistTime = 0;
       let inFlightPersist: Promise<void> | null = null;
+      let streamCompletedNormally = false;
+
       const flushPartialParts = () => {
         if (!(accumulatedText || accumulatedReasoning)) {
           return;
@@ -299,6 +303,9 @@ const app = new Hono<AuthEnv>()
         messages: modelMessages,
         system: ragSystem,
         providerOptions: {},
+        onFinish: () => {
+          streamCompletedNormally = true;
+        },
         onError: ({ error }) => {
           streamFailed = true;
           logger.error("Chat stream failed", error, {
@@ -309,8 +316,10 @@ const app = new Hono<AuthEnv>()
         onChunk: ({ chunk }) => {
           if (chunk.type === "text-delta") {
             accumulatedText += chunk.text;
+            totalAccumulatedText += chunk.text;
           } else if (chunk.type === "reasoning-delta") {
             accumulatedReasoning += chunk.text;
+            totalAccumulatedReasoning += chunk.text;
           }
 
           const now = Date.now();
@@ -333,10 +342,48 @@ const app = new Hono<AuthEnv>()
             if (inFlightPersist) {
               await inFlightPersist;
             }
+
+            const hasValidResponseParts =
+              Array.isArray(responseMessage.parts) &&
+              responseMessage.parts.some(
+                (p: { type: string; text?: string }) =>
+                  (p.type === "text" && Boolean(p.text)) ||
+                  (p.type === "reasoning" && Boolean(p.text))
+              );
+
+            let finalParts: JsonValue[];
+            if (hasValidResponseParts) {
+              finalParts = responseMessage.parts as JsonValue[];
+            } else {
+              const fallbackParts: JsonValue[] = [];
+              if (totalAccumulatedReasoning) {
+                fallbackParts.push({
+                  type: "reasoning",
+                  text: totalAccumulatedReasoning,
+                } as JsonValue);
+              }
+              if (totalAccumulatedText) {
+                fallbackParts.push({
+                  type: "text",
+                  text: totalAccumulatedText,
+                } as JsonValue);
+              }
+              finalParts = fallbackParts;
+            }
+
+            let finalStatus: "finished" | "errored" | "stopped";
+            if (streamFailed) {
+              finalStatus = "errored";
+            } else if (streamCompletedNormally) {
+              finalStatus = "finished";
+            } else {
+              finalStatus = "stopped";
+            }
+
             await updateMessage({
               id: assistantMessage.id,
-              parts: responseMessage.parts as JsonValue,
-              status: streamFailed ? "errored" : "finished",
+              parts: finalParts as JsonValue,
+              status: finalStatus,
             });
             await updateThreadOnNewMessage(threadId, user.id, new Date());
           } catch {

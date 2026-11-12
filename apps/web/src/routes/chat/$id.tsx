@@ -55,19 +55,23 @@ function RouteComponent() {
     },
   });
 
-  // If navigated here with an initial prompt from /chat, send it once
-  const hasSentInitialPromptRef = useRef(false);
+  // If navigated here with an initial prompt from /chat, send it once per thread
+  const sentInitialPromptThreadIdRef = useRef<number | null>(null);
   useEffect(() => {
     const p =
       typeof search?.initialPrompt === "string" ? search.initialPrompt : "";
-    if (!hasSentInitialPromptRef.current && p.trim() && messages.length === 0) {
-      hasSentInitialPromptRef.current = true;
+    if (
+      sentInitialPromptThreadIdRef.current !== threadIdNum &&
+      p.trim() &&
+      messages.length === 0
+    ) {
+      sentInitialPromptThreadIdRef.current = threadIdNum;
       // Fire-and-forget; chat.$id already handles renaming and streaming
       handleSendPrompt(p).catch(() => {
         toast.error(fa.chat.sendMessageError);
       });
     }
-  }, [search, messages.length, handleSendPrompt]);
+  }, [search, messages.length, handleSendPrompt, threadIdNum]);
 
   useEffect(() => {
     setIsAutoScrollEnabled(readAutoScrollByThread(threadIdNum));

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import {
   type ChatThread,
   chatThreads,
@@ -23,7 +23,7 @@ export async function createThread(
     if (!params.userId) {
       throw new Error("شناسه کاربر برای ایجاد گفتگو الزامی است.");
     }
-    const title = (params?.title ?? "گفتگوی جدید").trim();
+    const title = params?.title?.trim() || "گفتگوی جدید";
 
     const result = await db
       .insert(chatThreads)
@@ -86,18 +86,19 @@ export function listThreads(options?: {
   if (!includeArchived) {
     conditions.push(eq(chatThreads.isArchived, false));
   }
+  const orderClause = sql`coalesce(${chatThreads.lastMessageAt}, ${chatThreads.updatedAt}) desc`;
   if (conditions.length === 1) {
     return db
       .select()
       .from(chatThreads)
       .where(conditions[0])
-      .orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
+      .orderBy(orderClause);
   }
   return db
     .select()
     .from(chatThreads)
     .where(and(...conditions))
-    .orderBy(desc(chatThreads.lastMessageAt), desc(chatThreads.updatedAt));
+    .orderBy(orderClause);
 }
 
 /**
@@ -115,10 +116,14 @@ export async function renameThread(
     if (!userId) {
       throw new Error("شناسه کاربر برای تغییر نام گفتگو الزامی است.");
     }
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      throw new Error("عنوان گفتگو نمی‌تواند خالی باشد.");
+    }
     await db
       .update(chatThreads)
       .set({
-        title,
+        title: trimmedTitle,
         updatedAt: new Date(),
       })
       .where(and(eq(chatThreads.id, id), eq(chatThreads.userId, userId)))
@@ -211,7 +216,7 @@ export async function updateThreadOnNewMessage(
 }
 
 export type MessageWithModel = Message & {
-  model: Pick<LLMModel, "identifier" | "provider">;
+  model: Pick<LLMModel, "identifier" | "provider"> | null;
 };
 
 /**
@@ -243,7 +248,7 @@ export async function loadThreadMessages(
         modelProvider: llmModels.provider,
       })
       .from(messages)
-      .innerJoin(llmModels, eq(messages.modelId, llmModels.id))
+      .leftJoin(llmModels, eq(messages.modelId, llmModels.id))
       .where(and(eq(messages.threadId, threadId), eq(messages.userId, userId)))
       .orderBy(asc(messages.createdAt));
 
@@ -257,10 +262,13 @@ export async function loadThreadMessages(
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       userId: row.userId,
-      model: {
-        identifier: row.modelIdentifier,
-        provider: row.modelProvider,
-      },
+      model:
+        row.modelIdentifier && row.modelProvider
+          ? {
+              identifier: row.modelIdentifier,
+              provider: row.modelProvider,
+            }
+          : null,
     }));
   } catch (error) {
     logger.error("Failed to load messages for thread", error, { threadId });
