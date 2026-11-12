@@ -19,6 +19,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { IS_DEMO } from "@/demo/mode";
 import { fa } from "@/lib/texts";
 import type { orpc } from "@/utils/orpc";
 
@@ -71,6 +72,11 @@ function RootComponent() {
       >
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster position="bottom-left" richColors />
+        {IS_DEMO && (
+          <div className="-translate-x-1/2 pointer-events-none fixed top-2 left-1/2 z-50 rounded-full bg-amber-100 px-3 py-1 text-amber-900 text-xs shadow">
+            نسخه‌ی دمو: پاسخ‌ها از پیش نوشته شده‌اند و مدلی اجرا نمی‌شود.
+          </div>
+        )}
       </ThemeProvider>
     </>
   );

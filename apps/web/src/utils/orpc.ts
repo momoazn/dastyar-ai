@@ -5,6 +5,8 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LS_TOKEN_KEY } from "@/atoms/auth";
+import { demoClient } from "@/demo/client";
+import { IS_DEMO } from "@/demo/mode";
 import { formatErrorForUser } from "@/lib/error-utils";
 import { errors } from "@/lib/texts/errors";
 import type { appRouter } from "@/server/procedures";
@@ -62,6 +64,6 @@ export const link = new RPCLink({
 });
 
 export type OrpcClient = RouterClient<typeof appRouter>;
-export const client: OrpcClient = createORPCClient(link);
+export const client: OrpcClient = IS_DEMO ? demoClient : createORPCClient(link);
 
 export const orpc = createTanstackQueryUtils(client);

@@ -4,6 +4,8 @@
 
 A local-first, Persian-first AI assistant: chat, document Q&A, translation, summaries, code help, image generation, and speech-to-text. It runs on your own machine and talks to local model servers.
 
+**Live demo:** https://dastyar-ai.vercel.app. It is a static build with `VITE_DEMO=true`: a fake API runs in the browser, so answers are canned and no model runs. Build it with `VITE_DEMO=true bun run --cwd apps/web build`.
+
 ![Chat with a local model](docs/screenshots/chat.png)
 
 | Landing page | Chat, dark theme |

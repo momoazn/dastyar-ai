@@ -1,12 +1,14 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import { DEMO_TOKEN, IS_DEMO } from "@/demo/mode";
 
 export const LS_TOKEN_KEY = "auth-token";
 
 // Persist token in localStorage
 export const tokenAtom = atomWithStorage<string | null>(
   LS_TOKEN_KEY,
-  null,
+  // Demo build starts signed in.
+  IS_DEMO ? DEMO_TOKEN : null,
   undefined,
   {
     getOnInit: true,
