@@ -7,7 +7,7 @@ export function listSummaries(userId: number): Promise<Summary[]> {
     .select()
     .from(summariesTable)
     .where(eq(summariesTable.userId, userId))
-    .orderBy(desc(summariesTable.createdAt));
+    .orderBy(desc(summariesTable.createdAt), desc(summariesTable.id));
 }
 
 export async function createSummary(

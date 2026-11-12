@@ -30,6 +30,7 @@ import {
   createSummaryModeOptions,
   createToneOptions,
 } from "@/lib/enum-mappings";
+import { getErrorMessage as extractErrorMessage } from "@/lib/error-utils";
 import { fa } from "@/lib/texts";
 import { detectTextDirection } from "@/lib/utils";
 import type { SummaryMode, Tone } from "@/server/database/schema";
@@ -191,7 +192,10 @@ function SummarizePage() {
                   clipboardError ??
                   (modelsError
                     ? fa.general.modelsRefreshFailed
-                    : fa.summarize.errors.requestFailed);
+                    : extractErrorMessage(
+                        summarizeMutation.error,
+                        fa.summarize.errors.requestFailed
+                      ));
                 return <span>{message}</span>;
               })()}
               <span>{fa.translation.tryAgain}</span>

@@ -32,36 +32,6 @@ export function PdfResultDisplay({
     );
   }
 
-  if (pdfResult && translatedText) {
-    return (
-      <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
-        <div
-          className="flex items-center gap-3 rounded-lg border bg-green-500/10 p-4"
-          dir="rtl"
-        >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
-            <FileText className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-medium text-sm">
-              {fa.translation.translationCompleted}
-            </div>
-            <div className="text-green-600/80 text-xs">
-              {fa.translation.pagesTranslated(pdfResult.page_count)}
-            </div>
-          </div>
-        </div>
-        <textarea
-          aria-label={fa.translation.translatedText}
-          className="min-h-[140px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
-          dir={detectTextDirection(translatedText)}
-          readOnly
-          value={translatedText}
-        />
-      </div>
-    );
-  }
-
   if (pdfResult && pdfResult.pages.length > 0) {
     return (
       <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
@@ -101,6 +71,38 @@ export function PdfResultDisplay({
             })}
           </div>
         </ScrollArea>
+      </div>
+    );
+  }
+
+  if (translatedText) {
+    return (
+      <div className="flex h-full max-h-[400px] min-h-[300px] flex-col gap-4 overflow-auto">
+        <div
+          className="flex items-center gap-3 rounded-lg border bg-green-500/10 p-4"
+          dir="rtl"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+            <FileText className="h-6 w-6 text-green-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-sm">
+              {fa.translation.translationCompleted}
+            </div>
+            {pdfResult && (
+              <div className="text-green-600/80 text-xs">
+                {fa.translation.pagesTranslated(pdfResult.page_count)}
+              </div>
+            )}
+          </div>
+        </div>
+        <textarea
+          aria-label={fa.translation.translatedText}
+          className="min-h-[140px] resize-none border-none p-0 text-base shadow-none focus-visible:ring-0"
+          dir={detectTextDirection(translatedText)}
+          readOnly
+          value={translatedText}
+        />
       </div>
     );
   }

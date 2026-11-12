@@ -108,6 +108,14 @@ describe("Utils", () => {
       // Arabic punctuation (؟،) is detected as RTL by the regex
       expect(detectTextDirection("!؟،")).toBe("rtl");
     });
+
+    it("should detect RTL for lists and sentences starting with numbers or symbols", () => {
+      expect(detectTextDirection("1. سلام این یک متن است")).toBe("rtl");
+      expect(detectTextDirection("- خلاصه جلسه")).toBe("rtl");
+      expect(detectTextDirection("1402 سال خوبی بود")).toBe("rtl");
+      expect(detectTextDirection("[#1] متن ترجمه شده")).toBe("rtl");
+      expect(detectTextDirection("«سلام دنیا»")).toBe("rtl");
+    });
   });
 
   describe("debounce", () => {

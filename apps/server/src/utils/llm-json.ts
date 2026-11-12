@@ -58,6 +58,75 @@ function extractJsonObjectCandidates(input: string): string[] {
   return candidates;
 }
 
+function escapeStringChar(char: string): string {
+  if (char === "\n") return "\\n";
+  if (char === "\r") return "\\r";
+  if (char === "\t") return "\\t";
+  return char;
+}
+
+function sanitizeJsonCandidate(input: string): string {
+  let inString = false;
+  let escaped = false;
+  let result = "";
+
+  for (const char of input) {
+    if (!inString) {
+      if (char === '"') {
+        inString = true;
+      }
+      result += char;
+      continue;
+    }
+
+    if (escaped) {
+      escaped = false;
+      result += char;
+    } else if (char === "\\") {
+      escaped = true;
+      result += char;
+    } else if (char === '"') {
+      inString = false;
+      result += char;
+    } else {
+      result += escapeStringChar(char);
+    }
+  }
+
+  return result.replace(/,\s*([}\]])/g, "$1");
+}
+
+function parseJsonCandidate<T = Record<string, unknown>>(
+  candidate: string
+): T | null {
+  try {
+    return JSON.parse(candidate) as T;
+  } catch {
+    try {
+      const sanitized = sanitizeJsonCandidate(candidate);
+      return JSON.parse(sanitized) as T;
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractFieldFallback(text: string, fieldName: string): string | null {
+  const regex = new RegExp(
+    `"${fieldName}"\\s*:\\s*"([\\s\\S]*?)"\\s*(?:,|\\n\\s*["}]|})`
+  );
+  const match = text.match(regex);
+  if (match) {
+    return match[1]
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\\\\/g, "\\");
+  }
+  return null;
+}
+
 export function extractJsonField(
   rawOutput: string,
   fieldName: string
@@ -72,21 +141,18 @@ export function extractJsonField(
   const candidates = extractJsonObjectCandidates(cleaned);
   for (let i = candidates.length - 1; i >= 0; i -= 1) {
     const candidate = candidates[i];
-    try {
-      const parsed = JSON.parse(candidate) as Record<string, unknown>;
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        Object.hasOwn(parsed, fieldName)
-      ) {
-        const v = parsed[fieldName];
-        return v == null ? "" : String(v);
-      }
-    } catch {
-      // ignore and continue
+    const parsed = parseJsonCandidate(candidate);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      Object.hasOwn(parsed, fieldName)
+    ) {
+      const v = (parsed as Record<string, unknown>)[fieldName];
+      return v == null ? "" : String(v);
     }
   }
-  return null;
+
+  return extractFieldFallback(cleaned, fieldName);
 }
 
 /**
@@ -109,12 +175,14 @@ export function extractJsonObject<T>(
   const candidates = extractJsonObjectCandidates(cleaned);
   for (let i = candidates.length - 1; i >= 0; i -= 1) {
     const candidate = candidates[i];
-    try {
-      const parsed = JSON.parse(candidate);
-      const validated = schema.parse(parsed);
-      return validated;
-    } catch {
-      // ignore and continue to next candidate
+    const parsed = parseJsonCandidate(candidate);
+    if (parsed) {
+      try {
+        const validated = schema.parse(parsed);
+        return validated;
+      } catch {
+        // ignore and continue to next candidate
+      }
     }
   }
   return null;

@@ -1,5 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { fa } from "@/lib/texts";
+import { makeTitle } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 import { SidebarItem, useSidebarList, useTranslationMutations } from "./base";
 import { TranslationEmptyState } from "./empty-state";
@@ -51,8 +52,9 @@ export function TranslationsList() {
           params={{ translationId: String(translation.id) }}
           title={
             translation.sourceFileName ||
-            translation.sourceText?.slice(0, 30) ||
-            fa.general.untitled
+            (translation.sourceText
+              ? makeTitle(translation.sourceText, 30)
+              : fa.general.untitled)
           }
           to="/translation/$translationId"
         />

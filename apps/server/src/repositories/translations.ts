@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import {
   db,
   type Translation,
@@ -24,7 +24,8 @@ export function listTranslations(userId: number): Promise<Translation[]> {
   return db
     .select()
     .from(translationsTable)
-    .where(eq(translationsTable.userId, userId));
+    .where(eq(translationsTable.userId, userId))
+    .orderBy(desc(translationsTable.createdAt), desc(translationsTable.id));
 }
 
 export async function createTranslation(

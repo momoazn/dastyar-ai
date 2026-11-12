@@ -33,12 +33,14 @@ function SummaryHistoryView() {
   const [isCopied, setIsCopied] = useState(false);
 
   const summaryId = Number.parseInt(id, 10);
+  const isValidId = Number.isFinite(summaryId) && summaryId > 0;
 
-  const { data: summaryData, isLoading } = useQuery(
-    orpc.summarize.get.queryOptions({
-      input: { id: summaryId },
-    })
-  );
+  const { data: summaryData, isLoading } = useQuery({
+    ...orpc.summarize.get.queryOptions({
+      input: { id: isValidId ? summaryId : 0 },
+    }),
+    enabled: isValidId,
+  });
 
   const { models } = useSummarizeModelSelection();
 

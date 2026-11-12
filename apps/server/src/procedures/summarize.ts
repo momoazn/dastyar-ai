@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { type SummaryMode, summaryModes, type Tone, tones } from "@/database";
 import { summarySystemPrompt } from "@/lib/prompts";
@@ -26,54 +27,84 @@ const summarizeTextWithModel = async (params: {
   tone: Tone;
 }): Promise<string> => {
   const { model, text, mode, tone } = params;
-  const summaryText = await generateWithStructuredJsonFallback({
-    model,
-    schema: SUMMARY_TEXT_SCHEMA,
-    structuredSystem: summarySystemPrompt({ mode, tone, format: "structured" }),
-    jsonSystem: summarySystemPrompt({ mode, tone, format: "json" }),
-    prompt: text,
-    jsonField: "summaryText",
-    readStructured: (result) => {
-      if (
-        !(
-          typeof result === "object" &&
-          result !== null &&
-          "summaryText" in result
-        )
-      ) {
-        return null;
-      }
-      const structuredSummaryText = (result as { summaryText?: unknown })
-        .summaryText;
-      return typeof structuredSummaryText === "string"
-        ? structuredSummaryText
-        : null;
-    },
-    temperature: 0.1,
-  });
+  try {
+    const summaryText = await generateWithStructuredJsonFallback({
+      model,
+      schema: SUMMARY_TEXT_SCHEMA,
+      structuredSystem: summarySystemPrompt({
+        mode,
+        tone,
+        format: "structured",
+      }),
+      jsonSystem: summarySystemPrompt({ mode, tone, format: "json" }),
+      prompt: text,
+      jsonField: "summaryText",
+      readStructured: (result) => {
+        if (
+          !(
+            typeof result === "object" &&
+            result !== null &&
+            "summaryText" in result
+          )
+        ) {
+          return null;
+        }
+        const structuredSummaryText = (result as { summaryText?: unknown })
+          .summaryText;
+        return typeof structuredSummaryText === "string"
+          ? structuredSummaryText
+          : null;
+      },
+      temperature: 0.1,
+    });
 
-  if (!summaryText) {
-    throw new Error(serverTexts.summary.failed);
+    if (!summaryText) {
+      throw new ORPCError("SUMMARIZE_EMPTY_RESULT", {
+        message: serverTexts.summary.failed,
+        status: 500,
+      });
+    }
+
+    return summaryText;
+  } catch (error) {
+    if (error instanceof ORPCError) {
+      throw error;
+    }
+    throw new ORPCError("SUMMARIZE_FAILED", {
+      message: serverTexts.summary.failed,
+      status: 502,
+    });
   }
+};
 
-  return summaryText;
+const saveSummaryOrThrow = async (
+  params: Parameters<typeof createSummary>[0]
+) => {
+  try {
+    return await createSummary(params);
+  } catch {
+    throw new ORPCError("SUMMARY_PERSIST_FAILED", {
+      message: serverTexts.summary.failed,
+      status: 500,
+    });
+  }
 };
 
 export const summarizeProcedures = {
   list: protectedProcedure.handler(async ({ context }) => {
-    const rows = await listSummaries(context.user?.id);
+    const rows = await listSummaries(context.user.id);
     return rows;
   }),
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      const row = await getSummary(input.id, context.user?.id);
+      const row = await getSummary(input.id, context.user.id);
       return row;
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .handler(async ({ input, context }) => {
-      await deleteSummary(input.id, context.user?.id);
+      await deleteSummary(input.id, context.user.id);
       return { ok: true } as const;
     }),
   create: protectedProcedure
@@ -104,15 +135,13 @@ export const summarizeProcedures = {
           }),
       });
 
-      const summary = await createSummary({
+      return await saveSummaryOrThrow({
         sourceText: input.text,
         summaryText,
         mode,
         tone,
         modelId: input.modelId,
-        userId: context.user?.id,
+        userId: context.user.id,
       });
-
-      return summary;
     }),
 };
