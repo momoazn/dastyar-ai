@@ -212,6 +212,12 @@ func TestResponseFormats(t *testing.T) {
 				if !strings.Contains(rec.Body.String(), want) {
 					t.Errorf("body = %s", rec.Body)
 				}
+				if strings.Contains(rec.Body.String(), `"tokens":null`) {
+					t.Errorf("verbose_json contains tokens:null; want non-null array: %s", rec.Body)
+				}
+				if !strings.Contains(rec.Body.String(), `"tokens":[]`) {
+					t.Errorf("verbose_json missing tokens:[]; got: %s", rec.Body)
+				}
 			} else if rec.Body.String() != want {
 				t.Errorf("body = %q, want %q", rec.Body.String(), want)
 			}

@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { getSettingValue } from "@/repositories/system-settings";
 import {
   getWhisperModels,
   transcribe as whisperTranscribe,
@@ -46,6 +47,17 @@ export const transcribeProcedures = {
     .output(z.string())
     .handler(async ({ input, context }) => {
       try {
+        const isTranscriptionEnabled = await getSettingValue(
+          "enable_transcription",
+          true
+        );
+        if (isTranscriptionEnabled === false) {
+          throw new ORPCError("FORBIDDEN", {
+            status: 403,
+            message: "سرویس تبدیل گفتار به متن غیرفعال است",
+          });
+        }
+
         const language = input.language ?? "fa";
         const model = input.model ?? "ggml-base.bin";
 
@@ -86,6 +98,9 @@ export const transcribeProcedures = {
           initialPrompt: input.initialPrompt,
         });
       } catch (error) {
+        if (error instanceof ORPCError) {
+          throw error;
+        }
         const err =
           error instanceof Error ? error : new Error(String(error ?? "Error"));
         logger.error("Transcribe procedure error", err, {
