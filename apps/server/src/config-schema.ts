@@ -28,6 +28,28 @@ export const CONFIG_KEYS = Object.keys(DEFAULT_CONFIG) as Array<
   keyof typeof DEFAULT_CONFIG
 >;
 
+const TRUE_FLAGS = new Set(["true", "1", "yes", "on"]);
+const FALSE_FLAGS = new Set(["false", "0", "no", "off", ""]);
+
+// `z.coerce.boolean()` turns the string "false" into true, because
+// Boolean("false") is true. Read boolean-like strings by their meaning.
+const booleanFlag = (defaultValue: boolean) =>
+  z.preprocess((value) => {
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (TRUE_FLAGS.has(normalized)) {
+        return true;
+      }
+      if (FALSE_FLAGS.has(normalized)) {
+        return false;
+      }
+    }
+    if (typeof value === "number") {
+      return value !== 0;
+    }
+    return value;
+  }, z.boolean().default(defaultValue));
+
 export const CONFIG_SCHEMA = z.object({
   PORT: z.coerce.number().default(DEFAULT_CONFIG.PORT),
   HOST: z.string().default(DEFAULT_CONFIG.HOST),
@@ -54,7 +76,7 @@ export const CONFIG_SCHEMA = z.object({
   WHISPER_MODELS: z.string().default(DEFAULT_CONFIG.WHISPER_MODELS),
   WEB_DEV_PORT: z.coerce.number().default(DEFAULT_CONFIG.WEB_DEV_PORT),
   OLLAMA_BASE_URL: z.string().default(DEFAULT_CONFIG.OLLAMA_BASE_URL),
-  OLLAMA_ENABLED: z.coerce.boolean().default(DEFAULT_CONFIG.OLLAMA_ENABLED),
+  OLLAMA_ENABLED: booleanFlag(DEFAULT_CONFIG.OLLAMA_ENABLED),
   STABLE_DIFFUSION_BASE_URL: z
     .string()
     .default(DEFAULT_CONFIG.STABLE_DIFFUSION_BASE_URL),
@@ -62,7 +84,7 @@ export const CONFIG_SCHEMA = z.object({
   DOCUMENTS_DIR: z.string().default(DEFAULT_CONFIG.DOCUMENTS_DIR),
   EMBEDDING_MODEL: z.string().default(DEFAULT_CONFIG.EMBEDDING_MODEL),
   WEB_DIST_DIR: z.string().default(DEFAULT_CONFIG.WEB_DIST_DIR),
-  SSL_ENABLED: z.coerce.boolean().default(DEFAULT_CONFIG.SSL_ENABLED),
+  SSL_ENABLED: booleanFlag(DEFAULT_CONFIG.SSL_ENABLED),
   SSL_CERT_PATH: z.string().default(DEFAULT_CONFIG.SSL_CERT_PATH),
   SSL_KEY_PATH: z.string().default(DEFAULT_CONFIG.SSL_KEY_PATH),
 });
