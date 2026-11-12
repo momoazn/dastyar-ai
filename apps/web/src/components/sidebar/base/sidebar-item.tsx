@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Archive, Download, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, useSidebar } from "@/components/ui";
 import { fa } from "@/lib/texts";
 import { cn } from "@/lib/utils";
 import {
@@ -71,6 +71,7 @@ export function SidebarItem({
   className,
   showActionsOnHover = true,
 }: SidebarItemProps) {
+  const { isMobile, setOpenMobile } = useSidebar();
   const hasActions = actions.length > 0;
   const hasContent = subtitle || date;
 
@@ -78,6 +79,11 @@ export function SidebarItem({
     <div className={cn("group/sidebar-item relative", className)}>
       <Link
         activeProps={{ "aria-current": "page" }}
+        onClick={() => {
+          if (isMobile) {
+            setOpenMobile(false);
+          }
+        }}
         params={params}
         search={search}
         to={to}

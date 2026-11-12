@@ -73,7 +73,7 @@ function RootComponent() {
         <Wrapper>{isFetching ? <Loader /> : <Outlet />}</Wrapper>
         <Toaster position="bottom-left" richColors />
         {IS_DEMO && (
-          <div className="-translate-x-1/2 pointer-events-none fixed top-2 left-1/2 z-50 rounded-full bg-amber-100 px-3 py-1 text-amber-900 text-xs shadow">
+          <div className="-translate-x-1/2 pointer-events-none fixed top-2 left-1/2 z-50 rounded-full bg-amber-100 px-3 py-1 text-amber-900 text-xs shadow dark:border dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
             نسخه‌ی دمو: پاسخ‌ها از پیش نوشته شده‌اند و مدلی اجرا نمی‌شود.
           </div>
         )}
@@ -112,7 +112,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
       }
     >
       <AppSidebar side="right" />
-      <SidebarInset className="min-w-0 bg-sidebar ps-2 pb-2">
+      <SidebarInset className="min-w-0 bg-sidebar px-2 pb-2 md:ps-2 md:pe-0">
         <Header SideBarTrigger={<SidebarTrigger />} />
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-md border bg-background">
           {children}

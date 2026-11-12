@@ -4,6 +4,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui";
 import { fa } from "@/lib/texts";
 
@@ -16,13 +17,25 @@ export function AppSidebarHeader({
   variant = "full",
   className,
 }: SidebarHeaderProps) {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   if (variant === "icon") {
     return (
       <SidebarHeader className={className}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="md:h-8 md:p-0" size="lg">
-              <Link aria-label={fa.navigation.appTitle} to="/">
+              <Link
+                aria-label={fa.navigation.appTitle}
+                onClick={handleLinkClick}
+                to="/"
+              >
                 <img
                   alt={fa.navigation.appTitle}
                   className="size-8 rounded-lg"
@@ -49,7 +62,7 @@ export function AppSidebarHeader({
             className="h-10 hover:bg-sidebar-accent/50 data-[state=open]:bg-sidebar-accent/50"
             size="default"
           >
-            <Link to="/">
+            <Link onClick={handleLinkClick} to="/">
               <div className="flex items-center gap-2">
                 <img
                   alt={fa.navigation.appTitle}
