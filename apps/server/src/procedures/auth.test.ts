@@ -1,7 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
 import { call } from "@orpc/server";
+import jwt from "jsonwebtoken";
 import { db, initializeDatabase, users } from "@/database";
 import { createUser, hashPassword } from "@/repositories/auth";
+import { upsertSetting } from "@/repositories/system-settings";
 import { generateJwtToken } from "@/services/auth";
 import { authProcedures } from "./auth";
 
@@ -79,5 +81,16 @@ describe("auth procedures", () => {
         }
       )
     ).rejects.toMatchObject({ code: "INVALID_CREDENTIALS", status: 401 });
+  });
+
+  it("applies token_expiration_hours setting when generating token", async () => {
+    await upsertSetting("token_expiration_hours", 48);
+    const result = await call(
+      authProcedures.register,
+      { username: "1111111111", password: "password123" },
+      ctx
+    );
+    const decoded = jwt.decode(result.token) as { exp: number; iat: number };
+    expect(decoded.exp - decoded.iat).toBe(48 * 3600);
   });
 });

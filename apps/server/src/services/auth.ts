@@ -35,15 +35,27 @@ export type JwtPayload = {
  * @param user - The user object containing id, username, and role
  * @returns The signed JWT token
  */
-export function generateJwtToken(user: {
-  id: number;
-  username: string;
-  role: string;
-}): string {
+export function generateJwtToken(
+  user: {
+    id: number;
+    username: string;
+    role: string;
+  },
+  expiresIn?: number | string
+): string {
+  const signOptions: jwt.SignOptions = {
+    algorithm: JWT_ALGORITHM,
+  };
+  if (expiresIn !== undefined) {
+    (signOptions as Record<string, unknown>).expiresIn = expiresIn;
+  } else {
+    signOptions.expiresIn = env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
+  }
+
   return jwt.sign(
     { userId: user.id, username: user.username, role: user.role },
     env.JWT_SECRET,
-    { algorithm: JWT_ALGORITHM, expiresIn: env.JWT_EXPIRES_IN }
+    signOptions
   );
 }
 

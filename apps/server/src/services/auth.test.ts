@@ -55,6 +55,20 @@ describe("Auth Service", () => {
       expect(decoded.username).toBe(mockUser.username);
       expect(decoded.role).toBe(mockUser.role);
     });
+
+    it("should respect custom expiresIn option", () => {
+      const token = generateJwtToken(
+        {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+        },
+        7200
+      );
+
+      const decoded = jwt.decode(token) as { exp: number; iat: number };
+      expect(decoded.exp - decoded.iat).toBe(7200);
+    });
   });
 
   describe("verifyJwtToken", () => {
