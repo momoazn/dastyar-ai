@@ -12,6 +12,11 @@ import type { ConfigValue } from "@/types/config";
  */
 export async function getAllSettings(): Promise<SystemSetting[]> {
   const result = await db.select().from(systemSettings);
+  if (result.length === 0) {
+    await initializeDefaultSettings();
+    const seeded = await db.select().from(systemSettings);
+    return seeded as SystemSetting[];
+  }
   return result as SystemSetting[];
 }
 

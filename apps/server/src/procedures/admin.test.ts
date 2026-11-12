@@ -10,6 +10,7 @@ import {
   generatedImages,
   imageThreads,
   initializeDatabase,
+  systemSettings,
   users,
 } from "@/database";
 import { createUser, hashPassword } from "@/repositories/auth";
@@ -130,5 +131,28 @@ describe("admin user procedures", () => {
     await expect(
       call(adminProcedures.deleteUser, { userId: user.id }, ctxFor(user))
     ).rejects.toThrow();
+  });
+
+  it("returns totalPages as at least 1 when total is 0", async () => {
+    const admin = await makeUser("7000000009", "admin");
+    const result = await call(
+      adminProcedures.listUsers,
+      { page: 1, pageSize: 10, search: "nonexistent_user_xyz" },
+      ctxFor(admin)
+    );
+    expect(result.total).toBe(0);
+    expect(result.totalPages).toBe(1);
+  });
+
+  it("initializes default settings when getAllSettings is called on empty table", async () => {
+    const admin = await makeUser("7000000010", "admin");
+    await db.delete(systemSettings);
+    const settings = await call(
+      adminProcedures.getAllSettings,
+      undefined,
+      ctxFor(admin)
+    );
+    expect(settings.length).toBeGreaterThan(0);
+    expect(settings.some((s) => s.key === "enable_transcription")).toBe(true);
   });
 });
