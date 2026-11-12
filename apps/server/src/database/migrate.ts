@@ -1,3 +1,4 @@
+import type { Database } from "bun:sqlite";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "@/lib/logger";
@@ -87,8 +88,8 @@ async function loadAvailableMigrations(): Promise<{
 /**
  * Create migrations table if it doesn't exist
  */
-function createMigrationsTable(): void {
-  sqliteDB.run(`
+function createMigrationsTable(database: Database): void {
+  database.run(`
     CREATE TABLE IF NOT EXISTS __drizzle_migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       hash TEXT NOT NULL UNIQUE,
@@ -100,8 +101,8 @@ function createMigrationsTable(): void {
 /**
  * Get already applied migrations
  */
-function getAppliedMigrations(): Set<string> {
-  const appliedMigrations = sqliteDB
+function getAppliedMigrations(database: Database): Set<string> {
+  const appliedMigrations = database
     .prepare("SELECT hash FROM __drizzle_migrations")
     .all() as Array<{ hash: string }>;
   return new Set(appliedMigrations.map((m) => m.hash));
@@ -123,21 +124,33 @@ function parseSqlStatements(sqlContent: string): string[] {
 }
 
 /**
- * Execute SQL statements for a migration
+ * Execute SQL statements for a migration. A statement whose object already
+ * exists (an old install made before migration tracking) is skipped so the
+ * rest of the migration still runs.
  */
 function executeMigrationStatements(
+  database: Database,
   statements: string[],
   migrationTag: string
 ): void {
   for (const statement of statements) {
     try {
-      sqliteDB.run(statement);
+      database.run(statement);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("already exists")) {
+        logger.warn(`[migrate] Skipping existing object in ${migrationTag}`, {
+          migrationTag,
+          statement: statement.substring(0, 100),
+          error: message,
+        });
+        continue;
+      }
       logger.error(
         `[migrate] Error executing statement in ${migrationTag}:`,
         statement.substring(0, 100)
       );
-      logger.error(error instanceof Error ? error.message : String(error));
+      logger.error(message);
       throw error;
     }
   }
@@ -146,8 +159,8 @@ function executeMigrationStatements(
 /**
  * Record migration as applied
  */
-function recordMigration(migrationTag: string): void {
-  sqliteDB.run(
+function recordMigration(database: Database, migrationTag: string): void {
+  database.run(
     "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",
     [migrationTag, Date.now()]
   );
@@ -156,7 +169,10 @@ function recordMigration(migrationTag: string): void {
 /**
  * Apply migrations from either directory or bundled source
  */
-function applyMigrations(migrationData: MigrationData): void {
+export function applyMigrations(
+  migrationData: MigrationData,
+  database: Database = sqliteDB
+): void {
   logger.info(
     `[migrate] Running migrations from loaded migration data (${
       Object.keys(migrationData).length
@@ -171,8 +187,8 @@ function applyMigrations(migrationData: MigrationData): void {
   const journal = JSON.parse(journalContent);
   const entries = journal.entries as MigrationEntry[];
 
-  createMigrationsTable();
-  const appliedHashes = getAppliedMigrations();
+  createMigrationsTable(database);
+  const appliedHashes = getAppliedMigrations(database);
 
   for (const entry of entries) {
     const migrationTag = entry.tag;
@@ -193,9 +209,13 @@ function applyMigrations(migrationData: MigrationData): void {
 
     const statements = parseSqlStatements(sqlContent);
 
+    // One transaction per migration, so a failure leaves no half-applied
+    // schema that a later run would then record as done.
     try {
-      executeMigrationStatements(statements, migrationTag);
-      recordMigration(migrationTag);
+      database.transaction(() => {
+        executeMigrationStatements(database, statements, migrationTag);
+        recordMigration(database, migrationTag);
+      })();
       logger.info(`[migrate] ✓ Migration ${migrationTag} applied successfully`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -204,7 +224,7 @@ function applyMigrations(migrationData: MigrationData): void {
           `[migrate] Skipping migration ${migrationTag} because objects already exist`,
           { migrationTag, error: message }
         );
-        recordMigration(migrationTag);
+        recordMigration(database, migrationTag);
         continue;
       }
 
