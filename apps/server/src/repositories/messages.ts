@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import {
+  chatThreads,
   db,
   type JsonValue,
   llmModels,
@@ -213,6 +214,15 @@ export async function clearThread(
         )
       )
       .run();
+
+    await db
+      .update(chatThreads)
+      .set({
+        lastMessageAt: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(chatThreads.id, threadId), eq(chatThreads.userId, userId)))
+      .run();
   } catch (error) {
     logger.error("Failed to clear thread", error, { threadId });
     throw new Error("پاک کردن گفتگو ناموفق بود.");
@@ -241,7 +251,8 @@ export async function getLastUsedModelInThread(
       .where(
         and(
           eq(messagesTable.threadId, threadId),
-          eq(messagesTable.userId, userId)
+          eq(messagesTable.userId, userId),
+          eq(llmModels.isEnabled, true)
         )
       )
       .orderBy(desc(messagesTable.createdAt))
@@ -274,7 +285,9 @@ export async function getLastUsedModelGlobal(
       })
       .from(messagesTable)
       .innerJoin(llmModels, eq(messagesTable.modelId, llmModels.id))
-      .where(eq(messagesTable.userId, userId))
+      .where(
+        and(eq(messagesTable.userId, userId), eq(llmModels.isEnabled, true))
+      )
       .orderBy(desc(messagesTable.createdAt))
       .limit(1);
 

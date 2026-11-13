@@ -81,4 +81,42 @@ describe("chat route thread ownership", () => {
     // The model does not exist, so the request stops after the thread check
     expect(body.error.code).toBe("MODEL_NOT_FOUND");
   });
+
+  it("rejects a model that is disabled", async () => {
+    const userA = await createTestUser("6000000005");
+    const thread = await createThread({ userId: userA.id });
+
+    const { llmModels } = await import("@/database");
+    const [disabledModel] = await db
+      .insert(llmModels)
+      .values({
+        identifier: "disabled-chat-model",
+        provider: "ollama",
+        isEnabled: false,
+      })
+      .returning();
+
+    const res = await chatApp.request("/", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${generateJwtToken(userA)}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            id: "m1",
+            role: "user",
+            parts: [{ type: "text", text: "hello" }],
+          },
+        ],
+        modelId: disabledModel.id,
+        threadId: thread.id,
+      }),
+    });
+
+    const body = (await res.json()) as { error: { code: string } };
+    expect(res.status).toBe(403);
+    expect(body.error.code).toBe("MODEL_DISABLED");
+  });
 });
