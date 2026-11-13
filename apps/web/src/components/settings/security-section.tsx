@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useMutation } from "@tanstack/react-query";
 import { Shield } from "lucide-react";
 import { useState } from "react";
@@ -44,7 +44,7 @@ export function SecuritySection() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   const passwordForm = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
+    resolver: standardSchemaResolver(passwordSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
