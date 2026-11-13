@@ -38,7 +38,18 @@ export function splitTextIntoChunks(
       .split(SENTENCE_REGEX)
       .map((s) => s.trim())
       .filter(Boolean);
-    sentences.push(...parts);
+    for (const part of parts) {
+      // A paragraph without sentence punctuation (common in Persian) can be
+      // one huge "sentence"; hard-split it so chunks stay bounded.
+      if (part.length <= chunkSize) {
+        sentences.push(part);
+        continue;
+      }
+      const step = Math.max(1, chunkSize - overlap);
+      for (let start = 0; start < part.length; start += step) {
+        sentences.push(part.slice(start, start + chunkSize));
+      }
+    }
   }
 
   const chunks: TextChunk[] = [];
