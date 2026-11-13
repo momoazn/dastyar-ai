@@ -38,12 +38,14 @@ function TranslationHistoryView() {
   const [isCopied, setIsCopied] = useState(false);
 
   const translationId = Number.parseInt(id, 10);
+  const isValidId = Number.isFinite(translationId) && translationId > 0;
 
-  const { data: translationData, isLoading } = useQuery(
-    orpc.translations.get.queryOptions({
-      input: { id: translationId },
-    })
-  );
+  const { data: translationData, isLoading } = useQuery({
+    ...orpc.translations.get.queryOptions({
+      input: { id: isValidId ? translationId : 0 },
+    }),
+    enabled: isValidId,
+  });
 
   const { models } = useTranslationModelSelection();
 

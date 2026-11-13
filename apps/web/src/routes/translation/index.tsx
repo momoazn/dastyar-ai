@@ -152,13 +152,12 @@ function RouteComponent() {
    * Swap source/target languages and move translated text into the source area.
    */
   const swapLanguages = () => {
-    if (mode === "pdf") {
-      return;
-    }
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
-    setSourceText(translatedText);
-    setTranslatedText("");
+    if (mode === "text") {
+      setSourceText(translatedText);
+      setTranslatedText("");
+    }
   };
 
   const handleCopy = async () => {

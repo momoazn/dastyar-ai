@@ -123,6 +123,25 @@ describe("LLM JSON Utilities", () => {
       // This tests the current behavior
       expect(result !== null || result === null).toBe(true);
     });
+
+    it("should extract field with unescaped literal newlines", () => {
+      const output = '{\n  "summaryText": "پاراگراف اول\n\nپاراگراف دوم"\n}';
+      expect(extractJsonField(output, "summaryText")).toBe(
+        "پاراگراف اول\n\nپاراگراف دوم"
+      );
+    });
+
+    it("should extract field with trailing commas", () => {
+      const output = '{\n  "translatedText": "متن ترجمه شده",\n}';
+      expect(extractJsonField(output, "translatedText")).toBe("متن ترجمه شده");
+    });
+
+    it("should extract field with unescaped inner quotes using fallback", () => {
+      const output = '{\n  "summaryText": "او گفت "سلام" و ادامه داد",\n}';
+      expect(extractJsonField(output, "summaryText")).toBe(
+        'او گفت "سلام" و ادامه داد'
+      );
+    });
   });
 
   describe("extractJsonObject", () => {

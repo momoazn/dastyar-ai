@@ -334,7 +334,10 @@ export const translationProcedures = {
                     data: error.data,
                   });
                 }
-                throw error;
+                throw new ORPCError("TRANSLATION_FAILED", {
+                  message: serverTexts.translation.pageFailed(page.page),
+                  status: 502,
+                });
               }
             }
             if (translatedChunks.length === 0) {
@@ -358,7 +361,7 @@ export const translationProcedures = {
       }
 
       const payload: TranslationPayload = {
-        page_count: pdfPages.length,
+        page_count: translatedPages.length,
         pages: translatedPages,
       };
 

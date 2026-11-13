@@ -1,5 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { fa } from "@/lib/texts";
+import { makeTitle } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 import { SidebarItem, useSidebarList, useSummaryMutations } from "./base";
 import { SummaryEmptyState } from "./empty-state";
@@ -49,7 +50,11 @@ export function SummariesList() {
           ]}
           key={summary.id}
           params={{ summaryId: String(summary.id) }}
-          title={summary.sourceText?.slice(0, 30) || fa.general.untitled}
+          title={
+            summary.sourceText
+              ? makeTitle(summary.sourceText, 30)
+              : fa.general.untitled
+          }
           to="/summary/$summaryId"
         />
       ))}

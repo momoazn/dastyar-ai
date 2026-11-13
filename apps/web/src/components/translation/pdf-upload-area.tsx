@@ -31,7 +31,8 @@ export function PdfUploadArea({
   onKeyDown,
   onRemovePdf,
 }: PdfUploadAreaProps) {
-  if (selectedPdf) {
+  const currentFileName = selectedPdf?.name || pdfFileName;
+  if (currentFileName) {
     return (
       <div className="flex h-full flex-col gap-4">
         <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-4">
@@ -40,11 +41,13 @@ export function PdfUploadArea({
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium text-sm">
-              {selectedPdf.name}
+              {currentFileName}
             </div>
-            <div className="text-muted-foreground text-xs">
-              {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
-            </div>
+            {selectedPdf && (
+              <div className="text-muted-foreground text-xs">
+                {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
+              </div>
+            )}
           </div>
           <Button
             aria-label="Remove PDF"
@@ -64,8 +67,8 @@ export function PdfUploadArea({
             </div>
             <div className="flex flex-col gap-1 text-muted-foreground text-xs">
               <div>{fa.translation.pdfPageCount(pdfResult.page_count)}</div>
-              {pdfFileName && (
-                <div>{fa.translation.pdfSourceFile(pdfFileName)}</div>
+              {currentFileName && (
+                <div>{fa.translation.pdfSourceFile(currentFileName)}</div>
               )}
             </div>
           </div>
