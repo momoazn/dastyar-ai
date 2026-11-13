@@ -172,21 +172,135 @@ const codeRuns: NonNullable<CodeRun>[] = [];
 type Tr = NonNullable<Translation>;
 type Su = NonNullable<Summary>;
 type Cr = NonNullable<CodeRun>;
+type ImageThread = O["imageThreads"]["list"][number];
+const imageThreads: ImageThread[] = [];
+
+const addImageThread = (title: string, at = now()): ImageThread => {
+  const thread: ImageThread = {
+    id: newId(),
+    title,
+    isArchived: false,
+    lastImageAt: at,
+    userId: USER_ID,
+    createdAt: at,
+    updatedAt: at,
+  };
+  imageThreads.unshift(thread);
+  return thread;
+};
+
+type SettingRow = O["admin"]["getAllSettings"][number];
+const demoSettings: SettingRow[] = [
+  {
+    id: 1,
+    key: "app_name",
+    value: "دستیار هوشمند",
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 2,
+    key: "enable_chat",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 3,
+    key: "enable_translation",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 4,
+    key: "enable_summary",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 5,
+    key: "enable_transcription",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 6,
+    key: "enable_code_execution",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+  {
+    id: 7,
+    key: "enable_image_generation",
+    value: true,
+    description: null,
+    createdAt: ago(100),
+    updatedAt: ago(100),
+  },
+];
+
+type OllamaServerRow = O["admin"]["listOllamaServers"][number];
+const ollamaServers: OllamaServerRow[] = [
+  {
+    id: 1,
+    name: "سرور محلی",
+    baseUrl: "http://127.0.0.1:11434",
+    isEnabled: true,
+    createdAt: ago(60 * 24 * 7),
+    updatedAt: ago(60 * 24 * 7),
+    models: models.map((m) => m.identifier),
+    modelCount: models.length,
+    runtime: {
+      serverId: 1,
+      inFlight: 0,
+      runningModels: 1,
+      reachable: true,
+      busyScore: 0,
+      ewmaLatencyMs: 180,
+    },
+  },
+];
 
 const impl: Impl = {
   auth: {
     login: () => ({ token: DEMO_TOKEN, user }),
     register: () => ({ token: DEMO_TOKEN, user }),
     me: () => user,
+    updatePassword: () => ({ success: true }),
+    updateUsername: (input) => {
+      user.username = input.newUsername;
+      return { token: DEMO_TOKEN, user };
+    },
   },
   appConfig: {
-    getFeatureToggles: () => ({
-      enable_chat: true,
-      enable_translation: true,
-      enable_summary: true,
-      enable_transcription: true,
-      enable_code_execution: true,
-      enable_image_generation: false,
+    getFeatureToggles: () => {
+      const getVal = (key: string, def: boolean) => {
+        const found = demoSettings.find((s) => s.key === key);
+        return typeof found?.value === "boolean" ? found.value : def;
+      };
+      return {
+        enable_chat: getVal("enable_chat", true),
+        enable_translation: getVal("enable_translation", true),
+        enable_summary: getVal("enable_summary", true),
+        enable_transcription: getVal("enable_transcription", true),
+        enable_code_execution: getVal("enable_code_execution", true),
+        enable_image_generation: getVal("enable_image_generation", true),
+      };
+    },
+    getBuildInfo: () => ({
+      version: "1.0.0-demo",
+      release: true,
+      builtAt: now().toISOString(),
     }),
   },
   models: {
@@ -200,6 +314,7 @@ const impl: Impl = {
       const thread = threads.find((t) => t.id === id);
       if (thread) {
         thread.title = title;
+        thread.updatedAt = now();
       }
       return { ok: true } as const;
     },
@@ -207,14 +322,16 @@ const impl: Impl = {
       const thread = threads.find((t) => t.id === id);
       if (thread) {
         thread.isArchived = true;
+        thread.updatedAt = now();
       }
       return { ok: true } as const;
     },
     delete: ({ id }) => {
-      threads.splice(
-        threads.findIndex((t) => t.id === id),
-        1
-      );
+      const index = threads.findIndex((t) => t.id === id);
+      if (index !== -1) {
+        threads.splice(index, 1);
+        messages.delete(id);
+      }
       return { ok: true } as const;
     },
   },
@@ -229,6 +346,7 @@ const impl: Impl = {
   },
   documents: {
     listByThread: () => [],
+    detachFromThread: () => ({ ok: true }) as const,
   },
   translations: {
     list: () => translations,
@@ -252,6 +370,44 @@ const impl: Impl = {
       translations.unshift(row);
       return row;
     },
+    translatePdf: (input) => {
+      const row = {
+        id: newId(),
+        sourceText: "متن نمونه از سند PDF استخراج شده",
+        translatedText: demoTranslation("متن نمونه PDF", input.targetLanguage),
+        sourceLanguage: input.sourceLanguage as Tr["sourceLanguage"],
+        targetLanguage: input.targetLanguage as Tr["targetLanguage"],
+        tone: input.tone as Tr["tone"],
+        sourceType: "pdf" as const,
+        sourceFileName: input.file.name,
+        payload: {
+          page_count: 1,
+          pages: [
+            {
+              page: 1,
+              source_text: "متن نمونه از سند PDF",
+              translated_text: demoTranslation(
+                "متن نمونه PDF",
+                input.targetLanguage
+              ),
+            },
+          ],
+        },
+        modelId: input.modelId,
+        userId: USER_ID,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      translations.unshift(row);
+      return row;
+    },
+    delete: ({ id }) => {
+      const idx = translations.findIndex((t) => t.id === id);
+      if (idx !== -1) {
+        translations.splice(idx, 1);
+      }
+      return { ok: true } as const;
+    },
   },
   summarize: {
     list: () => summaries,
@@ -270,6 +426,13 @@ const impl: Impl = {
       };
       summaries.unshift(row);
       return row;
+    },
+    delete: ({ id }) => {
+      const idx = summaries.findIndex((s) => s.id === id);
+      if (idx !== -1) {
+        summaries.splice(idx, 1);
+      }
+      return { ok: true } as const;
     },
   },
   code: {
@@ -290,6 +453,13 @@ const impl: Impl = {
       });
       return output;
     },
+    deleteRun: ({ id }) => {
+      const idx = codeRuns.findIndex((r) => r.id === id);
+      if (idx !== -1) {
+        codeRuns.splice(idx, 1);
+      }
+      return { ok: true } as const;
+    },
   },
   transcribe: {
     models: () => [{ id: "ggml-base.bin", name: "base" }],
@@ -298,40 +468,184 @@ const impl: Impl = {
   },
   images: {
     checkService: () => ({ available: false }),
+    getSamplers: () => ({ samplers: ["Euler a", "DPM++ 2M Karras"] }),
+    listByThread: () => [],
   },
   imageThreads: {
-    list: () => [],
+    list: () => imageThreads.filter((t) => !t.isArchived),
+    get: ({ id }) => imageThreads.find((t) => t.id === id) ?? null,
+    create: (input) => ({
+      id: addImageThread(input?.title ?? "گفتگوی تصویری جدید").id,
+    }),
+    rename: ({ id, title }) => {
+      const thread = imageThreads.find((t) => t.id === id);
+      if (thread) {
+        thread.title = title;
+        thread.updatedAt = now();
+      }
+      return { ok: true } as const;
+    },
+    archive: ({ id }) => {
+      const thread = imageThreads.find((t) => t.id === id);
+      if (thread) {
+        thread.isArchived = true;
+        thread.updatedAt = now();
+      }
+      return { ok: true } as const;
+    },
+    delete: ({ id }) => {
+      const idx = imageThreads.findIndex((t) => t.id === id);
+      if (idx !== -1) {
+        imageThreads.splice(idx, 1);
+      }
+      return { ok: true } as const;
+    },
   },
   admin: {
-    listUsers: () => ({
-      users: demoUsers,
-      total: demoUsers.length,
-      page: 1,
-      pageSize: 20,
-      totalPages: 1,
-    }),
+    listUsers: (input) => {
+      const query = input?.search?.trim().toLowerCase();
+      const filtered = demoUsers.filter((u) => {
+        if (input?.role && u.role !== input.role) return false;
+        if (query && !u.username.toLowerCase().includes(query)) return false;
+        return true;
+      });
+      return {
+        users: filtered,
+        total: filtered.length,
+        page: input?.page ?? 1,
+        pageSize: input?.pageSize ?? 20,
+        totalPages: 1,
+      };
+    },
+    getUserDetails: ({ userId }) => {
+      const u = demoUsers.find((x) => x.id === userId);
+      if (!u) return null;
+      return {
+        ...u,
+        messageCount: 5,
+        documentCount: 0,
+        imageCount: 0,
+        translationCount: translations.length,
+        summaryCount: summaries.length,
+        codeRunCount: codeRuns.length,
+        threadCount: threads.length,
+      };
+    },
+    createUser: (input) => {
+      const u = demoUser(newId(), input.username, input.role ?? "user");
+      demoUsers.push(u);
+      return {
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        createdAt: u.createdAt,
+      };
+    },
+    updateUser: (input) => {
+      const u = demoUsers.find((x) => x.id === input.userId);
+      if (!u) throw new Error("کاربر یافت نشد");
+      if (input.username) u.username = input.username;
+      if (input.role) u.role = input.role;
+      u.updatedAt = now();
+      return {
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+      };
+    },
+    deleteUser: ({ userId }) => {
+      const idx = demoUsers.findIndex((x) => x.id === userId);
+      if (idx !== -1) demoUsers.splice(idx, 1);
+      return { success: true };
+    },
     listAllModels: () => models.map((m) => ({ ...m, serverCoverage: 1 })),
-    listOllamaServers: () => [
-      {
-        id: 1,
-        name: "سرور محلی",
-        baseUrl: "http://127.0.0.1:11434",
-        isEnabled: true,
-        createdAt: ago(60 * 24 * 7),
-        updatedAt: ago(60 * 24 * 7),
+    toggleModelStatus: ({ modelId, isEnabled }) => {
+      const m = models.find((x) => x.id === modelId);
+      if (m) {
+        m.isEnabled = isEnabled;
+        m.updatedAt = now();
+      }
+      return m ?? models[0];
+    },
+    listOllamaServers: () => ollamaServers,
+    createOllamaServer: (input) => {
+      const s = {
+        id: newId(),
+        name: input.name,
+        baseUrl: input.baseUrl,
+        isEnabled: input.isEnabled ?? true,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      ollamaServers.push({
+        ...s,
         models: models.map((m) => m.identifier),
         modelCount: models.length,
         runtime: {
-          serverId: 1,
+          serverId: s.id,
           inFlight: 0,
           runningModels: 1,
           reachable: true,
           busyScore: 0,
-          ewmaLatencyMs: 180,
+          ewmaLatencyMs: 120,
         },
-      },
-    ],
-    getAllSettings: () => [],
+      });
+      return s;
+    },
+    updateOllamaServer: (input) => {
+      const s = ollamaServers.find((x) => x.id === input.id);
+      if (!s) throw new Error("سرور یافت نشد");
+      if (input.name !== undefined) s.name = input.name;
+      if (input.baseUrl !== undefined) s.baseUrl = input.baseUrl;
+      if (input.isEnabled !== undefined) s.isEnabled = input.isEnabled;
+      s.updatedAt = now();
+      return {
+        id: s.id,
+        name: s.name,
+        baseUrl: s.baseUrl,
+        isEnabled: s.isEnabled,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      };
+    },
+    deleteOllamaServer: ({ id }) => {
+      const idx = ollamaServers.findIndex((x) => x.id === id);
+      if (idx !== -1) ollamaServers.splice(idx, 1);
+      return { success: true };
+    },
+    syncOllamaServerModels: () => ({
+      success: true,
+      modelCount: models.length,
+    }),
+    syncAllOllamaServersModels: () => ({
+      success: true,
+      modelCount: models.length,
+    }),
+    testOllamaServerConnection: () => ({
+      ok: true as const,
+      error: null,
+    }),
+    getAllSettings: () => demoSettings,
+    upsertSetting: (input) => {
+      const existing = demoSettings.find((s) => s.key === input.key);
+      if (existing) {
+        existing.value = input.value;
+        existing.updatedAt = now();
+        return existing;
+      }
+      const created: SettingRow = {
+        id: newId(),
+        key: input.key,
+        value: input.value,
+        description: input.description ?? null,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      demoSettings.push(created);
+      return created;
+    },
   },
 };
 

@@ -13,9 +13,17 @@ export function NavigationMenu({
   variant = "full",
   className,
 }: NavigationMenuProps) {
-  const { setOpen } = useSidebar();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
   const navItems = useEnabledNavItems();
   const activeItem = useActiveNavItem(navItems);
+
+  const handleClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(true);
+    }
+  };
 
   if (variant === "icon") {
     return (
@@ -30,7 +38,7 @@ export function NavigationMenu({
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
             key={item.title}
-            onClick={() => setOpen(true)}
+            onClick={handleClick}
             to={item.url}
           >
             <item.icon className="size-5" />
@@ -52,7 +60,7 @@ export function NavigationMenu({
               : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
           key={item.title}
-          onClick={() => setOpen(true)}
+          onClick={handleClick}
           to={item.url}
         >
           <item.icon className="size-4" />

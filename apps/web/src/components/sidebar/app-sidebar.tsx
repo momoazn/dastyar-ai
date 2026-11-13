@@ -7,6 +7,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui";
 import { fa } from "@/lib/texts";
 import { ChatThreadsList } from "./chat-threads-list";
@@ -27,8 +28,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { handleNewTranslation } = useTranslationActions();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleNew = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
     if (activeItem?.url === "/chat/") {
       createChatThread();
     } else if (activeItem?.url === "/translation/") {

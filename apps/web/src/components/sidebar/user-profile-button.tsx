@@ -10,7 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { useUser } from "@/hooks/use-user";
 import { fa } from "@/lib/texts";
 
@@ -19,13 +23,23 @@ export function UserProfileButton() {
   const [, logout] = useAtom(logoutAtom);
   const { data: user, isLoading } = useUser();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobile = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   if (!token) {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-          onClick={() => navigate({ to: "/login" })}
+          onClick={() => {
+            closeMobile();
+            navigate({ to: "/login" });
+          }}
           size="lg"
         >
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -109,7 +123,10 @@ export function UserProfileButton() {
           </div>
           <DropdownMenuItem
             className="cursor-pointer"
-            onClick={() => navigate({ to: "/settings" })}
+            onClick={() => {
+              closeMobile();
+              navigate({ to: "/settings" });
+            }}
           >
             <Settings aria-hidden="true" className="h-4 w-4" />
             <span>{fa.settings.title}</span>
@@ -117,14 +134,23 @@ export function UserProfileButton() {
           {user?.role === "admin" && (
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => navigate({ to: "/admin" })}
+              onClick={() => {
+                closeMobile();
+                navigate({ to: "/admin" });
+              }}
             >
               <Shield aria-hidden="true" className="h-4 w-4" />
               <span>{fa.admin.title}</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer" onClick={logout}>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => {
+              closeMobile();
+              logout();
+            }}
+          >
             <LogOut aria-hidden="true" className="h-4 w-4" />
             <span>{fa.userProfile.logOut}</span>
           </DropdownMenuItem>
