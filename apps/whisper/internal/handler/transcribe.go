@@ -212,9 +212,17 @@ func (h *TranscribeHandler) HandleOpenAITranscriptions(w http.ResponseWriter, r 
 		if result.Task != "" {
 			response["task"] = result.Task
 		}
-		if len(result.Segments) > 0 {
-			response["segments"] = result.Segments
+		segments := result.Segments
+		if segments == nil {
+			segments = []stt.Segment{}
+		} else {
+			for i := range segments {
+				if segments[i].Tokens == nil {
+					segments[i].Tokens = []int{}
+				}
+			}
 		}
+		response["segments"] = segments
 		writeJSON(w, response)
 	case "text":
 		writeText(w, result.Text)

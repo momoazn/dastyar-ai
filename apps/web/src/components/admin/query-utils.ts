@@ -43,7 +43,6 @@ export const invalidateAdminUsers = async (
   });
 
   await queryClient.invalidateQueries({
-    queryKey: baseQueryKey.slice(0, 2),
-    exact: false,
+    queryKey: baseQueryKey.slice(0, 1),
   });
 };

@@ -110,7 +110,7 @@ export async function listUsers(options?: {
     total,
     page,
     pageSize,
-    totalPages: Math.ceil(total / pageSize),
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
   };
 }
 

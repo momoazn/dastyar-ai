@@ -14,6 +14,7 @@ import {
   verifyUserCredentials,
   WrongPasswordError,
 } from "@/repositories/auth";
+import { getSettingValue } from "@/repositories/system-settings";
 import { recordUserIp } from "@/repositories/user-ips";
 import { generateJwtToken } from "@/services/auth";
 import { protectedProcedure, publicProcedure } from "./base";
@@ -46,6 +47,16 @@ const usernameTakenError = () =>
     message: serverTexts.auth.usernameExists,
     status: 400,
   });
+
+const generateTokenForUser = async (user: {
+  id: number;
+  username: string;
+  role: string;
+}): Promise<string> => {
+  const hours = await getSettingValue("token_expiration_hours", 24);
+  const expirationHours = typeof hours === "number" && hours > 0 ? hours : 24;
+  return generateJwtToken(user, expirationHours * 3600);
+};
 
 export const authProcedures = {
   register: publicProcedure
@@ -84,7 +95,7 @@ export const authProcedures = {
 
       logger.info("User registered", { userId: user.id, username, role });
 
-      const token = generateJwtToken({
+      const token = await generateTokenForUser({
         id: user.id,
         username: user.username,
         role: user.role,
@@ -122,7 +133,7 @@ export const authProcedures = {
         await recordUserIp({ userId: user.id, ipAddress: clientIp });
       }
 
-      const token = generateJwtToken({
+      const token = await generateTokenForUser({
         id: user.id,
         username: user.username,
         role: user.role,
@@ -168,7 +179,7 @@ export const authProcedures = {
       );
       logger.info("Username updated", { userId, newUsername });
 
-      const token = generateJwtToken({
+      const token = await generateTokenForUser({
         id: updatedUser.id,
         username: updatedUser.username,
         role: updatedUser.role,

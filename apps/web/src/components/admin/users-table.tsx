@@ -204,7 +204,7 @@ export function UsersTable() {
                 {fa.admin.users.pageInfo(page, totalPages)}
               </span>
               <Button
-                disabled={page === 1}
+                disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
                 size="icon"
                 variant="outline"
@@ -212,7 +212,7 @@ export function UsersTable() {
                 <ChevronRight className="h-4 w-4 rotate-180" />
               </Button>
               <Button
-                disabled={page === totalPages}
+                disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
                 size="icon"
                 variant="outline"
