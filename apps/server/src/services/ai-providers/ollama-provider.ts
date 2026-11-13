@@ -109,7 +109,8 @@ export async function listOllamaModels() {
           message,
           serverId: server.id,
         });
-        await replaceOllamaServerModels(server.id, []);
+        // Keep the last known mappings: a failed probe is usually transient.
+        // Wiping them hides the model from the picker and from routing.
         return [];
       }
     })
@@ -156,7 +157,6 @@ export async function syncAllOllamaServerModels() {
           serverId: server.id,
           baseURL: server.baseUrl,
         });
-        await replaceOllamaServerModels(server.id, []);
         return [];
       }
     })

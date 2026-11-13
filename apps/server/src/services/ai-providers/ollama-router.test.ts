@@ -1,9 +1,29 @@
-import { describe, expect, it } from "bun:test";
-import type { OllamaServer } from "@/database";
 import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "bun:test";
+import { env } from "@/config";
+import {
+  db,
+  initializeDatabase,
+  type OllamaServer,
+  ollamaServers,
+} from "@/database";
+import {
+  createOllamaServer,
+  replaceOllamaServerModels,
+} from "@/repositories/ollama-servers";
+import {
+  acquireLeastBusyOllamaServerForModel,
   computeOllamaBusyScore,
   pickLeastBusyOllamaServer,
 } from "./ollama-router";
+
+const DISABLED_PROVIDER_RE = /disabled/u;
 
 const server = (id: number): OllamaServer => ({
   id,
@@ -77,5 +97,36 @@ describe("pickLeastBusyOllamaServer", () => {
     ]);
 
     expect(selected.server.id).toBe(3);
+  });
+});
+
+describe("acquireLeastBusyOllamaServerForModel", () => {
+  const originalOllamaEnabled = env.OLLAMA_ENABLED;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+  });
+
+  // Test files share one database, so clear the rows another file may leave.
+  beforeEach(async () => {
+    await db.delete(ollamaServers);
+  });
+
+  afterEach(async () => {
+    env.OLLAMA_ENABLED = originalOllamaEnabled;
+    await db.delete(ollamaServers);
+  });
+
+  it("refuses to route when the Ollama provider is disabled", async () => {
+    const created = await createOllamaServer({
+      name: "offline",
+      baseUrl: "http://127.0.0.1:1",
+    });
+    await replaceOllamaServerModels(created.id, ["llama3:8b"]);
+    env.OLLAMA_ENABLED = false;
+
+    await expect(
+      acquireLeastBusyOllamaServerForModel("llama3:8b")
+    ).rejects.toThrow(DISABLED_PROVIDER_RE);
   });
 });

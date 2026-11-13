@@ -1,3 +1,4 @@
+import { env } from "@/config";
 import type { OllamaServer } from "@/database";
 import { getEnabledOllamaServersForModel } from "@/repositories/ollama-servers";
 
@@ -144,6 +145,10 @@ export type OllamaRouteLease = {
 export async function acquireLeastBusyOllamaServerForModel(
   modelIdentifier: string
 ): Promise<OllamaRouteLease> {
+  if (!env.OLLAMA_ENABLED) {
+    throw new Error("Ollama provider is disabled");
+  }
+
   const candidates = await getEnabledOllamaServersForModel(modelIdentifier);
   if (candidates.length === 0) {
     throw new Error(`No enabled Ollama server has model '${modelIdentifier}'`);
