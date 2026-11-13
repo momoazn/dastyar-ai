@@ -43,10 +43,12 @@ function CodeHistoryView() {
   const [isCopied, setIsCopied] = useState(false);
 
   const runId = Number.parseInt(id, 10);
+  const isValidRunId = !Number.isNaN(runId) && runId > 0;
 
   const { data: runData, isLoading } = useQuery(
     orpc.code.getRun.queryOptions({
-      input: { id: runId },
+      input: { id: isValidRunId ? runId : 0 },
+      enabled: isValidRunId,
     })
   );
 
@@ -110,7 +112,7 @@ function CodeHistoryView() {
     );
   }
 
-  if (!runData) {
+  if (!(isValidRunId && runData)) {
     return (
       <ToolScaffold
         alerts={
@@ -139,14 +141,23 @@ function CodeHistoryView() {
     try {
       const parsed = JSON.parse(runData.output as string) as unknown;
       if (mode === "generate") {
+        if (typeof parsed === "string") {
+          return sanitizeGeneratedCodeOutput(parsed);
+        }
         return sanitizeGeneratedCodeOutput(
           (parsed as { generatedCode?: string }).generatedCode || ""
         );
       }
       if (mode === "explain") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         return (parsed as { explanation?: string }).explanation || "";
       }
       if (mode === "review") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         const r = parsed as { feedback?: string; suggestions?: string[] };
         const suggestions = (r.suggestions ?? [])
           .map((s) => `- ${s}`)
@@ -158,17 +169,22 @@ function CodeHistoryView() {
         }`;
       }
       if (mode === "debug") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         const d = parsed as {
           rootCause?: string;
+          root_cause?: string;
           solution?: string;
           codeFix?: string;
+          code_fix?: string;
         };
-        return `${fa.codeAssistant.debug.rootCause}: ${d.rootCause ?? ""}\n\n${
+        const rootCause = d.rootCause ?? d.root_cause ?? "";
+        const codeFix = d.codeFix ?? d.code_fix;
+        return `${fa.codeAssistant.debug.rootCause}: ${rootCause}\n\n${
           fa.codeAssistant.debug.solution
         }: ${d.solution ?? ""}${
-          d.codeFix
-            ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${d.codeFix}`
-            : ""
+          codeFix ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${codeFix}` : ""
         }`;
       }
       return runData.output as string;
@@ -182,7 +198,7 @@ function CodeHistoryView() {
   return (
     <ToolScaffold
       content={
-        <div className="flex max-h-[calc(100vh-200px)] flex-col gap-6 overflow-hidden">
+        <div className="flex h-full flex-col gap-6">
           {/* Title Header */}
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">

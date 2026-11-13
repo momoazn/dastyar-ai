@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Context } from "hono";
 import { Hono } from "hono";
+import { env, resolveConfiguredPath } from "@/config";
 import { type AuthEnv, authMiddlewareHeaderOrQuery } from "@/middlewares/auth";
 import { getGeneratedImageByUser } from "@/repositories/images";
 
@@ -35,6 +36,12 @@ async function streamImage(
     const image = await getGeneratedImageByUser(parsedId, user.id);
     if (!image) {
       return c.json({ error: "Image not found" }, 404);
+    }
+
+    const imagesDir = path.resolve(resolveConfiguredPath(env.IMAGES_DIR));
+    const resolvedPath = path.resolve(image.filePath);
+    if (!resolvedPath.startsWith(imagesDir + path.sep)) {
+      return c.json({ error: "Access denied" }, 403);
     }
 
     let stat: fs.Stats;

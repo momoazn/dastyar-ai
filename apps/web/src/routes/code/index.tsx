@@ -125,7 +125,9 @@ function RouteComponent() {
     id: number;
     mode: string;
     language: string;
-    inputText: string;
+    inputCode?: string;
+    inputText?: string;
+    errorMessage?: string | null;
     errorText?: string | null;
     output: string;
     modelId: number;
@@ -220,14 +222,23 @@ function RouteComponent() {
     try {
       const parsed = JSON.parse(run.output) as unknown;
       if (run.mode === "generate") {
+        if (typeof parsed === "string") {
+          return sanitizeGeneratedCodeOutput(parsed);
+        }
         return sanitizeGeneratedCodeOutput(
           (parsed as { generatedCode?: string }).generatedCode || ""
         );
       }
       if (run.mode === "explain") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         return (parsed as { explanation?: string }).explanation || "";
       }
       if (run.mode === "review") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         const r = parsed as { feedback?: string; suggestions?: string[] };
         const suggestions = (r.suggestions ?? [])
           .map((s) => `- ${s}`)
@@ -239,17 +250,22 @@ function RouteComponent() {
         }`;
       }
       if (run.mode === "debug") {
+        if (typeof parsed === "string") {
+          return parsed;
+        }
         const d = parsed as {
           rootCause?: string;
+          root_cause?: string;
           solution?: string;
           codeFix?: string;
+          code_fix?: string;
         };
-        return `${fa.codeAssistant.debug.rootCause}: ${d.rootCause ?? ""}\n\n${
+        const rootCause = d.rootCause ?? d.root_cause ?? "";
+        const codeFix = d.codeFix ?? d.code_fix;
+        return `${fa.codeAssistant.debug.rootCause}: ${rootCause}\n\n${
           fa.codeAssistant.debug.solution
         }: ${d.solution ?? ""}${
-          d.codeFix
-            ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${d.codeFix}`
-            : ""
+          codeFix ? `\n\n${fa.codeAssistant.debug.fixedCode}:\n${codeFix}` : ""
         }`;
       }
       return run.output;
@@ -267,16 +283,19 @@ function RouteComponent() {
       if (["generate", "explain", "review", "debug"].includes(run.mode)) {
         setMode(run.mode as CodeMode);
       }
-      setInputCode(run.inputText || "");
-      setErrorMessage(run.errorText || "");
+      setInputCode(run.inputCode ?? run.inputText ?? "");
+      setErrorMessage(run.errorMessage ?? run.errorText ?? "");
       setOutput(formatRunOutput(run));
     },
     [setModelId, formatRunOutput]
   );
+  const fromIdNum = Number.parseInt(search.fromId || "0", 10);
   const selectedRunQuery = useQuery(
     orpc.code.getRun.queryOptions({
-      input: { id: Number.parseInt(search.fromId || "0", 10) },
-      enabled: Boolean(search.fromId),
+      input: { id: fromIdNum },
+      enabled: Boolean(
+        search.fromId && !Number.isNaN(fromIdNum) && fromIdNum > 0
+      ),
     })
   );
   useEffect(() => {

@@ -56,6 +56,7 @@ function RouteComponent() {
     refetchImages,
     isServiceAvailable,
     isGenerating,
+    interrupt,
     downloadImage,
     resetSettings,
     initializeFromSearch,
@@ -270,9 +271,10 @@ function RouteComponent() {
             formProps={formProps}
             isGenerating={isGenerating}
             onResetSettings={resetSettings}
+            onStop={interrupt}
             onSubmit={handleSubmit}
-            submitDisabled={isSubmitDisabled}
-            submitStatus={isGenerating ? "submitted" : undefined}
+            submitDisabled={isGenerating ? false : isSubmitDisabled}
+            submitStatus={isGenerating ? "streaming" : undefined}
             submitVariant={isGenerating ? "destructive" : "default"}
           />
         </div>

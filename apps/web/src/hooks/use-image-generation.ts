@@ -22,6 +22,8 @@ export type GeneratedImage = Awaited<
   ReturnType<OrpcClient["images"]["listByThread"]>
 >[number];
 
+const FILE_DOWNLOAD_URL_REGEX = /\/file(\?|$)/;
+
 type UseImageGenerationProps = {
   threadId?: number;
   initialSettings?: Partial<GenerationSettings>;
@@ -119,7 +121,7 @@ export function useImageGeneration({
   const downloadImage = useCallback((image: { id: number; url: string }) => {
     try {
       const link = document.createElement("a");
-      link.href = image.url;
+      link.href = image.url.replace(FILE_DOWNLOAD_URL_REGEX, "/download$1");
       link.download = `generated_${image.id}.png`;
       document.body.appendChild(link);
       link.click();
@@ -211,6 +213,27 @@ export function useImageGeneration({
     setNegativePrompt(text);
   }, []);
 
+  // Mutation for interrupting generation
+  const interruptMutation = useMutation(
+    orpc.images.interrupt.mutationOptions({
+      onError: (error) => {
+        const errorMessage = getErrorMessage(
+          error,
+          fa.imageGeneration.unknownError
+        );
+        toast.error(errorMessage);
+      },
+    })
+  );
+
+  const interrupt = useCallback(async () => {
+    try {
+      await interruptMutation.mutateAsync(undefined);
+    } catch {
+      // Handled in onError
+    }
+  }, [interruptMutation]);
+
   // NEW: Unified initialization method
   const initializeFromSearch = useCallback(
     (search: Record<string, string | number | boolean | null>) => {
@@ -218,6 +241,9 @@ export function useImageGeneration({
         parseSearchParams(search);
       if (Object.keys(parsedSettings).length > 0) {
         updateSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+      }
+      if (parsedSettings.negativePrompt !== undefined) {
+        setNegativePrompt(parsedSettings.negativePrompt);
       }
       if (initialPrompt) {
         setPrompt(initialPrompt);
@@ -293,6 +319,7 @@ export function useImageGeneration({
 
     // Actions
     generate,
+    interrupt,
     downloadImage,
     refetchImages,
     updateSettings,
