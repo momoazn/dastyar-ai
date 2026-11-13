@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { serverTexts } from "@/lib/texts";
+import { getImageThread } from "@/repositories/image-threads";
 import {
   clearGeneratedImagesByThread,
   listGeneratedImagesByThread,
@@ -55,20 +56,27 @@ export const imageProcedures = {
   generate: protectedProcedure
     .input(imageGenerationParamsSchema)
     .handler(async ({ input, context }) =>
-      generateAndPersistImage(input, context.user?.id)
+      generateAndPersistImage(input, context.user.id)
     ),
 
   // Get generation progress (for real-time updates)
   getProgress: protectedProcedure.handler(async () => {
     const generationProgress = await progress();
-    return generationProgress
-      ? {
-          progress: Math.round(generationProgress.progress * 100),
-          eta: generationProgress.eta,
-          currentStep: generationProgress.state?.samplingStep || 0,
-          totalSteps: generationProgress.state?.samplingSteps || 0,
-        }
-      : null;
+    if (!generationProgress) {
+      return null;
+    }
+
+    const state = generationProgress.state;
+    const currentStep = state?.samplingStep ?? state?.sampling_step ?? 0;
+    const totalSteps = state?.samplingSteps ?? state?.sampling_steps ?? 0;
+    const eta = generationProgress.eta ?? generationProgress.eta_relative ?? 0;
+
+    return {
+      progress: Math.round((generationProgress.progress ?? 0) * 100),
+      eta,
+      currentStep,
+      totalSteps,
+    };
   }),
 
   // Interrupt current generation
@@ -79,11 +87,19 @@ export const imageProcedures = {
 
   // List images by thread
   listByThread: protectedProcedure
-    .input(z.object({ threadId: z.number() }))
+    .input(z.object({ threadId: z.number().int().positive() }))
     .handler(async ({ input, context }) => {
+      const thread = await getImageThread(input.threadId, context.user.id);
+      if (!thread) {
+        throw new ORPCError("NOT_FOUND", {
+          message: serverTexts.chat.threadNotFound,
+          status: 404,
+        });
+      }
+
       const images = await listGeneratedImagesByThread(
         input.threadId,
-        context.user?.id
+        context.user.id
       );
 
       return images.map((img) => ({
@@ -99,9 +115,17 @@ export const imageProcedures = {
 
   // Clear images by thread
   clearByThread: protectedProcedure
-    .input(z.object({ threadId: z.number() }))
+    .input(z.object({ threadId: z.number().int().positive() }))
     .handler(async ({ input, context }) => {
-      await clearGeneratedImagesByThread(input.threadId, context.user?.id);
+      const thread = await getImageThread(input.threadId, context.user.id);
+      if (!thread) {
+        throw new ORPCError("NOT_FOUND", {
+          message: serverTexts.chat.threadNotFound,
+          status: 404,
+        });
+      }
+
+      await clearGeneratedImagesByThread(input.threadId, context.user.id);
       return { success: true };
     }),
 };

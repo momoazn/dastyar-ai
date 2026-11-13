@@ -1,3 +1,5 @@
+import { ORPCError } from "@orpc/server";
+import { serverTexts } from "@/lib/texts";
 import type { GenerateInput } from "@/procedures/images";
 import { getImageThread, touchLastImageAt } from "@/repositories/image-threads";
 import { createGeneratedImage } from "@/repositories/images";
@@ -10,7 +12,10 @@ export async function generateAndPersistImage(
 ) {
   const thread = await getImageThread(input.threadId, userId);
   if (!thread) {
-    throw new Error("Image thread not found");
+    throw new ORPCError("NOT_FOUND", {
+      message: serverTexts.chat.threadNotFound,
+      status: 404,
+    });
   }
 
   // Generate base64 image (includes availability check)

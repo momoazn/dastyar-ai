@@ -12,17 +12,23 @@ import { env } from "@/config";
 const MAX_RETRIES = 3;
 const HEALTH_CACHE_MS = 5000;
 const MODEL_ID_CACHE_MS = 60_000;
-const STABLE_DIFFUSION_BASE_URL = env.STABLE_DIFFUSION_BASE_URL;
 
 let provider: Automatic1111Provider | null = null;
+let lastProviderUrl = "";
 let cachedHealth: { at: number; ok: boolean } | null = null;
 let cachedModelId: { at: number; id: string } | null = null;
 
+function getBaseUrl(): string {
+  return env.STABLE_DIFFUSION_BASE_URL;
+}
+
 function getProvider(): Automatic1111Provider {
-  if (!provider) {
+  const currentBaseUrl = getBaseUrl();
+  if (!provider || lastProviderUrl !== currentBaseUrl) {
     provider = createAutomatic1111({
-      baseURL: STABLE_DIFFUSION_BASE_URL,
+      baseURL: currentBaseUrl,
     });
+    lastProviderUrl = currentBaseUrl;
   }
   return provider;
 }
@@ -39,18 +45,25 @@ export type GenerateParams = {
 
 export type Progress = {
   progress: number;
-  eta: number;
-  state: {
-    skipped: boolean;
-    interrupted: boolean;
-    job: string;
-    jobCount: number;
-    jobTimestamp: string;
-    jobNo: number;
-    samplingStep: number;
-    samplingSteps: number;
+  eta?: number;
+  eta_relative?: number;
+  state?: {
+    skipped?: boolean;
+    interrupted?: boolean;
+    job?: string;
+    jobCount?: number;
+    job_count?: number;
+    jobTimestamp?: string;
+    job_timestamp?: string;
+    jobNo?: number;
+    job_no?: number;
+    samplingStep?: number;
+    sampling_step?: number;
+    samplingSteps?: number;
+    sampling_steps?: number;
   };
   currentImage?: string;
+  current_image?: string;
   textinfo?: string;
 };
 
@@ -61,7 +74,7 @@ export async function ping(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${STABLE_DIFFUSION_BASE_URL}/internal/ping`, {
+    const response = await fetch(`${getBaseUrl()}/internal/ping`, {
       method: "GET",
       signal: AbortSignal.timeout(5000),
     });
@@ -74,12 +87,9 @@ export async function ping(): Promise<boolean> {
 }
 
 export async function getSamplers(): Promise<string[]> {
-  const response = await fetch(
-    `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/samplers`,
-    {
-      signal: AbortSignal.timeout(10_000),
-    }
-  );
+  const response = await fetch(`${getBaseUrl()}/sdapi/v1/samplers`, {
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch samplers: HTTP ${response.status}`);
   }
@@ -93,12 +103,9 @@ async function getModelId(): Promise<string> {
     return cachedModelId.id;
   }
 
-  const response = await fetch(
-    `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/options`,
-    {
-      signal: AbortSignal.timeout(10_000),
-    }
-  ).catch(() => null);
+  const response = await fetch(`${getBaseUrl()}/sdapi/v1/options`, {
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
 
   if (response?.ok) {
     const options = (await response.json()) as {
@@ -147,12 +154,9 @@ export async function generate(params: GenerateParams): Promise<string> {
 
 export async function progress(): Promise<Progress | null> {
   try {
-    const response = await fetch(
-      `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/progress`,
-      {
-        signal: AbortSignal.timeout(5000),
-      }
-    );
+    const response = await fetch(`${getBaseUrl()}/sdapi/v1/progress`, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!response.ok) {
       return null;
     }
@@ -164,13 +168,10 @@ export async function progress(): Promise<Progress | null> {
 
 export async function interrupt(): Promise<boolean> {
   try {
-    const response = await fetch(
-      `${STABLE_DIFFUSION_BASE_URL}/sdapi/v1/interrupt`,
-      {
-        method: "POST",
-        signal: AbortSignal.timeout(5000),
-      }
-    );
+    const response = await fetch(`${getBaseUrl()}/sdapi/v1/interrupt`, {
+      method: "POST",
+      signal: AbortSignal.timeout(5000),
+    });
     return response.ok;
   } catch {
     return false;

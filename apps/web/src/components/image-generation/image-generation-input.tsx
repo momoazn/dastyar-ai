@@ -28,9 +28,10 @@ type ImageGenerationInputProps = {
   };
   onSubmit: () => void;
   onResetSettings: () => void;
+  onStop?: () => void;
   isGenerating: boolean;
   submitDisabled?: boolean;
-  submitStatus?: "submitted" | undefined;
+  submitStatus?: "submitted" | "streaming" | undefined;
   submitVariant?: "default" | "destructive";
   disabled?: boolean;
 };
@@ -39,6 +40,7 @@ export function ImageGenerationInput({
   formProps,
   onSubmit,
   onResetSettings,
+  onStop,
   isGenerating,
   submitDisabled = false,
   submitStatus,
@@ -102,6 +104,7 @@ export function ImageGenerationInput({
         </>
       }
       onChange={setPrompt}
+      onStop={onStop}
       onSubmit={onSubmit}
       placeholder={fa.imageGeneration.promptPlaceholderAlt}
       rightTools={

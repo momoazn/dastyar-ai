@@ -35,8 +35,12 @@ const THINK_BLOCK_REGEX = /<think>[\s\S]*?<\/think>/gi;
 const MARKDOWN_CODE_BLOCK_REGEX =
   /```[^\S\r\n]*[a-zA-Z0-9_+#.-]*\s*([\s\S]*?)\s*```/;
 
+function stripThinking(raw: string): string {
+  return raw.replace(THINK_BLOCK_REGEX, "").trim();
+}
+
 function sanitizeGeneratedCodeOutput(raw: string): string {
-  const withoutThinking = raw.replace(THINK_BLOCK_REGEX, "").trim();
+  const withoutThinking = stripThinking(raw);
   const fencedMatch = withoutThinking.match(MARKDOWN_CODE_BLOCK_REGEX);
 
   if (fencedMatch?.[1]) {
@@ -47,15 +51,41 @@ function sanitizeGeneratedCodeOutput(raw: string): string {
 }
 
 const explanationSchema = z.object({ explanation: z.string() });
-const reviewSchema = z.object({
-  feedback: z.string(),
-  suggestions: z.array(z.string()).optional(),
-});
-const debugSchema = z.object({
-  rootCause: z.string(),
-  solution: z.string(),
-  codeFix: z.string().optional(),
-});
+const reviewSchema = z
+  .object({
+    feedback: z.string().optional(),
+    suggestions: z
+      .union([z.array(z.string()), z.string(), z.null()])
+      .optional(),
+  })
+  .transform((val) => {
+    let suggestions: string[] = [];
+    if (Array.isArray(val.suggestions)) {
+      suggestions = val.suggestions.filter(Boolean);
+    } else if (typeof val.suggestions === "string" && val.suggestions.trim()) {
+      suggestions = [val.suggestions.trim()];
+    }
+    return {
+      feedback: val.feedback ?? "",
+      suggestions,
+    };
+  });
+
+const debugSchema = z
+  .object({
+    rootCause: z.string().optional(),
+    root_cause: z.string().optional(),
+    solution: z.string().nullable().optional(),
+    codeFix: z.string().nullable().optional(),
+    code_fix: z.string().nullable().optional(),
+  })
+  .transform(
+    (val): { rootCause: string; solution: string; codeFix?: string } => ({
+      rootCause: val.rootCause ?? val.root_cause ?? "",
+      solution: val.solution ?? "",
+      codeFix: (val.codeFix ?? val.code_fix) || undefined,
+    })
+  );
 
 async function saveCodeRun(params: {
   input: CodeRunInput;
@@ -87,7 +117,7 @@ async function handleGenerateMode(
   });
   const userPrompt = [
     input.context ? `Context: ${input.context}` : "",
-    `Task: ${input.prompt ?? ""}`,
+    `Task: ${input.prompt ?? input.code ?? ""}`,
     `Language: ${input.language}`,
   ]
     .filter(Boolean)
@@ -98,7 +128,7 @@ async function handleGenerateMode(
   await saveCodeRun({
     input,
     output: payload,
-    inputText: input.prompt ?? "",
+    inputText: input.prompt ?? input.code ?? "",
     errorText: null,
     userId,
   });
@@ -115,18 +145,18 @@ async function handleExplainMode(
     mode: "explain",
     language: input.language,
   });
-  const userPrompt = `Code:\n\n${input.code ?? ""}`;
+  const userPrompt = `Code:\n\n${input.code ?? input.prompt ?? ""}`;
   const { text } = await makeRequest(system, userPrompt);
   const parsed = extractJsonObject(text, explanationSchema);
 
   const payload = {
-    explanation: parsed?.explanation ?? text.trim(),
+    explanation: parsed?.explanation || stripThinking(text),
   } as const;
 
   await saveCodeRun({
     input,
     output: payload,
-    inputText: input.code ?? "",
+    inputText: input.code ?? input.prompt ?? "",
     errorText: null,
     userId,
   });
@@ -143,19 +173,19 @@ async function handleReviewMode(
     mode: "review",
     language: input.language,
   });
-  const userPrompt = `Code to review:\n\n${input.code ?? ""}`;
+  const userPrompt = `Code to review:\n\n${input.code ?? input.prompt ?? ""}`;
   const { text } = await makeRequest(system, userPrompt);
   const parsed = extractJsonObject(text, reviewSchema);
 
   const payload = {
-    feedback: parsed?.feedback ?? text.trim(),
+    feedback: parsed?.feedback || stripThinking(text),
     suggestions: parsed?.suggestions ?? [],
   } as const;
 
   await saveCodeRun({
     input,
     output: payload,
-    inputText: input.code ?? "",
+    inputText: input.code ?? input.prompt ?? "",
     errorText: null,
     userId,
   });
@@ -172,22 +202,24 @@ async function handleDebugMode(
     mode: "debug",
     language: input.language,
   });
-  const userPrompt = `Code:\n\n${input.code ?? ""}\n\nError:\n${
+  const userPrompt = `Code:\n\n${input.code ?? input.prompt ?? ""}\n\nError:\n${
     input.error ?? ""
   }`;
   const { text } = await makeRequest(system, userPrompt);
   const parsed = extractJsonObject(text, debugSchema);
 
-  const payload = parsed ?? {
-    rootCause: text.trim(),
-    solution: "",
-    codeFix: undefined,
-  };
+  const payload: { rootCause: string; solution: string; codeFix?: string } =
+    parsed && (parsed.rootCause || parsed.solution || parsed.codeFix)
+      ? parsed
+      : {
+          rootCause: stripThinking(text),
+          solution: "",
+        };
 
   await saveCodeRun({
     input,
     output: payload,
-    inputText: input.code ?? "",
+    inputText: input.code ?? input.prompt ?? "",
     errorText: input.error ?? null,
     userId,
   });
@@ -241,12 +273,12 @@ export const codeProcedures = {
     listCodeRuns(context.user.id)
   ),
   getRun: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number().int().positive() }))
     .handler(async ({ input, context }) =>
       getCodeRun(input.id, context.user.id)
     ),
   deleteRun: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number().int().positive() }))
     .handler(async ({ input, context }) => {
       await deleteCodeRun(input.id, context.user.id);
       return { ok: true } as const;

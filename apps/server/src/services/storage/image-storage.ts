@@ -47,11 +47,20 @@ export async function saveImage(base64Data: string): Promise<SaveImageResult> {
 }
 
 export async function deleteImage(filePath: string): Promise<void> {
+  const imagesDir = path.resolve(getImagesDir());
+  const resolvedPath = path.resolve(filePath);
+  if (
+    !resolvedPath.startsWith(imagesDir + path.sep) &&
+    resolvedPath !== imagesDir
+  ) {
+    throw new Error("Invalid image file path");
+  }
+
   try {
     await fs.access(filePath);
     await fs.unlink(filePath);
   } catch {
-    throw new Error("Failed to delete image file");
+    // If the file does not exist on disk, do not fail
   }
 }
 

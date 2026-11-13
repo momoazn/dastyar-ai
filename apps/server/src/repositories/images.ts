@@ -97,8 +97,13 @@ export async function getGeneratedImageByUser(
   };
 }
 
-export async function deleteGeneratedImage(id: number): Promise<void> {
-  const image = await getGeneratedImage(id);
+export async function deleteGeneratedImage(
+  id: number,
+  userId?: number
+): Promise<void> {
+  const image = userId
+    ? await getGeneratedImageByUser(id, userId)
+    : await getGeneratedImage(id);
   if (!image) {
     throw new Error("تصویر تولیدشده یافت نشد.");
   }
@@ -106,7 +111,14 @@ export async function deleteGeneratedImage(id: number): Promise<void> {
   await deleteImageFile(image.filePath);
   await db
     .delete(generatedImagesTable)
-    .where(eq(generatedImagesTable.id, id))
+    .where(
+      userId
+        ? and(
+            eq(generatedImagesTable.id, id),
+            eq(generatedImagesTable.userId, userId)
+          )
+        : eq(generatedImagesTable.id, id)
+    )
     .run();
 }
 
