@@ -1,4 +1,11 @@
-import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "bun:test";
 import { db, initializeDatabase, ollamaServers } from "@/database";
 import {
   createOllamaServer,
@@ -16,6 +23,10 @@ describe("Ollama model sync with an unreachable server", () => {
   });
 
   beforeEach(async () => {
+    await db.delete(ollamaServers);
+  });
+
+  afterEach(async () => {
     await db.delete(ollamaServers);
   });
 

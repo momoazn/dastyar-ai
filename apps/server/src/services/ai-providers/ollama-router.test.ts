@@ -1,4 +1,11 @@
-import { afterEach, beforeAll, describe, expect, it } from "bun:test";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "bun:test";
 import { env } from "@/config";
 import {
   db,
@@ -98,6 +105,11 @@ describe("acquireLeastBusyOllamaServerForModel", () => {
 
   beforeAll(async () => {
     await initializeDatabase();
+  });
+
+  // Test files share one database, so clear the rows another file may leave.
+  beforeEach(async () => {
+    await db.delete(ollamaServers);
   });
 
   afterEach(async () => {
